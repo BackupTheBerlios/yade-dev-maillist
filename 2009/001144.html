@@ -1,0 +1,171 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1845 - in trunk:	pkg/dem/Engine/StandAloneEngine	py scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1845%20-%20in%20trunk%3A%0A%09pkg/dem/Engine/StandAloneEngine%09py%20scripts/test&In-Reply-To=%3C200907072005.n67K5VP5001092%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001143.html">
+   <LINK REL="Next"  HREF="001145.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1845 - in trunk:	pkg/dem/Engine/StandAloneEngine	py scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1845%20-%20in%20trunk%3A%0A%09pkg/dem/Engine/StandAloneEngine%09py%20scripts/test&In-Reply-To=%3C200907072005.n67K5VP5001092%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1845 - in trunk:	pkg/dem/Engine/StandAloneEngine	py scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jul  7 22:05:31 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001143.html">[deprecated list] [Yade-dev] [svn] r1844 - in trunk:	examples/triax-perf	py/yadeWrapper
+</A></li>
+        <LI>Next message: <A HREF="001145.html">[deprecated list] [Yade-dev] [svn] r1846 - trunk/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1144">[ date ]</a>
+              <a href="thread.html#1144">[ thread ]</a>
+              <a href="subject.html#1144">[ subject ]</a>
+              <a href="author.html#1144">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-07 22:05:30 +0200 (Tue, 07 Jul 2009)
+New Revision: 1845
+
+Added:
+   trunk/scripts/test/compare-identical.py
+Modified:
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+   trunk/py/plot.py
+Log:
+1. add yade.plot.resetData(), which unlike reset() resets just data 
+2. Add scripts/test/compare-identical.py to run 2 simulations at the same time and check at every step (configurable) if they differ or not.
+3. Add active=active line to GlobalStiffnessTimeStepper, which for some reason causes two same simulations to be the same. Any explanation someone??
+
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2009-07-07 18:48:15 UTC (rev 1844)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2009-07-07 20:05:30 UTC (rev 1845)
+@@ -128,6 +128,9 @@
+ 
+ void GlobalStiffnessTimeStepper::computeTimeStep(MetaBody* ncb)
+ {
++	// for some reason, this line is necessary to have correct functioning (no idea _why_)
++	// see scripts/test/compare-identical.py, run with or without active=active.
++	active=active;
+ 	computeStiffnesses(ncb);
+ 
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+
+Modified: trunk/py/plot.py
+===================================================================
+--- trunk/py/plot.py	2009-07-07 18:48:15 UTC (rev 1844)
++++ trunk/py/plot.py	2009-07-07 20:05:30 UTC (rev 1845)
+@@ -25,6 +25,10 @@
+ 	data={}; plots={}; plotsFilled={}; plotLines={}; needsFullReplot=True; 
+ 	pylab.close('all')
+ 
++def resetData():
++	global data
++	data={}
++
+ # we could have a yplot class, that would hold: (yspec,...), (Line2d,Line2d,...) ?
+ 
+ 
+
+Added: trunk/scripts/test/compare-identical.py
+===================================================================
+--- trunk/scripts/test/compare-identical.py	2009-07-07 18:48:15 UTC (rev 1844)
++++ trunk/scripts/test/compare-identical.py	2009-07-07 20:05:30 UTC (rev 1845)
+@@ -0,0 +1,52 @@
++&quot;&quot;&quot;
++This files tests simulation correctness by loading a simulation two times,
++and periodically comparing the results, showing diffs in the simulation XML,
++if any. It stops after the differece is first spotted.
++
++On openMP-enabled installs, it should be run with OMP_NUM_THREADS=1, otherwise
++there will be noise differences coming from non-deterministic order of interactions
++in the container (although they are the same). You can use OMP_NUM_THREADS=2 to see
++what happens if the simulations get different.
++&quot;&quot;&quot;
++# this is to provide some default simulation to test on
++# comment it out and provide your own simulation XML in init
++TriaxialTest().generate('/tmp/TriaxialTest.xml')
++#
++
++# what is the initial file to load
++initFile='/tmp/TriaxialTest.xml'
++# that is the prefix for HTML diffs, if any
++outPrefix='/tmp/scene_'
++# at which step to stop
++stopIter=2000
++# how may steps to run between comparisons
++nSteps=100
++
++# quiet annoying messages
++import yade.log
++yade.log.setLevel('Omega',yade.log.WARN)
++yade.log.setLevel('TriaxialCompressionEngine',yade.log.WARN)
++
++if O.numThreads&gt;1:
++	print &quot;WARNING: You should run single-threaded with OMP_NUM_THREADS=1; interaction order will be probably different otherwise!&quot;
++
++O.load(initFile); O.switchWorld(); O.load(initFile); O.switchWorld()
++from hashlib import md5; import difflib,sys
++print &quot;Identical at steps &quot;,
++for i in xrange(0,stopIter/nSteps):
++	sys.stdout.flush()
++	for world in 'A','B':
++		O.run(nSteps,True); O.saveTmp(world); O.switchWorld()
++	A,B=O.tmpToString('A'),O.tmpToString('B')
++	# fast compare first using hash digest
++	Ahash,Bhash=md5(A),md5(B)
++	if Ahash.digest()==Bhash.digest():
++		print O.iter,; continue
++	print &quot;\nComputing differences...&quot;
++	diff=difflib.HtmlDiff(tabsize=3,wrapcolumn=80)
++	outName=outPrefix+'%05d_diff.html'%O.iter
++	out=open(outName,'w')
++	out.write(diff.make_file(A.split('\n'),B.split('\n'),context=True,numlines=2))
++	print '<A HREF="file://%s">file://%s</A>'%outName
++	break # stop at the first different value
++	
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001143.html">[deprecated list] [Yade-dev] [svn] r1844 - in trunk:	examples/triax-perf	py/yadeWrapper
+</A></li>
+	<LI>Next message: <A HREF="001145.html">[deprecated list] [Yade-dev] [svn] r1846 - trunk/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1144">[ date ]</a>
+              <a href="thread.html#1144">[ thread ]</a>
+              <a href="subject.html#1144">[ subject ]</a>
+              <a href="author.html#1144">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

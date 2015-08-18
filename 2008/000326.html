@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1499 - trunk/gui/qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1499%20-%20trunk/gui/qt3&In-Reply-To=%3C200809020323.m823N7Yq005336%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000325.html">
+   <LINK REL="Next"  HREF="000327.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1499 - trunk/gui/qt3</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1499%20-%20trunk/gui/qt3&In-Reply-To=%3C200809020323.m823N7Yq005336%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1499 - trunk/gui/qt3">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Tue Sep  2 05:23:07 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000325.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-17138/bin/yade-svn1498:	DirectShearCis, FEMBeam,	HydraulicTest, SDECImpactTest, STLImporterTest, TetrahedronsTest
+</A></li>
+        <LI>Next message: <A HREF="000327.html">[deprecated list] [Yade-dev] [svn] r1500 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#326">[ date ]</a>
+              <a href="thread.html#326">[ thread ]</a>
+              <a href="subject.html#326">[ subject ]</a>
+              <a href="author.html#326">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2008-09-02 05:23:06 +0200 (Tue, 02 Sep 2008)
+New Revision: 1499
+
+Modified:
+   trunk/gui/qt3/SimulationController.cpp
+   trunk/gui/qt3/SimulationController.hpp
+Log:
+don't refresh display when there's nothing to refresh
+
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2008-08-29 21:23:56 UTC (rev 1498)
++++ trunk/gui/qt3/SimulationController.cpp	2008-09-02 03:23:06 UTC (rev 1499)
+@@ -84,7 +84,11 @@
+ }
+ 
+ /* restart timer with SimulationController::refreshTime */
+-void SimulationController::restartTimer(){ killTimer(updateTimerId); updateTimerId=startTimer(refreshTime); }
++void SimulationController::restartTimer()
++{ 
++	killTimer(updateTimerId); 
++	updateTimerId=startTimer(refreshTime); 
++}
+ 
+ 
+ void SimulationController::pbApplyClicked()
+@@ -225,12 +229,24 @@
+ 	else Omega::instance().startSimulationLoop();
+ }
+ 
+-void SimulationController::cbSyncToggled(bool b){	sync=b; if(sync &amp;&amp; refreshTime&lt;20) refreshTime=20; pbStopClicked(); pbStartClicked(); }
+-void SimulationController::timerEvent( QTimerEvent* ){
++void SimulationController::cbSyncToggled(bool b)
++{	
++	sync=b; 
++	if(sync &amp;&amp; refreshTime&lt;20) 
++		refreshTime=20; 
++	pbStopClicked(); 
++	pbStartClicked(); 
++}
++
++void SimulationController::timerEvent( QTimerEvent* )
++{
+ 	doUpdate(); /* update the controller, like iteration number etc */
+-	/* update GLViews */
+-	YadeQtMainWindow::self-&gt;redrawAll(true);
+-	if(sync &amp;&amp; syncRunning){ Omega::instance().spawnSingleSimulationLoop(); }
++	if(hasSimulation &amp;&amp; (Omega::instance().isRunning() || syncRunning))
++	{
++		/* update GLViews */
++		YadeQtMainWindow::self-&gt;redrawAll(true);
++		if(sync &amp;&amp; syncRunning){ Omega::instance().spawnSingleSimulationLoop(); }
++	}
+ }
+ 
+ void SimulationController::pbResetClicked()
+@@ -386,8 +402,8 @@
+ 	//cerr&lt;&lt;&quot;dt=&quot;&lt;&lt;dt&lt;&lt;&quot;,exp10=&quot;&lt;&lt;exp10&lt;&lt;&quot;,10^exp10=&quot;&lt;&lt;pow((float)10,exp10)&lt;&lt;endl;
+ 
+ 	/* enable/disable controls here, dynamically */
+-	bool hasSimulation=(Omega::instance().getRootBody() ? Omega::instance().getRootBody()-&gt;bodies-&gt;size()&gt;0 : false ),
+-		isRunning=Omega::instance().isRunning() || syncRunning,
++	hasSimulation=(Omega::instance().getRootBody() ? Omega::instance().getRootBody()-&gt;bodies-&gt;size()&gt;0 : false );
++	bool	isRunning=Omega::instance().isRunning() || syncRunning,
+ 		hasTimeStepper=Omega::instance().containTimeStepper(),
+ 		usesTimeStepper=Omega::instance().timeStepperActive(),
+ 		hasFileName=(Omega::instance().getSimulationFileName()!=&quot;&quot;);
+
+Modified: trunk/gui/qt3/SimulationController.hpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.hpp	2008-08-29 21:23:56 UTC (rev 1498)
++++ trunk/gui/qt3/SimulationController.hpp	2008-09-02 03:23:06 UTC (rev 1499)
+@@ -33,6 +33,7 @@
+ 		int updateTimerId;
+ 		bool sync;
+ 		bool syncRunning;
++		bool hasSimulation;
+ 
+ 		const int iterPerSec_TTL_ms;
+ 		long  iterPerSec_LastIter;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000325.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-17138/bin/yade-svn1498:	DirectShearCis, FEMBeam,	HydraulicTest, SDECImpactTest, STLImporterTest, TetrahedronsTest
+</A></li>
+	<LI>Next message: <A HREF="000327.html">[deprecated list] [Yade-dev] [svn] r1500 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#326">[ date ]</a>
+              <a href="thread.html#326">[ thread ]</a>
+              <a href="subject.html#326">[ subject ]</a>
+              <a href="author.html#326">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,120 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1808 -	trunk/pkg/dem/Engine/EngineUnit
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1808%20-%0A%09trunk/pkg/dem/Engine/EngineUnit&In-Reply-To=%3C200906231418.n5NEIEVv018701%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001039.html">
+   <LINK REL="Next"  HREF="001041.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1808 -	trunk/pkg/dem/Engine/EngineUnit</H1>
+    <B>richefeu at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1808%20-%0A%09trunk/pkg/dem/Engine/EngineUnit&In-Reply-To=%3C200906231418.n5NEIEVv018701%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1808 -	trunk/pkg/dem/Engine/EngineUnit">richefeu at mail.berlios.de
+       </A><BR>
+    <I>Tue Jun 23 16:18:14 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001039.html">[deprecated list] [Yade-dev] [svn] r1807 -	trunk/pkg/dem/Engine/EngineUnit
+</A></li>
+        <LI>Next message: <A HREF="001041.html">[deprecated list] [Yade-dev] [svn] r1809 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1040">[ date ]</a>
+              <a href="thread.html#1040">[ thread ]</a>
+              <a href="subject.html#1040">[ subject ]</a>
+              <a href="author.html#1040">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: richefeu
+Date: 2009-06-23 16:18:13 +0200 (Tue, 23 Jun 2009)
+New Revision: 1808
+
+Modified:
+   trunk/pkg/dem/Engine/EngineUnit/BasicViscoelasticRelationships.cpp
+Log:
+Ooops! There was a bug
+
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/BasicViscoelasticRelationships.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/BasicViscoelasticRelationships.cpp	2009-06-23 14:13:28 UTC (rev 1807)
++++ trunk/pkg/dem/Engine/EngineUnit/BasicViscoelasticRelationships.cpp	2009-06-23 14:18:13 UTC (rev 1808)
+@@ -55,26 +55,28 @@
+     {
+         const shared_ptr&lt;Body&gt;&amp; clump = (*((Omega::instance().getRootBody().get())-&gt;bodies))[ bdy1-&gt;clumpId ];
+         RigidBodyParameters* clumpRBP=YADE_CAST&lt;RigidBodyParameters*&gt; ( clump-&gt;physicalParameters.get() );
+-        m1 = clumpRBP-&gt;mass; 
++        m1 = clumpRBP-&gt;mass;
++        if (!clump-&gt;isDynamic) m1 *= 1.0e6;
+     }
+     else
+-    { m1 = sdec1-&gt;mass ; }
++    {  
++        m1 = sdec1-&gt;mass ; 
++        if (!bdy1-&gt;isDynamic) m1 *= 1.0e6;
++    }
+     
+     if (bdy2-&gt;isClumpMember())
+     {
+         const shared_ptr&lt;Body&gt;&amp; clump = (*((Omega::instance().getRootBody().get())-&gt;bodies))[ bdy2-&gt;clumpId ];
+         RigidBodyParameters* clumpRBP=YADE_CAST&lt;RigidBodyParameters*&gt; ( clump-&gt;physicalParameters.get() );
+         m2 = clumpRBP-&gt;mass;
++        if (!clump-&gt;isDynamic) m2 *= 1.0e6;
+     }
+     else
+-    { m2 = sdec2-&gt;mass; }
++    { 
++        m2 = sdec2-&gt;mass; 
++        if (!bdy2-&gt;isDynamic) m2 *= 1.0e6;
++    }
+ 
+-    if (!bdy1-&gt;isDynamic) m1 *= 1e6;
+-    if (!bdy2-&gt;isDynamic) m2 *= 1e6;
+-
+-    //cout &lt;&lt; &quot;m1 = &quot; &lt;&lt; m1 &lt;&lt; endl;
+-    //cout &lt;&lt; &quot;m2 = &quot; &lt;&lt; m2 &lt;&lt; endl;
+-
+     contactPhysics-&gt;cn *= 2.0 * sqrt(contactPhysics-&gt;kn * ((m1 * m2) / (m1 + m2)));
+  
+     contactPhysics-&gt;tangensOfFrictionAngle = std::tan(std::min(sdec1-&gt;frictionAngle, sdec2-&gt;frictionAngle)); 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001039.html">[deprecated list] [Yade-dev] [svn] r1807 -	trunk/pkg/dem/Engine/EngineUnit
+</A></li>
+	<LI>Next message: <A HREF="001041.html">[deprecated list] [Yade-dev] [svn] r1809 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1040">[ date ]</a>
+              <a href="thread.html#1040">[ thread ]</a>
+              <a href="subject.html#1040">[ subject ]</a>
+              <a href="author.html#1040">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

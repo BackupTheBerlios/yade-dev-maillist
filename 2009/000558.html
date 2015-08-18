@@ -1,0 +1,135 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1603 - in trunk: core	lib/serialization	pkg/dem/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1603%20-%20in%20trunk%3A%20core%0A%09lib/serialization%09pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200901041432.n04EWsSw029254%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   
+   <LINK REL="Next"  HREF="000563.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1603 - in trunk: core	lib/serialization	pkg/dem/Engine/DeusExMachina</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1603%20-%20in%20trunk%3A%20core%0A%09lib/serialization%09pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200901041432.n04EWsSw029254%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1603 - in trunk: core	lib/serialization	pkg/dem/Engine/DeusExMachina">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Sun Jan  4 15:32:54 CET 2009</I>
+    <P><UL>
+        
+        <LI>Next message: <A HREF="000563.html">[deprecated list] [Yade-dev] [svn] r1603 - in trunk:	core	lib/serialization	pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#558">[ date ]</a>
+              <a href="thread.html#558">[ thread ]</a>
+              <a href="subject.html#558">[ subject ]</a>
+              <a href="author.html#558">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2009-01-04 15:32:53 +0100 (Sun, 04 Jan 2009)
+New Revision: 1603
+
+Modified:
+   trunk/core/Omega.cpp
+   trunk/lib/serialization/IOFormatManager.tpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+Log:
+1. TriaxialStressController reads radius from interactingGeometry
+
+2. I added .gz support back, please don't remove it:
+
+   - I used .gz because files are only a bit bigger, but CPU usage is about 50 smaller
+   - so I generted about 2 GB of data with .gz, I'm not going to convert all of them into .bz2, even though it's as simple as 
+   find -name &quot;*.xml.gz&quot; -exec unp {}; bzip2 {} \; or such.
+
+
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2008-12-31 19:11:49 UTC (rev 1602)
++++ trunk/core/Omega.cpp	2009-01-04 14:32:53 UTC (rev 1603)
+@@ -236,7 +236,7 @@
+ 		//boost::mutex::scoped_lock lock1(rootBody-&gt;persistentInteractions-&gt;drawloopmutex);
+ 		//boost::mutex::scoped_lock lock2(rootBody-&gt;transientInteractions-&gt;drawloopmutex);
+ 		
+-		if(algorithm::ends_with(simulationFileName,&quot;.xml&quot;) || algorithm::ends_with(simulationFileName,&quot;.xml.bz2&quot;)){
++		if(algorithm::ends_with(simulationFileName,&quot;.xml&quot;) || algorithm::ends_with(simulationFileName,&quot;.xml.gz&quot;) || algorithm::ends_with(simulationFileName,&quot;.xml.bz2&quot;)){
+ 			resetRootBody();
+ 			IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,simulationFileName,&quot;rootBody&quot;,rootBody);
+ 		}
+
+Modified: trunk/lib/serialization/IOFormatManager.tpp
+===================================================================
+--- trunk/lib/serialization/IOFormatManager.tpp	2008-12-31 19:11:49 UTC (rev 1602)
++++ trunk/lib/serialization/IOFormatManager.tpp	2009-01-04 14:32:53 UTC (rev 1603)
+@@ -18,6 +18,7 @@
+ #include&lt;boost/scoped_ptr.hpp&gt;
+ #include&lt;boost/iostreams/filtering_stream.hpp&gt;
+ #include&lt;boost/iostreams/filter/bzip2.hpp&gt;
++#include&lt;boost/iostreams/filter/gzip.hpp&gt;
+ #include&lt;boost/iostreams/device/file.hpp&gt;
+ #include&lt;boost/algorithm/string.hpp&gt;
+ 
+@@ -45,6 +46,7 @@
+ void IOFormatManager::loadFromFile(const string&amp; libName, const string&amp; fileName,const string&amp; name, Type&amp; t){
+ 	iostreams::filtering_istream in;
+ 	if(boost::algorithm::ends_with(fileName,&quot;.bz2&quot;)) in.push(iostreams::bzip2_decompressor());
++	if(boost::algorithm::ends_with(fileName,&quot;.gz&quot;)) in.push(iostreams::gzip_decompressor());
+ 	in.push(iostreams::file_source(fileName));
+ 	if(!in.good()) throw SerializableError(IOManagerExceptions::FileNotGood);
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2008-12-31 19:11:49 UTC (rev 1602)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2009-01-04 14:32:53 UTC (rev 1603)
+@@ -228,8 +228,8 @@
+ 			const shared_ptr&lt;Body&gt;&amp; b = *bi;
+ 			if ( b-&gt;isDynamic )
+ 			{
+-				const shared_ptr&lt;Sphere&gt;&amp; sphere =
+-						YADE_PTR_CAST&lt;Sphere&gt; ( b-&gt;geometricalModel );
++				const shared_ptr&lt;InteractingSphere&gt;&amp; sphere =
++						YADE_PTR_CAST&lt;InteractingSphere&gt; ( b-&gt;interactingGeometry );
+ 				spheresVolume += 1.3333333*Mathr::PI*pow ( sphere-&gt;radius, 3 );
+ 			}
+ 		}
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	
+	<LI>Next message: <A HREF="000563.html">[deprecated list] [Yade-dev] [svn] r1603 - in trunk:	core	lib/serialization	pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#558">[ date ]</a>
+              <a href="thread.html#558">[ thread ]</a>
+              <a href="subject.html#558">[ subject ]</a>
+              <a href="author.html#558">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

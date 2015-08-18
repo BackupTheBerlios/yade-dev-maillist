@@ -1,0 +1,365 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1539 - in trunk: core	gui/py	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/StandAloneEngine	scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1539%20-%20in%20trunk%3A%20core%0A%09gui/py%09pkg/dem/DataClass/InteractionGeometry%09pkg/dem/Engine/StandAloneEngine%0A%09scripts&In-Reply-To=%3C200810091222.m99CMYmN019881%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000433.html">
+   <LINK REL="Next"  HREF="000439.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1539 - in trunk: core	gui/py	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/StandAloneEngine	scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1539%20-%20in%20trunk%3A%20core%0A%09gui/py%09pkg/dem/DataClass/InteractionGeometry%09pkg/dem/Engine/StandAloneEngine%0A%09scripts&In-Reply-To=%3C200810091222.m99CMYmN019881%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1539 - in trunk: core	gui/py	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/StandAloneEngine	scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Oct  9 14:22:34 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000433.html">[deprecated list] [Yade-dev] [svn] r1538 - in trunk: core extra	extra/clump gui/py	pkg/common/Engine/MetaEngine	pkg/dem/Engine/StandAloneEngine scripts
+</A></li>
+        <LI>Next message: <A HREF="000439.html">[deprecated list] [Yade-dev] [svn] r1541 - in trunk/gui: . py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#436">[ date ]</a>
+              <a href="thread.html#436">[ thread ]</a>
+              <a href="subject.html#436">[ subject ]</a>
+              <a href="author.html#436">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-10-09 14:22:33 +0200 (Thu, 09 Oct 2008)
+New Revision: 1539
+
+Modified:
+   trunk/core/Omega.cpp
+   trunk/core/Omega.hpp
+   trunk/gui/py/utils.py
+   trunk/gui/py/yadeControl.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+   trunk/scripts/chain-distant-interactions.py
+Log:
+1. Add Omega().reload()
+2. Create map&lt;string,string&gt; Omega::memSavedSimulations, where simulations are saved if they begin with special sequence &quot;:memory:&quot; and can be loaded again, within lifetime of Omega.
+3. Add Omega().tmpLoad() and Omega().tmpSave() that use the above mentioned thing.
+4. add utils.readParamsFromTable that reads any python variables from text file (useful for automatic parametric studies)
+5. Add less expensive routine for sontact point relocation in SpheresContactGeometry
+
+
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2008-10-07 07:02:48 UTC (rev 1538)
++++ trunk/core/Omega.cpp	2008-10-09 12:22:33 UTC (rev 1539)
+@@ -68,6 +68,7 @@
+ void Omega::init(){
+ 	simulationFileName=&quot;&quot;;
+ 	resetRootBody();
++	timeInit();
+ }
+ 
+ void Omega::timeInit(){
+@@ -215,7 +216,6 @@
+ void Omega::loadSimulationFromStream(std::istream&amp; stream){
+ 	LOG_DEBUG(&quot;Loading simulation from stream.&quot;);
+ 	resetRootBody();
+-	timeInit();
+ 	IOFormatManager::loadFromStream(&quot;XMLFormatManager&quot;,stream,&quot;rootBody&quot;,rootBody);
+ }
+ void Omega::saveSimulationToStream(std::ostream&amp; stream){
+@@ -223,10 +223,10 @@
+ 	IOFormatManager::saveToStream(&quot;XMLFormatManager&quot;,stream,&quot;rootBody&quot;,rootBody);
+ }
+ 
+-void Omega::loadSimulation()
+-{
++void Omega::loadSimulation(){
++
+ 	if(Omega::instance().getSimulationFileName().size()==0) throw yadeBadFile(&quot;Simulation filename to load has zero length&quot;);
+-	if(!filesystem::exists(simulationFileName)) throw yadeBadFile(&quot;Simulation file to load doesn't exist&quot;);
++	if(!filesystem::exists(simulationFileName) &amp;&amp; !algorithm::starts_with(simulationFileName,&quot;:memory&quot;)) throw yadeBadFile(&quot;Simulation file to load doesn't exist&quot;);
+ 	
+ 	// FIXME: should stop running simulation!!
+ 	LOG_INFO(&quot;Loading file &quot; + simulationFileName);
+@@ -244,6 +244,12 @@
+ 			resetRootBody();
+ 			IOFormatManager::loadFromFile(&quot;BINFormatManager&quot;,simulationFileName,&quot;rootBody&quot;,rootBody);
+ 		}
++		else if(algorithm::starts_with(simulationFileName,&quot;:memory:&quot;)){
++			if(memSavedSimulations.count(simulationFileName)==0) throw yadeBadFile((&quot;Cannot load nonexistent memory-saved simulation &quot;+simulationFileName).c_str());
++			resetRootBody();
++			istringstream iss(memSavedSimulations[simulationFileName]);
++			IOFormatManager::loadFromStream(&quot;XMLFormatManager&quot;,iss,&quot;rootBody&quot;,rootBody);
++		}
+ 		else throw (yadeBadFile(&quot;Extension of file not recognized.&quot;));
+ 	}
+ 
+@@ -269,6 +275,12 @@
+ 		FormatChecker::format=FormatChecker::BIN;
+ 		IOFormatManager::saveToFile(&quot;BINFormatManager&quot;,name,&quot;rootBody&quot;,rootBody);
+ 	}
++	else if(algorithm::starts_with(name,&quot;:memory:&quot;)){
++		if(memSavedSimulations.count(simulationFileName)&gt;0) LOG_INFO(&quot;Overwriting in-memory saved simulation &quot;&lt;&lt;name);
++		ostringstream oss;
++		IOFormatManager::saveToStream(&quot;XMLFormatManager&quot;,oss,&quot;rootBody&quot;,rootBody);
++		memSavedSimulations[name]=oss.str();
++	}
+ 	else {
+ 		throw(yadeBadFile((&quot;Filename extension not recognized in `&quot;+name+&quot;'&quot;).c_str()));
+ 	}
+
+Modified: trunk/core/Omega.hpp
+===================================================================
+--- trunk/core/Omega.hpp	2008-10-07 07:02:48 UTC (rev 1538)
++++ trunk/core/Omega.hpp	2008-10-09 12:22:33 UTC (rev 1539)
+@@ -87,6 +87,8 @@
+ 		string				 simulationFileName;
+ 		void buildDynlibDatabase(const vector&lt;string&gt;&amp; dynlibsList); // FIXME - maybe in ClassFactory ?
+ 
++		map&lt;string,string&gt; memSavedSimulations;
++
+ 	public :
+ 		shared_ptr&lt;Preferences&gt; preferences;
+ 		string 				 yadeConfigPath;	// FIXME - must be private and more clean
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-10-07 07:02:48 UTC (rev 1538)
++++ trunk/gui/py/utils.py	2008-10-09 12:22:33 UTC (rev 1539)
+@@ -17,6 +17,8 @@
+ from yade._utils import *
+ 
+ 
++def typedEngine(name): return [e for e in Omega().engines if e.name==name][0]
++
+ def sphere(center,radius,density=1,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=True,wire=False,color=[1,1,1],physParamsClass='BodyMacroParameters'):
+ 	&quot;&quot;&quot;Create default sphere, with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
+ 	s=Body()
+@@ -216,3 +218,50 @@
+ 	mainloop.run()
+ 	pipeline.set_state(gst.STATE_NULL); pipeline.get_state()
+ 
++def readParamsFromTable(tableFile=None,tableLine=None,noTableOk=False,**kw):
++	&quot;&quot;&quot;
++	Read parameters from a file and assign them to __builtin__ variables.
++
++	tableFile is a text file (with one value per blank-separated columns)
++	tableLine is number of line where to get the values from
++
++		The format of the file is as follows (no comments, empty lines etc allowed&#8230;)
++		
++		name1 name2 &#8230; # 0th line
++		val1  val2  &#8230; # 1st line
++		val2  val2  &#8230; # 2nd line
++		&#8230;
++
++	The name `description' is special and is assigned to Omega().tags['description']
++
++	assigns Omega().tags['params']=&quot;name1=val1,name2=val2,&#8230;&quot;
++	
++	assigns Omega().tags['defaultParams']=&quot;unassignedName1=defaultValue1,&#8230;&quot;
++
++	return value is the number of assigned parameters.
++	&quot;&quot;&quot;
++	o=Omega()
++	tagsParams=[]
++	import os, __builtin__
++	if not tableFile and not os.environ.has_key('PARAM_TABLE'):
++		if not noTableOk: raise EnvironmentError(&quot;PARAM_TABLE is not defined in the environment&quot;)
++	else:
++		if not tableFile: tableFile=os.environ['PARAM_TABLE']
++		if not tableLine: tableLine=int(os.environ['PARAM_LINE'])
++		ll=open(tableFile).readlines(); names=ll[0].split(); values=ll[tableLine].split()
++		assert(len(names)==len(values))
++		for i in range(len(names)):
++			if names[i]=='description': o.tags['description']=values[i]
++			else:
++				if names[i] not in kw.keys(): raise NameError(&quot;Parameter `%s' has no default value assigned&quot;%names[i])
++				kw.pop(names[i])
++				eq=&quot;%s=%s&quot;%(names[i],values[i])
++				exec('__builtin__.%s=%s'%(names[i],values[i])); tagsParams+=['%s=%s'%(names[i],values[i])]
++	defaults=[]
++	for k in kw.keys():
++		exec(&quot;__builtin__.%s=%s&quot;%(k,kw[k]))
++		defaults+=[&quot;%s=%s&quot;%(k,kw[k])]
++	o.tags['defaultParams']=&quot;,&quot;.join(defaults)
++	o.tags['params']=&quot;,&quot;.join(tagsParams)
++	return len(tagsParams)
++
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-10-07 07:02:48 UTC (rev 1538)
++++ trunk/gui/py/yadeControl.cpp	2008-10-09 12:22:33 UTC (rev 1539)
+@@ -424,7 +424,11 @@
+ 		OMEGA.createSimulationLoop();
+ 		LOG_DEBUG(&quot;LOAD!&quot;);
+ 	}
++	void reload(){	load(OMEGA.getSimulationFileName());}
++	void saveTmp(string mark){ save(&quot;:memory:&quot;+mark);}
++	void loadTmp(string mark){ load(&quot;:memory:&quot;+mark);}
+ 
++
+ 	void reset(){Py_BEGIN_ALLOW_THREADS; OMEGA.reset(); Py_END_ALLOW_THREADS; }
+ 
+ 	void save(std::string fileName){
+@@ -520,7 +524,10 @@
+ 		.add_property(&quot;dt&quot;,&amp;pyOmega::dt_get,&amp;pyOmega::dt_set)
+ 		.add_property(&quot;usesTimeStepper&quot;,&amp;pyOmega::usesTimeStepper_get,&amp;pyOmega::usesTimeStepper_set)
+ 		.def(&quot;load&quot;,&amp;pyOmega::load)
++		.def(&quot;reload&quot;,&amp;pyOmega::reload)
+ 		.def(&quot;save&quot;,&amp;pyOmega::save)
++		.def(&quot;loadTmp&quot;,&amp;pyOmega::loadTmp)
++		.def(&quot;saveTmp&quot;,&amp;pyOmega::saveTmp)
+ 		.def(&quot;saveSpheres&quot;,&amp;pyOmega::saveSpheres)
+ 		.def(&quot;run&quot;,&amp;pyOmega::run,omega_run_overloads())
+ 		.def(&quot;pause&quot;,&amp;pyOmega::pause)
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2008-10-07 07:02:48 UTC (rev 1538)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2008-10-09 12:22:33 UTC (rev 1539)
+@@ -25,8 +25,15 @@
+  */
+ void SpheresContactGeometry::relocateContactPoints(){
+ 	assert(hasShear);
+-	Vector3r p1=contPtInTgPlane1(), p2=contPtInTgPlane2();
+-	Vector3r midPt=.5*(p1+p2);
++	relocateContactPoints(contPtInTgPlane1(),contPtInTgPlane2());
++}
++
++/* Like SpheresContactGeometry::relocateContactPoints(), but use already computed tangent plane points.
++ *
++ *
++ */
++void SpheresContactGeometry::relocateContactPoints(const Vector3r&amp; p1, const Vector3r&amp; p2){
++	Vector3r midPt=(d1/(d1+d2))*(p1+p2); // proportionally to radii, so that angle would be the same
+ 	if((p1.SquaredLength()&gt;4*d1 || p2.SquaredLength()&gt;4*d2) &amp;&amp; midPt.SquaredLength()&gt;.5*min(d1,d2)){
+ 		//cerr&lt;&lt;&quot;RELOCATION with displacementT=&quot;&lt;&lt;displacementT(); // should be the same before and after relocation
+ 		setTgPlanePts(p1-midPt,p2-midPt);
+@@ -34,6 +41,7 @@
+ 	}
+ }
+ 
++
+ /*! Perform slip of the projected contact points so that their distance becomes equal (or remains smaller) than the given one.
+  * The slipped distance is returned.
+  */
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2008-10-07 07:02:48 UTC (rev 1538)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2008-10-09 12:22:33 UTC (rev 1539)
+@@ -22,7 +22,9 @@
+  *
+  * TODO: add torsion code, that will (if a flag is on) compute torsion angle on the contact axis.
+  *
++ * TODO: add bending code, that will compute bending angle of the contact axis
+  *
++ *
+  */
+ class SpheresContactGeometry: public InteractionGeometry{
+ 	public:
+@@ -58,7 +60,17 @@
+ 
+ 		Real displacementN(){assert(hasShear); return (pos2-pos1).Length()-d0;}
+ 		Real epsN(){return displacementN()*(1./d0);}
+-		Vector3r displacementT(){ assert(hasShear); return contPtInTgPlane2()-contPtInTgPlane1();}
++		Vector3r displacementT(){ assert(hasShear);
++			// enabling automatic relocation decreases overall simulation speed by about 3%
++			// perhaps: bool largeStrains ... ?
++			#if 0 
++				Vector3r p1=contPtInTgPlane1(), p2=contPtInTgPlane2();
++				relocateContactPoints(p1,p2);
++				return p2-p1; // shear before relocation, but that should be OK
++			#else
++				return contPtInTgPlane2()-contPtInTgPlane1();
++			#endif
++		}
+ 		Vector3r epsT(){return displacementT()*(1./d0);}
+ 	
+ 		Real slipToDisplacementTMax(Real displacementTMax);
+@@ -66,6 +78,7 @@
+ 		Real slipToEpsTMax(Real epsTMax){ return (1/d0)*slipToDisplacementTMax(epsTMax*d0);}
+ 
+ 		void relocateContactPoints();
++		void relocateContactPoints(const Vector3r&amp; tgPlanePt1, const Vector3r&amp; tgPlanePt2);
+ 
+ 		SpheresContactGeometry():contactPoint(Vector3r::ZERO),radius1(0),radius2(0),hasShear(false),pos1(Vector3r::ZERO),pos2(Vector3r::ZERO){createIndex();}
+ 		virtual ~SpheresContactGeometry();
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2008-10-07 07:02:48 UTC (rev 1538)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2008-10-09 12:22:33 UTC (rev 1539)
+@@ -36,6 +36,7 @@
+ 		Real Fn=contPhys-&gt;kn*contGeom-&gt;displacementN(); // scalar normal force; displacementN()&gt;=0 &#8801; elongation of the contact
+ 		if(!isCohesive &amp;&amp; contGeom-&gt;displacementN()&gt;0){ cerr&lt;&lt;&quot;deleting&quot;&lt;&lt;endl; /* delete the interaction */ i-&gt;isReal=false; continue;}
+ 		contPhys-&gt;normalForce=Fn*contGeom-&gt;normal;
++		//contGeom-&gt;relocateContactPoints();
+ 		contGeom-&gt;slipToDisplacementTMax(max(0.,(-Fn*contPhys-&gt;tangensOfFrictionAngle)/contPhys-&gt;ks)); // limit shear displacement -- Coulomb criterion
+ 		contPhys-&gt;shearForce=contPhys-&gt;ks*contGeom-&gt;displacementT();
+ 		Vector3r force=contPhys-&gt;shearForce+contPhys-&gt;normalForce;
+
+Modified: trunk/scripts/chain-distant-interactions.py
+===================================================================
+--- trunk/scripts/chain-distant-interactions.py	2008-10-07 07:02:48 UTC (rev 1538)
++++ trunk/scripts/chain-distant-interactions.py	2008-10-09 12:22:33 UTC (rev 1539)
+@@ -15,7 +15,7 @@
+ 	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+ 	StandAloneEngine('ElasticContactLaw2',{'isCohesive':True}),
+ 	DeusExMachina('GravityEngine',{'gravity':[0,0,-1e5]}),
+-	DeusExMachina('NewtonsDampedLaw',{'damping':0.2})
++	DeusExMachina('NewtonsDampedLaw',{'damping':0.1})
+ ]
+ from yade import utils
+ for n in range(20):
+@@ -25,4 +25,7 @@
+ 
+ 
+ o.dt=.04*utils.PWaveTimeStep()
+-o.save('/tmp/a.xml.bz2')
++#o.save('/tmp/a.xml.bz2')
++#o.reload()
++#o.run(50000,True)
++#print o.iter/o.realtime
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000433.html">[deprecated list] [Yade-dev] [svn] r1538 - in trunk: core extra	extra/clump gui/py	pkg/common/Engine/MetaEngine	pkg/dem/Engine/StandAloneEngine scripts
+</A></li>
+	<LI>Next message: <A HREF="000439.html">[deprecated list] [Yade-dev] [svn] r1541 - in trunk/gui: . py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#436">[ date ]</a>
+              <a href="thread.html#436">[ thread ]</a>
+              <a href="subject.html#436">[ subject ]</a>
+              <a href="author.html#436">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

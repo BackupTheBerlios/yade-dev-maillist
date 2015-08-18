@@ -1,0 +1,851 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1830 - in trunk: gui/py gui/qt3	lib lib/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1830%20-%20in%20trunk%3A%20gui/py%20gui/qt3%0A%09lib%20lib/py&In-Reply-To=%3C200907021009.n62A9vmU010203%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001093.html">
+   <LINK REL="Next"  HREF="001090.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1830 - in trunk: gui/py gui/qt3	lib lib/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1830%20-%20in%20trunk%3A%20gui/py%20gui/qt3%0A%09lib%20lib/py&In-Reply-To=%3C200907021009.n62A9vmU010203%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1830 - in trunk: gui/py gui/qt3	lib lib/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Jul  2 12:09:57 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001093.html">[deprecated list] [Yade-dev] mesh packing
+</A></li>
+        <LI>Next message: <A HREF="001090.html">[deprecated list] [Yade-dev] forgotten _packSpheres.cpp
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1089">[ date ]</a>
+              <a href="thread.html#1089">[ thread ]</a>
+              <a href="subject.html#1089">[ subject ]</a>
+              <a href="author.html#1089">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-02 12:09:56 +0200 (Thu, 02 Jul 2009)
+New Revision: 1830
+
+Added:
+   trunk/lib/miniWm3Wrap-generate.py
+   trunk/lib/miniWm3Wrap-toExpose.hpp
+   trunk/lib/py/_packSpheres.cpp
+Modified:
+   trunk/gui/py/PythonUI_rc.py
+   trunk/gui/py/yadeControl.cpp
+   trunk/gui/qt3/QtGUI-python.cpp
+   trunk/lib/SConscript
+   trunk/lib/py/_eudoxos.cpp
+   trunk/lib/py/_packPredicates.cpp
+   trunk/lib/py/_utils.cpp
+   trunk/lib/py/pack.py
+Log:
+1. Add automatic converter from python::tuple to Vector3r and vice versa. Wrapped functions can take/return Vector3r directly instead of manual conversion. Clean code that had to do that. Let me know if something breaks, the changes should not touch any python code.
+2. Some preliminary work on wrapping Vector+Quaternion classes in python via py++ (not enabled, just the files are there)
+3. Add forgotten _packSphere.cpp, thanks to Vincent for reporting.
+
+
+
+Modified: trunk/gui/py/PythonUI_rc.py
+===================================================================
+--- trunk/gui/py/PythonUI_rc.py	2009-07-01 18:27:44 UTC (rev 1829)
++++ trunk/gui/py/PythonUI_rc.py	2009-07-02 10:09:56 UTC (rev 1830)
+@@ -14,9 +14,10 @@
+ __builtins__.O=Omega()
+ 
+ #try:
+-#	import yade.qt.atexit
+-#	atexit.register(yade.qt.close)
+-#except ImportError: pass
++#	from miniWm3Wrap import Vector3_less__double__greater_ as Vector3r
++#	from miniWm3Wrap import Vector2_less__double__greater_ as Vector2r
++#	from miniWm3Wrap import Quaternion_less__double__greater_ as Quaternionr
++#except ImportError: pass 
+ 
+ ### direct object creation through automatic wrapper functions
+ def listChildClassesRecursive(base):
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2009-07-01 18:27:44 UTC (rev 1829)
++++ trunk/gui/py/yadeControl.cpp	2009-07-02 10:09:56 UTC (rev 1830)
+@@ -155,13 +155,13 @@
+ 			throw std::invalid_argument(&quot;Invalid  DOF specification `&quot;+s+&quot;', must be &#8712;{x,y,z,rx,ry,rz}.&quot;);
+ 		}
+ 	}
+-	python::tuple displ_get(){Vector3r ret=proxee-&gt;se3.position-proxee-&gt;refSe3.position; return python::make_tuple(ret[0],ret[1],ret[2]);}
++	Vector3r displ_get(){return proxee-&gt;se3.position-proxee-&gt;refSe3.position;}
+ 	python::tuple rot_get(){Quaternionr relRot=proxee-&gt;refSe3.orientation.Conjugate()*proxee-&gt;se3.orientation; Vector3r axis; Real angle; relRot.ToAxisAngle(axis,angle); axis*=angle; return python::make_tuple(axis[0],axis[1],axis[2]); }
+-	python::tuple pos_get(){const Vector3r&amp; p=proxee-&gt;se3.position; return python::make_tuple(p[0],p[1],p[2]);}
+-	python::tuple refPos_get(){const Vector3r&amp; p=proxee-&gt;refSe3.position; return python::make_tuple(p[0],p[1],p[2]);}
++	Vector3r pos_get(){return proxee-&gt;se3.position;}
++	Vector3r refPos_get(){return proxee-&gt;refSe3.position;}
+ 	python::tuple ori_get(){Vector3r axis; Real angle; proxee-&gt;se3.orientation.ToAxisAngle(axis,angle); return python::make_tuple(axis[0],axis[1],axis[2],angle);}
+-	void pos_set(python::list l){if(python::len(l)!=3) throw invalid_argument(&quot;Wrong number of vector3 elements &quot;+lexical_cast&lt;string&gt;(python::len(l))+&quot;, should be 3&quot;); proxee-&gt;se3.position=Vector3r(python::extract&lt;double&gt;(l[0])(),python::extract&lt;double&gt;(l[1])(),python::extract&lt;double&gt;(l[2])());}
+-	void refPos_set(python::list l){if(python::len(l)!=3) throw invalid_argument(&quot;Wrong number of vector3 elements &quot;+lexical_cast&lt;string&gt;(python::len(l))+&quot;, should be 3&quot;); proxee-&gt;refSe3.position=Vector3r(python::extract&lt;double&gt;(l[0])(),python::extract&lt;double&gt;(l[1])(),python::extract&lt;double&gt;(l[2])());}
++	void pos_set(const Vector3r&amp; p){ proxee-&gt;se3.position=p; }
++	void refPos_set(const Vector3r&amp; p){ proxee-&gt;refSe3.position=p;}
+ 	void ori_set(python::list l){if(python::len(l)!=4) throw invalid_argument(&quot;Wrong number of quaternion elements &quot;+lexical_cast&lt;string&gt;(python::len(l))+&quot;, should be 4&quot;); proxee-&gt;se3.orientation=Quaternionr(Vector3r(python::extract&lt;double&gt;(l[0])(),python::extract&lt;double&gt;(l[1])(),python::extract&lt;double&gt;(l[2])()),python::extract&lt;double&gt;(l[3])());}
+ BASIC_PY_PROXY_TAIL;
+ 
+@@ -428,10 +428,10 @@
+ 		python::tuple torque_get(long id){ MetaBody* rb=Omega::instance().getRootBody().get(); rb-&gt;bex.sync(); Vector3r m=rb-&gt;bex.getTorque(id); return python::make_tuple(m[0],m[1],m[2]);}
+ 		python::tuple move_get(long id){ MetaBody* rb=Omega::instance().getRootBody().get(); rb-&gt;bex.sync(); Vector3r m=rb-&gt;bex.getMove(id); return python::make_tuple(m[0],m[1],m[2]);}
+ 		python::tuple rot_get(long id){ MetaBody* rb=Omega::instance().getRootBody().get(); rb-&gt;bex.sync(); Vector3r m=rb-&gt;bex.getRot(id); return python::make_tuple(m[0],m[1],m[2]);}
+-		void force_add(long id, python::tuple f){  MetaBody* rb=Omega::instance().getRootBody().get(); rb-&gt;bex.addForce (id,tuple2vec(f)); }
+-		void torque_add(long id, python::tuple t){ MetaBody* rb=Omega::instance().getRootBody().get(); rb-&gt;bex.addTorque(id,tuple2vec(t));}
+-		void move_add(long id, python::tuple t){ MetaBody* rb=Omega::instance().getRootBody().get(); rb-&gt;bex.addMove(id,tuple2vec(t));}
+-		void rot_add(long id, python::tuple t){ MetaBody* rb=Omega::instance().getRootBody().get(); rb-&gt;bex.addRot(id,tuple2vec(t));}
++		void force_add(long id, const Vector3r&amp; f){  MetaBody* rb=Omega::instance().getRootBody().get(); rb-&gt;bex.addForce (id,f); }
++		void torque_add(long id, const Vector3r&amp; t){ MetaBody* rb=Omega::instance().getRootBody().get(); rb-&gt;bex.addTorque(id,t);}
++		void move_add(long id, const Vector3r&amp; t){ MetaBody* rb=Omega::instance().getRootBody().get(); rb-&gt;bex.addMove(id,t);}
++		void rot_add(long id, const Vector3r&amp; t){ MetaBody* rb=Omega::instance().getRootBody().get(); rb-&gt;bex.addRot(id,t);}
+ };
+ 
+ class pyOmega{
+@@ -663,19 +663,38 @@
+     public:
+ 	void py_import(pyBodyContainer bc, unsigned int begin=0, bool noInteractingGeometry=false) { import(bc.proxee,begin,noInteractingGeometry); }
+ };
+-
+ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(STLImporter_import_overloads,py_import,1,3);
+ 
++
++// automatic conversion of Vector3r and 3-tuple
++// this doesn't create any new class in python
++struct custom_Vector3r_to_tuple{
++	static PyObject* convert(Vector3r const&amp; v){
++		return python::incref(python::make_tuple(v[0],v[1],v[2]).ptr());
++	}
++};
++struct custom_Vector3r_from_tuple{
++	custom_Vector3r_from_tuple(){
++		python::converter::registry::push_back(&amp;convertible,&amp;construct,python::type_id&lt;Vector3r&gt;());
++	}
++	static void* convertible(PyObject* obj_ptr){
++		if(!PySequence_Check(obj_ptr) || PySequence_Size(obj_ptr)!=3) return 0;
++		return obj_ptr;
++	}
++	static void construct(PyObject* obj_ptr, python::converter::rvalue_from_python_stage1_data* data){
++		void* storage=((python::converter::rvalue_from_python_storage&lt;Vector3r&gt;*)(data))-&gt;storage.bytes;
++		new (storage) Vector3r(python::extract&lt;double&gt;(PySequence_GetItem(obj_ptr,0)),python::extract&lt;double&gt;(PySequence_GetItem(obj_ptr,1)),python::extract&lt;double&gt;(PySequence_GetItem(obj_ptr,2)));
++		data-&gt;convertible=storage;
++	}
++};
++
++
+ BOOST_PYTHON_MODULE(wrapper)
+ {
+-	/* <A HREF="http://mail.python.org/pipermail/c++-sig/2004-March/007025.html">http://mail.python.org/pipermail/c++-sig/2004-March/007025.html</A>
+-	<A HREF="http://mail.python.org/pipermail/c++-sig/2004-March/007029.html">http://mail.python.org/pipermail/c++-sig/2004-March/007029.html</A>
+ 
+-	UNUSED, deal with boost::python::list instead
++	python::to_python_converter&lt;Vector3r,custom_Vector3r_to_tuple&gt;();
++	custom_Vector3r_from_tuple();
+ 
+-	python::class_&lt;std::vector&lt;std::string&gt; &gt;(&quot;_vectSs&quot;)
+-		.def(python::vector_indexing_suite&lt;std::vector&lt;std::string&gt;,true&gt;());   */
+-
+ 	boost::python::class_&lt;pyOmega&gt;(&quot;Omega&quot;)
+ 		.add_property(&quot;iter&quot;,&amp;pyOmega::iter)
+ 		.add_property(&quot;stopAtIter&quot;,&amp;pyOmega::stopAtIter_get,&amp;pyOmega::stopAtIter_set)
+
+Modified: trunk/gui/qt3/QtGUI-python.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI-python.cpp	2009-07-01 18:27:44 UTC (rev 1829)
++++ trunk/gui/qt3/QtGUI-python.cpp	2009-07-02 10:09:56 UTC (rev 1830)
+@@ -129,7 +129,7 @@
+ 		pyGLViewer(size_t _viewNo){init(_viewNo);}
+ 		python::tuple get_grid(){GLV; return python::make_tuple(glv-&gt;drawGridXYZ[0],glv-&gt;drawGridXYZ[1],glv-&gt;drawGridXYZ[2]);}
+ 		void set_grid(python::tuple t){GLV; MUTEX; for(int i=0;i&lt;3;i++)glv-&gt;drawGridXYZ[i]=python::extract&lt;bool&gt;(t[i])();}
+-		#define VEC_GET_SET(property,getter,setter) python::object get_##property(){GLV; return vec2tuple(getter());} void set_##property(python::tuple t){GLV; MUTEX; setter(tuple2vec(t));}
++		#define VEC_GET_SET(property,getter,setter) Vector3r get_##property(){GLV; qglviewer::Vec v=getter(); return Vector3r(v[0],v[1],v[2]); } void set_##property(const Vector3r&amp; t){GLV; MUTEX; setter(qglviewer::Vec(t[0],t[1],t[2]));}
+ 		VEC_GET_SET(upVector,glv-&gt;camera()-&gt;upVector,glv-&gt;camera()-&gt;setUpVector);
+ 		VEC_GET_SET(lookAt,glv-&gt;camera()-&gt;position()+glv-&gt;camera()-&gt;viewDirection,glv-&gt;camera()-&gt;lookAt);
+ 		VEC_GET_SET(viewDir,glv-&gt;camera()-&gt;viewDirection,glv-&gt;camera()-&gt;setViewDirection);
+@@ -142,8 +142,8 @@
+ 		void set_orthographic(bool b){GLV; MUTEX; return glv-&gt;camera()-&gt;setType(b ? qglviewer::Camera::ORTHOGRAPHIC : qglviewer::Camera::PERSPECTIVE);}
+ 		#define FLOAT_GET_SET(property,getter,setter)void set_##property(Real r){GLV; MUTEX; setter(r);} Real get_##property(){GLV; return getter();}
+ 		FLOAT_GET_SET(sceneRadius,glv-&gt;sceneRadius,glv-&gt;setSceneRadius);
+-		void fitAABB(python::tuple min, python::tuple max){GLV; MUTEX; glv-&gt;camera()-&gt;fitBoundingBox(tuple2vec(min),tuple2vec(max));}
+-		void fitSphere(python::tuple center,Real radius){GLV; MUTEX; glv-&gt;camera()-&gt;fitSphere(tuple2vec(center),radius);}
++		void fitAABB(const Vector3r&amp; min, const Vector3r&amp; max){GLV; MUTEX; glv-&gt;camera()-&gt;fitBoundingBox(qglviewer::Vec(min[0],min[1],min[2]),qglviewer::Vec(max[0],max[1],max[2]));}
++		void fitSphere(const Vector3r&amp; center,Real radius){GLV; MUTEX; glv-&gt;camera()-&gt;fitSphere(qglviewer::Vec(center[0],center[1],center[2]),radius);}
+ 		void showEntireScene(){GLV; MUTEX; glv-&gt;camera()-&gt;showEntireScene();}
+ 		void center(bool median=false){GLV; MUTEX; if(median)glv-&gt;centerMedianQuartile(); else glv-&gt;centerScene();}
+ 		python::tuple get_screenSize(){GLV; return python::make_tuple(glv-&gt;width(),glv-&gt;height());} void set_screenSize(python::tuple t){GLV; MUTEX; vector&lt;int&gt;* ii=new(vector&lt;int&gt;); ii-&gt;push_back(viewNo); ii-&gt;push_back(python::extract&lt;int&gt;(t[0])()); ii-&gt;push_back(python::extract&lt;int&gt;(t[1])()); QApplication::postEvent(ensuredMainWindow(),new QCustomEvent((QEvent::Type)YadeQtMainWindow::EVENT_RESIZE_VIEW,(void*)ii));}
+
+Modified: trunk/lib/SConscript
+===================================================================
+--- trunk/lib/SConscript	2009-07-01 18:27:44 UTC (rev 1829)
++++ trunk/lib/SConscript	2009-07-02 10:09:56 UTC (rev 1830)
+@@ -29,10 +29,13 @@
+ 	# say e.g. 'import euclid' (not 'import  yade.euclid')
+ 	env.Install('$PREFIX/lib/yade$SUFFIX/py',[
+ 		env.File('euclid.py','py'),
++		# skip this for now
++		#env.SharedLibrary('miniWm3Wrap',['miniWm3Wrap.cpp'],SHLIBPREFIX='',CPPPATH=env['CPPPATH']+['.'])
+ 	])
+ 
+ 
+ 
++
+ if 'qt3' not in env['exclude']:
+ 	env.Install('$PREFIX/lib/yade$SUFFIX/lib',[
+ 		env.SharedLibrary('yade-serialization-qt',
+
+Added: trunk/lib/miniWm3Wrap-generate.py
+===================================================================
+--- trunk/lib/miniWm3Wrap-generate.py	2009-07-01 18:27:44 UTC (rev 1829)
++++ trunk/lib/miniWm3Wrap-generate.py	2009-07-02 10:09:56 UTC (rev 1830)
+@@ -0,0 +1,26 @@
++import os, os.path
++from pyplusplus import module_builder
++from pyplusplus.decl_wrappers import *
++from pyplusplus.module_builder import call_policies
++
++
++#Creating an instance of class that will help you to expose your declarations
++mb = module_builder.module_builder_t( [os.path.abspath(&quot;miniWm3Wrap-toExpose.hpp&quot;)]
++                                      , working_directory=r&quot;.&quot;
++                                      , include_paths=['miniWm3','.']
++                                      , define_symbols=['USE_MINIWM3'] )
++# we don't need system things from wm3
++mb.decls(lambda decl: 'System' in decl.name).exclude() 
++#mb.decls(lambda decl: 'noexpose' in decl.name).exclude() 
++# exclude casting operators
++mb.decls(lambda decl: 'operator double' in decl.name).exclude()
++mb.member_functions(return_type='double &amp;').exclude()
++# we would have to do some magic here
++mb.member_functions(lambda decl: decl.name in ['ToAxisAngle','ToRotationMatrix']).exclude()
++mb.member_functions(lambda decl: decl.name in ['FromRotationMatrix','FromAxisAngle','Slerp','SlerpExtraSpins','Intermediate','Squad','Align']).exclude()
++#mb.member_function(meth).call_policies=call_policies.return_value_policy(call_policies.return_internal_reference)
++
++#mb.print_declarations()
++mb.build_code_creator(module_name='miniWm3Wrap')
++mb.write_module('miniWm3Wrap.cpp')
++
+
+Added: trunk/lib/miniWm3Wrap-toExpose.hpp
+===================================================================
+--- trunk/lib/miniWm3Wrap-toExpose.hpp	2009-07-01 18:27:44 UTC (rev 1829)
++++ trunk/lib/miniWm3Wrap-toExpose.hpp	2009-07-02 10:09:56 UTC (rev 1830)
+@@ -0,0 +1,16 @@
++//#include&lt;Wm3Vector3.h&gt;
++#include&lt;base/yadeWm3.hpp&gt;
++#include&lt;base/yadeWm3Extra.hpp&gt;
++// instantiate those types so that they are exposed
++// but name them noexpose_*, as we ask for exclusion of such things in the wrapper script
++
++//int i=sizeof(Vector3r);
++//int j=sizeof(Vector2r);
++//int k=sizeof(Quaternionr);
++
++Vector3r noexpose_v3r;
++Vector2r noexpose_v2r;
++Quaternionr noexpose_q;
++//Matrix3r m3r;
++
++
+
+Modified: trunk/lib/py/_eudoxos.cpp
+===================================================================
+--- trunk/lib/py/_eudoxos.cpp	2009-07-01 18:27:44 UTC (rev 1829)
++++ trunk/lib/py/_eudoxos.cpp	2009-07-02 10:09:56 UTC (rev 1830)
+@@ -65,8 +65,7 @@
+  *
+  * The code is analogous to AxialGravityEngine and is intended to give initial motion
+  * to particles subject to axial compaction to speed up the process. */
+-void velocityTowardsAxis(python::tuple _axisPoint, python::tuple _axisDirection, Real timeToAxis, Real subtractDist=0., Real perturbation=0.1){
+-	Vector3r axisPoint=tuple2vec(_axisPoint), axisDirection=tuple2vec(_axisDirection);
++void velocityTowardsAxis(const Vector3r&amp; axisPoint, const Vector3r&amp; axisDirection, Real timeToAxis, Real subtractDist=0., Real perturbation=0.1){
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp;b, *(Omega::instance().getRootBody()-&gt;bodies)){
+ 		if(!b-&gt;isDynamic) continue;
+ 		ParticleParameters* pp=YADE_CAST&lt;ParticleParameters*&gt;(b-&gt;physicalParameters.get());
+
+Modified: trunk/lib/py/_packPredicates.cpp
+===================================================================
+--- trunk/lib/py/_packPredicates.cpp	2009-07-01 18:27:44 UTC (rev 1829)
++++ trunk/lib/py/_packPredicates.cpp	2009-07-02 10:09:56 UTC (rev 1830)
+@@ -30,15 +30,16 @@
+ python::tuple vec2tuple(const Vector2r&amp; v){return boost::python::make_tuple(v[0],v[1]);}
+ Vector3r tuple2vec(const python::tuple&amp; t){return Vector3r(python::extract&lt;double&gt;(t[0])(),python::extract&lt;double&gt;(t[1])(),python::extract&lt;double&gt;(t[2])());}
+ Vector2r tuple2vec2d(const python::tuple&amp; t){return Vector2r(python::extract&lt;double&gt;(t[0])(),python::extract&lt;double&gt;(t[1])());}
+-void ttuple2vvec(const python::tuple&amp; t, Vector3r&amp; v1, Vector3r&amp; v2){ v1=tuple2vec(python::extract&lt;python::tuple&gt;(t[0])()); v2=tuple2vec(python::extract&lt;python::tuple&gt;(t[1])()); }
+-python::tuple vvec2ttuple(const Vector3r&amp;v1, const Vector3r&amp;v2){ return python::make_tuple(vec2tuple(v1),vec2tuple(v2)); }
++//void ttuple2vvec(const python::tuple&amp; t, Vector3r&amp; v1, Vector3r&amp; v2){ v1=tuple2vec(python::extract&lt;python::tuple&gt;(t[0])()); v2=tuple2vec(python::extract&lt;python::tuple&gt;(t[1])()); }
++void ttuple2vvec(const python::tuple&amp; t, Vector3r&amp; v1, Vector3r&amp; v2){ v1=python::extract&lt;Vector3r&gt;(t[0])(); v2=python::extract&lt;Vector3r&gt;(t[1])(); }
++python::tuple vvec2ttuple(const Vector3r&amp;v1, const Vector3r&amp;v2){ return python::make_tuple(v1,v2); }
+ 
+ struct Predicate{
+ 	public:
+-		virtual bool operator() (python::tuple pt,Real pad=0.) const = 0;
++		virtual bool operator() (const Vector3r&amp; pt,Real pad=0.) const = 0;
+ 		virtual python::tuple aabb() const = 0;
+-		python::tuple dim() const { Vector3r mn,mx; ttuple2vvec(aabb(),mn,mx); return vec2tuple(mx-mn); }
+-		python::tuple center() const { Vector3r mn,mx; ttuple2vvec(aabb(),mn,mx); return vec2tuple(.5*(mn+mx)); }
++		Vector3r dim() const { Vector3r mn,mx; ttuple2vvec(aabb(),mn,mx); return mx-mn; }
++		Vector3r center() const { Vector3r mn,mx; ttuple2vvec(aabb(),mn,mx); return .5*(mn+mx); }
+ };
+ // make the pad parameter optional
+ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(PredicateCall_overloads,operator(),1,2);
+@@ -58,7 +59,7 @@
+ super(inGtsSurface,self).__init__() so that virtual methods work as expected.
+ */
+ struct PredicateWrap: Predicate, python::wrapper&lt;Predicate&gt;{
+-	bool operator()(python::tuple pt, Real pad=0.) const { return this-&gt;get_override(&quot;__call__&quot;)(pt,pad);}
++	bool operator()(const Vector3r&amp; pt, Real pad=0.) const { return this-&gt;get_override(&quot;__call__&quot;)(pt,pad);}
+ 	python::tuple aabb() const { return this-&gt;get_override(&quot;aabb&quot;)(); }
+ };
+ // make the pad parameter optional
+@@ -83,7 +84,7 @@
+ class PredicateUnion: public PredicateBoolean{
+ 	public:
+ 		PredicateUnion(const python::object _A, const python::object _B): PredicateBoolean(_A,_B){}
+-		virtual bool operator()(python::tuple pt,Real pad) const {return obj2pred(A)(pt,pad)||obj2pred(B)(pt,pad);}
++		virtual bool operator()(const Vector3r&amp; pt,Real pad) const {return obj2pred(A)(pt,pad)||obj2pred(B)(pt,pad);}
+ 		virtual python::tuple aabb() const { Vector3r minA,maxA,minB,maxB; ttuple2vvec(obj2pred(A).aabb(),minA,maxA); ttuple2vvec(obj2pred(B).aabb(),minB,maxB); return vvec2ttuple(componentMinVector(minA,minB),componentMaxVector(maxA,maxB));}
+ };
+ PredicateUnion makeUnion(const python::object&amp; A, const python::object&amp; B){ return PredicateUnion(A,B);}
+@@ -91,7 +92,7 @@
+ class PredicateIntersection: public PredicateBoolean{
+ 	public:
+ 		PredicateIntersection(const python::object _A, const python::object _B): PredicateBoolean(_A,_B){}
+-		virtual bool operator()(python::tuple pt,Real pad) const {return obj2pred(A)(pt,pad) &amp;&amp; obj2pred(B)(pt,pad);}
++		virtual bool operator()(const Vector3r&amp; pt,Real pad) const {return obj2pred(A)(pt,pad) &amp;&amp; obj2pred(B)(pt,pad);}
+ 		virtual python::tuple aabb() const { Vector3r minA,maxA,minB,maxB; ttuple2vvec(obj2pred(A).aabb(),minA,maxA); ttuple2vvec(obj2pred(B).aabb(),minB,maxB); return vvec2ttuple(componentMaxVector(minA,minB),componentMinVector(maxA,maxB));}
+ };
+ PredicateIntersection makeIntersection(const python::object&amp; A, const python::object&amp; B){ return PredicateIntersection(A,B);}
+@@ -99,7 +100,7 @@
+ class PredicateDifference: public PredicateBoolean{
+ 	public:
+ 		PredicateDifference(const python::object _A, const python::object _B): PredicateBoolean(_A,_B){}
+-		virtual bool operator()(python::tuple pt,Real pad) const {return obj2pred(A)(pt,pad) &amp;&amp; !obj2pred(B)(pt,-pad);}
++		virtual bool operator()(const Vector3r&amp; pt,Real pad) const {return obj2pred(A)(pt,pad) &amp;&amp; !obj2pred(B)(pt,-pad);}
+ 		virtual python::tuple aabb() const { return obj2pred(A).aabb(); }
+ };
+ PredicateDifference makeDifference(const python::object&amp; A, const python::object&amp; B){ return PredicateDifference(A,B);}
+@@ -107,7 +108,7 @@
+ class PredicateSymmetricDifference: public PredicateBoolean{
+ 	public:
+ 		PredicateSymmetricDifference(const python::object _A, const python::object _B): PredicateBoolean(_A,_B){}
+-		virtual bool operator()(python::tuple pt,Real pad) const {bool inA=obj2pred(A)(pt,pad), inB=obj2pred(B)(pt,pad); return (inA &amp;&amp; !inB) || (!inA &amp;&amp; inB);}
++		virtual bool operator()(const Vector3r&amp; pt,Real pad) const {bool inA=obj2pred(A)(pt,pad), inB=obj2pred(B)(pt,pad); return (inA &amp;&amp; !inB) || (!inA &amp;&amp; inB);}
+ 		virtual python::tuple aabb() const { Vector3r minA,maxA,minB,maxB; ttuple2vvec(obj2pred(A).aabb(),minA,maxA); ttuple2vvec(obj2pred(B).aabb(),minB,maxB); return vvec2ttuple(componentMinVector(minA,minB),componentMaxVector(maxA,maxB));}
+ };
+ PredicateSymmetricDifference makeSymmetricDifference(const python::object&amp; A, const python::object&amp; B){ return PredicateSymmetricDifference(A,B);}
+@@ -121,11 +122,8 @@
+ class inSphere: public Predicate {
+ 	Vector3r center; Real radius;
+ public:
+-	inSphere(python::tuple _center, Real _radius){center=tuple2vec(_center); radius=_radius;}
+-	virtual bool operator()(python::tuple _pt, Real pad=0.) const {
+-		Vector3r pt=tuple2vec(_pt);
+-		return ((pt-center).Length()-pad&lt;=radius-pad);
+-	}
++	inSphere(const Vector3r&amp; _center, Real _radius){center=_center; radius=_radius;}
++	virtual bool operator()(const Vector3r&amp; pt, Real pad=0.) const { return ((pt-center).Length()-pad&lt;=radius-pad); }
+ 	virtual python::tuple aabb() const {return vvec2ttuple(Vector3r(center[0]-radius,center[1]-radius,center[2]-radius),Vector3r(center[0]+radius,center[1]+radius,center[2]+radius));}
+ };
+ 
+@@ -133,9 +131,8 @@
+ class inAlignedBox: public Predicate{
+ 	Vector3r mn, mx;
+ public:
+-	inAlignedBox(python::tuple _mn, python::tuple _mx){mn=tuple2vec(_mn); mx=tuple2vec(_mx);}
+-	virtual bool operator()(python::tuple _pt, Real pad=0.) const {
+-		Vector3r pt=tuple2vec(_pt);
++	inAlignedBox(const Vector3r&amp; _mn, const Vector3r&amp; _mx): mn(_mn), mx(_mx) {}
++	virtual bool operator()(const Vector3r&amp; pt, Real pad=0.) const {
+ 		return
+ 			mn[0]+pad&lt;=pt[0] &amp;&amp; mx[0]-pad&gt;=pt[0] &amp;&amp;
+ 			mn[1]+pad&lt;=pt[1] &amp;&amp; mx[1]-pad&gt;=pt[1] &amp;&amp;
+@@ -148,9 +145,8 @@
+ class inCylinder: public Predicate{
+ 	Vector3r c1,c2,c12; Real radius,ht;
+ public:
+-	inCylinder(python::tuple _c1, python::tuple _c2, Real _radius){c1=tuple2vec(_c1); c2=tuple2vec(_c2); c12=c2-c1; radius=_radius; ht=c12.Length(); }
+-	bool operator()(python::tuple _pt, Real pad=0.) const {
+-		Vector3r pt=tuple2vec(_pt);
++	inCylinder(const Vector3r&amp; _c1, const Vector3r&amp; _c2, Real _radius){c1=_c1; c2=_c2; c12=c2-c1; radius=_radius; ht=c12.Length(); }
++	bool operator()(const Vector3r&amp; pt, Real pad=0.) const {
+ 		Real u=(pt.Dot(c12)-c1.Dot(c12))/(ht*ht); // normalized coordinate along the c1--c2 axis
+ 		if((u*ht&lt;0+pad) || (u*ht&gt;ht-pad)) return false; // out of cylinder along the axis
+ 		Real axisDist=((pt-c1).Cross(pt-c2)).Length()/ht;
+@@ -164,7 +160,7 @@
+ 			sqrt((pow(A[1]-B[1],2)+pow(A[2]-B[2],2)))/ht,
+ 			sqrt((pow(A[0]-B[0],2)+pow(A[2]-B[2],2)))/ht,
+ 			sqrt((pow(A[0]-B[0],2)+pow(A[1]-B[1],2)))/ht);
+-		Vector3r mn(min(A[0],B[0]),min(A[1],B[1]),min(A[2],B[2])), mx(max(A[0],B[0]),max(A[1],B[1]),max(A[2],B[2]));
++		Vector3r mn=componentMinVector(A,B), mx=componentMaxVector(A,B);
+ 		return vvec2ttuple(mn-radius*k,mx+radius*k);
+ 	}
+ };
+@@ -176,14 +172,13 @@
+ class inHyperboloid: public Predicate{
+ 	Vector3r c1,c2,c12; Real R,a,ht,c;
+ public:
+-	inHyperboloid(python::tuple _c1, python::tuple _c2, Real _R, Real _r){
+-		c1=tuple2vec(_c1); c2=tuple2vec(_c2); R=_R; a=_r;
++	inHyperboloid(const Vector3r&amp; _c1, const Vector3r&amp; _c2, Real _R, Real _r){
++		c1=_c1; c2=_c2; R=_R; a=_r;
+ 		c12=c2-c1; ht=c12.Length();
+ 		Real uMax=sqrt(pow(R/a,2)-1); c=ht/(2*uMax);
+ 	}
+ 	// WARN: this is not accurate, since padding is taken as perpendicular to the axis, not the the surface
+-	bool operator()(python::tuple _pt, Real pad=0.) const {
+-		Vector3r pt=tuple2vec(_pt);
++	bool operator()(const Vector3r&amp; pt, Real pad=0.) const {
+ 		Real v=(pt.Dot(c12)-c1.Dot(c12))/(ht*ht); // normalized coordinate along the c1--c2 axis
+ 		if((v*ht&lt;0+pad) || (v*ht&gt;ht-pad)) return false; // out of cylinder along the axis
+ 		Real u=(v-.5)*ht/c; // u from the wolfram parametrization; u is 0 in the center
+@@ -194,7 +189,7 @@
+ 	}
+ 	python::tuple aabb() const {
+ 		// the lazy way
+-		return inCylinder(vec2tuple(c1),vec2tuple(c2),R).aabb();
++		return inCylinder(c1,c2,R).aabb();
+ 	}
+ };
+ 
+@@ -202,9 +197,8 @@
+ class inEllipsoid: public Predicate{
+ 	Vector3r c, abc;
+ public:
+-	inEllipsoid(python::tuple _c, python::tuple _abc) {c=tuple2vec(_c); abc=tuple2vec(_abc);}
+-	bool operator()(python::tuple _pt, Real pad=0.) const {
+-		Vector3r pt=tuple2vec(_pt);
++	inEllipsoid(const Vector3r&amp; _c, const Vector3r&amp; _abc) {c=_c; abc=_abc;}
++	bool operator()(const Vector3r&amp; pt, Real pad=0.) const {
+ 		//Define the ellipsoid X-coordinate of given Y and Z
+ 		Real x = sqrt((1-pow((pt[1]-c[1]),2)/((abc[1]-pad)*(abc[1]-pad))-pow((pt[2]-c[2]),2)/((abc[2]-pad)*(abc[2]-pad)))*((abc[0]-pad)*(abc[0]-pad)))+c[0]; 
+ 		Vector3r edgeEllipsoid(x,pt[1],pt[2]); // create a vector of these 3 coordinates
+@@ -244,16 +238,15 @@
+ class notInNotch: public Predicate{
+ 	Vector3r c, edge, normal, inside; Real aperture;
+ public:
+-	notInNotch(python::tuple _c, python::tuple _edge, python::tuple _normal, Real _aperture){
+-		c=tuple2vec(_c);
+-		edge=tuple2vec(_edge); edge.Normalize();
+-		normal=tuple2vec(_normal); normal-=edge*edge.Dot(normal); normal.Normalize();
++	notInNotch(const Vector3r&amp; _c, const Vector3r&amp; _edge, const Vector3r&amp; _normal, Real _aperture){
++		c=_c;
++		edge=_edge; edge.Normalize();
++		normal=_normal; normal-=edge*edge.Dot(normal); normal.Normalize();
+ 		inside=edge.Cross(normal);
+ 		aperture=_aperture;
+ 		// LOG_DEBUG(&quot;edge=&quot;&lt;&lt;edge&lt;&lt;&quot;, normal=&quot;&lt;&lt;normal&lt;&lt;&quot;, inside=&quot;&lt;&lt;inside&lt;&lt;&quot;, aperture=&quot;&lt;&lt;aperture);
+ 	}
+-	bool operator()(python::tuple _pt, Real pad=0.) const {
+-		Vector3r pt=tuple2vec(_pt);
++	bool operator()(const Vector3r&amp; pt, Real pad=0.) const {
+ 		Real distUp=normal.Dot(pt-c)-aperture/2, distDown=-normal.Dot(pt-c)-aperture/2, distInPlane=-inside.Dot(pt-c);
+ 		// LOG_DEBUG(&quot;pt=&quot;&lt;&lt;pt&lt;&lt;&quot;, distUp=&quot;&lt;&lt;distUp&lt;&lt;&quot;, distDown=&quot;&lt;&lt;distDown&lt;&lt;&quot;, distInPlane=&quot;&lt;&lt;distInPlane);
+ 		if(distInPlane&gt;=pad) return true;
+@@ -268,7 +261,8 @@
+ 	// This predicate is not bounded, return infinities
+ 	python::tuple aabb() const {
+ 		Real inf=std::numeric_limits&lt;Real&gt;::infinity();
+-		return vvec2ttuple(Vector3r(-inf,-inf,-inf),Vector3r(inf,inf,inf)); }
++		return vvec2ttuple(Vector3r(-inf,-inf,-inf),Vector3r(inf,inf,inf));
++	}
+ };
+ 
+ #ifdef YADE_GTS
+@@ -309,12 +303,11 @@
+ 		gts_surface_foreach_vertex(surf,(GtsFunc)vertex_aabb,&amp;bb);
+ 		return vvec2ttuple(bb.first,bb.second);
+ 	}
+-	bool ptCheck(Vector3r pt) const{
++	bool ptCheck(const Vector3r&amp; pt) const{
+ 		GtsPoint gp; gp.x=pt[0]; gp.y=pt[1]; gp.z=pt[2];
+ 		return (bool)gts_point_is_inside_surface(&amp;gp,tree,is_open);
+ 	}
+-	bool operator()(python::tuple _pt, Real pad=0.) const {
+-		Vector3r pt=tuple2vec(_pt);
++	bool operator()(const Vector3r&amp; pt, Real pad=0.) const {
+ 		if(noPad){
+ 			if(pad!=0. &amp;&amp; noPadWarned) LOG_WARN(&quot;inGtsSurface constructed with noPad; requested non-zero pad set to zero.&quot;);
+ 			return ptCheck(pt);
+@@ -325,8 +318,8 @@
+ 
+ #endif
+ 
+-
+ BOOST_PYTHON_MODULE(_packPredicates){
++
+ 	// base predicate class
+ 	python::class_&lt;PredicateWrap,/* necessary, as methods are pure virtual*/ boost::noncopyable&gt;(&quot;Predicate&quot;)
+ 		.def(&quot;__call__&quot;,python::pure_virtual(&amp;Predicate::operator()))
+@@ -342,12 +335,12 @@
+ 	python::class_&lt;PredicateDifference,python::bases&lt;PredicateBoolean&gt; &gt;(&quot;PredicateDifference&quot;,&quot;Difference of 2 predicates&quot;,python::init&lt;python::object,python::object &gt;());
+ 	python::class_&lt;PredicateSymmetricDifference,python::bases&lt;PredicateBoolean&gt; &gt;(&quot;PredicateSymmetricDifference&quot;,&quot;SymmetricDifference of 2 predicates&quot;,python::init&lt;python::object,python::object &gt;());
+ 	// primitive predicates
+-	python::class_&lt;inSphere,python::bases&lt;Predicate&gt; &gt;(&quot;inSphere&quot;,&quot;Sphere predicate.&quot;,python::init&lt;python::tuple,Real&gt;(python::args(&quot;center&quot;,&quot;radius&quot;),&quot;Ctor taking center (as a 3-tuple) and radius&quot;));
+-	python::class_&lt;inAlignedBox,python::bases&lt;Predicate&gt; &gt;(&quot;inAlignedBox&quot;,&quot;Axis-aligned box predicate&quot;,python::init&lt;python::tuple,python::tuple&gt;(python::args(&quot;minAABB&quot;,&quot;maxAABB&quot;),&quot;Ctor taking minumum and maximum points of the box (as 3-tuples).&quot;));
+-	python::class_&lt;inCylinder,python::bases&lt;Predicate&gt; &gt;(&quot;inCylinder&quot;,&quot;Cylinder predicate&quot;,python::init&lt;python::tuple,python::tuple,Real&gt;(python::args(&quot;centerBottom&quot;,&quot;centerTop&quot;,&quot;radius&quot;),&quot;Ctor taking centers of the lateral walls (as 3-tuples) and radius.&quot;));
+-	python::class_&lt;inHyperboloid,python::bases&lt;Predicate&gt; &gt;(&quot;inHyperboloid&quot;,&quot;Hyperboloid predicate&quot;,python::init&lt;python::tuple,python::tuple,Real,Real&gt;(python::args(&quot;centerBottom&quot;,&quot;centerTop&quot;,&quot;radius&quot;,&quot;skirt&quot;),&quot;Ctor taking centers of the lateral walls (as 3-tuples), radius at bases and skirt (middle radius).&quot;));
+-	python::class_&lt;inEllipsoid,python::bases&lt;Predicate&gt; &gt;(&quot;inEllipsoid&quot;,&quot;Ellipsoid predicate&quot;,python::init&lt;python::tuple,python::tuple&gt;(python::args(&quot;centerPoint&quot;,&quot;abc&quot;),&quot;Ctor taking center of the ellipsoid (3-tuple) and its 3 radii (3-tuple).&quot;));
+-	python::class_&lt;notInNotch,python::bases&lt;Predicate&gt; &gt;(&quot;notInNotch&quot;,&quot;Outside of infinite, rectangle-shaped notch predicate&quot;,python::init&lt;python::tuple,python::tuple,python::tuple,Real&gt;(python::args(&quot;centerPoint&quot;,&quot;edge&quot;,&quot;normal&quot;,&quot;aperture&quot;),&quot;Ctor taking point in the symmetry plane, vector pointing along the edge, plane normal and aperture size.\nThe side inside the notch is edge&#215;normal.\nNormal is made perpendicular to the edge.\nAll vectors are normalized at construction time.&quot;)); 
++	python::class_&lt;inSphere,python::bases&lt;Predicate&gt; &gt;(&quot;inSphere&quot;,&quot;Sphere predicate.&quot;,python::init&lt;const Vector3r&amp;,Real&gt;(python::args(&quot;center&quot;,&quot;radius&quot;),&quot;Ctor taking center (as a 3-tuple) and radius&quot;));
++	python::class_&lt;inAlignedBox,python::bases&lt;Predicate&gt; &gt;(&quot;inAlignedBox&quot;,&quot;Axis-aligned box predicate&quot;,python::init&lt;const Vector3r&amp;,const Vector3r&amp;&gt;(python::args(&quot;minAABB&quot;,&quot;maxAABB&quot;),&quot;Ctor taking minumum and maximum points of the box (as 3-tuples).&quot;));
++	python::class_&lt;inCylinder,python::bases&lt;Predicate&gt; &gt;(&quot;inCylinder&quot;,&quot;Cylinder predicate&quot;,python::init&lt;const Vector3r&amp;,const Vector3r&amp;,Real&gt;(python::args(&quot;centerBottom&quot;,&quot;centerTop&quot;,&quot;radius&quot;),&quot;Ctor taking centers of the lateral walls (as 3-tuples) and radius.&quot;));
++	python::class_&lt;inHyperboloid,python::bases&lt;Predicate&gt; &gt;(&quot;inHyperboloid&quot;,&quot;Hyperboloid predicate&quot;,python::init&lt;const Vector3r&amp;,const Vector3r&amp;,Real,Real&gt;(python::args(&quot;centerBottom&quot;,&quot;centerTop&quot;,&quot;radius&quot;,&quot;skirt&quot;),&quot;Ctor taking centers of the lateral walls (as 3-tuples), radius at bases and skirt (middle radius).&quot;));
++	python::class_&lt;inEllipsoid,python::bases&lt;Predicate&gt; &gt;(&quot;inEllipsoid&quot;,&quot;Ellipsoid predicate&quot;,python::init&lt;const Vector3r&amp;,const Vector3r&amp;&gt;(python::args(&quot;centerPoint&quot;,&quot;abc&quot;),&quot;Ctor taking center of the ellipsoid (3-tuple) and its 3 radii (3-tuple).&quot;));
++	python::class_&lt;notInNotch,python::bases&lt;Predicate&gt; &gt;(&quot;notInNotch&quot;,&quot;Outside of infinite, rectangle-shaped notch predicate&quot;,python::init&lt;const Vector3r&amp;,const Vector3r&amp;,const Vector3r&amp;,Real&gt;(python::args(&quot;centerPoint&quot;,&quot;edge&quot;,&quot;normal&quot;,&quot;aperture&quot;),&quot;Ctor taking point in the symmetry plane, vector pointing along the edge, plane normal and aperture size.\nThe side inside the notch is edge&#215;normal.\nNormal is made perpendicular to the edge.\nAll vectors are normalized at construction time.&quot;)); 
+ 	#ifdef YADE_GTS
+ 		python::class_&lt;inGtsSurface,python::bases&lt;Predicate&gt; &gt;(&quot;inGtsSurface&quot;,&quot;GTS surface predicate&quot;,python::init&lt;python::object,python::optional&lt;bool&gt; &gt;(python::args(&quot;surface&quot;,&quot;noPad&quot;),&quot;Ctor taking a gts.Surface() instance, which must not be modified during instance lifetime.\nThe optional noPad can disable padding (if set to True), which speeds up calls several times.\nNote: padding checks inclusion of 6 points along +- cardinal directions in the pad distance from given point, which is not exact.&quot;));
+ 	#endif
+
+Added: trunk/lib/py/_packSpheres.cpp
+===================================================================
+--- trunk/lib/py/_packSpheres.cpp	2009-07-01 18:27:44 UTC (rev 1829)
++++ trunk/lib/py/_packSpheres.cpp	2009-07-02 10:09:56 UTC (rev 1830)
+@@ -0,0 +1,143 @@
++// 2009 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++#include&lt;boost/python.hpp&gt;
++#include&lt;yade/extra/boost_python_len.hpp&gt;
++#include&lt;yade/lib-base/Logging.hpp&gt;
++#include&lt;yade/lib-base/yadeWm3.hpp&gt;
++#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++// #include&lt;yade/gui-py/_utils.hpp&gt; // will be: yade/lib-py/_utils.hpp&gt; at some point
++#include&lt;Wm3Vector3.h&gt;
++
++#include&lt;yade/core/Omega.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++
++#include&lt;yade/extra/Shop.hpp&gt;
++
++using namespace boost;
++using namespace std;
++#ifdef LOG4CXX
++	log4cxx::LoggerPtr logger=log4cxx::Logger::getLogger(&quot;yade.pack.spheres&quot;);
++#endif
++
++// copied from _packPredicates.cpp :-(
++python::tuple vec2tuple(const Vector3r&amp; v){return boost::python::make_tuple(v[0],v[1],v[2]);}
++Vector3r tuple2vec(const python::tuple&amp; t){return Vector3r(python::extract&lt;double&gt;(t[0])(),python::extract&lt;double&gt;(t[1])(),python::extract&lt;double&gt;(t[2])());}
++Vector3r tuple2vec(python::tuple&amp; t){return Vector3r(python::extract&lt;double&gt;(t[0])(),python::extract&lt;double&gt;(t[1])(),python::extract&lt;double&gt;(t[2])());}
++
++struct SpherePack{
++	struct Sph{ Vector3r c; Real r; Sph(const Vector3r&amp; _c, Real _r): c(_c), r(_r){};
++		python::tuple asTuple() const { return python::make_tuple(c,r); }
++	};
++	vector&lt;Sph&gt; pack;
++	SpherePack(){};
++	SpherePack(const python::list&amp; l){ fromList(l); }
++	// add single sphere
++	void add(const Vector3r&amp; c, Real r){ pack.push_back(Sph(c,r)); }
++	// I/O
++	void fromList(const python::list&amp; l);
++	python::list toList() const;
++	void fromFile(const string file);
++	void toFile(const string file) const;
++	void fromSimulation();
++	// spatial characteristics
++	Vector3r dim() const {Vector3r mn,mx; aabb(mn,mx); return mx-mn;}
++	python::tuple aabb_py() const { Vector3r mn,mx; aabb(mn,mx); return python::make_tuple(mn,mx); }
++	void aabb(Vector3r&amp; mn, Vector3r&amp; mx) const {
++		Real inf=std::numeric_limits&lt;Real&gt;::infinity(); mn=Vector3r(inf,inf,inf); mx=Vector3r(-inf,-inf,-inf);
++		FOREACH(const Sph&amp; s, pack){ Vector3r r(s.r,s.r,s.r); mn=componentMinVector(mn,s.c-r); mx=componentMaxVector(mx,s.c+r);}
++	}
++	Vector3r midPt() const {Vector3r mn,mx; aabb(mn,mx); return .5*(mn+mx);}
++	Real relDensity() const {
++		Real sphVol=0; Vector3r dd=dim();
++		FOREACH(const Sph&amp; s, pack) sphVol+=pow(s.r,3);
++		sphVol*=(4/3.)*Mathr::PI;
++		return sphVol/(dd[0]*dd[1]*dd[2]);
++	}
++	// transformations
++	void translate(const Vector3r&amp; shift){ FOREACH(Sph&amp; s, pack) s.c+=shift; }
++	void rotate(const Vector3r&amp; axis, Real angle){ Vector3r mid=midPt(); Quaternionr q(axis,angle); FOREACH(Sph&amp; s, pack) s.c=q*(s.c-mid)+mid; }
++	void scale(Real scale){ Vector3r mid=midPt(); FOREACH(Sph&amp; s, pack) {s.c=scale*(s.c-mid)+mid; s.r*=abs(scale); } }
++	// iteration 
++	size_t len() const{ return pack.size(); }
++	python::tuple getitem(size_t idx){ if(idx&lt;0 || idx&gt;=pack.size()) throw runtime_error(&quot;Index &quot;+lexical_cast&lt;string&gt;(idx)+&quot; out of range 0..&quot;+lexical_cast&lt;string&gt;(pack.size()-1)); return pack[idx].asTuple(); }
++	struct iterator{
++		const SpherePack&amp; sPack; size_t pos;
++		iterator(const SpherePack&amp; _sPack): sPack(_sPack), pos(0){}
++		iterator iter(){ return *this;}
++		python::tuple next(){
++			if(pos==sPack.pack.size()-1){ PyErr_SetNone(PyExc_StopIteration); python::throw_error_already_set(); }
++			return sPack.pack[pos++].asTuple();
++		}
++	};
++	SpherePack::iterator getIterator() const{ return SpherePack::iterator(*this);};
++};
++
++void SpherePack::fromList(const python::list&amp; l){
++	pack.clear();
++	size_t len=python::len(l);
++	for(size_t i=0; i&lt;len; i++){
++		const python::tuple&amp; t=python::extract&lt;python::tuple&gt;(l[i]);
++		const Vector3r t0=python::extract&lt;Vector3r&gt;(t[0]);
++		pack.push_back(Sph(t0,python::extract&lt;double&gt;(t[1])));
++	}
++};
++
++python::list SpherePack::toList() const {
++	python::list ret;
++	FOREACH(const Sph&amp; s, pack) ret.append(python::make_tuple(s.c,s.r));
++	return ret;
++};
++
++void SpherePack::fromFile(string file) {
++	typedef pair&lt;Vector3r,Real&gt; pairVector3rReal;
++	vector&lt;pairVector3rReal&gt; ss;
++	Vector3r mn,mx;
++	ss=Shop::loadSpheresFromFile(file,mn,mx);
++	pack.clear();
++	FOREACH(const pairVector3rReal&amp; s, ss) pack.push_back(Sph(s.first,s.second));
++}
++
++void SpherePack::toFile(const string fname) const {
++	ofstream f(fname.c_str());
++	if(!f.good()) throw runtime_error(&quot;Unable to open file `&quot;+fname+&quot;'&quot;);
++	FOREACH(const Sph&amp; s, pack) f&lt;&lt;s.c[0]&lt;&lt;&quot; &quot;&lt;&lt;s.c[1]&lt;&lt;&quot; &quot;&lt;&lt;s.c[2]&lt;&lt;&quot; &quot;&lt;&lt;s.r&lt;&lt;endl;
++	f.close();
++};
++
++void SpherePack::fromSimulation() {
++	pack.clear();
++	MetaBody* rootBody=Omega::instance().getRootBody().get();
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
++		shared_ptr&lt;InteractingSphere&gt;	intSph=dynamic_pointer_cast&lt;InteractingSphere&gt;(b-&gt;interactingGeometry);
++		if(!intSph) continue;
++		pack.push_back(Sph(b-&gt;physicalParameters-&gt;se3.position,intSph-&gt;radius));
++	}
++}
++
++
++
++BOOST_PYTHON_MODULE(_packSpheres){
++	python::class_&lt;SpherePack&gt;(&quot;SpherePack&quot;,&quot;Set of spheres as centers and radii&quot;,python::init&lt;python::optional&lt;python::list&gt; &gt;(python::args(&quot;list&quot;),&quot;Empty constructor, optionally taking list [ ((cx,cy,cz),r), &#8230; ] for initial data.&quot; ))
++		.def(&quot;add&quot;,&amp;SpherePack::add,&quot;Add single sphere to packing, given center as 3-tuple and radius&quot;)
++		.def(&quot;toList&quot;,&amp;SpherePack::toList,&quot;Return packing data as python list.&quot;)
++		.def(&quot;fromList&quot;,&amp;SpherePack::fromList,&quot;Make packing from given list, same format as for constructor. Discards current data.&quot;)
++		.def(&quot;load&quot;,&amp;SpherePack::fromFile,&quot;Load packing from external text file (current data will be discarded).&quot;)
++		.def(&quot;save&quot;,&amp;SpherePack::toFile,&quot;Save packing to external text file (will be overwritten).&quot;)
++		.def(&quot;fromSimulation&quot;,&amp;SpherePack::fromSimulation,&quot;Make packing corresponding to the current simulation. Discards current data.&quot;)
++		.def(&quot;aabb&quot;,&amp;SpherePack::aabb_py,&quot;Get axis-aligned bounding box coordinates, as 2 3-tuples.&quot;)
++		.def(&quot;dim&quot;,&amp;SpherePack::dim,&quot;Return dimensions of the packing in terms of aabb(), as a 3-tuple.&quot;)
++		.def(&quot;center&quot;,&amp;SpherePack::midPt,&quot;Return coordinates of the bounding box center.&quot;)
++		.def(&quot;relDensity&quot;,&amp;SpherePack::relDensity,&quot;Relative packing density, measured as sum of spheres' volumes / aabb volume.\n(Sphere overlaps are ignored.)&quot;)
++		.def(&quot;translate&quot;,&amp;SpherePack::translate,&quot;Translate all spheres by given vector.&quot;)
++		.def(&quot;rotate&quot;,&amp;SpherePack::rotate,&quot;Rotate all spheres around packing center (in terms of aabb()), given axis and angle of the rotation.&quot;)
++		.def(&quot;scale&quot;,&amp;SpherePack::scale,&quot;Scale the packing around its center (in terms of aabb()) by given factor (may be negative).&quot;)
++		.def(&quot;__len__&quot;,&amp;SpherePack::len,&quot;Get number of spheres in the packing&quot;)
++		.def(&quot;__getitem__&quot;,&amp;SpherePack::getitem,&quot;Get entry at given index, as tuple of center and radius.&quot;)
++		.def(&quot;__iter__&quot;,&amp;SpherePack::getIterator,&quot;Return iterator over spheres.&quot;)
++		;
++	python::class_&lt;SpherePack::iterator&gt;(&quot;SpherePackIterator&quot;,python::init&lt;SpherePack::iterator&amp;&gt;())
++		.def(&quot;__iter__&quot;,&amp;SpherePack::iterator::iter)
++		.def(&quot;next&quot;,&amp;SpherePack::iterator::next)
++	;
++}
++
+
+Modified: trunk/lib/py/_utils.cpp
+===================================================================
+--- trunk/lib/py/_utils.cpp	2009-07-01 18:27:44 UTC (rev 1829)
++++ trunk/lib/py/_utils.cpp	2009-07-02 10:09:56 UTC (rev 1830)
+@@ -41,7 +41,7 @@
+ 		maximum=componentMaxVector(maximum,b-&gt;physicalParameters-&gt;se3.position+(centers?Vector3r::ZERO:rrr));
+ 	}
+ 	Vector3r dim=maximum-minimum;
+-	return python::make_tuple(vec2tuple(minimum+.5*cutoff*dim),vec2tuple(maximum-.5*cutoff*dim));
++	return python::make_tuple(minimum+.5*cutoff*dim,maximum-.5*cutoff*dim);
+ }
+ BOOST_PYTHON_FUNCTION_OVERLOADS(aabbExtrema_overloads,aabbExtrema,0,2);
+ 
+@@ -60,7 +60,7 @@
+ 
+ python::tuple coordsAndDisplacements(int axis,python::tuple AABB=python::tuple()){
+ 	Vector3r bbMin(Vector3r::ZERO), bbMax(Vector3r::ZERO); bool useBB=python::len(AABB)&gt;0;
+-	if(useBB){bbMin=tuple2vec(extract&lt;python::tuple&gt;(AABB[0])());bbMax=tuple2vec(extract&lt;python::tuple&gt;(AABB[1])());}
++	if(useBB){bbMin=extract&lt;Vector3r&gt;(AABB[0])();bbMax=extract&lt;Vector3r&gt;(AABB[1])();}
+ 	python::list retCoord,retDispl;
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp;b, *Omega::instance().getRootBody()-&gt;bodies){
+ 		if(useBB &amp;&amp; !isInBB(b-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax)) continue;
+@@ -81,7 +81,7 @@
+ Real PWaveTimeStep(){return Shop::PWaveTimeStep();};
+ 
+ Real elasticEnergyInAABB(python::tuple AABB){
+-	Vector3r bbMin=tuple2vec(extract&lt;python::tuple&gt;(AABB[0])()), bbMax=tuple2vec(extract&lt;python::tuple&gt;(AABB[1])());
++	Vector3r bbMin=extract&lt;Vector3r&gt;(AABB[0])(), bbMax=extract&lt;Vector3r&gt;(AABB[1])();
+ 	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
+ 	Real E=0;
+ 	FOREACH(const shared_ptr&lt;Interaction&gt;&amp;i, *rb-&gt;transientInteractions){
+@@ -120,7 +120,7 @@
+  */
+ python::tuple interactionAnglesHistogram(int axis, int mask=0, size_t bins=20, python::tuple aabb=python::tuple(), Real minProjLen=1e-6){
+ 	if(axis&lt;0||axis&gt;2) throw invalid_argument(&quot;Axis must be from {0,1,2}=x,y,z.&quot;);
+-	Vector3r bbMin(Vector3r::ZERO), bbMax(Vector3r::ZERO); bool useBB=python::len(aabb)&gt;0; if(useBB){bbMin=tuple2vec(extract&lt;python::tuple&gt;(aabb[0])());bbMax=tuple2vec(extract&lt;python::tuple&gt;(aabb[1])());}
++	Vector3r bbMin(Vector3r::ZERO), bbMax(Vector3r::ZERO); bool useBB=python::len(aabb)&gt;0; if(useBB){bbMin=extract&lt;Vector3r&gt;(aabb[0])();bbMax=extract&lt;Vector3r&gt;(aabb[1])();}
+ 	Real binStep=Mathr::PI/bins; int axis2=(axis+1)%3, axis3=(axis+2)%3;
+ 	vector&lt;Real&gt; cummProj(bins,0.);
+ 	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
+@@ -143,7 +143,7 @@
+ BOOST_PYTHON_FUNCTION_OVERLOADS(interactionAnglesHistogram_overloads,interactionAnglesHistogram,1,4);
+ 
+ python::tuple bodyNumInteractionsHistogram(python::tuple aabb=python::tuple()){
+-	Vector3r bbMin(Vector3r::ZERO), bbMax(Vector3r::ZERO); bool useBB=python::len(aabb)&gt;0; if(useBB){bbMin=tuple2vec(extract&lt;python::tuple&gt;(aabb[0])());bbMax=tuple2vec(extract&lt;python::tuple&gt;(aabb[1])());}
++	Vector3r bbMin(Vector3r::ZERO), bbMax(Vector3r::ZERO); bool useBB=python::len(aabb)&gt;0; if(useBB){bbMin=extract&lt;Vector3r&gt;(aabb[0])();bbMax=extract&lt;Vector3r&gt;(aabb[1])();}
+ 	const shared_ptr&lt;MetaBody&gt;&amp; rb=Omega::instance().getRootBody();
+ 	vector&lt;int&gt; bodyNumInta; bodyNumInta.resize(rb-&gt;bodies-&gt;size(),-1 /* uninitialized */);
+ 	int maxInta=0;
+@@ -165,9 +165,9 @@
+ }
+ BOOST_PYTHON_FUNCTION_OVERLOADS(bodyNumInteractionsHistogram_overloads,bodyNumInteractionsHistogram,0,1);
+ 
+-python::tuple inscribedCircleCenter(python::list v0, python::list v1, python::list v2)
++Vector3r inscribedCircleCenter(const Vector3r&amp; v0, const Vector3r&amp; v1, const Vector3r&amp; v2)
+ {
+-	return vec2tuple(Shop::inscribedCircleCenter(Vector3r(python::extract&lt;double&gt;(v0[0]),python::extract&lt;double&gt;(v0[1]),python::extract&lt;double&gt;(v0[2])), Vector3r(python::extract&lt;double&gt;(v1[0]),python::extract&lt;double&gt;(v1[1]),python::extract&lt;double&gt;(v1[2])), Vector3r(python::extract&lt;double&gt;(v2[0]),python::extract&lt;double&gt;(v2[1]),python::extract&lt;double&gt;(v2[2]))));
++	return Shop::inscribedCircleCenter(v0,v1,v2);
+ }
+ 
+ python::dict getViscoelasticFromSpheresInteraction(Real m, Real tc, Real en, Real es)
+@@ -199,11 +199,11 @@
+  * is position relative to axisPt; moment from moment is m; such moment per body is
+  * projected onto axis.
+  */
+-Real sumBexTorques(python::tuple ids, python::tuple _axis, python::tuple _axisPt){
++Real sumBexTorques(python::tuple ids, const Vector3r&amp; axis, const Vector3r&amp; axisPt){
+ 	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
+ 	rb-&gt;bex.sync();
+ 	Real ret=0;
+-	Vector3r axis=tuple2vec(_axis), axisPt=tuple2vec(_axisPt); size_t len=python::len(ids);
++	size_t len=python::len(ids);
+ 	for(size_t i=0; i&lt;len; i++){
+ 		const Body* b=(*rb-&gt;bodies)[python::extract&lt;int&gt;(ids[i])].get();
+ 		const Vector3r&amp; m=rb-&gt;bex.getTorque(b-&gt;getId());
+@@ -219,11 +219,11 @@
+  * @param direction direction in which forces are summed
+  *
+  */
+-Real sumBexForces(python::tuple ids, python::tuple _direction){
++Real sumBexForces(python::tuple ids, const Vector3r&amp; direction){
+ 	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
+ 	rb-&gt;bex.sync();
+ 	Real ret=0;
+-	Vector3r direction=tuple2vec(_direction); size_t len=python::len(ids);
++	size_t len=python::len(ids);
+ 	for(size_t i=0; i&lt;len; i++){
+ 		body_id_t id=python::extract&lt;int&gt;(ids[i]);
+ 		const Vector3r&amp; f=rb-&gt;bex.getForce(id);
+@@ -325,8 +325,8 @@
+ 
+ 	(This could be easily extended to return sum of only normal forces or only of shear forces.)
+ */
+-python::tuple forcesOnPlane(python::tuple _planePt, python::tuple _normal){
+-	Vector3r ret(Vector3r::ZERO), planePt(tuple2vec(_planePt)), normal(tuple2vec(_normal));
++Vector3r forcesOnPlane(const Vector3r&amp; planePt, const Vector3r&amp;  normal){
++	Vector3r ret(Vector3r::ZERO);
+ 	MetaBody* rootBody=Omega::instance().getRootBody().get();
+ 	FOREACH(const shared_ptr&lt;Interaction&gt;&amp;I, *rootBody-&gt;interactions){
+ 		if(!I-&gt;isReal()) continue;
+@@ -342,14 +342,14 @@
+ 		// otherwise, reverse its contribution
+ 		ret+=(dot1&lt;0.?1.:-1.)*(nsi-&gt;normalForce+nsi-&gt;shearForce);
+ 	}
+-	return vec2tuple(ret);
++	return ret;
+ }
+ 
+ /* Less general than forcesOnPlane, computes force on plane perpendicular to axis, passing through coordinate coord. */
+-python::tuple forcesOnCoordPlane(Real coord, int axis){
++Vector3r forcesOnCoordPlane(Real coord, int axis){
+ 	Vector3r planePt(Vector3r::ZERO); planePt[axis]=coord;
+ 	Vector3r normal(Vector3r::ZERO); normal[axis]=1;
+-	return forcesOnPlane(vec2tuple(planePt),vec2tuple(normal));
++	return forcesOnPlane(planePt,normal);
+ }
+ 
+ 
+@@ -361,9 +361,8 @@
+  * dH_dTheta is the inclination of the spiral (height increase per radian),
+  * theta0 is the angle for zero height (by given axis).
+  */
+-python::tuple spiralProject(python::tuple _pt, Real dH_dTheta, int axis=2, Real periodStart=std::numeric_limits&lt;Real&gt;::quiet_NaN(), Real theta0=0){
++python::tuple spiralProject(const Vector3r&amp; pt, Real dH_dTheta, int axis=2, Real periodStart=std::numeric_limits&lt;Real&gt;::quiet_NaN(), Real theta0=0){
+ 	int ax1=(axis+1)%3,ax2=(axis+2)%3;
+-	Vector3r pt=tuple2vec(_pt);
+ 	Real r=sqrt(pow(pt[ax1],2)+pow(pt[ax2],2));
+ 	Real theta;
+ 	if(r&gt;Mathr::ZERO_TOLERANCE){
+@@ -393,7 +392,7 @@
+ // for now, don't return anything, since we would have to include the whole yadeControl.cpp because of pyInteraction
+ void Shop__createExplicitInteraction(body_id_t id1, body_id_t id2){ (void) Shop::createExplicitInteraction(id1,id2);}
+ 
+-python::tuple Shop__scalarOnColorScale(Real scalar){ return vec2tuple(Shop::scalarOnColorScale(scalar));}
++//Vector3r Shop__scalarOnColorScale(Real scalar){ return Shop::scalarOnColorScale(scalar);}
+ 
+ BOOST_PYTHON_FUNCTION_OVERLOADS(unbalancedForce_overloads,Shop::unbalancedForce,0,1);
+ Real Shop__kineticEnergy(){return Shop::kineticEnergy();}
+@@ -423,7 +422,7 @@
+ 	def(&quot;createInteraction&quot;,Shop__createExplicitInteraction);
+ 	def(&quot;spiralProject&quot;,spiralProject,spiralProject_overloads(args(&quot;axis&quot;,&quot;periodStart&quot;,&quot;theta0&quot;)));
+ 	def(&quot;pointInsidePolygon&quot;,pointInsidePolygon);
+-	def(&quot;scalarOnColorScale&quot;,Shop__scalarOnColorScale);
++	def(&quot;scalarOnColorScale&quot;,Shop::scalarOnColorScale);
+ 	def(&quot;highlightNone&quot;,highlightNone);
+ 	def(&quot;wireAll&quot;,wireAll);
+ 	def(&quot;wireNone&quot;,wireNone);
+
+Modified: trunk/lib/py/pack.py
+===================================================================
+--- trunk/lib/py/pack.py	2009-07-01 18:27:44 UTC (rev 1829)
++++ trunk/lib/py/pack.py	2009-07-02 10:09:56 UTC (rev 1830)
+@@ -198,7 +198,6 @@
+ 			sp.scale(scale)
+ 			return filterSpherePack(predicate,sp,**kw)
+ 		print &quot;No suitable packing in database found, running triaxial&quot;
+-	#if len(O.bodies)!=0 or len(O.engines)!=0: raise RuntimeError(&quot;triaxialPack needs empty simulation (no bodies, no engines) to run.&quot;)
+ 	V=(4/3)*pi*radius**3; N=assumedFinalDensity*fullDim[0]*fullDim[1]*fullDim[2]/V;
+ 	##
+ 	O.switchWorld()
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001093.html">[deprecated list] [Yade-dev] mesh packing
+</A></li>
+	<LI>Next message: <A HREF="001090.html">[deprecated list] [Yade-dev] forgotten _packSpheres.cpp
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1089">[ date ]</a>
+              <a href="thread.html#1089">[ thread ]</a>
+              <a href="subject.html#1089">[ subject ]</a>
+              <a href="author.html#1089">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

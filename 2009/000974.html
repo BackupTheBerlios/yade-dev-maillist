@@ -1,0 +1,580 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1775 - in trunk: . core	examples/collider-perf	extra gui/py	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine	scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1775%20-%20in%20trunk%3A%20.%20core%0A%09examples/collider-perf%09extra%20gui/py%0A%09pkg/common/Engine/StandAloneEngine%09pkg/dem/Engine/StandAloneEngine%0A%09scripts/test&In-Reply-To=%3C200905240919.n4O9JSn5031681%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000972.html">
+   <LINK REL="Next"  HREF="000975.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1775 - in trunk: . core	examples/collider-perf	extra gui/py	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine	scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1775%20-%20in%20trunk%3A%20.%20core%0A%09examples/collider-perf%09extra%20gui/py%0A%09pkg/common/Engine/StandAloneEngine%09pkg/dem/Engine/StandAloneEngine%0A%09scripts/test&In-Reply-To=%3C200905240919.n4O9JSn5031681%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1775 - in trunk: . core	examples/collider-perf	extra gui/py	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine	scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun May 24 11:19:28 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000972.html">[deprecated list] [Yade-dev] [svn] r1774 - trunk/scripts/test
+</A></li>
+        <LI>Next message: <A HREF="000975.html">[deprecated list] [Yade-dev] [svn] r1776 - in trunk:	gui/py	pkg/common/Engine/StandAloneEngine scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#974">[ date ]</a>
+              <a href="thread.html#974">[ thread ]</a>
+              <a href="subject.html#974">[ subject ]</a>
+              <a href="author.html#974">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-05-24 11:19:26 +0200 (Sun, 24 May 2009)
+New Revision: 1775
+
+Modified:
+   trunk/SConstruct
+   trunk/core/Interaction.cpp
+   trunk/core/Interaction.hpp
+   trunk/core/InteractionContainer.cpp
+   trunk/core/InteractionContainer.hpp
+   trunk/examples/collider-perf/mkGraph.py
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/gui/py/utils.py
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+   trunk/scripts/test/insertion-sort-collider.py
+Log:
+1. Add InteractionContainer::requestErase to hint colliders that wouldn't otherwise see !isReal interactions.
+2. Use this logic in InsertionSortCollider, PersistentSAPCollider, SpatialQuickSortCollider (noop in the last one)
+3. Add InsertionSortCollider::sortThenCollide to make it behave as non-persistent collider (for debugging only?)
+4. Add Interaction::reset() that has common initialization code.
+5. Assign zero inertia to utils.facet (better than uninitialized binary garbage)
+6. Fix contact logic in Brefcom, finally I get the same results with InsertionSortCollider as with SpatialQuickSortCollider on large simulation (more fixes to come)
+7. Do not install pkg-config; fixes compilation error reported by the build bot.
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-05-23 10:29:03 UTC (rev 1774)
++++ trunk/SConstruct	2009-05-24 09:19:26 UTC (rev 1775)
+@@ -536,6 +536,7 @@
+ 	if 0: # do not install headers, nor make pkg-config (was never used, I think)
+ 		installHeaders(env.subst('$PREFIX')) # install to $PREFIX if specifically requested: like &quot;scons /usr/local/include&quot;
+ 		makePkgConfig('$buildDir/yade${SUFFIX}.pc')
++		env.Install(pcDir,'$buildDir/yade${SUFFIX}.pc')
+ 	if not env['haveForeach']:
+ 		boostDir=buildDir+'/include/yade-'+env['version']+'/boost'
+ 		foreachLink=boostDir+'/foreach.hpp'
+@@ -545,7 +546,6 @@
+ 			if lexists(foreachLink): os.remove(foreachLink) # broken symlink: remove it
+ 			os.symlink(relpath(foreachLink,foreachTarget),foreachLink)
+ 		env.InstallAs(env['PREFIX']+'/include/yade-'+env['version']+'/boost/foreach.hpp',foreachTarget)
+-	env.Install(pcDir,'$buildDir/yade${SUFFIX}.pc')
+ 	installAlias=env.Alias('install',instDirs) # build and install everything that should go to instDirs, which are $PREFIX/{bin,lib} (uses scons' Install); include pkgconfig stuff
+ 	env.Default([installAlias,'$PREFIX'])
+ 
+
+Modified: trunk/core/Interaction.cpp
+===================================================================
+--- trunk/core/Interaction.cpp	2009-05-23 10:29:03 UTC (rev 1774)
++++ trunk/core/Interaction.cpp	2009-05-24 09:19:26 UTC (rev 1775)
+@@ -10,26 +10,15 @@
+ 
+ #include &quot;Interaction.hpp&quot;
+ 
+-Interaction::Interaction ()
+-{
+-	// FIXME : -1
+-	id1 = 0; 
+-	id2 = 0;
+-	isNew = true;
+-	isReal = false; // maybe we can remove this, and check if InteractingGeometry, and InteractionPhysics are empty?
+-	
+-	isNeighbor = true;//NOTE : TriangulationCollider needs that
++Interaction::Interaction(): id1(0), id2(0){ reset(); }
++Interaction::Interaction(body_id_t newId1,body_id_t newId2): id1(newId1), id2(newId2){ reset(); }
+ 
+-}
+-
+-
+-Interaction::Interaction(body_id_t newId1,body_id_t newId2) : id1(newId1) , id2(newId2)
+-{	
+-	isNew = true;
+-	isReal = false;
++void Interaction::reset(){
++	isNew=true;
++	isReal=false;
+ 	isNeighbor = true;//NOTE : TriangulationCollider needs that
+-
+ 	functorCache.geomExists=true;
++	//functorCache.geom=shared_ptr&lt;InteractionGeometryEngineUnit&gt;(); functorCache.phys=shared_ptr&lt;InteractionPhysicsEngineUnit&gt;(); functorCache.constLaw=shared_ptr&lt;ConstitutiveLaw&gt;();
+ }
+ 
+ 
+
+Modified: trunk/core/Interaction.hpp
+===================================================================
+--- trunk/core/Interaction.hpp	2009-05-23 10:29:03 UTC (rev 1774)
++++ trunk/core/Interaction.hpp	2009-05-24 09:19:26 UTC (rev 1775)
+@@ -21,13 +21,16 @@
+ class Interaction : public Serializable
+ {
+ 	private	:
+-		body_id_t id1,id2;	// FIXME  this should be vector&lt;body_id_t&gt; ids;
+-
++		body_id_t id1,id2;
+ 	public :
+-		bool isNew;		// FIXME : better to test if InteractionPhysics==0 and remove this flag; we can also remove this flag, if we make another container for PotetntialInteraction with only ids
+-		bool isReal;		// maybe we can remove this, and check if InteractingGeometry, and InteractionPhysics are empty?
+-		bool cycle; // phase flag to mark (for example, SpatialQuickSortCollider mark by it the stale interactions) 
+-		bool isNeighbor;	// Has a meaning only with triangulationCollider atm NOTE : TriangulationCollider needs that
++		// FIXME : test if InteractionPhysics==0 and remove this flag; we can also remove this flag, if we make another container for PotetntialInteraction with only ids
++		bool isNew;		
++		// maybe we can remove this, and check if InteractingGeometry, and InteractionPhysics are empty?
++		bool isReal;		
++		//! phase flag to mark (for example, SpatialQuickSortCollider mark by it the stale interactions) 
++		bool cycle;      
++		//! NOTE : TriangulationCollider needs this (nothing else)
++		bool isNeighbor;	
+ 
+ 		shared_ptr&lt;InteractionGeometry&gt; interactionGeometry;
+ 		shared_ptr&lt;InteractionPhysics&gt; interactionPhysics;
+@@ -44,22 +47,17 @@
+ 		//! cache functors that are called for this interaction. Currently used by InteractionDispatchers.
+ 		struct {
+ 			// Whether geometry dispatcher exists at all; this is different from !geom, since that can mean we haven't populated the cache yet.
+-			// Therefore, geomExists must be initialized to true first (done in Interaction ctor).
++			// Therefore, geomExists must be initialized to true first (done in Interaction::reset() called from ctor).
+ 			bool geomExists;
+ 			// shared_ptr's are initialized to NULLs automagically
+ 			shared_ptr&lt;InteractionGeometryEngineUnit&gt; geom;
+ 			shared_ptr&lt;InteractionPhysicsEngineUnit&gt; phys;
+ 			shared_ptr&lt;ConstitutiveLaw&gt; constLaw;
+ 		} functorCache;
+-			
+ 
+-		#if 0
+-			//! Whether both bodies involved in interaction satisfies given mask; provide rootBody for faster lookup
+-			bool maskBothOK(int mask, MetaBody* rootBody=NULL){return (mask==0) || (Body::byId(id1,rootBody)-&gt;maskOK(mask) &amp;&amp; Body::byId(id2,rootBody)-&gt;maskOK(mask));}
+-			//! Whether at least one body in interaction satisfies given mask; provide rootBody for faster lookup
+-			bool maskAnyOK(int mask, MetaBody* rootBody=NULL){return (mask==0) || Body::byId(id1,rootBody)-&gt;maskOK(mask) || Body::byId(id2,rootBody)-&gt;maskOK(mask);}
+-		#endif
+-
++		//! Reset interaction to the intial state (keep only body ids)
++		void reset();
++			
+ 	REGISTER_ATTRIBUTES(/*no base*/,
+ 		(id1)
+ 		(id2)
+
+Modified: trunk/core/InteractionContainer.cpp
+===================================================================
+--- trunk/core/InteractionContainer.cpp	2009-05-23 10:29:03 UTC (rev 1774)
++++ trunk/core/InteractionContainer.cpp	2009-05-24 09:19:26 UTC (rev 1775)
+@@ -13,6 +13,8 @@
+ 
+ 
+ 
++void InteractionContainer::requestErase(body_id_t id1, body_id_t id2){ find(id1,id2)-&gt;reset(); bodyIdPair v(0,2); v.push_back(id1); v.push_back(id2); pendingErase.push_back(v); }
++
+ void InteractionContainer::preProcessAttributes(bool deserializing)
+ {
+ 	if(deserializing)
+
+Modified: trunk/core/InteractionContainer.hpp
+===================================================================
+--- trunk/core/InteractionContainer.hpp	2009-05-23 10:29:03 UTC (rev 1774)
++++ trunk/core/InteractionContainer.hpp	2009-05-24 09:19:26 UTC (rev 1775)
+@@ -83,7 +83,7 @@
+ 	public :
+ 		boost::mutex	drawloopmutex; // FIXME a hack, containers have to be rewritten lock-free.
+ 
+-		InteractionContainer() { interaction.clear(); };
++		InteractionContainer() { };
+ 		virtual ~InteractionContainer() {};
+ 
+ 		virtual bool insert(body_id_t /*id1*/,body_id_t /*id2*/)				{throw;};
+@@ -101,13 +101,19 @@
+ 		virtual shared_ptr&lt;Interaction&gt;&amp; operator[] (unsigned int) {throw;};
+ 		virtual const shared_ptr&lt;Interaction&gt;&amp; operator[] (unsigned int) const {throw;};
+ 
++		// std::pair is not handle by yade::serialization, use vector&lt;body_id_t&gt; instead
++		typedef vector&lt;body_id_t&gt; bodyIdPair;
++		// Ask for erasing the interaction given (from the constitutive law); this resets the interaction (to the initial=potential state)
++		// and collider should traverse pendingErase to decide whether to delete the interaction completely or keep it potential
++		void requestErase(body_id_t id1, body_id_t id2);
++		list&lt;bodyIdPair&gt; pendingErase;
+ 	private :
++		// used only during serialization/deserialization
+ 		vector&lt;shared_ptr&lt;Interaction&gt; &gt; interaction;
+-
+ 	protected :
+ 		virtual void preProcessAttributes(bool deserializing);
+ 		virtual void postProcessAttributes(bool deserializing);
+-	REGISTER_ATTRIBUTES(/*no base*/,(interaction));
++	REGISTER_ATTRIBUTES(/*no base*/,(interaction)(pendingErase));
+ 	REGISTER_CLASS_AND_BASE(InteractionContainer,Serializable);
+ };
+ 
+
+Modified: trunk/examples/collider-perf/mkGraph.py
+===================================================================
+--- trunk/examples/collider-perf/mkGraph.py	2009-05-23 10:29:03 UTC (rev 1774)
++++ trunk/examples/collider-perf/mkGraph.py	2009-05-24 09:19:26 UTC (rev 1775)
+@@ -31,7 +31,7 @@
+ legend(('SAP init','IS init'),'upper left')
+ 
+ ax2=twinx()
+-plot(SAP_N,SAPstep,'r-',IS_N,ISstep,'g-',QS_N,QSstep,'g-',QS_N,QSinit,'b-')
++plot(SAP_N,SAPstep,'r-',IS_N,ISstep,'k-',QS_N,QSstep,'g-',QS_N,QSinit,'b-')
+ ylabel(u&quot;Linear time per 1 step [s]&quot;)
+ legend(('SAP step','InsertionSort step','QuickSort step','QuickSort init'),'right')
+ grid()
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-05-23 10:29:03 UTC (rev 1774)
++++ trunk/extra/Brefcom.cpp	2009-05-24 09:19:26 UTC (rev 1775)
+@@ -73,7 +73,7 @@
+ 
+ 	if(!interaction-&gt;isNew &amp;&amp; interaction-&gt;interactionPhysics){ /* relax */ } 
+ 	else {
+-		interaction-&gt;isNew; // just in case
++		interaction-&gt;isNew=false; // just in case
+ 
+ 		const shared_ptr&lt;BodyMacroParameters&gt;&amp; elast1=static_pointer_cast&lt;BodyMacroParameters&gt;(pp1);
+ 		const shared_ptr&lt;BodyMacroParameters&gt;&amp; elast2=static_pointer_cast&lt;BodyMacroParameters&gt;(pp2);
+@@ -233,15 +233,17 @@
+ 	NNAN(sigmaN); NNANV(sigmaT); NNAN(crossSection);
+ 	//timingDeltas-&gt;checkpoint(&quot;material&quot;);
+ 
+-	const int watch1=6300, watch2=6299;
+-	#define SHOW(a) if((I-&gt;getId1()==watch1 &amp;&amp; I-&gt;getId2()==watch2) || (I-&gt;getId2()==watch1 &amp;&amp; I-&gt;getId1()==watch2)) cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; &quot;&lt;&lt;a&lt;&lt;endl;
+-	SHOW(&quot;epsN&quot;&lt;&lt;epsN);
++	//const int watch1=6300, watch2=6299;
++	//#define SHOW(a) if((I-&gt;getId1()==watch1 &amp;&amp; I-&gt;getId2()==watch2) || (I-&gt;getId2()==watch1 &amp;&amp; I-&gt;getId1()==watch2)) cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; &quot;&lt;&lt;a&lt;&lt;endl;
++	//SHOW(&quot;epsN&quot;&lt;&lt;epsN);
+ 	if(epsN&gt;0. &amp;&amp; ((isCohesive &amp;&amp; omega&gt;omegaThreshold) || !isCohesive)){
+-		I-&gt;isReal=false;
+-		const shared_ptr&lt;Body&gt;&amp; body1=Body::byId(I-&gt;getId1(),rootBody), body2=Body::byId(I-&gt;getId2(),rootBody); assert(body1); assert(body2);
+-		const shared_ptr&lt;BrefcomPhysParams&gt;&amp; rbp1=YADE_PTR_CAST&lt;BrefcomPhysParams&gt;(body1-&gt;physicalParameters), rbp2=YADE_PTR_CAST&lt;BrefcomPhysParams&gt;(body2-&gt;physicalParameters);
+-		if(BC-&gt;isCohesive){rbp1-&gt;numBrokenCohesive+=1; rbp2-&gt;numBrokenCohesive+=1; rbp1-&gt;epsPlBroken+=epsPlSum; rbp2-&gt;epsPlBroken+=epsPlSum;}
+-		LOG_DEBUG(&quot;Contact #&quot;&lt;&lt;I-&gt;getId1()&lt;&lt;&quot;=#&quot;&lt;&lt;I-&gt;getId2()&lt;&lt;&quot; is damaged over thershold (&quot;&lt;&lt;omega&lt;&lt;&quot;&gt;&quot;&lt;&lt;omegaThreshold&lt;&lt;&quot;) and has been deleted (isReal=&quot;&lt;&lt;I-&gt;isReal&lt;&lt;&quot;)&quot;);
++		rootBody-&gt;interactions-&gt;requestErase(I-&gt;getId1(),I-&gt;getId2());
++		if(isCohesive){
++			const shared_ptr&lt;Body&gt;&amp; body1=Body::byId(I-&gt;getId1(),rootBody), body2=Body::byId(I-&gt;getId2(),rootBody); assert(body1); assert(body2);
++			const shared_ptr&lt;BrefcomPhysParams&gt;&amp; rbp1=YADE_PTR_CAST&lt;BrefcomPhysParams&gt;(body1-&gt;physicalParameters), rbp2=YADE_PTR_CAST&lt;BrefcomPhysParams&gt;(body2-&gt;physicalParameters);
++			if(BC-&gt;isCohesive){rbp1-&gt;numBrokenCohesive+=1; rbp2-&gt;numBrokenCohesive+=1; rbp1-&gt;epsPlBroken+=epsPlSum; rbp2-&gt;epsPlBroken+=epsPlSum;}
++			LOG_DEBUG(&quot;Contact #&quot;&lt;&lt;I-&gt;getId1()&lt;&lt;&quot;=#&quot;&lt;&lt;I-&gt;getId2()&lt;&lt;&quot; is damaged over thershold (&quot;&lt;&lt;omega&lt;&lt;&quot;&gt;&quot;&lt;&lt;omegaThreshold&lt;&lt;&quot;) and will be deleted.&quot;);
++		}
+ 		return;
+ 	}
+ 
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2009-05-23 10:29:03 UTC (rev 1774)
++++ trunk/extra/Brefcom.hpp	2009-05-24 09:19:26 UTC (rev 1775)
+@@ -106,7 +106,7 @@
+ 
+ 
+ 
+-		BrefcomContact(): NormalShearInteraction(),E(0), G(0), tanFrictionAngle(0), undamagedCohesion(0), crossSection(0), xiShear(0), dmgTau(-1), dmgRateExp(0), dmgStrain(0), plTau(-1), plRateExp(0), isoPrestress(0.), epsPlSum(0.) { createIndex(); epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; neverDamage=false; omega=0; Fn=0; Fs=Vector3r::ZERO; epsPlSum=0; dmgOverstress=0; dmgStrain=0; }
++		BrefcomContact(): NormalShearInteraction(),E(0), G(0), tanFrictionAngle(0), undamagedCohesion(0), crossSection(0), xiShear(0), dmgTau(-1), dmgRateExp(0), dmgStrain(0), plTau(-1), plRateExp(0), isoPrestress(0.), kappaD(0.), epsTrans(0.), epsPlSum(0.) { createIndex(); epsT=Vector3r::ZERO; isCohesive=false; neverDamage=false; omega=0; Fn=0; Fs=Vector3r::ZERO; epsPlSum=0; dmgOverstress=0; }
+ 		virtual ~BrefcomContact();
+ 
+ 		REGISTER_ATTRIBUTES(NormalShearInteraction,
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2009-05-23 10:29:03 UTC (rev 1774)
++++ trunk/gui/py/utils.py	2009-05-24 09:19:26 UTC (rev 1775)
+@@ -124,7 +124,7 @@
+ 	vStr='['+' '.join(['{%g %g %g}'%(v[0],v[1],v[2]) for v in vertices])+']'
+ 	b.shape.setRaw('vertices',vStr)
+ 	b.mold.setRaw('vertices',vStr)
+-	pp={'se3':[center[0],center[1],center[2],1,0,0,0],'refSe3':[center[0],center[1],center[2],1,0,0,0],'young':young,'poisson':poisson,'frictionAngle':frictionAngle}
++	pp={'se3':[center[0],center[1],center[2],1,0,0,0],'refSe3':[center[0],center[1],center[2],1,0,0,0],'young':young,'poisson':poisson,'frictionAngle':frictionAngle,'inertia':[0,0,0]}
+ 	pp.update(physParamsAttr)
+ 	b.phys=PhysicalParameters(physParamsClass)
+ 	for k in [attr for attr in pp.keys() if attr in b.phys.keys()]:
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-05-23 10:29:03 UTC (rev 1774)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-05-24 09:19:26 UTC (rev 1775)
+@@ -31,7 +31,8 @@
+ 	const shared_ptr&lt;Interaction&gt;&amp; I=interactions-&gt;find(id1,id2);
+ 	bool hasInter=(bool)I;
+ 	// interaction doesn't exist and shouldn't, or it exists and should
+-	if((!overlap &amp;&amp; !hasInter) || (overlap &amp;&amp; hasInter)) return;
++	if(!overlap &amp;&amp; !hasInter) return;
++	if(overlap &amp;&amp; hasInter){ /* FIXME: should check I-&gt;isNew and I-&gt;isReal; etc */ return; }
+ 	// create interaction if not yet existing
+ 	if(overlap &amp;&amp; !hasInter){ // second condition only for readability
+ 		if(!Collider::mayCollide(Body::byId(id1,rb).get(),Body::byId(id2,rb).get())) return;
+@@ -40,21 +41,18 @@
+ 		interactions-&gt;insert(newI);
+ 		return;
+ 	}
+-	/* Note: this doesn't cover all disappearing interactions, only those that broke in the sortAxis direction;
+-	 	it is only a minor optimization (to be verified) to have it here.
+-		The rest of interaction will be deleted at the end of action. */
+-	if(!overlap &amp;&amp; hasInter){ if(!I-&gt;isReal) interactions-&gt;erase(id1,id2); return; }
++	if(!overlap &amp;&amp; hasInter){ if(!I-&gt;isReal &amp;&amp; I-&gt;isNew) interactions-&gt;erase(id1,id2); return; }
+ 	assert(false); // unreachable
+ }
+ 
+-void InsertionSortCollider::insertionSort(vector&lt;Bound&gt;&amp; v, InteractionContainer* interactions, MetaBody* rb){
++void InsertionSortCollider::insertionSort(vector&lt;Bound&gt;&amp; v, InteractionContainer* interactions, MetaBody* rb, bool doCollide){
+ 	long size=v.size();
+ 	for(long i=0; i&lt;size; i++){
+ 		Bound viInit=v[i]; long j=i-1; /* cache hasBB(); otherwise 1% overall performance hit */ bool viInitBB=viInit.hasBB();
+ 		while(j&gt;=0 &amp;&amp; v[j]&gt;viInit){
+ 			v[j+1]=v[j];
+ 			// no collisions without bounding boxes
+-			if(viInitBB &amp;&amp; v[j].hasBB()) handleBoundInversion(viInit.id,v[j].id,interactions,rb);
++			if(doCollide &amp;&amp; viInitBB &amp;&amp; v[j].hasBB()) handleBoundInversion(viInit.id,v[j].id,interactions,rb);
+ 			j--;
+ 		}
+ 		v[j+1]=viInit;
+@@ -112,19 +110,32 @@
+ 		}
+ 
+ 	//timingDeltas-&gt;checkpoint(&quot;copy&quot;);
++
++	// process interactions that the constitutive law asked to be erased
++	FOREACH(const InteractionContainer::bodyIdPair&amp; p, interactions-&gt;pendingErase){
++		// remove those that do not overlap spatially anymore
++		if(!spatialOverlap(p[0],p[1])){ interactions-&gt;erase(p[0],p[1]); LOG_TRACE(&quot;Deleted interaction #&quot;&lt;&lt;p[0]&lt;&lt;&quot;+#&quot;&lt;&lt;p[1]); }
++		else
++		{
++			const shared_ptr&lt;Interaction&gt;&amp; I=interactions-&gt;find(p[0],p[1]);
++			if(!I){ LOG_FATAL(&quot;Requested deletion of a non-existent interaction #&quot;&lt;&lt;p[0]&lt;&lt;&quot;+#&quot;&lt;&lt;p[1]&lt;&lt;&quot;?!&quot;); throw; }
++			I-&gt;reset();
++		}
++	}
++	interactions-&gt;pendingErase.clear();
+ 	
+ 
+ 	// sort
+-		if(!doInitSort){
++		if(!doInitSort &amp;&amp; !sortThenCollide){
+ 			/* each inversion in insertionSort calls handleBoundInversion, which in turns may add/remove interaction */
+-			insertionSort(XX,interactions,rb);
+-			insertionSort(YY,interactions,rb);
+-			insertionSort(ZZ,interactions,rb);
++			insertionSort(XX,interactions,rb); insertionSort(YY,interactions,rb); insertionSort(ZZ,interactions,rb);
+ 		}
+ 		else {
+-			std::sort(XX.begin(),XX.end());
+-			std::sort(YY.begin(),YY.end());
+-			std::sort(ZZ.begin(),ZZ.end());
++			if(doInitSort){
++				std::sort(XX.begin(),XX.end()); std::sort(YY.begin(),YY.end()); std::sort(ZZ.begin(),ZZ.end());
++			} else {
++				insertionSort(XX,interactions,rb,false); insertionSort(YY,interactions,rb,false); insertionSort(ZZ,interactions,rb,false);
++			}
+ 			// traverse the container along requested axis
+ 			assert(sortAxis==0 || sortAxis==1 || sortAxis==2);
+ 			vector&lt;Bound&gt;&amp; V=(sortAxis==0?XX:(sortAxis==1?YY:ZZ));
+@@ -137,17 +148,18 @@
+ 				// TRVAR3(i,iid,V[i].coord);
+ 				// go up until we meet the upper bound
+ 				for(size_t j=i+1; V[j].id!=iid; j++){
+-					// skip bodies with smaller (arbitrary, could be greater as well) id,
+-					// since they will detect us when their turn comes
+ 					const body_id_t&amp; jid=V[j].id;
+-					if(jid&lt;iid) { /* LOG_TRACE(&quot;Skip #&quot;&lt;&lt;V[j].id&lt;&lt;(V[j].isMin()?&quot;(min)&quot;:&quot;(max)&quot;)&lt;&lt;&quot; with &quot;&lt;&lt;iid&lt;&lt;&quot; (smaller id)&quot;); */ continue; }
++					/// FIXME: not sure why this doesn't work. If this condition is commented out, we have exact same interactions as from SpatialQuickSort. Otherwise some interactions are missing!
++					// skip bodies with smaller (arbitrary, could be greater as well) id, since they will detect us when their turn comes
++					// if(jid&lt;iid) { /* LOG_TRACE(&quot;Skip #&quot;&lt;&lt;V[j].id&lt;&lt;(V[j].isMin()?&quot;(min)&quot;:&quot;(max)&quot;)&lt;&lt;&quot; with &quot;&lt;&lt;iid&lt;&lt;&quot; (smaller id)&quot;); */ continue; }
+ 					/* abuse the same function here; since it does spatial overlap check first, it is OK to use it */
+ 					handleBoundInversion(iid,jid,interactions,rb);
+ 				}
+ 			}
+ 		}
+ 	//timingDeltas-&gt;checkpoint(&quot;sort&amp;collide&quot;);
+-
++	
++#if 0
+ 	// garbage collection once in a while: for interactions that were still real when the bounding boxes separated
+ 	// the collider would never get to see them again otherwise
+ 	if(iter%1000==0){
+@@ -159,4 +171,5 @@
+ 		FOREACH(const bodyIdPair&amp; p, toBeDeleted){ interactions-&gt;erase(p.first,p.second); LOG_TRACE(&quot;Deleted interaction #&quot;&lt;&lt;p.first&lt;&lt;&quot;+#&quot;&lt;&lt;p.second); }
+ 	}
+ 	//timingDeltas-&gt;checkpoint(&quot;stale&quot;);
++#endif
+ }
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp	2009-05-23 10:29:03 UTC (rev 1774)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp	2009-05-24 09:19:26 UTC (rev 1775)
+@@ -44,18 +44,20 @@
+ 	/*! sorting routine; insertion sort is very fast for strongly pre-sorted lists, which is our case
+   	    <A HREF="http://en.wikipedia.org/wiki/Insertion_sort">http://en.wikipedia.org/wiki/Insertion_sort</A> has the algorithm and other details
+ 	*/
+-	void insertionSort(std::vector&lt;Bound&gt;&amp; v,InteractionContainer*,MetaBody*);
++	void insertionSort(std::vector&lt;Bound&gt;&amp; v,InteractionContainer*,MetaBody*,bool doCollide=true);
+ 	void handleBoundInversion(body_id_t,body_id_t,InteractionContainer*,MetaBody*);
+ 	bool spatialOverlap(body_id_t,body_id_t);
+ 
+ 	public:
+ 	//! axis for the initial sort
+ 	int sortAxis;
++	//! if true, separate sorting and colliding phase; MUCH slower, but processes all interactions at every step
++	bool sortThenCollide;
+ 
+-	InsertionSortCollider(): sortAxis(0){ /* timingDeltas=shared_ptr&lt;TimingDeltas&gt;(new TimingDeltas);*/ }
++	InsertionSortCollider(): sortAxis(0), sortThenCollide(false){ /* timingDeltas=shared_ptr&lt;TimingDeltas&gt;(new TimingDeltas);*/ }
+ 	virtual void action(MetaBody*);
+ 	REGISTER_CLASS_AND_BASE(InsertionSortCollider,Collider);
+-	REGISTER_ATTRIBUTES(Collider,(sortAxis));
++	REGISTER_ATTRIBUTES(Collider,(sortAxis)(sortThenCollide));
+ 	DECLARE_LOGGER;
+ };
+ REGISTER_SERIALIZABLE(InsertionSortCollider);
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp	2009-05-23 10:29:03 UTC (rev 1774)
++++ trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp	2009-05-24 09:19:26 UTC (rev 1775)
+@@ -11,7 +11,8 @@
+ #include &lt;math.h&gt;
+ #include &lt;algorithm&gt;
+ 
+-
++YADE_PLUGIN(&quot;SpatialQuickSortCollider&quot;);
++ 
+ SpatialQuickSortCollider::SpatialQuickSortCollider() : Collider()
+ {
+ 	haveDistantTransient=false;
+@@ -24,16 +25,19 @@
+ 
+ void SpatialQuickSortCollider::action(MetaBody* ncb)
+ {
+-     shared_ptr&lt;BodyContainer&gt; bodies = ncb-&gt;bodies;
++	const shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ 
++	// This collider traverses all interactions at every step, therefore interactions that were reset() will be deleted automatically as needed
++	ncb-&gt;interactions-&gt;pendingErase.clear();
++
+ 	size_t nbElements=bodies-&gt;size();
+-       if (nbElements!=rank.size())
+-       {
+-	   size_t n = rank.size();
+-	   rank.resize(nbElements);
+-	   for (; n&lt;nbElements; ++n)
+-	       rank[n] = shared_ptr&lt;AABBBound&gt;(new AABBBound);
+-       }
++	if (nbElements!=rank.size())
++	{
++		size_t n = rank.size();
++		rank.resize(nbElements);
++		for (; n&lt;nbElements; ++n)
++			rank[n] = shared_ptr&lt;AABBBound&gt;(new AABBBound);
++	}
+ 
+ 	Vector3r min,max;
+ 	shared_ptr&lt;Body&gt; b;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2009-05-23 10:29:03 UTC (rev 1774)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2009-05-24 09:19:26 UTC (rev 1775)
+@@ -70,7 +70,7 @@
+ 			SpheresContactGeometry*    currentContactGeometry= static_cast&lt;SpheresContactGeometry*&gt;(ig.get());
+ 			ElasticContactInteraction* currentContactPhysics = static_cast&lt;ElasticContactInteraction*&gt;(ip.get());
+ 			// delete interaction where spheres don't touch
+-			if(currentContactGeometry-&gt;penetrationDepth&lt;0){ contact-&gt;isReal=false; return; }
++			if(currentContactGeometry-&gt;penetrationDepth&lt;0){ ncb-&gt;interactions-&gt;requestErase(id1,id2); return; }
+ 	
+ 			BodyMacroParameters* de1 				= YADE_CAST&lt;BodyMacroParameters*&gt;(Body::byId(id1,ncb)-&gt;physicalParameters.get());
+ 			BodyMacroParameters* de2 				= YADE_CAST&lt;BodyMacroParameters*&gt;(Body::byId(id2,ncb)-&gt;physicalParameters.get());
+@@ -116,7 +116,7 @@
+ 	Dem3DofGeom* geom=static_cast&lt;Dem3DofGeom*&gt;(ig.get());
+ 	ElasticContactInteraction* phys=static_cast&lt;ElasticContactInteraction*&gt;(ip.get());
+ 	Real displN=geom-&gt;displacementN();
+-	if(displN&gt;0){contact-&gt;isReal=false; return; }
++	if(displN&gt;0){rootBody-&gt;interactions-&gt;requestErase(contact-&gt;getId1(),contact-&gt;getId2()); return; }
+ 	phys-&gt;normalForce=phys-&gt;kn*displN*geom-&gt;normal;
+ 	Real maxFsSq=phys-&gt;normalForce.SquaredLength()*pow(phys-&gt;tangensOfFrictionAngle,2);
+ 	Vector3r trialFs=phys-&gt;ks*geom-&gt;displacementT();
+
+Modified: trunk/scripts/test/insertion-sort-collider.py
+===================================================================
+--- trunk/scripts/test/insertion-sort-collider.py	2009-05-23 10:29:03 UTC (rev 1774)
++++ trunk/scripts/test/insertion-sort-collider.py	2009-05-24 09:19:26 UTC (rev 1775)
+@@ -4,21 +4,22 @@
+ 	BexResetter(),
+ 	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingBox2AABB(),InteractingFacet2AABB(),MetaInteractingGeometry2AABB()]),
+ 	InsertionSortCollider(),
+-	InteractionDispatchers([ef2_Facet_Sphere_Dem3DofGeom()],[SimpleElasticRelationships()],[ef2_Dem3Dof_Elastic_ElasticLaw()],),
++	#InteractionDispatchers([ef2_Facet_Sphere_Dem3DofGeom()],[SimpleElasticRelationships()],[ef2_Dem3Dof_Elastic_ElasticLaw()],),
++	InteractionDispatchers([ef2_Facet_Sphere_Dem3DofGeom()],[BrefcomMakeContact(cohesiveThresholdIter=0)],[ef2_Spheres_Brefcom_BrefcomLaw()],),
+ 	GravityEngine(gravity=[0,0,-10]),
+ 	NewtonsDampedLaw(damping=0.01),
+ ]
+ 
+ O.bodies.append([
+-	utils.facet([[-1,-1,0],[1,-1,0],[0,1,0]],dynamic=False,color=[1,0,0],young=1e3),
+-	utils.facet([[1,-1,0],[0,1,0,],[1,.5,.5]],dynamic=False,young=1e3)
++	utils.facet([[-1,-1,0],[1,-1,0],[0,1,0]],dynamic=False,color=[1,0,0],young=1e3,physParamsClass='BrefcomPhysParams'),
++	utils.facet([[1,-1,0],[0,1,0,],[1,.5,.5]],dynamic=False,young=1e3,physParamsClass='BrefcomPhysParams')
+ ])
+ import random
+ if 1:
+ 	for i in range(0,100):
+-		O.bodies.append(utils.sphere([random.gauss(0,1),random.gauss(0,1),random.uniform(1,2)],random.uniform(.02,.05),velocity=[random.gauss(0,.1),random.gauss(0,.1),random.gauss(0,.1)]))
++		O.bodies.append(utils.sphere([random.gauss(0,1),random.gauss(0,1),random.uniform(1,2)],random.uniform(.02,.05),velocity=[random.gauss(0,.1),random.gauss(0,.1),random.gauss(0,.1)],,physParamsClass='BrefcomPhysParams'))
+ else:
+-	O.bodies.append(utils.sphere([0,0,.6],.5))
++	O.bodies.append(utils.sphere([0,0,.6],.5,,physParamsClass='BrefcomPhysParams'))
+ O.dt=1e-4
+ O.saveTmp('init')
+ import yade.log
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000972.html">[deprecated list] [Yade-dev] [svn] r1774 - trunk/scripts/test
+</A></li>
+	<LI>Next message: <A HREF="000975.html">[deprecated list] [Yade-dev] [svn] r1776 - in trunk:	gui/py	pkg/common/Engine/StandAloneEngine scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#974">[ date ]</a>
+              <a href="thread.html#974">[ thread ]</a>
+              <a href="subject.html#974">[ subject ]</a>
+              <a href="author.html#974">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

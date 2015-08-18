@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] new algorithm for facets
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20new%20algorithm%20for%20facets&In-Reply-To=%3C200809251041.10043.sj2001%40yandex.ru%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000382.html">
+   <LINK REL="Next"  HREF="000353.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] new algorithm for facets</H1>
+    <B>sega</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20new%20algorithm%20for%20facets&In-Reply-To=%3C200809251041.10043.sj2001%40yandex.ru%3E"
+       TITLE="[deprecated list] [Yade-dev] new algorithm for facets">sj2001 at yandex.ru
+       </A><BR>
+    <I>Thu Sep 25 08:41:09 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000382.html">[deprecated list] [Yade-dev] new algorithm for facets
+</A></li>
+        <LI>Next message: <A HREF="000353.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-3315/bin/yade-svn1513:	DirectShearCis, FEMBeam,	HydraulicTest, SDECImpactTest, STLImporterTest, TetrahedronsTest
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#387">[ date ]</a>
+              <a href="thread.html#387">[ thread ]</a>
+              <a href="subject.html#387">[ subject ]</a>
+              <a href="author.html#387">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>&gt;<i> Does this means that edges can have a radius too, like a cylinder 
+</I>&gt;<i> between the two nodes?
+</I>
+No.
+on fig below O is a sphere, --- is a facet's surface, * is a edge
+if shrinkFactor=0 we have doubled contact on a edge like this:
+   O
+    ||
+----*----
+
+if shrinkFactor&gt;0 we have a gap between facets and two contacts like this:
+     O
+     /\
+----*  *----
+when a gap size is 2*R*shrinkFactor.
+
+ps.  I think this can be even removed, but let until...
+
+-- 
+Best regards, Sergei D.
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000382.html">[deprecated list] [Yade-dev] new algorithm for facets
+</A></li>
+	<LI>Next message: <A HREF="000353.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-3315/bin/yade-svn1513:	DirectShearCis, FEMBeam,	HydraulicTest, SDECImpactTest, STLImporterTest, TetrahedronsTest
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#387">[ date ]</a>
+              <a href="thread.html#387">[ thread ]</a>
+              <a href="subject.html#387">[ subject ]</a>
+              <a href="author.html#387">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

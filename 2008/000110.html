@@ -1,0 +1,144 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] new contact models
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20new%20contact%20models&In-Reply-To=%3C47D65DDB.2060705%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000108.html">
+   <LINK REL="Next"  HREF="000111.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] new contact models</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20new%20contact%20models&In-Reply-To=%3C47D65DDB.2060705%40hmg.inpg.fr%3E"
+       TITLE="[yade-dev] new contact models">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Tue Mar 11 11:24:27 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000108.html">[yade-dev] new contact models
+</A></li>
+        <LI>Next message: <A HREF="000111.html">[yade-dev] moving qglviewer into our tree
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#110">[ date ]</a>
+              <a href="thread.html#110">[ thread ]</a>
+              <a href="subject.html#110">[ subject ]</a>
+              <a href="author.html#110">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+Yes, you got the idea. It should work.
+Remember to list your new classes in the scons file (again with existing 
+classes as exemple) or they won't compile.
+Also remember that you can commit the new code to the svn base.
+
+Bruno
+
+
+sega a &#233;crit :
+&gt;<i> Hello.  
+</I>&gt;<i>
+</I>&gt;<i> I want realize the viscoelastic contact model (Cundall-Strack) and
+</I>&gt;<i> elastoplastic contact model (Walton-Braun) 
+</I>&gt;<i> (from Phys. Rev. E, 2001, 65, 011302 
+</I>&gt;<i> <A HREF="http://link.aps.org/abstract/PRE/v65/e011302">http://link.aps.org/abstract/PRE/v65/e011302</A>).  
+</I>&gt;<i>
+</I>&gt;<i> What can I do for this in the YADE framework? 
+</I>&gt;<i>
+</I>&gt;<i> For example, viscoelastic model is
+</I>&gt;<i>
+</I>&gt;<i> Fn = kn * xn + cn * vn // normal, xn - normal penetration, vn - normal 
+</I>&gt;<i> velocity
+</I>&gt;<i> Fs = ks * xs + cs * vs // tangential, xs - shear displacement, vs - shear 
+</I>&gt;<i> velocity
+</I>&gt;<i> Fs &lt;= Fn*mu // Coulumb friction
+</I>&gt;<i>
+</I>&gt;<i> where kn, ks, cn, cs is a functions of restitution coefficient and collision 
+</I>&gt;<i> time.
+</I>&gt;<i>
+</I>&gt;<i> Can I realize new PhysicalParameters class:
+</I>&gt;<i>
+</I>&gt;<i> class EmpyreanBodyParameters : public RigidBodyParameters {
+</I>&gt;<i> public:
+</I>&gt;<i>     double tc; // collision time
+</I>&gt;<i>     double epsilon; // restitution coefficient
+</I>&gt;<i>     double mu; // friction coefficient
+</I>&gt;<i> };
+</I>&gt;<i>
+</I>&gt;<i> new InteractionPhysics class:
+</I>&gt;<i>
+</I>&gt;<i> class CundallStrackInteraction : public InteractionPhysics {
+</I>&gt;<i> public:
+</I>&gt;<i>     double kn, ks; // elastic
+</I>&gt;<i>     double cn, cs; // viscous
+</I>&gt;<i> }
+</I>&gt;<i>
+</I>&gt;<i> new InteractionPhysicsEngineUnit:
+</I>&gt;<i>
+</I>&gt;<i> class CundallStrackPhysics : public InteractionPhysicsEngineUnit {
+</I>&gt;<i>     tc, epsilon -&gt; kn, kt, cn, cs
+</I>&gt;<i> }
+</I>&gt;<i>
+</I>&gt;<i> and new InteractionSolver class?
+</I>&gt;<i>
+</I>&gt;<i> class CundallStrackContactLaw : public InteractionSolver {
+</I>&gt;<i>     This is analog ElasticContactLaw but with viscous damping
+</I>&gt;<i> }
+</I>&gt;<i>
+</I>&gt;<i> Is this right?
+</I>&gt;<i>
+</I>&gt;<i> Thanks.
+</I>&gt;<i> _______________________________________________
+</I>&gt;<i> yade-dev mailing list
+</I>&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.berlios.de</A>
+</I>&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">https://lists.berlios.de/mailman/listinfo/yade-dev</A>
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Institut National Polytechnique de Grenoble
+Laboratoire 3S (Soils Solids Structures) - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000108.html">[yade-dev] new contact models
+</A></li>
+	<LI>Next message: <A HREF="000111.html">[yade-dev] moving qglviewer into our tree
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#110">[ date ]</a>
+              <a href="thread.html#110">[ thread ]</a>
+              <a href="subject.html#110">[ subject ]</a>
+              <a href="author.html#110">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] impossible to compile without	python / sqlite3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20impossible%20to%20compile%20without%0A%09python%20/%20sqlite3&In-Reply-To=%3C49C12AB1.8050601%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000863.html">
+   <LINK REL="Next"  HREF="000866.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] impossible to compile without	python / sqlite3</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20impossible%20to%20compile%20without%0A%09python%20/%20sqlite3&In-Reply-To=%3C49C12AB1.8050601%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev] impossible to compile without	python / sqlite3">eudoxos at arcig.cz
+       </A><BR>
+    <I>Wed Mar 18 18:09:05 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000863.html">[deprecated list] [Yade-dev] impossible to compile without python /	sqlite3
+</A></li>
+        <LI>Next message: <A HREF="000866.html">[deprecated list] [Yade-dev] impossible to compile without	python / sqlite3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#864">[ date ]</a>
+              <a href="thread.html#864">[ thread ]</a>
+              <a href="subject.html#864">[ subject ]</a>
+              <a href="author.html#864">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> 1. have boost 1.33, we just need foreach.hpp
+</I>&gt;<i> 2. they don't have sqlite3 (only sqlite2)
+</I>&gt;<i> 3. boost::python::len is not defined in boost 1.33. And that's the
+</I>&gt;<i>     only reason for which I must disable python. Or we'll see if we
+</I>&gt;<i>     can upgrade boost....
+</I>&gt;<i>    
+</I>You could install locally boost 1.35 or later (I did that on RHEL 4.? 
+machine, like 4 years old installation with only security updates) and 
+also sqlite3. Otherwise:
+
+For foreach.hpp, just copy that header to some local include directory. 
+For boost::python::len, you can put this anywhere (into local 
+foreach.hpp, if you wish ;-) ):
+
+namespace boost { namespace python {
+     inline ssize_t len(object const&amp; obj)
+     {
+         ssize_t result = PyObject_Length(obj.ptr());
+         if (PyErr_Occurred()) throw_error_already_set();
+         return result;
+     }
+
+
+&gt;<i> sqlite3 problem:
+</I>&gt;<i> - make sqlite3 optional (the check in SConscript)
+</I>&gt;<i> - add some #ifdefs in GLSimulationPlayerViewer, and respective
+</I>&gt;<i>    SConstript entry
+</I>&gt;<i>    
+</I><A HREF="http://www.novell.com/products/linuxpackages/opensuse/index_group.html">http://www.novell.com/products/linuxpackages/opensuse/index_group.html</A>
+
+It seems there must be a sqlite3 lib and headers in suse 10.3 (unless 
+opensuse 10.3 has nothing to do with suse 10.3). Can you doublecheck?
+
+Vaclav
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000863.html">[deprecated list] [Yade-dev] impossible to compile without python /	sqlite3
+</A></li>
+	<LI>Next message: <A HREF="000866.html">[deprecated list] [Yade-dev] impossible to compile without	python / sqlite3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#864">[ date ]</a>
+              <a href="thread.html#864">[ thread ]</a>
+              <a href="subject.html#864">[ subject ]</a>
+              <a href="author.html#864">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

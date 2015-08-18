@@ -1,0 +1,385 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1587 - in trunk: extra	extra/usct gui/py	pkg/common	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine	scripts scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1587%20-%20in%20trunk%3A%20extra%0A%09extra/usct%20gui/py%09pkg/common%0A%09pkg/common/Engine/DeusExMachina%09pkg/common/Engine/StandAloneEngine%0A%09scripts%20scripts/test&In-Reply-To=%3C200812011947.mB1JlJU8002448%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000537.html">
+   <LINK REL="Next"  HREF="000539.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1587 - in trunk: extra	extra/usct gui/py	pkg/common	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine	scripts scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1587%20-%20in%20trunk%3A%20extra%0A%09extra/usct%20gui/py%09pkg/common%0A%09pkg/common/Engine/DeusExMachina%09pkg/common/Engine/StandAloneEngine%0A%09scripts%20scripts/test&In-Reply-To=%3C200812011947.mB1JlJU8002448%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1587 - in trunk: extra	extra/usct gui/py	pkg/common	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine	scripts scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Dec  1 20:47:19 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000537.html">[deprecated list] [Yade-dev] [robot] build failed
+</A></li>
+        <LI>Next message: <A HREF="000539.html">[deprecated list] [Yade-dev] [svn] r1589 -	trunk/pkg/snow/PreProcessor/Voxel
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#538">[ date ]</a>
+              <a href="thread.html#538">[ thread ]</a>
+              <a href="subject.html#538">[ subject ]</a>
+              <a href="author.html#538">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-12-01 20:47:18 +0100 (Mon, 01 Dec 2008)
+New Revision: 1587
+
+Added:
+   trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.cpp
+   trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.hpp
+   trunk/scripts/test/
+   trunk/scripts/test/Se3Interpolator.py
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+   trunk/extra/usct/UniaxialStrainControlledTest.hpp
+   trunk/gui/py/PythonUI_rc.py
+   trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/ResetPositionEngine.cpp
+   trunk/pkg/common/SConscript
+Log:
+1. Added Se3Interpolator engine, with scripts/test/Se3Interpolator.py
+2. Added from math import * to PythonUI_rc.py so that math functions are readily accessible everywhere
+3. Implemented stopStrain in UniaxialStrainControlledTest
+4. other small fixes
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-11-27 08:32:53 UTC (rev 1586)
++++ trunk/extra/Brefcom.cpp	2008-12-01 19:47:18 UTC (rev 1587)
+@@ -156,6 +156,7 @@
+ 
+ 		epsN=contGeom-&gt;epsN();
+ 		epsT=contGeom-&gt;epsT();
++		//if(I-&gt;getId1()==0 &amp;&amp; (Omega::instance().getCurrentIteration()%10==0)) LOG_INFO(&quot;##&quot;&lt;&lt;I-&gt;getId1()&lt;&lt;&quot;+&quot;&lt;&lt;I-&gt;getId2()&lt;&lt;&quot;: &quot;&lt;&lt;&quot; dist2-1=&quot;&lt;&lt;(contGeom-&gt;pos1-contGeom-&gt;pos2).Length()-1.&lt;&lt;&quot;, d0=&quot;&lt;&lt;contGeom-&gt;d0&lt;&lt;&quot;, epsN=&quot;&lt;&lt;epsN&lt;&lt;&quot;, |epsT|=&quot;&lt;&lt;epsT.Length());
+ 
+ 		#ifdef BREFCOM_MATERIAL_MODEL
+ 			BREFCOM_MATERIAL_MODEL
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-11-27 08:32:53 UTC (rev 1586)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-12-01 19:47:18 UTC (rev 1587)
+@@ -84,8 +84,19 @@
+ 	if(posIds.size()==0 || negIds.size()==0) return;
+ 	// linearly increase strain to the desired value
+ 	if(abs(currentStrainRate)&lt;abs(strainRate))currentStrainRate+=strainRate*.005; else currentStrainRate=strainRate;
+-	// how much do we move; in the symmetric case, half of the strain is applied at each end;
+-	Real dAX=(asymmetry==0?.5:1)*currentStrainRate*originalLength*Omega::instance().getTimeStep();
++	// how much do we move (in total, symmetry handled below)
++	Real dAX=currentStrainRate*originalLength*Omega::instance().getTimeStep();
++	if(!isnan(stopStrain)){
++		Real axialLength=axisCoord(posIds[0])-axisCoord(negIds[0]);
++		Real newStrain=(axialLength+dAX)/originalLength-1;
++		if((newStrain*stopStrain&gt;0) &amp;&amp; abs(newStrain)&gt;=stopStrain){ // same sign of newStrain and stopStrain &amp;&amp; over the limit from below in abs values
++			dAX=originalLength*(stopStrain+1)-axialLength;
++			LOG_INFO(&quot;Reached stopStrain &quot;&lt;&lt;stopStrain&lt;&lt;&quot;, deactivating self and stopping in &quot;&lt;&lt;idleIterations+1&lt;&lt;&quot; iterations.&quot;);
++			this-&gt;active=false;
++			rootBody-&gt;stopAtIteration=Omega::instance().getCurrentIteration()+1+idleIterations;
++		}
++	}
++	if(asymmetry==0) dAX*=.5; // apply half on both sides if straining symetrically
+ 	for(size_t i=0; i&lt;negIds.size(); i++){
+ 		if(asymmetry==0 || asymmetry==-1 /* for +1, don't move*/) negCoords[i]-=dAX;
+ 		axisCoord(negIds[i])=negCoords[i]; // update current position
+@@ -102,9 +113,6 @@
+ 	// reverse if we're over the limit strain
+ 	if(notYetReversed &amp;&amp; limitStrain!=0 &amp;&amp; ((currentStrainRate&gt;0 &amp;&amp; strain&gt;limitStrain) || (currentStrainRate&lt;0 &amp;&amp; strain&lt;limitStrain))) { currentStrainRate*=-1; notYetReversed=false; LOG_INFO(&quot;Reversed strain rate to &quot;&lt;&lt;currentStrainRate); }
+ 
+-	// if(strain==stopAtStrain){LOG_INFO(&quot;Prescibed strain &quot;&lt;&lt;stopAtStrain&lt;&lt;&quot; reached, pausing.&quot;); }
+-	if(!isnan(stopAtStrain) &amp;&amp; ((strain*stopAtStrain&gt;0) &amp;&amp; abs(strain)&gt;abs(stopAtStrain))) { strain=stopAtStrain;	rootBody-&gt;stopAtIteration=Omega::instance().getCurrentIteration()+2; LOG_INFO(&quot;Prescribed strain &quot;&lt;&lt;stopAtStrain&lt;&lt;&quot; reached, will stop in 2 iterations&quot;); }
+-
+ 	if(Omega::instance().getCurrentIteration()%10==0 ) {
+ 		computeAxialForce(rootBody);
+ 		#if 0
+@@ -297,12 +305,6 @@
+ 
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;BrefcomDamageColorizer&gt;(new BrefcomDamageColorizer));
+ 
+-	shared_ptr&lt;PositionOrientationRecorder&gt; por(new PositionOrientationRecorder);
+-	por-&gt;outputFile=&quot;/tmp/usct-traction&quot;;
+-	por-&gt;interval=300;
+-	por-&gt;saveRgb=true;
+-	rootBody-&gt;engines.push_back(por);
+-
+ }
+ 
+ 
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.hpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.hpp	2008-11-27 08:32:53 UTC (rev 1586)
++++ trunk/extra/usct/UniaxialStrainControlledTest.hpp	2008-12-01 19:47:18 UTC (rev 1587)
+@@ -80,9 +80,10 @@
+ 		Real&amp; axisCoord(body_id_t id){ return Body::byId(id)-&gt;physicalParameters-&gt;se3.position[axis]; };
+ 		void init();
+ 	public:
++		virtual bool isActivated(){return active;}
+ 		Real strainRate,currentStrainRate;
+ 		//! strain at which we will pause simulation; inactive (nan) by default; must be reached from below (in absolute value)
+-		Real stopAtStrain;
++		Real stopStrain;
+ 		//! distance of reference bodies in the direction of axis before straining started
+ 		Real originalLength;
+ 		vector&lt;Real&gt; originalWidths;
+@@ -100,6 +101,10 @@
+ 		bool blockDisplacements;
+ 		//! Whether rotations of boundary bodies are blocked.
+ 		bool blockRotations;
++		//! Are we activated?
++		bool active;
++		//! Number of iterations that will pass without straining activity after stopStrain has been reached (default: 0)
++		long idleIterations;
+ 
+ 		/** bodies on which straining will be applied (on the positive and negative side of axis) */
+ 		vector&lt;body_id_t&gt; posIds, negIds;
+@@ -126,11 +131,13 @@
+ 		Real strain, avgStress;
+ 
+ 		virtual void applyCondition(MetaBody* rootBody);
+-		UniaxialStrainer(){axis=2; asymmetry=0; currentStrainRate=0; originalLength=-1; limitStrain=0; notYetReversed=true; crossSectionArea=-1; needsInit=true; /* sensorsPusher=shared_ptr&lt;UniaxialStrainSensorPusher&gt;(); */ recordFile=&quot;/tmp/usct.data&quot;; strain=avgStress=/*avgTransStrain=*/0; blockRotations=false; blockDisplacements=false;  stopAtStrain=numeric_limits&lt;Real&gt;::quiet_NaN();};
++		UniaxialStrainer(){axis=2; asymmetry=0; currentStrainRate=0; originalLength=-1; limitStrain=0; notYetReversed=true; crossSectionArea=-1; needsInit=true; /* sensorsPusher=shared_ptr&lt;UniaxialStrainSensorPusher&gt;(); */ recordFile=&quot;/tmp/usct.data&quot;; strain=avgStress=/*avgTransStrain=*/0; blockRotations=false; blockDisplacements=false;  stopStrain=numeric_limits&lt;Real&gt;::quiet_NaN(); active=true; idleIterations=0; };
+ 		virtual ~UniaxialStrainer(){};
+ 		REGISTER_ATTRIBUTES_WITH_BASE(DeusExMachina,
+ 				(strainRate) 
+-				(stopAtStrain) 
++				(stopStrain) 
++				(active)
++				(idleIterations)
+ 				(currentStrainRate) 
+ 				(axis) 
+ 				(asymmetry) 
+
+Modified: trunk/gui/py/PythonUI_rc.py
+===================================================================
+--- trunk/gui/py/PythonUI_rc.py	2008-11-27 08:32:53 UTC (rev 1586)
++++ trunk/gui/py/PythonUI_rc.py	2008-12-01 19:47:18 UTC (rev 1587)
+@@ -7,6 +7,7 @@
+ sys.excepthook=sys.__excepthook__ # apport on ubuntu overrides this, we don't need it
+ # sys.path.insert(0,runtime.prefix+'/lib/yade'+runtime.suffix+'/extra')
+ 
++from math import *
+ from yade.wrapper import *
+ from yade import runtime
+ from yade import utils
+
+Added: trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.cpp	2008-11-27 08:32:53 UTC (rev 1586)
++++ trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.cpp	2008-12-01 19:47:18 UTC (rev 1587)
+@@ -0,0 +1,37 @@
++
++#include&quot;Se3Interpolator.hpp&quot;
++#include&lt;yade/pkg-common/PeriodicEngines.hpp&gt;
++
++YADE_PLUGIN(&quot;Se3Interpolator&quot;)
++CREATE_LOGGER(Se3Interpolator);
++
++void Se3Interpolator::applyCondition(MetaBody* mb){
++	assert(subscribedBodies.size()==1);
++	const shared_ptr&lt;Body&gt;&amp;b=Body::byId(subscribedBodies[0],mb);
++	Omega&amp; O=Omega::instance();
++	if(!started){
++		started=true;
++		start=b-&gt;physicalParameters-&gt;se3;
++		if(rotRelative) goal.orientation=goal.orientation*start.orientation;
++		int numGoalEndpoints=0;
++		if(goalVirt&gt;0){startVirt=O.getSimulationTime(); numGoalEndpoints++;}
++		if(goalReal&gt;0){startReal=PeriodicEngine::getClock(); numGoalEndpoints++;}
++		if(goalIter&gt;0){startIter=O.getCurrentIteration(); numGoalEndpoints++;}
++		assert(numGoalEndpoints==1);
++		LOG_DEBUG(&quot;Init'ed.&quot;);
++	}
++	Real t=-1; // t&#8712;[0,1]
++	if(goalVirt&gt;0) t=(O.getSimulationTime()-startVirt)/(goalVirt-startVirt);
++	if(goalReal&gt;0) t=(PeriodicEngine::getClock()-startReal)/(goalReal-startReal);
++	if(goalIter&gt;0) t=(O.getCurrentIteration()-startIter)/(goalIter-startIter);
++	assert(t&gt;=0);
++	LOG_DEBUG(&quot;t=&quot;&lt;&lt;t);
++	t=min(t,1.);
++	b-&gt;physicalParameters-&gt;se3.position=start.position+t*(goal.position-start.position);
++	b-&gt;physicalParameters-&gt;se3.orientation=Quaternionr().Slerp(t,start.orientation,goal.orientation);
++	if(t&gt;=1.){
++		done=true;
++		LOG_DEBUG(&quot;Goal reached.&quot;);
++		if(!goalHook.empty()){ PyGILState_STATE gstate; gstate=PyGILState_Ensure(); PyRun_SimpleString(goalHook.c_str()); PyGILState_Release(gstate); }
++	}
++}
+
+Added: trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.hpp	2008-11-27 08:32:53 UTC (rev 1586)
++++ trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.hpp	2008-12-01 19:47:18 UTC (rev 1587)
+@@ -0,0 +1,60 @@
++// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt; 
++#pragma once
++
++#include&lt;yade/core/DeusExMachina.hpp&gt;
++#include&lt;yade/core/PhysicalParameters.hpp&gt;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++#include&lt;Python.h&gt;
++
++/* Engine interpolating between starting (current) and goal (given) se3, both position and orientation.
++ *
++ * The interpolation is linear, either in iteration space or (real/virtual) time space.
++ *
++ * A given python code can be executed when the ending se3 is reached and the engine deactivates itself.
++ *
++ * Note that eactly one body must be subscribed to this engine, since interpolating positions
++ * on multiple bodies is meaningless.
++ *
++ * Attributes that should be assigned:
++ * 	subscribedBodies (exactly one)
++ * 	goal (7-tuple of position and orientation)
++ * 	startVirt XOR startReal XOR startIter (at what time point to start)
++ * 	goalVirt XOR goalReal XOR goalIter (at what time point to reach desired se3)
++ * 	goalHook (optional: python command to be run when finished)
++ * 	rotRelative (optional: rotation part of goal is relative to the rotation at the beginning)
++ */
++class Se3Interpolator: public DeusExMachina {
++	public:
++		bool done,started;
++		Se3r start;
++		Se3r goal;
++		bool rotRelative;
++		Real goalVirt, goalReal; long goalIter;
++		long startVirt, startReal; long startIter;
++		string goalHook;
++		virtual bool isActivated(){return !done;}
++		Se3Interpolator(): done(false), started(false), rotRelative(false), goalVirt(0), goalReal(0), goalIter(0) {};
++		virtual ~Se3Interpolator(){};
++		virtual void applyCondition(MetaBody* mb);
++	protected:
++		REGISTER_ATTRIBUTES_WITH_BASE(DeusExMachina,
++			(done)
++			(started)
++			(start)
++			(goal)
++			(rotRelative)
++			(goalVirt)
++			(goalReal)
++			(goalIter)
++			(startVirt)
++			(startReal)
++			(startIter)
++			(goalHook)
++		);
++		REGISTER_CLASS_AND_BASE(Se3Interpolator,DeusExMachina);
++		DECLARE_LOGGER;
++};
++REGISTER_SERIALIZABLE(Se3Interpolator);
++	
++
++
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2008-11-27 08:32:53 UTC (rev 1586)
++++ trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2008-12-01 19:47:18 UTC (rev 1587)
+@@ -11,9 +11,8 @@
+  * the number of activations was already reached, no action will be called even if any of active period has elapsed.
+  */
+ class PeriodicEngine:  public StandAloneEngine {
+-	protected:
+-		static Real getClock(){ timeval tp; gettimeofday(&amp;tp,NULL); return tp.tv_sec+tp.tv_usec/1e6; }
+ 	public:
++		static Real getClock(){ timeval tp; gettimeofday(&amp;tp,NULL); return tp.tv_sec+tp.tv_usec/1e6; }
+ 		Real virtPeriod, virtLast, realPeriod, realLast; long iterPeriod,iterLast,nDo,nDone;
+ 		PeriodicEngine(): virtPeriod(0),virtLast(0),realPeriod(0),realLast(0),iterPeriod(0),iterLast(0),nDo(-1),nDone(0) { realLast=getClock(); }
+ 		virtual bool isActivated(){
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/ResetPositionEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/ResetPositionEngine.cpp	2008-11-27 08:32:53 UTC (rev 1586)
++++ trunk/pkg/common/Engine/StandAloneEngine/ResetPositionEngine.cpp	2008-12-01 19:47:18 UTC (rev 1587)
+@@ -8,7 +8,7 @@
+ 
+ #include&quot;ResetPositionEngine.hpp&quot;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
++#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
+ #include&lt;boost/foreach.hpp&gt;
+ 
+ CREATE_LOGGER(ResetPositionEngine);
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2008-11-27 08:32:53 UTC (rev 1586)
++++ trunk/pkg/common/SConscript	2008-12-01 19:47:18 UTC (rev 1587)
+@@ -55,8 +55,8 @@
+ 		LIBS=env['LIBS']+['Force','ParticleParameters']),
+ 	env.SharedLibrary('GravityEngines',['Engine/DeusExMachina/GravityEngines.cpp'],
+ 		LIBS=env['LIBS']+['Force','ParticleParameters']),
+-	env.SharedLibrary('JumpChangeSe3',['Engine/DeusExMachina/JumpChangeSe3.cpp'],
+-		LIBS=env['LIBS']+['RigidBodyParameters']),
++	env.SharedLibrary('JumpChangeSe3',['Engine/DeusExMachina/JumpChangeSe3.cpp'], LIBS=env['LIBS']+['RigidBodyParameters']),
++	env.SharedLibrary('Se3Interpolator',['Engine/DeusExMachina/Se3Interpolator.cpp'], LIBS=env['LIBS']+['RigidBodyParameters']),
+ 	env.SharedLibrary('RotationEngine',['Engine/DeusExMachina/RotationEngine.cpp'],
+ 		LIBS=env['LIBS']+['ParticleParameters','RigidBodyParameters']),
+ 	env.SharedLibrary('TranslationEngine',['Engine/DeusExMachina/TranslationEngine.cpp'],
+
+Added: trunk/scripts/test/Se3Interpolator.py
+===================================================================
+--- trunk/scripts/test/Se3Interpolator.py	2008-11-27 08:32:53 UTC (rev 1586)
++++ trunk/scripts/test/Se3Interpolator.py	2008-12-01 19:47:18 UTC (rev 1587)
+@@ -0,0 +1,14 @@
++# default parameters or from table
++# encoding: utf-8
++O.bodies.append([
++	utils.sphere([0,0,0],radius=.5),
++])
++
++O.engines=[
++	DeusExMachina('Se3Interpolator',{'subscribedBodies':[0],'goal':[10,10,0,0,0,1,pi],'startIter':10,'goalIter':1010,'goalHook':'print &quot;Finished moving the thing!&quot;; O.pause()'}),
++]
++O.dt=1e-6
++print 'Initial se3:',O.bodies[0].phys['se3']
++#O.saveTmp('init'); O.run(); O.wait();
++#print 'Final   se3:',O.bodies[0].phys['se3']
++#quit()
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000537.html">[deprecated list] [Yade-dev] [robot] build failed
+</A></li>
+	<LI>Next message: <A HREF="000539.html">[deprecated list] [Yade-dev] [svn] r1589 -	trunk/pkg/snow/PreProcessor/Voxel
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#538">[ date ]</a>
+              <a href="thread.html#538">[ thread ]</a>
+              <a href="subject.html#538">[ subject ]</a>
+              <a href="author.html#538">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

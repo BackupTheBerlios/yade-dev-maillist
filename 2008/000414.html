@@ -1,0 +1,265 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1532 - in trunk/pkg/dem:	Engine/DeusExMachina	Engine/EngineUnit PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1532%20-%20in%20trunk/pkg/dem%3A%0A%09Engine/DeusExMachina%09Engine/EngineUnit%20PreProcessor&In-Reply-To=%3C200809301029.m8UATreO028485%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000419.html">
+   <LINK REL="Next"  HREF="000415.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1532 - in trunk/pkg/dem:	Engine/DeusExMachina	Engine/EngineUnit PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1532%20-%20in%20trunk/pkg/dem%3A%0A%09Engine/DeusExMachina%09Engine/EngineUnit%20PreProcessor&In-Reply-To=%3C200809301029.m8UATreO028485%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1532 - in trunk/pkg/dem:	Engine/DeusExMachina	Engine/EngineUnit PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Sep 30 12:29:53 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000419.html">[deprecated list] [Yade-dev] Colorful Errors and Warnings in xterm when compiling! EXTRA :)
+</A></li>
+        <LI>Next message: <A HREF="000415.html">[deprecated list] [Yade-dev] [svn] r1533 - in trunk: core	pkg/common	pkg/common/Container	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#414">[ date ]</a>
+              <a href="thread.html#414">[ thread ]</a>
+              <a href="subject.html#414">[ subject ]</a>
+              <a href="author.html#414">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-09-30 12:29:52 +0200 (Tue, 30 Sep 2008)
+New Revision: 1532
+
+Modified:
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+Log:
+A few fixes in TriaxialTest:
+1. radiusStdDev is a registered attribute parameter
+2. skip unloading phase if sigmaLateralConfinement==sigmaIsoCompaction
+3. new bool autoUnload, that controls automaticity of going from compaction to unloading; autocompressionActivation controls from unloading to loading.
+Note: IFacet2IS4SCG is broken, but not yet fixed. 
+
+
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-09-29 06:37:41 UTC (rev 1531)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-09-30 10:29:52 UTC (rev 1532)
+@@ -38,8 +38,10 @@
+ 	FinalIterationPhase1 = 0;
+ 	Iteration = 0;
+ 	testEquilibriumInterval = 20;
+-	//compressionActivated=false;
++
++	autoUnload=true;
+ 	autoCompressionActivation=true;
++
+ 	UnbalancedForce = 1;
+ 	saveSimulation = false;
+ 	firstRun=true;
+@@ -147,12 +149,16 @@
+ 
+ 		if ( UnbalancedForce&lt;=StabilityCriterion &amp;&amp; abs ( ( meanStress-sigma_iso ) /sigma_iso ) &lt;0.005 )
+ 		{
+-			if ( currentState==STATE_ISO_COMPACTION &amp;&amp; autoCompressionActivation )
+-			{
+-				doStateTransition (ncb, STATE_ISO_UNLOADING ); /*update stress and strain here*/ computeStressStrain ( ncb );
++			// only go to UNLOADING if it is needed (hard float comparison... :-| )
++			if ( currentState==STATE_ISO_COMPACTION &amp;&amp; autoUnload &amp;&amp; sigmaLateralConfinement!=sigmaIsoCompaction ) {
++				doStateTransition (ncb, STATE_ISO_UNLOADING );
++				computeStressStrain ( ncb ); // update stress and strain
+ 			}
+-			else if ( currentState==STATE_ISO_UNLOADING &amp;&amp; autoCompressionActivation )
+-			{
++			else if(currentState==STATE_ISO_COMPACTION &amp;&amp; autoCompressionActivation){
++				doStateTransition (ncb, STATE_TRIAX_LOADING );
++				computeStressStrain ( ncb ); // update stress and strain
++			}
++			else if ( currentState==STATE_ISO_UNLOADING &amp;&amp; autoCompressionActivation ) {
+ 				doStateTransition (ncb, STATE_TRIAX_LOADING ); computeStressStrain ( ncb );
+ 			}
+ 			// huh?! this will never happen, because of the first condition...
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp	2008-09-29 06:37:41 UTC (rev 1531)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp	2008-09-30 10:29:52 UTC (rev 1532)
+@@ -24,20 +24,26 @@
+ 
+ /** \brief Class for controlling optional initial isotropic compaction and subsequent triaxial test with constant lateral stress and constant axial strain rate.
+  *
+- * The engine is a state machine with the following states (and automatic transitions):
++ * The engine is a state machine with the following states; transitions my be automatic, see below.
+  *
+  * 1. STATE_ISO_COMPACTION: isotropic compaction (compression) until
+  *    the prescribed mean pressue sigmaIsoCompaction is reached and the packing is stable.
+  *    The compaction happens either by straining the walls (!internalCompaction)
+- *    or by growing size of grains (internalCompaction)
++ *    or by growing size of grains (internalCompaction).
+  * 2. STATE_ISO_UNLOADING: isotropic unloading from the previously reached state, until
+- *    the mean pressure sigmaLateralConfinement is reached (and stabilizes)
++ *    the mean pressure sigmaLateralConfinement is reached (and stabilizes).
++ *    NOTE: this state will be skipped if sigmaLateralConfinement == sigmaIsoCompaction.
+  * 3. STATE_TRIAX_LOADING: confined uniaxial compression:
+  *		constant sigmaLateralConfinement is kept at lateral walls (left, right, front, back), while
+  * 	top and bottom walls load the packing in their axis (by straining), until the value of epsilonMax
+  * 	(deformation along the loading axis) is reached. At this point, the simulation is stopped.
+  * 4. STATE_TRIAX_LIMBO: currently unused, since simulation is hard-stopped in the previous state.
+  *
++ * Transition from COMPACTION to UNLOADING is done automatically if autoUnload==true;
++ * Transition from (UNLOADING to LOADING) or from (COMPACTION to LOADING: if UNLOADING is skipped) is
++ *   done automatically if autoCompressionActivation=true;
++ * Both autoUnload and autoCompressionActivation are true by default.
++ *
+  */
+ 
+ class TriaxialCompressionEngine : public TriaxialStressController
+@@ -92,8 +98,11 @@
+ 		std::string Key;//A code that is appended to file names to help distinguish between different simulations
+ 		// //! Is uniaxial compression currently activated?
+ 		// bool compressionActivated;
+-		//! Auto-switch between isotropic and uniaxial compression?
++		//! Auto-switch from isotropic compaction or unloading state (if sigmaLateralConfinement&lt;sigmaIsoCompaction)
++		// to uniaxial compression
+ 		bool autoCompressionActivation;
++		//! Auto-switch from isotropic compaction to unloading
++		bool autoUnload;
+ 				
+ 		virtual void applyCondition(MetaBody * ncb);
+ 		void updateParameters(MetaBody * ncb);
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2008-09-29 06:37:41 UTC (rev 1531)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2008-09-30 10:29:52 UTC (rev 1532)
+@@ -122,6 +122,7 @@
+ 				scm-&gt;cp2rel.Align(Vector3r::UNIT_X,se32.orientation.Conjugate()*(-normal));
+ 				scm-&gt;cp1rel.Normalize(); scm-&gt;cp2rel.Normalize();
+ 			}
++			cerr&lt;&lt;&quot;[n&quot;&lt;&lt;scm-&gt;displacementN()&lt;&lt;&quot; t&quot;&lt;&lt;scm-&gt;displacementT()&lt;&lt;&quot;]&quot;;
+ 		}
+ 
+ 		return true;
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-09-29 06:37:41 UTC (rev 1531)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-09-30 10:29:52 UTC (rev 1532)
+@@ -138,6 +138,7 @@
+ 	maxWallVelocity=10;
+ 	StabilityCriterion = 0.01;
+ 	autoCompressionActivation = true;
++	autoUnload = true;
+ 	maxMultiplier = 1.01;
+ 	finalMaxMultiplier = 1.001;
+ 	
+@@ -158,6 +159,8 @@
+ 	wallOversizeFactor=1.3;
+ 
+ 	biaxial2dTest=false;
++
++	radiusStdDev=0.3;
+ 	
+ //	wall_top_id =0;
+ // 	wall_bottom_id =0;
+@@ -188,6 +191,7 @@
+ 	REGISTER_ATTRIBUTE(biaxial2dTest);
+ 	REGISTER_ATTRIBUTE(maxMultiplier);
+ 	REGISTER_ATTRIBUTE(finalMaxMultiplier);
++	REGISTER_ATTRIBUTE(radiusStdDev);
+ 
+ 	REGISTER_ATTRIBUTE(sphereYoungModulus);
+ 	REGISTER_ATTRIBUTE(spherePoissonRatio);
+@@ -211,6 +215,7 @@
+ 	REGISTER_ATTRIBUTE(maxWallVelocity);
+ 	REGISTER_ATTRIBUTE(StabilityCriterion);
+ 	REGISTER_ATTRIBUTE(autoCompressionActivation);
++	REGISTER_ATTRIBUTE(autoUnload);
+ //	REGISTER_ATTRIBUTE(wall_top);
+ //	REGISTER_ATTRIBUTE(wall_bottom);
+ //	REGISTER_ATTRIBUTE(wall_1);
+@@ -381,7 +386,7 @@
+ 	
+ 	vector&lt;BasicSphere&gt; sphere_list;
+ 	if(importFilename!=&quot;&quot;) sphere_list=Shop::loadSpheresFromFile(importFilename,lowerCorner,upperCorner);
+-	else message+=GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, 0.3, 0.75);
++	else message+=GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, radiusStdDev, 0.75);
+ 	
+ 	vector&lt;BasicSphere&gt;::iterator it = sphere_list.begin();
+ 	vector&lt;BasicSphere&gt;::iterator it_end = sphere_list.end();
+@@ -594,6 +599,7 @@
+ 	triaxialcompressionEngine-&gt;strainRate = strainRate;
+ 	triaxialcompressionEngine-&gt;StabilityCriterion = StabilityCriterion;
+ 	triaxialcompressionEngine-&gt;autoCompressionActivation = autoCompressionActivation;
++	triaxialcompressionEngine-&gt;autoUnload = autoUnload;
+ 	triaxialcompressionEngine-&gt;internalCompaction = internalCompaction;
+ 	triaxialcompressionEngine-&gt;maxMultiplier = maxMultiplier;
+ 	triaxialcompressionEngine-&gt;finalMaxMultiplier = finalMaxMultiplier;
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2008-09-29 06:37:41 UTC (rev 1531)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2008-09-30 10:29:52 UTC (rev 1532)
+@@ -73,7 +73,8 @@
+ 				StabilityCriterion,
+ 				maxMultiplier, ///max multiplier of diameters during internal compaction
+ 				finalMaxMultiplier,
+-				wallOversizeFactor; // make walls bigger (/smaller) than necessary by this factor
++				wallOversizeFactor,
++				radiusStdDev; // make walls bigger (/smaller) than necessary by this factor
+ 
+ 		bool		 wall_top
+ 				,wall_bottom
+@@ -89,6 +90,8 @@
+ 				,wall_4_wire
+ 				//! do we just want to generate a stable packing under isotropic pressure (false) or do we want the triaxial loading to start automatically right after compaction stage (true)?
+ 				,autoCompressionActivation
++				//! see docs for TriaxialCompressionEngine and TriaxialCompressionEngine::autoUnload
++				,autoUnload
+ 			
+ 				,rotationBlocked
+ 				,spheresRandomColor
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000419.html">[deprecated list] [Yade-dev] Colorful Errors and Warnings in xterm when compiling! EXTRA :)
+</A></li>
+	<LI>Next message: <A HREF="000415.html">[deprecated list] [Yade-dev] [svn] r1533 - in trunk: core	pkg/common	pkg/common/Container	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#414">[ date ]</a>
+              <a href="thread.html#414">[ thread ]</a>
+              <a href="subject.html#414">[ subject ]</a>
+              <a href="author.html#414">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

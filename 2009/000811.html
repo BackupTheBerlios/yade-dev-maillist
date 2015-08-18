@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] contact logic (again)
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20contact%20logic%20%28again%29&In-Reply-To=%3C49AE5A54.3030200%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000806.html">
+   <LINK REL="Next"  HREF="000812.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] contact logic (again)</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20contact%20logic%20%28again%29&In-Reply-To=%3C49AE5A54.3030200%40hmg.inpg.fr%3E"
+       TITLE="[deprecated list] [Yade-dev] contact logic (again)">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Wed Mar  4 11:39:16 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000806.html">[deprecated list] [Yade-dev] contact logic (again)
+</A></li>
+        <LI>Next message: <A HREF="000812.html">[deprecated list] [Yade-dev] contact logic (again)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#811">[ date ]</a>
+              <a href="thread.html#811">[ thread ]</a>
+              <a href="subject.html#811">[ subject ]</a>
+              <a href="author.html#811">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i> To summarize:
+</I>&gt;<i>
+</I>&gt;<i> 1. Colliders:
+</I>&gt;<i> a) create potential (isNew !isReal) interactions, for overlapping AABBs
+</I>&gt;<i> b) delete interactions that were potential (isNew&amp;!isReal) but now 
+</I>&gt;<i> don't have overlapping AABBs
+</I>&gt;<i> c) keep isReal interactions (regardless of geometrical overlap)
+</I>&gt;<i>
+</I>&gt;<i> 2. InteractionGeometryMetaEngine:
+</I>&gt;<i> a) set isReal on interactions that are real (bodies collide not only 
+</I>&gt;<i> with AABBs, but also with their volumes)
+</I>&gt;<i>
+</I>&gt;<i> 3. ConstitutiveLaws
+</I>&gt;<i> a) may set !isReal, they do not change anything else (let alone 
+</I>&gt;<i> deleting interactions directly!)
+</I>&gt;<i>
+</I>Perfect!
+
+
+&gt;<i> Remaining problem: who deletes interaction that was ever only 
+</I>&gt;<i> potential and now there is no AABB overlap anymore? It would have to 
+</I>&gt;<i> keep track of when was the interaction seen last (something like 
+</I>&gt;<i> Interaction::cycle). I propose long Interaction::lastSeen for 
+</I>&gt;<i> iteration number. All interactions that are isNew &amp;&amp; !isReal &amp;&amp; 
+</I>&gt;<i> lastSeen&lt;currentIteration can be deleted safely. Whould that be OK? 
+</I>&gt;<i> Currently, PersistentSAPCollider sets isReal=false at the beginning of 
+</I>&gt;<i> the loop.
+</I>&gt;<i>
+</I>
+Mmmh... Is there really a problem here? What is the difference with 1.b) 
+above?
+You can let the collider delete those interactions, disregarding the 
+&quot;lastseen&quot; iteration.
+PersistentSAPCollider is NOT reseting isReal for the case we are 
+discussing :
+/
+if(!haveDistantTransient) I-&gt;isReal=false;/
+
+This is the only place where isReal can be set false if it is not set in 
+the constitutive law (e.g. ElasticContactLaw).
+This line will be totally removed eventually, when the 
+haveDistantTransient behaviour will be the default. Or perhaps this line 
+will be left here and only the default value of hDT will be changed to 
+keep both behaviours possible?
+
+Bruno
+
+
+&gt;<i>
+</I>&gt;<i> _______________________________________________
+</I>&gt;<i> Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+</I>&gt;<i> Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+</I>&gt;<i> Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+</I>&gt;<i> More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</I>&gt;<i>
+</I>
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Grenoble INP
+Laboratoire 3SR - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000806.html">[deprecated list] [Yade-dev] contact logic (again)
+</A></li>
+	<LI>Next message: <A HREF="000812.html">[deprecated list] [Yade-dev] contact logic (again)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#811">[ date ]</a>
+              <a href="thread.html#811">[ thread ]</a>
+              <a href="subject.html#811">[ subject ]</a>
+              <a href="author.html#811">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

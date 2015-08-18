@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [Bug 418107] Re: bzr1727 fails to	compile on ubuntu 9.04
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5BBug%20418107%5D%20Re%3A%20bzr1727%20fails%20to%0A%09compile%20on%20ubuntu%209.04&In-Reply-To=%3C20090824142144.6727.49088.malone%40potassium.ubuntu.com%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001574.html">
+   <LINK REL="Next"  HREF="001575.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [Bug 418107] Re: bzr1727 fails to	compile on ubuntu 9.04</H1>
+    <B>Janek Kozicki</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5BBug%20418107%5D%20Re%3A%20bzr1727%20fails%20to%0A%09compile%20on%20ubuntu%209.04&In-Reply-To=%3C20090824142144.6727.49088.malone%40potassium.ubuntu.com%3E"
+       TITLE="[deprecated list] [Yade-dev] [Bug 418107] Re: bzr1727 fails to	compile on ubuntu 9.04">janek_listy at wp.pl
+       </A><BR>
+    <I>Mon Aug 24 16:21:44 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001574.html">[deprecated list] [Yade-dev] [Bug 418107] Re: bzr1727 fails to	compile on ubuntu 9.04
+</A></li>
+        <LI>Next message: <A HREF="001575.html">[deprecated list] [Yade-dev] [Bug 418107] Re: bzr1727 fails to	compile on ubuntu 9.04
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1577">[ date ]</a>
+              <a href="thread.html#1577">[ thread ]</a>
+              <a href="subject.html#1577">[ subject ]</a>
+              <a href="author.html#1577">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>actually on my regular box the rev1728 it is not compiling either (and
+two revisions ago it was!)! See this error:
+
+/home/janek/tmp/ZZ/build-ZZ-test-fast/include/yade-ZZ-test/indexing_suite/slice_handler.hpp:48: error: `list' in namespace `boost::python' does not name a type
+/home/janek/tmp/ZZ/build-ZZ-test-fast/include/yade-ZZ-test/indexing_suite/slice_handler.hpp: In static member function `static boost::python::api::object boost::python::indexing::slice_handler&lt;Algorithms, Policy&gt;::make_getitem(const Policy&amp;)':
+/home/janek/tmp/ZZ/build-ZZ-test-fast/include/yade-ZZ-test/indexing_suite/slice_handler.hpp:92: error: `get_slice' was not declared in this scope
+/home/janek/tmp/ZZ/build-ZZ-test-fast/include/yade-ZZ-test/indexing_suite/slice_handler.hpp: At global scope:
+/home/janek/tmp/ZZ/build-ZZ-test-fast/include/yade-ZZ-test/indexing_suite/slice_handler.hpp:180: error: expected constructor, destructor, or type conversion before `slice_handler'
+In file included from /usr/include/boost/python.hpp:24,
+                 from /home/janek/tmp/ZZ/build-ZZ-test-fast/include/yade-ZZ-test/yade/lib-serialization/Serializable.hpp:23,
+                 from /home/janek/tmp/ZZ/yade/core/GeometricalModel.hpp:14,
+                 from /home/janek/tmp/ZZ/yade/core/Body.hpp:13,
+                 from /home/janek/tmp/ZZ/yade/core/Body.cpp:11,
+                 from /home/janek/tmp/ZZ/build-ZZ-test-fast/core/core.cpp:1:
+/usr/include/boost/python/dict.hpp:38: error: `list' does not name a type
+/usr/include/boost/python/dict.hpp:50: error: `list' does not name a type
+/usr/include/boost/python/dict.hpp:65: error: `list' does not name a type
+
+-- 
+bzr1727 fails to compile on ubuntu 9.04
+<A HREF="https://bugs.launchpad.net/bugs/418107">https://bugs.launchpad.net/bugs/418107</A>
+You received this bug notification because you are a member of Yade
+developers, which is subscribed to Yade.
+
+Status in Yet Another Dynamic Engine: New
+
+Bug description:
+I even made a clean ubuntu 9.04 install under vmware to be sure that it's not some broken python configuration. When you type scons to compile you only get this error:
+
+scons: Reading SCconscript files...
+@@@ Using profile default (scons.profile default) @@@
+TypeError: cannot concatenate 'str' and 'NoneType' objects:
+  File &quot;/home/janek/trunk/SConstruct&quot;, line 194:
+    env['SUFFIX']='-'+env['version']+env['variant']
+
+
+It doesn't even start checking what libraries are available.
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001574.html">[deprecated list] [Yade-dev] [Bug 418107] Re: bzr1727 fails to	compile on ubuntu 9.04
+</A></li>
+	<LI>Next message: <A HREF="001575.html">[deprecated list] [Yade-dev] [Bug 418107] Re: bzr1727 fails to	compile on ubuntu 9.04
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1577">[ date ]</a>
+              <a href="thread.html#1577">[ thread ]</a>
+              <a href="subject.html#1577">[ subject ]</a>
+              <a href="author.html#1577">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

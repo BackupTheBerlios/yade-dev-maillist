@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] more diversity in /pkg/ dir?
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20more%20diversity%20in%20/pkg/%20dir%3F&In-Reply-To=%3C20090127070141.52d11212%40szpak%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000634.html">
+   <LINK REL="Next"  HREF="000636.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] more diversity in /pkg/ dir?</H1>
+    <B>Janek Kozicki</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20more%20diversity%20in%20/pkg/%20dir%3F&In-Reply-To=%3C20090127070141.52d11212%40szpak%3E"
+       TITLE="[deprecated list] [Yade-dev] more diversity in /pkg/ dir?">janek_listy at wp.pl
+       </A><BR>
+    <I>Tue Jan 27 07:01:41 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000634.html">[deprecated list] [Yade-dev] [svn] r1647 - in trunk: gui/qt3	pkg/snow/RenderingEngine
+</A></li>
+        <LI>Next message: <A HREF="000636.html">[deprecated list] [Yade-dev] more diversity in /pkg/ dir?
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#635">[ date ]</a>
+              <a href="thread.html#635">[ thread ]</a>
+              <a href="subject.html#635">[ subject ]</a>
+              <a href="author.html#635">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>People tend to add, like 10 or 20 classes to achieve something
+specific like for example:
+
+1. STL facets, 
+2. capillary law, 
+3. snow simulations, 
+4. polyhedron collisions, (almost there ;)
+5. example of adding a custom element (MyTetrahedron) etc.
+
+How about making a directory for each of those achieved &quot;tasks&quot;?
+
+It would make it simpler to see, what indeed is in yade, just by
+looking at /pkg/ directory. That means splitting dem/ into several
+directories. And would solve few other problems: too deep directory
+structure (since there will be about 20 files per dir, we don't need
+deep dir structure), too difficult to find anything, because there
+are too many files in single dir, etc...
+
+When I get polyhedrons to work I'm planning to split polyhedron
+specific code into /pkg/polyhedron directory, and pkg/snow package
+will simply depend on it.
+
+the &quot;original&quot; DEM code would be put into /pkg/sphere/ directory, and
+other stuff into dirs names after, whet they really do - like for
+example the capillary stuff would be /pkg/capillary, and so on....
+
+
+yet another idea about cleaning up everything. Who know if we ever
+make it. But I like the idea anyway. Do you? If you do, then maybe,
+someday, out of the sudden I will feel like doing it :) Or someone
+else, for that matter.
+
+
+btw - check 'blame doc/REMOVED_STUFF' it looks like 'svn mv' doesn't
+break svn blame! So we can move stuff around freely.
+
+-- 
+Janek Kozicki                                                         |
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000634.html">[deprecated list] [Yade-dev] [svn] r1647 - in trunk: gui/qt3	pkg/snow/RenderingEngine
+</A></li>
+	<LI>Next message: <A HREF="000636.html">[deprecated list] [Yade-dev] more diversity in /pkg/ dir?
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#635">[ date ]</a>
+              <a href="thread.html#635">[ thread ]</a>
+              <a href="subject.html#635">[ subject ]</a>
+              <a href="author.html#635">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

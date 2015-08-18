@@ -1,0 +1,194 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1858 - in trunk: . debian
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1858%20-%20in%20trunk%3A%20.%20debian&In-Reply-To=%3C200907120839.n6C8dZN0002900%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001183.html">
+   <LINK REL="Next"  HREF="001185.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1858 - in trunk: . debian</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1858%20-%20in%20trunk%3A%20.%20debian&In-Reply-To=%3C200907120839.n6C8dZN0002900%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1858 - in trunk: . debian">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Jul 12 10:39:35 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001183.html">[deprecated list] [Yade-dev] [svn] r1857 - in trunk: . gui/py	pkg/common	pkg/common/Engine/MetaEngine pkg/dem py	py/yadeWrapper scripts/test
+</A></li>
+        <LI>Next message: <A HREF="001185.html">[deprecated list] [Yade-dev] [svn] r1859 - in trunk: . debian py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1184">[ date ]</a>
+              <a href="thread.html#1184">[ thread ]</a>
+              <a href="subject.html#1184">[ subject ]</a>
+              <a href="author.html#1184">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-12 10:39:34 +0200 (Sun, 12 Jul 2009)
+New Revision: 1858
+
+Modified:
+   trunk/SConstruct
+   trunk/debian/control-template
+Log:
+1. Rename scons option arcs to PGO (profile=guided optimizations)
+2. Install only binaries by default (no docs, must be requested from cmd line via path)
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-07-12 08:21:25 UTC (rev 1857)
++++ trunk/SConstruct	2009-07-12 08:39:34 UTC (rev 1858)
+@@ -127,7 +127,7 @@
+ 	BoolVariable('optimize','Turn on heavy optimizations',defOptions['optimize']),
+ 	BoolVariable('openmp','Compile with openMP parallelization support',defOptions['openmp']),
+ 	ListVariable('exclude','Yade components that will not be built','none',names=['qt3','gui','extra','common','dem','fem','lattice','mass-spring','realtime-rigidbody','snow']),
+-	EnumVariable('arcs','Whether to generate or use branch probabilities','',['','gen','use'],{'no':'','0':'','false':''},1),
++	EnumVariable('PGO','Whether to &quot;gen&quot;erate or &quot;use&quot; Profile-Guided Optimization','',['','gen','use'],{'no':'','0':'','false':''},1),
+ 	# OK, dummy prevents bug in scons: if one selects all, it says all in scons.config, but without quotes, which generates error.
+ 	ListVariable('features','Optional features that are turned on','python,log4cxx,openGL',names=['openGL','python','log4cxx','binfmt','CGAL','dummy','GTS']),
+ 	('jobs','Number of jobs to run at the same time (same as -j, but saved)',4,None,int),
+@@ -276,14 +276,12 @@
+ 		context.Result(False); return False
+ def CheckScientificPython(context): return CheckPythonModule(context,&quot;Scientific&quot;)
+ def CheckIPython(context): return CheckPythonModule(context,&quot;IPython&quot;)
+-	
+ def CheckCXX(context):
+ 	context.Message('Checking whether c++ compiler &quot;%s&quot; works...'%env['CXX'])
+ 	ret=context.TryLink('#include&lt;iostream&gt;\nint main(int argc, char**argv){std::cerr&lt;&lt;std::endl;return 0;}\n','.cpp')
+ 	context.Result(ret)
+ 	return ret
+ 
+-
+ if not env.GetOption('clean'):
+ 	conf=env.Configure(custom_tests={'CheckQt':CheckQt,'CheckCXX':CheckCXX,'CheckPython':CheckPython,'CheckScientificPython':CheckScientificPython,'CheckIPython':CheckIPython},
+ 		conf_dir='$buildDir/.sconf_temp',log_file='$buildDir/config.log')
+@@ -419,8 +417,8 @@
+ if env['gprof']: env.Append(CXXFLAGS=['-pg'],LINKFLAGS=['-pg'],SHLINKFLAGS=['-pg'])
+ env.Prepend(CXXFLAGS=['-pipe','-Wall']) # '-Wc++0x-compat' ## not know to gcc-3.*
+ 
+-if env['arcs']=='gen': env.Append(CXXFLAGS=['-fprofile-generate'],LINKFLAGS=['-fprofile-generate'])
+-if env['arcs']=='use': env.Append(CXXFLAGS=['-fprofile-use'],LINKFLAGS=['-fprofile-use'])
++if env['PGO']=='gen': env.Append(CXXFLAGS=['-fprofile-generate'],LINKFLAGS=['-fprofile-generate'])
++if env['PGO']=='use': env.Append(CXXFLAGS=['-fprofile-use'],LINKFLAGS=['-fprofile-use'])
+ 
+ ### LINKER
+ ## libs for all plugins
+@@ -486,28 +484,6 @@
+ 	while apfl[i]==aptl[i] and i&lt;min(len(apfl),len(aptl))-1: i+=1
+ 	return sep.join(['..' for j in range(0,len(apfl)-i)]+aptl[i:])
+ 
+-
+-def makePkgConfig(fileName):
+-	cflags,libs='Cflags: ','Libs: '
+-	cflags+=' '+' '.join(env['CXXFLAGS'])
+-	for df in env['CPPDEFINES']:
+-		if type(df)==tuple: cflags+=' -D%s=%s'%(df[0],df[1])
+-		else: cflags+=' -D%s'%df
+-	for p in env['CPPPATH']:
+-		if p[0]=='#': cflags+=' -I$PREFIX/include/yade$SUFFIX'
+-		else: cflags+=' -I%s'%p
+-	for l in env['SHLINKFLAGS']:
+-		if not l.find('soname')&gt;=0: libs+=' '+l # skip -Wl,soname=...
+-	for p in env['RPATH']: libs+=' -Wl,-rpath=%s'%p
+-	for p in env['LIBPATH']: libs+=' -L%s'%p
+-	pc='Name: Yade\nDescription: Platform for dynamic mechanics\nVersion: %s\n%s\n%s\n'%(env['version'],cflags,libs)
+-	pc+='yadeLibDir: $PREFIX/lib/yade$SUFFIX\n'
+-	pc=re.sub(r'\bPREFIX\b','runtimePREFIX',pc) # fix prefix paths
+-	pc=re.sub(r'\bbuildDir\b','runtimePREFIX',pc) # fix include paths: divert to the installed location
+-	pc=env.subst(pc)+'\n'
+-	f=file(env.subst(fileName),'w'); f.write(pc); f.close()
+-	return None
+-
+ # 1. symlink all headers to buildDir/include before the actual build
+ # 2. (unused now) instruct scons to install (not symlink) all headers to the right place as well
+ # 3. set the &quot;install&quot; target as default (if scons is called without any arguments), which triggers build in turn
+@@ -518,11 +494,8 @@
+ 	#env.AddPreAction(installAlias,installHeaders)
+ 	from os.path import join,split,isabs,isdir,exists,lexists,islink,isfile,sep
+ 	installHeaders() # install to buildDir always
+-	if 0: # do not install headers, nor make pkg-config (was never used, I think)
++	if 0: # do not install headers
+ 		installHeaders(env.subst('$PREFIX')) # install to $PREFIX if specifically requested: like &quot;scons /usr/local/include&quot;
+-		makePkgConfig('$buildDir/yade${SUFFIX}.pc')
+-		env.Install(pcDir,'$buildDir/yade${SUFFIX}.pc')
+-		#  add pcDir to instDirs if you install pkg-config stuff at some point
+ 	if not env['haveForeach']:
+ 		boostDir=buildDir+'/include/yade-'+env['version']+'/boost'
+ 		foreachLink=boostDir+'/foreach.hpp'
+@@ -532,8 +505,7 @@
+ 			if lexists(foreachLink): os.remove(foreachLink) # broken symlink: remove it
+ 			os.symlink(relpath(foreachLink,foreachTarget),foreachLink)
+ 		env.InstallAs(env['PREFIX']+'/include/yade-'+env['version']+'/boost/foreach.hpp',foreachTarget)
+-	installAlias=env.Alias('install',instDirs) # build and install everything that should go to instDirs, which are $PREFIX/{bin,lib} (uses scons' Install)
+-	env.Default([installAlias,'$PREFIX'])
++	env.Default(env.Alias('install',instDirs)) # build and install everything that should go to instDirs, which are $PREFIX/{bin,lib} (uses scons' Install)
+ 
+ env.Export('env');
+ 
+@@ -558,8 +530,9 @@
+ 			os.remove(ff)
+ 
+ #################################################################################
+-#### DOCUMENTATION ##############################################################
+-#################################################################################
++#### DOCUMENTATION
++# must be explicitly requested to be installed, e.g.:
++#    scons /usr/local/share/doc
+ env.Install('$PREFIX/share/doc/yade$SUFFIX-doc/',['examples','scripts','doc'])
+ 
+ #Progress('.', interval=100, file=sys.stderr)
+
+Modified: trunk/debian/control-template
+===================================================================
+--- trunk/debian/control-template	2009-07-12 08:21:25 UTC (rev 1857)
++++ trunk/debian/control-template	2009-07-12 08:39:34 UTC (rev 1858)
+@@ -31,4 +31,4 @@
+ Description: Platform for dynamical modeling.
+  Yet Another Dynamic Engine. etc.
+  .
+- This package contains examples, test scripts and documentation
++ This package contains examples, test scripts and some documentation.
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001183.html">[deprecated list] [Yade-dev] [svn] r1857 - in trunk: . gui/py	pkg/common	pkg/common/Engine/MetaEngine pkg/dem py	py/yadeWrapper scripts/test
+</A></li>
+	<LI>Next message: <A HREF="001185.html">[deprecated list] [Yade-dev] [svn] r1859 - in trunk: . debian py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1184">[ date ]</a>
+              <a href="thread.html#1184">[ thread ]</a>
+              <a href="subject.html#1184">[ subject ]</a>
+              <a href="author.html#1184">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

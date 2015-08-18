@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1563 - trunk/gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1563%20-%20trunk/gui/py&In-Reply-To=%3C200810281807.m9SI758q023961%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000478.html">
+   <LINK REL="Next"  HREF="000479.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1563 - trunk/gui/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1563%20-%20trunk/gui/py&In-Reply-To=%3C200810281807.m9SI758q023961%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1563 - trunk/gui/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Oct 28 19:07:05 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000478.html">[deprecated list] [Yade-dev] Problem with DeusExMachina('TranslationEngine', {'subscribedBodies':[idWall], 'velocity':[x, y, z]}) on Python
+</A></li>
+        <LI>Next message: <A HREF="000479.html">[deprecated list] [Yade-dev] Mandatory engines
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#477">[ date ]</a>
+              <a href="thread.html#477">[ thread ]</a>
+              <a href="subject.html#477">[ subject ]</a>
+              <a href="author.html#477">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-10-28 19:06:54 +0100 (Tue, 28 Oct 2008)
+New Revision: 1563
+
+Modified:
+   trunk/gui/py/utils.py
+Log:
+1. Changed colors to be random by default on utils.{sphere,box,facet}
+
+
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-10-28 10:30:53 UTC (rev 1562)
++++ trunk/gui/py/utils.py	2008-10-28 18:06:54 UTC (rev 1563)
+@@ -40,11 +40,14 @@
+ 	for k in d: __builtin__.__dict__[k]=d[k]
+ 
+ 
++def randomColor(): return [random.random(),random.random(),random.random()]
++
+ def typedEngine(name): return [e for e in Omega().engines if e.name==name][0]
+ 
+-def sphere(center,radius,density=1,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=True,wire=False,color=[1,1,1],physParamsClass='BodyMacroParameters'):
++def sphere(center,radius,density=1,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=True,wire=False,color=None,physParamsClass='BodyMacroParameters'):
+ 	&quot;&quot;&quot;Create default sphere, with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
+ 	s=Body()
++	if not color: color=randomColor()
+ 	s.shape=GeometricalModel('Sphere',{'radius':radius,'diffuseColor':color,'wire':wire,'visible':True})
+ 	s.mold=InteractingGeometry('InteractingSphere',{'radius':radius,'diffuseColor':color})
+ 	V=(4./3)*math.pi*radius**3
+@@ -54,9 +57,10 @@
+ 	s['isDynamic']=dynamic
+ 	return s
+ 
+-def box(center,extents,orientation=[1,0,0,0],density=1,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=True,wire=False,color=[1,1,1],physParamsClass='BodyMacroParameters'):
++def box(center,extents,orientation=[1,0,0,0],density=1,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=True,wire=False,color=None,physParamsClass='BodyMacroParameters'):
+ 	&quot;&quot;&quot;Create default box (cuboid), with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
+ 	b=Body()
++	if not color: color=randomColor()
+ 	b.shape=GeometricalModel('Box',{'extents':extents,'diffuseColor':color,'wire':wire,'visible':True})
+ 	b.mold=InteractingGeometry('InteractingBox',{'extents':extents,'diffuseColor':color})
+ 	mass=8*extents[0]*extents[1]*extents[2]*density
+@@ -65,9 +69,10 @@
+ 	b['isDynamic']=dynamic
+ 	return b
+ 
+-def facet(vertices,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=False,wire=True,color=[1,1,1],physParamsClass='BodyMacroParameters'):
++def facet(vertices,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=False,wire=True,color=None,physParamsClass='BodyMacroParameters'):
+ 	&quot;&quot;&quot;Create Facet&quot;&quot;&quot;
+ 	b=Body()
++	if not color: color=randomColor()
+ 	b.shape=GeometricalModel('Facet',{'diffuseColor':color,'wire':wire,'visible':True})
+ 	b.mold=InteractingGeometry('InteractingFacet',{'diffuseColor':color})
+ 	center=inscribedCircleCenter(list(vertices[0]),list(vertices[1]),list(vertices[2]))
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000478.html">[deprecated list] [Yade-dev] Problem with DeusExMachina('TranslationEngine', {'subscribedBodies':[idWall], 'velocity':[x, y, z]}) on Python
+</A></li>
+	<LI>Next message: <A HREF="000479.html">[deprecated list] [Yade-dev] Mandatory engines
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#477">[ date ]</a>
+              <a href="thread.html#477">[ thread ]</a>
+              <a href="subject.html#477">[ subject ]</a>
+              <a href="author.html#477">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

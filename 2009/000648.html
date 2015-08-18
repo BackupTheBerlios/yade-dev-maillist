@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] drawing a color legend
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20drawing%20a%20color%20legend&In-Reply-To=%3C4986B864.3040408%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000645.html">
+   <LINK REL="Next"  HREF="000650.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] drawing a color legend</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20drawing%20a%20color%20legend&In-Reply-To=%3C4986B864.3040408%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev] drawing a color legend">eudoxos at arcig.cz
+       </A><BR>
+    <I>Mon Feb  2 10:09:56 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000645.html">[deprecated list] [Yade-dev] drawing a color legend
+</A></li>
+        <LI>Next message: <A HREF="000650.html">[deprecated list] [Yade-dev] [svn] r1654 -	trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#648">[ date ]</a>
+              <a href="thread.html#648">[ thread ]</a>
+              <a href="subject.html#648">[ subject ]</a>
+              <a href="author.html#648">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> Hello.
+</I>&gt;<i> I want to draw a color legend from ColorizedVelocityFilter engine.
+</I>&gt;<i>   
+</I>:<i>-) there is duplicated code, see Shop::scalarOnColorScale, which uses
+</I>the algorithm from matplotlib.
+&gt;<i> How to draw from engine? Is there such mechanism?
+</I>&gt;<i>   
+</I>I recently added GL locking which should make it possible, but I give no
+warranties. You _must_ get a GLLock before manipulating GL, otherwise
+you get error/crash/hardlock (depending on graphics card and driver). I
+don't know however, if you will get the scale painted after the whole
+scene of just before the scene, maybe it is undefined.
+
+I was thinking once of using openscenegraph for GL stuff, since we're
+already got bunch of low-level hacks to get relatively decent 3d. One
+more hack could be to draw the scale in GLViewer::postDraw, but you must
+carefully think were you store min/max values (in the engine? and the
+GLViewer will have to search engines every time? Or in the GLViewer? But
+what if there is no GLViewer? And so on). If someone needs, god forbid,
+two scales or three scales, we're lost...
+&gt;<i> Currently, I see an possibility to do so by adding a body with an appropriate GeometricalModel...
+</I>&gt;<i>   
+</I>It would be subject to 3d manipulation of the scene (GL functors for
+bodies are in local coordinates), whereas here you need something that
+is bound to the 2d view; maybe do the inverse glMatrix to get to global
+space. You could also use special kind of interaction, since those are
+GL-drawn in global space. But the constitutive law must skip such
+interaction then. Still you need to find camera glMatrix and use its
+inverse to get from global space to the view space. Eh, ugly.
+
+What about creating special kind of objects just for this (like
+MetaBody::planarWidgets ;-) ), like grid, time displays etc, that would
+be drawn in the 2d space and add those to the OpenGLRenderingEngine?
+
+V.
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000645.html">[deprecated list] [Yade-dev] drawing a color legend
+</A></li>
+	<LI>Next message: <A HREF="000650.html">[deprecated list] [Yade-dev] [svn] r1654 -	trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#648">[ date ]</a>
+              <a href="thread.html#648">[ thread ]</a>
+              <a href="subject.html#648">[ subject ]</a>
+              <a href="author.html#648">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

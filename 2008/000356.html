@@ -1,0 +1,316 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1516 - in	trunk:	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1516%20-%20in%0A%09trunk%3A%09pkg/dem/DataClass/InteractionGeometry%0A%09pkg/dem/Engine/EngineUnit%09pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry%0A%09scripts&In-Reply-To=%3C200809172148.m8HLmIaE007036%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000355.html">
+   <LINK REL="Next"  HREF="000358.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1516 - in	trunk:	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1516%20-%20in%0A%09trunk%3A%09pkg/dem/DataClass/InteractionGeometry%0A%09pkg/dem/Engine/EngineUnit%09pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry%0A%09scripts&In-Reply-To=%3C200809172148.m8HLmIaE007036%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1516 - in	trunk:	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Sep 17 23:48:18 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000355.html">[deprecated list] [Yade-dev] normalized null quaternion has	length 0...
+</A></li>
+        <LI>Next message: <A HREF="000358.html">[deprecated list] [Yade-dev] [svn] r1517 - in trunk: extra	extra/clump lib/opengl	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#356">[ date ]</a>
+              <a href="thread.html#356">[ thread ]</a>
+              <a href="subject.html#356">[ subject ]</a>
+              <a href="author.html#356">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-09-17 23:48:17 +0200 (Wed, 17 Sep 2008)
+New Revision: 1516
+
+Modified:
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp
+   trunk/scripts/exact-rot.py
+Log:
+1. The exactRot code is reasonably verified now to be functional, including rolling correction (SpheresContactGeometry::relocateContactPoints) and will used in brefcom soon. 
+2. Updated the &quot;testing&quot; script scripts/exact-rot.py, as a showcase as well.
+
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2008-09-15 20:27:49 UTC (rev 1515)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2008-09-17 21:48:17 UTC (rev 1516)
+@@ -5,28 +5,31 @@
+ #include &quot;SpheresContactGeometry.hpp&quot;
+ YADE_PLUGIN(&quot;SpheresContactGeometry&quot;);
+ 
+-/* Set contact points on both spheres such that their projection is the one given.
++/* Set contact points on both spheres such that their projection is the one given
++ * (should be on the plane passing through origin and oriented with normal; not checked!)
+  */
+ void SpheresContactGeometry::setTgPlanePts(Vector3r p1new, Vector3r p2new){
+ 	cp1rel=ori1.Conjugate()*rollPlanePtToSphere(p1new,d1,normal);
+-	cp2rel=ori2.Conjugate()*rollPlanePtToSphere(-p2new,d2,-normal);
++	cp2rel=ori2.Conjugate()*rollPlanePtToSphere(p2new,d2,-normal);
+ }
+ 
+ 
+-/* Move contact point on both spheres in such way that their relative position is the same;
++/* Move contact point on both spheres in such way that their relative position (displacementT) is the same;
+  * this should be done regularly to ensure that the angle doesn't go over &#960;, since then quaternion would
+  * flip axis and the point would project on other side of the tangent plane piece.
+  */
+-void SpheresContactGeometry::relocateContactPoint(){
++void SpheresContactGeometry::relocateContactPoints(){
+ 	Vector3r p1=contPtInTgPlane1(), p2=contPtInTgPlane2();
+ 	Vector3r midPt=.5*(p1+p2);
+-	/* the factor 1.2 is arbitrary; it should be smaller than pi/2 and bigger than some reasonably small value to avoid frequent relocation */
+-	if(midPt.Length()&lt;1.2*min(d1,d2)) return;
+-	setTgPlanePts(p1-midPt,p2-midPt);
++	if((p1.SquaredLength()&gt;4*d1 || p2.SquaredLength()&gt;4*d2) &amp;&amp; midPt.SquaredLength()&gt;.5*min(d1,d2)){
++		//cerr&lt;&lt;&quot;RELOCATION with displacementT=&quot;&lt;&lt;displacementT(); // should be the same before and after relocation
++		setTgPlanePts(p1-midPt,p2-midPt);
++		//cerr&lt;&lt;&quot; &#8594; &quot;&lt;&lt;displacementT()&lt;&lt;endl;
++	}
+ }
+ 
+ /*! Perform slip of the projected contact points so that their distance becomes equal (or remains smaller) than the given one.
+- *
++ * TODO: not yet tested
+  */
+ void SpheresContactGeometry::slipToDistIfNeeded(Real dist){
+ 	Vector3r p1=contPtInTgPlane1(), p2=contPtInTgPlane2();
+@@ -49,8 +52,8 @@
+  * @returns The projected point coordinates (with origin at the contact point).
+  */
+ Vector3r SpheresContactGeometry::unrollSpherePtToPlane(const Quaternionr&amp; fromXtoPtOri, const Real&amp; radius, const Vector3r&amp; planeNormal){
+-	Quaternionr fromNormalToPt; fromNormalToPt.Align(planeNormal,fromXtoPtOri*Vector3r::UNIT_X);
+-	Vector3r axis; Real angle; fromNormalToPt.ToAxisAngle(axis,angle);
++	Quaternionr normal2pt; normal2pt.Align(planeNormal,fromXtoPtOri*Vector3r::UNIT_X);
++	Vector3r axis; Real angle; normal2pt.ToAxisAngle(axis,angle);
+ 	return (angle*radius) /* length */ *(axis.Cross(planeNormal)) /* direction: both are unit vectors */;
+ }
+ 
+@@ -68,7 +71,9 @@
+ Quaternionr SpheresContactGeometry::rollPlanePtToSphere(const Vector3r&amp; planePt, const Real&amp; radius, const Vector3r&amp; planeNormal){
+ 		Vector3r axis=planeNormal.Cross(planePt); axis.Normalize();
+ 		Real angle=planePt.Length()/radius;
+-		return Quaternionr(axis,angle);
++		Quaternionr normal2pt(axis,angle);
++		Quaternionr ret; ret.Align(Vector3r::UNIT_X,normal2pt*planeNormal);
++		return ret;
+ }
+ 
+ 
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2008-09-15 20:27:49 UTC (rev 1515)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2008-09-17 21:48:17 UTC (rev 1516)
+@@ -20,7 +20,9 @@
+  * (a) plastic slip, when we want to limit their maximum distance (in the projected plane)
+  * (b) rolling, where those points must be relocated to not flip over the &#960; angle from the current contact point
+  *
++ * TODO: add torsion code, that will (if a flag is on) compute torsion angle on the contact axis.
+  *
++ *
+  */
+ class SpheresContactGeometry: public InteractionGeometry{
+ 	public :
+@@ -39,28 +41,29 @@
+ 		 * 		taken instead)
+ 		 */
+ 		Quaternionr cp1rel, cp2rel;
+-		// interaction &quot;radii&quot; and total length; this is _really_ contant throughout the interaction life
++		// interaction &quot;radii&quot; and total length; this is _really_ constant throughout the interaction life
+ 		// d1 is really distance from the sphere1 center to the contact plane, it may not correspond to the sphere radius!
+ 		// therefore, d1+d2=d0 (distance at which the contact was created)
+ 		Real d1, d2, d0;
+ 
+-		// auxiliary functions: &quot;this&quot; not needed
++		// auxiliary functions; the quaternion magic is all in here
+ 		static Vector3r unrollSpherePtToPlane(const Quaternionr&amp; fromXtoPtOri, const Real&amp; radius, const Vector3r&amp; normal);
+ 		static Quaternionr rollPlanePtToSphere(const Vector3r&amp; planePt, const Real&amp; radius, const Vector3r&amp; normal);
++
+ 		void setTgPlanePts(Vector3r p1new, Vector3r p2new);
+ 
+ 		Vector3r contPtInTgPlane1(){return unrollSpherePtToPlane(ori1*cp1rel,d1,normal);}
+ 		Vector3r contPtInTgPlane2(){return unrollSpherePtToPlane(ori2*cp2rel,d2,-normal);}
+ 		Vector3r contPt(){return contactPoint; /*pos1+(d1/d0)*(pos2-pos1)*/}
+ 
+-		Vector3r epsT(){return (1/d0)*(contPtInTgPlane2()-contPtInTgPlane1());}
+-		Real epsN(){return (pos2-pos1).Length()/d0;}
++		Real displacementN(){return (pos2-pos1).Length()-d0;}
++		Real epsN(){return displacementN()*(1./d0);}
++		Vector3r displacementT(bool relocate=true){ return contPtInTgPlane2()-contPtInTgPlane1();}
++		Vector3r epsT(){return displacementT()*(1./d0);}
+ 	
+ 		void slipToDistIfNeeded(Real slip);
+-		void relocateContactPoint();
++		void relocateContactPoints();
+ 
+-
+-
+ 		SpheresContactGeometry():InteractionGeometry(),contactPoint(Vector3r::ZERO),radius1(0),radius2(0),exactRot(false){createIndex();}
+ 		virtual ~SpheresContactGeometry(){};
+ 	protected :
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2008-09-15 20:27:49 UTC (rev 1515)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2008-09-17 21:48:17 UTC (rev 1516)
+@@ -13,6 +13,7 @@
+ #include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
+ 
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++#include&lt;yade/core/Omega.hpp&gt;
+ 
+ 
+ InteractingSphere2InteractingSphere4SpheresContactGeometry::InteractingSphere2InteractingSphere4SpheresContactGeometry()
+@@ -36,17 +37,13 @@
+ 	InteractingSphere* s2 = static_cast&lt;InteractingSphere*&gt;(cm2.get());
+ 
+ 	Vector3r normal = se32.position-se31.position;
+-	Real penetrationDepth = pow(interactionDetectionFactor*(s1-&gt;radius+s2-&gt;radius), 2) - normal.SquaredLength();// Compute a wrong value just to check sign - faster than computing distances
++	Real penetrationDepth = pow(interactionDetectionFactor*(s1-&gt;radius+s2-&gt;radius),2) - normal.SquaredLength();// Compute a wrong value just to check sign - faster than computing distances
+ 	//Real penetrationDepth = s1-&gt;radius+s2-&gt;radius-normal.Normalize();
+ 	if (penetrationDepth&gt;0 || c-&gt;isReal){
+ 		shared_ptr&lt;SpheresContactGeometry&gt; scm;
+-		if (c-&gt;interactionGeometry){
+-			// WARNING! 
+-			// FIXME - this must be dynamic cast until the contaners are rewritten to support multiple interactions types
+-			//         the problem is that scm can be either SDECLinkGeometry or SpheresContactGeometry and the only way CURRENTLY
+-			//         to check this is by dynamic cast. This has to be fixed.
+-			scm = YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
+-		} else scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
++		if (c-&gt;interactionGeometry) scm = YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
++		else scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
++
+ 		penetrationDepth = s1-&gt;radius+s2-&gt;radius-normal.Normalize();
+ 		scm-&gt;contactPoint = se31.position+(s1-&gt;radius-0.5*penetrationDepth)*normal;//0.5*(pt1+pt2);
+ 		scm-&gt;normal = normal;
+@@ -58,9 +55,7 @@
+ 			scm-&gt;exactRot=true;
+ 			scm-&gt;pos1=se31.position; scm-&gt;pos2=se32.position;
+ 			scm-&gt;ori1=se31.orientation; scm-&gt;ori2=se32.orientation;
+-			//scm-&gt;ori1.Normalize(); scm-&gt;ori2.Normalize();
+ 			if(c-&gt;isNew){
+-				//cerr&lt;&lt;&quot;+++ Assigning constants to SpheresContactGeometry&quot;&lt;&lt;endl;
+ 				// contact constants
+ 				scm-&gt;d0=(se32.position-se31.position).Length();
+ 				scm-&gt;d1=s1-&gt;radius-penetrationDepth; scm-&gt;d2=s2-&gt;radius-penetrationDepth;
+@@ -68,12 +63,9 @@
+ 				scm-&gt;cp1rel.Align(Vector3r::UNIT_X,se31.orientation.Conjugate()*normal);
+ 				scm-&gt;cp2rel.Align(Vector3r::UNIT_X,se32.orientation.Conjugate()*(-normal));
+ 				scm-&gt;cp1rel.Normalize(); scm-&gt;cp2rel.Normalize();
+-				cerr&lt;&lt;&quot;+++ Relative orientations: &quot;&lt;&lt;scm-&gt;cp1rel&lt;&lt;&quot; | &quot;&lt;&lt;scm-&gt;cp2rel&lt;&lt;endl;
+-				//cerr&lt;&lt;&quot;+++ &quot;&lt;&lt;se31.orientation.Conjugate()&lt;&lt;&quot; | &quot;&lt;&lt;se31.orientation.Conjugate()*normal&lt;&lt;&quot;|&quot;&lt;&lt;scm-&gt;cp1rel&lt;&lt;endl;
+-				//cerr&lt;&lt;&quot;@@@ cp1rel=&quot;&lt;&lt;scm-&gt;cp1rel[0]&lt;&lt;&quot;;&quot;&lt;&lt;scm-&gt;cp1rel[1]&lt;&lt;&quot;;&quot;&lt;&lt;scm-&gt;cp1rel[2]&lt;&lt;&quot;;&quot;&lt;&lt;scm-&gt;cp1rel[3]&lt;&lt;endl;
+-				//cerr&lt;&lt;&quot;@@@ ori1=&quot;&lt;&lt;scm-&gt;ori1[0]&lt;&lt;&quot;;&quot;&lt;&lt;scm-&gt;ori1[1]&lt;&lt;&quot;;&quot;&lt;&lt;scm-&gt;ori1[2]&lt;&lt;&quot;;&quot;&lt;&lt;scm-&gt;ori1[3]&lt;&lt;endl;
+-				//cerr&lt;&lt;&quot;+++ (normalized)&#160;&quot;&lt;&lt;scm-&gt;cp1rel&lt;&lt;&quot; || product with &quot;&lt;&lt;se31.orientation&lt;&lt;&quot; is &quot;&lt;&lt;scm-&gt;cp1rel*se31.orientation&lt;&lt;endl;
+ 			}
++			// FIXME: temporary, testing only!
++			if((Omega::instance().getCurrentIteration()%500)==0) scm-&gt;relocateContactPoints();
+ 		}
+ 		return true;
+ 	} else return false;
+
+Modified: trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp	2008-09-15 20:27:49 UTC (rev 1515)
++++ trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp	2008-09-17 21:48:17 UTC (rev 1516)
+@@ -75,9 +75,9 @@
+ 	}
+ 
+ 	if(sc-&gt;exactRot){
+-		//GLUtils::GLDrawLine(sc-&gt;pos1,sc-&gt;pos2,Vector3r(1,1,1));
++		GLUtils::GLDrawLine(sc-&gt;pos1,sc-&gt;pos2,Vector3r(.5,.5,.5));
+ 		// sphere center to point on the sphere
+-		GLUtils::GLDrawText(&quot;[1]&quot;,sc-&gt;pos1,Vector3r(1,1,1)); GLUtils::GLDrawText(&quot;[2]&quot;,sc-&gt;pos2,Vector3r(1,1,1));
++		//GLUtils::GLDrawText(&quot;[1]&quot;,sc-&gt;pos1,Vector3r(1,1,1)); GLUtils::GLDrawText(&quot;[2]&quot;,sc-&gt;pos2,Vector3r(1,1,1));
+ 		GLUtils::GLDrawLine(sc-&gt;pos1,sc-&gt;pos1+(sc-&gt;ori1*sc-&gt;cp1rel*Vector3r::UNIT_X),Vector3r(0,.5,1));
+ 		GLUtils::GLDrawLine(sc-&gt;pos2,sc-&gt;pos2+(sc-&gt;ori2*sc-&gt;cp2rel*Vector3r::UNIT_X),Vector3r(0,1,.5));
+ 		//cerr&lt;&lt;&quot;=== cp1rel=&quot;&lt;&lt;sc-&gt;cp1rel[0]&lt;&lt;&quot;;&quot;&lt;&lt;sc-&gt;cp1rel[1]&lt;&lt;&quot;;&quot;&lt;&lt;sc-&gt;cp1rel[2]&lt;&lt;&quot;;&quot;&lt;&lt;sc-&gt;cp1rel[3]&lt;&lt;endl;
+@@ -89,8 +89,7 @@
+ 		GLUtils::GLDrawLine(sc-&gt;contPt(),sc-&gt;contPt()+ptTg1,Vector3r(0,.5,1));
+ 		GLUtils::GLDrawLine(sc-&gt;contPt(),sc-&gt;contPt()+ptTg2,Vector3r(0,1,.5));
+ 		// projected shear
+-		GLUtils::GLDrawLine(sc-&gt;contPt()+ptTg1,sc-&gt;contPt()+ptTg2,Vector3r(.7,.7,.7));
+-		// TODO: crosshair to show contact plane (?)
++		GLUtils::GLDrawLine(sc-&gt;contPt()+ptTg1,sc-&gt;contPt()+ptTg2,Vector3r(1,1,1));
+ 	}
+ 
+ 
+
+Modified: trunk/scripts/exact-rot.py
+===================================================================
+--- trunk/scripts/exact-rot.py	2008-09-15 20:27:49 UTC (rev 1515)
++++ trunk/scripts/exact-rot.py	2008-09-17 21:48:17 UTC (rev 1516)
+@@ -22,7 +22,7 @@
+ 	StandAloneEngine('ElasticContactLaw'),
+ 	DeusExMachina('GravityEngine',{'gravity':[0,0,-9.81]}),
+ 	DeusExMachina('RotationEngine',{'subscribedBodies':[1],'rotationAxis':[1,0,0],'angularVelocity':.01}),
+-	DeusExMachina('RotationEngine',{'subscribedBodies':[0],'rotationAxis':[sqrt(2)/2.,sqrt(2)/2.,0],'angularVelocity':.02}),
++	DeusExMachina('RotationEngine',{'subscribedBodies':[0],'rotationAxis':[1,1,1],'angularVelocity':-.02}),
+ 	MetaEngine('PhysicalActionDamper',[
+ 		EngineUnit('CundallNonViscousForceDamping',{'damping':0.2}),
+ 		EngineUnit('CundallNonViscousMomentumDamping',{'damping':0.2})
+@@ -36,11 +36,11 @@
+ ]
+ from yade import utils
+ o.bodies.append(utils.sphere([0,0,0],1,dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=2400,wire=True))
+-o.bodies.append(utils.sphere([0,0,2],1,color=[0,1,0],young=30e9,poisson=.3,density=2400,wire=True))
++o.bodies.append(utils.sphere([0,sqrt(2),sqrt(2)],1,color=[0,1,0],young=30e9,poisson=.3,density=2400,wire=True))
+ o.miscParams=[Generic('GLDrawSphere',{'glutUse':True})]
+ 
+-o.dt=.2*utils.PWaveTimeStep()
+-o.save('/tmp/a.xml.bz2');
++o.dt=.8*utils.PWaveTimeStep()
++#o.save('/tmp/a.xml.bz2');
+ #o.run(100000); o.wait(); print o.iter/o.realtime,'iterations/sec'
+ from yade import qt
+ renderer=qt.Renderer()
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000355.html">[deprecated list] [Yade-dev] normalized null quaternion has	length 0...
+</A></li>
+	<LI>Next message: <A HREF="000358.html">[deprecated list] [Yade-dev] [svn] r1517 - in trunk: extra	extra/clump lib/opengl	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#356">[ date ]</a>
+              <a href="thread.html#356">[ thread ]</a>
+              <a href="subject.html#356">[ subject ]</a>
+              <a href="author.html#356">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

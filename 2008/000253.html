@@ -1,0 +1,110 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] facets, edges, vertices (questions to sega)
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20facets%2C%20edges%2C%20vertices%20%28questions%20to%20sega%29&In-Reply-To=%3C485EBBFF.3020407%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000252.html">
+   <LINK REL="Next"  HREF="000254.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] facets, edges, vertices (questions to sega)</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20facets%2C%20edges%2C%20vertices%20%28questions%20to%20sega%29&In-Reply-To=%3C485EBBFF.3020407%40arcig.cz%3E"
+       TITLE="[yade-dev] facets, edges, vertices (questions to sega)">eudoxos at arcig.cz
+       </A><BR>
+    <I>Sun Jun 22 22:54:23 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000252.html">[yade-dev] Automated crash report for	/tmp/yade-5427/bin/yade-svn1397:	SDECLinkedSpheres, ScrewGen,	TetraTestGen, ThreePointBending
+</A></li>
+        <LI>Next message: <A HREF="000254.html">[yade-dev] facets, edges, vertices (questions to sega)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#253">[ date ]</a>
+              <a href="thread.html#253">[ thread ]</a>
+              <a href="subject.html#253">[ subject ]</a>
+              <a href="author.html#253">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Hi,
+
+I was looking at the classes you added recently, which I find
+(potentially, for me at this moment) _VERY_ useful. I have a few
+questions as I am not sure I understand exactly how those classes are
+supposed to work.
+
+1. Factets have normals - what is their meaning? Is it the normal from
+the edge towards the center of mass of the facet?
+
+2. What happens if vertices of facet are not in-plane?
+
+3. Why should I want to have not only facets, but also edges and
+vertices? Does it avoid some singularities at facet boundary?
+
+4. What subclass of PhysicalParameters for facet is needed so that
+spheres can bump into facets etc (I can look into the code here)?
+
+4. Could you give some rudiementary working example of say 1 sphere
+falling into cone from 4 facets (or something like that)? I tried
+running your model but didn't succeed (will investigate shortly).
+(Preferably you could do the whole thing in python; I added methods for
+raw attribute access to make vector&lt;Vector3r&gt; Facet::vertices (and
+similar) accessible in a way, but didn't figure out the normals. They
+are calculated in postProcessAttributes, is that why in your example,
+you save the simulation and load it again? (I could add wrapper for
+postProcess to python in that case) This is what I wanted to add to utils:
+
+ from yade.wrapper import *
+ def facet(center,vertices,relative=False):
+    if relative: relCenter=[0,0,0]
+    else: relCenter=center
+    vStr='['
+    for v in vertices: vStr+=&quot; {%g %g %g}
+&quot;%(v[0]-relCenter[0],v[1]-relCenter[1],v[2]-relCenter[2])
+    vStr+=']'
+    b=Body()
+    b.shape=GeometricalModel(&quot;Facet&quot;,{'wire':True,'visible':True})
+    b.shape.setRaw('vertices',vStr)
+    b.mold=InteractingGeometry(&quot;InteractingFacet&quot;)
+    b.mold.setRaw('vertices',vStr)
+   
+b.phys=PhysicalParameters(&quot;PhysicalParameters&quot;,{'se3':[center[0],center[1],center[2],1,0,0,0]})
+    b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+    b['isDynamic']=False
+    return b
+
+Best regards, Vaclav
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000252.html">[yade-dev] Automated crash report for	/tmp/yade-5427/bin/yade-svn1397:	SDECLinkedSpheres, ScrewGen,	TetraTestGen, ThreePointBending
+</A></li>
+	<LI>Next message: <A HREF="000254.html">[yade-dev] facets, edges, vertices (questions to sega)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#253">[ date ]</a>
+              <a href="thread.html#253">[ thread ]</a>
+              <a href="subject.html#253">[ subject ]</a>
+              <a href="author.html#253">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

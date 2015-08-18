@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] Intergator and clumps
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Intergator%20and%20clumps&In-Reply-To=%3C4850DD0F.1050508%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000236.html">
+   <LINK REL="Next"  HREF="000238.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] Intergator and clumps</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Intergator%20and%20clumps&In-Reply-To=%3C4850DD0F.1050508%40hmg.inpg.fr%3E"
+       TITLE="[yade-dev] Intergator and clumps">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Thu Jun 12 10:23:43 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000236.html">[yade-dev] Intergator and clumps
+</A></li>
+        <LI>Next message: <A HREF="000238.html">[yade-dev] cool! &amp; postprocessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#237">[ date ]</a>
+              <a href="thread.html#237">[ thread ]</a>
+              <a href="subject.html#237">[ subject ]</a>
+              <a href="author.html#237">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+Ok, thank you for details.
+I wonder if we can't move clumps at the end of MB-&gt;bodies without 
+changing ids...
+
+For clump members velocity it should be easy to define in the 
+displacement engine.
+
+Bruno
+
+
+Va'clav S a e'crit :
+&gt;&gt;<i> 1/ Forces are damped based on the motion of each body. As a consequence, 
+</I>&gt;&gt;<i> different contact forces on the same clump will be damped independently. 
+</I>&gt;&gt;<i> Its a bit like damping separately each individual force applied on a 
+</I>&gt;&gt;<i> standalone body. The very bad effect of this is that a body at static 
+</I>&gt;&gt;<i> equilibrium can be moved out of equilibrium by damping effect (i.e. the 
+</I>&gt;&gt;<i> exact opposite of what damping is supposed to do...).
+</I>&gt;&gt;<i> The correct way to damp is to damp the resultant force/moment on a clump 
+</I>&gt;&gt;<i> based on the motion of the clump.
+</I>&gt;&gt;<i>   
+</I>&gt;&gt;<i>     
+</I>&gt;<i> I wasn't sure what the correct way was, but please fell free to adjust
+</I>&gt;<i> that. If you do, however, make sure that the same is done in the
+</I>&gt;<i> original engines (CundallNonViscous etc) so that the behavior is consistent.
+</I>&gt;<i>   
+</I>&gt;&gt;<i> 2/ From what I see in the code, if a clump has bodies &quot;i&quot; and &quot;j&quot;, I 
+</I>&gt;&gt;<i> fear the integration loop could make something like (depending on the 
+</I>&gt;&gt;<i> ordering of bodies):
+</I>&gt;&gt;<i>  
+</I>&gt;&gt;<i> on body i : clump-&gt;acceleration += i-&gt;force/clump-&gt;mass
+</I>&gt;&gt;<i> on clump : clump-&gt;velocity += clump-&gt;acceleration*dt
+</I>&gt;&gt;<i> on body j : clump-&gt;acceleration += j-&gt;force/clump-&gt;mass
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> so that forces on clump member j are ignored in the motion of the clump...
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> Is there something to prevent that? Are clumps always at the end of the 
+</I>&gt;&gt;<i> loop?
+</I>&gt;&gt;<i>   
+</I>&gt;&gt;<i>     
+</I>&gt;<i> Currently, the ordering of IDs of clump and its members is undefined.
+</I>&gt;<i> There are 2 ways out of this, it seems to me:
+</I>&gt;<i>
+</I>&gt;<i> 1. Add an extra loop that would apply forces on clump members to clump
+</I>&gt;<i> itself, before calculating clump acceleration. Perhaps a flag on
+</I>&gt;<i> NewtonsDampedLaw so that the loop would be run only if clumps were
+</I>&gt;<i> actually in use. That could be either set by the user (like you have to
+</I>&gt;<i> set distant flag for the collider to make it work) or by the engine
+</I>&gt;<i> itself: at each iteration, it would remember whether some bodies were
+</I>&gt;<i> actually clumps - if so, the flag would be turned on and you would get
+</I>&gt;<i> the extra loop run at next iteration; you would miss just the first
+</I>&gt;<i> iteration, which is negligible. If the clump loop would run , at some
+</I>&gt;<i> point, without doing any work, it would switch that flag off automatically.
+</I>&gt;<i>
+</I>&gt;<i> 2. Prescribe such ordering of clumps and its members so that the problem
+</I>&gt;<i> is prevented. It is not very user-friendly, but could be enforced by
+</I>&gt;<i> assertions/exceptions when the clump is created. But having bodies
+</I>&gt;<i> behave depending on their ID seems weird (non-intuitive).
+</I>&gt;<i>
+</I>&gt;<i> PS. I wonder if there is anyone using clumps actually (I don't need them
+</I>&gt;<i> now); there can be problem with shear forces, since clump members have
+</I>&gt;<i> zero velocities, even if they move (they are moved by a special engine);
+</I>&gt;<i> since shear displacement is frequently calculated from angularVelocity,
+</I>&gt;<i> it will give zero. It could be fixed (angularVelocity of each member
+</I>&gt;<i> would be calculated from clump's angular velocity) but it has not been
+</I>&gt;<i> done yet.
+</I>&gt;<i>
+</I>&gt;<i> Vaclav
+</I>&gt;<i>
+</I>&gt;<i> _______________________________________________
+</I>&gt;<i> yade-dev mailing list
+</I>&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.berlios.de</A>
+</I>&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">https://lists.berlios.de/mailman/listinfo/yade-dev</A>
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Institut National Polytechnique de Grenoble
+Laboratoire 3S (Soils Solids Structures) - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+Te'l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000236.html">[yade-dev] Intergator and clumps
+</A></li>
+	<LI>Next message: <A HREF="000238.html">[yade-dev] cool! &amp; postprocessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#237">[ date ]</a>
+              <a href="thread.html#237">[ thread ]</a>
+              <a href="subject.html#237">[ subject ]</a>
+              <a href="author.html#237">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

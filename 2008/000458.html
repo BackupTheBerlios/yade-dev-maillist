@@ -1,0 +1,364 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1551 - in trunk/pkg/dem:	Engine/StandAloneEngine	PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1551%20-%20in%20trunk/pkg/dem%3A%0A%09Engine/StandAloneEngine%09PreProcessor&In-Reply-To=%3C200810231735.m9NHZYS4021975%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000462.html">
+   <LINK REL="Next"  HREF="000459.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1551 - in trunk/pkg/dem:	Engine/StandAloneEngine	PreProcessor</H1>
+    <B>jduriez at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1551%20-%20in%20trunk/pkg/dem%3A%0A%09Engine/StandAloneEngine%09PreProcessor&In-Reply-To=%3C200810231735.m9NHZYS4021975%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1551 - in trunk/pkg/dem:	Engine/StandAloneEngine	PreProcessor">jduriez at mail.berlios.de
+       </A><BR>
+    <I>Thu Oct 23 19:35:34 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000462.html">[deprecated list] [Yade-dev] drop .gz support in favor of .bz2	only?
+</A></li>
+        <LI>Next message: <A HREF="000459.html">[deprecated list] [Yade-dev] [svn] r1552 - in trunk/pkg/dem:	Engine/StandAloneEngine	PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#458">[ date ]</a>
+              <a href="thread.html#458">[ thread ]</a>
+              <a href="subject.html#458">[ subject ]</a>
+              <a href="author.html#458">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: jduriez
+Date: 2008-10-23 19:35:34 +0200 (Thu, 23 Oct 2008)
+New Revision: 1551
+
+Modified:
+   trunk/pkg/dem/Engine/StandAloneEngine/ContactLaw1.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ContactLaw1.hpp
+   trunk/pkg/dem/PreProcessor/SimpleShear.cpp
+   trunk/pkg/dem/PreProcessor/SimpleShear.hpp
+Log:
+-ContactLaw1 : correction of prototype of action() : it needed a body, whereas now action methods of Engines need a Metabody. This led the simulation to crash and is 
+now fixed
+- SimpleShear : now all is normaly done so that this preprocessor could be used (with success) with this ContactLaw. Moreover it is now linked to the 
+GlobalStifnessTimeStepper (instead of the ElasticOne)
+
+
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ContactLaw1.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ContactLaw1.cpp	2008-10-23 13:36:45 UTC (rev 1550)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ContactLaw1.cpp	2008-10-23 17:35:34 UTC (rev 1551)
+@@ -9,7 +9,6 @@
+ #include &quot;ContactLaw1.hpp&quot;
+ #include&lt;yade/pkg-dem/CohesiveFrictionalBodyParameters.hpp&gt;
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+-#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/ContactLaw1Interaction.hpp&gt;
+ #include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+@@ -42,9 +41,8 @@
+ }
+ 
+ 
+-void ContactLaw1::action(Body* body)
++void ContactLaw1::action(MetaBody* ncb)
+ {
+-    MetaBody * ncb = YADE_CAST&lt;MetaBody*&gt;(body);
+     shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ 
+     Real dt = Omega::instance().getTimeStep();
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ContactLaw1.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ContactLaw1.hpp	2008-10-23 13:36:45 UTC (rev 1550)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ContactLaw1.hpp	2008-10-23 17:35:34 UTC (rev 1551)
+@@ -19,10 +19,12 @@
+ This contact Law is inspired by CohesiveFrictionalContactLaw (inspired itselve directly from the work of Plassiard &amp; Belheine, see the corresponding articles in &quot;Annual Report 2006&quot; in <A HREF="http://geo.hmg.inpg.fr/frederic/Discrete_Element_Group_FVD.html">http://geo.hmg.inpg.fr/frederic/Discrete_Element_Group_FVD.html</A> for example). It allows so to set moments, cohesion, tension limit and (that's the difference) inelastic unloadings in compression between bodies.
+ All that concerned brokenBodies (this flag and the erosionactivated one) and the useless &quot;iter&quot; has been suppressed.
+ 
+-The Relationsships corresponding are Relationships_1, where the rigidities, the friction angles (with their tan()), and the orientations of the interactions are calculated. No more cohesion and tension limits are computed for all the interactions
++The Relationsships corresponding are CL1Relationships, where the rigidities, the friction angles (with their tan()), and the orientations of the interactions are calculated. No more cohesion and tension limits are computed for all the interactions
+ To use it you should also use :
+-- CohesiveFrictionalBodyParameters for the bodies, with &quot;isCohesive&quot; = 1
++- CohesiveFrictionalBodyParameters for the bodies, with &quot;isCohesive&quot; = 1 (A verifier ce dernier point)
+ - CL1Relationships (=&gt; which involves interactions of &quot;ContactLaw1Interaction&quot; type)
++
++MODIF / SVN : ContactLaw1::action recevait un body, il faut un MetaBody
+  */
+ 
+ 
+@@ -42,7 +44,7 @@
+ 		bool momentAlwaysElastic;	// if true the value of the momentum (computed only if momentRotationLaw !!) is not limited by a plastic threshold
+ 	
+ 		ContactLaw1();
+-		void action(Body* body);
++		void action(MetaBody*);
+ 
+ 	protected :
+ 		void registerAttributes();
+
+Modified: trunk/pkg/dem/PreProcessor/SimpleShear.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SimpleShear.cpp	2008-10-23 13:36:45 UTC (rev 1550)
++++ trunk/pkg/dem/PreProcessor/SimpleShear.cpp	2008-10-23 17:35:34 UTC (rev 1551)
+@@ -15,11 +15,11 @@
+ 
+ #include &lt;yade/lib-miniWm3/Wm3Math.h&gt;
+ 
+-#include &lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+-#include &lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
+-#include &lt;yade/pkg-dem/MacroMicroElasticRelationships.hpp&gt;
+-#include &lt;yade/pkg-dem/SimpleElasticRelationships.hpp&gt;
+-#include &lt;yade/pkg-dem/ElasticCriterionTimeStepper.hpp&gt;
++#include &lt;yade/pkg-dem/CohesiveFrictionalBodyParameters.hpp&gt;
++#include &lt;yade/pkg-dem/ContactLaw1.hpp&gt;
++#include &lt;yade/pkg-dem/CL1Relationships.hpp&gt;
++#include&lt;yade/pkg-dem/GlobalStiffnessCounter.hpp&gt;
++#include&lt;yade/pkg-dem/GlobalStiffnessTimeStepper.hpp&gt;
+ #include &lt;yade/pkg-dem/PositionOrientationRecorder.hpp&gt;
+ 
+ #include &lt;yade/pkg-dem/PositionRecorder.hpp&gt;
+@@ -42,11 +42,7 @@
+ #include&lt;yade/pkg-common/PhysicalActionContainerReseter.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionContainerInitializer.hpp&gt;
+ 
+-#include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+-#include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+-
+-#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
++#include&lt;yade/pkg-dem/NewtonsDampedLaw.hpp&gt;
+ #include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-common/CinemDNCEngine.hpp&gt;
+ 
+@@ -73,7 +69,7 @@
+ 	gravity = Vector3r(0,-9.81,0);
+ 
+ // Fichier contenant la liste des positions des centres et des rayons des spheres qui vont generer l'echantillon :
+-	filename = &quot;../data/porosite0_55.txt&quot;;
++	filename = &quot;../porosite0_44.txt&quot;;
+ //  Deux parametres necessaires si on veut utiliser au contraire la methode de TriaxialTest pour generer l'echantillon de spheres :
+ // 	porosite=0.75;
+ // 	nBilles=8000;
+@@ -83,18 +79,15 @@
+ 	profondeur=0.04;
+ 
+ 	density=2600;
+-	sphereYoungModulus=10000000; // 10 MPa
+-	spherePoissonRatio=0.2;
++	sphereYoungModulus=2.0e9; // 2 GPa, n&#233;cessaire apparemment si on veut reproduire un joint rocheux
++	spherePoissonRatio=0.04; // Venant de &quot;Calibration procedure....&quot; (Plassiard et al)
+ 	sphereFrictionDeg=26;
+ 
+-	boxYoungModulus=10000000; // 10 MPa
+-	boxPoissonRatio=0.2;
++	boxYoungModulus=2.0e9; // 2 GPa, n&#233;cessaire apparemment si on veut reproduire un joint rocheux
++	boxPoissonRatio=0.04;
+ 
+ 	shearSpeed=0.1;
+ 	
+-	dampingForce = 0.3;
+-	dampingMomentum = 0.3;
+-
+ 	timeStepUpdateInterval = 50;
+ 	
+ 	gravApplied = true;
+@@ -135,8 +128,6 @@
+ 	REGISTER_ATTRIBUTE(shearSpeed);
+ 	REGISTER_ATTRIBUTE(gravApplied);
+ 	REGISTER_ATTRIBUTE(shearApplied);
+-	REGISTER_ATTRIBUTE(dampingForce);
+-	REGISTER_ATTRIBUTE(dampingMomentum );
+ 	REGISTER_ATTRIBUTE(timeStepUpdateInterval );
+ }
+ 
+@@ -162,7 +153,7 @@
+ 
+ 	shared_ptr&lt;Body&gt; w2;	// The lower one :
+ 	createBox(w2,Vector3r(width/2.0,-thickness/2.0,0),Vector3r(width/2.0,thickness/2.0,profondeur/2.0));
+-	YADE_CAST&lt;BodyMacroParameters*&gt;(w2-&gt;physicalParameters.get())-&gt;frictionAngle = sphereFrictionDeg; // so that we have phi(spheres-inferior wall)=phi(sphere-sphere)
++	YADE_CAST&lt;CohesiveFrictionalBodyParameters*&gt;(w2-&gt;physicalParameters.get())-&gt;frictionAngle = sphereFrictionDeg * Mathr::PI/180.0;; // so that we have phi(spheres-inferior wall)=phi(sphere-sphere)
+ 	rootBody-&gt;bodies-&gt;insert(w2);
+ 
+ 	shared_ptr&lt;Body&gt; w3;	// The right one
+@@ -171,7 +162,7 @@
+ 
+ 	shared_ptr&lt;Body&gt; w4; // The upper one
+ 	createBox(w4,Vector3r(width/2.0,height+thickness/2.0,0),Vector3r(width/2.0,thickness/2.0,profondeur/2.0));
+-	YADE_CAST&lt;BodyMacroParameters*&gt;(w4-&gt;physicalParameters.get())-&gt;frictionAngle = sphereFrictionDeg; // so that we have phi(spheres-superior wall)=phi(sphere-sphere)
++	YADE_CAST&lt;CohesiveFrictionalBodyParameters*&gt;(w4-&gt;physicalParameters.get())-&gt;frictionAngle = sphereFrictionDeg * Mathr::PI/180.0;; // so that we have phi(spheres-superior wall)=phi(sphere-sphere)
+ 	rootBody-&gt;bodies-&gt;insert(w4);
+ 
+ // To close the front and the bottom of the box 
+@@ -211,7 +202,7 @@
+ void SimpleShear::createSphere(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Real radius)
+ {
+ 	body = shared_ptr&lt;Body&gt;(new Body(0,1));
+-	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
++	shared_ptr&lt;CohesiveFrictionalBodyParameters&gt; physics(new CohesiveFrictionalBodyParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
+ 	shared_ptr&lt;InteractingSphere&gt; iSphere(new InteractingSphere);
+@@ -229,6 +220,7 @@
+ 	physics-&gt;young			= sphereYoungModulus;
+ 	physics-&gt;poisson		= spherePoissonRatio;
+ 	physics-&gt;frictionAngle		= sphereFrictionDeg * Mathr::PI/180.0;
++	physics-&gt;isCohesive		= 1;
+ 
+ 	aabb-&gt;diffuseColor		= Vector3r(0,1,0);
+ 
+@@ -253,7 +245,7 @@
+ void SimpleShear::createBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents)
+ {
+ 	body = shared_ptr&lt;Body&gt;(new Body(0,1));
+-	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
++	shared_ptr&lt;CohesiveFrictionalBodyParameters&gt; physics(new CohesiveFrictionalBodyParameters);
+ 	shared_ptr&lt;AABB&gt; aabb(new AABB);
+ 	shared_ptr&lt;Box&gt; gBox(new Box);
+ 	shared_ptr&lt;InteractingBox&gt; iBox(new InteractingBox);
+@@ -278,6 +270,7 @@
+ 	physics-&gt;young			= boxYoungModulus;
+ 	physics-&gt;poisson		= boxPoissonRatio;
+ 	physics-&gt;frictionAngle		= 0.0;	//default value, modified after for w2 and w4 to have good values of phi(sphere-walls)
++	physics-&gt;isCohesive		= 1;
+ 
+ 	aabb-&gt;diffuseColor		= Vector3r(1,0,0);
+ 
+@@ -318,14 +311,15 @@
+ 	shared_ptr&lt;PhysicalActionContainerInitializer&gt; physicalActionInitializer(new PhysicalActionContainerInitializer);
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Force&quot;);
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Momentum&quot;);
++	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;GlobalStiffness&quot;);
+ 	
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+ 	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
+ 	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
+ 
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
+-	shared_ptr&lt;InteractionPhysicsEngineUnit&gt; ss(new SimpleElasticRelationships);
+-	interactionPhysicsDispatcher-&gt;add(ss);
++	shared_ptr&lt;InteractionPhysicsEngineUnit&gt; CL1Rel(new CL1Relationships);
++	interactionPhysicsDispatcher-&gt;add(CL1Rel);
+ 
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+ 	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;);
+@@ -335,47 +329,27 @@
+ 	shared_ptr&lt;GravityEngine&gt; gravityCondition(new GravityEngine);
+ 	gravityCondition-&gt;gravity = gravity;
+ 	
+-	shared_ptr&lt;CundallNonViscousForceDamping&gt; actionForceDamping(new CundallNonViscousForceDamping);
+-	actionForceDamping-&gt;damping = dampingForce;
+-	shared_ptr&lt;CundallNonViscousMomentumDamping&gt; actionMomentumDamping(new CundallNonViscousMomentumDamping);
+-	actionMomentumDamping-&gt;damping = dampingMomentum;
+-	shared_ptr&lt;PhysicalActionDamper&gt; actionDampingDispatcher(new PhysicalActionDamper);
+-	actionDampingDispatcher-&gt;add(actionForceDamping);
+-	actionDampingDispatcher-&gt;add(actionMomentumDamping);
+-	
+-	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-	applyActionDispatcher-&gt;add(&quot;NewtonsForceLaw&quot;);
+-	applyActionDispatcher-&gt;add(&quot;NewtonsMomentumLaw&quot;);
+-	
+-	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+-	positionIntegrator-&gt;add(&quot;LeapFrogPositionIntegrator&quot;);
+-	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+-	orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
+- 	
+ 
+-	shared_ptr&lt;ElasticCriterionTimeStepper&gt; sdecTimeStepper(new ElasticCriterionTimeStepper);
+-	sdecTimeStepper-&gt;sdecGroupMask = 1;
+-	sdecTimeStepper-&gt;timeStepUpdateInterval = timeStepUpdateInterval;
++	shared_ptr&lt;GlobalStiffnessTimeStepper&gt; globalStiffnessTimeStepper(new GlobalStiffnessTimeStepper);
++	globalStiffnessTimeStepper-&gt;sdecGroupMask = 1;
++	globalStiffnessTimeStepper-&gt;timeStepUpdateInterval = timeStepUpdateInterval;
+ 
+ 
+ 	rootBody-&gt;engines.clear();
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+-	rootBody-&gt;engines.push_back(sdecTimeStepper);
++	rootBody-&gt;engines.push_back(globalStiffnessTimeStepper);
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);	
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new ElasticContactLaw));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new ContactLaw1));
+ 	if(gravApplied)
+ 		rootBody-&gt;engines.push_back(gravityCondition);
+ 	if(shearApplied)
+ 		rootBody-&gt;engines.push_back(kinematic);
+-	rootBody-&gt;engines.push_back(actionDampingDispatcher);
+-	rootBody-&gt;engines.push_back(applyActionDispatcher);
+-	rootBody-&gt;engines.push_back(positionIntegrator);
+-	rootBody-&gt;engines.push_back(orientationIntegrator);
+-	rootBody-&gt;engines.push_back(possnap);
+-	rootBody-&gt;engines.push_back(forcesnap);
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt; (new NewtonsDampedLaw));
++// 	rootBody-&gt;engines.push_back(possnap);
++// 	rootBody-&gt;engines.push_back(forcesnap);
+ 	rootBody-&gt;initializers.clear();
+ 	rootBody-&gt;initializers.push_back(physicalActionInitializer);
+ 	rootBody-&gt;initializers.push_back(boundingVolumeDispatcher);
+
+Modified: trunk/pkg/dem/PreProcessor/SimpleShear.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SimpleShear.hpp	2008-10-23 13:36:45 UTC (rev 1550)
++++ trunk/pkg/dem/PreProcessor/SimpleShear.hpp	2008-10-23 17:35:34 UTC (rev 1551)
+@@ -18,6 +18,11 @@
+ The sample could be generated via the same method used in TriaxialTest Preprocesor (=&gt; see GenerateCloud) or by reading a text file containing positions and radii of a sample (=&gt; see ImportCloud). This last one is the one by default used by this PreProcessor as it is written here =&gt; you need to have such a file.
+ Thanks to the Engines (in pkg/common/Engine/DeusExMachina) CinemDNCEngine, CinemKNCEngine and CinemCNCEngine, respectively constant normal displacement, constant normal rigidity and constant normal stress are possible to execute over such samples
+ NB : in this PreProcessor only CinemDNCEngine appears, if you want to use other engines the best is maybe to modify directly .xml files
++
++Chgts depuis derniers svn
++- utilisation de ContactLaw1 =&gt; Changer les parameters en Cohe...Parameters
++- de globalstifness... pour calcul de dt
++- correction que le phi des boites etaient en la valeurs en deg (alors qu'il faut des rad)
+  */
+ 
+ 
+@@ -50,8 +55,6 @@
+ 				;
+ 		Real		 displacement
+ 				,shearSpeed;
+-		Real		 dampingForce
+-				,dampingMomentum;
+ 
+ 		int		 recordIntervalIter
+ 				,timeStepUpdateInterval;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000462.html">[deprecated list] [Yade-dev] drop .gz support in favor of .bz2	only?
+</A></li>
+	<LI>Next message: <A HREF="000459.html">[deprecated list] [Yade-dev] [svn] r1552 - in trunk/pkg/dem:	Engine/StandAloneEngine	PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#458">[ date ]</a>
+              <a href="thread.html#458">[ thread ]</a>
+              <a href="subject.html#458">[ subject ]</a>
+              <a href="author.html#458">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

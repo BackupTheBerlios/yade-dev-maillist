@@ -1,0 +1,326 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1655 - in trunk: . core extra	gui/py gui/qt3	pkg/dem/Engine/EngineUnit scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1655%20-%20in%20trunk%3A%20.%20core%20extra%0A%09gui/py%20gui/qt3%09pkg/dem/Engine/EngineUnit%20scripts&In-Reply-To=%3C200902042047.n14KljSo004364%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000650.html">
+   <LINK REL="Next"  HREF="000657.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1655 - in trunk: . core extra	gui/py gui/qt3	pkg/dem/Engine/EngineUnit scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1655%20-%20in%20trunk%3A%20.%20core%20extra%0A%09gui/py%20gui/qt3%09pkg/dem/Engine/EngineUnit%20scripts&In-Reply-To=%3C200902042047.n14KljSo004364%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1655 - in trunk: . core extra	gui/py gui/qt3	pkg/dem/Engine/EngineUnit scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Feb  4 21:47:45 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000650.html">[deprecated list] [Yade-dev] [svn] r1654 -	trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000657.html">[deprecated list] [Yade-dev] [svn] r1656 - in trunk/pkg/common: .	Container
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#656">[ date ]</a>
+              <a href="thread.html#656">[ thread ]</a>
+              <a href="subject.html#656">[ subject ]</a>
+              <a href="author.html#656">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-02-04 21:47:43 +0100 (Wed, 04 Feb 2009)
+New Revision: 1655
+
+Modified:
+   trunk/SConstruct
+   trunk/core/GroupRelationData.cpp
+   trunk/extra/Brefcom.cpp
+   trunk/gui/py/utils.py
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/scripts/simple-scene.py
+Log:
+1. Contact sphere-facet must be deleted by the constitutive law once created. Let me know if that is a problem -- I think it is the way it should be in the future everywhere, though.
+2. Fixes for boost 1.37 (boost::thread not fully compatible)
+3. utils.basidDEMEngines (not tested yet)
+4. Fix warning in?\194?\160GroupRelationData
+5. add march switch to scons ('native' is default, but not supported by older compilers)
+6. Prepend default CXXFLAGS so that user-defined ones (like warning suppression) come after the default ones and override those.
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-02-02 16:25:12 UTC (rev 1654)
++++ trunk/SConstruct	2009-02-04 20:47:43 UTC (rev 1655)
+@@ -137,6 +137,7 @@
+ 	('QTDIR','Directories where to look for qt3',['/usr/share/qt3','/usr/lib/qt','/usr/lib/qt3','/usr/qt/3','/usr/lib/qt-3.3'],None,Split),
+ 	('CXX','The c++ compiler','g++'),
+ 	('CXXFLAGS','Additional compiler flags for compilation (like -march=core2).',None,None,Split),
++	('march','Architecture to use with -march=... when optimizing','native',None,None),
+ 	#('SHLINK','Linker for shared objects','g++'),
+ 	('SHCCFLAGS','Additional compiler flags for linking (for plugins).',None,None,Split),
+ 	BoolOption('QUAD_PRECISION','typedef Real as long double (=quad)',0),
+@@ -391,7 +392,7 @@
+ else: env.Append(CXXFLAGS='-O2')
+ if env['openmp']: env.Append(CXXFLAGS='-fopenmp',LIBS='gomp')
+ if env['optimize']:
+-	env.Append(CXXFLAGS=Split('-O3 -ffast-math -march=native'),
++	env.Append(CXXFLAGS=Split('-O3 -ffast-math -march=%s'%env['march']),
+ 		CPPDEFINES=[('YADE_CAST','static_cast'),('YADE_PTR_CAST','static_pointer_cast'),'NDEBUG'])
+ 	# NDEBUG is used in /usr/include/assert.h: when defined, asserts() are no-ops
+ 
+@@ -411,7 +412,7 @@
+ 	env.Append(CPPDEFINES=[('YADE_CAST','dynamic_cast'),('YADE_PTR_CAST','dynamic_pointer_cast')])
+ 
+ if env['gprof']: env.Append(CXXFLAGS=['-pg'],LINKFLAGS=['-pg'],SHLINKFLAGS=['-pg'])
+-env.Append(CXXFLAGS=['-pipe','-Wall'])
++env.Prepend(CXXFLAGS=['-pipe','-Wall'])
+ 
+ if env['arcs']=='gen': env.Append(CXXFLAGS=['-fprofile-generate'],LINKFLAGS=['-fprofile-generate'])
+ if env['arcs']=='use': env.Append(CXXFLAGS=['-fprofile-use'],LINKFLAGS=['-fprofile-use'])
+
+Modified: trunk/core/GroupRelationData.cpp
+===================================================================
+--- trunk/core/GroupRelationData.cpp	2009-02-02 16:25:12 UTC (rev 1654)
++++ trunk/core/GroupRelationData.cpp	2009-02-04 20:47:43 UTC (rev 1655)
+@@ -8,12 +8,12 @@
+ 
+ #include &quot;GroupRelationData.hpp&quot;
+ 
+-GroupRelationData::GroupRelationData() : npar_(0), ngrp_(2)
++GroupRelationData::GroupRelationData() : ngrp_(2), npar_(0)
+ { 
+         initActivator(); 
+ }
+ 
+-GroupRelationData::GroupRelationData(unsigned int ngrp) : npar_(0), ngrp_(ngrp)
++GroupRelationData::GroupRelationData(unsigned int ngrp) : ngrp_(ngrp), npar_(0)
+ { 
+ 	initActivator();
+ }
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-02-02 16:25:12 UTC (rev 1654)
++++ trunk/extra/Brefcom.cpp	2009-02-04 20:47:43 UTC (rev 1655)
+@@ -156,13 +156,14 @@
+ 		epsN=contGeom-&gt;epsN();
+ 		epsT=contGeom-&gt;epsT();
+ 
++		contGeom-&gt;relocateContactPoints(); // allow very large mutual rotations
++
+ 		if(logStrain &amp;&amp; epsN&lt;0){
+ 			Real epsN0=epsN;
+ 			epsN=log(epsN0+1);
+ 			epsT*=epsN/epsN0;
+ 		}
+ 
+-
+ 		#ifdef BREFCOM_MATERIAL_MODEL
+ 			BREFCOM_MATERIAL_MODEL
+ 		#else
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2009-02-02 16:25:12 UTC (rev 1654)
++++ trunk/gui/py/utils.py	2009-02-04 20:47:43 UTC (rev 1655)
+@@ -338,3 +338,42 @@
+ 	dictParams.update(dictDefaults); saveVars('table',**dictParams)
+ 	return len(tagsParams)
+ 
++
++def basicDEMEngines(interPhysics='SimpleElasticRelationships',constitutiveLaw='ElasticContactLaw',gravity=None,damping=.4):
++	&quot;&quot;&quot;Set basic set of DEM engines and initializers.
++	
++	interPhysics and constitutiveLaw specify class of respective engines to use instead of defaults.
++
++	Gravity can be list or tuple to specify numeric value, it can also be an object that will be inserted into
++	engines, however. By default, no gravity is applied.
++	&quot;&quot;&quot;
++	O.initializers=[
++		StandAloneEngine('PhysicalActionContainerInitializer'),
++		MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('InteractingFacet2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
++	]
++	O.engines=[
++		StandAloneEngine('PhysicalActionContainerReseter'),
++		MetaEngine('BoundingVolumeMetaEngine',[
++			EngineUnit('InteractingSphere2AABB'),
++			EngineUnit('InteractingBox2AABB'),
++			EngineUnit('InteractingFacet2AABB'),
++			EngineUnit('MetaInteractingGeometry2AABB')
++		]),
++		StandAloneEngine('PersistentSAPCollider'),
++		MetaEngine('InteractionGeometryMetaEngine',[
++			EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
++			EngineUnit('InteractingFacet2InteractingSphere4SpheresContactGeometry'),
++			EngineUnit('InteractingBox2InteractingSphere4SpheresContactGeometry')
++		]),
++		MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
++		StandAloneEngine('ElasticContactLaw'),
++	]
++	if gravity:
++		if islist(gravity) or istuple(gravity):
++			O.engines=O.engines+[DeusExMachina('GravityEngine',{'gravity':gravity}),]
++		else:
++			O.engines=O.engines+[gravity]
++	O.engines=O.engines+[DeusExMachina('NewtonsDampedLaw',{'damping':damping}),]
++	
++		
++
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2009-02-02 16:25:12 UTC (rev 1654)
++++ trunk/gui/qt3/GLViewer.cpp	2009-02-04 20:47:43 UTC (rev 1655)
+@@ -18,11 +18,21 @@
+ #include&lt;yade/core/Body.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;boost/filesystem/operations.hpp&gt;
++#include&lt;boost/version.hpp&gt;
+ 
+ CREATE_LOGGER(GLViewer);
++GLLock::GLLock(GLViewer* _glv):
+ 
+-GLLock::GLLock(GLViewer* _glv): boost::try_mutex::scoped_try_lock(YadeQtMainWindow::self-&gt;glMutex,true), glv(_glv){
+-	if(locked()) glv-&gt;makeCurrent(); }
++#if BOOST_VERSION&lt;103500
++	boost::try_mutex::scoped_try_lock(YadeQtMainWindow::self-&gt;glMutex,true), glv(_glv){
++		if(locked()) glv-&gt;makeCurrent();
++	}
++#else
++	boost::try_mutex::scoped_try_lock(YadeQtMainWindow::self-&gt;glMutex), glv(_glv){
++		if(owns_lock()) glv-&gt;makeCurrent();
++	}
++#endif
++
+ GLLock::~GLLock(){ /*glv-&gt;doneCurrent();*/}
+ 
+ void GLViewer::updateGL(void){/*GLLock lock(this); */QGLViewer::updateGL();}
+@@ -30,10 +40,15 @@
+ void GLViewer::paintGL(void){
+ 	/* paintGL encapsulated preDraw, draw and postDraw within QGLViewer. If the mutex cannot be locked,
+ 	 * we just return without repainting */
+-	boost::try_mutex::scoped_try_lock lock(YadeQtMainWindow::self-&gt;glMutex);
+-	if(lock.locked()){
+-		this-&gt;makeCurrent(); // not sure if this is needed
+-		QGLViewer::paintGL();
++	#if BOOST_VERSION&lt;103500
++		boost::try_mutex::scoped_try_lock lock(YadeQtMainWindow::self-&gt;glMutex);
++		if(lock.locked()){
++	#else
++		boost::try_mutex::scoped_try_lock lock(YadeQtMainWindow::self-&gt;glMutex,boost::defer_lock);
++		if(lock.owns_lock()){
++	#endif
++			this-&gt;makeCurrent(); // not sure if this is needed
++			QGLViewer::paintGL();
+ 	}
+ 	//this-&gt;doneCurrent();
+ }
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2009-02-02 16:25:12 UTC (rev 1654)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2009-02-04 20:47:43 UTC (rev 1655)
+@@ -51,6 +51,7 @@
+ 	Real L = normal.Dot(cl);
+ 
+ 	int contactFace=0; // temp to save what will be maybe needed for new contact
++	assert((c-&gt;interactionGeometry&amp;&amp;c-&gt;isReal)||(!c-&gt;interactionGeometry&amp;&amp;!c-&gt;isReal));
+ 	if(c-&gt;interactionGeometry){ // contact already exists, use old data here
+ 		contactFace=YADE_CAST&lt;SpheresContactGeometry*&gt;(c-&gt;interactionGeometry.get())-&gt;facetContactFace;
+ 		// determinate contact on negative side: reverse quantities
+@@ -65,7 +66,7 @@
+ 	}
+ 
+ 	Real sphereRadius = static_cast&lt;InteractingSphere*&gt;(cm2.get())-&gt;radius;
+-	if (L &gt; sphereRadius)  return false; // no contact
++	if (L&gt;sphereRadius &amp;&amp; !c-&gt;isReal)  return false; // no contact, but only if there was no previous contact; ortherwise, the constitutive law is responsible for setting Interaction::isReal=false
+ 
+ 	Vector3r cp = cl - L*normal;
+ 	const Vector3r* ne = facet-&gt;ne;
+@@ -117,7 +118,7 @@
+ 	// END everything in facet-local coordinates
+ 	//
+ 
+-	if (penetrationDepth&gt;0)
++	if (penetrationDepth&gt;0 || c-&gt;isReal)
+ 	{
+ 		shared_ptr&lt;SpheresContactGeometry&gt; scm;
+ 		if (c-&gt;interactionGeometry)
+
+Modified: trunk/scripts/simple-scene.py
+===================================================================
+--- trunk/scripts/simple-scene.py	2009-02-02 16:25:12 UTC (rev 1654)
++++ trunk/scripts/simple-scene.py	2009-02-04 20:47:43 UTC (rev 1655)
+@@ -57,21 +57,21 @@
+ 	## This MetaEngine acts on all PhysicalActions and selects the right EngineUnit base on type of the PhysicalAction.
+ 	#
+ 	# note that following 4 engines (till the end) can be replaced by an optimized monolithic version:
+-	#	DeusExMachina('NewtonsDampedLaw',{'damping':0.2}),
++	DeusExMachina('NewtonsDampedLaw',{'damping':0.0}),
+ 	#
+-	MetaEngine('PhysicalActionDamper',[
+-		EngineUnit('CundallNonViscousForceDamping',{'damping':0.2}),
+-		EngineUnit('CundallNonViscousMomentumDamping',{'damping':0.2})
+-	]),
++#	MetaEngine('PhysicalActionDamper',[
++#		EngineUnit('CundallNonViscousForceDamping',{'damping':0.2}),
++#		EngineUnit('CundallNonViscousMomentumDamping',{'damping':0.2})
++#	]),
+ 	## Now we have forces and momenta acting on bodies. Newton's law calculates acceleration that corresponds to them.
+-	MetaEngine('PhysicalActionApplier',[
+-		EngineUnit('NewtonsForceLaw'),
+-		EngineUnit('NewtonsMomentumLaw'),
+-	]),
++#	MetaEngine('PhysicalActionApplier',[
++#		EngineUnit('NewtonsForceLaw'),
++#		EngineUnit('NewtonsMomentumLaw'),
++#	]),
+ 	## Acceleration results in velocity change. Integrating the velocity over dt, position of the body will change.
+-	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogPositionIntegrator')]),
++#	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogPositionIntegrator')]),
+ 	## Angular acceleration changes angular velocity, resulting in position and/or orientation change of the body.
+-	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogOrientationIntegrator')]),
++#	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogOrientationIntegrator')]),
+ ]
+ 
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000650.html">[deprecated list] [Yade-dev] [svn] r1654 -	trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000657.html">[deprecated list] [Yade-dev] [svn] r1656 - in trunk/pkg/common: .	Container
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#656">[ date ]</a>
+              <a href="thread.html#656">[ thread ]</a>
+              <a href="subject.html#656">[ subject ]</a>
+              <a href="author.html#656">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

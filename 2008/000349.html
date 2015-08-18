@@ -1,0 +1,252 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1511 - in trunk: core gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1511%20-%20in%20trunk%3A%20core%20gui/py&In-Reply-To=%3C200809071247.m87Cl2tt006579%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000348.html">
+   <LINK REL="Next"  HREF="000350.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1511 - in trunk: core gui/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1511%20-%20in%20trunk%3A%20core%20gui/py&In-Reply-To=%3C200809071247.m87Cl2tt006579%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1511 - in trunk: core gui/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Sep  7 14:47:02 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000348.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-29029/bin/yade-svn1510:	DirectShearCis, FEMBeam,	HydraulicTest, SDECImpactTest, STLImporterTest, TetrahedronsTest
+</A></li>
+        <LI>Next message: <A HREF="000350.html">[deprecated list] [Yade-dev] [svn] r1512 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#349">[ date ]</a>
+              <a href="thread.html#349">[ thread ]</a>
+              <a href="subject.html#349">[ subject ]</a>
+              <a href="author.html#349">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-09-07 14:47:01 +0200 (Sun, 07 Sep 2008)
+New Revision: 1511
+
+Modified:
+   trunk/core/Body.hpp
+   trunk/core/Interaction.hpp
+   trunk/core/NullGUI.cpp
+   trunk/core/yade.cpp
+   trunk/gui/py/_utils.cpp
+   trunk/gui/py/eudoxos.py
+Log:
+1. poisson and young estimator now works on a fractional part of the speciment
+2. do not switch ui automatically if selected explcitly
+3. body::maskOK to check mask
+
+
+Modified: trunk/core/Body.hpp
+===================================================================
+--- trunk/core/Body.hpp	2008-09-05 14:37:29 UTC (rev 1510)
++++ trunk/core/Body.hpp	2008-09-07 12:47:01 UTC (rev 1511)
+@@ -61,9 +61,8 @@
+ 
+ 		body_id_t getId() const {return id;};
+ 
+-		// FIXME - but we SHOULDN'T use them in InteractionSolver, because it allows
+-		//         to have flat simulation. We should make tree simulation and see...
+ 		int getGroupMask() {return groupMask; };
++		bool maskOk(int mask){return (mask==0 || (groupMask&amp;mask));}
+ 
+ 		// only BodyContainer can set the id of a body
+ 		friend class BodyContainer;
+
+Modified: trunk/core/Interaction.hpp
+===================================================================
+--- trunk/core/Interaction.hpp	2008-09-05 14:37:29 UTC (rev 1510)
++++ trunk/core/Interaction.hpp	2008-09-07 12:47:01 UTC (rev 1511)
+@@ -33,6 +33,13 @@
+ 		body_id_t getId1() {return id1;};
+ 		body_id_t getId2() {return id2;};
+ 
++		#if 0
++			//! Whether both bodies involved in interaction satisfies given mask; provide rootBody for faster lookup
++			bool maskBothOK(int mask, MetaBody* rootBody=NULL){return (mask==0) || (Body::byId(id1,rootBody)-&gt;maskOK(mask) &amp;&amp; Body::byId(id2,rootBody)-&gt;maskOK(mask));}
++			//! Whether at least one body in interaction satisfies given mask; provide rootBody for faster lookup
++			bool maskAnyOK(int mask, MetaBody* rootBody=NULL){return (mask==0) || Body::byId(id1,rootBody)-&gt;maskOK(mask) || Body::byId(id2,rootBody)-&gt;maskOK(mask);}
++		#endif
++
+ 	protected :
+ 		void registerAttributes();
+ 	REGISTER_CLASS_NAME(Interaction);
+
+Modified: trunk/core/NullGUI.cpp
+===================================================================
+--- trunk/core/NullGUI.cpp	2008-09-05 14:37:29 UTC (rev 1510)
++++ trunk/core/NullGUI.cpp	2008-09-07 12:47:01 UTC (rev 1511)
+@@ -114,7 +114,7 @@
+ 	} 
+ 	else // FileGenerator
+ 	{
+-		for(unsigned int i=0; i&lt;inputFiles.size() ; ++i)
++		for(size_t i=0; i&lt;inputFiles.size() ; ++i)
+ 		{
+ 			std::cerr &lt;&lt; &quot;filegenerator: \&quot;&quot; &lt;&lt; inputFiles[i] &lt;&lt; &quot;\&quot;&quot;;
+ 			file=inputFiles[i];
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2008-09-05 14:37:29 UTC (rev 1510)
++++ trunk/core/yade.cpp	2008-09-07 12:47:01 UTC (rev 1511)
+@@ -145,12 +145,12 @@
+ 
+ 	string configPath=string(getenv(&quot;HOME&quot;)) + &quot;/.yade&quot; SUFFIX; // this is the default, may be overridden by -c / -C
+ 	
+-	int ch; string gui=&quot;&quot;; string simulationFileName=&quot;&quot;; bool setup=false; int verbose=0; bool coreOptions=true;
++	int ch; string gui=&quot;&quot;; string simulationFileName=&quot;&quot;; bool setup=false; int verbose=0; bool coreOptions=true; bool explicitUI=false;
+ 	while(coreOptions &amp;&amp; (ch=getopt(argc,argv,&quot;hnN:wC:cvS:&quot;))!=-1)
+ 		switch(ch){
+ 			case 'h': printHelp(); return 1;
+-			case 'n': gui=&quot;NullGUI&quot;; break;
+-			case 'N': gui=optarg; break;
++			case 'n': gui=&quot;NullGUI&quot;; explicitUI=true; break;
++			case 'N': gui=optarg; explicitUI=true; break;
+ 			case 'w': setup=true; break;
+ 			case 'C': configPath=optarg; break;
+ 			case 'c': configPath=&quot;.&quot;; break;
+@@ -242,7 +242,7 @@
+ 	}
+ 
+ 	if(gui.size()==0) gui=Omega::instance().preferences-&gt;defaultGUILibName;
+-	if(gui==&quot;PythonUI&quot; &amp;&amp; !getenv(&quot;TERM&quot;)){ LOG_WARN(&quot;No $TERM, using QtGUI instead of PythonUI&quot;); gui=&quot;QtGUI&quot;; }
++	if(!explicitUI &amp;&amp; gui==&quot;PythonUI&quot; &amp;&amp; !getenv(&quot;TERM&quot;)){ LOG_WARN(&quot;No $TERM, using QtGUI instead of PythonUI&quot;); gui=&quot;QtGUI&quot;; }
+ 	if(gui==&quot;QtGUI&quot; &amp;&amp; !getenv(&quot;DISPLAY&quot;)){ LOG_WARN(&quot;No $DISPLAY, using PythonUI instead of QtUI&quot;); gui=&quot;PythonUI&quot;; }
+ 		
+ 	shared_ptr&lt;FrontEnd&gt; frontEnd = dynamic_pointer_cast&lt;FrontEnd&gt;(ClassFactory::instance().createShared(gui));
+
+Modified: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2008-09-05 14:37:29 UTC (rev 1510)
++++ trunk/gui/py/_utils.cpp	2008-09-07 12:47:01 UTC (rev 1511)
+@@ -7,7 +7,9 @@
+ #include&lt;cmath&gt;
+ using namespace boost::python;
+ 
+-python::tuple vec2tuple(const Vector3r&amp; v){return boost::python::make_tuple(v[0],v[1],v[2]);};
++python::tuple vec2tuple(const Vector3r&amp; v){return boost::python::make_tuple(v[0],v[1],v[2]);}
++Vector3r tuple2vec(const python::tuple&amp; t){return Vector3r(extract&lt;double&gt;(t[0])(),extract&lt;double&gt;(t[1])(),extract&lt;double&gt;(t[2])());}
++bool isInBB(Vector3r p, Vector3r bbMin, Vector3r bbMax){return p[0]&gt;bbMin[0] &amp;&amp; p[0]&lt;bbMax[0] &amp;&amp; p[1]&gt;bbMin[1] &amp;&amp; p[1]&lt;bbMax[1] &amp;&amp; p[2]&gt;bbMin[2] &amp;&amp; p[2]&lt;bbMax[2];}
+ 
+ /* \todo implement groupMask */
+ python::tuple aabbExtrema(){
+@@ -35,14 +37,18 @@
+ }
+ BOOST_PYTHON_FUNCTION_OVERLOADS(negPosExtremeIds_overloads,negPosExtremeIds,1,2);
+ 
+-python::tuple coordsAndDisplacements(int axis){
++python::tuple coordsAndDisplacements(int axis,python::tuple AABB=python::tuple()){
++	Vector3r bbMin,bbMax; bool useBB=python::len(AABB)&gt;0;
++	if(useBB){bbMin=tuple2vec(extract&lt;python::tuple&gt;(AABB[0])());bbMax=tuple2vec(extract&lt;python::tuple&gt;(AABB[1])());}
+ 	python::list retCoord,retDispl;
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp;b, *Omega::instance().getRootBody()-&gt;bodies){
++		if(useBB &amp;&amp; !isInBB(b-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax)) continue;
+ 		retCoord.append(b-&gt;physicalParameters-&gt;se3.position[axis]);
+ 		retDispl.append(b-&gt;physicalParameters-&gt;se3.position[axis]-b-&gt;physicalParameters-&gt;refSe3.position[axis]);
+ 	}
+ 	return python::make_tuple(retCoord,retDispl);
+ }
++BOOST_PYTHON_FUNCTION_OVERLOADS(coordsAndDisplacements_overloads,coordsAndDisplacements,1,2);
+ 
+ void setRefSe3(){
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *Omega::instance().getRootBody()-&gt;bodies){
+@@ -90,7 +96,7 @@
+ 	def(&quot;PWaveTimeStep&quot;,PWaveTimeStep);
+ 	def(&quot;aabbExtrema&quot;,aabbExtrema);
+ 	def(&quot;negPosExtremeIds&quot;,negPosExtremeIds,negPosExtremeIds_overloads(args(&quot;axis&quot;,&quot;distFactor&quot;)));
+-	def(&quot;coordsAndDisplacements&quot;,coordsAndDisplacements);
++	def(&quot;coordsAndDisplacements&quot;,coordsAndDisplacements,coordsAndDisplacements_overloads(args(&quot;AABB&quot;)));
+ 	def(&quot;setRefSe3&quot;,setRefSe3);
+ 	def(&quot;interactionAnglesHistogram&quot;,interactionAnglesHistogram,interactionAnglesHistogram_overloads(args(&quot;axis&quot;,&quot;mask&quot;,&quot;bins&quot;)));
+ }
+
+Modified: trunk/gui/py/eudoxos.py
+===================================================================
+--- trunk/gui/py/eudoxos.py	2008-09-05 14:37:29 UTC (rev 1510)
++++ trunk/gui/py/eudoxos.py	2008-09-07 12:47:01 UTC (rev 1511)
+@@ -16,7 +16,7 @@
+ 		bar(d[0],d[1],width=math.pi/(1.2*bins),fc=fc,alpha=.7,label=['yz','xz','xy'][axis])
+ 	pylab.show()
+ 
+-def estimatePoissonYoung(principalAxis,stress=0,plot=False):
++def estimatePoissonYoung(principalAxis,stress=0,plot=False,keepRatio=1.):
+ 	&quot;&quot;&quot;Estimate Poisson's ration given the &quot;principal&quot; axis of straining.
+ 	For every base direction, homogenized strain is computed
+ 	(slope in linear regression on discrete function particle coordinate &#8594;
+@@ -26,12 +26,20 @@
+ 
+ 	Young's modulus is computed as &#963;/&#949;&#8320;; if stress &#963; is not given (default 0),
+ 	the result is 0.
++
++	keepRatio, if &lt; 1., will take only smaller part (centered) or the specimen into account
+ 	&quot;&quot;&quot;
+ 	dd=[] # storage for linear regression parameters
+ 	import pylab,numpy,stats
+ 	from yade import utils
++	if keepRatio&lt;1.:
++		aabb=utils.aabbExtrema(); half=[.5*(aabb[1][i]-aabb[0][i]) for i in [0,1,2]]
++		cut=(tuple([aabb[0][i]+(1.-keepRatio)*half[i] for i in [0,1,2]]),tuple([aabb[1][i]-(1.-keepRatio)*half[i] for i in [0,1,2]]))
+ 	for axis in [0,1,2]:
+-		w,dw=utils.coordsAndDisplacements(axis)
++		if keepRatio&lt;1.:
++			w,dw=utils.coordsAndDisplacements(axis,AABB=cut)
++		else:
++			w,dw=utils.coordsAndDisplacements(axis)
+ 		l,ll=stats.linregress(w,dw)[0:2] # use only tangent and section
+ 		dd.append((l,ll,min(w),max(w)))
+ 		if plot: pylab.plot(w,dw,'.',label='xyz'[axis])
+@@ -67,7 +75,7 @@
+ 
+ 	ph=o.interactions.nth(0).phys # some params are the same everywhere
+ 	material.append(&quot;%g %g&quot;%(ph['E'],ph['G']))
+-	material.append(&quot;%g %g %g %g&quot;%(ph['epsCrackOnset'],ph['epsFracture'],ph['expBending'],ph['xiShear']))
++	material.append(&quot;%g %g %g %g&quot;%(ph['epsCrackOnset'],ph['epsFracture'],1e50,ph['xiShear']))
+ 	material.append(&quot;%g %g&quot;%(ph['undamagedCohesion'],ph['tanFrictionAngle']))
+ 
+ 	# need strainer for getting bodies in positive/negative boundary
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000348.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-29029/bin/yade-svn1510:	DirectShearCis, FEMBeam,	HydraulicTest, SDECImpactTest, STLImporterTest, TetrahedronsTest
+</A></li>
+	<LI>Next message: <A HREF="000350.html">[deprecated list] [Yade-dev] [svn] r1512 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#349">[ date ]</a>
+              <a href="thread.html#349">[ thread ]</a>
+              <a href="subject.html#349">[ subject ]</a>
+              <a href="author.html#349">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,324 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1754 - in trunk: extra	gui/py	pkg/common/DataClass/InteractingGeometry	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine	scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1754%20-%20in%20trunk%3A%20extra%0A%09gui/py%09pkg/common/DataClass/InteractingGeometry%09pkg/common/Engine/StandAloneEngine%09pkg/dem/Engine/StandAloneEngine%0A%09scripts/test&In-Reply-To=%3C200904101136.n3ABaKrE008564%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000917.html">
+   <LINK REL="Next"  HREF="000922.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1754 - in trunk: extra	gui/py	pkg/common/DataClass/InteractingGeometry	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine	scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1754%20-%20in%20trunk%3A%20extra%0A%09gui/py%09pkg/common/DataClass/InteractingGeometry%09pkg/common/Engine/StandAloneEngine%09pkg/dem/Engine/StandAloneEngine%0A%09scripts/test&In-Reply-To=%3C200904101136.n3ABaKrE008564%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1754 - in trunk: extra	gui/py	pkg/common/DataClass/InteractingGeometry	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine	scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Apr 10 13:36:20 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000917.html">[deprecated list] [Yade-dev] [svn] r1753 - in trunk: . extra	extra/usct gui/py	pkg/common/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000922.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-13614/bin/yade-svn1754:	TriaxialTestWater, USCTGen
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#921">[ date ]</a>
+              <a href="thread.html#921">[ thread ]</a>
+              <a href="subject.html#921">[ subject ]</a>
+              <a href="author.html#921">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-04-10 13:36:17 +0200 (Fri, 10 Apr 2009)
+New Revision: 1754
+
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/gui/py/eudoxos.py
+   trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.cpp
+   trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.hpp
+   trunk/scripts/test/facet-topo.py
+Log:
+1. Fix bug in FacetTopologyAnalyzer algorithm
+2. Add angle info to InteractingFacet (not yet used)
+3. Add triangulated sphere test for FacetTopoloyAnalyzer to facet-topo.py
+4. Fixes in rate-dep in brefcom
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-04-10 08:49:36 UTC (rev 1753)
++++ trunk/extra/Brefcom.cpp	2009-04-10 11:36:17 UTC (rev 1754)
+@@ -172,8 +172,9 @@
+ 
+ Real BrefcomContact::computeViscoplScalingFactor(Real sigmaTNorm, Real sigmaTYield,Real dt){
+ 	if(sigmaTNorm&lt;sigmaTYield) return 1.;
+-	Real c=sigmaTNorm*pow(plTau/(G*dt),plRateExp)*pow(sigmaTNorm-sigmaTYield,plRateExp-1.);
++	Real c=undamagedCohesion*pow(plTau/(G*dt),plRateExp)*pow(sigmaTNorm-sigmaTYield,plRateExp-1.);
+ 	Real beta=solveBeta(c,plRateExp);
++	LOG_DEBUG(&quot;scaling factor &quot;&lt;&lt;1.-exp(beta)*(1-sigmaTYield/sigmaTNorm));
+ 	return 1.-exp(beta)*(1-sigmaTYield/sigmaTNorm);
+ }
+ 
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2009-04-10 08:49:36 UTC (rev 1753)
++++ trunk/extra/Brefcom.hpp	2009-04-10 11:36:17 UTC (rev 1754)
+@@ -13,6 +13,7 @@
+ #include&lt;yade/pkg-common/NormalShearInteractions.hpp&gt;
+ #include&lt;yade/pkg-common/ConstitutiveLaw.hpp&gt;
+ 
++
+ /* Engine encompassing several computations looping over all bodies/interactions
+  *
+  * * Compute and store unbalanced force over the whole simulation.
+
+Modified: trunk/gui/py/eudoxos.py
+===================================================================
+--- trunk/gui/py/eudoxos.py	2009-04-10 08:49:36 UTC (rev 1753)
++++ trunk/gui/py/eudoxos.py	2009-04-10 11:36:17 UTC (rev 1754)
+@@ -174,7 +174,7 @@
+ 	f.write(&quot;SimpleCS 1 thick 1.0 width 1.0\n&quot;)
+ 	# material
+ 	ph=inters[0].phys
+-	f.write(&quot;CohInt 1 kn %g ks %g e0 %g ef %g c 0. ksi %g coh %g tanphi %g damchartime %g damrateexp %g d 1.0\n&quot;%(ph['E'],ph['G'],ph['epsCrackOnset'],ph['epsFracture'],ph['xiShear'],ph['undamagedCohesion'],ph['tanFrictionAngle'],ph['dmgTau'],ph['dmgRateExp']))
++	f.write(&quot;CohInt 1 kn %g ks %g e0 %g ef %g c 0. ksi %g coh %g tanphi %g damchartime %g damrateexp %g plchartime %g plrateexp %g d 1.0\n&quot;%(ph['E'],ph['G'],ph['epsCrackOnset'],ph['epsFracture'],ph['xiShear'],ph['undamagedCohesion'],ph['tanFrictionAngle'],ph['dmgTau'],ph['dmgRateExp'],ph['plTau'],ph['plRateExp']))
+ 	# boundary conditions
+ 	f.write('BoundaryCondition 1 loadTimeFunction 1 prescribedvalue 0.0\n')
+ 	f.write('BoundaryCondition 2 loadTimeFunction 1 prescribedvalue 1.e-4\n')
+
+Modified: trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.cpp
+===================================================================
+--- trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.cpp	2009-04-10 08:49:36 UTC (rev 1753)
++++ trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.cpp	2009-04-10 11:36:17 UTC (rev 1754)
+@@ -12,6 +12,7 @@
+ 	createIndex();
+ 	#ifdef FACET_TOPO
+ 		edgeAdjIds.resize(3,Body::ID_NONE);	
++		edgeAdjAngle.resize(3,0);
+ 	#endif
+ }
+ 
+@@ -25,6 +26,7 @@
+     REGISTER_ATTRIBUTE(vertices);
+ 	#ifdef FACET_TOPO
+ 		REGISTER_ATTRIBUTE(edgeAdjIds);
++		REGISTER_ATTRIBUTE(edgeAdjAngle);
+ 	#endif
+ }
+ 
+
+Modified: trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.hpp	2009-04-10 08:49:36 UTC (rev 1753)
++++ trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.hpp	2009-04-10 11:36:17 UTC (rev 1754)
+@@ -41,6 +41,8 @@
+ 	#ifdef FACET_TOPO
+ 		//! facet id's that are adjacent to respective edges
+ 		vector&lt;body_id_t&gt; edgeAdjIds;
++		//! angle between normals of this facet and the adjacent facet
++		vector&lt;body_id_t&gt; edgeAdjAngle;
+ 	#endif
+ 
+ 	protected:
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-04-10 08:49:36 UTC (rev 1753)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-04-10 11:36:17 UTC (rev 1754)
+@@ -251,8 +251,6 @@
+ 
+ /* Note that this function is called only for bodies that actually overlap along some axis */
+ void PersistentSAPCollider::updateOverlapingBBSet(int id1,int id2){
+-	#pragma omp critical
+-	{
+ 		// look if the pair (id1,id2) already exists in the overlappingBB collection
+ 		const shared_ptr&lt;Interaction&gt;&amp; interaction=transientInteractions-&gt;find(body_id_t(id1),body_id_t(id2));
+ 		bool found=(bool)interaction;
+@@ -279,7 +277,6 @@
+ 			//LOG_DEBUG(&quot;Erasing interaction #&quot;&lt;&lt;id1&lt;&lt;&quot;=#&quot;&lt;&lt;id2&lt;&lt;&quot; (isReal=&quot;&lt;&lt;interaction-&gt;isReal&lt;&lt;&quot;)&quot;);
+ 			transientInteractions-&gt;erase(body_id_t(id1),body_id_t(id2));
+ 		}
+-	}
+ }
+ 
+ 
+@@ -322,7 +319,14 @@
+ 		while (i&lt;2*nbElements &amp;&amp; !bounds[i]-&gt;lower) i++;
+ 		j=i+1;
+ 		while (j&lt;2*nbElements &amp;&amp; bounds[j]-&gt;id!=bounds[i]-&gt;id){
+-			if (bounds[j]-&gt;lower) updateOverlapingBBSet(bounds[i]-&gt;id,bounds[j]-&gt;id);
++			if (bounds[j]-&gt;lower){
++				/* findOverlappingBB is called in parallel for different data at initialization,
++				 * but updateOverlapingBBSet touches shared global data, therefore must be protected by critical section;
++				 * normally updateOverlapingBBSet is also called sequentially from sortBounds, where the critical section
++				 * would penalize performance; therefore we have to protect it from here */
++				#pragma omp critical 
++					updateOverlapingBBSet(bounds[i]-&gt;id,bounds[j]-&gt;id);
++			}
+ 			j++;
+ 		}
+ 		i++;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp	2009-04-10 08:49:36 UTC (rev 1753)
++++ trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp	2009-04-10 11:36:17 UTC (rev 1754)
+@@ -61,6 +61,7 @@
+ 		if(v-&gt;vertexId&gt;=0) continue; // already assigned
+ 	}
+ 	LOG_DEBUG(&quot;Found &quot;&lt;&lt;maxVertexId&lt;&lt;&quot; unique vertices.&quot;);
++	commonVerticesFound=maxVertexId;
+ 	// add FacetTopology for all facets; index within the topo array is the body id
+ 	vector&lt;shared_ptr&lt;FacetTopology&gt; &gt; topo(rb-&gt;bodies-&gt;size()); // initialized with the default ctor
+ 	FOREACH(shared_ptr&lt;VertexData&gt;&amp; v, vv){
+@@ -80,21 +81,18 @@
+ 		}
+ 		topo1.push_back(t);
+ 	}
+-	sort(topo1.begin(),topo1.end(),TopologyIndexComparator());
+ 	size_t nTopo=topo1.size();
+ 	for(size_t i=0; i&lt;nTopo; i++){
+ 		size_t j=i;
+ 		while(++j&lt;nTopo){
+ 			const shared_ptr&lt;FacetTopology&gt;&amp; ti(topo1[i]), &amp;tj(topo1[j]);
+-			LOG_TRACE(&quot;Analyzing possibly-adjacent facets #&quot;&lt;&lt;ti-&gt;id&lt;&lt;&quot; #&quot;&lt;&lt;tj-&gt;id&lt;&lt;&quot; (vertices &quot;&lt;&lt;ti-&gt;vertices[0]&lt;&lt;&quot;,&quot;&lt;&lt;ti-&gt;vertices[1]&lt;&lt;&quot;,&quot;&lt;&lt;ti-&gt;vertices[2]&lt;&lt;&quot;; &quot;&lt;&lt;tj-&gt;vertices[0]&lt;&lt;&quot;,&quot;&lt;&lt;ti-&gt;vertices[1]&lt;&lt;&quot;,&quot;&lt;&lt;ti-&gt;vertices[2]&lt;&lt;&quot;)&quot;);
+ 			vector&lt;size_t&gt; vvv; // array of common vertices
+ 			for(size_t k=0; k&lt;3; k++){
+ 				if     (ti-&gt;vertices[k]==tj-&gt;vertices[0]) vvv.push_back(ti-&gt;vertices[k]);
+ 				else if(ti-&gt;vertices[k]==tj-&gt;vertices[1]) vvv.push_back(ti-&gt;vertices[k]);
+ 				else if(ti-&gt;vertices[k]==tj-&gt;vertices[2]) vvv.push_back(ti-&gt;vertices[k]);
+ 			}
+-			if(vvv.size()==0) break; // reached end of those that have the lowest-id vertex in common
+-			if(vvv.size()==1) continue; // only one edge in common
++			if(vvv.size()&lt;2) continue;
+ 			assert(vvv.size()!=3); // same coords? nonsense
+ 			assert(vvv.size()==2);
+ 			vector&lt;int&gt; edge(2,0);
+@@ -112,7 +110,7 @@
+ 			}
+ 			// add adjacency information to the facet itself
+ 			YADE_PTR_CAST&lt;InteractingFacet&gt;((*rb-&gt;bodies)[ti-&gt;id]-&gt;interactingGeometry)-&gt;edgeAdjIds[edge[0]]=tj-&gt;id;
+-			YADE_PTR_CAST&lt;InteractingFacet&gt;((*rb-&gt;bodies)[tj-&gt;id]-&gt;interactingGeometry)-&gt;edgeAdjIds[edge[1]]=tj-&gt;id;
++			YADE_PTR_CAST&lt;InteractingFacet&gt;((*rb-&gt;bodies)[tj-&gt;id]-&gt;interactingGeometry)-&gt;edgeAdjIds[edge[1]]=ti-&gt;id;
+ 			commonEdgesFound++;
+ 			LOG_TRACE(&quot;Added adjacency information for #&quot;&lt;&lt;ti-&gt;id&lt;&lt;&quot;+#&quot;&lt;&lt;tj-&gt;id&lt;&lt;&quot; (common edges &quot;&lt;&lt;edge[0]&lt;&lt;&quot;+&quot;&lt;&lt;edge[1]&lt;&lt;&quot;)&quot;);
+ 		}
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.hpp	2009-04-10 08:49:36 UTC (rev 1753)
++++ trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.hpp	2009-04-10 11:36:17 UTC (rev 1754)
+@@ -40,9 +40,6 @@
+ 		//! facet id, for back reference
+ 		body_id_t id;
+ 	};
+-	struct TopologyIndexComparator{
+-		bool operator()(const shared_ptr&lt;FacetTopology&gt;&amp; t1, const shared_ptr&lt;FacetTopology&gt;&amp; t2){ return min(t1-&gt;vertices[0],min(t1-&gt;vertices[1],t1-&gt;vertices[2]))&lt;min(t2-&gt;vertices[0],min(t2-&gt;vertices[1],t2-&gt;vertices[2])); }
+-	};
+ 	public:
+ 		//! Axis along which to do the initial vertex sort
+ 		Vector3r projectionAxis;
+@@ -50,11 +47,13 @@
+ 		Real relTolerance;
+ 		//! how many common edges were identified during last run
+ 		long commonEdgesFound;
++		//! how many common vertices were identified during last run
++		long commonVerticesFound;
+ 	void action(MetaBody*); 
+-	FacetTopologyAnalyzer(): projectionAxis(Vector3r::UNIT_X), relTolerance(1e-4), commonEdgesFound(0) {}
++	FacetTopologyAnalyzer(): projectionAxis(Vector3r::UNIT_X), relTolerance(1e-4), commonEdgesFound(0), commonVerticesFound(0) {}
+ 	DECLARE_LOGGER;
+ 	REGISTER_CLASS_AND_BASE(FacetTopologyAnalyzer,StandAloneEngine);
+-	REGISTER_ATTRIBUTES(StandAloneEngine, (projectionAxis)(relTolerance));
++	REGISTER_ATTRIBUTES(StandAloneEngine, (projectionAxis)(relTolerance)(commonEdgesFound)(commonVerticesFound));
+ };
+ REGISTER_SERIALIZABLE(FacetTopologyAnalyzer);
+ 
+
+Modified: trunk/scripts/test/facet-topo.py
+===================================================================
+--- trunk/scripts/test/facet-topo.py	2009-04-10 08:49:36 UTC (rev 1753)
++++ trunk/scripts/test/facet-topo.py	2009-04-10 11:36:17 UTC (rev 1754)
+@@ -1,9 +1,9 @@
+ import yade.log
+-yade.log.setLevel('FacetTopologyAnalyzer',yade.log.TRACE)
++#yade.log.setLevel('FacetTopologyAnalyzer',yade.log.TRACE)
+ 
+ # Note: FacetTopologyAnalyzer is normally run as an initializer;
+ # it is only for testing sake that it is in O.engines here.
+-O.engines=[FacetTopologyAnalyzer(projectionAxis=(0,0,1),label='topo'),]
++O.engines=[FacetTopologyAnalyzer(projectionAxis=(1,1,1),label='topo'),]
+ 
+ # most simple case: no touch at all
+ if 1:
+@@ -22,3 +22,26 @@
+ 	O.step()
+ 	assert(O.bodies[0].phys['edgeAdjIds'][1]==1 and O.bodies[1].phys['edgeAdjIds'][0]==1)
+ 	assert(topo['commonEdgesFound']==1)
++if 1:
++	O.bodies.clear()
++	r=.5 # radius of the sphere
++	nPoly=12; # try 128, it is still quite fast
++	def sphPt(i,j):
++		if i==0: return (0,0,-r)
++		if i==nPoly/2: return (0,0,r)
++		assert(i&gt;0 and i&lt;nPoly/2)
++		assert(j&gt;=0 and j&lt;=nPoly)
++		theta=i*2*pi/nPoly
++		rr=r*sin(theta)
++		phi=j*2*pi/nPoly
++		return rr*cos(phi),rr*sin(phi),-r*cos(theta)
++	for i in range(0,nPoly/2):
++		for j in range(0,nPoly):
++			if i!=0: O.bodies.append(utils.facet([sphPt(i,j),sphPt(i,j+1),sphPt(i+1,j)]))
++			if i!=nPoly/2-1: O.bodies.append(utils.facet([sphPt(i+1,j),sphPt(i,j+1),sphPt(i+1,j+1)]))
++	print 'Sphere created, has',len(O.bodies),'facets'
++	O.step()
++	assert(topo['commonVerticesFound']==nPoly*(nPoly/2-1)+2)
++	assert(topo['commonEdgesFound']==nPoly*((nPoly/2-1)+(nPoly/2-2)*2+2))
++	print topo['commonVerticesFound'],'vertices; ',topo['commonEdgesFound'],'edges'
++#quit()
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000917.html">[deprecated list] [Yade-dev] [svn] r1753 - in trunk: . extra	extra/usct gui/py	pkg/common/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000922.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-13614/bin/yade-svn1754:	TriaxialTestWater, USCTGen
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#921">[ date ]</a>
+              <a href="thread.html#921">[ thread ]</a>
+              <a href="subject.html#921">[ subject ]</a>
+              <a href="author.html#921">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

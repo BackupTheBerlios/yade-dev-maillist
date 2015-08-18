@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [Bug 416906] Re: some scripts possibly	not compatible	with python 2.5
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5BBug%20416906%5D%20Re%3A%20some%20scripts%20possibly%0A%09not%20compatible%09with%20python%202.5&In-Reply-To=%3C20090821135704.15568.71474.malone%40gangotri.canonical.com%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001531.html">
+   <LINK REL="Next"  HREF="001534.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [Bug 416906] Re: some scripts possibly	not compatible	with python 2.5</H1>
+    <B>Janek Kozicki</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5BBug%20416906%5D%20Re%3A%20some%20scripts%20possibly%0A%09not%20compatible%09with%20python%202.5&In-Reply-To=%3C20090821135704.15568.71474.malone%40gangotri.canonical.com%3E"
+       TITLE="[deprecated list] [Yade-dev] [Bug 416906] Re: some scripts possibly	not compatible	with python 2.5">janek_listy at wp.pl
+       </A><BR>
+    <I>Fri Aug 21 15:57:04 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001531.html">[deprecated list] [Yade-dev] [Bug 416906] Re: some scripts possibly	not compatible	with python 2.5
+</A></li>
+        <LI>Next message: <A HREF="001534.html">[deprecated list] [Yade-dev] [Bug 416906] Re: some scripts possibly	not compatible	with python 2.5
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1533">[ date ]</a>
+              <a href="thread.html#1533">[ thread ]</a>
+              <a href="subject.html#1533">[ subject ]</a>
+              <a href="author.html#1533">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>ok, I tried them all. Only two seem to produce errors:
+
+rb.py:
+
+INFO  /home/janek/tmp/ZZ/yade/core/yade.cpp:266 main: Loading /home/janek/.yade-ZZ-test-fast/preferences.xml
+INFO  /home/janek/tmp/ZZ/yade/core/yade.cpp:268 main: Loading plugins
+INFO  gui/qt3/YadeQtMainWindow.cpp:64 YadeQtMainWindow: Loading configuration file: /home/janek/.yade-ZZ-test-fast/QtGUIPreferences.xml.
+Python TCP server listening on localhost:9001, auth cookie is `kuadse'
+/usr/lib/python2.5/site-packages/pytz/__init__.py:32: UserWarning: Module dateutil was already imported from /usr/lib/pymodules/python2.5/dateutil/__init__.py, but /usr/lib/pymodules/python2.5 is being added to sys.path
+  from pkg_resources import resource_stream
+Traceback (most recent call last):
+  File &quot;/home/janek/tmp/ZZ/BIN/lib/yade-ZZ-test-fast/gui/PythonUI_rc.py&quot;, line 128, in &lt;module&gt;
+    execfile(runtime.script)
+  File &quot;../../yade/examples/concrete/uniaxial/rb.py&quot;, line 66, in &lt;module&gt;
+    spheres=pack.triaxialPack(pack.inHyperboloid((0,0,-.5*specimenLength),(0,0,.5*specimenLength),.25*specimenLength,.2*specimenLength),radius=sphereRadius,memoizeDb='/tmp/triaxPackCache.sqlite',young=young,poisson=poisson,frictionAngle=frictionAngle,physParamsClass='CpmMat',density=density)
+  File &quot;/home/janek/tmp/ZZ/BIN/lib/yade-ZZ-test-fast/py/yade/pack.py&quot;, line 228, in triaxialPack
+    if type(predicate)==inGtsSurface and useOBB:
+NameError: global name 'inGtsSurface' is not defined
+
+
+interpolating-force.py:
+
+INFO  /home/janek/tmp/ZZ/yade/core/yade.cpp:266 main: Loading /home/janek/.yade-ZZ-test-fast/preferences.xml
+INFO  /home/janek/tmp/ZZ/yade/core/yade.cpp:268 main: Loading plugins
+INFO  gui/qt3/YadeQtMainWindow.cpp:64 YadeQtMainWindow: Loading configuration file: /home/janek/.yade-ZZ-test-fast/QtGUIPreferences.xml.
+Python TCP server listening on localhost:9001, auth cookie is `csakud'
+/usr/lib/python2.5/site-packages/pytz/__init__.py:32: UserWarning: Module dateutil was already imported from /usr/lib/pymodules/python2.5/dateutil/__init__.py, but /usr/lib/pymodules/python2.5 is being added to sys.path
+  from pkg_resources import resource_stream
+Running script ../../yade/scripts/test/interpolating-force.py
+INFO  /home/janek/tmp/ZZ/yade/core/Omega.cpp:270 saveSimulation: Saving file :memory:
+INFO  gui/qt3/GLViewer.cpp:368 centerScene: Less than 500 bodies, moving possible. Select with shift, press 'm' to move.
+INFO  pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp:68 initgl: (re)initializing GL for gldraw methods.
+
+Traceback (most recent call last):
+  File &quot;/home/janek/tmp/ZZ/BIN/lib/yade-ZZ-test-fast/gui/PythonUI_rc.py&quot;, line 128, in &lt;module&gt;
+    execfile(runtime.script)
+  File &quot;../../yade/scripts/test/interpolating-force.py&quot;, line 68, in &lt;module&gt;
+    yp.plot()
+  File &quot;/home/janek/tmp/ZZ/BIN/lib/yade-ZZ-test-fast/py/yade/plot.py&quot;, line 98, in plot
+    pylab.figure()
+  File &quot;/usr/lib/python2.5/site-packages/matplotlib/pyplot.py&quot;, line 260, in figure
+    draw_if_interactive()
+  File &quot;/usr/lib/python2.5/site-packages/matplotlib/backends/backend_tkagg.py&quot;, line 61, in draw_if_interactive
+    figManager.show()
+  File &quot;/usr/lib/python2.5/site-packages/matplotlib/backends/backend_tkagg.py&quot;, line 391, in show
+    self.canvas.draw()
+  File &quot;/usr/lib/python2.5/site-packages/matplotlib/backends/backend_tkagg.py&quot;, line 215, in draw
+    tkagg.blit(self._tkphoto, self.renderer._renderer, colormode=2)
+  File &quot;/usr/lib/python2.5/site-packages/matplotlib/backends/tkagg.py&quot;, line 19, in blit
+    tk.call(&quot;PyAggImagePhoto&quot;, photoimage, id(aggimage), colormode, id(bbox_array))
+TclError
+
+
+for the sake of completeness see attached file.
+
+zsh history:
+91929  ./yade-ZZ-test-fast ../../yade/scripts/regression-tests.py &gt; RESULT-regression-tests.py 2&gt;&amp;1
+91930  cat RESULT-regression-tests.py
+91931  ./yade-ZZ-test-fast ../../yade/examples/concrete/uniaxial/rb.py &gt; RESULT-rb.py 2&gt;&amp;1
+91932  ./yade-ZZ-test-fast ../../yade/scripts/test/clump.py &gt; RESULT-clump.py 2&gt;&amp;1
+91934  ./yade-ZZ-test-fast ../../yade/scripts/test/pack-cloud.py &gt; RESULT-pack-cloud.py 2&gt;&amp;1
+91935  ./yade-ZZ-test-fast ../../yade/scripts/test/pack-predicates.py &gt; RESULT-pack-predicates.py 2&gt;&amp;1
+91937  ./yade-ZZ-test-fast ../../yade/scripts/test/regular-sphere-pack.py &gt; RESULT-regular-sphere-pack.py 2&gt;&amp;1
+91939  ./yade-ZZ-test-fast ../../yade/scripts/test/interpolating-force.py &gt; RESULT-interpolating-force.py 2&gt;&amp;1
+
+
+
+** Attachment added: &quot;results.tar.bz2&quot;
+   <A HREF="http://launchpadlibrarian.net/30640721/results.tar.bz2">http://launchpadlibrarian.net/30640721/results.tar.bz2</A>
+
+-- 
+some scripts possibly not compatible with python 2.5
+<A HREF="https://bugs.launchpad.net/bugs/416906">https://bugs.launchpad.net/bugs/416906</A>
+You received this bug notification because you are a member of Yade
+developers, which is subscribed to Yade.
+
+Status in Yet Another Dynamic Engine: New
+
+Bug description:
+Python 2.5 should be fully supported because it is in lenny, squeeze and hardy, which we want to support for 0.20. All scripts should be checked that they work with python 2.5. The initial report was use of itertools.product in yade.pack by Janek.
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001531.html">[deprecated list] [Yade-dev] [Bug 416906] Re: some scripts possibly	not compatible	with python 2.5
+</A></li>
+	<LI>Next message: <A HREF="001534.html">[deprecated list] [Yade-dev] [Bug 416906] Re: some scripts possibly	not compatible	with python 2.5
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1533">[ date ]</a>
+              <a href="thread.html#1533">[ thread ]</a>
+              <a href="subject.html#1533">[ subject ]</a>
+              <a href="author.html#1533">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

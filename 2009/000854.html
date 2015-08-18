@@ -1,0 +1,316 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1719 -	trunk/pkg/dem/DataClass/InteractionGeometry
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1719%20-%0A%09trunk/pkg/dem/DataClass/InteractionGeometry&In-Reply-To=%3C200903130908.n2D98W4d016261%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000856.html">
+   <LINK REL="Next"  HREF="000857.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1719 -	trunk/pkg/dem/DataClass/InteractionGeometry</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1719%20-%0A%09trunk/pkg/dem/DataClass/InteractionGeometry&In-Reply-To=%3C200903130908.n2D98W4d016261%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1719 -	trunk/pkg/dem/DataClass/InteractionGeometry">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Mar 13 10:08:32 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000856.html">[deprecated list] [Yade-dev] [Yade-users] pregenerated sphere	packings
+</A></li>
+        <LI>Next message: <A HREF="000857.html">[deprecated list] [Yade-dev] [robot] build failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#854">[ date ]</a>
+              <a href="thread.html#854">[ thread ]</a>
+              <a href="subject.html#854">[ subject ]</a>
+              <a href="author.html#854">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-03-13 10:08:31 +0100 (Fri, 13 Mar 2009)
+New Revision: 1719
+
+Added:
+   trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.hpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.hpp
+Removed:
+   trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofContactGeometry.hpp
+Log:
+1. Initial checkout for the DemXDofGeom classes (will contain the hasShear code from SpheresContactGeometry and more eventually).
+
+
+Deleted: trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofContactGeometry.hpp	2009-03-12 17:27:35 UTC (rev 1718)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofContactGeometry.hpp	2009-03-13 09:08:31 UTC (rev 1719)
+@@ -1,41 +0,0 @@
+-// 2009 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+-
+-/*! Abstract class for geometry providing normal and shear strains (or displacements) */
+-class Dem3DofContactGeometry: public InteractionGeometry {
+-	public:
+-		//! reference length of the contact (usually initial length)
+-		Real refLength;
+-		//! unit vector in the interaction direction (normal to the contact plane), always from id1 towards id2 
+-		Vector3r normal;
+-		//! contact point
+-		Vector3r contactPoint;
+-		//! Absolute displacement in the normal direction
+-		virtual Real displacementN()=0;
+-		//! Strain in the normal direction
+-		virtual Real epsN(){ return displacementN()/refLength; }
+-		//! Absolute displacement in the shear direction (in global coordinates)
+-		virtual Vector3r displacementT()=0;
+-		//! Strain in the shear direction (in global coordinates)
+-		virtual Vector3r epsT(){ return displacementT/refLength; }
+-	REGISTER_CLASS_AND_BASE(Dem3DofContactGeometry,InteractionGeometry);
+-	REGISTER_ATTRIBUTES(InteractionGeometry,(refLength)(normal)(contactPoint));
+-};
+-REGISTER_SERIALIZABLE(Dem3DofContactGeometry);
+-
+-#if 0
+-/*! Abstract class for providing torsion and bending, in addition to inherited normal and shear strains. */
+-class Dem6DofContactGeometry: public Dem3DofContactGeometry {
+-	public:
+-		//! Absolute value of rotation along the interaction normal
+-		virtual Real rotationN()=0;
+-		//! Relative rotation along the contact normal
+-		virtual Real torsion(){ return rotationN()/refLength; }
+-		//! Absolute value of bending (in global coordinates)
+-		virtual Vector3r rotationT()=0;
+-		//! Relative rotation perpendicular to contact normal (in global coordinates)
+-		virtual Vector3r bending(){ return rotationT()/refLength; }
+-	REGISTER_CLASS_AND_BASE(Dem6DofContactGeometry,Dem3DofContactGeometry);
+-	REGISTER_ATTRIBUTES(Dem3DofContactGeometry,);
+-};
+-REGISTER_SERIALIZABLE(Dem6DofContactGeometry);
+-#endif 
+
+Added: trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp	2009-03-12 17:27:35 UTC (rev 1718)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp	2009-03-13 09:08:31 UTC (rev 1719)
+@@ -0,0 +1,86 @@
++#include &quot;Dem3DofGeom_SphereSphere.hpp&quot;
++
++Dem3DofGeom_SphereSphere::~Dem3DofGeom_SphereSphere(){}
++
++/*! Project point from sphere surface to tangent plane,
++ * such that the angle of shortest arc from (1,0,0) pt on the sphere to the point itself is the same
++ * as the angle of segment of the same length on the tangent plane.
++ *
++ * This function is (or should be) inverse of SpheresContactGeometry::rollPlanePtToSphere.
++ * 
++ * @param fromXtoPtOri gives orientation of the vector from sphere center to the sphere point from the global +x axis.
++ * @param radius the distance from sphere center to the contact plane
++ * @param planeNormal unit vector pointing away from the sphere center, determining plane orientation on which the projected point lies.
++ * @returns The projected point coordinates (with origin at the contact point).
++ */
++Vector3r Dem3DofGeom_SphereSphere::unrollSpherePtToPlane(const Quaternionr&amp; fromXtoPtOri, const Real&amp; radius, const Vector3r&amp; planeNormal){
++	Quaternionr normal2pt; normal2pt.Align(planeNormal,fromXtoPtOri*Vector3r::UNIT_X);
++	Vector3r axis; Real angle; normal2pt.ToAxisAngle(axis,angle);
++	return (angle*radius) /* length */ *(axis.Cross(planeNormal)) /* direction: both are unit vectors */;
++}
++
++/*! Project point from tangent plane to the sphere.
++ *
++ * This function is (or should be) inverse of SpheresContactGeometry::unrollSpherePtToPlane.
++ *
++ * @param planePt point on the tangent plane, with origin at the contact point (i.e. at sphere center + normal*radius)
++ * @param radius sphere radius
++ * @param planeNorma _unit_ vector pointing away from sphere center
++ * @returns orientation that transforms +x axis to the vector between sphere center and point on the sphere that corresponds to planePt.
++ *
++ * @note It is not checked whether planePt relly lies on the tangent plane. If not, result will be incorrect.
++ */
++Quaternionr Dem3DofGeom_SphereSphere::rollPlanePtToSphere(const Vector3r&amp; planePt, const Real&amp; radius, const Vector3r&amp; planeNormal){
++		Vector3r axis=planeNormal.Cross(planePt); axis.Normalize();
++		Real angle=planePt.Length()/radius;
++		Quaternionr normal2pt(axis,angle);
++		Quaternionr ret; ret.Align(Vector3r::UNIT_X,normal2pt*planeNormal);
++		return ret;
++}
++
++
++
++/* Set contact points on both spheres such that their projection is the one given
++ * (should be on the plane passing through origin and oriented with normal; not checked!)
++ */
++void Dem3DofGeom_SphereSphere::setTgPlanePts(Vector3r p1new, Vector3r p2new){
++	cp1rel=ori1.Conjugate()*rollPlanePtToSphere(p1new,effR1,normal);
++	cp2rel=ori2.Conjugate()*rollPlanePtToSphere(p2new,effR2,-normal);
++}
++
++
++
++/*! Perform slip of the projected contact points so that their distance becomes equal (or remains smaller) than the given one.
++ * The slipped distance is returned.
++ */
++Real Dem3DofGeom_SphereSphere::slipToDisplacementTMax(Real displacementTMax){
++	// very close, reset shear
++	if(displacementTMax&lt;=0.){ setTgPlanePts(Vector3r(0,0,0),Vector3r(0,0,0)); return displacementTMax;}
++	// otherwise
++	Vector3r p1=contPtInTgPlane1(), p2=contPtInTgPlane2();
++	Real currDistSq=(p2-p1).SquaredLength();
++	if(currDistSq&lt;pow(displacementTMax,2)) return 0; // close enough, no slip needed
++	Vector3r diff=.5*(sqrt(currDistSq)/displacementTMax-1)*(p2-p1);
++	setTgPlanePts(p1+diff,p2-diff);
++	return 2*diff.Length();
++}
++
++
++/* Move contact point on both spheres in such way that their relative position (displacementT) is the same;
++ * this should be done regularly to ensure that the angle doesn't go over &#960;, since then quaternion would
++ * flip axis and the point would project on other side of the tangent plane piece. */
++void Dem3DofGeom_SphereSphere::relocateContactPoints(){
++	relocateContactPoints(contPtInTgPlane1(),contPtInTgPlane2());
++}
++
++/*! Like Dem3DofGeom_SphereSphere::relocateContactPoints(), but use already computed tangent plane points. */
++void Dem3DofGeom_SphereSphere::relocateContactPoints(const Vector3r&amp; p1, const Vector3r&amp; p2){
++	Vector3r midPt=(effR1/(effR1+effR2))*(p1+p2); // proportionally to radii, so that angle would be the same
++	if((p1.SquaredLength()&gt;pow(effR1,2) || p2.SquaredLength()&gt;pow(effR2,2)) &amp;&amp; midPt.SquaredLength()&gt;pow(min(effR1,effR2),2)){
++		//cerr&lt;&lt;&quot;RELOCATION with displacementT=&quot;&lt;&lt;displacementT(); // should be the same before and after relocation
++		setTgPlanePts(p1-midPt,p2-midPt);
++		//cerr&lt;&lt;&quot; &#8594; &quot;&lt;&lt;displacementT()&lt;&lt;endl;
++	}
++}
++
++
+
+Added: trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.hpp	2009-03-12 17:27:35 UTC (rev 1718)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.hpp	2009-03-13 09:08:31 UTC (rev 1719)
+@@ -0,0 +1,41 @@
++#pragma once
++#include&lt;yade/pkg-dem/DemXDofGeom.hpp&gt;
++
++class Dem3DofGeom_SphereSphere: public Dem3DofGeom{
++	public:
++		// auxiliary functions; the quaternion magic is all in here
++		static Vector3r unrollSpherePtToPlane(const Quaternionr&amp; fromXtoPtOri, const Real&amp; radius, const Vector3r&amp; normal);
++		static Quaternionr rollPlanePtToSphere(const Vector3r&amp; planePt, const Real&amp; radius, const Vector3r&amp; normal);
++	private:
++		Vector3r contPtInTgPlane1() const { return unrollSpherePtToPlane(ori1*cp1rel,effR1,normal); }
++		Vector3r contPtInTgPlane2() const { return unrollSpherePtToPlane(ori2*cp2rel,effR2,-normal);}
++		void setTgPlanePts(Vector3r p1new, Vector3r p2new);
++		void relocateContactPoints();
++		void relocateContactPoints(const Vector3r&amp; tgPlanePt1, const Vector3r&amp; tgPlanePt2);
++	public:
++		//! Positions and orientations of both spheres; must be updated at every iteration by the geom functor
++		Se3r se31, se32;
++		const Vector3r&amp; pos1, pos2; const Quaternionr&amp; ori1, ori2;
++		Quaternionr cp1rel, cp2rel;
++		Dem3DofGeom_SphereSphere(): pos1(se31.position), pos2(se32.position), ori1(se31.orientation), ori2(se32.orientation){}
++		~Dem3DofGeom_SphereSphere();
++		//! effective radii of spheres for this interaction; can be smaller/larger than actual radii, but quasi-constant throughout the interaction life
++		Real effR1, effR2;
++		
++		/********* API **********/
++		Real displacementN(){ return (pos2-pos2).Length()-refLength; }
++		Vector3r displacementT() {
++			// enabling automatic relocation decreases overall simulation speed by about 3%; perhaps: bool largeStrains ... ?
++			#if 1 
++				Vector3r p1=contPtInTgPlane1(), p2=contPtInTgPlane2(); relocateContactPoints(p1,p2); return p2-p1; // shear before relocation, but that is OK
++			#else
++				return contPtInTgPlane2()-contPtInTgPlane1();
++			#endif
++		}
++		Real slipToDisplacementTMax(Real displacementTMax);
++		/********* end API ***********/
++
++	REGISTER_ATTRIBUTES(Dem3DofGeom,(se31)(se32)(effR1)(effR2));
++};
++REGISTER_SERIALIZABLE(Dem3DofGeom_SphereSphere);
++
+
+Added: trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.hpp	2009-03-12 17:27:35 UTC (rev 1718)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.hpp	2009-03-13 09:08:31 UTC (rev 1719)
+@@ -0,0 +1,44 @@
++// 2009 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++#pragma once
++#include&lt;yade/core/InteractionGeometry.hpp&gt;
++
++/*! Abstract base class for representing contact geometry of 2 elements that has 3 degrees of freedom:
++ *  normal (1 component) and shear (Vector3r, but in plane perpendicular to the normal)
++ */
++class Dem3DofGeom: public InteractionGeometry {
++	public:
++		//! some length used to convert displacements to strains
++		Real refLength;
++		//! some unit reference vector (in the direction of the interaction)
++		Vector3r normal;
++		//! some reference point for the interaction
++		Vector3r contactPoint;
++
++		// API that needs to be implemented in derived classes
++		virtual Real displacementN()=0;
++		virtual Vector3r displacementT()=0;
++		virtual Real slipToDisplacementTMax(Real displacementTMax)=0; // plasticity
++		// end API
++
++		Real strainN(){return displacementN()/refLength;}
++		Vector3r strainT(){return displacementT()/refLength;}
++		Real slipToStrainTMax(Real strainTMax){return slipToDisplacementTMax(strainTMax*refLength)/refLength;}
++
++		REGISTER_CLASS_AND_BASE(Dem3DofGeom,InteractionGeometry);
++		REGISTER_ATTRIBUTES(InteractionGeometry,(refLength)(normal)(contactPoint));
++};
++//REGISTER_SERIALIZABLE(Dem3DofGeom);
++
++#if 0
++/*! Abstract class for providing torsion and bending, in addition to inherited normal and shear strains. */
++class Dem6DofGeom: public Dem3DofGeom {
++	public:
++		//! rotations perpendicular to the normal (bending; in global coords) and parallel with the normal (torsion)
++		void bendingTorsionAbs(Vector3r&amp; bend, Real&amp; tors)=0;
++		void bendingTorsionRel(Vector3r&amp; bend, Real&amp; tors){ bendingTorsionAbs(bend,tors); bend/=refLength; tors/=refLength;}
++	REGISTER_CLASS_AND_BASE(Dem6DofGeom,Dem3DofGeom);
++	REGISTER_ATTRIBUTES(Dem3DofGeom, /*nothing*/);
++};
++REGISTER_SERIALIZABLE(Dem6DofGeom);
++#endif
++
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000856.html">[deprecated list] [Yade-dev] [Yade-users] pregenerated sphere	packings
+</A></li>
+	<LI>Next message: <A HREF="000857.html">[deprecated list] [Yade-dev] [robot] build failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#854">[ date ]</a>
+              <a href="thread.html#854">[ thread ]</a>
+              <a href="subject.html#854">[ subject ]</a>
+              <a href="author.html#854">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

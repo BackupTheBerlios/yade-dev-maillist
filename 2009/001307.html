@@ -1,0 +1,357 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1903 -	trunk/pkg/lattice/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1903%20-%0A%09trunk/pkg/lattice/PreProcessor&In-Reply-To=%3C200907291550.n6TFomK6008404%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001301.html">
+   <LINK REL="Next"  HREF="001308.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1903 -	trunk/pkg/lattice/PreProcessor</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1903%20-%0A%09trunk/pkg/lattice/PreProcessor&In-Reply-To=%3C200907291550.n6TFomK6008404%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1903 -	trunk/pkg/lattice/PreProcessor">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul 29 17:50:48 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001301.html">[deprecated list] [Yade-dev] [svn] r1902 - in	trunk/pkg:	lattice/DataClass/PhysicalParameters	lattice/Engine/StandAloneEngine	lattice/PreProcessor	snow/PreProcessor/Voxel
+</A></li>
+        <LI>Next message: <A HREF="001308.html">[deprecated list] [Yade-dev] [svn] r1904 - in trunk/gui: . qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1307">[ date ]</a>
+              <a href="thread.html#1307">[ thread ]</a>
+              <a href="subject.html#1307">[ subject ]</a>
+              <a href="author.html#1307">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2009-07-29 17:50:47 +0200 (Wed, 29 Jul 2009)
+New Revision: 1903
+
+Modified:
+   trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+Log:
+- some improvements wrt to generation of densely packed aggregates and steel fibres in the concrete structure
+
+
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2009-07-29 11:05:36 UTC (rev 1902)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2009-07-29 15:50:47 UTC (rev 1903)
+@@ -1515,21 +1515,26 @@
+ {
+         // first make a list of circles
+         std::vector&lt;Circle&gt; c;
++        std::vector&lt;int&gt; penalty;
+ 
+         Real AGGREGATES_X=speciemen_size_in_meters[0];
+         Real AGGREGATES_Y=speciemen_size_in_meters[1];
+         Real AGGREGATES_Z=speciemen_size_in_meters[2];
+ 	if(AGGREGATES_Z &lt; cellsizeUnit_in_meters )
+ 		AGGREGATES_Z = 0.0;
+-        Real MAX_DIAMETER  =aggregateMaxDiameter;
+-        Real MIN_DIAMETER  =aggregateMinDiameter;
+-        Real MEAN_DIAMETER =aggregateMeanDiameter;
+-        Real SIGMA_DIAMETER=aggregateSigmaDiameter;
+ 
+         typedef boost::minstd_rand StdGenerator;
+         static StdGenerator generator;
+         static boost::variate_generator&lt;StdGenerator&amp;, boost::uniform_real&lt;&gt; &gt;
+                 random1(generator, boost::uniform_real&lt;&gt;(0,1));
++///////////////////////////////////////////////////////////////
++/////// stage 2 ///////////////////////////////////////////////
++///////////////////////////////////////////////////////////////
++
++        Real MAX_DIAMETER  =aggregateMaxDiameter;
++        Real MIN_DIAMETER  =aggregateMinDiameter;
++        Real MEAN_DIAMETER =aggregateMeanDiameter;
++        Real SIGMA_DIAMETER=aggregateSigmaDiameter;
+         static boost::variate_generator&lt;StdGenerator&amp;, boost::normal_distribution&lt;&gt; &gt; 
+                 randomN(generator, boost::normal_distribution&lt;&gt;(MEAN_DIAMETER,SIGMA_DIAMETER));
+ 
+@@ -1564,22 +1569,36 @@
+         }
+         //while(aggregatePercent/100.0 &gt; aggsAreas(c)/(AGGREGATES_X*AGGREGATES_Y) );
+         while( progress() &lt; 1.0 );
+-        
+-	
++
+ 	std::cerr &lt;&lt; &quot;placing aggregates with repulsion ... &quot;;
+ 	setStatus(   &quot;aggregates repulsion ...&quot;);
+ 	setProgress(0);
++	penalty.clear();
++	penalty.resize(c.size(),0);
+ 
++///////////////////////////////////////////////////////////////
++/////// stage 3 ///////////////////////////////////////////////
++///////////////////////////////////////////////////////////////
++        
++	
+ 	int overlap_count;
+ 	overlap_count=overlapCount(c,1.05);
+-	int begin_overlap_count = overlap_count;
++	int begin_overlap_count(overlap_count);
+ 
+ // repulsion !!
+ 	for( ; overlap_count &gt; 0 ; )
+ 	{
+ 		overlap_count=overlapCount(c,1.05);
+ 
+-		setStatus(std::string(&quot;repulsion &quot;)+boost::lexical_cast&lt;std::string&gt;(overlap_count));
++		int last_overlap( ((int)(overlap_count)/10)*10+10 );
++		if(overlap_count &lt;= last_overlap - 10)
++		{
++			//setStatus(std::string(&quot;repulsion &quot;)+boost::lexical_cast&lt;std::string&gt;(overlap_count));
++			last_overlap = ((int)(overlap_count)/10)*10;
++			std::cerr &lt;&lt; &quot; . &quot; &lt;&lt; last_overlap;
++			if(last_overlap &lt;= 11)
++				last_overlap = 11;
++		}
+ 		setProgress(1.0 - (float)(overlap_count)/(float)(begin_overlap_count));
+ 
+ 		std::vector&lt;Vector3r &gt; moves;
+@@ -1591,12 +1610,13 @@
+ 			Vector3r c1(c[i].x,c[i].y,c[i].z);
+ 
+ 			//emulate periodic boundary
+-			for(int px = -1 ; px &lt; 2 ; ++px )
+-			for(int py = -1 ; py &lt; 2 ; ++py )
+-			for(int pz = ((AGGREGATES_Z==0)?0:-1) ; pz &lt; ((AGGREGATES_Z==0)?1:2) ; ++pz )
++			//for(int px = -1 ; px &lt; 2 ; ++px )
++			//for(int py = -1 ; py &lt; 2 ; ++py )
++			//for(int pz = ((AGGREGATES_Z==0)?0:-1) ; pz &lt; ((AGGREGATES_Z==0)?1:2) ; ++pz )
++			int px(0),py(0),pz(0);
+ 			{
+ 				Vector3r PERIODIC_DELTA(px*AGGREGATES_X,py*AGGREGATES_Y,pz*AGGREGATES_Z);
+-				for(unsigned int j = 0 ; j &lt; fibres.size() ; ++j )
++				for(unsigned int j = 0 ; j &lt; c.size() ; ++j )
+ 					if(i != j)
+ 					{
+ 						Vector3r c2 = Vector3r(c[j].x, c[j].y, c[j].z) + PERIODIC_DELTA;
+@@ -1609,11 +1629,16 @@
+ 							dir[0]=random1()-0.5, dir[1]=random1()-0.5, dir[2]=((AGGREGATES_Z==0)?(0):(random1()-0.5));
+ 							dir.Normalize();
+ 						}
+-						d += dir * 1/(r*r);
++						// weak distance repulsion
++						d += dir * 1/(r*r)*0.3;
+ 
+ 						// strong repulsion when they are intersecting
+-						if(2*r &lt; (c[i].d+c[j].d)*1.1)
+-							d += (dir * 1/(r*r))*10;
++						if(2*r &lt; (c[i].d+c[j].d)*1.11)
++						{
++							d += (dir * 1/(r*r))*3;
++							++penalty[i];
++							++penalty[j];
++						}
+ 					}
+ 			}
+ 
+@@ -1621,10 +1646,14 @@
+ 			Vector3r MAX(AGGREGATES_X, AGGREGATES_Y, AGGREGATES_Z);
+ 			for(int I=0 ; I&lt;((AGGREGATES_Z==0)?2:3) ; ++I)
+ 			{
+-				if(c1[I] &gt; 0 &amp;&amp; c1[I] &lt; MAX[I])
+-					d[I] += (1/(c1[I]*c1[I]) - 1/((MAX[I]-c1[I])*(MAX[I]-c1[I])))*0.5;
+-				//else
+-				//	std::cerr &lt;&lt; &quot;fibre &quot; &lt;&lt; i &lt;&lt; &quot; is escaping\n&quot;;
++				//if(c1[I] &gt; 0 &amp;&amp; c1[I] &lt; MAX[I])
++				//	d[I] += (1/(c1[I]*c1[I]) - 1/((MAX[I]-c1[I])*(MAX[I]-c1[I])))*0.5;
++
++				if(c1[I] &gt; 0 &amp;&amp; c1[I] &lt; c[i].d*0.5 )
++					d[I] += (1/(c1[I]*c1[I]));
++				else
++				if(c1[I] &lt; MAX[I] &amp;&amp; c1[I] &gt; MAX[I]-c[i].d*0.5)
++					d[I] += (-1/((MAX[I]-c1[I])*(MAX[I]-c1[I])));
+ 			}
+ 
+ 			// check with fibres
+@@ -1650,11 +1679,15 @@
+ 							dir[0]=random1()-0.5, dir[1]=random1()-0.5, dir[2]=((AGGREGATES_Z==0)?(0):(random1()-0.5));
+ 							dir.Normalize();
+ 						}
+-						d += dir * 1/(r*r);
++						// weak repulnsion
++						d += (dir * 1/(r*r))*(0.1/beams_per_fibre);
+ 
+ 						// strong repulsion when they are intersecting
+-						if(2*r &lt; (c[i].d)*1.1)
+-							d += (dir * 1/(r*r))*10;
++						if(2*r &lt; (c[i].d)*1.11)
++						{
++							d += (dir * 1/(r*r));
++							++penalty[i];
++						}
+ 					}
+ 				}
+ 			}
+@@ -1667,7 +1700,7 @@
+ 		for(unsigned int i = 0 ; i &lt; moves.size() ; ++i )
+ 			maxl = std::max(moves[i].Length(),maxl);
+ 		for(unsigned int i = 0 ; i &lt; moves.size() ; ++i )
+-			moves[i] = cellsizeUnit_in_meters*moves[i]/maxl;
++			moves[i] = cellsizeUnit_in_meters*0.3*moves[i]/(maxl==0?1:maxl);
+ 	
+ 		for(unsigned int i = 0 ; i &lt; moves.size() ; ++i )
+ 		{
+@@ -1684,12 +1717,28 @@
+ 			   || c1[2] &lt; 0
+ 			   || c1[0] &gt; AGGREGATES_X
+ 			   || c1[1] &gt; AGGREGATES_Y
+-			   || c1[2] &gt; AGGREGATES_Z)
++			   || c1[2] &gt; AGGREGATES_Z
++			   || penalty[i] &gt; (beams_per_fibre+10)*1500)
+ 			{
+-				std::cerr &lt;&lt; &quot;aggregate: putting again randomly\n&quot;;
+-				c[i].x = random1()*AGGREGATES_X;
+-				c[i].y = random1()*AGGREGATES_Y;
+-				c[i].z = ((AGGREGATES_Z==0)?(0):(random1()*AGGREGATES_Z));
++				//std::cerr &lt;&lt; &quot;aggregate: putting again randomly &quot;;
++				float limit(1.31);
++				int count(0);
++				do
++				{
++					//std::cerr &lt;&lt; &quot;.&quot;;
++					c[i].x = random1()*AGGREGATES_X;
++					c[i].y = random1()*AGGREGATES_Y;
++					c[i].z = ((AGGREGATES_Z==0)?(0):(random1()*AGGREGATES_Z));
++					++count;
++					if(count&gt;1000 &amp;&amp; limit &gt; 0.85)
++					{
++						limit -= 0.02;
++						count=0;
++						//std::cerr &lt;&lt; &quot;\nlimit set to: &quot; &lt;&lt; limit &lt;&lt; &quot; &quot;;
++					}
++				} while(overlaps(c[i],c,true,limit));
++				penalty[i]=0;
++				//std::cerr &lt;&lt; &quot;\n&quot;;
+ 			}
+ 		}
+ 		
+@@ -1810,10 +1859,6 @@
+ // new method - equally balance fibres over volume using repulsion
+ void LatticeExample::makeFibres()
+ {
+-	setStatus(&quot;balancing fibres...&quot;);
+-	std::cerr &lt;&lt; &quot;fibres: &quot;;
+-	fibres.clear();
+-
+         Real AGGREGATES_X=speciemen_size_in_meters[0];
+         Real AGGREGATES_Y=speciemen_size_in_meters[1];
+         Real AGGREGATES_Z=speciemen_size_in_meters[2];
+@@ -1825,6 +1870,14 @@
+         static boost::variate_generator&lt;StdGenerator&amp;, boost::uniform_real&lt;&gt; &gt;
+                 random1(generator, boost::uniform_real&lt;&gt;(0,1));
+ 
++///////////////////////////////////////////////////////////////
++/////// stage 0 ///////////////////////////////////////////////
++///////////////////////////////////////////////////////////////
++
++	setStatus(&quot;balancing fibres...&quot;);
++	std::cerr &lt;&lt; &quot;fibres: &quot;;
++	fibres.clear();
++
+ 	for(int i = 0 ; i &lt; fibre_count ; ++i)
+         {
+                 Vector3r cc;
+@@ -1885,6 +1938,9 @@
+ 		   fibres.push_back(std::make_pair(cc,del));
+ 	   }
+ */
++///////////////////////////////////////////////////////////////
++/////// stage 1 ///////////////////////////////////////////////
++///////////////////////////////////////////////////////////////
+ 
+ // repulsion !!
+ 	for(int frame=0; frame &lt; fibre_balancing_iterations ; ++frame)
+@@ -1902,9 +1958,10 @@
+ 			Vector3r c1 = fibres[i].first + fibres[i].second*beams_per_fibre*PART_1;
+ 
+ 			//emulate periodic boundary
+-			for(int px = -1 ; px &lt; 2 ; ++px )
+-			for(int py = -1 ; py &lt; 2 ; ++py )
+-			for(int pz = ((AGGREGATES_Z==0)?0:-1) ; pz &lt; ((AGGREGATES_Z==0)?1:2) ; ++pz )
++			//for(int px = -1 ; px &lt; 2 ; ++px )
++			//for(int py = -1 ; py &lt; 2 ; ++py )
++			//for(int pz = ((AGGREGATES_Z==0)?0:-1) ; pz &lt; ((AGGREGATES_Z==0)?1:2) ; ++pz )
++			int px(0),py(0),pz(0);
+ 			{
+ 				Vector3r PERIODIC_DELTA(px*AGGREGATES_X,py*AGGREGATES_Y,pz*AGGREGATES_Z);
+ 				for(unsigned int j = 0 ; j &lt; fibres.size() ; ++j )
+@@ -1956,10 +2013,14 @@
+ 			Vector3r MAX(AGGREGATES_X, AGGREGATES_Y, AGGREGATES_Z);
+ 			for(int I=0 ; I&lt;((AGGREGATES_Z==0)?2:3) ; ++I)
+ 			{
+-				if(c1[I] &gt; 0 &amp;&amp; c1[I] &lt; MAX[I])
+-					d[I] += (1/(c1[I]*c1[I]) - 1/((MAX[I]-c1[I])*(MAX[I]-c1[I])))*0.5;
+-				//else
+-				//	std::cerr &lt;&lt; &quot;fibre &quot; &lt;&lt; i &lt;&lt; &quot; is escaping\n&quot;;
++				//if(c1[I] &gt; 0 &amp;&amp; c1[I] &lt; MAX[I])
++				//	d[I] += (1/(c1[I]*c1[I]) - 1/((MAX[I]-c1[I])*(MAX[I]-c1[I])))*0.5;
++				
++				if(c1[I] &gt; 0 &amp;&amp; c1[I] &lt; beams_per_fibre*cellsizeUnit_in_meters*0.2 )
++					d[I] += (1/(c1[I]*c1[I]));
++				else
++				if(c1[I] &lt; MAX[I] &amp;&amp; c1[I] &gt; MAX[I]-beams_per_fibre*cellsizeUnit_in_meters*0.2)
++					d[I] += (-1/((MAX[I]-c1[I])*(MAX[I]-c1[I])));
+ 			}
+ 			moves.push_back(d);
+ 		}
+@@ -1999,8 +2060,11 @@
+ 
+ 		if(shouldTerminate()) return;
+ 		setProgress(1.0*frame/(1.0*fibre_balancing_iterations));
+-		if( (int)(progress() * 10.0)%10==0)
+-			std::cerr &lt;&lt; (int)(progress() * 10.0) &lt;&lt; &quot;...&quot;;
++		int last_progress(0);
++		if(last_progress == 0)
++			std::cerr &lt;&lt; &quot;0% &quot;;
++		if( progress()*10 &gt; last_progress )
++			std::cerr &lt;&lt; &quot;... &quot; &lt;&lt; ++last_progress &lt;&lt; &quot;0% &quot;;
+ 
+ 	}
+ 	std::cerr &lt;&lt; &quot;\n&quot;;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001301.html">[deprecated list] [Yade-dev] [svn] r1902 - in	trunk/pkg:	lattice/DataClass/PhysicalParameters	lattice/Engine/StandAloneEngine	lattice/PreProcessor	snow/PreProcessor/Voxel
+</A></li>
+	<LI>Next message: <A HREF="001308.html">[deprecated list] [Yade-dev] [svn] r1904 - in trunk/gui: . qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1307">[ date ]</a>
+              <a href="thread.html#1307">[ thread ]</a>
+              <a href="subject.html#1307">[ subject ]</a>
+              <a href="author.html#1307">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

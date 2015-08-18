@@ -1,0 +1,213 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1585 - in trunk/pkg/snow: .	RenderingEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1585%20-%20in%20trunk/pkg/snow%3A%20.%0A%09RenderingEngine&In-Reply-To=%3C200811262036.mAQKa8rr029586%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000531.html">
+   <LINK REL="Next"  HREF="000535.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1585 - in trunk/pkg/snow: .	RenderingEngine</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1585%20-%20in%20trunk/pkg/snow%3A%20.%0A%09RenderingEngine&In-Reply-To=%3C200811262036.mAQKa8rr029586%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1585 - in trunk/pkg/snow: .	RenderingEngine">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Wed Nov 26 21:36:08 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000531.html">[deprecated list] [Yade-dev] commit 1583, 3d view,	serialization.
+</A></li>
+        <LI>Next message: <A HREF="000535.html">[deprecated list] [Yade-dev] [robot] build failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#529">[ date ]</a>
+              <a href="thread.html#529">[ thread ]</a>
+              <a href="subject.html#529">[ subject ]</a>
+              <a href="author.html#529">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2008-11-26 21:36:08 +0100 (Wed, 26 Nov 2008)
+New Revision: 1585
+
+Added:
+   trunk/pkg/snow/RenderingEngine/
+   trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.cpp
+   trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.hpp
+Log:
+forgot some files
+
+
+
+Added: trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.cpp
+===================================================================
+--- trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.cpp	2008-11-26 20:10:06 UTC (rev 1584)
++++ trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.cpp	2008-11-26 20:36:08 UTC (rev 1585)
+@@ -0,0 +1,97 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&quot;Ef1_BshSnowGrain_glDraw.hpp&quot;
++#include&lt;yade/pkg-snow/BshSnowGrain.hpp&gt;
++#include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
++
++
++void Ef1_BshSnowGrain_glDraw::go(const shared_ptr&lt;GeometricalModel&gt;&amp; gm, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool wire)
++{
++	bool surface = !wire;
++	BshSnowGrain* gr = static_cast&lt;BshSnowGrain*&gt;(gm.get());
++	Real LEN=(gr-&gt;start - gr-&gt;end).Length();
++
++//	glTranslatef(gr-&gt;center[0],gr-&gt;center[1],gr-&gt;center[2]);
++	glColor3f(0.5,0.5,1.0);
++	glutSolidCube(LEN*0.1);
++	glTranslatef(-gr-&gt;center[0],-gr-&gt;center[1],-gr-&gt;center[2]);
++
++  	glMaterialv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, Vector3f(gm-&gt;diffuseColor[0],gm-&gt;diffuseColor[1],gm-&gt;diffuseColor[2]));
++	glColor3v(gm-&gt;diffuseColor);
++
++//	std::cerr &lt;&lt; gr-&gt;slices.size() &lt;&lt; &quot; ===========  \n&quot;;
++
++	if(surface)
++	{
++		glDisable(GL_CULL_FACE);
++		glEnable(GL_LIGHTING);
++		//glShadeModel(GL_SMOOTH);
++		//glColor3f(gr-&gt;color[0],gr-&gt;color[1],gr-&gt;color[2]);
++		for(int i=0;i&lt;gr-&gt;slices.size()-1;++i)
++		{
++			glBegin(GL_QUAD_STRIP);
++				for(int j=0;j&lt;gr-&gt;slices[i].size()-1;++j)
++				{
++					Vector3r n=1.0*((gr-&gt;slices[i  ][j] - gr-&gt;slices[i+1][j]).Cross(gr-&gt;slices[i  ][j+1] - gr-&gt;slices[i][j]));
++					n.Normalize();
++					glNormal3f(n[0],n[1],n[2]);
++
++					glVertex3d(gr-&gt;slices[i  ][j][0],gr-&gt;slices[i  ][j][1],gr-&gt;slices[i  ][j][2]);
++					glVertex3d(gr-&gt;slices[i+1][j][0],gr-&gt;slices[i+1][j][1],gr-&gt;slices[i+1][j][2]);
++				}
++				glVertex3d(gr-&gt;slices[i  ][0][0],gr-&gt;slices[i  ][0][1],gr-&gt;slices[i  ][0][2]);
++				glVertex3d(gr-&gt;slices[i+1][0][0],gr-&gt;slices[i+1][0][1],gr-&gt;slices[i+1][0][2]);
++			glEnd();
++		}
++		glEnable(GL_CULL_FACE);
++	}
++	else
++	{
++		glDisable(GL_LIGHTING);
++		glBegin(GL_LINE_STRIP);
++			glColor3f(0,0,0);
++			glVertex3d(gr-&gt;start[0],gr-&gt;start[1],gr-&gt;start[2]);
++			glVertex3d(gr-&gt;end[0]  ,gr-&gt;end[1]  ,gr-&gt;end[2]);
++		glEnd();
++			glColor3v(gm-&gt;diffuseColor);
++			for(int i=0;i &lt; gr-&gt;slices.size();++i)
++			{
++				glBegin(GL_LINE_STRIP);
++					for(int j=0 ; j &lt; gr-&gt;slices[i].size() ; ++j)
++						glVertex3d(gr-&gt;slices[i][j][0],gr-&gt;slices[i][j][1],gr-&gt;slices[i][j][2]);
++					glVertex3d(gr-&gt;slices[i][0][0],gr-&gt;slices[i][0][1],gr-&gt;slices[i][0][2]);
++				glEnd();
++			}
++		glEnable(GL_LIGHTING);
++	}
++	glTranslatef(gr-&gt;center[0],gr-&gt;center[1],gr-&gt;center[2]);
++/*	// FIXME : check that : one of those 2 lines are useless
++  	glMaterialv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, Vector3f(gm-&gt;diffuseColor[0],gm-&gt;diffuseColor[1],gm-&gt;diffuseColor[2]));
++	glColor3v(gm-&gt;diffuseColor);
++	
++	Vector3r &amp;extents = (static_cast&lt;Box*&gt;(gm.get()))-&gt;extents;
++	
++	glScalef(2*extents[0],2*extents[1],2*extents[2]);
++
++	if (gm-&gt;wire || wire)
++	{
++		glDisable(GL_LIGHTING);
++		glutWireCube(1);
++	}
++	else
++	{
++		glEnable(GL_LIGHTING);
++		glutSolidCube(1);
++	}
++*/
++}
++
++
++YADE_PLUGIN();
++
+
+Added: trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.hpp
+===================================================================
+--- trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.hpp	2008-11-26 20:10:06 UTC (rev 1584)
++++ trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.hpp	2008-11-26 20:36:08 UTC (rev 1585)
+@@ -0,0 +1,24 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#pragma once
++
++#include&lt;yade/pkg-common/GLDrawFunctors.hpp&gt;
++
++class Ef1_BshSnowGrain_glDraw : public GLDrawGeometricalModelFunctor
++{
++	public :
++		virtual void go(const shared_ptr&lt;GeometricalModel&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool);
++
++	RENDERS(BshSnowGrain);
++	REGISTER_CLASS_NAME(Ef1_BshSnowGrain_glDraw);
++	REGISTER_BASE_CLASS_NAME(GLDrawGeometricalModelFunctor);
++};
++
++REGISTER_SERIALIZABLE(Ef1_BshSnowGrain_glDraw);
++
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000531.html">[deprecated list] [Yade-dev] commit 1583, 3d view,	serialization.
+</A></li>
+	<LI>Next message: <A HREF="000535.html">[deprecated list] [Yade-dev] [robot] build failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#529">[ date ]</a>
+              <a href="thread.html#529">[ thread ]</a>
+              <a href="subject.html#529">[ subject ]</a>
+              <a href="author.html#529">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] significat timestep improvement with non-incremental shear computation
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20significat%20timestep%20improvement%0A%20with%20non-incremental%20shear%20computation&In-Reply-To=%3C48D79E19.8060900%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000366.html">
+   <LINK REL="Next"  HREF="000368.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] significat timestep improvement with non-incremental shear computation</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20significat%20timestep%20improvement%0A%20with%20non-incremental%20shear%20computation&In-Reply-To=%3C48D79E19.8060900%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev] significat timestep improvement with non-incremental shear computation">eudoxos at arcig.cz
+       </A><BR>
+    <I>Mon Sep 22 15:31:05 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000366.html">[deprecated list] [Yade-dev] [svn] r1520 - in trunk:	core	pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000368.html">[deprecated list] [Yade-dev] please reply to mailing list (was: significat timestep improvement....)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#367">[ date ]</a>
+              <a href="thread.html#367">[ thread ]</a>
+              <a href="subject.html#367">[ subject ]</a>
+              <a href="author.html#367">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> You are storing 1 &quot;initial&quot; orientation for each grain in the
+</I>&gt;<i> interaction, then update it when plastic motion occures, right?
+</I>&gt;<i> Is it commited already?
+</I>Yes, it is commited and there is some documentation in
+SpheresContactGeometry. The plastic slip must be requested explicitly by
+the user (the contact law) with SpheresContactGeometry::slipToEpsTMax
+(or slipToDisplacementTMax) where you specify maximum shear (T as
+tangent) strain (or displacement).
+
+&gt;<i>From time to time, you should also call
+</I>SpheresContactGeometry::relocateContactPoints, if spheres roll one on
+another.
+
+I will send you some images once I make them (I would have to make them
+for the thesis anyway...)
+
+See scripts/exact-rot.py, it can be visualized quite intuitively.
+
+Vaclav
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000366.html">[deprecated list] [Yade-dev] [svn] r1520 - in trunk:	core	pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000368.html">[deprecated list] [Yade-dev] please reply to mailing list (was: significat timestep improvement....)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#367">[ date ]</a>
+              <a href="thread.html#367">[ thread ]</a>
+              <a href="subject.html#367">[ subject ]</a>
+              <a href="author.html#367">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

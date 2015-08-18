@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] Simulation with Python
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Simulation%20with%20Python&In-Reply-To=%3C48F501A1.6050409%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000447.html">
+   <LINK REL="Next"  HREF="000449.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] Simulation with Python</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Simulation%20with%20Python&In-Reply-To=%3C48F501A1.6050409%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev] Simulation with Python">eudoxos at arcig.cz
+       </A><BR>
+    <I>Tue Oct 14 22:31:29 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000447.html">[deprecated list] [Yade-dev] Simulation with Python
+</A></li>
+        <LI>Next message: <A HREF="000449.html">[deprecated list] [Yade-dev] Simulation with Python
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#448">[ date ]</a>
+              <a href="thread.html#448">[ thread ]</a>
+              <a href="subject.html#448">[ subject ]</a>
+              <a href="author.html#448">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i>
+</I>&gt;<i> My new question is about Python. I have a simulation which represents
+</I>&gt;<i> a fiber (red spheres) pull out in a matrix . I have the initial sphere
+</I>&gt;<i> packing (see attached file) with two types of spheres (fiber and matrix).
+</I>&gt;<i> After our conversation, i am sure that it is easier to do this
+</I>&gt;<i> simulation with Python. But i need know how :
+</I>&gt;<i>
+</I>&gt;<i>  * Allocate different contact laws between two types of spheres.
+</I>&gt;<i>  * Move only few spheres.
+</I>&gt;<i>  * etc...
+</I>Hi, your question is rather about engines. You will probably have to use
+groupMask magic to differentiate types of spheres and adjust the
+constitutive law for that. Unfortunately there is no unification on this
+(yet).
+
+For moving the spheres that are being pulled out: create
+TranslationEngine and subscribe only those red spheres, something like
+this (let's suppose that they have groupMask==2, for example):
+
+ids=[b.id for b in o.bodies if int(b['groupMask'] &amp; 2)] # this will give
+you the list of IDs of red spheres
+
+then put something like this amongst your engines:
+
+DeusExMachina('TranslationEngine',{'subscribedBodies':ids,'param1':value1,...})
+
+OK, but maybe you want to move only a few spheres that are at the
+beginning of the bar?
+
+I am sorry to reply in such a brief manner, if you send me (here or
+privately) the simulation setup (.xml or just sphere coordinates), I can
+prepare for you abundantly commented script thursday.
+
+HTH, Vaclav
+
+&gt;<i>
+</I>&gt;<i> I didn't find Python tutorial on the Yade's site. Moreover, i think
+</I>&gt;<i> the Python lines for YADE are not general, the user must know the
+</I>&gt;<i> specific syntax.
+</I>&gt;<i> Please, can you help me to find good examples or this specific synthax
+</I>&gt;<i> to realize my modeling.
+</I>&gt;<i>
+</I>&gt;<i> King regards
+</I>&gt;<i> JF
+</I>&gt;<i> _______________________________________________
+</I>&gt;<i> Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+</I>&gt;<i> Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+</I>&gt;<i> Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+</I>&gt;<i> More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</I>&gt;<i>   
+</I>
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000447.html">[deprecated list] [Yade-dev] Simulation with Python
+</A></li>
+	<LI>Next message: <A HREF="000449.html">[deprecated list] [Yade-dev] Simulation with Python
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#448">[ date ]</a>
+              <a href="thread.html#448">[ thread ]</a>
+              <a href="subject.html#448">[ subject ]</a>
+              <a href="author.html#448">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

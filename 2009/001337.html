@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1921 - in trunk/pkg:	common/Engine/DeusExMachina	dem/meta
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1921%20-%20in%20trunk/pkg%3A%0A%09common/Engine/DeusExMachina%09dem/meta&In-Reply-To=%3C200908050902.n7592ZIC025515%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001334.html">
+   <LINK REL="Next"  HREF="001338.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1921 - in trunk/pkg:	common/Engine/DeusExMachina	dem/meta</H1>
+    <B>gladky_anton at mail.berlios.de</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1921%20-%20in%20trunk/pkg%3A%0A%09common/Engine/DeusExMachina%09dem/meta&In-Reply-To=%3C200908050902.n7592ZIC025515%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1921 - in trunk/pkg:	common/Engine/DeusExMachina	dem/meta">gladky_anton at mail.berlios.de
+       </A><BR>
+    <I>Wed Aug  5 11:02:35 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001334.html">[deprecated list] [Yade-dev] yade CRASH contest
+</A></li>
+        <LI>Next message: <A HREF="001338.html">[deprecated list] [Yade-dev] CAELinux and YADE
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1337">[ date ]</a>
+              <a href="thread.html#1337">[ thread ]</a>
+              <a href="subject.html#1337">[ subject ]</a>
+              <a href="author.html#1337">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: gladky_anton
+Date: 2009-08-05 11:02:32 +0200 (Wed, 05 Aug 2009)
+New Revision: 1921
+
+Modified:
+   trunk/pkg/common/Engine/DeusExMachina/PressTestEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/PressTestEngine.hpp
+   trunk/pkg/dem/meta/RockPM.cpp
+Log:
+1. Some small changes
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/PressTestEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/PressTestEngine.cpp	2009-08-05 08:32:18 UTC (rev 1920)
++++ trunk/pkg/common/Engine/DeusExMachina/PressTestEngine.cpp	2009-08-05 09:02:32 UTC (rev 1921)
+@@ -42,7 +42,7 @@
+ 						 */ 
+ 						curentDirection=backward;
+ 						TranslationEngine::velocity *= -pressVelocityForw2Back;
+-						currentIterationAfterDestruction = (Omega::instance().getCurrentIteration())/pressVelocityForw2Back;
++						currentIterationAfterDestruction = (Omega::instance().getCurrentIteration())/pressVelocityForw2Back*riseUpPressHigher;
+ 					}
+ 				}  else if (((currentIterationAfterDestruction!=0)&amp;&amp;(maxVerticalForce !=0))) {
+ 					/*
+@@ -66,4 +66,4 @@
+ }
+ 
+ CREATE_LOGGER(PressTestEngine);
+-YADE_PLUGIN((PressTestEngine));
+\ No newline at end of file
++YADE_PLUGIN((PressTestEngine));
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/PressTestEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/PressTestEngine.hpp	2009-08-05 08:32:18 UTC (rev 1920)
++++ trunk/pkg/common/Engine/DeusExMachina/PressTestEngine.hpp	2009-08-05 09:02:32 UTC (rev 1921)
+@@ -29,14 +29,14 @@
+ 	public:
+ 		enum motionDirection {forward, backward, stop};
+ 		motionDirection curentDirection;
+-		Real currentVerticalForce, maxVerticalForce, minimalForce, predictedForce, minimalPredictedForce;
++		Real currentVerticalForce, maxVerticalForce, minimalForce, predictedForce, minimalPredictedForce, riseUpPressHigher;
+ 		long int numberIterationAfterDestruction, currentIterationAfterDestruction;
+ 		int pressVelocityForw2Back;
+-		PressTestEngine(): curentDirection(forward), currentVerticalForce(0), maxVerticalForce(0), currentIterationAfterDestruction(0), pressVelocityForw2Back(25) {};
++		PressTestEngine(): curentDirection(forward), currentVerticalForce(0), maxVerticalForce(0), currentIterationAfterDestruction(0), pressVelocityForw2Back(25), riseUpPressHigher(1){};
+ 		virtual ~PressTestEngine(){};
+ 		virtual void applyCondition(MetaBody*);
+ 	REGISTER_CLASS_AND_BASE(PressTestEngine,TranslationEngine);
+-	REGISTER_ATTRIBUTES(TranslationEngine, (numberIterationAfterDestruction) (predictedForce));
++	REGISTER_ATTRIBUTES(TranslationEngine, (numberIterationAfterDestruction) (predictedForce) (riseUpPressHigher));
+ 	DECLARE_LOGGER;
+ };
+ REGISTER_SERIALIZABLE(PressTestEngine);
+
+Modified: trunk/pkg/dem/meta/RockPM.cpp
+===================================================================
+--- trunk/pkg/dem/meta/RockPM.cpp	2009-08-05 08:32:18 UTC (rev 1920)
++++ trunk/pkg/dem/meta/RockPM.cpp	2009-08-05 09:02:32 UTC (rev 1921)
+@@ -32,7 +32,8 @@
+ void Law2_Dem3DofGeom_RockPMPhys_Rpm::go(shared_ptr&lt;InteractionGeometry&gt;&amp; ig, shared_ptr&lt;InteractionPhysics&gt;&amp; ip, Interaction* contact, MetaBody* rootBody){
+ 	Dem3DofGeom* geom=static_cast&lt;Dem3DofGeom*&gt;(ig.get());
+ 	RpmPhys* phys=static_cast&lt;RpmPhys*&gt;(ip.get());
+-
++	//geom-&gt;distanceFactor=1.1;
++	
+ 	Real displN=geom-&gt;displacementN();
+ 	const Real&amp; crossSection=phys-&gt;crossSection;
+ 	
+@@ -126,7 +127,7 @@
+ 	
+ 	const shared_ptr&lt;BodyMacroParameters&gt;&amp; elast1=static_pointer_cast&lt;BodyMacroParameters&gt;(pp1);
+ 	const shared_ptr&lt;BodyMacroParameters&gt;&amp; elast2=static_pointer_cast&lt;BodyMacroParameters&gt;(pp2);
+-	long cohesiveThresholdIter=1000;
++	long cohesiveThresholdIter=10;
+ 	
+ 	bool initCohesive = rpm1-&gt;initCohesive*rpm2-&gt;initCohesive;
+ 	
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001334.html">[deprecated list] [Yade-dev] yade CRASH contest
+</A></li>
+	<LI>Next message: <A HREF="001338.html">[deprecated list] [Yade-dev] CAELinux and YADE
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1337">[ date ]</a>
+              <a href="thread.html#1337">[ thread ]</a>
+              <a href="subject.html#1337">[ subject ]</a>
+              <a href="author.html#1337">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

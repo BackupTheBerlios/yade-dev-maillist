@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] [Yade-commits] r1359 - in trunk: core gui/py	lib/import pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20r1359%20-%20in%20trunk%3A%20core%0A%20gui/py%09lib/import%0A%20pkg/common/DataClass/PhysicalParameters%09pkg/common/Engine/DeusExMachina%09pkg/common/Engine/StandAloneEngine%0A%20pkg/dem/Engine/EngineUnit%09pkg/dem/Engine/StandAloneEngine%09pkg/dem/RenderingEngine/GLDrawElasticContactInteraction&In-Reply-To=%3C4836ADF9.40304%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000205.html">
+   <LINK REL="Next"  HREF="000207.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py	lib/import pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20r1359%20-%20in%20trunk%3A%20core%0A%20gui/py%09lib/import%0A%20pkg/common/DataClass/PhysicalParameters%09pkg/common/Engine/DeusExMachina%09pkg/common/Engine/StandAloneEngine%0A%20pkg/dem/Engine/EngineUnit%09pkg/dem/Engine/StandAloneEngine%09pkg/dem/RenderingEngine/GLDrawElasticContactInteraction&In-Reply-To=%3C4836ADF9.40304%40hmg.inpg.fr%3E"
+       TITLE="[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py	lib/import pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Fri May 23 13:43:53 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000205.html">[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py	lib/import pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+        <LI>Next message: <A HREF="000207.html">[yade-dev] Automated crash report for	/tmp/yade-26182/bin/yade-svn1368:	SDECLinkedSpheres, ScrewGen,	TetraTestGen, ThreePointBending
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#194">[ date ]</a>
+              <a href="thread.html#194">[ thread ]</a>
+              <a href="subject.html#194">[ subject ]</a>
+              <a href="author.html#194">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>sega a &#233;crit :
+&gt;&gt;<i> We need to compute the geometry when c-&gt;isReal because an interaction under 
+</I>&gt;&gt;<i>     
+</I>&gt;<i> tension, for instance, will not have penetrationDepth&gt;0 but will still be 
+</I>&gt;<i> a &quot;real&quot; interraction and needs geometrical data. I suspect this change 
+</I>&gt;<i> actually brakes all cohesive and capillary laws in Yade.
+</I>&gt;<i>
+</I>&gt;<i> If it so this changes should be reverted... But that is 
+</I>&gt;<i> interactionDetectionFactor then? I think it's better to use with cohesive 
+</I>&gt;<i> interactions. And by default, allow only purely contact interactions... Such 
+</I>&gt;<i> behaviour is more clear and saves computing resources in many cases.
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>
+interactionDetectionFactor is more aimed at CREATING distant 
+interactions, not for deleting them. It is not supposed to be used for 
+cohesive interactions (it's been introduced for capillary interactions).
+Using interactionDetectionFactor&gt;1 just to make cohesive contacts work 
+in tension would be a waste of resources.
+Using interactionDetectionFactor=1 and computing geometry for real 
+interactions only is the way to compute only what is needed.
+
+
+Bruno
+
+
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Institut National Polytechnique de Grenoble
+Laboratoire 3S (Soils Solids Structures) - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000205.html">[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py	lib/import pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+	<LI>Next message: <A HREF="000207.html">[yade-dev] Automated crash report for	/tmp/yade-26182/bin/yade-svn1368:	SDECLinkedSpheres, ScrewGen,	TetraTestGen, ThreePointBending
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#194">[ date ]</a>
+              <a href="thread.html#194">[ thread ]</a>
+              <a href="subject.html#194">[ subject ]</a>
+              <a href="author.html#194">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

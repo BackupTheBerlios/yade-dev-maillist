@@ -1,0 +1,500 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1892 - in trunk: . core lib	lib/import	lib/multimethods pkg/dem/PreProcessor	pkg/dem/meta	pkg/fem/DataClass/PhysicalParameters	pkg/snow/PreProcessor	pkg/snow/PreProcessor/Voxel py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1892%20-%20in%20trunk%3A%20.%20core%20lib%0A%09lib/import%09lib/multimethods%20pkg/dem/PreProcessor%0A%09pkg/dem/meta%09pkg/fem/DataClass/PhysicalParameters%0A%09pkg/snow/PreProcessor%09pkg/snow/PreProcessor/Voxel%20py&In-Reply-To=%3C200907280623.n6S6NgIX006294%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001270.html">
+   <LINK REL="Next"  HREF="001272.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1892 - in trunk: . core lib	lib/import	lib/multimethods pkg/dem/PreProcessor	pkg/dem/meta	pkg/fem/DataClass/PhysicalParameters	pkg/snow/PreProcessor	pkg/snow/PreProcessor/Voxel py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1892%20-%20in%20trunk%3A%20.%20core%20lib%0A%09lib/import%09lib/multimethods%20pkg/dem/PreProcessor%0A%09pkg/dem/meta%09pkg/fem/DataClass/PhysicalParameters%0A%09pkg/snow/PreProcessor%09pkg/snow/PreProcessor/Voxel%20py&In-Reply-To=%3C200907280623.n6S6NgIX006294%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1892 - in trunk: . core lib	lib/import	lib/multimethods pkg/dem/PreProcessor	pkg/dem/meta	pkg/fem/DataClass/PhysicalParameters	pkg/snow/PreProcessor	pkg/snow/PreProcessor/Voxel py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jul 28 08:23:42 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001270.html">[deprecated list] [Yade-dev] [robot] startup failed
+</A></li>
+        <LI>Next message: <A HREF="001272.html">[deprecated list] [Yade-dev] [svn] r1893 - in trunk: lib	pkg/dem/Engine/DeusExMachina	pkg/fem/DataClass/PhysicalParameters	pkg/fem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1271">[ date ]</a>
+              <a href="thread.html#1271">[ thread ]</a>
+              <a href="subject.html#1271">[ subject ]</a>
+              <a href="author.html#1271">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-28 08:23:39 +0200 (Tue, 28 Jul 2009)
+New Revision: 1892
+
+Removed:
+   trunk/lib/import/STLReader.cpp
+Modified:
+   trunk/SConstruct
+   trunk/core/SConscript
+   trunk/lib/SConscript
+   trunk/lib/import/STLReader.hpp
+   trunk/lib/multimethods/DynLibDispatcher.hpp
+   trunk/pkg/dem/PreProcessor/STLImporter.cpp
+   trunk/pkg/dem/PreProcessor/STLImporter.hpp
+   trunk/pkg/dem/PreProcessor/STLImporterTest.cpp
+   trunk/pkg/dem/meta/ConcretePM.cpp
+   trunk/pkg/fem/DataClass/PhysicalParameters/FEMTetrahedronData.cpp
+   trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp
+   trunk/pkg/snow/PreProcessor/Voxel/Config.cpp
+   trunk/pkg/snow/PreProcessor/Voxel/DataSurface.cpp
+   trunk/pkg/snow/PreProcessor/Voxel/DataVoxel.cpp
+   trunk/pkg/snow/PreProcessor/Voxel/GrainSurface.cpp
+   trunk/pkg/snow/PreProcessor/Voxel/SafeVectors3.cpp
+   trunk/pkg/snow/PreProcessor/Voxel/VoxelEnvelope.cpp
+   trunk/py/SConscript
+   trunk/py/_eudoxos.cpp
+Log:
+1. Fix snow compilation by #including Voxel/* files in SnowVoxeslLoader and noc compiling them directly (sorry)
+2. STLReader is a pure-header import lib now, tolerance is passed as regular data member.
+3. Fix all warnings in ConcretePM.
+4. Merge lib/yade-* into lib/yade-support.
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/SConstruct	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -352,6 +352,10 @@
+ 
+ 	env=conf.Finish()
+ 
++	if os.path.exists('../brefcom-mm.hh'):
++		print &quot;Will use full CPM model in ../brefcom-mm.hh&quot;
++		env.Append(CPPDEFINES='YADE_CPM_FULL_MODEL_AVAILABLE')
++
+ ##########################################################################################
+ ############# BUILDING ###################################################################
+ ##########################################################################################
+
+Modified: trunk/core/SConscript
+===================================================================
+--- trunk/core/SConscript	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/core/SConscript	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -31,15 +31,9 @@
+ 			'containers/InteractionVecMap.cpp',
+ 			]),
+ 		LIBS=env['LIBS']+[
+-			'yade-base',
+-			'yade-serialization',
+-			'yade-factory',
+-			'yade-multimethods',
+-			'yade-computational-geometry',
++			'yade-support',
+ 			'sqlite3x',
+-			'XMLFormatManager',
+ 			'miniWm3',
+-			'STLImporter',
+ 			'rt', # realtime lib, for clock_gettime 
+ 			]+
+ 			['$QGLVIEWER_LIB','yade-opengl'] if 'YADE_OPENGL' in env['CPPDEFINES'] else [],
+
+Modified: trunk/lib/SConscript
+===================================================================
+--- trunk/lib/SConscript	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/lib/SConscript	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -9,7 +9,9 @@
+ 	#return env.Install('$PREFIX/lib/yade$SUFFIX/lib',env.StaticLibrary(*args,**kw))
+ 
+ if 'qt3' not in env['exclude']:
+-	yadeStaticOrSharedLib('yade-serialization-qt',['serialization-qt/QtGUIGenerator.cpp'],LIBS=env['LIBS']+['yade-base','XMLFormatManager']),
++	yadeStaticOrSharedLib('yade-serialization-qt',['serialization-qt/QtGUIGenerator.cpp'],
++		#LIBS=env['LIBS']+['yade-suypportbase','XMLFormatManager']),
++		LIBS=['yade-support']),
+ 	yadeStaticOrSharedLib('yade-QGLViewer',Split('''
+ 		QGLViewer/VRenderInterface_Qt3.ui
+ 		QGLViewer/ImageInterface_Qt3.ui
+@@ -50,18 +52,14 @@
+ if 'YADE_OPENGL' in env['CPPDEFINES']:
+ 	yadeStaticOrSharedLib('yade-opengl',['opengl/FpsTracker.cpp','opengl/GLTextLabel.cpp','opengl/GLWindow.cpp','opengl/GLWindowsManager.cpp','opengl/GLUtils.cpp'],LIBS=env['LIBS']+['glut','$QGLVIEWER_LIB']),
+ 
+-yadeStaticOrSharedLib('yade-base',['base/yadeWm3Extra.cpp'],LIBS=env['LIBS']),
+-yadeStaticOrSharedLib('yade-computational-geometry',['computational-geometry/Distances2D.cpp','computational-geometry/Distances3D.cpp','computational-geometry/Intersections2D.cpp','computational-geometry/Intersections3D.cpp','computational-geometry/MarchingCube.cpp'],LIBS=env['LIBS']+['yade-base']),
+-yadeStaticOrSharedLib('yade-factory',['factory/ClassFactory.cpp','factory/DynLibManager.cpp','factory/FactoryExceptions.cpp']),
+-yadeStaticOrSharedLib('yade-multimethods',['multimethods/Indexable.cpp','multimethods/MultiMethodsExceptions.cpp']),
+-yadeStaticOrSharedLib('XMLFormatManager',['serialization-xml/XMLFormatManager.cpp','serialization-xml/XMLSaxParser.cpp'],LIBS=env['LIBS']+['yade-base','yade-serialization']),
+-yadeStaticOrSharedLib('yade-serialization',['serialization/Archive.cpp','serialization/IOFormatManager.cpp','serialization/IOManagerExceptions.cpp','serialization/FormatChecker.cpp','serialization/Serializable.cpp','serialization/SerializableSingleton.cpp','serialization/SerializationExceptions.cpp'],LIBS=env['LIBS']+['yade-base','yade-factory']),
++yadeStaticOrSharedLib('yade-support',[
++	'base/yadeWm3Extra.cpp',
++	'computational-geometry/Distances2D.cpp','computational-geometry/Distances3D.cpp','computational-geometry/Intersections2D.cpp','computational-geometry/Intersections3D.cpp','computational-geometry/MarchingCube.cpp',
++	'factory/ClassFactory.cpp','factory/DynLibManager.cpp','factory/FactoryExceptions.cpp',
++	'multimethods/Indexable.cpp','multimethods/MultiMethodsExceptions.cpp',
++	'serialization-xml/XMLFormatManager.cpp','serialization-xml/XMLSaxParser.cpp','serialization/Archive.cpp',
++	'serialization/IOFormatManager.cpp','serialization/IOManagerExceptions.cpp','serialization/FormatChecker.cpp','serialization/Serializable.cpp','serialization/SerializableSingleton.cpp','serialization/SerializationExceptions.cpp'])
+ 
+-# for now, keep this is as a shared lib, since it depends on things from pkg (shouldn't be the case, though...)
+-env.Install('$PREFIX/lib/yade$SUFFIX/lib',[
+-	env.SharedLibrary('STLImporter',['import/STLReader.cpp']),
+-])
+-
+ #######################
+ ###### 3rd party libs
+ #######################
+
+Deleted: trunk/lib/import/STLReader.cpp
+===================================================================
+--- trunk/lib/import/STLReader.cpp	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/lib/import/STLReader.cpp	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -1,11 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2008 by Sergei Dorofeenko				 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-#include &quot;STLReader.hpp&quot;
+-
+-float STLReader::tolerance =0;
+-
+
+Modified: trunk/lib/import/STLReader.hpp
+===================================================================
+--- trunk/lib/import/STLReader.hpp	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/lib/import/STLReader.hpp	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -25,7 +25,7 @@
+ 	template&lt;class OutV, class OutE, class OutF, class OutN&gt;
+ 	    bool open(const char* filename, OutV vertices, OutE edges, OutF facets, OutN normals);
+ 	
+-	static float tolerance;
++	float tolerance;
+     
+     protected:
+ 	template&lt;class OutV, class OutE, class OutF, class OutN&gt;
+@@ -47,12 +47,14 @@
+ 	};
+ 
+ 	class IsDifferent {
++		float tolerance;
+ 	    public:
++		IsDifferent(float _tolerance): tolerance(_tolerance){}
+ 		bool operator() (const Vrtx&amp; v1, const Vrtx&amp; v2)
+ 		{
+-		    if ( std::abs(v1[0]-v2[0])&lt;STLReader::tolerance 
+-			    &amp;&amp; std::abs(v1[1]-v2[1])&lt;STLReader::tolerance 
+-			    &amp;&amp; std::abs(v1[2]-v2[2])&lt;STLReader::tolerance ) 
++		    if ( std::abs(v1[0]-v2[0])&lt;tolerance 
++			    &amp;&amp; std::abs(v1[1]-v2[1])&lt;tolerance 
++			    &amp;&amp; std::abs(v1[2]-v2[2])&lt;tolerance ) 
+ 			return false;
+ 		    return true;
+ 		}
+@@ -127,7 +129,7 @@
+ 	{
+ 	    (normals++) = n[i];
+ 	    bool is_different=true;
+-	    IsDifferent isd;
++	    IsDifferent isd(tolerance);
+ 	    int j=0;
+ 	    for(int ej=vcs.size(); j&lt;ej; ++j) 
+ 		if ( !(is_different = isd(v[i],vcs[j])) ) break;
+@@ -193,7 +195,7 @@
+ 	{
+ 	    (normals++) = n[i];
+ 	    bool is_different=true;
+-	    IsDifferent isd;
++	    IsDifferent isd(tolerance);
+ 	    int j=0;
+ 	    for(int ej=vcs.size(); j&lt;ej; ++j) 
+ 		if ( !(is_different = isd(v[i],vcs[j])) ) break;
+
+Modified: trunk/lib/multimethods/DynLibDispatcher.hpp
+===================================================================
+--- trunk/lib/multimethods/DynLibDispatcher.hpp	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/lib/multimethods/DynLibDispatcher.hpp	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -224,7 +224,7 @@
+ 			{
+ 				executor = dynamic_pointer_cast&lt;Executor&gt;(ClassFactory::instance().createShared(libName));
+ 				if (!executor){ //dynamic_cast_failed for some reason so try with static_cast
+-					cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; ERROR dynamic_casting executor of type &quot;&lt;&lt;libName&lt;&lt;&quot;, using static_cast (WHY?)&quot;&lt;&lt;endl;
++					//cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; ERROR dynamic_casting executor of type &quot;&lt;&lt;libName&lt;&lt;&quot;, using static_cast (WHY?)&quot;&lt;&lt;endl;
+ 					//abort();
+ 					executor = static_pointer_cast&lt;Executor&gt;(ClassFactory::instance().createShared(libName));
+ 				}
+
+Modified: trunk/pkg/dem/PreProcessor/STLImporter.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/STLImporter.cpp	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/pkg/dem/PreProcessor/STLImporter.cpp	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -5,8 +5,9 @@
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+-#include &quot;STLImporter.hpp&quot;
+-#include &lt;yade/pkg-dem/Shop.hpp&gt;
++#include&quot;STLImporter.hpp&quot;
++#include&lt;yade/pkg-dem/Shop.hpp&gt;
++#include&lt;yade/lib-import/STLReader.hpp&gt;
+ 
+ CREATE_LOGGER(STLImporter);
+ 
+@@ -20,8 +21,9 @@
+ {
+     vector&lt;double&gt; vtmp, ntmp;
+     vector&lt;int&gt;  etmp, ftmp;
+-    STLReader::tolerance = Math&lt;Real&gt;::ZERO_TOLERANCE;
+     STLReader reader;
++	 reader.tolerance=Math&lt;Real&gt;::ZERO_TOLERANCE;
++
+     if(!reader.open(filename, back_inserter(vtmp), back_inserter(etmp), back_inserter(ftmp), back_inserter(ntmp))) 
+ 	{
+ 		LOG_ERROR(&quot;Can't open file: &quot; &lt;&lt; filename);
+
+Modified: trunk/pkg/dem/PreProcessor/STLImporter.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/STLImporter.hpp	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/pkg/dem/PreProcessor/STLImporter.hpp	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -8,10 +8,10 @@
+ #pragma once
+ #include&lt;yade/pkg-common/Facet.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingFacet.hpp&gt;
+-#include&lt;yade/lib-import/STLReader.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
+ #include&lt;yade/core/BodyContainer.hpp&gt;
+ 
++
+ class STLImporter {
+     public:
+ 	STLImporter();	
+
+Modified: trunk/pkg/dem/PreProcessor/STLImporterTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/STLImporterTest.cpp	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/pkg/dem/PreProcessor/STLImporterTest.cpp	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -6,6 +6,7 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
++
+ #include&quot;STLImporterTest.hpp&quot;
+ #include&lt;yade/pkg-common/SpatialQuickSortCollider.hpp&gt;
+ #include&lt;yade/pkg-dem/STLImporter.hpp&gt;
+
+Modified: trunk/pkg/dem/meta/ConcretePM.cpp
+===================================================================
+--- trunk/pkg/dem/meta/ConcretePM.cpp	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/pkg/dem/meta/ConcretePM.cpp	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -131,19 +131,23 @@
+ // &gt;=1. to deactivate (never delete damaged contacts)
+ Real Law2_Dem3DofGeom_CpmPhys_Cpm::omegaThreshold=1.;
+ 
++#ifdef YADE_CPM_FULL_MODEL_AVAILABLE
++	#include&quot;../../../../brefcom-mm.hh&quot;
++#endif
++
+ void Law2_Dem3DofGeom_CpmPhys_Cpm::go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody){
+ 	Dem3DofGeom* contGeom=static_cast&lt;Dem3DofGeom*&gt;(_geom.get());
+ 	CpmPhys* BC=static_cast&lt;CpmPhys*&gt;(_phys.get());
+ 
+ 	// shorthands
+-		Real&amp; epsN(BC-&gt;epsN); Real&amp; epsNPl(BC-&gt;epsNPl); Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); Real&amp; epsPlSum(BC-&gt;epsPlSum); const Real&amp; E(BC-&gt;E); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle); const Real&amp; G(BC-&gt;G); const Real&amp; crossSection(BC-&gt;crossSection); const Real&amp; omegaThreshold(Law2_Dem3DofGeom_CpmPhys_Cpm::omegaThreshold); const Real&amp; epsCrackOnset(BC-&gt;epsCrackOnset); Real&amp; relResidualStrength(BC-&gt;relResidualStrength); const Real&amp; dt=Omega::instance().getTimeStep();  const Real&amp; epsFracture(BC-&gt;epsFracture); const bool&amp; neverDamage(BC-&gt;neverDamage); const Real&amp; dmgTau(BC-&gt;dmgTau); const Real&amp; plTau(BC-&gt;plTau); const bool&amp; isCohesive(BC-&gt;isCohesive);
+-		Real&amp; omega(BC-&gt;omega); Real&amp; sigmaN(BC-&gt;sigmaN);  Vector3r&amp; sigmaT(BC-&gt;sigmaT); Real&amp; Fn(BC-&gt;Fn); Vector3r&amp; Fs(BC-&gt;Fs); // for python access
+-		const Real&amp; yieldLogSpeed(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldLogSpeed); const int&amp; yieldSurfType(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldSurfType);
+-		const Real&amp; yieldEllipseShift(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldEllipseShift); 
+-		const Real&amp; epsSoft(Law2_Dem3DofGeom_CpmPhys_Cpm::epsSoft); 
+-		const Real&amp; relKnSoft(Law2_Dem3DofGeom_CpmPhys_Cpm::relKnSoft); 
++		Real&amp; epsN(BC-&gt;epsN);
++		Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); Real&amp; epsPlSum(BC-&gt;epsPlSum); const Real&amp; E(BC-&gt;E); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle); const Real&amp; G(BC-&gt;G); const Real&amp; crossSection(BC-&gt;crossSection); const Real&amp; omegaThreshold(Law2_Dem3DofGeom_CpmPhys_Cpm::omegaThreshold); const Real&amp; epsCrackOnset(BC-&gt;epsCrackOnset); Real&amp; relResidualStrength(BC-&gt;relResidualStrength); const Real&amp; epsFracture(BC-&gt;epsFracture); const bool&amp; neverDamage(BC-&gt;neverDamage); Real&amp; omega(BC-&gt;omega); Real&amp; sigmaN(BC-&gt;sigmaN);  Vector3r&amp; sigmaT(BC-&gt;sigmaT); Real&amp; Fn(BC-&gt;Fn); Vector3r&amp; Fs(BC-&gt;Fs); // for python access
+ 
++	#ifdef CPM_MATERIAL_MODEL
++		Real&amp; epsNPl(BC-&gt;epsNPl); const Real&amp; dt=Omega::instance().getTimeStep(); const Real&amp; dmgTau(BC-&gt;dmgTau); const Real&amp; plTau(BC-&gt;plTau); const bool&amp; isCohesive(BC-&gt;isCohesive); const Real&amp; yieldLogSpeed(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldLogSpeed); const int&amp; yieldSurfType(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldSurfType); const Real&amp; yieldEllipseShift(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldEllipseShift); const Real&amp; epsSoft(Law2_Dem3DofGeom_CpmPhys_Cpm::epsSoft); const Real&amp; relKnSoft(Law2_Dem3DofGeom_CpmPhys_Cpm::relKnSoft); 
++	#endif
+ 
++
+ 	epsN=contGeom-&gt;strainN(); epsT=contGeom-&gt;strainT();
+ 	
+ 	// debugging
+
+Modified: trunk/pkg/fem/DataClass/PhysicalParameters/FEMTetrahedronData.cpp
+===================================================================
+--- trunk/pkg/fem/DataClass/PhysicalParameters/FEMTetrahedronData.cpp	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/pkg/fem/DataClass/PhysicalParameters/FEMTetrahedronData.cpp	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -6,8 +6,8 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;FEMTetrahedronData.hpp&quot;
+-#include &quot;FEMNodeData.hpp&quot;
++#include&quot;FEMTetrahedronData.hpp&quot;
++#include&lt;yade/pkg-fem/FEMNodeData.hpp&gt;
+ 
+ 
+ FEMTetrahedronData::FEMTetrahedronData() : PhysicalParameters()
+@@ -183,4 +183,4 @@
+ 	damping = Damp * mass ;
+ }
+ 
+-YADE_PLUGIN(&quot;FEMTetrahedronData&quot;);
+\ No newline at end of file
++YADE_PLUGIN(&quot;FEMTetrahedronData&quot;);
+
+Modified: trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp
+===================================================================
+--- trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -68,6 +68,17 @@
+ //#include&lt;yade/pkg-snow/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.hpp&gt;
+ //#include&lt;yade/pkg-snow/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.hpp&gt;
+ 
++/* this is a little hack; all those files are not picked up by the source
++scanner since they have YADE_REQUIRE_FEATURE(some nonsense) inside.
++Sorry for that. */
++#include&quot;Voxel/Config.cpp&quot;
++#include&quot;Voxel/DataSurface.cpp&quot;
++#include&quot;Voxel/DataVoxel.cpp&quot;
++#include&quot;Voxel/GrainSurface.cpp&quot;
++#include&quot;Voxel/SafeVectors3.cpp&quot;
++#include&quot;Voxel/VoxelEnvelope.cpp&quot;
++
++
+ YADE_PLUGIN(&quot;SnowVoxelsLoader&quot;);
+ SnowVoxelsLoader::SnowVoxelsLoader() : FileGenerator()
+ {
+
+Modified: trunk/pkg/snow/PreProcessor/Voxel/Config.cpp
+===================================================================
+--- trunk/pkg/snow/PreProcessor/Voxel/Config.cpp	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/pkg/snow/PreProcessor/Voxel/Config.cpp	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -1,3 +1,4 @@
++YADE_REQUIRE_FEATURE(COMPILED_BY_INCLUDE_FROM_SnowVoxelsLoader.cpp)
+ #include &quot;Config.hpp&quot;
+ #include &lt;GL/glut.h&gt;
+ #include &lt;iostream&gt;
+
+Modified: trunk/pkg/snow/PreProcessor/Voxel/DataSurface.cpp
+===================================================================
+--- trunk/pkg/snow/PreProcessor/Voxel/DataSurface.cpp	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/pkg/snow/PreProcessor/Voxel/DataSurface.cpp	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -1,3 +1,4 @@
++YADE_REQUIRE_FEATURE(COMPILED_BY_INCLUDE_FROM_SnowVoxelsLoader.cpp)
+ #include &lt;fstream&gt;
+ #include &lt;boost/lexical_cast.hpp&gt;
+ #include &lt;boost/date_time/posix_time/posix_time.hpp&gt;
+@@ -3,5 +4,5 @@
+ #include &lt;GL/glut.h&gt;
+ #include &quot;DataSurface.hpp&quot;
+-#include &quot;Config.hpp&quot;
++#include&lt;yade/pkg-snow/Config.hpp&gt;
+ #include &quot;VoxelEnvelope.hpp&quot;
+ #include &lt;unistd.h&gt;
+
+Modified: trunk/pkg/snow/PreProcessor/Voxel/DataVoxel.cpp
+===================================================================
+--- trunk/pkg/snow/PreProcessor/Voxel/DataVoxel.cpp	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/pkg/snow/PreProcessor/Voxel/DataVoxel.cpp	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -1,3 +1,4 @@
++YADE_REQUIRE_FEATURE(COMPILED_BY_INCLUDE_FROM_SnowVoxelsLoader.cpp)
+ #include &lt;fstream&gt;
+ #include &lt;boost/lexical_cast.hpp&gt;
+ #include &lt;boost/date_time/posix_time/posix_time.hpp&gt;
+
+Modified: trunk/pkg/snow/PreProcessor/Voxel/GrainSurface.cpp
+===================================================================
+--- trunk/pkg/snow/PreProcessor/Voxel/GrainSurface.cpp	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/pkg/snow/PreProcessor/Voxel/GrainSurface.cpp	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -1,3 +1,4 @@
++YADE_REQUIRE_FEATURE(COMPILED_BY_INCLUDE_FROM_SnowVoxelsLoader.cpp)
+ #include &quot;GrainSurface.hpp&quot;
+ #include &quot;Config.hpp&quot;
+ 
+
+Modified: trunk/pkg/snow/PreProcessor/Voxel/SafeVectors3.cpp
+===================================================================
+--- trunk/pkg/snow/PreProcessor/Voxel/SafeVectors3.cpp	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/pkg/snow/PreProcessor/Voxel/SafeVectors3.cpp	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -1,3 +1,4 @@
++YADE_REQUIRE_FEATURE(COMPILED_BY_INCLUDE_FROM_SnowVoxelsLoader.cpp)
+ #include &quot;SafeVectors3.hpp&quot;
+ 
+ SafeVectors3::SafeVectors3(int size,std::string myname,std::string fname,bool has_id) : m_myname(myname)
+
+Modified: trunk/pkg/snow/PreProcessor/Voxel/VoxelEnvelope.cpp
+===================================================================
+--- trunk/pkg/snow/PreProcessor/Voxel/VoxelEnvelope.cpp	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/pkg/snow/PreProcessor/Voxel/VoxelEnvelope.cpp	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -1,3 +1,4 @@
++YADE_REQUIRE_FEATURE(COMPILED_BY_INCLUDE_FROM_SnowVoxelsLoader.cpp)
+ #include &lt;boost/bind.hpp&gt;
+ #include &quot;VoxelEnvelope.hpp&quot;
+ 
+
+Modified: trunk/py/SConscript
+===================================================================
+--- trunk/py/SConscript	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/py/SConscript	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -27,8 +27,8 @@
+ 		env.File('linterpolation.py'),
+ 		env.File('timing.py'),
+ 		env.File('pack.py'),
+-		env.SharedLibrary('wrapper',['yadeWrapper/yadeWrapper.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['XMLFormatManager','yade-factory','yade-serialization',linkPlugins(['Shop','BoundingVolumeMetaEngine','GeometricalModelMetaEngine','InteractingGeometryMetaEngine','InteractionGeometryMetaEngine','InteractionPhysicsMetaEngine','PhysicalParametersMetaEngine','ConstitutiveLawDispatcher','InteractionDispatchers','ParallelEngine','Clump','STLImporter',])
+-			],),
++		env.SharedLibrary('wrapper',['yadeWrapper/yadeWrapper.cpp'],SHLIBPREFIX='',LIBS=linkPlugins(['Shop','BoundingVolumeMetaEngine','GeometricalModelMetaEngine','InteractingGeometryMetaEngine','InteractionGeometryMetaEngine','InteractionPhysicsMetaEngine','PhysicalParametersMetaEngine','ConstitutiveLawDispatcher','InteractionDispatchers','ParallelEngine','Clump','STLImporter',])
++			),
+ 		env.SharedLibrary('_customConverters',['yadeWrapper/customConverters.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['boost_python_indexing_suite_v2']+linkPlugins(Split(&quot;BoundingVolumeEngineUnit GeometricalModelEngineUnit InteractingGeometryEngineUnit InteractionGeometryEngineUnit InteractionPhysicsEngineUnit PhysicalParametersEngineUnit PhysicalActionDamperUnit PhysicalActionApplierUnit ConstitutiveLaw&quot;)))
+ 	])
+ 
+
+Modified: trunk/py/_eudoxos.cpp
+===================================================================
+--- trunk/py/_eudoxos.cpp	2009-07-27 22:03:35 UTC (rev 1891)
++++ trunk/py/_eudoxos.cpp	2009-07-28 06:23:39 UTC (rev 1892)
+@@ -7,6 +7,10 @@
+ 	log4cxx::LoggerPtr logger=log4cxx::Logger::getLogger(&quot;yade.eudoxos&quot;);
+ #endif
+ 
++#ifdef YADE_CPM_FULL_MODEL_AVAILABLE
++	#include&quot;../../brefcom-mm.hh&quot;
++#endif
++
+ # if 0
+ Real elasticEnergyDensityInAABB(python::tuple AABB){
+ 	Vector3r bbMin=tuple2vec(python::extract&lt;python::tuple&gt;(AABB[0])()), bbMax=tuple2vec(python::extract&lt;python::tuple&gt;(AABB[1])()); Vector3r box=bbMax-bbMin;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001270.html">[deprecated list] [Yade-dev] [robot] startup failed
+</A></li>
+	<LI>Next message: <A HREF="001272.html">[deprecated list] [Yade-dev] [svn] r1893 - in trunk: lib	pkg/dem/Engine/DeusExMachina	pkg/fem/DataClass/PhysicalParameters	pkg/fem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1271">[ date ]</a>
+              <a href="thread.html#1271">[ thread ]</a>
+              <a href="subject.html#1271">[ subject ]</a>
+              <a href="author.html#1271">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

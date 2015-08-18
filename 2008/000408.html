@@ -1,0 +1,300 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1531 - in	trunk:	core/DefaultContainerImplementations gui/py	gui/qt3	pkg/common/Container	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1531%20-%20in%0A%09trunk%3A%09core/DefaultContainerImplementations%20gui/py%0A%09gui/qt3%09pkg/common/Container%0A%09pkg/dem/Engine/EngineUnit%09pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry&In-Reply-To=%3C200809290637.m8T6bgta007057%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000407.html">
+   <LINK REL="Next"  HREF="000411.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1531 - in	trunk:	core/DefaultContainerImplementations gui/py	gui/qt3	pkg/common/Container	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1531%20-%20in%0A%09trunk%3A%09core/DefaultContainerImplementations%20gui/py%0A%09gui/qt3%09pkg/common/Container%0A%09pkg/dem/Engine/EngineUnit%09pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry&In-Reply-To=%3C200809290637.m8T6bgta007057%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1531 - in	trunk:	core/DefaultContainerImplementations gui/py	gui/qt3	pkg/common/Container	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Sep 29 08:37:42 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000407.html">[deprecated list] [Yade-dev] HEAD compilation error.
+</A></li>
+        <LI>Next message: <A HREF="000411.html">[deprecated list] [Yade-dev] Color Errors in xterm when compiling!	EXTRA :)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#408">[ date ]</a>
+              <a href="thread.html#408">[ thread ]</a>
+              <a href="subject.html#408">[ subject ]</a>
+              <a href="author.html#408">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-09-29 08:37:41 +0200 (Mon, 29 Sep 2008)
+New Revision: 1531
+
+Added:
+   trunk/gui/qt3/SnapshotEngine.cpp
+   trunk/gui/qt3/SnapshotEngine.hpp
+Modified:
+   trunk/core/DefaultContainerImplementations/BodyRedirectionVector.cpp
+   trunk/gui/py/yadeControl.cpp
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/qt.py
+   trunk/pkg/common/Container/BodyAssocVector.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp
+Log:
+1. Add forgotten SnapshotEngine
+2. BodyRedirectionVector always really find the lowest unused ID (the same for BodyAssocVector)
+3. add Omega().interactions.clear() in python
+4. Move the &quot;Less than 500 bodies, moving possible&quot; to LOG_INFO instead of on-screen since it disturbs videos taken during simulation...
+
+
+
+Modified: trunk/core/DefaultContainerImplementations/BodyRedirectionVector.cpp
+===================================================================
+--- trunk/core/DefaultContainerImplementations/BodyRedirectionVector.cpp	2008-09-28 12:37:30 UTC (rev 1530)
++++ trunk/core/DefaultContainerImplementations/BodyRedirectionVector.cpp	2008-09-29 06:37:41 UTC (rev 1531)
+@@ -73,7 +73,8 @@
+ // FIXME - make sure that this is correct
+ unsigned int BodyRedirectionVector::insert(shared_ptr&lt;Body&gt;&amp; b)
+ {
+-	unsigned int position = b-&gt;getId();
++	//unsigned int position = b-&gt;getId();
++	unsigned position=0;
+ 
+ //	std::vector&lt; shared_ptr&lt;Body&gt; &gt;::iterator tmpVii    = bodies.begin();
+ //	std::vector&lt; shared_ptr&lt;Body&gt; &gt;::iterator tmpViiEnd = bodies.end();
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-09-28 12:37:30 UTC (rev 1530)
++++ trunk/gui/py/yadeControl.cpp	2008-09-29 06:37:41 UTC (rev 1531)
+@@ -289,6 +289,7 @@
+ 	void clear(){proxee-&gt;clear();}
+ };
+ 
++
+ class pyTags{
+ 	public:
+ 		pyTags(const shared_ptr&lt;MetaBody&gt; _mb): mb(_mb){}
+@@ -345,6 +346,7 @@
+ 			long i=0; FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *proxee){ if(!I-&gt;isReal) continue; if(i++==n) return pyInteraction(I); }
+ 			throw invalid_argument(string(&quot;Interaction number out of range (&quot;)+lexical_cast&lt;string&gt;(n)+&quot;&gt;=&quot;+lexical_cast&lt;string&gt;(i)+&quot;).&quot;);
+ 		}
++		void clear(){proxee-&gt;clear();}
+ };
+ 
+ 
+@@ -550,7 +552,8 @@
+ 	boost::python::class_&lt;pyInteractionContainer&gt;(&quot;InteractionContainer&quot;,python::init&lt;pyInteractionContainer&amp;&gt;())
+ 		.def(&quot;__iter__&quot;,&amp;pyInteractionContainer::pyIter)
+ 		.def(&quot;__getitem__&quot;,&amp;pyInteractionContainer::pyGetitem)
+-		.def(&quot;nth&quot;,&amp;pyInteractionContainer::pyNth);
++		.def(&quot;nth&quot;,&amp;pyInteractionContainer::pyNth)
++		.def(&quot;clear&quot;,&amp;pyInteractionContainer::clear);
+ 	boost::python::class_&lt;pyInteractionIterator&gt;(&quot;InteractionIterator&quot;,python::init&lt;pyInteractionIterator&amp;&gt;())
+ 		.def(&quot;__iter__&quot;,&amp;pyInteractionIterator::pyIter)
+ 		.def(&quot;next&quot;,&amp;pyInteractionIterator::pyNext);
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-09-28 12:37:30 UTC (rev 1530)
++++ trunk/gui/qt3/GLViewer.cpp	2008-09-29 06:37:41 UTC (rev 1531)
+@@ -312,8 +312,8 @@
+ 	MetaBody* rb=Omega::instance().getRootBody().get();
+ 	if (!rb) return;
+ 
+-	if(rb-&gt;bodies-&gt;size() &lt; 500) displayMessage(&quot;Less than 500 bodies, moving possible. Select with shift, press 'm' to move. Use / * - + for cutting plane.&quot;, 6000);
+-	else displayMessage(&quot;More than 500 bodies. Moving not possible. Use / * - + for cutting plane.&quot;, 6000);
++	if(rb-&gt;bodies-&gt;size()&lt;500){LOG_INFO(&quot;Less than 500 bodies, moving possible. Select with shift, press 'm' to move.&quot;);}
++	else{LOG_INFO(&quot;More than 500 bodies. Moving not possible.&quot;);}
+ 	Vector3r min,max;	
+ 	if(rb-&gt;boundingVolume){
+ 		min=rb-&gt;boundingVolume-&gt;min; max=rb-&gt;boundingVolume-&gt;max;
+
+Added: trunk/gui/qt3/SnapshotEngine.cpp
+===================================================================
+--- trunk/gui/qt3/SnapshotEngine.cpp	2008-09-28 12:37:30 UTC (rev 1530)
++++ trunk/gui/qt3/SnapshotEngine.cpp	2008-09-29 06:37:41 UTC (rev 1531)
+@@ -0,0 +1,17 @@
++#include&quot;SnapshotEngine.hpp&quot;
++#include&lt;sstream&gt;
++#include&lt;iomanip&gt;
++CREATE_LOGGER(SnapshotEngine);
++void SnapshotEngine::action(MetaBody* rb){
++	shared_ptr&lt;GLViewer&gt; glv;
++	if(!YadeQtMainWindow::self || ((size_t)viewNo&gt;=YadeQtMainWindow::self-&gt;glViews.size()) || !(glv=YadeQtMainWindow::self-&gt;glViews[viewNo])){
++		if(!ignoreErrors) throw invalid_argument(&quot;View #&quot;+lexical_cast&lt;string&gt;(viewNo)+&quot; (SnapshotEngine::viewNo) doesn't exist.&quot;);
++		return;
++	}
++	ostringstream fss; fss&lt;&lt;fileBase&lt;&lt;setw(4)&lt;&lt;setfill('0')&lt;&lt;counter++&lt;&lt;&quot;.png&quot;;
++	LOG_DEBUG(&quot;GL view #&quot;&lt;&lt;viewNo&lt;&lt;&quot; &#8594; &quot;&lt;&lt;fss.str())
++	glv-&gt;setSnapshotFormat(&quot;PNG&quot;);
++	glv-&gt;saveSnapshot(QString(fss.str()),/*overwrite*/ true);
++	savedSnapshots.push_back(fss.str());
++}
++
+
+Added: trunk/gui/qt3/SnapshotEngine.hpp
+===================================================================
+--- trunk/gui/qt3/SnapshotEngine.hpp	2008-09-28 12:37:30 UTC (rev 1530)
++++ trunk/gui/qt3/SnapshotEngine.hpp	2008-09-29 06:37:41 UTC (rev 1531)
+@@ -0,0 +1,38 @@
++#pragma once
++#include&lt;yade/core/StandAloneEngine.hpp&gt;
++#include&lt;yade/gui-qt3/GLViewer.hpp&gt;
++#include&lt;yade/gui-qt3/YadeQtMainWindow.hpp&gt;
++#include&lt;yade/pkg-common/PeriodicEngines.hpp&gt;
++/*! Engine for saving snapshots of GLView(s) as .png files.
++ *
++ * Derives from PeriodicEngine, which has detailed information on controlling periodicity.
++ *
++ * The files are named fileBase+counter+&quot;.png&quot; (counter is left-padded by 0s, i.e. snap0004.png)
++ */
++class SnapshotEngine: public PeriodicEngine{
++	public:
++		//! Basename for snapshots
++		string fileBase;
++		//! Number appended to fileBase
++		int counter;
++		//! The GLView number that we save (default: 0, i.e. primary view)
++		int viewNo;
++		//! Silently return if selected view doesn't exist (default: true)
++		bool ignoreErrors;
++		//! files that have been created so far
++		vector&lt;string&gt; savedSnapshots;
++	SnapshotEngine():counter(0),viewNo(0),ignoreErrors(true){}
++	virtual void action(MetaBody*);
++	void registerAttributes(){	
++		PeriodicEngine::registerAttributes();
++		REGISTER_ATTRIBUTE(fileBase);
++		REGISTER_ATTRIBUTE(counter);
++		REGISTER_ATTRIBUTE(viewNo);
++		REGISTER_ATTRIBUTE(ignoreErrors);
++		REGISTER_ATTRIBUTE(savedSnapshots);
++	}
++	DECLARE_LOGGER;
++	REGISTER_CLASS_NAME(SnapshotEngine);
++	REGISTER_BASE_CLASS_NAME(PeriodicEngine);
++};
++REGISTER_SERIALIZABLE(SnapshotEngine,false);
+
+Modified: trunk/gui/qt3/qt.py
+===================================================================
+--- trunk/gui/qt3/qt.py	2008-09-28 12:37:30 UTC (rev 1530)
++++ trunk/gui/qt3/qt.py	2008-09-29 06:37:41 UTC (rev 1531)
+@@ -15,7 +15,7 @@
+ 	viewNo is 0-based GL view number. 0 is the primary view and will be created if it doesn't exist.
+ 	It is an error if viewNo&gt;0 and the view doesn't exist.
+ 
+-	The simulation will run until it stops by itself. Either set Omega().stopAtIteration or have an engine
++	The simulation will run until it stops by itself. Either set Omega().stopAtIter or have an engine
+ 	that will call Omega().pause() at some point.
+ 
+ 	See makePlayerVideo for more documentation.
+
+Modified: trunk/pkg/common/Container/BodyAssocVector.cpp
+===================================================================
+--- trunk/pkg/common/Container/BodyAssocVector.cpp	2008-09-28 12:37:30 UTC (rev 1530)
++++ trunk/pkg/common/Container/BodyAssocVector.cpp	2008-09-29 06:37:41 UTC (rev 1531)
+@@ -80,7 +80,8 @@
+ //	BodyContainer::setId(b,max);
+ //	return max;
+ 
+-	unsigned int position = b-&gt;getId();
++	//unsigned int position = b-&gt;getId();
++	unsigned int position=0;
+ 
+ 	Loki::AssocVector&lt;unsigned int , shared_ptr&lt;Body&gt; &gt;::const_iterator tmpBii;
+ 	tmpBii = bodies.find(position);
+@@ -88,8 +89,7 @@
+ 	{
+ 		// finds the first free key, which is bigger than 0 (was: newPoistion=position, i.e. greater than id... why?)
+ 		unsigned int newPosition = 0;
+-		while( bodies.find(newPosition) != bodies.end() )
+-			++newPosition;
++		while( bodies.find(newPosition) != bodies.end() ) ++newPosition;
+ 		//cerr &lt;&lt; &quot;WARNING: body id=\&quot;&quot; &lt;&lt; position &lt;&lt; &quot;\&quot; is already used. Using first free id=\&quot;&quot; &lt;&lt; newPosition &lt;&lt; &quot;\&quot;, beware - if you are loading a file, this will break interactions for this body!\n&quot;;
+ 		position = newPosition;
+ 	}
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2008-09-28 12:37:30 UTC (rev 1530)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2008-09-29 06:37:41 UTC (rev 1531)
+@@ -122,7 +122,6 @@
+ 				scm-&gt;cp2rel.Align(Vector3r::UNIT_X,se32.orientation.Conjugate()*(-normal));
+ 				scm-&gt;cp1rel.Normalize(); scm-&gt;cp2rel.Normalize();
+ 			}
+-			cerr&lt;&lt;&quot;@@ &quot;&lt;&lt;scm-&gt;epsT()&lt;&lt;endl;
+ 		}
+ 
+ 		return true;
+
+Modified: trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp	2008-09-28 12:37:30 UTC (rev 1530)
++++ trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp	2008-09-29 06:37:41 UTC (rev 1531)
+@@ -80,13 +80,8 @@
+ 		Vector3r contPt=se31.position+(sc-&gt;d1/sc-&gt;d0)*(se32.position-se31.position); // must be recalculated to not be unscaled if scaling displacements ...
+ 		GLUtils::GLDrawLine(pos1,pos2,Vector3r(.5,.5,.5));
+ 		// sphere center to point on the sphere
+-		//GLUtils::GLDrawText(&quot;[1]&quot;,sc-&gt;pos1,Vector3r(1,1,1)); GLUtils::GLDrawText(&quot;[2]&quot;,sc-&gt;pos2,Vector3r(1,1,1));
+-		GLUtils::GLDrawLine(pos1,pos1+(sc-&gt;ori1*sc-&gt;cp1rel*Vector3r::UNIT_X*sc-&gt;d1),Vector3r(0,.5,1));
+-		GLUtils::GLDrawLine(pos2,pos2+(sc-&gt;ori2*sc-&gt;cp2rel*Vector3r::UNIT_X*sc-&gt;d2),Vector3r(0,1,.5));
+-		//cerr&lt;&lt;&quot;=== cp1rel=&quot;&lt;&lt;sc-&gt;cp1rel[0]&lt;&lt;&quot;;&quot;&lt;&lt;sc-&gt;cp1rel[1]&lt;&lt;&quot;;&quot;&lt;&lt;sc-&gt;cp1rel[2]&lt;&lt;&quot;;&quot;&lt;&lt;sc-&gt;cp1rel[3]&lt;&lt;endl;
+-		//cerr&lt;&lt;&quot;=== ori1=&quot;&lt;&lt;sc-&gt;ori1[0]&lt;&lt;&quot;;&quot;&lt;&lt;sc-&gt;ori1[1]&lt;&lt;&quot;;&quot;&lt;&lt;sc-&gt;ori1[2]&lt;&lt;&quot;;&quot;&lt;&lt;sc-&gt;ori1[3]&lt;&lt;endl;
+-		//cerr&lt;&lt;&quot;+++ cp1rel=&quot;&lt;&lt;sc-&gt;cp1rel&lt;&lt;&quot;, ori1=&quot;&lt;&lt;sc-&gt;ori1&lt;&lt;&quot;, cp1rel*ori1=&quot;&lt;&lt;sc-&gt;cp1rel*sc-&gt;ori1&lt;&lt;endl;
+-		//&lt;&lt;&quot;, *UNIT_X=&quot;&lt;&lt;sc-&gt;cp1rel*sc-&gt;ori1*Vector3r::UNIT_X&lt;&lt;&quot;, +pos1=&quot;&lt;&lt;sc-&gt;pos1+(sc-&gt;cp1rel*sc-&gt;ori1*Vector3r::UNIT_X)&lt;&lt;endl;
++		//GLUtils::GLDrawLine(pos1,pos1+(sc-&gt;ori1*sc-&gt;cp1rel*Vector3r::UNIT_X*sc-&gt;d1),Vector3r(0,.5,1));
++		//GLUtils::GLDrawLine(pos2,pos2+(sc-&gt;ori2*sc-&gt;cp2rel*Vector3r::UNIT_X*sc-&gt;d2),Vector3r(0,1,.5));
+ 		// contact point to projected points
+ 		Vector3r ptTg1=sc-&gt;contPtInTgPlane1(), ptTg2=sc-&gt;contPtInTgPlane2();
+ 		GLUtils::GLDrawLine(contPt,contPt+ptTg1,Vector3r(0,.5,1));
+@@ -94,7 +89,7 @@
+ 		// projected shear
+ 		GLUtils::GLDrawLine(contPt+ptTg1,contPt+ptTg2,Vector3r(1,1,1));
+ 		// 
+-		GLUtils::GLDrawNum(sc-&gt;epsN(),contPt,Vector3r(1,1,1));
++		//GLUtils::GLDrawNum(sc-&gt;epsN(),contPt,Vector3r(1,1,1));
+ 	}
+ 
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000407.html">[deprecated list] [Yade-dev] HEAD compilation error.
+</A></li>
+	<LI>Next message: <A HREF="000411.html">[deprecated list] [Yade-dev] Color Errors in xterm when compiling!	EXTRA :)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#408">[ date ]</a>
+              <a href="thread.html#408">[ thread ]</a>
+              <a href="subject.html#408">[ subject ]</a>
+              <a href="author.html#408">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

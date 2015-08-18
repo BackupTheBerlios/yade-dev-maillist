@@ -1,0 +1,681 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1680 - in trunk: . core extra	extra/clump	extra/usct gui/py	pkg/common/Engine/DeusExMachina	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1680%20-%20in%20trunk%3A%20.%20core%20extra%0A%09extra/clump%09extra/usct%20gui/py%0A%09pkg/common/Engine/DeusExMachina%09pkg/common/Engine/MetaEngine%0A%09pkg/common/Engine/StandAloneEngine%09pkg/dem/Engine/DeusExMachina%0A%09pkg/dem/Engine/EngineUnit%09pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200902222008.n1MK8luB009759%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000735.html">
+   <LINK REL="Next"  HREF="000737.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1680 - in trunk: . core extra	extra/clump	extra/usct gui/py	pkg/common/Engine/DeusExMachina	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1680%20-%20in%20trunk%3A%20.%20core%20extra%0A%09extra/clump%09extra/usct%20gui/py%0A%09pkg/common/Engine/DeusExMachina%09pkg/common/Engine/MetaEngine%0A%09pkg/common/Engine/StandAloneEngine%09pkg/dem/Engine/DeusExMachina%0A%09pkg/dem/Engine/EngineUnit%09pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200902222008.n1MK8luB009759%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1680 - in trunk: . core extra	extra/clump	extra/usct gui/py	pkg/common/Engine/DeusExMachina	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Feb 22 21:08:47 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000735.html">[deprecated list] [Yade-dev] Wm3 replacement candidate
+</A></li>
+        <LI>Next message: <A HREF="000737.html">[deprecated list] [Yade-dev] [svn] r1681 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#734">[ date ]</a>
+              <a href="thread.html#734">[ thread ]</a>
+              <a href="subject.html#734">[ subject ]</a>
+              <a href="author.html#734">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-02-22 21:08:45 +0100 (Sun, 22 Feb 2009)
+New Revision: 1680
+
+Modified:
+   trunk/SConstruct
+   trunk/core/BexContainer.hpp
+   trunk/core/Omega.hpp
+   trunk/extra/Brefcom.cpp
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/clump/Shop.hpp
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+   trunk/gui/py/_utils.cpp
+   trunk/gui/py/yadeControl.cpp
+   trunk/pkg/common/Engine/DeusExMachina/GravityEngines.cpp
+   trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+   trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+Log:
+1. Add BexContainer (same interface, but separate implementation) in openMP flavor.
+2. openmp=0 is the default for scons now (for some time), since openMP BexContainer gives about 7% slowdown and thus is not useful before at least some engines are parallelized as well.
+3. Removed getting references to Force/Torque from BexContainer, since that breaks concurrency. Instead, addForce/addTorque must be used. If you need to read back with getForce/getTorque, you have to call sync() (expensive!!) beforehand, which will compute summary values for all bodies; if you forget, exception will be thrown. Note that sync() is invalidated at next write operation.
+4. Adapted a few constitutive laws and other engines for the changes mentiones here.
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-02-22 13:08:47 UTC (rev 1679)
++++ trunk/SConstruct	2009-02-22 20:08:45 UTC (rev 1680)
+@@ -102,8 +102,8 @@
+ print '@@@ Using profile',profile,'('+optsFile+') @@@'
+ 
+ # defaults for various profiles
+-if profile=='default': defOptions={'debug':1,'variant':'','optimize':0,'openmp':True}
+-elif profile=='opt': defOptions={'debug':0,'variant':'-opt','optimize':1,'openmp':True}
++if profile=='default': defOptions={'debug':1,'variant':'','optimize':0,'openmp':False}
++elif profile=='opt': defOptions={'debug':0,'variant':'-opt','optimize':1,'openmp':False}
+ else: defOptions={'debug':0,'optimize':0,'variant':profile,'openmp':True}
+ 
+ 
+@@ -390,7 +390,7 @@
+ ### COMPILER
+ if env['debug']: env.Append(CXXFLAGS='-ggdb3',CPPDEFINES=['YADE_DEBUG'])
+ else: env.Append(CXXFLAGS='-O2')
+-if env['openmp']: env.Append(CXXFLAGS='-fopenmp',LIBS='gomp')
++if env['openmp']: env.Append(CXXFLAGS='-fopenmp',LIBS='gomp',CPPDEFINES='YADE_OPENMP')
+ if env['optimize']:
+ 	env.Append(CXXFLAGS=Split('-O3 -ffast-math -march=%s'%env['march']),
+ 		CPPDEFINES=[('YADE_CAST','static_cast'),('YADE_PTR_CAST','static_pointer_cast'),'NDEBUG'])
+
+Modified: trunk/core/BexContainer.hpp
+===================================================================
+--- trunk/core/BexContainer.hpp	2009-02-22 13:08:47 UTC (rev 1679)
++++ trunk/core/BexContainer.hpp	2009-02-22 20:08:45 UTC (rev 1680)
+@@ -7,6 +7,83 @@
+ // for body_id_t
+ #include&lt;yade/core/Interaction.hpp&gt;
+ 
++#ifdef YADE_OPENMP
++
++#include&lt;omp.h&gt;
++
++class BexContainer{
++	private:
++		typedef std::vector&lt;Vector3r&gt; vvector;
++		std::vector&lt;vvector&gt; _forceData;
++		std::vector&lt;vvector&gt; _torqueData;
++		vvector _force, _torque;
++		size_t size;
++		int nThreads;
++		bool synced;
++		boost::mutex globalMutex;
++
++		inline void ensureSize(body_id_t id){
++			assert(nThreads&gt;omp_get_thread_num());
++			if (size&lt;=(size_t)id) resize(min((size_t)1.5*(id+100),(size_t)(id+2000)));
++		}
++
++		inline void ensureSynced(){ if(!synced) throw runtime_error(&quot;BexContainer not thread-synchronized; call sync() first!&quot;); }
++	public:
++		BexContainer(): size(0), synced(true){
++			nThreads=omp_get_max_threads();
++			for(int i=0; i&lt;nThreads; i++){
++				_forceData.push_back(vvector()); _torqueData.push_back(vvector());
++			}
++		}
++
++		/* To be benchmarked: sum thread data in getForce/getTorque upon request for each body individually instead of by the sync() function globally */
++		const Vector3r&amp; getForce(body_id_t id)         { ensureSize(id); ensureSynced(); return _force[id]; }
++		void  addForce(body_id_t id, const Vector3r&amp; f){ ensureSize(id); synced=false;   _forceData[omp_get_thread_num()][id]+=f;}
++		const Vector3r&amp; getTorque(body_id_t id)        { ensureSize(id); ensureSynced(); return _torque[id]; }
++		void addTorque(body_id_t id, const Vector3r&amp; f){ ensureSize(id); synced=false;   _torqueData[omp_get_thread_num()][id]+=f;}
++
++		/* Sum contributions from all threads, save to the 0th thread storage.
++		 * Locks globalMutex, since one thread modifies other threads' data.
++		 * Must be called before get* methods are used. Exception is thrown otherwise, since data are not consistent.
++		 */
++		inline void sync(){
++			if(synced) return;
++			boost::mutex::scoped_lock lock(globalMutex);
++			// #pragma omp parallel for private(sumF,sumT,thread);
++			for(size_t id=0; id&lt;size; id++){
++				Vector3r sumF(Vector3r::ZERO), sumT(Vector3r::ZERO);
++				for(int thread=0; thread&lt;omp_get_max_threads(); thread++){ sumF+=_forceData[thread][id]; sumT+=_torqueData[thread][id];}
++				_force[id]=sumF; _torque[id]=sumT;
++			}
++			synced=true;
++		}
++
++		/* Change size of containers (number of bodies).
++		 * Locks globalMutex, since on threads modifies other threads' data.
++		 * Called very rarely (a few times at the beginning of the simulation)
++		 */
++		void resize(size_t newSize){
++			boost::mutex::scoped_lock lock(globalMutex);
++			if(size&gt;=newSize) return; // in case on thread was waiting for resize, but it was already satisfied by another one
++			for(int thread=0; thread&lt;nThreads; thread++){
++				_forceData [thread].resize(newSize);
++				_torqueData[thread].resize(newSize);
++			}
++			_force.resize(newSize); _torque.resize(newSize);
++			size=newSize;
++		}
++
++		void reset(){
++			for(int thread=0; thread&lt;nThreads; thread++){
++				memset(_forceData [thread][0], 0,sizeof(Vector3r)*size);
++				memset(_torqueData[thread][0],0,sizeof(Vector3r)*size);
++			}
++			memset(_force [0], 0,sizeof(Vector3r)*size); memset(_torque[0], 0,sizeof(Vector3r)*size);
++			synced=true;
++		}
++};
++
++#else
+ /* Container for Body External Variables (bex), typically forces and torques from interactions.
+  * Values should be reset at every iteration by BexResetter.
+  * If you want to add your own bex, there are 4 steps:
+@@ -22,21 +99,22 @@
+ 		std::vector&lt;Vector3r&gt; _force;
+ 		std::vector&lt;Vector3r&gt; _torque;
+ 		size_t size;
++		inline void ensureSize(body_id_t id){ if(size&lt;=(size_t)id) resize(min((size_t)1.5*(id+100),(size_t)(id+2000)));}
+ 	public:
+ 		BexContainer(): size(0){}
+-		inline void ensureSize(body_id_t id){ if(size&lt;=(size_t)id) resize(min((size_t)1.5*(id+100),(size_t)(id+2000)));}
+-		//! Get writable reference to force acting on body # id
+-		inline Vector3r&amp; force(body_id_t id){ ensureSize(id); return _force[id]; }
+-		//! Get writable reference to torque acting on body # id
+-		inline Vector3r&amp; torque(body_id_t id){ ensureSize(id); return _torque[id]; }
++		const Vector3r&amp; getForce(body_id_t id){ensureSize(id); return _force[id];}
++		void  addForce(body_id_t id,const Vector3r&amp; f){ensureSize(id); _force[id]+=f;}
++		const Vector3r&amp; getTorque(body_id_t id){ensureSize(id); return _torque[id];}
++		void  addTorque(body_id_t id,const Vector3r&amp; t){ensureSize(id); _torque[id]+=t;}
+ 		//! Set all bex's to zero
+ 		void reset(){
+ 			memset(_force[0], 0,sizeof(Vector3r)*size);
+ 			memset(_torque[0],0,sizeof(Vector3r)*size);
+ 		}
++		//! No-op for API compatibility with the threaded version
++		void sync(){return;}
+ 		/*! Resize the container; this happens automatically,
+-		 * but you may want to set the size beforehand to avoid resizes as the simulation grows.
+-		 */
++		 * but you may want to set the size beforehand to avoid resizes as the simulation grows. */
+ 		void resize(size_t newSize){
+ 			_force.resize(newSize);
+ 			_torque.resize(newSize);
+@@ -44,3 +122,6 @@
+ 			std::cerr&lt;&lt;&quot;[DEBUG] BexContainer: Resized to &quot;&lt;&lt;size&lt;&lt;std::endl;
+ 		}
+ };
++
++
++#endif
+
+Modified: trunk/core/Omega.hpp
+===================================================================
+--- trunk/core/Omega.hpp	2009-02-22 13:08:47 UTC (rev 1679)
++++ trunk/core/Omega.hpp	2009-02-22 20:08:45 UTC (rev 1680)
+@@ -167,6 +167,7 @@
+ 		Omega&amp; operator=(const Omega&amp;);
+ 
+ 	FRIEND_SINGLETON(Omega);
++	friend class pyOmega;
+ };
+ 
+ 
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-02-22 13:08:47 UTC (rev 1679)
++++ trunk/extra/Brefcom.cpp	2009-02-22 20:08:45 UTC (rev 1680)
+@@ -12,7 +12,8 @@
+ CREATE_LOGGER(BrefcomGlobalCharacteristics);
+ 
+ void BrefcomGlobalCharacteristics::compute(MetaBody* rb, bool useMaxForce){
+-	Shop::Bex::initCache();
++	//Shop::Bex::initCache();
++	rb-&gt;bex.sync();
+ 
+ 	// 1. reset volumetric strain (cummulative in the next loop)
+ 	// 2. get maximum force on a body and sum of all forces (for averaging)
+@@ -21,7 +22,7 @@
+ 	BrefcomPhysParams* bpp(YADE_CAST&lt;BrefcomPhysParams*&gt;(b-&gt;physicalParameters.get()));
+ 		bpp-&gt;epsVolumetric=0;
+ 		bpp-&gt;numContacts=0;
+-		currF=Shop::Bex::force(b-&gt;id,rb).Length(); maxF=max(currF,maxF); sumF+=currF;
++		currF=rb-&gt;bex.getForce(b-&gt;id).Length(); maxF=max(currF,maxF); sumF+=currF;
+ 	}
+ 	Real meanF=sumF/rb-&gt;bodies-&gt;size(); 
+ 
+@@ -124,10 +125,10 @@
+ CREATE_LOGGER(BrefcomLaw);
+ 
+ void BrefcomLaw::applyForce(const Vector3r&amp; force, const body_id_t&amp; id1, const body_id_t&amp; id2){
+-	Shop::Bex::force(id1,rootBody)+=force;
+-	Shop::Bex::force(id2,rootBody)-=force;
+-	Shop::Bex::momentum(id1,rootBody)+=(contGeom-&gt;contactPoint-contGeom-&gt;pos1).Cross(force);
+-	Shop::Bex::momentum(id2,rootBody)+=(contGeom-&gt;contactPoint-contGeom-&gt;pos2).Cross(-force);
++	rootBody-&gt;bex.addForce(id1,force);
++	rootBody-&gt;bex.addForce(id2,-force);
++	rootBody-&gt;bex.addTorque(id1,(contGeom-&gt;contactPoint-contGeom-&gt;pos1).Cross(force));
++	rootBody-&gt;bex.addTorque(id2,(contGeom-&gt;contactPoint-contGeom-&gt;pos2).Cross(-force));
+ }
+ 
+ CREATE_LOGGER(ef2_Spheres_Brefcom_BrefcomLaw);
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2009-02-22 13:08:47 UTC (rev 1679)
++++ trunk/extra/clump/Shop.cpp	2009-02-22 20:08:45 UTC (rev 1680)
+@@ -39,7 +39,6 @@
+ 
+ #include&lt;yade/pkg-common/Force.hpp&gt;
+ #include&lt;yade/pkg-common/Momentum.hpp&gt;
+-#include&lt;yade/pkg-dem/GlobalStiffness.hpp&gt;
+ /*class InteractingSphere2AABB;
+ class InteractingBox2AABB;
+ class MetaInteractingGeometry;
+@@ -87,18 +86,16 @@
+ 
+ int Shop::Bex::forceIdx=-1;
+ int Shop::Bex::momentumIdx=-1;
+-int Shop::Bex::globalStiffnessIdx=-1;
+ 
+ void Shop::Bex::initCache(){
+ 	if(Shop::Bex::forceIdx&lt;0){
+ 		Shop::Bex::forceIdx=shared_ptr&lt;PhysicalAction&gt;(new Force())-&gt;getClassIndex();
+ 		Shop::Bex::momentumIdx=shared_ptr&lt;PhysicalAction&gt;(new Momentum())-&gt;getClassIndex();
+-		Shop::Bex::globalStiffnessIdx=shared_ptr&lt;PhysicalAction&gt;(new GlobalStiffness())-&gt;getClassIndex();
+ 	}
+ }
+ #ifdef BEX_CONTAINER
+-	Vector3r&amp; Shop::Bex::force(body_id_t id,MetaBody* rb){ return rb-&gt;bex.force(id);}
+-	Vector3r&amp; Shop::Bex::momentum(body_id_t id,MetaBody* rb){ return rb-&gt;bex.force(id);}
++	const Vector3r&amp; Shop::Bex::force(body_id_t id,MetaBody* rb){  rb-&gt;bex.sync();  return rb-&gt;bex.getForce(id);}
++	const Vector3r&amp; Shop::Bex::momentum(body_id_t id,MetaBody* rb){ rb-&gt;bex.sync(); return rb-&gt;bex.getTorque(id);}
+ #else
+ 	#define __BEX_ACCESS(retType,shopBexMember,bexClass,bexIdx,bexAttribute) retType&amp; Shop::Bex::shopBexMember(body_id_t id,MetaBody* mb){ assert(bexIdx&gt;=0); shared_ptr&lt;PhysicalActionContainer&gt; pac=(mb?mb:Omega::instance().getRootBody().get())-&gt;physicalActions; /*if((long)pac-&gt;size()&lt;=id) throw invalid_argument(&quot;No &quot; #shopBexMember &quot; for #&quot;+lexical_cast&lt;string&gt;(id)+&quot; (max=&quot;+lexical_cast&lt;string&gt;(((long)pac-&gt;size()-1))+&quot;)&quot;);*/ return static_pointer_cast&lt;bexClass&gt;(pac-&gt;find(id,bexIdx))-&gt;bexAttribute; }
+ 	__BEX_ACCESS(Vector3r,force,Force,forceIdx,force);
+@@ -110,10 +107,17 @@
+  *
+  * Shop::Bex::initCache must have been called at some point. */
+ void Shop::applyForceAtContactPoint(const Vector3r&amp; force, const Vector3r&amp; contPt, body_id_t id1, const Vector3r&amp; pos1, body_id_t id2, const Vector3r&amp; pos2, MetaBody* rootBody){
++#ifdef BEX_CONTAINER
++	rootBody-&gt;bex.addForce(id1,force);
++	rootBody-&gt;bex.addForce(id2,-force);
++	rootBody-&gt;bex.addTorque(id1,(contPt-pos1).Cross(force));
++	rootBody-&gt;bex.addTorque(id2,-(contPt-pos2).Cross(force));
++#else
+ 	Shop::Bex::force(id1,rootBody)+=force;
+ 	Shop::Bex::force(id2,rootBody)-=force;
+ 	Shop::Bex::momentum(id1,rootBody)+=(contPt-pos1).Cross(force);
+ 	Shop::Bex::momentum(id2,rootBody)-=(contPt-pos2).Cross(force);
++#endif
+ }
+ 
+ 
+@@ -124,7 +128,12 @@
+ 	Real sumF=0,maxF=0,currF;
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rb-&gt;bodies){
+ 		if(!b-&gt;isDynamic) continue;
+-		currF=Shop::Bex::force(b-&gt;id,rb).Length(); maxF=max(currF,maxF); sumF+=currF;
++		#ifdef BEX_CONTAINER
++			LOG_FATAL(&quot;No implemented with BEX_CONTAINER yet&quot;);
++			abort();
++		#else
++			currF=Shop::Bex::force(b-&gt;id,rb).Length(); maxF=max(currF,maxF); sumF+=currF;
++		#endif
+ 	}
+ 	Real meanF=sumF/rb-&gt;bodies-&gt;size(); 
+ 	// get max force on contacts
+
+Modified: trunk/extra/clump/Shop.hpp
+===================================================================
+--- trunk/extra/clump/Shop.hpp	2009-02-22 13:08:47 UTC (rev 1679)
++++ trunk/extra/clump/Shop.hpp	2009-02-22 20:08:45 UTC (rev 1680)
+@@ -86,12 +86,15 @@
+ 		 */
+ 		class Bex{
+ 			public:
+-			static int forceIdx,momentumIdx,globalStiffnessIdx;
++			static int forceIdx,momentumIdx;
+ 			static void initCache();
+-			static Vector3r&amp; force(body_id_t, MetaBody* mb=NULL);
+-			static Vector3r&amp; momentum(body_id_t, MetaBody* mb=NULL);
+-			static Vector3r&amp; globalStiffness(body_id_t, MetaBody* mb=NULL);
+-			static Vector3r&amp; globalRStiffness(body_id_t, MetaBody* mb=NULL);
++			#ifdef BEX_CONTAINER
++				static const Vector3r&amp; force(body_id_t, MetaBody* mb=NULL);
++				static const Vector3r&amp; momentum(body_id_t, MetaBody* mb=NULL);
++			#else
++				static Vector3r&amp; force(body_id_t, MetaBody* mb=NULL);
++				static Vector3r&amp; momentum(body_id_t, MetaBody* mb=NULL);
++			#endif
+ 		};
+ 
+ 		//! Estimate timestep based on P-wave propagation speed
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2009-02-22 13:08:47 UTC (rev 1679)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2009-02-22 20:08:45 UTC (rev 1680)
+@@ -129,8 +129,9 @@
+ void UniaxialStrainer::computeAxialForce(MetaBody* rootBody){
+ 	sumPosForces=sumNegForces=0;
+ 	#ifdef BEX_CONTAINER
+-		FOREACH(body_id_t id, negIds) sumNegForces+=rootBody-&gt;bex.force(id)[axis];
+-		FOREACH(body_id_t id, posIds) sumNegForces-=rootBody-&gt;bex.force(id)[axis];
++		rootBody-&gt;bex.sync();
++		FOREACH(body_id_t id, negIds) sumNegForces+=rootBody-&gt;bex.getForce(id)[axis];
++		FOREACH(body_id_t id, posIds) sumNegForces-=rootBody-&gt;bex.getForce(id)[axis];
+ 	#else
+ 		FOREACH(body_id_t id, negIds) sumNegForces+=Shop::Bex::force(id)[axis];
+ 		FOREACH(body_id_t id, posIds) sumPosForces-=Shop::Bex::force(id)[axis];
+
+Modified: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2009-02-22 13:08:47 UTC (rev 1679)
++++ trunk/gui/py/_utils.cpp	2009-02-22 20:08:45 UTC (rev 1680)
+@@ -187,14 +187,19 @@
+  * projected onto axis.
+  */
+ Real sumBexTorques(int mask, python::tuple _axis, python::tuple _axisPt){
++	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
+ 	Shop::Bex::initCache();
+-	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
+-	Real ret;
++	Real ret=0;
+ 	Vector3r axis=tuple2vec(_axis), axisPt=tuple2vec(_axisPt);
+ 	FOREACH(const shared_ptr&lt;Body&gt; b, *rb-&gt;bodies){
+ 		if(!b-&gt;maskOk(mask)) continue;
+-		const Vector3r&amp; m=Shop::Bex::momentum(b-&gt;getId(),rb.get());
+-		const Vector3r&amp; f=Shop::Bex::force(b-&gt;getId(),rb.get());
++		#ifdef BEX_CONTAINER
++			const Vector3r&amp; m=rb-&gt;bex.getTorque(b-&gt;getId());
++			const Vector3r&amp; f=rb-&gt;bex.getForce(b-&gt;getId());
++		#else
++			const Vector3r&amp; m=Shop::Bex::momentum(b-&gt;getId(),rb.get());
++			const Vector3r&amp; f=Shop::Bex::force(b-&gt;getId(),rb.get());
++		#endif
+ 		Vector3r r=b-&gt;physicalParameters-&gt;se3.position-axisPt;
+ 		ret+=axis.Dot(m+r.Cross(f));
+ 	}
+@@ -213,7 +218,11 @@
+ 	Vector3r direction=tuple2vec(_direction);
+ 	FOREACH(const shared_ptr&lt;Body&gt; b, *rb-&gt;bodies){
+ 		if(!b-&gt;maskOk(mask)) continue;
+-		const Vector3r&amp; f=Shop::Bex::force(b-&gt;getId(),rb.get());
++		#ifdef BEX_CONTAINER
++			const Vector3r&amp; f=rb-&gt;bex.getForce(b-&gt;getId());
++		#else
++			const Vector3r&amp; f=Shop::Bex::force(b-&gt;getId(),rb.get());
++		#endif
+ 		ret+=direction.Dot(f);
+ 	}
+ 	return ret;
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2009-02-22 13:08:47 UTC (rev 1679)
++++ trunk/gui/py/yadeControl.cpp	2009-02-22 20:08:45 UTC (rev 1680)
+@@ -387,8 +387,8 @@
+ class pyBexContainer{
+ 	public:
+ 		pyBexContainer(){}
+-		python::tuple force_get(long id){ Vector3r&amp; f=Omega::instance().getRootBody()-&gt;bex.force(id); return python::make_tuple(f[0],f[1],f[2]); }
+-		python::tuple torque_get(long id){ Vector3r&amp; m=Omega::instance().getRootBody()-&gt;bex.torque(id); return python::make_tuple(m[0],m[1],m[2]);}
++		python::tuple force_get(long id){  MetaBody* rb=Omega::instance().getRootBody().get(); rb-&gt;bex.sync(); Vector3r f=rb-&gt;bex.getForce(id); return python::make_tuple(f[0],f[1],f[2]); }
++		python::tuple torque_get(long id){ MetaBody* rb=Omega::instance().getRootBody().get(); rb-&gt;bex.sync(); Vector3r m=rb-&gt;bex.getTorque(id); return python::make_tuple(m[0],m[1],m[2]);}
+ };
+ #endif
+ 
+@@ -459,13 +459,13 @@
+ 	void loadTmp(string mark){ load(&quot;:memory:&quot;+mark);}
+ 	void tmpToFile(string mark, string filename){
+ 		// FIXME: memSavedSimulations are private, but I don't want to recompile all yade now; move it to public and uncomment these few lines at some point
+-		// if(OMEGA.memSavedSimulations.count(&quot;:memory:&quot;+mark)==0) throw runtime_error(&quot;No memory-saved simulation named &quot;+mark);
++		if(OMEGA.memSavedSimulations.count(&quot;:memory:&quot;+mark)==0) throw runtime_error(&quot;No memory-saved simulation named &quot;+mark);
+ 		iostreams::filtering_ostream out;
+ 		if(boost::algorithm::ends_with(filename,&quot;.bz2&quot;)) out.push(iostreams::bzip2_compressor());
+ 		out.push(iostreams::file_sink(filename));
+ 		if(!out.good()) throw runtime_error(&quot;Error while opening file `&quot;+filename+&quot;' for writing.&quot;);
+ 		LOG_INFO(&quot;Saving :memory:&quot;&lt;&lt;mark&lt;&lt;&quot; to &quot;&lt;&lt;filename);
+-		//out&lt;&lt;OMEGA.memSavedSimulations[&quot;:memory:&quot;+mark];
++		out&lt;&lt;OMEGA.memSavedSimulations[&quot;:memory:&quot;+mark];
+ 	}
+ 
+ 
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/GravityEngines.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/GravityEngines.cpp	2009-02-22 13:08:47 UTC (rev 1679)
++++ trunk/pkg/common/Engine/DeusExMachina/GravityEngines.cpp	2009-02-22 20:08:45 UTC (rev 1680)
+@@ -25,7 +25,7 @@
+ 		shared_ptr&lt;ParticleParameters&gt; p=YADE_PTR_CAST&lt;ParticleParameters&gt;(b-&gt;physicalParameters);
+ 		if(p!=0) //not everything derives from ParticleParameters; this line was    assert(p); - Janek
+ #ifdef BEX_CONTAINER
+-			ncb-&gt;bex.force(b-&gt;getId())+=gravity*p-&gt;mass;
++			ncb-&gt;bex.addForce(b-&gt;getId(),gravity*p-&gt;mass);
+ #else
+ 			static_cast&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find(b-&gt;getId(),cachedForceClassIndex).get())-&gt;force+=gravity*p-&gt;mass;
+ #endif
+@@ -39,8 +39,8 @@
+ 		Real F=accel*YADE_PTR_CAST&lt;ParticleParameters&gt;(b-&gt;physicalParameters)-&gt;mass;
+ 		Vector3r toCenter=centralPos-b-&gt;physicalParameters-&gt;se3.position; toCenter.Normalize();
+ #ifdef BEX_CONTAINER
+-		rootBody-&gt;bex.force(b-&gt;getId())+=F*toCenter;
+-		if(reciprocal) rootBody-&gt;bex.force(centralBody)-=F*toCenter;
++		rootBody-&gt;bex.addForce(b-&gt;getId(),F*toCenter);
++		if(reciprocal) rootBody-&gt;bex.addForce(centralBody,-F*toCenter);
+ #else
+ 		static_cast&lt;Force*&gt;(rootBody-&gt;physicalActions-&gt;find(b-&gt;getId(),cachedForceClassIndex).get())-&gt;force+=F*toCenter;
+ 		if(reciprocal) static_cast&lt;Force*&gt;(rootBody-&gt;physicalActions-&gt;find(centralBody,cachedForceClassIndex).get())-&gt;force-=F*toCenter;
+@@ -59,7 +59,7 @@
+ 		Vector3r closestAxisPoint=(x2-x1) * /* t */ (-(x1-x0).Dot(x2-x1))/((x2-x1).SquaredLength());
+ 		Vector3r toAxis=closestAxisPoint-x0; toAxis.Normalize();
+ #ifdef BEX_CONTAINER
+-		rootBody-&gt;bex.force(b-&gt;getId())+=acceleration*myMass*toAxis;
++		rootBody-&gt;bex.addForce(b-&gt;getId(),acceleration*myMass*toAxis);
+ #else
+ 		static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(b-&gt;getId(),cachedForceClassIndex))-&gt;force+=acceleration*myMass*toAxis;
+ 		//if(b-&gt;getId()==20){ TRVAR3(toAxis,acceleration*myMass*toAxis,static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(b-&gt;getId(),cachedForceClassIndex))-&gt;force); }
+
+Modified: trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp	2009-02-22 13:08:47 UTC (rev 1679)
++++ trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp	2009-02-22 20:08:45 UTC (rev 1680)
+@@ -23,8 +23,8 @@
+ 	 * is done only if the derived ConstitutiveLaw says NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;), for example.
+ 	 */
+ #ifdef BEX_CONTAINER
+-	inline Vector3r&amp; bodyForce(const body_id_t id, MetaBody* rb) const { return rb-&gt;bex.force(id); }
+-	inline Vector3r&amp; bodyTorque(const body_id_t id, MetaBody* rb) const { return rb-&gt;bex.torque(id);}
++	void addForce (const body_id_t id, const Vector3r&amp; f,MetaBody* rb){rb-&gt;bex.addForce (id,f);}
++	void addTorque(const body_id_t id, const Vector3r&amp; t,MetaBody* rb){rb-&gt;bex.addTorque(id,t);}
+ #else
+ 	Vector3r&amp; bodyForce(const body_id_t id, MetaBody* rb) const { return static_pointer_cast&lt;Force&gt;(rb-&gt;physicalActions-&gt;find(id,forceIdx))-&gt;force; }
+ 	Vector3r&amp; bodyTorque(const body_id_t id, MetaBody* rb) const { return static_pointer_cast&lt;Momentum&gt;(rb-&gt;physicalActions-&gt;find(id,torqueIdx))-&gt;momentum;}
+@@ -33,9 +33,9 @@
+ 	/*! Convenience function to apply force and torque from one force at contact point. Not sure if this is the right place for it. */
+ 	void applyForceAtContactPoint(const Vector3r&amp; force, const Vector3r&amp; contactPoint, const body_id_t id1, const Vector3r&amp; pos1, const body_id_t id2, const Vector3r&amp; pos2, MetaBody* rb){
+ 		#ifdef BEX_CONTAINER
+-			rb-&gt;bex.force(id1)+=force; rb-&gt;bex.force(id2)-=force;
+-			rb-&gt;bex.torque(id1)+=(contactPoint-pos1).Cross(force);
+-			rb-&gt;bex.torque(id2)-=(contactPoint-pos2).Cross(force);
++			rb-&gt;bex.addForce(id1,force); rb-&gt;bex.addForce(id2,-force);
++			rb-&gt;bex.addTorque(id1,(contactPoint-pos1).Cross(force));
++			rb-&gt;bex.addTorque(id2,-(contactPoint-pos2).Cross(force));
+ 		#else
+ 			bodyForce(id1,rb)+=force; bodyForce(id2,rb)-=force;
+ 			bodyTorque(id1,rb)+=(contactPoint-pos1).Cross(force);
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.cpp	2009-02-22 13:08:47 UTC (rev 1679)
++++ trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.cpp	2009-02-22 20:08:45 UTC (rev 1680)
+@@ -32,6 +32,9 @@
+ void PhysicalActionContainerInitializer::action(MetaBody* ncb)
+ {
+ 	#ifdef BEX_CONTAINER
++		// this is not necessary, since BexContainer grows upon requests.
++		// But it takes about 10 resizes to get to 2000 bodies (only at the beginning), so you can save a few milliseconds here
++		ncb-&gt;bex.resize(ncb-&gt;bodies-&gt;size());
+ 		return;
+ 	#endif
+ 	list&lt;string&gt; allNames;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-02-22 13:08:47 UTC (rev 1679)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-02-22 20:08:45 UTC (rev 1680)
+@@ -31,17 +31,22 @@
+ 
+ void NewtonsDampedLaw::applyCondition ( MetaBody * ncb )
+ {
++	#ifdef BEX_CONTAINER
++		#ifdef YADE_OPENMP
++			ncb-&gt;bex.sync();
++		#endif
++	#endif
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *ncb-&gt;bodies){
+ 		if (!b-&gt;isDynamic) continue;
+ 		
+ 		RigidBodyParameters* rb = YADE_CAST&lt;RigidBodyParameters*&gt;(b-&gt;physicalParameters.get());
+ 		unsigned int id = b-&gt;getId();
+ 		#ifdef BEX_CONTAINER
+-			Vector3r&amp; m = ncb-&gt;bex.torque(id);
+-			Vector3r&amp; f = ncb-&gt;bex.force(id);
++			const Vector3r&amp; m=ncb-&gt;bex.getTorque(id);
++			const Vector3r&amp; f=ncb-&gt;bex.getForce(id);
+ 		#else
+-			Vector3r&amp; m = ( static_cast&lt;Momentum*&gt; ( ncb-&gt;physicalActions-&gt;find ( id, momentumClassIndex ).get() ) )-&gt;momentum;
+-			Vector3r&amp; f = ( static_cast&lt;Force*&gt; ( ncb-&gt;physicalActions-&gt;find ( id, forceClassIndex ).get() ) )-&gt;force;
++			const Vector3r&amp; m = ( static_cast&lt;Momentum*&gt; ( ncb-&gt;physicalActions-&gt;find ( id, momentumClassIndex ).get() ) )-&gt;momentum;
++			const Vector3r&amp; f = ( static_cast&lt;Force*&gt; ( ncb-&gt;physicalActions-&gt;find ( id, forceClassIndex ).get() ) )-&gt;force;
+ 		#endif
+ 
+ 		Real dt = Omega::instance().getTimeStep();
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2009-02-22 13:08:47 UTC (rev 1679)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2009-02-22 20:08:45 UTC (rev 1680)
+@@ -198,7 +198,10 @@
+ {
+ 	//cerr &lt;&lt; &quot;TriaxialStressController::applyCondition&quot; &lt;&lt; endl;
+ 	
++	// sync thread storage of BexContainer
++	ncb-&gt;bex.sync();
+ 	
++	
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ 	
+ 	
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2009-02-22 13:08:47 UTC (rev 1679)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2009-02-22 20:08:45 UTC (rev 1680)
+@@ -33,7 +33,7 @@
+ 		bool firstRun;
+ 		inline const Vector3r getForce(MetaBody* rb, body_id_t id){
+ 			#ifdef BEX_CONTAINER
+-				return rb-&gt;bex.force(id);
++				return rb-&gt;bex.getForce(id); // needs sync, which is done at the beginning of applyCondition
+ 			#else
+ 				return static_cast&lt;Force*&gt;(rb-&gt;physicalActions-&gt;find(id,ForceClassIndex).get())-&gt;force				
+ 			#endif
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp	2009-02-22 13:08:47 UTC (rev 1679)
++++ trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp	2009-02-22 20:08:45 UTC (rev 1680)
+@@ -67,8 +67,8 @@
+ 	}
+ 
+ 	Vector3r f				= phys-&gt;normalForce + shearForce;
+-	bodyForce (id1,rootBody) -= f;
+-	bodyForce (id2,rootBody) += f;
+-	bodyTorque(id1,rootBody) -= c1x.Cross(f);
+-	bodyTorque(id2,rootBody) += c2x.Cross(f);
++	addForce (id1,-f,rootBody);
++	addForce (id2, f,rootBody);
++	addTorque(id1,-c1x.Cross(f),rootBody);
++	addTorque(id2, c2x.Cross(f),rootBody);
+ }
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2009-02-22 13:08:47 UTC (rev 1679)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2009-02-22 20:08:45 UTC (rev 1680)
+@@ -44,10 +44,15 @@
+ 		Shop::applyForceAtContactPoint(force,contGeom-&gt;contactPoint,i-&gt;getId1(),contGeom-&gt;pos1,i-&gt;getId2(),contGeom-&gt;pos2,rb);
+ 
+ 		Vector3r bendAbs; Real torsionAbs; contGeom-&gt;bendingTorsionAbs(bendAbs,torsionAbs);
+-		Shop::Bex::momentum(i-&gt;getId1(),rb)+=contGeom-&gt;normal*torsionAbs*ktor;
+-		Shop::Bex::momentum(i-&gt;getId2(),rb)-=contGeom-&gt;normal*torsionAbs*ktor;
+-		Shop::Bex::momentum(i-&gt;getId1(),rb)+=bendAbs*kb;
+-		Shop::Bex::momentum(i-&gt;getId2(),rb)-=bendAbs*kb;
++		#ifdef BEX_CONTAINER
++			rb-&gt;bex.addTorque(i-&gt;getId1(), contGeom-&gt;normal*torsionAbs*ktor+bendAbs*kb);
++			rb-&gt;bex.addTorque(i-&gt;getId2(),-contGeom-&gt;normal*torsionAbs*ktor-bendAbs*kb);
++		#else
++			Shop::Bex::momentum(i-&gt;getId1(),rb)+=contGeom-&gt;normal*torsionAbs*ktor;
++			Shop::Bex::momentum(i-&gt;getId2(),rb)-=contGeom-&gt;normal*torsionAbs*ktor;
++			Shop::Bex::momentum(i-&gt;getId1(),rb)+=bendAbs*kb;
++			Shop::Bex::momentum(i-&gt;getId2(),rb)-=bendAbs*kb;
++		#endif
+ 	}
+ }
+ 
+@@ -170,10 +175,10 @@
+ 	
+ 			Vector3r f				= currentContactPhysics-&gt;normalForce + shearForce;
+ 			#ifdef BEX_CONTAINER
+-				ncb-&gt;bex.force(id1)-=f;
+-				ncb-&gt;bex.force(id2)+=f;
+-				ncb-&gt;bex.torque(id1)-=c1x.Cross(f);
+-				ncb-&gt;bex.torque(id2)+=c2x.Cross(f);
++				ncb-&gt;bex.addForce (id1,-f);
++				ncb-&gt;bex.addForce (id2,+f);
++				ncb-&gt;bex.addTorque(id1,-c1x.Cross(f));
++				ncb-&gt;bex.addTorque(id2, c2x.Cross(f));
+ 			#else
+ 				static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( id1 , actionForceIndex).get() )-&gt;force    -= f;
+ 				static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( id2 , actionForceIndex ).get() )-&gt;force    += f;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000735.html">[deprecated list] [Yade-dev] Wm3 replacement candidate
+</A></li>
+	<LI>Next message: <A HREF="000737.html">[deprecated list] [Yade-dev] [svn] r1681 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#734">[ date ]</a>
+              <a href="thread.html#734">[ thread ]</a>
+              <a href="subject.html#734">[ subject ]</a>
+              <a href="author.html#734">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

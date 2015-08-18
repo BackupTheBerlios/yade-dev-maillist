@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] Mandatory engines
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Mandatory%20engines&In-Reply-To=%3C46524A53-4ED0-4668-9578-CE69751EBB39%40geo.hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000469.html">
+   <LINK REL="Next"  HREF="000470.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] Mandatory engines</H1>
+    <B>Vincent Richefeu</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Mandatory%20engines&In-Reply-To=%3C46524A53-4ED0-4668-9578-CE69751EBB39%40geo.hmg.inpg.fr%3E"
+       TITLE="[deprecated list] [Yade-dev] Mandatory engines">richefeu at geo.hmg.inpg.fr
+       </A><BR>
+    <I>Wed Oct 29 09:32:08 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000469.html">[deprecated list] [Yade-dev] Mandatory engines
+</A></li>
+        <LI>Next message: <A HREF="000470.html">[deprecated list] [Yade-dev] [svn] r1560 - in trunk: .	gui/py	pkg/dem/DataClass/InteractionGeometry
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#483">[ date ]</a>
+              <a href="thread.html#483">[ thread ]</a>
+              <a href="subject.html#483">[ subject ]</a>
+              <a href="author.html#483">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Hi Vaclav,
+
+Thanks a lot for explanations. I will write the needed physicalAction 
+(s) after.
+For the moment, I would simply like to test (with display) two new  
+functors:
+- the one make interactingGeometry (BssSweptSphereLineSegment) from  
+GeometricalModel (BshTube),
+- the other make AABB from interactingGeometry.
+To 'launch' these functor, I pushed back to the initializers.  
+Nevertheless, it seems that initializations
+are performed during the first step of calculation. Is it right?
+
+Another questions:
+do you think I can add to svn repository my pluggins even if they are  
+not yet usable?
+(I'm sure they will not interact with the rest)
+Is there a rule about that?
+
+Regards,
+Vincent
+
+&gt;<i>
+</I>&gt;&gt;<i> * HERE IS THE STORY:
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> Say I want to implement a new geometry for bodies. I code pluggins
+</I>&gt;&gt;<i> that I needed (GeometriclModel, InteractingGeometry,Functors,
+</I>&gt;&gt;<i> GLDraw*,Preprocessor...) after discussing with Janeck
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> I wanted to make some check on the displaying of this new geometry so
+</I>&gt;&gt;<i> I created a new PreProcessor that generates the wanted bodies. In a
+</I>&gt;&gt;<i> first stage, the 'lists' rootBody-&gt;engines and rootBody-&gt;initializers
+</I>&gt;&gt;<i> was copy&amp;past from the TetrahedronsTest pre-processor. It worked fine
+</I>&gt;&gt;<i> at generation but  crashed during the first step of simulation (!)
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> I decided to clear all engines and initializers...  it crashed during
+</I>&gt;&gt;<i> generation!
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> * HERE ARE MY QUESTIONS:
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> Can we have empty 'lists' of engines and initializers without crash
+</I>&gt;&gt;<i> (only to make some graphical checks)?
+</I>&gt;&gt;<i> If it does not, what are the engines (and initializers) that MUST
+</I>&gt;&gt;<i> absolutely be 'defined'?
+</I>&gt;<i> Hi, There are no mandatory engines/initializers per se, but some  
+</I>&gt;<i> engines
+</I>&gt;<i> need PhysicalActions, that must be initialized with
+</I>&gt;<i> PhysicalActionContainerInitializer. If you use the debug version and
+</I>&gt;<i> have gdb installed, you will get backtrace after crash, which will  
+</I>&gt;<i> tell
+</I>&gt;<i> you (or us, if you can't make sense of it) what went wrong.
+</I>&gt;<i>
+</I>&gt;<i> However, if you want just to create a simple simulation for testing, I
+</I>&gt;<i> suggest that you use python for that -- see scripts/simple-scene.py  
+</I>&gt;<i> for
+</I>&gt;<i> an example. For testing display, you can only create the body, without
+</I>&gt;<i> any engines, like this:
+</I>&gt;<i>
+</I>&gt;<i>  b=Body()
+</I>&gt;<i>  b.shape=GeometricalModel('VincentGeomModel', 
+</I>&gt;<i> {'attribute1':value1,'attribue2':value2})
+</I>&gt;<i>  b.mold=InteractingGeometry('VincentInteractingGeom', 
+</I>&gt;<i> {'attr1':val1,'attr2',val2})
+</I>&gt;<i>  b.phys=PhysicalParameters('BodyMacroParameters',{'se3':[x,y,z, 
+</I>&gt;<i> 1,0,0,0]})
+</I>&gt;<i>  b.bound=BoundingVolume('AABB')
+</I>&gt;<i>  o=Omega()
+</I>&gt;<i>  o.bodies.append(b)
+</I>&gt;<i>
+</I>&gt;<i> You can save that in somefile.py and run &quot;yade-... somefile.py&quot; or you
+</I>&gt;<i> can type that to the python console. At this point, you should have  
+</I>&gt;<i> your
+</I>&gt;<i> body displayed in the 3d view.
+</I>&gt;<i>
+</I>&gt;<i> Regards, Vaclav
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i> _______________________________________________
+</I>&gt;<i> Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+</I>&gt;<i> Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+</I>&gt;<i> Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+</I>&gt;<i> More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</I>
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000469.html">[deprecated list] [Yade-dev] Mandatory engines
+</A></li>
+	<LI>Next message: <A HREF="000470.html">[deprecated list] [Yade-dev] [svn] r1560 - in trunk: .	gui/py	pkg/dem/DataClass/InteractionGeometry
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#483">[ date ]</a>
+              <a href="thread.html#483">[ thread ]</a>
+              <a href="subject.html#483">[ subject ]</a>
+              <a href="author.html#483">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

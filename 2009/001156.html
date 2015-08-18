@@ -1,0 +1,188 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1849 - in trunk: core	pkg/dem/Engine/EngineUnit
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1849%20-%20in%20trunk%3A%20core%0A%09pkg/dem/Engine/EngineUnit&In-Reply-To=%3C200907081603.n68G3Cap028588%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001153.html">
+   <LINK REL="Next"  HREF="001159.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1849 - in trunk: core	pkg/dem/Engine/EngineUnit</H1>
+    <B>richefeu at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1849%20-%20in%20trunk%3A%20core%0A%09pkg/dem/Engine/EngineUnit&In-Reply-To=%3C200907081603.n68G3Cap028588%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1849 - in trunk: core	pkg/dem/Engine/EngineUnit">richefeu at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul  8 18:03:12 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001153.html">[deprecated list] [Yade-dev] RockPM problem
+</A></li>
+        <LI>Next message: <A HREF="001159.html">[deprecated list] [Yade-dev] [svn] r1850 - trunk/pkg/dem
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1156">[ date ]</a>
+              <a href="thread.html#1156">[ thread ]</a>
+              <a href="subject.html#1156">[ subject ]</a>
+              <a href="author.html#1156">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: richefeu
+Date: 2009-07-08 18:03:12 +0200 (Wed, 08 Jul 2009)
+New Revision: 1849
+
+Modified:
+   trunk/core/GroupRelationData.hpp
+   trunk/pkg/dem/Engine/EngineUnit/BasicViscoelasticRelationships.cpp
+Log:
+Just try to use GroupRelationData with BasicViscolelasticRelationships.
+
+
+Modified: trunk/core/GroupRelationData.hpp
+===================================================================
+--- trunk/core/GroupRelationData.hpp	2009-07-08 09:24:58 UTC (rev 1848)
++++ trunk/core/GroupRelationData.hpp	2009-07-08 16:03:12 UTC (rev 1849)
+@@ -66,6 +66,7 @@
+   ~GroupRelationData();
+   
+   //void activate();
++  bool isActivated() {return isActivated_;}
+ 
+   //! Return true if the parameter exist
+   //! \param name  Parameter name 
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/BasicViscoelasticRelationships.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/BasicViscoelasticRelationships.cpp	2009-07-08 09:24:58 UTC (rev 1848)
++++ trunk/pkg/dem/Engine/EngineUnit/BasicViscoelasticRelationships.cpp	2009-07-08 16:03:12 UTC (rev 1849)
+@@ -12,6 +12,7 @@
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/core/GroupRelationData.hpp&gt;
+ 
+ 
+ BasicViscoelasticRelationships::BasicViscoelasticRelationships()
+@@ -30,25 +31,41 @@
+ {
+     if(interaction-&gt;interactionPhysics) return;
+ 
+-    SimpleViscoelasticBodyParameters* sdec1 = static_cast&lt;SimpleViscoelasticBodyParameters*&gt;(b1.get());
+-    SimpleViscoelasticBodyParameters* sdec2 = static_cast&lt;SimpleViscoelasticBodyParameters*&gt;(b2.get());
++    shared_ptr&lt;GroupRelationData&gt; data = (Omega::instance().getRootBody().get())-&gt;grpRelationData;
+ 
+     interaction-&gt;interactionPhysics = shared_ptr&lt;ViscoelasticInteraction&gt;(new ViscoelasticInteraction());
+     ViscoelasticInteraction* contactPhysics = YADE_CAST&lt;ViscoelasticInteraction*&gt;(interaction-&gt;interactionPhysics.get());
+ 
+-    // Check that cn is dimensionless
+-    if (sdec1-&gt;cn &gt;= 1.0 || sdec2-&gt;cn &gt;= 1.0) std::cout &lt;&lt; &quot;Warning: non dimensionless value for cn&quot; &lt;&lt; std::endl;
++    shared_ptr&lt;Body&gt; bdy1 = (*((Omega::instance().getRootBody().get())-&gt;bodies))[ interaction-&gt;getId1() ];
++    shared_ptr&lt;Body&gt; bdy2 = (*((Omega::instance().getRootBody().get())-&gt;bodies))[ interaction-&gt;getId2() ];
+ 
+-    // FIXME Arbitrary ponderations... (Should be replaced by parameters that depends on groupMasks)
+-    contactPhysics-&gt;kn = 0.5 * (sdec1-&gt;kn + sdec2-&gt;kn);
+-    contactPhysics-&gt;ks = 0.5 * (sdec1-&gt;ks + sdec2-&gt;ks);
+-    contactPhysics-&gt;cn = 0.5 * (sdec1-&gt;cn + sdec2-&gt;cn);
+-    contactPhysics-&gt;cs = 0.0; // not viscosity in the tangent direction
++    if (data-&gt;isActivated())
++    {
++        int msk1 = bdy1-&gt;groupMask;
++        int msk2 = bdy2-&gt;groupMask;
++        contactPhysics-&gt;kn = (data-&gt;exists(&quot;kn&quot;)) ? data-&gt;getParameter(&quot;kn&quot;,msk1,msk2) : 0.0;
++        contactPhysics-&gt;ks = (data-&gt;exists(&quot;ks&quot;)) ? data-&gt;getParameter(&quot;ks&quot;,msk1,msk2) : 0.0;
++        contactPhysics-&gt;cn = (data-&gt;exists(&quot;cn&quot;)) ? data-&gt;getParameter(&quot;cn&quot;,msk1,msk2) : 0.0;
++        contactPhysics-&gt;cs = (data-&gt;exists(&quot;cs&quot;)) ? data-&gt;getParameter(&quot;cs&quot;,msk1,msk2) : 0.0;
++        contactPhysics-&gt;tangensOfFrictionAngle = (data-&gt;exists(&quot;mu&quot;)) ? data-&gt;getParameter(&quot;mu&quot;,msk1,msk2) : 0.0;
++    }
++    else
++    {
++        SimpleViscoelasticBodyParameters* sdec1 = static_cast&lt;SimpleViscoelasticBodyParameters*&gt;(b1.get());
++        SimpleViscoelasticBodyParameters* sdec2 = static_cast&lt;SimpleViscoelasticBodyParameters*&gt;(b2.get());
+ 
++        // Check that cn is dimensionless
++        if (sdec1-&gt;cn &gt;= 1.0 || sdec2-&gt;cn &gt;= 1.0) std::cout &lt;&lt; &quot;Warning: non dimensionless value for cn&quot; &lt;&lt; std::endl;
++    
++        // Arbitrary ponderations
++        contactPhysics-&gt;kn = 0.5 * (sdec1-&gt;kn + sdec2-&gt;kn);
++        contactPhysics-&gt;ks = 0.5 * (sdec1-&gt;ks + sdec2-&gt;ks);
++        contactPhysics-&gt;cn = 0.5 * (sdec1-&gt;cn + sdec2-&gt;cn);
++        contactPhysics-&gt;cs = 0.0; // not viscosity in the tangent direction
++        contactPhysics-&gt;tangensOfFrictionAngle = std::tan(std::min(sdec1-&gt;frictionAngle, sdec2-&gt;frictionAngle)); 
++    }
++
+     // in fact, at this stage cn is a ponderation of the critical value cn_crit = 2sqrt(kn*meff)
+-
+-    shared_ptr&lt;Body&gt; bdy1 = (*((Omega::instance().getRootBody().get())-&gt;bodies))[ interaction-&gt;getId1() ];
+-    shared_ptr&lt;Body&gt; bdy2 = (*((Omega::instance().getRootBody().get())-&gt;bodies))[ interaction-&gt;getId2() ];
+     double m1,m2;
+     
+     if (bdy1-&gt;isClumpMember())
+@@ -60,7 +77,8 @@
+     }
+     else
+     {  
+-        m1 = sdec1-&gt;mass ; 
++        ParticleParameters* pp = YADE_CAST&lt;ParticleParameters*&gt; ( bdy1-&gt;physicalParameters.get() );
++        m1 = pp-&gt;mass ; 
+         if (!bdy1-&gt;isDynamic) m1 *= 1.0e6;
+     }
+     
+@@ -73,17 +91,15 @@
+     }
+     else
+     { 
+-        m2 = sdec2-&gt;mass; 
++        ParticleParameters* pp = YADE_CAST&lt;ParticleParameters*&gt; ( bdy2-&gt;physicalParameters.get() );
++        m2 = pp-&gt;mass; 
+         if (!bdy2-&gt;isDynamic) m2 *= 1.0e6;
+     }
+ 
+     contactPhysics-&gt;cn *= 2.0 * sqrt(contactPhysics-&gt;kn * ((m1 * m2) / (m1 + m2)));
+  
+-    contactPhysics-&gt;tangensOfFrictionAngle = std::tan(std::min(sdec1-&gt;frictionAngle, sdec2-&gt;frictionAngle)); 
+-
+     contactPhysics-&gt;shearForce = Vector3r(0,0,0);
+     contactPhysics-&gt;prevNormal = Vector3r(0,0,0);
+-
+ }
+ 
+ YADE_PLUGIN();
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001153.html">[deprecated list] [Yade-dev] RockPM problem
+</A></li>
+	<LI>Next message: <A HREF="001159.html">[deprecated list] [Yade-dev] [svn] r1850 - trunk/pkg/dem
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1156">[ date ]</a>
+              <a href="thread.html#1156">[ thread ]</a>
+              <a href="subject.html#1156">[ subject ]</a>
+              <a href="author.html#1156">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

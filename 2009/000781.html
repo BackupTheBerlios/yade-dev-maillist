@@ -1,0 +1,84 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] PersistentSAPCollider leaks??
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20PersistentSAPCollider%20leaks%3F%3F&In-Reply-To=%3C200902271954.25261.sj2001%40yandex.ru%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000780.html">
+   <LINK REL="Next"  HREF="000784.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] PersistentSAPCollider leaks??</H1>
+    <B>sega</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20PersistentSAPCollider%20leaks%3F%3F&In-Reply-To=%3C200902271954.25261.sj2001%40yandex.ru%3E"
+       TITLE="[deprecated list] [Yade-dev] PersistentSAPCollider leaks??">sj2001 at yandex.ru
+       </A><BR>
+    <I>Fri Feb 27 17:54:24 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000780.html">[deprecated list] [Yade-dev] PersistentSAPCollider leaks??
+</A></li>
+        <LI>Next message: <A HREF="000784.html">[deprecated list] [Yade-dev] PersistentSAPCollider leaks??
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#781">[ date ]</a>
+              <a href="thread.html#781">[ thread ]</a>
+              <a href="subject.html#781">[ subject ]</a>
+              <a href="author.html#781">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE> 
+&gt;<i> I wanted to measure exactly how much time is used for how many elements.
+</I>&gt;<i> The largest set I dared (the complexity is something like O(n^2), since
+</I>&gt;<i> findOverlappingBB has two nested while loops over bodies) was 64k
+</I>&gt;<i> spheres, running just the very first iteration with only the collider as
+</I>&gt;<i> engine.
+</I>&gt;<i> 
+</I>&gt;<i> After about 7 minutes of running, the process starts taking more and
+</I>&gt;<i> more memory (now it has 15GB) and doesn't seem to stop. You can try
+</I>&gt;<i> yourself with the script below.
+</I>
+May be do need calculation of AABBs? If do it, leak don't observed. 
+But without AABBs leak have been and for 16k spheres. 
+Maybe too many interactions to create (nbSpheres^2) in this case?
+
+-- 
+Best regards, Sergei D.
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000780.html">[deprecated list] [Yade-dev] PersistentSAPCollider leaks??
+</A></li>
+	<LI>Next message: <A HREF="000784.html">[deprecated list] [Yade-dev] PersistentSAPCollider leaks??
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#781">[ date ]</a>
+              <a href="thread.html#781">[ thread ]</a>
+              <a href="subject.html#781">[ subject ]</a>
+              <a href="author.html#781">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

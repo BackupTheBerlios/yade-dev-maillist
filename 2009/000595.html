@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1625 - in trunk: extra/usct	pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1625%20-%20in%20trunk%3A%20extra/usct%0A%09pkg/dem/PreProcessor&In-Reply-To=%3C200901150517.n0F5HxVh015092%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000594.html">
+   <LINK REL="Next"  HREF="000596.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1625 - in trunk: extra/usct	pkg/dem/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1625%20-%20in%20trunk%3A%20extra/usct%0A%09pkg/dem/PreProcessor&In-Reply-To=%3C200901150517.n0F5HxVh015092%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1625 - in trunk: extra/usct	pkg/dem/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Jan 15 06:17:59 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000594.html">[deprecated list] [Yade-dev] IMPORTANT: to receive SVN commits!
+</A></li>
+        <LI>Next message: <A HREF="000596.html">[deprecated list] [Yade-dev] [svn] r1626 - in trunk/gui: . py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#595">[ date ]</a>
+              <a href="thread.html#595">[ thread ]</a>
+              <a href="subject.html#595">[ subject ]</a>
+              <a href="author.html#595">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-01-15 06:17:58 +0100 (Thu, 15 Jan 2009)
+New Revision: 1625
+
+Modified:
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+   trunk/extra/usct/UniaxialStrainControlledTest.hpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+Log:
+1. Un-disallow (bug) having all dimensions scalable in triaxial if particle radius is fixed.
+2. Don't record anything by default to file in UniaxialStrainer (only useful for debugging)
+
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2009-01-14 03:17:46 UTC (rev 1624)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2009-01-15 05:17:58 UTC (rev 1625)
+@@ -113,7 +113,7 @@
+ 	// reverse if we're over the limit strain
+ 	if(notYetReversed &amp;&amp; limitStrain!=0 &amp;&amp; ((currentStrainRate&gt;0 &amp;&amp; strain&gt;limitStrain) || (currentStrainRate&lt;0 &amp;&amp; strain&lt;limitStrain))) { currentStrainRate*=-1; notYetReversed=false; LOG_INFO(&quot;Reversed strain rate to &quot;&lt;&lt;currentStrainRate); }
+ 
+-	if(Omega::instance().getCurrentIteration()%10==0 ) {
++	if(Omega::instance().getCurrentIteration()%10==0) {
+ 		computeAxialForce(rootBody);
+ 		#if 0
+ 			vector&lt;Real&gt; widths;
+@@ -122,7 +122,7 @@
+ 			for(size_t i=0; i&lt;widths.size(); i++) avgTransStrain+=(widths[i]/originalWidths[i]-1); avgTransStrain/=widths.size();
+ 		#endif
+ 		avgStress=(sumPosForces+sumNegForces)/(2*crossSectionArea); // average nominal stress
+-		if(recStream.good()) recStream&lt;&lt;Omega::instance().getCurrentIteration()&lt;&lt;&quot; &quot;&lt;&lt;strain&lt;&lt;&quot; &quot;&lt;&lt;avgStress&lt;&lt;endl; // &lt;&lt;&quot; &quot;&lt;&lt;avgTransStrain&lt;&lt;endl;
++		if(!recordFile.empty() &amp;&amp; recStream.good()) recStream&lt;&lt;Omega::instance().getCurrentIteration()&lt;&lt;&quot; &quot;&lt;&lt;strain&lt;&lt;&quot; &quot;&lt;&lt;avgStress&lt;&lt;endl; // &lt;&lt;&quot; &quot;&lt;&lt;avgTransStrain&lt;&lt;endl;
+ 	}
+ }
+ 
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.hpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.hpp	2009-01-14 03:17:46 UTC (rev 1624)
++++ trunk/extra/usct/UniaxialStrainControlledTest.hpp	2009-01-15 05:17:58 UTC (rev 1625)
+@@ -131,7 +131,7 @@
+ 		Real strain, avgStress;
+ 
+ 		virtual void applyCondition(MetaBody* rootBody);
+-		UniaxialStrainer(){axis=2; asymmetry=0; currentStrainRate=0; originalLength=-1; limitStrain=0; notYetReversed=true; crossSectionArea=-1; needsInit=true; /* sensorsPusher=shared_ptr&lt;UniaxialStrainSensorPusher&gt;(); */ recordFile=&quot;/tmp/usct.data&quot;; strain=avgStress=/*avgTransStrain=*/0; blockRotations=false; blockDisplacements=false;  stopStrain=numeric_limits&lt;Real&gt;::quiet_NaN(); active=true; idleIterations=0; };
++		UniaxialStrainer(){axis=2; asymmetry=0; currentStrainRate=0; originalLength=-1; limitStrain=0; notYetReversed=true; crossSectionArea=-1; needsInit=true; /* sensorsPusher=shared_ptr&lt;UniaxialStrainSensorPusher&gt;(); */ recordFile=&quot;&quot;; strain=avgStress=/*avgTransStrain=*/0; blockRotations=false; blockDisplacements=false;  stopStrain=numeric_limits&lt;Real&gt;::quiet_NaN(); active=true; idleIterations=0; };
+ 		virtual ~UniaxialStrainer(){};
+ 		REGISTER_ATTRIBUTES(DeusExMachina,
+ 				(strainRate) 
+@@ -154,7 +154,7 @@
+ 				(blockDisplacements) 
+ 				(blockRotations) 
+ 		);
+-		void prepareRecStream(void){ if(recordFile!=&quot;&quot;) recStream.open(recordFile.c_str()); }
++		void prepareRecStream(void){ if(!recordFile.empty()) recStream.open(recordFile.c_str()); }
+ 		void postProcessAttributes(bool deserializing){ if(deserializing) prepareRecStream(); } 	
+ 	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;,&quot;GlobalStiffness&quot;);
+ 	REGISTER_CLASS_AND_BASE(UniaxialStrainer,DeusExMachina);
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-01-14 03:17:46 UTC (rev 1624)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-01-15 05:17:58 UTC (rev 1625)
+@@ -277,7 +277,7 @@
+ 		bool fixedDims[3];
+ 		fixedDims[0]=fixedBoxDims.find('x')!=string::npos; fixedDims[1]=fixedBoxDims.find('y')!=string::npos; fixedDims[2]=fixedBoxDims.find('z')!=string::npos;
+ 		int nScaled=(3-(int)fixedDims[0]+(int)fixedDims[1]+(int)fixedDims[2]);
+-		if(nScaled==3) throw std::invalid_argument(&quot;At most 2 (not 3) axes can have fixed dimensions in fixedBoxDims if scaling for given radiusMean.&quot;);
++		if(nScaled==0) throw std::invalid_argument(&quot;At most 2 (not 3) axes can have fixed dimensions in fixedBoxDims if scaling for given radiusMean.&quot;);
+ 		Real boxScaleFactor=radiusMean*pow((4/3.)*Mathr::PI*numberOfGrains/(volume*(1-porosity)),1./nScaled);
+ 		LOG_INFO(&quot;Mean radius value of &quot;&lt;&lt;radiusMean&lt;&lt;&quot; requested, scaling &quot;&lt;&lt;nScaled&lt;&lt;&quot; dimensions by &quot;&lt;&lt;boxScaleFactor);
+ 		dimensions[0]*=fixedDims[0]?1.:boxScaleFactor; dimensions[1]*=fixedDims[1]?1.:boxScaleFactor; dimensions[2]*=fixedDims[2]?1.:boxScaleFactor;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000594.html">[deprecated list] [Yade-dev] IMPORTANT: to receive SVN commits!
+</A></li>
+	<LI>Next message: <A HREF="000596.html">[deprecated list] [Yade-dev] [svn] r1626 - in trunk/gui: . py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#595">[ date ]</a>
+              <a href="thread.html#595">[ thread ]</a>
+              <a href="subject.html#595">[ subject ]</a>
+              <a href="author.html#595">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

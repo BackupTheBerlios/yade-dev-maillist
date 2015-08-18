@@ -1,0 +1,156 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] crash svn-1357
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20crash%20svn-1357&In-Reply-To=%3C200805201221.11348.dorofeenko%40icp.ac.ru%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000181.html">
+   <LINK REL="Next"  HREF="000184.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] crash svn-1357</H1>
+    <B>sega</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20crash%20svn-1357&In-Reply-To=%3C200805201221.11348.dorofeenko%40icp.ac.ru%3E"
+       TITLE="[yade-dev] crash svn-1357">dorofeenko at icp.ac.ru
+       </A><BR>
+    <I>Tue May 20 10:21:10 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000181.html">[yade-dev] new PhysicalAction
+</A></li>
+        <LI>Next message: <A HREF="000184.html">[yade-dev] crash svn-1357
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#183">[ date ]</a>
+              <a href="thread.html#183">[ thread ]</a>
+              <a href="subject.html#183">[ subject ]</a>
+              <a href="author.html#183">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Hello!
+
+1. After generation scene from action-&gt;File Generator menu I get crash yade-svn1357:
+
+==&gt; BEGIN ===
+SIGSEGV/SIGABRT handler called; gdb batch file is `/home/sega/.yade-trunk/gdb_crash_batch-pid13959'
+GNU gdb 6.5
+Copyright (C) 2006 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type &quot;show copying&quot; to see the conditions.
+There is absolutely no warranty for GDB.  Type &quot;show warranty&quot; for details.
+This GDB was configured as &quot;x86_64-suse-linux&quot;.
+Using host libthread_db library &quot;/lib64/libthread_db.so.1&quot;.
+[Thread debugging using libthread_db enabled]
+[New Thread 47433347492912 (LWP 13959)]
+[New Thread 1090541888 (LWP 13978)]
+[New Thread 1082149184 (LWP 13960)]
+0x00002b23eb863e1f in waitpid () from /lib64/libc.so.6
+No symbol &quot;info&quot; in current context.
+
+Thread 3 (Thread 1082149184 (LWP 13960)):
+#0  0x00002b23eb8644f1 in __nanosleep_nocancel () from /lib64/libc.so.6
+#1  0x00002b23eb88cab4 in usleep () from /lib64/libc.so.6
+#2  0x00002b23e9a52dc9 in log4cxx::helpers::FileWatchdog::run (this=0x7dcf00) at filewatchdog.cpp:70
+#3  0x00002b23e9a964fa in threadProc (arg=0x408040a0) at thread.cpp:38
+#4  0x00002b23e82e609e in start_thread () from /lib64/libpthread.so.0
+#5  0x00002b23eb8924cd in clone () from /lib64/libc.so.6
+#6  0x0000000000000000 in ?? ()
+
+Thread 2 (Thread 1090541888 (LWP 13978)):
+#0  0x00002b23eb88c302 in __select_nocancel () from /lib64/libc.so.6
+#1  0x00002aaad1f2a4c5 in initreadline () from /usr/lib64/python2.5/lib-dynload/readline.so
+#2  0x00002b23e7fc2b4f in PyOS_Readline () from /usr/lib64/libpython2.5.so.1.0
+#3  0x00002b23e802ec74 in _PyBuiltin_Init () from /usr/lib64/libpython2.5.so.1.0
+#4  0x00002b23e803856a in PyEval_EvalFrameEx () from /usr/lib64/libpython2.5.so.1.0
+#5  0x00002b23e80395ac in PyEval_EvalCodeEx () from /usr/lib64/libpython2.5.so.1.0
+#6  0x00002b23e8037cd4 in PyEval_EvalFrameEx () from /usr/lib64/libpython2.5.so.1.0
+#7  0x00002b23e80395ac in PyEval_EvalCodeEx () from /usr/lib64/libpython2.5.so.1.0
+#8  0x00002b23e8037cd4 in PyEval_EvalFrameEx () from /usr/lib64/libpython2.5.so.1.0
+#9  0x00002b23e80395ac in PyEval_EvalCodeEx () from /usr/lib64/libpython2.5.so.1.0
+#10 0x00002b23e8037cd4 in PyEval_EvalFrameEx () from /usr/lib64/libpython2.5.so.1.0
+#11 0x00002b23e80395ac in PyEval_EvalCodeEx () from /usr/lib64/libpython2.5.so.1.0
+#12 0x00002b23e7fe1c48 in PyClassMethod_New () from /usr/lib64/libpython2.5.so.1.0
+#13 0x00002b23e7fc4e13 in PyObject_Call () from /usr/lib64/libpython2.5.so.1.0
+#14 0x00002b23e7fcbecd in PyClass_IsSubclass () from /usr/lib64/libpython2.5.so.1.0
+#15 0x00002b23e7fc4e13 in PyObject_Call () from /usr/lib64/libpython2.5.so.1.0
+#16 0x00002b23e7fcc93b in _PyInstance_Lookup () from /usr/lib64/libpython2.5.so.1.0
+#17 0x00002b23e7fc4e13 in PyObject_Call () from /usr/lib64/libpython2.5.so.1.0
+#18 0x00002b23e8035463 in PyEval_EvalFrameEx () from /usr/lib64/libpython2.5.so.1.0
+#19 0x00002b23e80395ac in PyEval_EvalCodeEx () from /usr/lib64/libpython2.5.so.1.0
+#20 0x00002b23e80395f2 in PyEval_EvalCode () from /usr/lib64/libpython2.5.so.1.0
+#21 0x00002b23e8052022 in Py_CompileString () from /usr/lib64/libpython2.5.so.1.0
+#22 0x00002b23e80520f6 in PyRun_FileExFlags () from /usr/lib64/libpython2.5.so.1.0
+#23 0x00002b23e80535b8 in PyRun_SimpleFileExFlags () from /usr/lib64/libpython2.5.so.1.0
+#24 0x00002aaab5113773 in PythonUI::execScript (script=@0x41004ff0) at gui/py/PythonUI.cpp:40
+#25 0x00002aaab51144c4 in PythonUI::pythonSession () at gui/py/PythonUI.cpp:84
+#26 0x00002aaab49efe1b in boost::detail::function::void_function_invoker0&lt;void (*)(), void&gt;::invoke (function_ptr=@0x410050a8) at /usr/local/include/boost/function/function_template.hpp:114
+#27 0x00002b23e896154e in boost::function0&lt;void, std::allocator&lt;boost::function_base&gt; &gt;::operator() () from /usr/local/lib64/libboost_thread-gcc41-mt-1_34_1.so.1.34.1
+#28 0x00002b23e8961202 in boost::thread_group::add_thread () from /usr/local/lib64/libboost_thread-gcc41-mt-1_34_1.so.1.34.1
+#29 0x00002b23e82e609e in start_thread () from /lib64/libpthread.so.0
+#30 0x00002b23eb8924cd in clone () from /lib64/libc.so.6
+#31 0x0000000000000000 in ?? ()
+
+Thread 1 (Thread 47433347492912 (LWP 13959)):
+#0  0x00002b23eb863e1f in waitpid () from /lib64/libc.so.6
+#1  0x00002b23eb80c491 in do_system () from /lib64/libc.so.6
+#2  0x00002b23eb80c817 in system () from /lib64/libc.so.6
+#3  0x000000000055c97d in sigHandler (sig=11) at core/yade.cpp:58
+#4  &lt;signal handler called&gt;
+#5  0x00002aaab49ab92f in QRect::size (this=0x8c) at /usr/lib/qt3/include/qrect.h:254
+#6  0x00002aaab49ab990 in QWidget::size (this=0x0) at /usr/lib/qt3/include/qwidget.h:765
+#7  0x00002aaab49bd00d in MessageDialog (this=0x2aaad8000ff0, message=@0x7fffc2d3aa60, parent=0x0, name=0x0, modal=false, fl=0) at gui/qt3/MessageDialog.cpp:34
+#8  0x00002aaab49c0067 in QtFileGenerator::timerEvent (this=0x117a570) at gui/qt3/QtFileGenerator.cpp:222
+#9  0x00002b23e92c7576 in QObject::event () from /usr/lib64/libqt-mt.so.3
+#10 0x00002b23e92fa418 in QWidget::event () from /usr/lib64/libqt-mt.so.3
+#11 0x00002b23e9270eb5 in QApplication::internalNotify () from /usr/lib64/libqt-mt.so.3
+#12 0x00002b23e9271c40 in QApplication::notify () from /usr/lib64/libqt-mt.so.3
+#13 0x00002b23e926750f in QEventLoop::activateTimers () from /usr/lib64/libqt-mt.so.3
+#14 0x00002b23e922769d in QEventLoop::processEvents () from /usr/lib64/libqt-mt.so.3
+#15 0x00002b23e9285963 in QEventLoop::enterLoop () from /usr/lib64/libqt-mt.so.3
+#16 0x00002b23e9285812 in QEventLoop::exec () from /usr/lib64/libqt-mt.so.3
+#17 0x00002aaab49ef24c in QtGUI::run (this=0x8b05d0, argc=1, argv=0x7fffc2d3b9a8) at gui/qt3/QtGUI.cpp:65
+#18 0x000000000055c441 in main (argc=1, argv=0x7fffc2d3b9a8) at core/yade.cpp:254
+#0  0x00002b23eb863e1f in waitpid () from /lib64/libc.so.6
+In [1]: Segmentation fault
+&lt;===END===
+
+2. New Simulation Controller  allows select fixed time step and time stepper at the same time. 
+
+3. How can I run *.py preprocessor from python console? Seems &quot;yade simple-scene.py&quot; don't work now. 
+And from python console &quot;import simple-scene.py&quot; also don't work.
+
+Best regards, Sergei D.
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000181.html">[yade-dev] new PhysicalAction
+</A></li>
+	<LI>Next message: <A HREF="000184.html">[yade-dev] crash svn-1357
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#183">[ date ]</a>
+              <a href="thread.html#183">[ thread ]</a>
+              <a href="subject.html#183">[ subject ]</a>
+              <a href="author.html#183">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

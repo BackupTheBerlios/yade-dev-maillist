@@ -1,0 +1,1017 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1726 - in trunk: . core gui/py	lib/factory	pkg/common/DataClass/InteractionPhysics	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/snow/Engine scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1726%20-%20in%20trunk%3A%20.%20core%20gui/py%0A%09lib/factory%09pkg/common/DataClass/InteractionPhysics%09pkg/dem/DataClass/InteractionGeometry%09pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%09pkg/snow/Engine%20scripts/test&In-Reply-To=%3C200903221401.n2ME1ReR009604%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000884.html">
+   <LINK REL="Next"  HREF="000886.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1726 - in trunk: . core gui/py	lib/factory	pkg/common/DataClass/InteractionPhysics	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/snow/Engine scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1726%20-%20in%20trunk%3A%20.%20core%20gui/py%0A%09lib/factory%09pkg/common/DataClass/InteractionPhysics%09pkg/dem/DataClass/InteractionGeometry%09pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%09pkg/snow/Engine%20scripts/test&In-Reply-To=%3C200903221401.n2ME1ReR009604%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1726 - in trunk: . core gui/py	lib/factory	pkg/common/DataClass/InteractionPhysics	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/snow/Engine scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Mar 22 15:01:27 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000884.html">[deprecated list] [Yade-dev] [robot] build failed
+</A></li>
+        <LI>Next message: <A HREF="000886.html">[deprecated list] [Yade-dev] [svn] r1727 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#885">[ date ]</a>
+              <a href="thread.html#885">[ thread ]</a>
+              <a href="subject.html#885">[ subject ]</a>
+              <a href="author.html#885">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-03-22 15:01:25 +0100 (Sun, 22 Mar 2009)
+New Revision: 1726
+
+Added:
+   trunk/scripts/test/shear.py
+   trunk/scripts/test/triax-identical-results.py
+Modified:
+   trunk/SConstruct
+   trunk/core/BexContainer.hpp
+   trunk/core/Omega.cpp
+   trunk/core/yade.cpp
+   trunk/gui/py/PythonUI_rc.py
+   trunk/lib/factory/ClassFactory.cpp
+   trunk/lib/factory/ClassFactory.hpp
+   trunk/pkg/common/DataClass/InteractionPhysics/NormalShearInteractions.hpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp
+   trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.cpp
+   trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.hpp
+Log:
+1. Remove logger from ClassFactory
+2. Cleanup logging stuff in main (use constructor function, among other)
+3. Cleanup system exit from python in PythonUI_rc.py
+4. Add SpheresContactGeometry::updateShear that can be optionally used with ElasticContactLaw to update shear displacement instead of updating shearForce. triax-identical-results.py show quite large difference between both implementations, but I am not able to tell which one is correct. scripts/test/shear.py shown almost no difference for 2-sphere scenarios, modulo differences at 15th decimal place or so.
+5. Remove debug output from BexContainer
+6. Remove warning about meniscus data from CapillaryCohesiveLaw (warning is given in postProcessAttributes now, i.e. iff the class is actually used)
+7. Add logger to snow.
+8. Removed shear computation code in ElasticContactLaw, use SpheresContactGeometry::updateShearForce.
+9. Fix scons deprecation warnings
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-03-19 17:55:37 UTC (rev 1725)
++++ trunk/SConstruct	2009-03-22 14:01:25 UTC (rev 1726)
+@@ -66,8 +66,8 @@
+ env=Environment(tools=['default'])
+ profileFile='scons.current-profile'
+ 
+-profOpts=Options(profileFile)
+-profOpts.AddOptions(('profile','Config profile to use (predefined: default or &quot;&quot;, opt); append ! to use it but not save for next build (in scons.current-profile)','default'))
++profOpts=Variables(profileFile)
++profOpts.Add(('profile','Config profile to use (predefined: default or &quot;&quot;, opt); append ! to use it but not save for next build (in scons.current-profile)','default'))
+ profOpts.Update(env)
+ # multiple profiles - run them all at the same time
+ # take care not to save current profile for those parallel builds
+@@ -107,7 +107,7 @@
+ else: defOptions={'debug':0,'optimize':0,'variant':profile,'openmp':True}
+ 
+ 
+-opts=Options(optsFile)
++opts=Variables(optsFile)
+ #
+ # The convention now is, that
+ #  1. CAPITALIZED options are
+@@ -115,19 +115,19 @@
+ #   (b) c preprocessor macros available to the program source (like PREFIX and SUFFIX)
+ #  2. lowercase options influence the building process, compiler options and the like.
+ #
+-opts.AddOptions(
++opts.AddVariables(
+ 	### OLD: use PathOption with PathOption.PathIsDirCreate, but that doesn't exist in 0.96.1!
+ 	('PREFIX','Install path prefix','/usr/local'),
+ 	('runtimePREFIX','Runtime path prefix; DO NOT USE, inteded for packaging only.','$PREFIX'),
+ 	('variant','Build variant, will be suffixed to all files, along with version (beware: if PREFIX is the same, headers of the older version will still be overwritten',defOptions['variant'],None,lambda x:x),
+-	BoolOption('debug', 'Enable debugging information and disable optimizations',defOptions['debug']),
+-	BoolOption('gprof','Enable profiling information for gprof',0),
+-	BoolOption('optimize','Turn on heavy optimizations',defOptions['optimize']),
+-	BoolOption('openmp','Compile with openMP parallelization support',defOptions['openmp']),
+-	ListOption('exclude','Yade components that will not be built','none',names=['qt3','gui','extra','common','dem','fem','lattice','mass-spring','realtime-rigidbody','snow']),
+-	EnumOption('arcs','Whether to generate or use branch probabilities','',['','gen','use'],{'no':'','0':'','false':''},1),
++	BoolVariable('debug', 'Enable debugging information and disable optimizations',defOptions['debug']),
++	BoolVariable('gprof','Enable profiling information for gprof',0),
++	BoolVariable('optimize','Turn on heavy optimizations',defOptions['optimize']),
++	BoolVariable('openmp','Compile with openMP parallelization support',defOptions['openmp']),
++	ListVariable('exclude','Yade components that will not be built','none',names=['qt3','gui','extra','common','dem','fem','lattice','mass-spring','realtime-rigidbody','snow']),
++	EnumVariable('arcs','Whether to generate or use branch probabilities','',['','gen','use'],{'no':'','0':'','false':''},1),
+ 	# OK, dummy prevents bug in scons: if one selects all, it says all in scons.config, but without quotes, which generates error.
+-	ListOption('features','Optional features that are turned on','python,log4cxx',names=['python','log4cxx','binfmt','dummy']),
++	ListVariable('features','Optional features that are turned on','python,log4cxx',names=['python','log4cxx','binfmt','dummy']),
+ 	('jobs','Number of jobs to run at the same time (same as -j, but saved)',4,None,int),
+ 	('extraModules', 'Extra directories with their own SConscript files (must be in-tree) (whitespace separated)',None,None,Split),
+ 	('buildPrefix','Where to create build-[version][variant] directory for intermediary files','..'),
+@@ -140,10 +140,10 @@
+ 	('march','Architecture to use with -march=... when optimizing','native',None,None),
+ 	#('SHLINK','Linker for shared objects','g++'),
+ 	('SHCCFLAGS','Additional compiler flags for linking (for plugins).',None,None,Split),
+-	BoolOption('QUAD_PRECISION','typedef Real as long double (=quad)',0),
+-	BoolOption('pretty',&quot;Don't show compiler command line (like the Linux kernel)&quot;,1),
+-	BoolOption('useMiniWm3','use local miniWm3 library instead of Wm3Foundation',1),
+-	#BoolOption('useLocalQGLViewer','use in-tree QGLViewer library instead of the one installed in system',1),
++	BoolVariable('QUAD_PRECISION','typedef Real as long double (=quad)',0),
++	BoolVariable('pretty',&quot;Don't show compiler command line (like the Linux kernel)&quot;,1),
++	BoolVariable('useMiniWm3','use local miniWm3 library instead of Wm3Foundation',1),
++	#BoolVariable('useLocalQGLViewer','use in-tree QGLViewer library instead of the one installed in system',1),
+ )
+ opts.Update(env)
+ opts.Save(optsFile,env)
+
+Modified: trunk/core/BexContainer.hpp
+===================================================================
+--- trunk/core/BexContainer.hpp	2009-03-19 17:55:37 UTC (rev 1725)
++++ trunk/core/BexContainer.hpp	2009-03-22 14:01:25 UTC (rev 1726)
+@@ -122,7 +122,7 @@
+ 			_force.resize(newSize);
+ 			_torque.resize(newSize);
+ 			size=newSize;
+-			std::cerr&lt;&lt;&quot;[DEBUG] BexContainer: Resized to &quot;&lt;&lt;size&lt;&lt;std::endl;
++			// std::cerr&lt;&lt;&quot;[DEBUG] BexContainer: Resized to &quot;&lt;&lt;size&lt;&lt;std::endl;
+ 		}
+ };
+ 
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2009-03-19 17:55:37 UTC (rev 1725)
++++ trunk/core/Omega.cpp	2009-03-22 14:01:25 UTC (rev 1726)
+@@ -46,7 +46,7 @@
+ CREATE_LOGGER(Omega);
+ 
+ Omega::Omega(){
+-	if(getenv(&quot;YADE_DEBUG&quot;)) cerr&lt;&lt;&quot;Constructing Omega; _must_ be only once, otherwise linking is broken (missing -rdynamic?)\n&quot;;
++	if(getenv(&quot;YADE_DEBUG&quot;)) cerr&lt;&lt;&quot;Constructing Omega; _must_ be only once, otherwise linking is broken (missing -rdynamic?)&quot;&lt;&lt;endl;
+ }
+ 
+ Omega::~Omega(){LOG_INFO(&quot;Shuting down; duration &quot;&lt;&lt;(microsec_clock::local_time()-msStartingSimulationTime)/1000&lt;&lt;&quot; s&quot;);}
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2009-03-19 17:55:37 UTC (rev 1725)
++++ trunk/core/yade.cpp	2009-03-22 14:01:25 UTC (rev 1726)
+@@ -34,11 +34,29 @@
+ #ifdef LOG4CXX
+ 	// provides parent logger for everybody
+ 	log4cxx::LoggerPtr logger=log4cxx::Logger::getLogger(&quot;yade&quot;);
++
++	#ifdef LOG4CXX_TRACE
++		log4cxx::LevelPtr debugLevel=log4cxx::Level::getDebug(), infoLevel=log4cxx::Level::getInfo(), warnLevel=log4cxx::Level::getWarn();
++	#else
++		log4cxx::LevelPtr debugLevel=log4cxx::Level::DEBUG, infoLevel=log4cxx::Level::INFO, warnLevel=log4cxx::Level::WARN;
++	#endif
++
++	/* initialization of log4cxx for early logging */
++	__attribute__((constructor(1000))) void initLog4cxx(){
++		log4cxx::BasicConfigurator::configure();
++		log4cxx::LoggerPtr localLogger=log4cxx::Logger::getLogger(&quot;yade&quot;);
++		if(getenv(&quot;YADE_DEBUG&quot;)){
++			LOG_INFO(&quot;YADE_DEBUG environment variable is defined, logging level is DEBUG.&quot;);
++			localLogger-&gt;setLevel(debugLevel);
++		}
++		else localLogger-&gt;setLevel(warnLevel);
++	}
+ #endif
+ 
+ void nullHandler(int sig){}
++void termHandler(int sig){cerr&lt;&lt;&quot;terminating...&quot;&lt;&lt;endl; raise(SIGTERM);}
+ void warnOnceHandler(int sig){
+-	cerr&lt;&lt;&quot;WARN: nullHandler (probably log4cxx error), signal &quot;&lt;&lt;(sig==SIGSEGV?&quot;SEGV&quot;:&quot;[other]. Signal will be ignored since now.&quot;)&lt;&lt;endl;
++	cerr&lt;&lt;&quot;WARN: nullHandler (probably log4cxx error), signal &quot;&lt;&lt;(sig==SIGSEGV?&quot;SEGV&quot;:&quot;[other]&quot;)&lt;&lt;&quot;. Signal will be ignored since now.&quot;&lt;&lt;endl;
+ 	signal(sig,nullHandler);
+ }
+ 
+@@ -185,22 +203,19 @@
+ 	optind=0; opterr=0;
+ 
+ 	#ifdef LOG4CXX
+-		#ifdef LOG4CXX_TRACE
+-			log4cxx::LevelPtr debugLevel=log4cxx::Level::getDebug(), infoLevel=log4cxx::Level::getInfo(), warnLevel=log4cxx::Level::getWarn();
+-		#else
+-			log4cxx::LevelPtr debugLevel=log4cxx::Level::DEBUG, infoLevel=log4cxx::Level::INFO, warnLevel=log4cxx::Level::WARN;
+-		#endif
+ 		// read logging configuration from file and watch it (creates a separate thread)
+ 		std::string logConf=configPath+&quot;/logging.conf&quot;;
+ 		if(filesystem::exists(logConf)){
+ 			log4cxx::PropertyConfigurator::configure(logConf);
+ 			LOG_INFO(&quot;Loading &quot;&lt;&lt;logConf);
+ 		} else { // otherwise use simple console-directed logging
+-			log4cxx::BasicConfigurator::configure();
+ 			logger-&gt;setLevel(warnLevel);
+ 			LOG_INFO(&quot;Logger uses basic (console) configuration since `&quot;&lt;&lt;logConf&lt;&lt;&quot;' was not found. INFO and DEBUG messages will be omitted.&quot;);
+ 			LOG_INFO(&quot;Look at the file doc/logging.conf.sample in the source distribution as an example on how to customize logging.&quot;);
+ 		}
++		// command-line switches override levels
++		if(verbose==1) logger-&gt;setLevel(infoLevel);
++		else if (verbose&gt;=2) logger-&gt;setLevel(debugLevel);
+ 	#endif
+ 
+ 	Omega::instance().yadeVersionName = &quot;Yet Another Dynamic Engine 0.12.x, beta, SVN snapshot.&quot;;
+@@ -209,16 +224,7 @@
+ 	filesystem::path yadeConfigPath  = filesystem::path(Omega::instance().yadeConfigPath, filesystem::native);
+ 	filesystem::path yadeConfigFile  = filesystem::path(Omega::instance().yadeConfigPath + &quot;/preferences.xml&quot;, filesystem::native);
+ 
+-	#ifdef LOG4CXX
+-		if(verbose==1) logger-&gt;setLevel(infoLevel);
+-		else if (verbose&gt;=2) logger-&gt;setLevel(debugLevel);
+-		if(getenv(&quot;YADE_DEBUG&quot;)){
+-			LOG_INFO(&quot;YADE_DEBUG environment variable is defined, setting logging level to DEBUG.&quot;);
+-			logger-&gt;setLevel(debugLevel);
+-		}
+-	#endif
+ 
+-
+ 	#ifdef EMBED_PYTHON
+ 		/* see <A HREF="http://www.python.org/dev/peps/pep-0311">http://www.python.org/dev/peps/pep-0311</A> for threading with Python embedded */
+ 		LOG_DEBUG(&quot;Initializing Python...&quot;);
+@@ -288,8 +294,8 @@
+ 	#ifdef YADE_DEBUG
+ 		if(useGdb){
+ 			signal(SIGABRT,SIG_DFL); signal(SIGHUP,SIG_DFL); // default handlers
+-			signal(SIGSEGV,warnOnceHandler); // FIXME: this is to cover up crash that occurs in log4cxx on i386 sometimes 
+ 			unlink(Omega::instance().gdbCrashBatch.c_str());
++			signal(SIGSEGV,termHandler);
+ 		}
+ 	#endif
+ 
+
+Modified: trunk/gui/py/PythonUI_rc.py
+===================================================================
+--- trunk/gui/py/PythonUI_rc.py	2009-03-19 17:55:37 UTC (rev 1725)
++++ trunk/gui/py/PythonUI_rc.py	2009-03-22 14:01:25 UTC (rev 1726)
+@@ -23,6 +23,14 @@
+ 	def _quit(): import sys; sys.exit(0)
+ 	__builtins__.quit=_quit
+ 
++def cleanup():
++	try:
++		import yade.qt, time
++		yade.qt.close()
++		while True: time.sleep(.1) # wait to be killed
++	except ImportError: pass
++
++
+ ## run the TCP server
+ import yade.PythonTCPServer
+ srv=yade.PythonTCPServer.PythonTCPServer(minPort=9000)
+@@ -31,50 +39,54 @@
+ runtime.argv=[runtime.script]+runtime.argv
+ sys.argv=runtime.argv # could be [] as well
+ 
+-## run simulation if requested from the command line
+-if runtime.simulation:
+-	print &quot;Running simulation &quot;+runtime.simulation
+-	o=Omega(); o.load(runtime.simulation); o.run();
++try:
++	## run simulation if requested from the command line
++	if runtime.simulation:
++		print &quot;Running simulation &quot;+runtime.simulation
++		o=Omega(); o.load(runtime.simulation); o.run();
+ 
+-## run script if requested from the command line
+-if runtime.script:
+-	print &quot;Running script &quot;+runtime.script
+-	# an exception from python would propagate to c++ unhandled and cause crash
+-	try: execfile(runtime.script)
+-	except SystemExit: raise # re-raise sys.exit
+-	except: # all other exceptions
+-		import traceback
+-		traceback.print_exc()
+-		if(runtime.nonInteractive or runtime.stopAfter): sys.exit(1)
+-if runtime.stopAfter:
+-	print &quot;Finished, bye.&quot;
+-	sys.exit(0)
++	## run script if requested from the command line
++	if runtime.script:
++		print &quot;Running script &quot;+runtime.script
++		# an exception from python would propagate to c++ unhandled and cause crash
++		try:
++			execfile(runtime.script)
++		except SystemExit: raise
++		except: # all other exceptions
++			import traceback
++			traceback.print_exc()
++			if(runtime.nonInteractive or runtime.stopAfter): sys.exit(1)
++	if runtime.stopAfter:
++		print &quot;Finished, bye.&quot;
++		sys.exit(0)
+ 
+-# run commands if requested from the command line
+-#if yadeRunCommands:
+-#	print &quot;Running commands from commandline: &quot;+yadeRunCommands
+-#	exec(yadeRunCommands)
++	# run commands if requested from the command line
++	#if yadeRunCommands:
++	#	print &quot;Running commands from commandline: &quot;+yadeRunCommands
++	#	exec(yadeRunCommands)
+ 
+-if runtime.nonInteractive:
+-	import time;
+-	while True: time.sleep(1)
+-else:
+-	sys.argv[0]='&lt;embedded python interpreter&gt;'
+-	from IPython.Shell import IPShellEmbed
+-	ipshell = IPShellEmbed(banner=r&quot;&quot;&quot;__   __    ____          ____                      _      
+-\ \ / /_ _|  _ \  ___   / ___|___  _ __  ___  ___ | | ___ 
+- \ V / _` | | | |/ _ \ | |   / _ \| '_ \/ __|/ _ \| |/ _ \ 
+-  | | (_| | |_| |  __/ | |__| (_) | | | \__ \ (_) | |  __/
+-  |_|\__,_|____/ \___|  \____\___/|_| |_|___/\___/|_|\___|
+-&quot;&quot;&quot;,exit_msg='Bye.'
+-	,rc_override={'execfile':[runtime.prefix+'/lib/yade'+runtime.suffix+'/gui/yade/ipython.py']})
++	if runtime.nonInteractive:
++		import time;
++		while True: time.sleep(1)
++	else:
++		sys.argv[0]='&lt;embedded python interpreter&gt;'
++		from IPython.Shell import IPShellEmbed
++		ipshell = IPShellEmbed(banner=r&quot;&quot;&quot;__   __    ____          ____                      _      
++	\ \ / /_ _|  _ \  ___   / ___|___  _ __  ___  ___ | | ___ 
++	 \ V / _` | | | |/ _ \ | |   / _ \| '_ \/ __|/ _ \| |/ _ \ 
++	  | | (_| | |_| |  __/ | |__| (_) | | | \__ \ (_) | |  __/
++	  |_|\__,_|____/ \___|  \____\___/|_| |_|___/\___/|_|\___|
++	&quot;&quot;&quot;,exit_msg='Bye.'
++		,rc_override={'execfile':[runtime.prefix+'/lib/yade'+runtime.suffix+'/gui/yade/ipython.py']})
+ 
+-	ipshell()
+-	# save history -- a workaround for atexit handlers not being run (why?)
+-	# <A HREF="http://lists.ipython.scipy.org/pipermail/ipython-user/2008-September/005839.html">http://lists.ipython.scipy.org/pipermail/ipython-user/2008-September/005839.html</A>
+-	import IPython.ipapi
+-	IPython.ipapi.get().IP.atexit_operations()
+-	try:
+-		import yade.qt
+-		yade.qt.close()
+-	except ImportError: pass
++		ipshell()
++		# save history -- a workaround for atexit handlers not being run (why?)
++		# <A HREF="http://lists.ipython.scipy.org/pipermail/ipython-user/2008-September/005839.html">http://lists.ipython.scipy.org/pipermail/ipython-user/2008-September/005839.html</A>
++		import IPython.ipapi
++		IPython.ipapi.get().IP.atexit_operations()
++except SystemExit:
++	cleanup()
++finally:
++	cleanup()
++
++	
+
+Modified: trunk/lib/factory/ClassFactory.cpp
+===================================================================
+--- trunk/lib/factory/ClassFactory.cpp	2009-03-19 17:55:37 UTC (rev 1725)
++++ trunk/lib/factory/ClassFactory.cpp	2009-03-22 14:01:25 UTC (rev 1726)
+@@ -12,8 +12,6 @@
+ 
+ #include&lt;boost/algorithm/string/regex.hpp&gt;
+ 
+-CREATE_LOGGER(ClassFactory);
+-
+ class Factorable;
+ 
+ void ClassFactory::addBaseDirectory(const string&amp; dir)
+@@ -128,16 +126,17 @@
+ 
+ void ClassFactory::registerPluginClasses(const char* fileAndClasses[]){
+ 	assert(fileAndClasses[0]!=NULL); // must be file name
++	bool log=getenv(&quot;YADE_DEBUG&quot;);
+ 	// only filename given, no classes names explicitly
+ 	if(fileAndClasses[1]==NULL){
+ 		/* strip leading path (if any; using / as path separator) and strip one suffix (if any) to get the contained class name */
+ 		string heldClass=boost::algorithm::replace_regex_copy(string(fileAndClasses[0]),boost::regex(&quot;^(.*/)?(.*?)(\\.[^.]*)?$&quot;),string(&quot;\\2&quot;));
+-		LOG_DEBUG(&quot;Plugin &quot;&lt;&lt;fileAndClasses[0]&lt;&lt;&quot;, class &quot;&lt;&lt;heldClass&lt;&lt;&quot; (deduced)&quot;);
++		if(log) cerr&lt;&lt;&quot;Plugin &quot;&lt;&lt;fileAndClasses[0]&lt;&lt;&quot;, class &quot;&lt;&lt;heldClass&lt;&lt;&quot; (deduced)&quot;&lt;&lt;endl;
+ 		pluginClasses.push_back(heldClass); // last item with everything up to last / take off and .suffix strip
+ 	}
+ 	else {
+ 		for(int i=1; fileAndClasses[i]!=NULL; i++){
+-			LOG_DEBUG(&quot;Plugin &quot;&lt;&lt;fileAndClasses[0]&lt;&lt;&quot;, class &quot;&lt;&lt;fileAndClasses[i]);
++			if(log) cerr&lt;&lt;&quot;Plugin &quot;&lt;&lt;fileAndClasses[0]&lt;&lt;&quot;, class &quot;&lt;&lt;fileAndClasses[i]&lt;&lt;endl;
+ 			pluginClasses.push_back(fileAndClasses[i]);
+ 		}
+ 	}
+
+Modified: trunk/lib/factory/ClassFactory.hpp
+===================================================================
+--- trunk/lib/factory/ClassFactory.hpp	2009-03-19 17:55:37 UTC (rev 1725)
++++ trunk/lib/factory/ClassFactory.hpp	2009-03-22 14:01:25 UTC (rev 1726)
+@@ -26,7 +26,6 @@
+ 
+ 
+ #include&lt;yade/lib-loki/Singleton.hpp&gt;
+-#include&lt;yade/lib-base/Logging.hpp&gt;
+ 
+ 
+ #include &quot;FactoryExceptions.hpp&quot;
+@@ -105,7 +104,7 @@
+ 		/// Map that contains the name of the registered class and their description
+ 		FactorableCreatorsMap map;
+ 
+-		ClassFactory() { if(getenv(&quot;YADE_DEBUG&quot;)) cerr&lt;&lt;&quot;Constructing ClassFactory; _must_ be only once, otherwise linking is broken (missing -rdynamic?)\n&quot;; };
++		ClassFactory() { if(getenv(&quot;YADE_DEBUG&quot;)) cerr&lt;&lt;&quot;Constructing ClassFactory; _must_ be only once, otherwise linking is broken (missing -rdynamic?)\n&quot;&lt;&lt;endl; };
+ 		ClassFactory(const ClassFactory&amp;);
+ 		ClassFactory&amp; operator=(const ClassFactory&amp;);
+ 		virtual ~ClassFactory() {};
+@@ -152,8 +151,6 @@
+ 		virtual string getClassName() const { return &quot;Factorable&quot;; };
+ 		virtual string getBaseClassName(int ) const { return &quot;&quot;;};
+ 
+-	DECLARE_LOGGER;
+-
+ 	FRIEND_SINGLETON(ClassFactory);
+ };
+ 
+
+Modified: trunk/pkg/common/DataClass/InteractionPhysics/NormalShearInteractions.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/InteractionPhysics/NormalShearInteractions.hpp	2009-03-19 17:55:37 UTC (rev 1725)
++++ trunk/pkg/common/DataClass/InteractionPhysics/NormalShearInteractions.hpp	2009-03-22 14:01:25 UTC (rev 1726)
+@@ -11,15 +11,10 @@
+ 		Real kn;
+ 		//! normal force
+ 		Vector3r normalForce;
+-		NormalInteraction(){createIndex(); }
++		NormalInteraction(): normalForce(Vector3r::ZERO) {createIndex(); }
+ 		virtual ~NormalInteraction();
+-	protected:
+-		virtual void registerAttributes(){
+-			REGISTER_ATTRIBUTE(kn);
+-			REGISTER_ATTRIBUTE(normalForce);
+-		}
+-	REGISTER_CLASS_NAME(NormalInteraction);
+-	REGISTER_BASE_CLASS_NAME(InteractionPhysics);
++	REGISTER_ATTRIBUTES(/*no base class attributes*/,(kn)(normalForce));
++	REGISTER_CLASS_AND_BASE(NormalInteraction,InteractionPhysics);
+ 	REGISTER_CLASS_INDEX(NormalInteraction,InteractionPhysics);
+ };
+ REGISTER_SERIALIZABLE(NormalInteraction);
+@@ -33,16 +28,10 @@
+ 		Real ks;
+ 		//! shear force
+ 		Vector3r shearForce;
+-		NormalShearInteraction(){ createIndex(); }
++		NormalShearInteraction(): shearForce(Vector3r::ZERO){ createIndex(); }
+ 		virtual ~NormalShearInteraction();
+-	protected:
+-		virtual void registerAttributes(){	
+-			NormalInteraction::registerAttributes();
+-			REGISTER_ATTRIBUTE(ks);
+-			REGISTER_ATTRIBUTE(shearForce);
+-		}
+-	REGISTER_CLASS_NAME(NormalShearInteraction);
+-	REGISTER_BASE_CLASS_NAME(NormalInteraction);
++	REGISTER_ATTRIBUTES(NormalInteraction,(ks)(shearForce));
++	REGISTER_CLASS_AND_BASE(NormalShearInteraction,NormalInteraction);
+ 	REGISTER_CLASS_INDEX(NormalShearInteraction,NormalInteraction);
+ };
+ REGISTER_SERIALIZABLE(NormalShearInteraction);
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2009-03-19 17:55:37 UTC (rev 1725)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2009-03-22 14:01:25 UTC (rev 1726)
+@@ -9,6 +9,63 @@
+ // At least one virtual method must be in the .cpp file (!!!)
+ SpheresContactGeometry::~SpheresContactGeometry(){};
+ 
++#ifdef SCG_SHEAR
++void SpheresContactGeometry::updateShear(const RigidBodyParameters* rbp1, const RigidBodyParameters* rbp2, Real dt, bool avoidGranularRatcheting){
++
++	Vector3r axis;
++	Real angle;
++
++	shearIncrement=Vector3r::ZERO;
++
++	// approximated rotations
++		axis = prevNormal.Cross(normal); 
++		shearIncrement -= shear.Cross(axis);
++		angle = dt*0.5*normal.Dot(rbp1-&gt;angularVelocity + rbp2-&gt;angularVelocity);
++		axis = angle*normal;
++		shearIncrement -= (shear+shearIncrement).Cross(axis);
++		
++	// exact rotations (not adapted to shear/shearIncrement!)
++	#if 0
++		Quaternionr q;
++		axis					= prevNormal.Cross(normal);
++		angle					= acos(normal.Dot(prevNormal));
++		q.FromAngleAxis(angle,axis);
++		shearForce        = shearForce*q;
++		angle             = dt*0.5*normal.dot(rbp1-&gt;angularVelocity+rbp2-&gt;angularVelocity);
++		axis					= normal;
++		q.FromAngleAxis(angle,axis);
++		shearForce        = q*shearForce;
++	#endif
++
++	Vector3r&amp; x = contactPoint;
++	Vector3r c1x, c2x;
++
++	if(avoidGranularRatcheting){
++		/* The following definition of c1x and c2x is to avoid &quot;granular ratcheting&quot; 
++		 *  (see F. ALONSO-MARROQUIN, R. GARCIA-ROJO, H.J. HERRMANN, 
++		 *  &quot;Micro-mechanical investigation of granular ratcheting, in Cyclic Behaviour of Soils and Liquefaction Phenomena&quot;,
++		 *  ed. T. Triantafyllidis (Balklema, London, 2004), p. 3-10 - and a lot more papers from the same authors) */
++
++		// FIXME: For sphere-facet contact this will give an erroneous value of relative velocity...
++		c1x =   radius1*normal; 
++		c2x =  -radius2*normal;
++	}
++	else {
++		// FIXME: It is correct for sphere-sphere and sphere-facet contact
++		c1x = (x - rbp1-&gt;se3.position);
++		c2x = (x - rbp2-&gt;se3.position);
++	}
++
++	Vector3r relativeVelocity = (rbp2-&gt;velocity+rbp2-&gt;angularVelocity.Cross(c2x)) - (rbp1-&gt;velocity+rbp1-&gt;angularVelocity.Cross(c1x));
++	Vector3r shearVelocity = relativeVelocity-normal.Dot(relativeVelocity)*normal;
++	Vector3r shearDisplacement = shearVelocity*dt;
++	shearIncrement -= shearDisplacement;
++
++	shear+=shearIncrement;
++	shearUpdateIter=Omega::instance().getCurrentIteration();
++}
++#endif
++
+ void SpheresContactGeometry::updateShearForce(Vector3r&amp; shearForce, Real ks, const Vector3r&amp; prevNormal, const RigidBodyParameters* rbp1, const RigidBodyParameters* rbp2, Real dt, bool avoidGranularRatcheting){
+ 
+ 	Vector3r axis;
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2009-03-19 17:55:37 UTC (rev 1725)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2009-03-22 14:01:25 UTC (rev 1726)
+@@ -8,31 +8,31 @@
+ #include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+ /*! Class representing geometry of two spheres in contact.
+  *
+- * exactRot code
+- * =============
+- * At initial contact, each of the two spheres fixes a point on its surface relative to its own orientation.
+- * It is therefore possible to derive at any later point how much slipping between the two spheres has taken
+- * place since the first contact.
+- *
+- * The surface point is stored as quaternion.
+- *
+- * Function is provided to manipulate those points:
+- *
+- * (a) plastic slip, when we want to limit their maximum distance (in the projected plane)
+- * (b) rolling, where those points must be relocated to not flip over the &#960; angle from the current contact point
+- *
+- * TODO: add torsion code, that will (if a flag is on) compute torsion angle on the contact axis.
+- *
+- * TODO: add bending code, that will compute bending angle of the contact axis
+- *
+- *
++ * The code under SCG_SHEAR is experimental and is used only if ElasticContactLaw::useShear is explicitly true
+  */
++
++#define SCG_SHEAR
++
+ class SpheresContactGeometry: public InteractionGeometry{
+ 	public:
+ 		Vector3r normal, // unit vector in the direction from sphere1 center to sphere2 center
+ 			contactPoint;
+ 		Real radius1,radius2,penetrationDepth;
+ 
++		#ifdef SCG_SHEAR
++			//! Total value of the current shear. Update the value using updateShear.
++			Vector3r shear;
++			//! Normal of the contact in the previous step
++			Vector3r prevNormal;
++			//! Increment of shear displacement in last step (is already added to shear); perhaps useful for viscosity or something similar
++			Vector3r shearIncrement;
++			long shearUpdateIter; // debugging only, to check when shear was updated last time
++			//! update shear on this contact given dynamic parameters of bodies. Should be called from constitutive law, exactly once per iteration
++			void updateShear(const RigidBodyParameters* rbp1, const RigidBodyParameters* rbp2, Real dt, bool avoidGranularRatcheting=true);
++			//const Vector3r&amp; getShear(){ if(Omega::instance().getCurrentIteration()&gt;shearUpdateIter) throw runtime_error(&quot;SpheresContactGeometry::updateShear must be called prior to getShear().&quot;); return shear; }
++		#endif
++		
++		// all the rest here will hopefully disappear at some point...
+ 
+ 		// begin abusive storage
+ 		bool hasNormalViscosity;
+@@ -97,7 +97,11 @@
+ 
+ 		Vector3r relRotVector() const;
+ 
+-		SpheresContactGeometry():contactPoint(Vector3r::ZERO),radius1(0),radius2(0),facetContactFace(0.),hasShear(false),pos1(Vector3r::ZERO),pos2(Vector3r::ZERO),ori1(Quaternionr::IDENTITY),ori2(Quaternionr::IDENTITY),cp1rel(Quaternionr::IDENTITY),cp2rel(Quaternionr::IDENTITY),d1(0),d2(0),d0(0),initRelOri12(Quaternionr::IDENTITY){createIndex();}
++		SpheresContactGeometry():contactPoint(Vector3r::ZERO),radius1(0),radius2(0),facetContactFace(0.),hasShear(false),pos1(Vector3r::ZERO),pos2(Vector3r::ZERO),ori1(Quaternionr::IDENTITY),ori2(Quaternionr::IDENTITY),cp1rel(Quaternionr::IDENTITY),cp2rel(Quaternionr::IDENTITY),d1(0),d2(0),d0(0),initRelOri12(Quaternionr::IDENTITY){createIndex();
++		#ifdef SCG_SHEAR
++			shear=Vector3r::ZERO; prevNormal=Vector3r::ZERO /*initialized to aproper value by geom functor*/; shearIncrement=Vector3r::ZERO; shearUpdateIter=-1 /* proper value from geom functor */;
++		#endif	
++		}
+ 		virtual ~SpheresContactGeometry();
+ 
+ 		void updateShearForce(Vector3r&amp; shearForce, Real ks, const Vector3r&amp; prevNormal, const RigidBodyParameters* rbp1, const RigidBodyParameters* rbp2, Real dt, bool avoidGranularRatcheting=true);
+@@ -107,6 +111,12 @@
+ 			(contactPoint)
+ 			(radius1)
+ 			(radius2)
++			#ifdef SCG_SHEAR
++				(shear)
++				(prevNormal)
++				(shearIncrement)
++				(shearUpdateIter)
++			#endif
+ 			(facetContactFace)
+ 			// hasShear
+ 			(hasShear)
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2009-03-19 17:55:37 UTC (rev 1725)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2009-03-22 14:01:25 UTC (rev 1726)
+@@ -37,6 +37,17 @@
+ 		if(c-&gt;interactionGeometry) scm=YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
+ 		else { scm=shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry()); c-&gt;interactionGeometry=scm; }
+ 
++		#ifdef SCG_SHEAR
++			if(c-&gt;isNew){
++				scm-&gt;prevNormal=normal;
++				scm-&gt;shearUpdateIter=Omega::instance().getCurrentIteration(); /* no shear at the very beginning; shear initialized to zero vector in SCG ctor */
++			} else {
++				scm-&gt;prevNormal=scm-&gt;normal;
++				// make sure updateShear was properly called at last iteration; debugging only
++				//assert(scm-&gt;shearUpdateIter==Omega::instance().getCurrentIteration()-1);
++			}
++		#endif
++
+ 		Real penetrationDepth=s1-&gt;radius+s2-&gt;radius-normal.Normalize(); /* Normalize() works in-place and returns length before normalization; from here, normal is unit vector */
+ 		scm-&gt;contactPoint=se31.position+(s1-&gt;radius-0.5*penetrationDepth)*normal;//0.5*(pt1+pt2);
+ 		scm-&gt;normal=normal;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp	2009-03-19 17:55:37 UTC (rev 1725)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp	2009-03-22 14:01:25 UTC (rev 1726)
+@@ -39,26 +39,30 @@
+ {
+         sdecGroupMask=1;
+ 
+-        capillary = shared_ptr&lt;capillarylaw&gt;(new capillarylaw); // ????????
+-
+-        capillary-&gt;fill(&quot;M(r=1)&quot;);
+-        capillary-&gt;fill(&quot;M(r=1.1)&quot;);
+-        capillary-&gt;fill(&quot;M(r=1.25)&quot;);
+-        capillary-&gt;fill(&quot;M(r=1.5)&quot;);
+-        capillary-&gt;fill(&quot;M(r=1.75)&quot;);
+-        capillary-&gt;fill(&quot;M(r=2)&quot;);
+-        capillary-&gt;fill(&quot;M(r=3)&quot;);
+-        capillary-&gt;fill(&quot;M(r=4)&quot;);
+-        capillary-&gt;fill(&quot;M(r=5)&quot;);
+-        capillary-&gt;fill(&quot;M(r=10)&quot;);
+-
+         CapillaryPressure=0;
+         fusionDetection = false;
+         binaryFusion = true;
+ 
++		  // capillary setup moved to postProcessAttributes
++
+ }
+ 
++void CapillaryCohesiveLaw::postProcessAttributes(bool deserializing){
++	if(!deserializing) return;
+ 
++  capillary = shared_ptr&lt;capillarylaw&gt;(new capillarylaw); // ????????
++  capillary-&gt;fill(&quot;M(r=1)&quot;);
++  capillary-&gt;fill(&quot;M(r=1.1)&quot;);
++  capillary-&gt;fill(&quot;M(r=1.25)&quot;);
++  capillary-&gt;fill(&quot;M(r=1.5)&quot;);
++  capillary-&gt;fill(&quot;M(r=1.75)&quot;);
++  capillary-&gt;fill(&quot;M(r=2)&quot;);
++  capillary-&gt;fill(&quot;M(r=3)&quot;);
++  capillary-&gt;fill(&quot;M(r=4)&quot;);
++  capillary-&gt;fill(&quot;M(r=5)&quot;);
++  capillary-&gt;fill(&quot;M(r=10)&quot;);
++}
++
+ void CapillaryCohesiveLaw::registerAttributes()
+ {
+         InteractionSolver::registerAttributes();
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.hpp	2009-03-19 17:55:37 UTC (rev 1725)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.hpp	2009-03-22 14:01:25 UTC (rev 1726)
+@@ -89,6 +89,7 @@
+ 
+ 	protected : 
+ 		void registerAttributes();
++		virtual void postProcessAttributes(bool deserializing);
+ 	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
+ 	REGISTER_CLASS_NAME(CapillaryCohesiveLaw);
+ 	REGISTER_BASE_CLASS_NAME(InteractionSolver);
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2009-03-19 17:55:37 UTC (rev 1725)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2009-03-22 14:01:25 UTC (rev 1726)
+@@ -64,6 +64,9 @@
+ 	momentRotationLaw = true;
+ 	actionForceIndex = actionForce-&gt;getClassIndex();
+ 	actionMomentumIndex = actionMomentum-&gt;getClassIndex();
++	#ifdef SCG_SHEAR
++		useShear=false;
++	#endif
+ }
+ 
+ 
+@@ -72,6 +75,9 @@
+ 	InteractionSolver::registerAttributes();
+ 	REGISTER_ATTRIBUTE(sdecGroupMask);
+ 	REGISTER_ATTRIBUTE(momentRotationLaw);
++	#ifdef SCG_SHEAR
++		REGISTER_ATTRIBUTE(useShear);
++	#endif
+ }
+ 
+ 
+@@ -111,62 +117,30 @@
+ 			Real un=currentContactGeometry-&gt;penetrationDepth;
+ 			currentContactPhysics-&gt;normalForce=currentContactPhysics-&gt;kn*std::max(un,(Real) 0)*currentContactGeometry-&gt;normal;
+ 	
+-	#if 0
+-		// the core under #else, refactored
+-		currentContactGeometry-&gt;updateShearForce(shearForce,currentContactPhysics-&gt;ks,currentContactPhysics-&gt;prevNormal,de1,de2,isDynamic1,isDynamic2,dt);
+-	#else
+-			Vector3r axis;
+-			Real angle;
+-
+-	/// Here is the code with approximated rotations 	 ///
+-			axis = currentContactPhysics-&gt;prevNormal.Cross(currentContactGeometry-&gt;normal);
+-			shearForce -= shearForce.Cross(axis);
+-			angle = dt*0.5*currentContactGeometry-&gt;normal.Dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
+-			axis = angle*currentContactGeometry-&gt;normal;
+-			shearForce -= shearForce.Cross(axis);
+-		
+-	/// Here is the code with exact rotations 		 ///
+-	
+-	// 		Quaternionr q;
+-	//
+-	// 		axis					= currentContactPhysics-&gt;prevNormal.cross(currentContactGeometry-&gt;normal);
+-	// 		angle					= acos(currentContactGeometry-&gt;normal.dot(currentContactPhysics-&gt;prevNormal));
+-	// 		q.fromAngleAxis(angle,axis);
+-	//
+-	// 		currentContactPhysics-&gt;shearForce	= currentContactPhysics-&gt;shearForce*q;
+-	//
+-	// 		angle					= dt*0.5*currentContactGeometry-&gt;normal.dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
+-	// 		axis					= currentContactGeometry-&gt;normal;
+-	// 		q.fromAngleAxis(angle,axis);
+-	// 		currentContactPhysics-&gt;shearForce	= q*currentContactPhysics-&gt;shearForce;
+-	
+-	/// 							 ///
+-	
+-			Vector3r x				= currentContactGeometry-&gt;contactPoint;
+-			Vector3r c1x				= (x - de1-&gt;se3.position);
+-			Vector3r c2x				= (x - de2-&gt;se3.position);
+-			 /// The following definition of c1x and c2x is to avoid &quot;granular ratcheting&quot; 
+-			///  (see F. ALONSO-MARROQUIN, R. GARCIA-ROJO, H.J. HERRMANN, 
+-			///   &quot;Micro-mechanical investigation of granular ratcheting, in Cyclic Behaviour of Soils and Liquefaction Phenomena&quot;,
+-			///   ed. T. Triantafyllidis (Balklema, London, 2004), p. 3-10 - and a lot more papers from the same authors)
+-                    //Vector3r _c1x_	=  currentContactGeometry-&gt;radius1*currentContactGeometry-&gt;normal;
+-                    //Vector3r _c2x_	= -currentContactGeometry-&gt;radius2*currentContactGeometry-&gt;normal;
+-					//Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.Cross(_c2x_)) - (de1-&gt;velocity+de1-&gt;angularVelocity.Cross(_c1x_));
+-			Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.Cross(c2x)) - (de1-&gt;velocity+de1-&gt;angularVelocity.Cross(c1x));
+-			Vector3r shearVelocity			= relativeVelocity-currentContactGeometry-&gt;normal.Dot(relativeVelocity)*currentContactGeometry-&gt;normal;
+-			Vector3r shearDisplacement		= shearVelocity*dt;
+-			shearForce 			       -= currentContactPhysics-&gt;ks*shearDisplacement;
+-
+-	#endif
+-	
+-	// PFC3d SlipModel, is using friction angle. CoulombCriterion
++			// the same as under #else, but refactored
++			#ifdef SCG_SHEAR
++				if(useShear){
++					currentContactGeometry-&gt;updateShear(de1,de2,dt);
++					shearForce=currentContactPhysics-&gt;ks*currentContactGeometry-&gt;shear;
++				} else {
++					currentContactGeometry-&gt;updateShearForce(shearForce,currentContactPhysics-&gt;ks,currentContactPhysics-&gt;prevNormal,de1,de2,dt);
++				}
++			#else
++				currentContactGeometry-&gt;updateShearForce(shearForce,currentContactPhysics-&gt;ks,currentContactPhysics-&gt;prevNormal,de1,de2,dt);
++			#endif
++			
++			// PFC3d SlipModel, is using friction angle. CoulombCriterion
+ 			Real maxFs = currentContactPhysics-&gt;normalForce.SquaredLength() * std::pow(currentContactPhysics-&gt;tangensOfFrictionAngle,2);
+ 			if( shearForce.SquaredLength() &gt; maxFs )
+ 			{
+-				maxFs = Mathr::Sqrt(maxFs) / shearForce.Length();
+-				shearForce *= maxFs;
++				Real ratio = Mathr::Sqrt(maxFs) / shearForce.Length();
++				shearForce *= ratio;
++				#ifdef SCG_SHEAR
++					// in this case, total shear displacement must be updated as well
++					if(useShear) currentContactGeometry-&gt;shear*=ratio;
++				#endif
+ 			}
+-	////////// PFC3d SlipModel
++			////////// PFC3d SlipModel
+ 	
+ 			Vector3r f=currentContactPhysics-&gt;normalForce + shearForce;
+ 			Vector3r _c1x(currentContactGeometry-&gt;contactPoint-de1-&gt;se3.position),
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp	2009-03-19 17:55:37 UTC (rev 1725)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp	2009-03-22 14:01:25 UTC (rev 1726)
+@@ -11,6 +11,9 @@
+ #include&lt;yade/core/InteractionSolver.hpp&gt;
+ #include&lt;yade/core/PhysicalAction.hpp&gt;
+ 
++// only to see whether SCG_SHEAR is defined, may be removed in the future
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++
+ #include &lt;set&gt;
+ #include &lt;boost/tuple/tuple.hpp&gt;
+ 
+@@ -45,6 +48,9 @@
+ 	public :
+ 		int sdecGroupMask;
+ 		bool momentRotationLaw;
++		#ifdef SCG_SHEAR
++			bool useShear;
++		#endif
+ 	
+ 		ElasticContactLaw();
+ 		void action(MetaBody*);
+
+Modified: trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.cpp
+===================================================================
+--- trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.cpp	2009-03-19 17:55:37 UTC (rev 1725)
++++ trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.cpp	2009-03-22 14:01:25 UTC (rev 1726)
+@@ -22,6 +22,8 @@
+ 	#include &lt;Wm3Plane3.h&gt;
+ #endif
+ 
++CREATE_LOGGER(Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact);
++
+ bool is_point_inside_box(InteractingBox* b, Vector3r P)
+ {
+ 	return		std::abs(P[0]) &lt; std::abs(b-&gt;extents[0])
+@@ -231,7 +233,7 @@
+ 
+ 		//return true;
+ #else
+-		LOG_FATAL(&quot;Using miniWm3; recompile with full Wm3 support to make snow folly functional.&quot;);
++		LOG_FATAL(&quot;Using miniWm3; recompile with full Wm3 support to make snow fully functional.&quot;);
+ 		throw runtime_error(&quot;full wm3 required (message above).&quot;);
+ #endif
+ 	}
+
+Modified: trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.hpp
+===================================================================
+--- trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.hpp	2009-03-19 17:55:37 UTC (rev 1725)
++++ trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.hpp	2009-03-22 14:01:25 UTC (rev 1726)
+@@ -30,6 +30,8 @@
+ 					const Se3r&amp; se32,
+ 					const shared_ptr&lt;Interaction&gt;&amp; c);
+ 
++	DECLARE_LOGGER;
++
+ 	REGISTER_CLASS_NAME(Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact);
+ 	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
+ 
+
+Added: trunk/scripts/test/shear.py
+===================================================================
+--- trunk/scripts/test/shear.py	2009-03-19 17:55:37 UTC (rev 1725)
++++ trunk/scripts/test/shear.py	2009-03-22 14:01:25 UTC (rev 1726)
+@@ -0,0 +1,53 @@
++#
++# script for testing SpheresContactGeometry shear computation
++# Runs the same 2-sphere setup for useShear=False and for useShear=True
++#
++
++O.bodies.append([
++	utils.sphere([0,0,0],.5000001,dynamic=False,color=(1,0,0)),
++	utils.sphere([0,0,1],.5000001,dynamic=True,color=(0,0,1))
++])
++O.engines=[
++	MetaEngine('BoundingVolumeMetaEngine',[
++		EngineUnit('InteractingSphere2AABB'),
++		EngineUnit('InteractingFacet2AABB'),
++	]),
++	StandAloneEngine('PersistentSAPCollider',{'haveDistantTransient':True}),
++	MetaEngine('InteractionGeometryMetaEngine',[
++		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
++	]),
++	MetaEngine('InteractionPhysicsMetaEngine',[
++		EngineUnit('SimpleElasticRelationships')
++	]),
++	DeusExMachina('RotationEngine',{'rotationAxis':[1,1,0],'angularVelocity':.001,'subscribedBodies':[1]}),
++	StandAloneEngine('ElasticContactLaw',{'useShear':False}),
++	StandAloneEngine('PeriodicPythonRunner',{'iterPeriod':10000,'command':'interInfo()'}),
++	#DeusExMachina('NewtonsDampedLaw',{'damping':0})
++]
++O.miscParams=[
++	Generic('GLDrawSphere',{'glutUse':True})
++]
++
++O.dt=1e-8
++O.saveTmp('init')
++
++def interInfo():
++	i=O.interactions[0,1]
++	if 1:
++		print O.time,i.phys['shearForce']
++	else:
++		r1,r2=O.bodies[0].shape['radius'],O.bodies[1].shape['radius']
++		theta=[e['angularVelocity'] for e in O.engines if e.name=='RotationEngine'][0]
++		f=.5*(r1+r2)*theta*O.time*i.phys['ks']
++		print O.time,i.phys['shearForce'],f,i.phys['shearForce'][0]/f
++
++
++print '=========== no shear ============'
++O.run(100000,True)
++nIter=O.iter
++print '============= shear ============='
++O.loadTmp('init')
++ecl=[e for e in O.engines if e.name=='ElasticContactLaw'][0]
++ecl['useShear']=True
++O.run(nIter,True)
++quit()
+
+Added: trunk/scripts/test/triax-identical-results.py
+===================================================================
+--- trunk/scripts/test/triax-identical-results.py	2009-03-19 17:55:37 UTC (rev 1725)
++++ trunk/scripts/test/triax-identical-results.py	2009-03-22 14:01:25 UTC (rev 1726)
+@@ -0,0 +1,32 @@
++# Test if different algorithm version give same results for TriaxialTest.
++#
++# The first run creates initial sphere packing, and saves resulting positions
++# after 2000 steps. Subsequent runs only save resulting positions.
++#
++# Compare output files with diff to see if the are 100% identical
++#
++from os.path import exists
++sph='triax-identical-results'
++i=0; outSph=''
++while True:
++	outSph='%s-out%02d.spheres'%(sph,i)
++	if not exists(outSph): break
++	i+=1
++inSph='%s-in.spheres'%sph
++if exists(inSph):
++	print &quot;Using existing initial configuration&quot;,inSph
++Preprocessor('TriaxialTest',{'importFilename':(inSph if exists(inSph) else ''),'numberOfGrains':400}).load()
++if not exists(inSph):
++	print &quot;Saving new initial configuration to&quot;,inSph
++	utils.spheresToFile(inSph)
++O.usesTimeStepper=False
++O.dt=utils.PWaveTimeStep()
++#
++# uncomment this line to enable shear computation in SpheresContactGeometry and then compare results with this line commented
++#
++#[e for e in O.engines if e.name=='ElasticContactLaw'][0]['useShear']=True
++if 1:
++	O.run(2000,True)
++	utils.spheresToFile(outSph)
++	print &quot;Results saved to&quot;,outSph
++	quit()
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000884.html">[deprecated list] [Yade-dev] [robot] build failed
+</A></li>
+	<LI>Next message: <A HREF="000886.html">[deprecated list] [Yade-dev] [svn] r1727 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#885">[ date ]</a>
+              <a href="thread.html#885">[ thread ]</a>
+              <a href="subject.html#885">[ subject ]</a>
+              <a href="author.html#885">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

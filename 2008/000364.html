@@ -1,0 +1,575 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1519 - in trunk:	examples	examples/rod_penetration pkg/common	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1519%20-%20in%20trunk%3A%0A%09examples%09examples/rod_penetration%20pkg/common%0A%09pkg/common/Engine/DeusExMachina%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200809200848.m8K8meLj019666%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000361.html">
+   <LINK REL="Next"  HREF="000366.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1519 - in trunk:	examples	examples/rod_penetration pkg/common	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1519%20-%20in%20trunk%3A%0A%09examples%09examples/rod_penetration%20pkg/common%0A%09pkg/common/Engine/DeusExMachina%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200809200848.m8K8meLj019666%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1519 - in trunk:	examples	examples/rod_penetration pkg/common	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine">sega at mail.berlios.de
+       </A><BR>
+    <I>Sat Sep 20 10:48:40 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000361.html">[deprecated list] [Yade-dev] significat timestep improvement with non-incremental shear computation
+</A></li>
+        <LI>Next message: <A HREF="000366.html">[deprecated list] [Yade-dev] [svn] r1520 - in trunk:	core	pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#364">[ date ]</a>
+              <a href="thread.html#364">[ thread ]</a>
+              <a href="subject.html#364">[ subject ]</a>
+              <a href="author.html#364">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2008-09-20 10:47:19 +0200 (Sat, 20 Sep 2008)
+New Revision: 1519
+
+Added:
+   trunk/examples/rod_penetration/
+   trunk/examples/rod_penetration/model.py
+   trunk/examples/rod_penetration/rod-coarse.stl
+   trunk/examples/rod_penetration/rod-fine.stl
+   trunk/examples/rod_penetration/rod-tiny.stl
+   trunk/pkg/common/Engine/StandAloneEngine/ResetPositionEngine.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/ResetPositionEngine.hpp
+Removed:
+   trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp
+Modified:
+   trunk/pkg/common/SConscript
+Log:
+1. ResetPositionEngine is now inherited from PeriodicEngine.
+2. Add examples/rod_penetration model and geometry.
+
+
+Added: trunk/examples/rod_penetration/model.py
+===================================================================
+--- trunk/examples/rod_penetration/model.py	2008-09-18 11:16:48 UTC (rev 1518)
++++ trunk/examples/rod_penetration/model.py	2008-09-20 08:47:19 UTC (rev 1519)
+@@ -0,0 +1,92 @@
++#!/usr/local/bin/yade-trunk -x
++# -*- encoding=utf-8 -*-
++
++from yade import utils
++import random
++
++## PhysicalParameters 
++Young = 15e6
++Poisson = 0.2
++
++## Variant of mesh
++mesh = 'coarse'
++#mesh = 'fine'
++#mesh = 'tiny'
++
++## Omega
++o=Omega() 
++
++## Import geometry 
++rod = utils.import_stl_geometry('rod-'+mesh+'.stl',wire=True,young=Young,poisson=Poisson)
++shrinkFactor=0.005
++
++# Spheres
++sphereRadius = 0.01
++nbSpheres = (32,11,32) 
++print &quot;Creating %d spheres...&quot;%(nbSpheres[0]*nbSpheres[1]*nbSpheres[2]),
++for i in xrange(nbSpheres[0]):
++    for j in xrange(nbSpheres[1]):
++		for k in xrange(nbSpheres[2]):
++			x = (i*2 - nbSpheres[0])*sphereRadius*1.1+sphereRadius*random.uniform(-0.1,0.1)
++			y = -j*sphereRadius*2.2-0.01
++			z = (k*2 - nbSpheres[2])*sphereRadius*1.1+sphereRadius*random.uniform(-0.1,0.1)
++			r = random.uniform(sphereRadius,sphereRadius*0.9)
++			dynamic = True
++			color=[0.51,0.52,0.4]
++			if (i==0 or i==nbSpheres[0]-1 or j==nbSpheres[1]-1 or k==0 or k==nbSpheres[2]-1): 
++				dynamic = False
++				color=[0.21,0.22,0.1]
++			o.bodies.append(utils.sphere([x,y,z],r,young=Young,poisson=Poisson,density=2400,color=color,dynamic=dynamic))
++print &quot;done\n&quot;
++
++## Estimate time step
++#o.dt=utils.PWaveTimeStep()
++o.dt=0.0001
++
++## Initializers 
++o.initializers=[
++	StandAloneEngine('PhysicalActionContainerInitializer'),
++	MetaEngine('BoundingVolumeMetaEngine',[
++		EngineUnit('InteractingSphere2AABB'),
++		EngineUnit('InteractingFacet2AABB'),
++		EngineUnit('MetaInteractingGeometry2AABB')])
++	]
++
++## Engines 
++o.engines=[
++	StandAloneEngine('PhysicalActionContainerReseter'),
++	MetaEngine('BoundingVolumeMetaEngine',[
++		EngineUnit('InteractingSphere2AABB'),
++		EngineUnit('InteractingFacet2AABB'),
++		EngineUnit('MetaInteractingGeometry2AABB')
++	]),
++	StandAloneEngine('PersistentSAPCollider'),
++	MetaEngine('InteractionGeometryMetaEngine',[
++		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
++		EngineUnit('InteractingFacet2InteractingSphere4SpheresContactGeometry',{'shrinkFactor':shrinkFactor})
++	]),
++	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('MacroMicroElasticRelationships')]),
++	StandAloneEngine('ElasticContactLaw'),
++	DeusExMachina('GravityEngine',{'gravity':[0,-9.81,0]}),
++	DeusExMachina('NewtonsDampedLaw',{'damping':0.3}),
++	## Apply kinematics to rod
++	DeusExMachina('TranslationEngine',{'subscribedBodies':range(rod),'translationAxis':[0,-1,0],'velocity':0.075}),
++	## Save force on rod
++	StandAloneEngine('ForceRecorder',{'startId':0,'endId':rod-1,'outputFile':'force-'+mesh+'.dat','interval':50}),	
++	## Save positions
++	StandAloneEngine('SQLiteRecorder',{'recorders':['se3'],'dbFile':'positions-'+mesh+'.sqlite','iterPeriod':100})
++
++]
++
++o.save('/tmp/scene.xml.bz2');
++
++import sys,time
++
++print &quot;Start simulation: &quot; + mesh
++nbIter=10000
++for t in xrange(2):
++	start=time.time();o.run(nbIter);o.wait();finish=time.time() 
++	speed=nbIter/(finish-start); print '%g iter/sec\n'%speed
++print &quot;FINISH&quot;
++quit()
++
+
+Added: trunk/examples/rod_penetration/rod-coarse.stl
+===================================================================
+(Binary files differ)
+
+
+Property changes on: trunk/examples/rod_penetration/rod-coarse.stl
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+Added: trunk/examples/rod_penetration/rod-fine.stl
+===================================================================
+(Binary files differ)
+
+
+Property changes on: trunk/examples/rod_penetration/rod-fine.stl
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+Added: trunk/examples/rod_penetration/rod-tiny.stl
+===================================================================
+(Binary files differ)
+
+
+Property changes on: trunk/examples/rod_penetration/rod-tiny.stl
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+Deleted: trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp	2008-09-18 11:16:48 UTC (rev 1518)
++++ trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp	2008-09-20 08:47:19 UTC (rev 1519)
+@@ -1,108 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2008 by Sergei Dorofeenko				 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include&quot;ResetPositionEngine.hpp&quot;
+-#include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
+-#include&lt;boost/foreach.hpp&gt;
+-
+-CREATE_LOGGER(ResetPositionEngine);
+-
+-ResetPositionEngine::ResetPositionEngine(){
+-		Y_min=-1;
+-		interval=0;
+-		ini_pos.clear();
+-		initial_positions.clear();
+-		subscrBodies.clear();
+-		fileName=&quot;&quot;;
+-		first=true;
+-		onlyDynamic=false;
+-}
+-
+-void ResetPositionEngine::postProcessAttributes(bool deserializing){}
+-
+-void ResetPositionEngine::registerAttributes(){
+-	DeusExMachina::registerAttributes(); // for subscribedBodies
+-	REGISTER_ATTRIBUTE(interval);
+-	REGISTER_ATTRIBUTE(onlyDynamic);
+-	REGISTER_ATTRIBUTE(Y_min);
+-	REGISTER_ATTRIBUTE(initial_positions);
+-	REGISTER_ATTRIBUTE(fileName);
+-}
+-
+-
+-void ResetPositionEngine::applyCondition(MetaBody * ncb)
+-{
+-	if (first) { initialize(ncb); return; }
+-
+-	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-	for(int i=0,e=subscrBodies.size(); i&lt;e; ++i)
+-	{
+-			ParticleParameters* pp = YADE_CAST&lt;ParticleParameters*&gt;((*bodies)[subscrBodies[i]]-&gt;physicalParameters.get());
+-			if (pp-&gt;se3.position[1]&lt;Y_min)
+-			{
+-					pp-&gt;se3.position = ini_pos[i];
+-					pp-&gt;velocity = Vector3r(0,0,0);
+-			}
+-	}
+-}
+-
+-void ResetPositionEngine::initialize(MetaBody * ncb)
+-{
+-	first=false;
+-	if (onlyDynamic)
+-	{
+-		FOREACH(shared_ptr&lt;Body&gt; b, *ncb-&gt;bodies) { if(b-&gt;isDynamic) subscrBodies.push_back(b-&gt;getId()); }
+-	}
+-	else
+-		subscrBodies.assign(subscribedBodies.begin(),subscribedBodies.end());
+-
+-	if (fileName==&quot;&quot;)
+-	{ 
+-		if (initial_positions.size()==0) 	
+-		{ // initialize positions from bodies se3
+-			LOG_INFO(&quot;Initialize positions from bodies se3&quot;);
+-			initial_positions.resize(subscrBodies.size());
+-			shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-			for(int i=0,e=subscrBodies.size(); i&lt;e; ++i)
+-				initial_positions[i]=(*bodies)[subscrBodies[i]]-&gt;physicalParameters-&gt;se3.position;
+-		}
+-		ini_pos.assign(initial_positions.begin(),initial_positions.end());
+-		return;
+-	}
+-	
+-	std::ifstream is(fileName.c_str());
+-	if (is) 
+-	{// reading positions from file 
+-		LOG_INFO(&quot;Reading positions from file: &quot; &lt;&lt; fileName);
+-		ini_pos.resize(subscrBodies.size());
+-		for(int i=0,e=subscrBodies.size(); i&lt;e &amp;&amp; !is.eof(); ++i)
+-			is &gt;&gt; ini_pos[i][0] &gt;&gt; ini_pos[i][1] &gt;&gt; ini_pos[i][2];
+-		return;
+-	}
+-	
+-	// initialize positions form bodies se3 if need and export to file
+-	if (initial_positions.size()==0)
+-	{
+-		LOG_INFO(&quot;Initialize positions from bodies se3&quot;);
+-		ini_pos.resize(subscrBodies.size());
+-		shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-		for(int i=0,e=subscrBodies.size(); i&lt;e; ++i)
+-			ini_pos[i]=(*bodies)[subscrBodies[i]]-&gt;physicalParameters-&gt;se3.position;
+-	}
+-	else ini_pos.swap(initial_positions);
+-	std::ofstream os(fileName.c_str());
+-	if (!os) {
+-		LOG_ERROR(&quot;Can't open file to export positions: &quot;&lt;&lt;fileName&lt;&lt;&quot;!&quot;);
+-		return;
+-	}
+-	LOG_INFO(&quot;Export positions to file: &quot;&lt;&lt;fileName);
+-	for(int i=0,e=subscrBodies.size(); i&lt;e; ++i)
+-		os &lt;&lt; ini_pos[i][0]&lt;&lt; '\t' &lt;&lt; ini_pos[i][1]&lt;&lt; '\t' &lt;&lt; ini_pos[i][2]&lt;&lt; std::endl;
+-}
+-YADE_PLUGIN();
+
+Deleted: trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp	2008-09-18 11:16:48 UTC (rev 1518)
++++ trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp	2008-09-20 08:47:19 UTC (rev 1519)
+@@ -1,53 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2008 by Sergei Dorofeenko				 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#ifndef RESETPOSITONENGINE_HPP
+-#define RESETPOSITONENGINE_HPP
+-
+-#include&lt;yade/core/DeusExMachina.hpp&gt;
+-#include &lt;Wm3Vector3.h&gt;
+-#include&lt;yade/lib-base/yadeWm3.hpp&gt;
+-
+-/*! \brief Reset the spatial position of all subscribed bodies to the desired value. 
+- *
+- *
+- * */
+-class ResetPositionEngine : public DeusExMachina {
+-	public:
+-		void applyCondition(MetaBody*);
+-		bool isActivated()
+-				{return ((Omega::instance().getCurrentIteration() % interval == 0));}
+-		ResetPositionEngine();
+-
+-		int interval;
+-		Real Y_min;
+-		/// \brief import/export desired positions from file.
+-		/// If fileName is set and initial_positions are not set, then positions are read from file.
+-		/// If fileName is not set and initial_positions are set, then positions are read bodies se3
+-		std::string fileName; 
+-		std::vector&lt;Vector3r&gt; initial_positions; // for serialization
+-		/// if true ResetPositionEngine is active for all isDynamic bodies 
+-		bool onlyDynamic;
+-		
+-		DECLARE_LOGGER;
+-	protected:
+-		virtual void postProcessAttributes(bool);
+-		virtual void registerAttributes();
+-	REGISTER_CLASS_NAME(ResetPositionEngine);
+-	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+-	private:
+-		std::vector&lt;Vector3r&gt; ini_pos;
+-		std::vector&lt;long int&gt; subscrBodies;
+-		bool first;
+-		void initialize(MetaBody * ncb);
+-};
+-
+-REGISTER_SERIALIZABLE(ResetPositionEngine,false);
+-
+-#endif //  RESETPOSITONENGINE_HPP
+-
+
+Copied: trunk/pkg/common/Engine/StandAloneEngine/ResetPositionEngine.cpp (from rev 1518, trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp)
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.cpp	2008-09-18 11:16:48 UTC (rev 1518)
++++ trunk/pkg/common/Engine/StandAloneEngine/ResetPositionEngine.cpp	2008-09-20 08:47:19 UTC (rev 1519)
+@@ -0,0 +1,98 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&quot;ResetPositionEngine.hpp&quot;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
++#include&lt;boost/foreach.hpp&gt;
++
++CREATE_LOGGER(ResetPositionEngine);
++
++ResetPositionEngine::ResetPositionEngine(){
++		Y_min=-1;
++		ini_pos.clear();
++		initial_positions.clear();
++		subscribedBodies.clear();
++		fileName=&quot;&quot;;
++		first=true;
++}
++
++void ResetPositionEngine::postProcessAttributes(bool deserializing){}
++
++void ResetPositionEngine::registerAttributes(){
++	PeriodicEngine::registerAttributes(); // for subscribedBodies
++	REGISTER_ATTRIBUTE(Y_min);
++	REGISTER_ATTRIBUTE(subscribedBodies);
++	REGISTER_ATTRIBUTE(initial_positions);
++	REGISTER_ATTRIBUTE(fileName);
++}
++
++
++void ResetPositionEngine::action(MetaBody * ncb)
++{
++	if (first) { initialize(ncb); return; }
++
++	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++	for(int i=0,e=subscribedBodies.size(); i&lt;e; ++i)
++	{
++			ParticleParameters* pp = YADE_CAST&lt;ParticleParameters*&gt;((*bodies)[subscribedBodies[i]]-&gt;physicalParameters.get());
++			if (pp-&gt;se3.position[1]&lt;Y_min)
++			{
++					pp-&gt;se3.position = ini_pos[i];
++					pp-&gt;velocity = Vector3r(0,0,0);
++			}
++	}
++}
++
++void ResetPositionEngine::initialize(MetaBody * ncb)
++{
++	first=false;
++	if (fileName==&quot;&quot;)
++	{ 
++		if (initial_positions.size()==0) 	
++		{ // initialize positions from bodies se3
++			LOG_INFO(&quot;Initialize positions from bodies se3&quot;);
++			initial_positions.resize(subscribedBodies.size());
++			shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++			for(int i=0,e=subscribedBodies.size(); i&lt;e; ++i)
++				initial_positions[i]=(*bodies)[subscribedBodies[i]]-&gt;physicalParameters-&gt;se3.position;
++		}
++		ini_pos.assign(initial_positions.begin(),initial_positions.end());
++		return;
++	}
++	
++	std::ifstream is(fileName.c_str());
++	if (is) 
++	{// reading positions from file 
++		LOG_INFO(&quot;Reading positions from file: &quot; &lt;&lt; fileName);
++		ini_pos.resize(subscribedBodies.size());
++		for(int i=0,e=subscribedBodies.size(); i&lt;e &amp;&amp; !is.eof(); ++i)
++			is &gt;&gt; ini_pos[i][0] &gt;&gt; ini_pos[i][1] &gt;&gt; ini_pos[i][2];
++		return;
++	}
++	
++	// initialize positions form bodies se3 if need and export to file
++	if (initial_positions.size()==0)
++	{
++		LOG_INFO(&quot;Initialize positions from bodies se3&quot;);
++		ini_pos.resize(subscribedBodies.size());
++		shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++		for(int i=0,e=subscribedBodies.size(); i&lt;e; ++i)
++			ini_pos[i]=(*bodies)[subscribedBodies[i]]-&gt;physicalParameters-&gt;se3.position;
++	}
++	else ini_pos.swap(initial_positions);
++	std::ofstream os(fileName.c_str());
++	if (!os) {
++		LOG_ERROR(&quot;Can't open file to export positions: &quot;&lt;&lt;fileName&lt;&lt;&quot;!&quot;);
++		return;
++	}
++	LOG_INFO(&quot;Export positions to file: &quot;&lt;&lt;fileName);
++	for(int i=0,e=subscribedBodies.size(); i&lt;e; ++i)
++		os &lt;&lt; ini_pos[i][0]&lt;&lt; '\t' &lt;&lt; ini_pos[i][1]&lt;&lt; '\t' &lt;&lt; ini_pos[i][2]&lt;&lt; std::endl;
++}
++YADE_PLUGIN();
+
+
+Property changes on: trunk/pkg/common/Engine/StandAloneEngine/ResetPositionEngine.cpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/pkg/common/Engine/StandAloneEngine/ResetPositionEngine.hpp (from rev 1518, trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp)
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/ResetPositionEngine.hpp	2008-09-18 11:16:48 UTC (rev 1518)
++++ trunk/pkg/common/Engine/StandAloneEngine/ResetPositionEngine.hpp	2008-09-20 08:47:19 UTC (rev 1519)
+@@ -0,0 +1,49 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef RESETPOSITONENGINE_HPP
++#define RESETPOSITONENGINE_HPP
++
++#include&lt;yade/pkg-common/PeriodicEngines.hpp&gt;
++#include &lt;Wm3Vector3.h&gt;
++#include&lt;yade/lib-base/yadeWm3.hpp&gt;
++
++/*! \brief Reset the spatial position of all subscribed bodies to the desired value. 
++ *
++ *
++ * */
++class ResetPositionEngine : public PeriodicEngine {
++	public:
++		void action(MetaBody*);
++		bool isActivated() {if (first) return true; else return PeriodicEngine::isActivated();}
++		ResetPositionEngine();
++
++		Real Y_min;
++		/// \brief import/export desired positions from file.
++		/// If fileName is set and initial_positions are not set, then positions are read from file.
++		/// If fileName is not set and initial_positions are set, then positions are read bodies se3
++		std::string fileName; 
++		std::vector&lt; int &gt;   subscribedBodies;
++		std::vector&lt;Vector3r&gt; initial_positions; // for serialization
++		
++		DECLARE_LOGGER;
++	protected:
++		virtual void postProcessAttributes(bool);
++		virtual void registerAttributes();
++	REGISTER_CLASS_NAME(ResetPositionEngine);
++	REGISTER_BASE_CLASS_NAME(PeriodicEngine);
++	private:
++		std::vector&lt;Vector3r&gt; ini_pos;
++		bool first;
++		void initialize(MetaBody * ncb);
++};
++
++REGISTER_SERIALIZABLE(ResetPositionEngine,false);
++
++#endif //  RESETPOSITONENGINE_HPP
++
+
+
+Property changes on: trunk/pkg/common/Engine/StandAloneEngine/ResetPositionEngine.hpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2008-09-18 11:16:48 UTC (rev 1518)
++++ trunk/pkg/common/SConscript	2008-09-20 08:47:19 UTC (rev 1519)
+@@ -63,7 +63,7 @@
+ 	env.SharedLibrary('DisplacementEngine',['Engine/DeusExMachina/DisplacementEngine.cpp']),
+ 	env.SharedLibrary('FixedPositionEngine',['Engine/DeusExMachina/FixedPositionEngine.cpp']),
+ 	env.SharedLibrary('FixedOrientationEngine',['Engine/DeusExMachina/FixedOrientationEngine.cpp']),
+-	env.SharedLibrary('ResetPositionEngine',['Engine/DeusExMachina/ResetPositionEngine.cpp'],
++	env.SharedLibrary('ResetPositionEngine',['Engine/StandAloneEngine/ResetPositionEngine.cpp'],
+ 		LIBS=env['LIBS']+['ParticleParameters']),
+ 	env.SharedLibrary('FilterEngine',['Engine/FilterEngine/FilterEngine.cpp']),
+ 	env.SharedLibrary('ColorizedLayerFilter',['Engine/FilterEngine/ColorizedLayerFilter.cpp'],
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000361.html">[deprecated list] [Yade-dev] significat timestep improvement with non-incremental shear computation
+</A></li>
+	<LI>Next message: <A HREF="000366.html">[deprecated list] [Yade-dev] [svn] r1520 - in trunk:	core	pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#364">[ date ]</a>
+              <a href="thread.html#364">[ thread ]</a>
+              <a href="subject.html#364">[ subject ]</a>
+              <a href="author.html#364">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

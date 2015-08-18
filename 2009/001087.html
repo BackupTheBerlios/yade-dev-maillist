@@ -1,0 +1,3164 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1829 - in trunk: core extra gui	gui/py lib lib/py	pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1829%20-%20in%20trunk%3A%20core%20extra%20gui%0A%09gui/py%20lib%20lib/py%09pkg/dem/PreProcessor&In-Reply-To=%3C200907011827.n61IRm3s009661%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001086.html">
+   <LINK REL="Next"  HREF="001088.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1829 - in trunk: core extra gui	gui/py lib lib/py	pkg/dem/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1829%20-%20in%20trunk%3A%20core%20extra%20gui%0A%09gui/py%20lib%20lib/py%09pkg/dem/PreProcessor&In-Reply-To=%3C200907011827.n61IRm3s009661%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1829 - in trunk: core extra gui	gui/py lib lib/py	pkg/dem/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul  1 20:27:48 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001086.html">[deprecated list] [Yade-dev] [svn] r1828 - trunk/extra/mgpost/src
+</A></li>
+        <LI>Next message: <A HREF="001088.html">[deprecated list] [Yade-dev] [svn] r1829 - in trunk: core extra	gui gui/py lib	lib/py pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1087">[ date ]</a>
+              <a href="thread.html#1087">[ thread ]</a>
+              <a href="subject.html#1087">[ subject ]</a>
+              <a href="author.html#1087">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-01 20:27:44 +0200 (Wed, 01 Jul 2009)
+New Revision: 1829
+
+Added:
+   trunk/lib/py/_eudoxos.cpp
+   trunk/lib/py/_packPredicates.cpp
+   trunk/lib/py/_utils.cpp
+   trunk/lib/py/eudoxos.py
+   trunk/lib/py/linterpolation.py
+   trunk/lib/py/log.cpp
+   trunk/lib/py/pack.py
+   trunk/lib/py/plot.py
+   trunk/lib/py/timing.py
+   trunk/lib/py/utils.py
+Removed:
+   trunk/gui/py/_eudoxos.cpp
+   trunk/gui/py/_packPredicates.cpp
+   trunk/gui/py/_utils.cpp
+   trunk/gui/py/eudoxos.py
+   trunk/gui/py/linterpolation.py
+   trunk/gui/py/log.cpp
+   trunk/gui/py/pack.py
+   trunk/gui/py/plot.py
+   trunk/gui/py/timing.py
+   trunk/gui/py/utils.py
+Modified:
+   trunk/core/Omega.cpp
+   trunk/core/Omega.hpp
+   trunk/extra/Shop.cpp
+   trunk/gui/SConscript
+   trunk/gui/py/yadeControl.cpp
+   trunk/lib/SConscript
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+Log:
+1. Add triaxial packing generator, with optional memoization to sqlite database to avoid generating packing if there are suitable ones (same parameters/scalable to same parameters) available. Sample script will be provided soon. This allows for filling arbitrary (gts-defined, for example) volumes with irregular, high-quality sphere packing.
+2. Add python-wrapped class SpherePack for manipulating sphere packings (loading, saving, spatial transformations, iterating)
+3. Add shared_ptr&lt;MetaBody&gt; Omega::rootBodyAnother to be used with Omega().switchWorld()
+4. Move some stuff from gui/py to lib/py, which is more logical hopefully
+5. If negative value is specified for TriaxialTest::thickness, wall thickness will correspond to the mean sphere radius (avoids spheres going through the walls during compaction for some radii)
+
+
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2009-07-01 12:00:32 UTC (rev 1828)
++++ trunk/core/Omega.cpp	2009-07-01 18:27:44 UTC (rev 1829)
+@@ -81,6 +81,7 @@
+ void Omega::init(){
+ 	simulationFileName=&quot;&quot;;
+ 	resetRootBody();
++	rootBodyAnother=shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 	timeInit();
+ }
+ 
+
+Modified: trunk/core/Omega.hpp
+===================================================================
+--- trunk/core/Omega.hpp	2009-07-01 12:00:32 UTC (rev 1828)
++++ trunk/core/Omega.hpp	2009-07-01 18:27:44 UTC (rev 1829)
+@@ -74,7 +74,10 @@
+ 
+ 		map&lt;string,DynlibDescriptor&gt;	 dynlibs;	// FIXME : should store that in ClassFactory ?
+ 		
+-		shared_ptr&lt;MetaBody&gt;		 rootBody;
++		shared_ptr&lt;MetaBody&gt;	rootBody;
++
++		shared_ptr&lt;MetaBody&gt;	rootBodyAnother; // used for temporarily running different simulation, in Omega().switchWorld()
++
+ 		//ptime				 sStartingSimulationTime;
+ 		ptime				 msStartingSimulationTime;
+ 		ptime				 msStartingPauseTime;
+
+Modified: trunk/extra/Shop.cpp
+===================================================================
+--- trunk/extra/Shop.cpp	2009-07-01 12:00:32 UTC (rev 1828)
++++ trunk/extra/Shop.cpp	2009-07-01 18:27:44 UTC (rev 1829)
+@@ -403,7 +403,7 @@
+ 		shared_ptr&lt;InteractingSphere&gt;	intSph=dynamic_pointer_cast&lt;InteractingSphere&gt;(b-&gt;interactingGeometry);
+ 		if(!intSph) continue;
+ 		const Vector3r&amp; pos=b-&gt;physicalParameters-&gt;se3.position;
+-		f&lt;&lt;pos[0]&lt;&lt;&quot; &quot;&lt;&lt;pos[1]&lt;&lt;&quot; &quot;&lt;&lt;pos[2]&lt;&lt;&quot; &quot;&lt;&lt;intSph-&gt;radius&lt;&lt;&quot; &quot;&lt;&lt;1&lt;&lt;&quot; &quot;&lt;&lt;1&lt;&lt;endl;
++		f&lt;&lt;pos[0]&lt;&lt;&quot; &quot;&lt;&lt;pos[1]&lt;&lt;&quot; &quot;&lt;&lt;pos[2]&lt;&lt;&quot; &quot;&lt;&lt;intSph-&gt;radius&lt;&lt;endl; // &lt;&lt;&quot; &quot;&lt;&lt;1&lt;&lt;&quot; &quot;&lt;&lt;1&lt;&lt;endl;
+ 	}
+ 	f.close();
+ }
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2009-07-01 12:00:32 UTC (rev 1828)
++++ trunk/gui/SConscript	2009-07-01 18:27:44 UTC (rev 1829)
+@@ -73,27 +73,21 @@
+ 				'Clump'
+ 			],
+ 			),
+-		env.SharedLibrary('_utils',['py/_utils.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['Shop','ConcretePM']),
+-		env.SharedLibrary('_packPredicates',['py/_packPredicates.cpp'],SHLIBPREFIX='',
+-			# if we compile with GTS, link to the python module, as inGtsSurface uses some of its symbols.
+-			# because the module doesn't have the lib- suffix, we put it directly to SHLINKFLAGS
+-			# using the -l: syntax (see man ld) and declare the dependency below
+-			SHLINKFLAGS=env['SHLINKFLAGS']+(['-l:$PREFIX/lib/yade$SUFFIX/py/gts/_gts.so'] if 'GTS' in env['features'] else [])),
+-		env.SharedLibrary('_eudoxos',['py/_eudoxos.cpp'],SHLIBPREFIX='',CXXFLAGS=env['CXXFLAGS']+([] if not os.path.exists('../../brefcom-mm.hh') else ['-include','../brefcom-mm.hh']),LIBS=env['LIBS']+['Shop','ConcretePM']),
+-		env.SharedLibrary('log',['py/log.cpp'],SHLIBPREFIX=''),
++		#env.SharedLibrary('_utils',['py/_utils.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['Shop','ConcretePM']),
++		#env.SharedLibrary('_packPredicates',['py/_packPredicates.cpp'],SHLIBPREFIX='',
++		#	# if we compile with GTS, link to the python module, as inGtsSurface uses some of its symbols.
++		#	# because the module doesn't have the lib- suffix, we put it directly to SHLINKFLAGS
++		#	# using the -l: syntax (see man ld) and declare the dependency below
++		#	SHLINKFLAGS=env['SHLINKFLAGS']+(['-l:$PREFIX/lib/yade$SUFFIX/py/gts/_gts.so'] if 'GTS' in env['features'] else [])),
++		#env.SharedLibrary('_eudoxos',['py/_eudoxos.cpp'],SHLIBPREFIX='',CXXFLAGS=env['CXXFLAGS']+([] if not os.path.exists('../../brefcom-mm.hh') else ['-include','../brefcom-mm.hh']),LIBS=env['LIBS']+['Shop','ConcretePM']),
++		#env.SharedLibrary('log',['py/log.cpp'],SHLIBPREFIX=''),
+ 		env.File('__init__.py','py'),
+-		env.File('utils.py','py'),
+-		env.File('eudoxos.py','py'),
+ 		env.File('runtime.py','py'),
+ 		env.File('ipython.py','py'),
+-		env.File('plot.py','py'),
+-		env.File('linterpolation.py','py'),
+-		env.File('timing.py','py'),
+ 		env.File('PythonTCPServer.py','py'),
+-		env.File('pack.py','py'),
+ 	])
+-	if os.path.exists('../../brefcom-mm.hh'): Depends('py/_eudoxos.cpp','../../brefcom-mm.hh')
++	#if os.path.exists('../../brefcom-mm.hh'): Depends('py/_eudoxos.cpp','../../brefcom-mm.hh')
+ 	# see comments for _packPredicates above
+-	if 'GTS' in env['features']: env.Depends('_packPredicates.so','$PREFIX/lib/yade$SUFFIX/py/gts/_gts.so')
++	#if 'GTS' in env['features']: env.Depends('_packPredicates.so','$PREFIX/lib/yade$SUFFIX/py/gts/_gts.so')
+ 
+ 
+
+Deleted: trunk/gui/py/_eudoxos.cpp
+===================================================================
+--- trunk/gui/py/_eudoxos.cpp	2009-07-01 12:00:32 UTC (rev 1828)
++++ trunk/gui/py/_eudoxos.cpp	2009-07-01 18:27:44 UTC (rev 1829)
+@@ -1,92 +0,0 @@
+-#include&lt;yade/pkg-dem/ConcretePM.hpp&gt;
+-#include&lt;boost/python.hpp&gt;
+-#include&lt;yade/extra/boost_python_len.hpp&gt;
+-using namespace boost::python;
+-using namespace std;
+-#ifdef LOG4CXX
+-	log4cxx::LoggerPtr logger=log4cxx::Logger::getLogger(&quot;yade.eudoxos&quot;);
+-#endif
+-
+-# if 0
+-Real elasticEnergyDensityInAABB(python::tuple AABB){
+-	Vector3r bbMin=tuple2vec(python::extract&lt;python::tuple&gt;(AABB[0])()), bbMax=tuple2vec(python::extract&lt;python::tuple&gt;(AABB[1])()); Vector3r box=bbMax-bbMin;
+-	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
+-	Real E=0;
+-	FOREACH(const shared_ptr&lt;Interaction&gt;&amp;i, *rb-&gt;transientInteractions){
+-		if(!i-&gt;interactionPhysics) continue;
+-		shared_ptr&lt;CpmPhys&gt; bc=dynamic_pointer_cast&lt;CpmPhys&gt;(i-&gt;interactionPhysics); if(!bc) continue;
+-		const shared_ptr&lt;Body&gt;&amp; b1=Body::byId(i-&gt;getId1(),rb), b2=Body::byId(i-&gt;getId2(),rb);
+-		bool isIn1=isInBB(b1-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax), isIn2=isInBB(b2-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax);
+-		if(!isIn1 &amp;&amp; !isIn2) continue;
+-		Real weight=1.;
+-		if((!isIn1 &amp;&amp; isIn2) || (isIn1 &amp;&amp; !isIn2)){
+-			//shared_ptr&lt;Body&gt; bIn=isIn1?b1:b2, bOut=isIn2?b2:b1;
+-			Vector3r vIn=(isIn1?b1:b2)-&gt;physicalParameters-&gt;se3.position, vOut=(isIn2?b1:b2)-&gt;physicalParameters-&gt;se3.position;
+-			#define _WEIGHT_COMPONENT(axis) if(vOut[axis]&lt;bbMin[axis]) weight=min(weight,abs((vOut[axis]-bbMin[axis])/(vOut[axis]-vIn[axis]))); else if(vOut[axis]&gt;bbMax[axis]) weight=min(weight,abs((vOut[axis]-bbMax[axis])/(vOut[axis]-vIn[axis])));
+-			_WEIGHT_COMPONENT(0); _WEIGHT_COMPONENT(1); _WEIGHT_COMPONENT(2);
+-			assert(weight&gt;=0 &amp;&amp; weight&lt;=1);
+-		}
+-		E+=.5*bc-&gt;E*bc-&gt;crossSection*pow(bc-&gt;epsN,2)+.5*bc-&gt;G*bc-&gt;crossSection*pow(bc-&gt;epsT.Length(),2);
+-	}
+-	return E/(box[0]*box[1]*box[2]);
+-}
+-#endif
+-
+-/* yield surface for the CPM model; this is used only to make yield surface plot from python, for debugging */
+-Real yieldSigmaTMagnitude(Real sigmaN, int yieldSurfType=0){
+-	#ifdef CPM_YIELD_SIGMA_T_MAGNITUDE
+-		/* find first suitable interaction */
+-		MetaBody* rootBody=Omega::instance().getRootBody().get();
+-		shared_ptr&lt;Interaction&gt; I;
+-		FOREACH(I, *rootBody-&gt;transientInteractions){
+-			if(I-&gt;isReal()) break;
+-		}
+-		Real nan=std::numeric_limits&lt;Real&gt;::quiet_NaN();
+-		if(!I-&gt;isReal()) {LOG_ERROR(&quot;No real interaction found, returning NaN!&quot;); return nan; }
+-		CpmPhys* BC=dynamic_cast&lt;CpmPhys*&gt;(I-&gt;interactionPhysics.get());
+-		if(!BC) {LOG_ERROR(&quot;Interaction physics is not CpmPhys instance, returning NaN!&quot;); return nan;}
+-		const Real &amp;omega(BC-&gt;omega); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle);
+-		const Real&amp; yieldLogSpeed(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldLogSpeed); // const int&amp; yieldSurfType(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldSurfType);
+-		const Real&amp; yieldEllipseShift(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldEllipseShift);
+-		return CPM_YIELD_SIGMA_T_MAGNITUDE(sigmaN);
+-	#else
+-		LOG_FATAL(&quot;CPM model not available in this build.&quot;);
+-		throw;
+-	#endif
+-}
+-
+-
+-// copied from _utils.cpp
+-Vector3r tuple2vec(const python::tuple&amp; t){return Vector3r(extract&lt;double&gt;(t[0])(),extract&lt;double&gt;(t[1])(),extract&lt;double&gt;(t[2])());}
+-
+-/*! Set velocity of all dynamic particles so that if their motion were unconstrained,
+- * axis given by axisPoint and axisDirection would be reached in timeToAxis
+- * (or, point at distance subtractDist from axis would be reached).
+- *
+- * The code is analogous to AxialGravityEngine and is intended to give initial motion
+- * to particles subject to axial compaction to speed up the process. */
+-void velocityTowardsAxis(python::tuple _axisPoint, python::tuple _axisDirection, Real timeToAxis, Real subtractDist=0., Real perturbation=0.1){
+-	Vector3r axisPoint=tuple2vec(_axisPoint), axisDirection=tuple2vec(_axisDirection);
+-	FOREACH(const shared_ptr&lt;Body&gt;&amp;b, *(Omega::instance().getRootBody()-&gt;bodies)){
+-		if(!b-&gt;isDynamic) continue;
+-		ParticleParameters* pp=YADE_CAST&lt;ParticleParameters*&gt;(b-&gt;physicalParameters.get());
+-		const Vector3r&amp; x0=pp-&gt;se3.position;
+-		const Vector3r&amp; x1=axisPoint;
+-		const Vector3r x2=axisPoint+axisDirection;
+-		Vector3r closestAxisPoint=(x2-x1) * /* t */ (-(x1-x0).Dot(x2-x1))/((x2-x1).SquaredLength());
+-		Vector3r toAxis=closestAxisPoint-x0;
+-		if(subtractDist&gt;0) toAxis*=(toAxis.Length()-subtractDist)/toAxis.Length();
+-		pp-&gt;velocity=toAxis/timeToAxis;
+-		Vector3r ppDiff=perturbation*(1./sqrt(3.))*Vector3r(Mathr::UnitRandom(),Mathr::UnitRandom(),Mathr::UnitRandom())*pp-&gt;velocity.Length();
+-		pp-&gt;velocity+=ppDiff;
+-	}
+-}
+-BOOST_PYTHON_FUNCTION_OVERLOADS(velocityTowardsAxis_overloads,velocityTowardsAxis,3,5);
+-
+-
+-
+-BOOST_PYTHON_MODULE(_eudoxos){
+-	def(&quot;velocityTowardsAxis&quot;,velocityTowardsAxis,velocityTowardsAxis_overloads(args(&quot;axisPoint&quot;,&quot;axisDirection&quot;,&quot;timeToAxis&quot;,&quot;subtractDist&quot;,&quot;perturbation&quot;)));
+-	def(&quot;yieldSigmaTMagnitude&quot;,yieldSigmaTMagnitude);
+-}
+-
+
+Deleted: trunk/gui/py/_packPredicates.cpp
+===================================================================
+--- trunk/gui/py/_packPredicates.cpp	2009-07-01 12:00:32 UTC (rev 1828)
++++ trunk/gui/py/_packPredicates.cpp	2009-07-01 18:27:44 UTC (rev 1829)
+@@ -1,351 +0,0 @@
+-// 2009 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+-#include&lt;boost/python.hpp&gt;
+-#include&lt;yade/extra/boost_python_len.hpp&gt;
+-#include&lt;yade/lib-base/Logging.hpp&gt;
+-#include&lt;yade/lib-base/yadeWm3.hpp&gt;
+-#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+-// #include&lt;yade/gui-py/_utils.hpp&gt; // will be: yade/lib-py/_utils.hpp&gt; at some point
+-#include&lt;Wm3Vector3.h&gt;
+-
+-using namespace boost;
+-using namespace std;
+-#ifdef LOG4CXX
+-	log4cxx::LoggerPtr logger=log4cxx::Logger::getLogger(&quot;yade.predicates&quot;);
+-#endif
+-
+-/*
+-This file contains various predicates that say whether a given point is within the solid,
+-or, not closer than &quot;pad&quot; to its boundary, if pad is nonzero
+-Besides the (point,pad) operator, each predicate defines aabb() method that returns
+-(min,max) tuple defining minimum and maximum point of axis-aligned bounding box 
+-for the predicate.
+-
+-These classes are primarily used for yade.pack.* functions creating packings.
+-See scripts/test/regular-sphere-pack.py for an example.
+-
+-*/
+-
+-// aux functions
+-python::tuple vec2tuple(const Vector3r&amp; v){return boost::python::make_tuple(v[0],v[1],v[2]);}
+-python::tuple vec2tuple(const Vector2r&amp; v){return boost::python::make_tuple(v[0],v[1]);}
+-Vector3r tuple2vec(const python::tuple&amp; t){return Vector3r(python::extract&lt;double&gt;(t[0])(),python::extract&lt;double&gt;(t[1])(),python::extract&lt;double&gt;(t[2])());}
+-Vector2r tuple2vec2d(const python::tuple&amp; t){return Vector2r(python::extract&lt;double&gt;(t[0])(),python::extract&lt;double&gt;(t[1])());}
+-void ttuple2vvec(const python::tuple&amp; t, Vector3r&amp; v1, Vector3r&amp; v2){ v1=tuple2vec(python::extract&lt;python::tuple&gt;(t[0])()); v2=tuple2vec(python::extract&lt;python::tuple&gt;(t[1])()); }
+-python::tuple vvec2ttuple(const Vector3r&amp;v1, const Vector3r&amp;v2){ return python::make_tuple(vec2tuple(v1),vec2tuple(v2)); }
+-
+-struct Predicate{
+-	public:
+-		virtual bool operator() (python::tuple pt,Real pad=0.) const = 0;
+-		virtual python::tuple aabb() const = 0;
+-};
+-// make the pad parameter optional
+-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(PredicateCall_overloads,operator(),1,2);
+-
+-/* Since we want to make Predicate::operator() and Predicate::aabb() callable from c++ on python::object
+-with the right virtual method resolution, we have to wrap the class in the following way. See 
+-<A HREF="http://www.boost.org/doc/libs/1_38_0/libs/python/doc/tutorial/doc/html/python/exposing.html">http://www.boost.org/doc/libs/1_38_0/libs/python/doc/tutorial/doc/html/python/exposing.html</A> for documentation
+-on exposing virtual methods.
+-
+-This makes it possible to derive a python class from Predicate, override its aabb() method, for instance,
+-and use it in PredicateUnion, which will call the python implementation of aabb() as it should. This
+-approach is used in the inGtsSurface class defined in pack.py.
+-
+-See scripts/test/gts-operators.py for an example.
+-
+-NOTE: you still have to call base class ctor in your class' ctor derived in python, e.g.
+-super(inGtsSurface,self).__init__() so that virtual methods work as expected.
+-*/
+-struct PredicateWrap: Predicate, python::wrapper&lt;Predicate&gt;{
+-	bool operator()(python::tuple pt, Real pad=0.) const { return this-&gt;get_override(&quot;__call__&quot;)(pt,pad);}
+-	python::tuple aabb() const { return this-&gt;get_override(&quot;aabb&quot;)(); }
+-};
+-// make the pad parameter optional
+-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(PredicateWrapCall_overloads,operator(),1,2);
+-
+-/*********************************************************************************
+-****************** Boolean operations on predicates ******************************
+-*********************************************************************************/
+-
+-const Predicate&amp; obj2pred(python::object obj){ return python::extract&lt;const Predicate&amp;&gt;(obj)();}
+-
+-class PredicateBoolean: public Predicate{
+-	protected:
+-		const python::object A,B;
+-	public:
+-		PredicateBoolean(const python::object _A, const python::object _B): A(_A), B(_B){}
+-		const python::object getA(){ return A;}
+-		const python::object getB(){ return B;}
+-};
+-
+-// <A HREF="http://www.linuxtopia.org/online_books/programming_books/python_programming/python_ch16s03.html">http://www.linuxtopia.org/online_books/programming_books/python_programming/python_ch16s03.html</A>
+-class PredicateUnion: public PredicateBoolean{
+-	public:
+-		PredicateUnion(const python::object _A, const python::object _B): PredicateBoolean(_A,_B){}
+-		virtual bool operator()(python::tuple pt,Real pad) const {return obj2pred(A)(pt,pad)||obj2pred(B)(pt,pad);}
+-		virtual python::tuple aabb() const { Vector3r minA,maxA,minB,maxB; ttuple2vvec(obj2pred(A).aabb(),minA,maxA); ttuple2vvec(obj2pred(B).aabb(),minB,maxB); return vvec2ttuple(componentMinVector(minA,minB),componentMaxVector(maxA,maxB));}
+-};
+-PredicateUnion makeUnion(const python::object&amp; A, const python::object&amp; B){ return PredicateUnion(A,B);}
+-
+-class PredicateIntersection: public PredicateBoolean{
+-	public:
+-		PredicateIntersection(const python::object _A, const python::object _B): PredicateBoolean(_A,_B){}
+-		virtual bool operator()(python::tuple pt,Real pad) const {return obj2pred(A)(pt,pad) &amp;&amp; obj2pred(B)(pt,pad);}
+-		virtual python::tuple aabb() const { Vector3r minA,maxA,minB,maxB; ttuple2vvec(obj2pred(A).aabb(),minA,maxA); ttuple2vvec(obj2pred(B).aabb(),minB,maxB); return vvec2ttuple(componentMaxVector(minA,minB),componentMinVector(maxA,maxB));}
+-};
+-PredicateIntersection makeIntersection(const python::object&amp; A, const python::object&amp; B){ return PredicateIntersection(A,B);}
+-
+-class PredicateDifference: public PredicateBoolean{
+-	public:
+-		PredicateDifference(const python::object _A, const python::object _B): PredicateBoolean(_A,_B){}
+-		virtual bool operator()(python::tuple pt,Real pad) const {return obj2pred(A)(pt,pad) &amp;&amp; !obj2pred(B)(pt,-pad);}
+-		virtual python::tuple aabb() const { return obj2pred(A).aabb(); }
+-};
+-PredicateDifference makeDifference(const python::object&amp; A, const python::object&amp; B){ return PredicateDifference(A,B);}
+-
+-class PredicateSymmetricDifference: public PredicateBoolean{
+-	public:
+-		PredicateSymmetricDifference(const python::object _A, const python::object _B): PredicateBoolean(_A,_B){}
+-		virtual bool operator()(python::tuple pt,Real pad) const {bool inA=obj2pred(A)(pt,pad), inB=obj2pred(B)(pt,pad); return (inA &amp;&amp; !inB) || (!inA &amp;&amp; inB);}
+-		virtual python::tuple aabb() const { Vector3r minA,maxA,minB,maxB; ttuple2vvec(obj2pred(A).aabb(),minA,maxA); ttuple2vvec(obj2pred(B).aabb(),minB,maxB); return vvec2ttuple(componentMinVector(minA,minB),componentMaxVector(maxA,maxB));}
+-};
+-PredicateSymmetricDifference makeSymmetricDifference(const python::object&amp; A, const python::object&amp; B){ return PredicateSymmetricDifference(A,B);}
+-
+-/*********************************************************************************
+-****************************** Primitive predicates ******************************
+-*********************************************************************************/
+-
+-
+-/*! Sphere predicate */
+-class inSphere: public Predicate {
+-	Vector3r center; Real radius;
+-public:
+-	inSphere(python::tuple _center, Real _radius){center=tuple2vec(_center); radius=_radius;}
+-	virtual bool operator()(python::tuple _pt, Real pad=0.) const {
+-		Vector3r pt=tuple2vec(_pt);
+-		return ((pt-center).Length()-pad&lt;=radius-pad);
+-	}
+-	virtual python::tuple aabb() const {return vvec2ttuple(Vector3r(center[0]-radius,center[1]-radius,center[2]-radius),Vector3r(center[0]+radius,center[1]+radius,center[2]+radius));}
+-};
+-
+-/*! Axis-aligned box predicate */
+-class inAlignedBox: public Predicate{
+-	Vector3r mn, mx;
+-public:
+-	inAlignedBox(python::tuple _mn, python::tuple _mx){mn=tuple2vec(_mn); mx=tuple2vec(_mx);}
+-	virtual bool operator()(python::tuple _pt, Real pad=0.) const {
+-		Vector3r pt=tuple2vec(_pt);
+-		return
+-			mn[0]+pad&lt;=pt[0] &amp;&amp; mx[0]-pad&gt;=pt[0] &amp;&amp;
+-			mn[1]+pad&lt;=pt[1] &amp;&amp; mx[1]-pad&gt;=pt[1] &amp;&amp;
+-			mn[2]+pad&lt;=pt[2] &amp;&amp; mx[2]-pad&gt;=pt[2];
+-	}
+-	virtual python::tuple aabb() const { return vvec2ttuple(mn,mx); }
+-};
+-
+-/*! Arbitrarily oriented cylinder predicate */
+-class inCylinder: public Predicate{
+-	Vector3r c1,c2,c12; Real radius,ht;
+-public:
+-	inCylinder(python::tuple _c1, python::tuple _c2, Real _radius){c1=tuple2vec(_c1); c2=tuple2vec(_c2); c12=c2-c1; radius=_radius; ht=c12.Length(); }
+-	bool operator()(python::tuple _pt, Real pad=0.) const {
+-		Vector3r pt=tuple2vec(_pt);
+-		Real u=(pt.Dot(c12)-c1.Dot(c12))/(ht*ht); // normalized coordinate along the c1--c2 axis
+-		if((u*ht&lt;0+pad) || (u*ht&gt;ht-pad)) return false; // out of cylinder along the axis
+-		Real axisDist=((pt-c1).Cross(pt-c2)).Length()/ht;
+-		if(axisDist&gt;radius-pad) return false;
+-		return true;
+-	}
+-	python::tuple aabb() const {
+-		// see <A HREF="http://www.gamedev.net/community/forums/topic.asp?topic_id=338522&amp;forum_id=20&amp;gforum_id=0">http://www.gamedev.net/community/forums/topic.asp?topic_id=338522&amp;forum_id=20&amp;gforum_id=0</A> for the algorithm
+-		const Vector3r&amp; A(c1); const Vector3r&amp; B(c2); 
+-		Vector3r k(
+-			sqrt((pow(A[1]-B[1],2)+pow(A[2]-B[2],2)))/ht,
+-			sqrt((pow(A[0]-B[0],2)+pow(A[2]-B[2],2)))/ht,
+-			sqrt((pow(A[0]-B[0],2)+pow(A[1]-B[1],2)))/ht);
+-		Vector3r mn(min(A[0],B[0]),min(A[1],B[1]),min(A[2],B[2])), mx(max(A[0],B[0]),max(A[1],B[1]),max(A[2],B[2]));
+-		return vvec2ttuple(mn-radius*k,mx+radius*k);
+-	}
+-};
+-
+-/*! Oriented hyperboloid predicate (cylinder as special case).
+-
+-See <A HREF="http://mathworld.wolfram.com/Hyperboloid.html">http://mathworld.wolfram.com/Hyperboloid.html</A> for the parametrization and meaning of symbols
+-*/
+-class inHyperboloid: public Predicate{
+-	Vector3r c1,c2,c12; Real R,a,ht,c;
+-public:
+-	inHyperboloid(python::tuple _c1, python::tuple _c2, Real _R, Real _r){
+-		c1=tuple2vec(_c1); c2=tuple2vec(_c2); R=_R; a=_r;
+-		c12=c2-c1; ht=c12.Length();
+-		Real uMax=sqrt(pow(R/a,2)-1); c=ht/(2*uMax);
+-	}
+-	// WARN: this is not accurate, since padding is taken as perpendicular to the axis, not the the surface
+-	bool operator()(python::tuple _pt, Real pad=0.) const {
+-		Vector3r pt=tuple2vec(_pt);
+-		Real v=(pt.Dot(c12)-c1.Dot(c12))/(ht*ht); // normalized coordinate along the c1--c2 axis
+-		if((v*ht&lt;0+pad) || (v*ht&gt;ht-pad)) return false; // out of cylinder along the axis
+-		Real u=(v-.5)*ht/c; // u from the wolfram parametrization; u is 0 in the center
+-		Real rHere=a*sqrt(1+u*u); // pad is taken perpendicular to the axis, not to the surface (inaccurate)
+-		Real axisDist=((pt-c1).Cross(pt-c2)).Length()/ht;
+-		if(axisDist&gt;rHere-pad) return false;
+-		return true;
+-	}
+-	python::tuple aabb() const {
+-		// the lazy way
+-		return inCylinder(vec2tuple(c1),vec2tuple(c2),R).aabb();
+-	}
+-};
+-
+-/*! Axis-aligned ellipsoid predicate */
+-class inEllipsoid: public Predicate{
+-	Vector3r c, abc;
+-public:
+-	inEllipsoid(python::tuple _c, python::tuple _abc) {c=tuple2vec(_c); abc=tuple2vec(_abc);}
+-	bool operator()(python::tuple _pt, Real pad=0.) const {
+-		Vector3r pt=tuple2vec(_pt);
+-		//Define the ellipsoid X-coordinate of given Y and Z
+-		Real x = sqrt((1-pow((pt[1]-c[1]),2)/((abc[1]-pad)*(abc[1]-pad))-pow((pt[2]-c[2]),2)/((abc[2]-pad)*(abc[2]-pad)))*((abc[0]-pad)*(abc[0]-pad)))+c[0]; 
+-		Vector3r edgeEllipsoid(x,pt[1],pt[2]); // create a vector of these 3 coordinates
+-		//check whether given coordinates lie inside ellipsoid or not
+-		if ((pt-c).Length()&lt;=(edgeEllipsoid-c).Length()) return true;
+-		else return false;
+-	}
+-	python::tuple aabb() const {
+-		const Vector3r&amp; center(c); const Vector3r&amp; ABC(abc);
+-		return vvec2ttuple(Vector3r(center[0]-ABC[0],center[1]-ABC[1],center[2]-ABC[2]),Vector3r(center[0]+ABC[0],center[1]+ABC[1],center[2]+ABC[2]));
+-	}
+-};
+-
+-/*! Negative notch predicate.
+-
+-Use intersection (&amp; operator) of another predicate with notInNotch to create notched solid.
+-
+-
+-		
+-		geometry explanation:
+-		
+-			c: the center
+-			normalHalfHt (in constructor): A-C
+-			inside: perpendicular to notch edge, points inside the notch (unit vector)
+-			normal: perpendicular to inside, perpendicular to both notch planes
+-			edge: unit vector in the direction of the edge
+-
+-		          &#8593; distUp        A
+-		-------------------------
+-		                        | C
+-		         inside(unit) &#8592; * &#8594; distInPlane
+-		                        |
+-		-------------------------
+-		          &#8595; distDown      B
+-
+-*/
+-class notInNotch: public Predicate{
+-	Vector3r c, edge, normal, inside; Real aperture;
+-public:
+-	notInNotch(python::tuple _c, python::tuple _edge, python::tuple _normal, Real _aperture){
+-		c=tuple2vec(_c);
+-		edge=tuple2vec(_edge); edge.Normalize();
+-		normal=tuple2vec(_normal); normal-=edge*edge.Dot(normal); normal.Normalize();
+-		inside=edge.Cross(normal);
+-		aperture=_aperture;
+-		// LOG_DEBUG(&quot;edge=&quot;&lt;&lt;edge&lt;&lt;&quot;, normal=&quot;&lt;&lt;normal&lt;&lt;&quot;, inside=&quot;&lt;&lt;inside&lt;&lt;&quot;, aperture=&quot;&lt;&lt;aperture);
+-	}
+-	bool operator()(python::tuple _pt, Real pad=0.) const {
+-		Vector3r pt=tuple2vec(_pt);
+-		Real distUp=normal.Dot(pt-c)-aperture/2, distDown=-normal.Dot(pt-c)-aperture/2, distInPlane=-inside.Dot(pt-c);
+-		// LOG_DEBUG(&quot;pt=&quot;&lt;&lt;pt&lt;&lt;&quot;, distUp=&quot;&lt;&lt;distUp&lt;&lt;&quot;, distDown=&quot;&lt;&lt;distDown&lt;&lt;&quot;, distInPlane=&quot;&lt;&lt;distInPlane);
+-		if(distInPlane&gt;=pad) return true;
+-		if(distUp     &gt;=pad) return true;
+-		if(distDown   &gt;=pad) return true;
+-		if(distInPlane&lt;0) return false;
+-		if(distUp  &gt;0) return sqrt(pow(distInPlane,2)+pow(distUp,2))&gt;=pad;
+-		if(distDown&gt;0) return sqrt(pow(distInPlane,2)+pow(distUp,2))&gt;=pad;
+-		// between both notch planes, closer to the edge than pad (distInPlane&lt;pad)
+-		return false;
+-	}
+-	// This predicate is not bounded, return infinities
+-	python::tuple aabb() const {
+-		Real inf=std::numeric_limits&lt;Real&gt;::infinity();
+-		return vvec2ttuple(Vector3r(-inf,-inf,-inf),Vector3r(inf,inf,inf)); }
+-};
+-
+-#ifdef YADE_GTS
+-extern &quot;C&quot; {
+-#include&lt;yade/lib-py/pygts.h&gt;
+-}
+-/* Helper function for inGtsSurface::aabb() */
+-static void vertex_aabb(GtsVertex *vertex, pair&lt;Vector3r,Vector3r&gt; *bb)
+-{
+-	GtsPoint *_p=GTS_POINT(vertex);
+-	Vector3r p(_p-&gt;x,_p-&gt;y,_p-&gt;z);
+-	bb-&gt;first=componentMinVector(bb-&gt;first,p);
+-	bb-&gt;second=componentMaxVector(bb-&gt;second,p);
+-}
+-
+-/*
+-This class plays tricks getting aroung pyGTS to get GTS objects and cache bb tree to speed
+-up point inclusion tests. For this reason, we have to link with _gts.so (see corresponding
+-SConscript file), which is at the same time the python module.
+-*/
+-class inGtsSurface: public Predicate{
+-	python::object pySurf; // to hold the reference so that surf is valid
+-	GtsSurface *surf;
+-	bool is_open, noPad, noPadWarned;
+-	GNode* tree;
+-public:
+-	inGtsSurface(python::object _surf, bool _noPad=false): pySurf(_surf), noPad(_noPad), noPadWarned(false) {
+-		if(!pygts_surface_check(_surf.ptr())) throw invalid_argument(&quot;Ctor must receive a gts.Surface() instance.&quot;); 
+-		surf=PYGTS_SURFACE_AS_GTS_SURFACE(PYGTS_SURFACE(_surf.ptr()));
+-	 	if(!gts_surface_is_closed(surf)) throw invalid_argument(&quot;Surface is not closed.&quot;);
+-		is_open=gts_surface_volume(surf)&lt;0.;
+-		if((tree=gts_bb_tree_surface(surf))==NULL) throw runtime_error(&quot;Could not create GTree.&quot;);
+-	}
+-	~inGtsSurface(){g_node_destroy(tree);}
+-	python::tuple aabb() const {
+-		Real inf=std::numeric_limits&lt;Real&gt;::infinity();
+-		pair&lt;Vector3r,Vector3r&gt; bb; bb.first=Vector3r(inf,inf,inf); bb.second=Vector3r(-inf,-inf,-inf);
+-		gts_surface_foreach_vertex(surf,(GtsFunc)vertex_aabb,&amp;bb);
+-		return vvec2ttuple(bb.first,bb.second);
+-	}
+-	bool ptCheck(Vector3r pt) const{
+-		GtsPoint gp; gp.x=pt[0]; gp.y=pt[1]; gp.z=pt[2];
+-		return (bool)gts_point_is_inside_surface(&amp;gp,tree,is_open);
+-	}
+-	bool operator()(python::tuple _pt, Real pad=0.) const {
+-		Vector3r pt=tuple2vec(_pt);
+-		if(noPad){
+-			if(pad!=0. &amp;&amp; noPadWarned) LOG_WARN(&quot;inGtsSurface constructed with noPad; requested non-zero pad set to zero.&quot;);
+-			return ptCheck(pt);
+-		}
+-		return ptCheck(pt) &amp;&amp; ptCheck(pt-Vector3r(pad,0,0)) &amp;&amp; ptCheck(pt+Vector3r(pad,0,0)) &amp;&amp; ptCheck(pt-Vector3r(0,pad,0))&amp;&amp; ptCheck(pt+Vector3r(0,pad,0)) &amp;&amp; ptCheck(pt-Vector3r(0,0,pad))&amp;&amp; ptCheck(pt+Vector3r(0,0,pad));
+-	}
+-};
+-
+-#endif
+-
+-
+-BOOST_PYTHON_MODULE(_packPredicates){
+-	// base predicate class
+-	python::class_&lt;PredicateWrap,/* necessary, as methods are pure virtual*/ boost::noncopyable&gt;(&quot;Predicate&quot;)
+-		.def(&quot;__call__&quot;,python::pure_virtual(&amp;Predicate::operator()))
+-		.def(&quot;aabb&quot;,python::pure_virtual(&amp;Predicate::aabb))
+-		.def(&quot;__or__&quot;,makeUnion).def(&quot;__and__&quot;,makeIntersection).def(&quot;__sub__&quot;,makeDifference).def(&quot;__xor__&quot;,makeSymmetricDifference);
+-	// boolean operations
+-	python::class_&lt;PredicateBoolean,python::bases&lt;Predicate&gt;,boost::noncopyable&gt;(&quot;PredicateBoolean&quot;,&quot;Boolean operation on 2 predicates (abstract class)&quot;,python::no_init)
+-		.add_property(&quot;A&quot;,&amp;PredicateBoolean::getA).add_property(&quot;B&quot;,&amp;PredicateBoolean::getB);
+-	python::class_&lt;PredicateUnion,python::bases&lt;PredicateBoolean&gt; &gt;(&quot;PredicateUnion&quot;,&quot;Union of 2 predicates&quot;,python::init&lt;python::object,python::object&gt;());
+-	python::class_&lt;PredicateIntersection,python::bases&lt;PredicateBoolean&gt; &gt;(&quot;PredicateIntersection&quot;,&quot;Intersection of 2 predicates&quot;,python::init&lt;python::object,python::object &gt;());
+-	python::class_&lt;PredicateDifference,python::bases&lt;PredicateBoolean&gt; &gt;(&quot;PredicateDifference&quot;,&quot;Difference of 2 predicates&quot;,python::init&lt;python::object,python::object &gt;());
+-	python::class_&lt;PredicateSymmetricDifference,python::bases&lt;PredicateBoolean&gt; &gt;(&quot;PredicateSymmetricDifference&quot;,&quot;SymmetricDifference of 2 predicates&quot;,python::init&lt;python::object,python::object &gt;());
+-	// primitive predicates
+-	python::class_&lt;inSphere,python::bases&lt;Predicate&gt; &gt;(&quot;inSphere&quot;,&quot;Sphere predicate.&quot;,python::init&lt;python::tuple,Real&gt;(python::args(&quot;center&quot;,&quot;radius&quot;),&quot;Ctor taking center (as a 3-tuple) and radius&quot;));
+-	python::class_&lt;inAlignedBox,python::bases&lt;Predicate&gt; &gt;(&quot;inAlignedBox&quot;,&quot;Axis-aligned box predicate&quot;,python::init&lt;python::tuple,python::tuple&gt;(python::args(&quot;minAABB&quot;,&quot;maxAABB&quot;),&quot;Ctor taking minumum and maximum points of the box (as 3-tuples).&quot;));
+-	python::class_&lt;inCylinder,python::bases&lt;Predicate&gt; &gt;(&quot;inCylinder&quot;,&quot;Cylinder predicate&quot;,python::init&lt;python::tuple,python::tuple,Real&gt;(python::args(&quot;centerBottom&quot;,&quot;centerTop&quot;,&quot;radius&quot;),&quot;Ctor taking centers of the lateral walls (as 3-tuples) and radius.&quot;));
+-	python::class_&lt;inHyperboloid,python::bases&lt;Predicate&gt; &gt;(&quot;inHyperboloid&quot;,&quot;Hyperboloid predicate&quot;,python::init&lt;python::tuple,python::tuple,Real,Real&gt;(python::args(&quot;centerBottom&quot;,&quot;centerTop&quot;,&quot;radius&quot;,&quot;skirt&quot;),&quot;Ctor taking centers of the lateral walls (as 3-tuples), radius at bases and skirt (middle radius).&quot;));
+-	python::class_&lt;inEllipsoid,python::bases&lt;Predicate&gt; &gt;(&quot;inEllipsoid&quot;,&quot;Ellipsoid predicate&quot;,python::init&lt;python::tuple,python::tuple&gt;(python::args(&quot;centerPoint&quot;,&quot;abc&quot;),&quot;Ctor taking center of the ellipsoid (3-tuple) and its 3 radii (3-tuple).&quot;));
+-	python::class_&lt;notInNotch,python::bases&lt;Predicate&gt; &gt;(&quot;notInNotch&quot;,&quot;Outside of infinite, rectangle-shaped notch predicate&quot;,python::init&lt;python::tuple,python::tuple,python::tuple,Real&gt;(python::args(&quot;centerPoint&quot;,&quot;edge&quot;,&quot;normal&quot;,&quot;aperture&quot;),&quot;Ctor taking point in the symmetry plane, vector pointing along the edge, plane normal and aperture size.\nThe side inside the notch is edge&#215;normal.\nNormal is made perpendicular to the edge.\nAll vectors are normalized at construction time.&quot;)); 
+-	#ifdef YADE_GTS
+-		python::class_&lt;inGtsSurface,python::bases&lt;Predicate&gt; &gt;(&quot;inGtsSurface&quot;,&quot;GTS surface predicate&quot;,python::init&lt;python::object,python::optional&lt;bool&gt; &gt;(python::args(&quot;surface&quot;,&quot;noPad&quot;),&quot;Ctor taking a gts.Surface() instance, which must not be modified during instance lifetime.\nThe optional noPad can disable padding (if set to True), which speeds up calls several times.\nNote: padding checks inclusion of 6 points along +- cardinal directions in the pad distance from given point, which is not exact.&quot;));
+-	#endif
+-}
+-
+
+Deleted: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2009-07-01 12:00:32 UTC (rev 1828)
++++ trunk/gui/py/_utils.cpp	2009-07-01 18:27:44 UTC (rev 1829)
+@@ -1,433 +0,0 @@
+-#include&lt;yade/extra/Shop.hpp&gt;
+-#include&lt;boost/python.hpp&gt;
+-#include&lt;yade/extra/boost_python_len.hpp&gt;
+-#include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/core/Omega.hpp&gt;
+-#include&lt;yade/pkg-common/Sphere.hpp&gt;
+-#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+-#include&lt;yade/pkg-dem/DemXDofGeom.hpp&gt;
+-#include&lt;yade/pkg-dem/SimpleViscoelasticBodyParameters.hpp&gt;
+-#include&lt;yade/pkg-common/NormalShearInteractions.hpp&gt;
+-#include&lt;yade/lib-computational-geometry/Hull2d.hpp&gt;
+-#include&lt;cmath&gt;
+-
+-#include&lt;numpy/ndarrayobject.h&gt;
+-
+-// #include&quot;_utils.hpp&quot;
+-
+-
+-
+-using namespace boost::python;
+-
+-#ifdef LOG4CXX
+-	log4cxx::LoggerPtr logger=log4cxx::Logger::getLogger(&quot;yade.utils&quot;);
+-#endif
+-
+-python::tuple vec2tuple(const Vector3r&amp; v){return boost::python::make_tuple(v[0],v[1],v[2]);}
+-Vector3r tuple2vec(const python::tuple&amp; t){return Vector3r(extract&lt;double&gt;(t[0])(),extract&lt;double&gt;(t[1])(),extract&lt;double&gt;(t[2])());}
+-bool isInBB(Vector3r p, Vector3r bbMin, Vector3r bbMax){return p[0]&gt;bbMin[0] &amp;&amp; p[0]&lt;bbMax[0] &amp;&amp; p[1]&gt;bbMin[1] &amp;&amp; p[1]&lt;bbMax[1] &amp;&amp; p[2]&gt;bbMin[2] &amp;&amp; p[2]&lt;bbMax[2];}
+-
+-bool ptInAABB(python::tuple p, python::tuple bbMin, python::tuple bbMax){return isInBB(tuple2vec(p),tuple2vec(bbMin),tuple2vec(bbMax));}
+-
+-/* \todo implement groupMask */
+-python::tuple aabbExtrema(Real cutoff=0.0, bool centers=false){
+-	if(cutoff&lt;0. || cutoff&gt;1.) throw invalid_argument(&quot;Cutoff must be &gt;=0 and &lt;=1.&quot;);
+-	Real inf=std::numeric_limits&lt;Real&gt;::infinity();
+-	Vector3r minimum(inf,inf,inf),maximum(-inf,-inf,-inf);
+-	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *Omega::instance().getRootBody()-&gt;bodies){
+-		shared_ptr&lt;Sphere&gt; s=dynamic_pointer_cast&lt;Sphere&gt;(b-&gt;geometricalModel); if(!s) continue;
+-		Vector3r rrr(s-&gt;radius,s-&gt;radius,s-&gt;radius);
+-		minimum=componentMinVector(minimum,b-&gt;physicalParameters-&gt;se3.position-(centers?Vector3r::ZERO:rrr));
+-		maximum=componentMaxVector(maximum,b-&gt;physicalParameters-&gt;se3.position+(centers?Vector3r::ZERO:rrr));
+-	}
+-	Vector3r dim=maximum-minimum;
+-	return python::make_tuple(vec2tuple(minimum+.5*cutoff*dim),vec2tuple(maximum-.5*cutoff*dim));
+-}
+-BOOST_PYTHON_FUNCTION_OVERLOADS(aabbExtrema_overloads,aabbExtrema,0,2);
+-
+-python::tuple negPosExtremeIds(int axis, Real distFactor=1.1){
+-	python::tuple extrema=aabbExtrema();
+-	Real minCoord=extract&lt;double&gt;(extrema[0][axis])(),maxCoord=extract&lt;double&gt;(extrema[1][axis])();
+-	python::list minIds,maxIds;
+-	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *Omega::instance().getRootBody()-&gt;bodies){
+-		shared_ptr&lt;Sphere&gt; s=dynamic_pointer_cast&lt;Sphere&gt;(b-&gt;geometricalModel); if(!s) continue;
+-		if(b-&gt;physicalParameters-&gt;se3.position[axis]-s-&gt;radius*distFactor&lt;=minCoord) minIds.append(b-&gt;getId());
+-		if(b-&gt;physicalParameters-&gt;se3.position[axis]+s-&gt;radius*distFactor&gt;=maxCoord) maxIds.append(b-&gt;getId());
+-	}
+-	return python::make_tuple(minIds,maxIds);
+-}
+-BOOST_PYTHON_FUNCTION_OVERLOADS(negPosExtremeIds_overloads,negPosExtremeIds,1,2);
+-
+-python::tuple coordsAndDisplacements(int axis,python::tuple AABB=python::tuple()){
+-	Vector3r bbMin(Vector3r::ZERO), bbMax(Vector3r::ZERO); bool useBB=python::len(AABB)&gt;0;
+-	if(useBB){bbMin=tuple2vec(extract&lt;python::tuple&gt;(AABB[0])());bbMax=tuple2vec(extract&lt;python::tuple&gt;(AABB[1])());}
+-	python::list retCoord,retDispl;
+-	FOREACH(const shared_ptr&lt;Body&gt;&amp;b, *Omega::instance().getRootBody()-&gt;bodies){
+-		if(useBB &amp;&amp; !isInBB(b-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax)) continue;
+-		retCoord.append(b-&gt;physicalParameters-&gt;se3.position[axis]);
+-		retDispl.append(b-&gt;physicalParameters-&gt;se3.position[axis]-b-&gt;physicalParameters-&gt;refSe3.position[axis]);
+-	}
+-	return python::make_tuple(retCoord,retDispl);
+-}
+-BOOST_PYTHON_FUNCTION_OVERLOADS(coordsAndDisplacements_overloads,coordsAndDisplacements,1,2);
+-
+-void setRefSe3(){
+-	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *Omega::instance().getRootBody()-&gt;bodies){
+-		b-&gt;physicalParameters-&gt;refSe3.position=b-&gt;physicalParameters-&gt;se3.position;
+-		b-&gt;physicalParameters-&gt;refSe3.orientation=b-&gt;physicalParameters-&gt;se3.orientation;
+-	}
+-}
+-
+-Real PWaveTimeStep(){return Shop::PWaveTimeStep();};
+-
+-Real elasticEnergyInAABB(python::tuple AABB){
+-	Vector3r bbMin=tuple2vec(extract&lt;python::tuple&gt;(AABB[0])()), bbMax=tuple2vec(extract&lt;python::tuple&gt;(AABB[1])());
+-	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
+-	Real E=0;
+-	FOREACH(const shared_ptr&lt;Interaction&gt;&amp;i, *rb-&gt;transientInteractions){
+-		if(!i-&gt;interactionPhysics) continue;
+-		shared_ptr&lt;NormalShearInteraction&gt; bc=dynamic_pointer_cast&lt;NormalShearInteraction&gt;(i-&gt;interactionPhysics); if(!bc) continue;
+-		shared_ptr&lt;Dem3DofGeom&gt; geom=dynamic_pointer_cast&lt;Dem3DofGeom&gt;(i-&gt;interactionGeometry); if(!bc){LOG_ERROR(&quot;NormalShearInteraction contact doesn't have SpheresContactGeomety associated?!&quot;); continue;}
+-		const shared_ptr&lt;Body&gt;&amp; b1=Body::byId(i-&gt;getId1(),rb), b2=Body::byId(i-&gt;getId2(),rb);
+-		bool isIn1=isInBB(b1-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax), isIn2=isInBB(b2-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax);
+-		if(!isIn1 &amp;&amp; !isIn2) continue;
+-		LOG_DEBUG(&quot;Interaction #&quot;&lt;&lt;i-&gt;getId1()&lt;&lt;&quot;--#&quot;&lt;&lt;i-&gt;getId2());
+-		Real weight=1.;
+-		if((!isIn1 &amp;&amp; isIn2) || (isIn1 &amp;&amp; !isIn2)){
+-			//shared_ptr&lt;Body&gt; bIn=isIn1?b1:b2, bOut=isIn2?b2:b1;
+-			Vector3r vIn=(isIn1?b1:b2)-&gt;physicalParameters-&gt;se3.position, vOut=(isIn2?b1:b2)-&gt;physicalParameters-&gt;se3.position;
+-			#define _WEIGHT_COMPONENT(axis) if(vOut[axis]&lt;bbMin[axis]) weight=min(weight,abs((vOut[axis]-bbMin[axis])/(vOut[axis]-vIn[axis]))); else if(vOut[axis]&gt;bbMax[axis]) weight=min(weight,abs((vOut[axis]-bbMax[axis])/(vOut[axis]-vIn[axis])));
+-			_WEIGHT_COMPONENT(0); _WEIGHT_COMPONENT(1); _WEIGHT_COMPONENT(2);
+-			assert(weight&gt;=0 &amp;&amp; weight&lt;=1);
+-			//cerr&lt;&lt;&quot;Interaction crosses AABB boundary, weight is &quot;&lt;&lt;weight&lt;&lt;endl;
+-			//LOG_DEBUG(&quot;Interaction crosses AABB boundary, weight is &quot;&lt;&lt;weight);
+-		} else {assert(isIn1 &amp;&amp; isIn2); /* cerr&lt;&lt;&quot;Interaction inside, weight is &quot;&lt;&lt;weight&lt;&lt;endl;*/ /*LOG_DEBUG(&quot;Interaction inside, weight is &quot;&lt;&lt;weight);*/}
+-		E+=geom-&gt;refLength*weight*(.5*bc-&gt;kn*pow(geom-&gt;strainN(),2)+.5*bc-&gt;ks*pow(geom-&gt;strainT().Length(),2));
+-	}
+-	return E;
+-}
+-
+-/* return histogram ([bin1Min,bin2Min,&#8230;],[value1,value2,&#8230;]) from projections of interactions
+- * to the plane perpendicular to axis&#8712;[0,1,2]; the number of bins can be specified and they cover
+- * the range (0,&#960;), since interactions are bidirecional, hence periodically the same on (&#960;,2&#960;).
+- *
+- * Only contacts using SpheresContactGeometry are considered.
+- * Both bodies must be in the mask (except if mask is 0, when all bodies are considered)
+- * If the projection is shorter than minProjLen, it is skipped.
+- *
+- * If both bodies are _outside_ the aabb (if specified), the interaction is skipped.
+- *
+- */
+-python::tuple interactionAnglesHistogram(int axis, int mask=0, size_t bins=20, python::tuple aabb=python::tuple(), Real minProjLen=1e-6){
+-	if(axis&lt;0||axis&gt;2) throw invalid_argument(&quot;Axis must be from {0,1,2}=x,y,z.&quot;);
+-	Vector3r bbMin(Vector3r::ZERO), bbMax(Vector3r::ZERO); bool useBB=python::len(aabb)&gt;0; if(useBB){bbMin=tuple2vec(extract&lt;python::tuple&gt;(aabb[0])());bbMax=tuple2vec(extract&lt;python::tuple&gt;(aabb[1])());}
+-	Real binStep=Mathr::PI/bins; int axis2=(axis+1)%3, axis3=(axis+2)%3;
+-	vector&lt;Real&gt; cummProj(bins,0.);
+-	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
+-	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; i, *rb-&gt;transientInteractions){
+-		if(!i-&gt;isReal()) continue;
+-		const shared_ptr&lt;Body&gt;&amp; b1=Body::byId(i-&gt;getId1(),rb), b2=Body::byId(i-&gt;getId2(),rb);
+-		if(!b1-&gt;maskOk(mask) || !b2-&gt;maskOk(mask)) continue;
+-		if(useBB &amp;&amp; !isInBB(b1-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax) &amp;&amp; !isInBB(b2-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax)) continue;
+-		shared_ptr&lt;SpheresContactGeometry&gt; scg=dynamic_pointer_cast&lt;SpheresContactGeometry&gt;(i-&gt;interactionGeometry); if(!scg) continue;
+-		Vector3r n(scg-&gt;normal); n[axis]=0.; Real nLen=n.Length();
+-		if(nLen&lt;minProjLen) continue; // this interaction is (almost) exactly parallel to our axis; skip that one
+-		Real theta=acos(n[axis2]/nLen)*(n[axis3]&gt;0?1:-1); if(theta&lt;0) theta+=Mathr::PI;
+-		int binNo=theta/binStep;
+-		cummProj[binNo]+=nLen;
+-	}
+-	python::list val,binMid;
+-	for(size_t i=0; i&lt;(size_t)bins; i++){ val.append(cummProj[i]); binMid.append(i*binStep);}
+-	return python::make_tuple(binMid,val);
+-}
+-BOOST_PYTHON_FUNCTION_OVERLOADS(interactionAnglesHistogram_overloads,interactionAnglesHistogram,1,4);
+-
+-python::tuple bodyNumInteractionsHistogram(python::tuple aabb=python::tuple()){
+-	Vector3r bbMin(Vector3r::ZERO), bbMax(Vector3r::ZERO); bool useBB=python::len(aabb)&gt;0; if(useBB){bbMin=tuple2vec(extract&lt;python::tuple&gt;(aabb[0])());bbMax=tuple2vec(extract&lt;python::tuple&gt;(aabb[1])());}
+-	const shared_ptr&lt;MetaBody&gt;&amp; rb=Omega::instance().getRootBody();
+-	vector&lt;int&gt; bodyNumInta; bodyNumInta.resize(rb-&gt;bodies-&gt;size(),-1 /* uninitialized */);
+-	int maxInta=0;
+-	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; i, *rb-&gt;transientInteractions){
+-		if(!i-&gt;isReal()) continue;
+-		const body_id_t id1=i-&gt;getId1(), id2=i-&gt;getId2(); const shared_ptr&lt;Body&gt;&amp; b1=Body::byId(id1,rb), b2=Body::byId(id2,rb);
+-		if(useBB &amp;&amp; isInBB(b1-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax)) bodyNumInta[id1]=bodyNumInta[id1]&gt;0?bodyNumInta[id1]+1:1;
+-		if(useBB &amp;&amp; isInBB(b2-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax)) bodyNumInta[id2]=bodyNumInta[id2]&gt;0?bodyNumInta[id2]+1:1;
+-		maxInta=max(max(maxInta,bodyNumInta[b1-&gt;getId()]),bodyNumInta[b2-&gt;getId()]);
+-	}
+-	vector&lt;int&gt; bins; bins.resize(maxInta+1);
+-	for(size_t id=0; id&lt;bodyNumInta.size(); id++){ if(bodyNumInta[id]&gt;=0) bins[bodyNumInta[id]]+=1; }
+-	python::list count,num;
+-	for(size_t n=1; n&lt;bins.size(); n++){
+-		if(bins[n]==0) continue;
+-		num.append(n); count.append(bins[n]);
+-	}
+-	return python::make_tuple(num,count);
+-}
+-BOOST_PYTHON_FUNCTION_OVERLOADS(bodyNumInteractionsHistogram_overloads,bodyNumInteractionsHistogram,0,1);
+-
+-python::tuple inscribedCircleCenter(python::list v0, python::list v1, python::list v2)
+-{
+-	return vec2tuple(Shop::inscribedCircleCenter(Vector3r(python::extract&lt;double&gt;(v0[0]),python::extract&lt;double&gt;(v0[1]),python::extract&lt;double&gt;(v0[2])), Vector3r(python::extract&lt;double&gt;(v1[0]),python::extract&lt;double&gt;(v1[1]),python::extract&lt;double&gt;(v1[2])), Vector3r(python::extract&lt;double&gt;(v2[0]),python::extract&lt;double&gt;(v2[1]),python::extract&lt;double&gt;(v2[2]))));
+-}
+-
+-python::dict getViscoelasticFromSpheresInteraction(Real m, Real tc, Real en, Real es)
+-{
+-    shared_ptr&lt;SimpleViscoelasticBodyParameters&gt; b = shared_ptr&lt;SimpleViscoelasticBodyParameters&gt;(new SimpleViscoelasticBodyParameters());
+-    Shop::getViscoelasticFromSpheresInteraction(m,tc,en,es,b);
+-	python::dict d;
+-	d[&quot;kn&quot;]=b-&gt;kn;
+-	d[&quot;cn&quot;]=b-&gt;cn;
+-	d[&quot;ks&quot;]=b-&gt;ks;
+-	d[&quot;cs&quot;]=b-&gt;cs;
+-    return d;
+-}
+-/* reset highlight of all bodies */
+-void highlightNone(){
+-	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *Omega::instance().getRootBody()-&gt;bodies){
+-		if(!b-&gt;geometricalModel) continue;
+-		b-&gt;geometricalModel-&gt;highlight=false;
+-	}
+-}
+-
+-/*!Sum moments acting on given bodies
+- *
+- * @param mask is Body::groupMask that must match for a body to be taken in account.
+- * @param axis is the direction of axis with respect to which the moment is calculated.
+- * @param axisPt is a point on the axis.
+- *
+- * The computation is trivial: moment from force is is by definition r&#215;F, where r
+- * is position relative to axisPt; moment from moment is m; such moment per body is
+- * projected onto axis.
+- */
+-Real sumBexTorques(python::tuple ids, python::tuple _axis, python::tuple _axisPt){
+-	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
+-	rb-&gt;bex.sync();
+-	Real ret=0;
+-	Vector3r axis=tuple2vec(_axis), axisPt=tuple2vec(_axisPt); size_t len=python::len(ids);
+-	for(size_t i=0; i&lt;len; i++){
+-		const Body* b=(*rb-&gt;bodies)[python::extract&lt;int&gt;(ids[i])].get();
+-		const Vector3r&amp; m=rb-&gt;bex.getTorque(b-&gt;getId());
+-		const Vector3r&amp; f=rb-&gt;bex.getForce(b-&gt;getId());
+-		Vector3r r=b-&gt;physicalParameters-&gt;se3.position-axisPt;
+-		ret+=axis.Dot(m+r.Cross(f));
+-	}
+-	return ret;
+-}
+-/* Sum forces actiong on bodies within mask.
+- *
+- * @param mask groupMask of matching bodies
+- * @param direction direction in which forces are summed
+- *
+- */
+-Real sumBexForces(python::tuple ids, python::tuple _direction){
+-	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
+-	rb-&gt;bex.sync();
+-	Real ret=0;
+-	Vector3r direction=tuple2vec(_direction); size_t len=python::len(ids);
+-	for(size_t i=0; i&lt;len; i++){
+-		body_id_t id=python::extract&lt;int&gt;(ids[i]);
+-		const Vector3r&amp; f=rb-&gt;bex.getForce(id);
+-		ret+=direction.Dot(f);
+-	}
+-	return ret;
+-}
+-
+-/* Set wire display of all/some/none bodies depending on the filter. */
+-void wireSome(string filter){
+-	enum{none,all,noSpheres,unknown};
+-	int mode=(filter==&quot;none&quot;?none:(filter==&quot;all&quot;?all:(filter==&quot;noSpheres&quot;?noSpheres:unknown)));
+-	if(mode==unknown) { LOG_WARN(&quot;Unknown wire filter `&quot;&lt;&lt;filter&lt;&lt;&quot;', using noSpheres instead.&quot;); mode=noSpheres; }
+-	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *Omega::instance().getRootBody()-&gt;bodies){
+-		if(!b-&gt;geometricalModel) return;
+-		bool wire;
+-		switch(mode){
+-			case none: wire=false; break;
+-			case all: wire=true; break;
+-			case noSpheres: wire=!(bool)(dynamic_pointer_cast&lt;Sphere&gt;(b-&gt;geometricalModel)); break;
+-			default: throw logic_error(&quot;No such case possible&quot;);
+-		}
+-		b-&gt;geometricalModel-&gt;wire=wire;
+-	}
+-}
+-void wireAll(){wireSome(&quot;all&quot;);}
+-void wireNone(){wireSome(&quot;none&quot;);}
+-void wireNoSpheres(){wireSome(&quot;noSpheres&quot;);}
+-
+-
+-/* Tell us whether a point lies in polygon given by array of points.
+- *  @param xy is the point that is being tested
+- *  @param vertices is Numeric.array (or list or tuple) of vertices of the polygon.
+- *         Every row of the array is x and y coordinate, numer of rows is &gt;= 3 (triangle).
+- *
+- * Copying the algorithm from <A HREF="http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html">http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html</A>
+- * is gratefully acknowledged:
+- *
+- * License to Use:
+- * Copyright (c) 1970-2003, Wm. Randolph Franklin
+- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+- *   1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimers.
+- *   2. Redistributions in binary form must reproduce the above copyright notice in the documentation and/or other materials provided with the distribution.
+- *   3. The name of W. Randolph Franklin may not be used to endorse or promote products derived from this Software without specific prior written permission. 
+- * THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+- *
+- * <A HREF="http://numpy.scipy.org/numpydoc/numpy-13.html">http://numpy.scipy.org/numpydoc/numpy-13.html</A> told me how to use Numeric.array from c
+- */
+-bool pointInsidePolygon(python::tuple xy, python::object vertices){
+-	Real testx=python::extract&lt;double&gt;(xy[0])(),testy=python::extract&lt;double&gt;(xy[1])();
+-	char** vertData; int rows, cols; PyArrayObject* vert=(PyArrayObject*)vertices.ptr();
+-	int result=PyArray_As2D((PyObject**)&amp;vert /* is replaced */ ,&amp;vertData,&amp;rows,&amp;cols,PyArray_DOUBLE);
+-	if(result!=0) throw invalid_argument(&quot;Unable to cast vertices to 2d array&quot;);
+-	if(cols!=2 || rows&lt;3) throw invalid_argument(&quot;Vertices must have 2 columns (x and y) and at least 3 rows.&quot;);
+-	int i /*current node*/, j/*previous node*/; bool inside=false;
+-	for(i=0,j=rows-1; i&lt;rows; j=i++){
+-		double vx_i=*(double*)(vert-&gt;data+i*vert-&gt;strides[0]), vy_i=*(double*)(vert-&gt;data+i*vert-&gt;strides[0]+vert-&gt;strides[1]), vx_j=*(double*)(vert-&gt;data+j*vert-&gt;strides[0]), vy_j=*(double*)(vert-&gt;data+j*vert-&gt;strides[0]+vert-&gt;strides[1]);
+-		if (((vy_i&gt;testy)!=(vy_j&gt;testy)) &amp;&amp; (testx &lt; (vx_j-vx_i) * (testy-vy_i) / (vy_j-vy_i) + vx_i) ) inside=!inside;
+-	}
+-	Py_DECREF(vert);
+-	return inside;
+-}
+-
+-/* Compute area of convex hull when when taking (swept) spheres crossing the plane at coord, perpendicular to axis.
+-
+-	All spheres that touch the plane are projected as hexagons on their circumference to the plane.
+-	Convex hull from this cloud is computed.
+-	The area of the hull is returned.
+-
+-*/
+-Real approxSectionArea(Real coord, int axis){
+-	std::list&lt;Vector2r&gt; cloud;
+-	if(axis&lt;0 || axis&gt;2) throw invalid_argument(&quot;Axis must be &#8712; {0,1,2}&quot;);
+-	const int ax1=(axis+1)%3, ax2=(axis+2)%3;
+-	const Real sqrt3=sqrt(3);
+-	Vector2r mm(-10.,0),mx(0,0);
+-	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *Omega::instance().getRootBody()-&gt;bodies){
+-		Sphere* s=dynamic_cast&lt;Sphere*&gt;(b-&gt;geometricalModel.get());
+-		if(!s) continue;
+-		const Vector3r&amp; pos(b-&gt;physicalParameters-&gt;se3.position); const Real r(s-&gt;radius);
+-		if((pos[axis]&gt;coord &amp;&amp; (pos[axis]-r)&gt;coord) || (pos[axis]&lt;coord &amp;&amp; (pos[axis]+r)&lt;coord)) continue;
+-		Vector2r c(pos[ax1],pos[ax2]);
+-		cloud.push_back(c+Vector2r(r,0)); cloud.push_back(c+Vector2r(-r,0));
+-		cloud.push_back(c+Vector2r( r/2., sqrt3*r)); cloud.push_back(c+Vector2r( r/2.,-sqrt3*r));
+-		cloud.push_back(c+Vector2r(-r/2., sqrt3*r)); cloud.push_back(c+Vector2r(-r/2.,-sqrt3*r));
+-		if(mm[0]==-10.){ mm=c, mx=c;}
+-		mm=Vector2r(min(c[0]-r,mm[0]),min(c[1]-r,mm[1]));
+-		mx=Vector2r(max(c[0]+r,mx[0]),max(c[1]+r,mx[1]));
+-	}
+-	if(cloud.size()==0) return 0;
+-	ConvexHull2d ch2d(cloud);
+-	vector&lt;Vector2r&gt; hull=ch2d();
+-	return simplePolygonArea2d(hull);
+-}
+-/* Find all interactions deriving from NormalShearInteraction that cross plane given by a point and normal
+-	(the normal may not be normalized in this case, though) and sum forces (both normal and shear) on them.
+-	
+-	Return a 3-tuple with the components along global x,y,z axes.
+-
+-	(This could be easily extended to return sum of only normal forces or only of shear forces.)
+-*/
+-python::tuple forcesOnPlane(python::tuple _planePt, python::tuple _normal){
+-	Vector3r ret(Vector3r::ZERO), planePt(tuple2vec(_planePt)), normal(tuple2vec(_normal));
+-	MetaBody* rootBody=Omega::instance().getRootBody().get();
+-	FOREACH(const shared_ptr&lt;Interaction&gt;&amp;I, *rootBody-&gt;interactions){
+-		if(!I-&gt;isReal()) continue;
+-		NormalShearInteraction* nsi=dynamic_cast&lt;NormalShearInteraction*&gt;(I-&gt;interactionPhysics.get());
+-		if(!nsi) continue;
+-		Vector3r pos1,pos2;
+-		Dem3DofGeom* d3dg=dynamic_cast&lt;Dem3DofGeom*&gt;(I-&gt;interactionGeometry.get()); // Dem3DofGeom has copy of se3 in itself, otherwise we have to look up the bodies
+-		if(d3dg){ pos1=d3dg-&gt;se31.position; pos2=d3dg-&gt;se32.position; }
+-		else{ pos1=Body::byId(I-&gt;getId1(),rootBody)-&gt;physicalParameters-&gt;se3.position; pos2=Body::byId(I-&gt;getId2(),rootBody)-&gt;physicalParameters-&gt;se3.position; }
+-		Real dot1=(pos1-planePt).Dot(normal), dot2=(pos2-planePt).Dot(normal);
+-		if(dot1*dot2&gt;0) continue; // both interaction points on the same side of the plane
+-		// if pt1 is on the negative plane side, d3dg-&gt;normal.Dot(normal)&gt;0, the force is well oriented;
+-		// otherwise, reverse its contribution
+-		ret+=(dot1&lt;0.?1.:-1.)*(nsi-&gt;normalForce+nsi-&gt;shearForce);
+-	}
+-	return vec2tuple(ret);
+-}
+-
+-/* Less general than forcesOnPlane, computes force on plane perpendicular to axis, passing through coordinate coord. */
+-python::tuple forcesOnCoordPlane(Real coord, int axis){
+-	Vector3r planePt(Vector3r::ZERO); planePt[axis]=coord;
+-	Vector3r normal(Vector3r::ZERO); normal[axis]=1;
+-	return forcesOnPlane(vec2tuple(planePt),vec2tuple(normal));
+-}
+-
+-
+-/* Project 3d point into 2d using spiral projection along given axis;
+- * the returned tuple is
+- * 	
+- *  ( (height relative to the spiral, distance from axis), theta )
+- *
+- * dH_dTheta is the inclination of the spiral (height increase per radian),
+- * theta0 is the angle for zero height (by given axis).
+- */
+-python::tuple spiralProject(python::tuple _pt, Real dH_dTheta, int axis=2, Real periodStart=std::numeric_limits&lt;Real&gt;::quiet_NaN(), Real theta0=0){
+-	int ax1=(axis+1)%3,ax2=(axis+2)%3;
+-	Vector3r pt=tuple2vec(_pt);
+-	Real r=sqrt(pow(pt[ax1],2)+pow(pt[ax2],2));
+-	Real theta;
+-	if(r&gt;Mathr::ZERO_TOLERANCE){
+-		theta=acos(pt[ax1]/r);
+-		if(pt[ax2]&lt;0) theta=Mathr::TWO_PI-theta;
+-	}
+-	else theta=0;
+-	Real hRef=dH_dTheta*(theta-theta0);
+-	long period;
+-	if(isnan(periodStart)){
+-		Real h=Shop::periodicWrap(pt[axis]-hRef,hRef-Mathr::PI*dH_dTheta,hRef+Mathr::PI*dH_dTheta,&amp;period);
+-		return python::make_tuple(python::make_tuple(r,h),theta);
+-	}
+-	else{
+-		// Real hPeriodStart=(periodStart-theta0)*dH_dTheta;
+-		//TRVAR4(hPeriodStart,periodStart,theta0,theta);
+-		//Real h=Shop::periodicWrap(pt[axis]-hRef,hPeriodStart,hPeriodStart+2*Mathr::PI*dH_dTheta,&amp;period);
+-		theta=Shop::periodicWrap(theta,periodStart,periodStart+2*Mathr::PI,&amp;period);
+-		Real h=pt[axis]-hRef+period*2*Mathr::PI*dH_dTheta;
+-		//TRVAR3(pt[axis],pt[axis]-hRef,period);
+-		//TRVAR2(h,theta);
+-		return python::make_tuple(python::make_tuple(r,h),theta);
+-	}
+-}
+-BOOST_PYTHON_FUNCTION_OVERLOADS(spiralProject_overloads,spiralProject,2,5);
+-
+-// for now, don't return anything, since we would have to include the whole yadeControl.cpp because of pyInteraction
+-void Shop__createExplicitInteraction(body_id_t id1, body_id_t id2){ (void) Shop::createExplicitInteraction(id1,id2);}
+-
+-python::tuple Shop__scalarOnColorScale(Real scalar){ return vec2tuple(Shop::scalarOnColorScale(scalar));}
+-
+-BOOST_PYTHON_FUNCTION_OVERLOADS(unbalancedForce_overloads,Shop::unbalancedForce,0,1);
+-Real Shop__kineticEnergy(){return Shop::kineticEnergy();}
+-
+-BOOST_PYTHON_MODULE(_utils){
+-	// <A HREF="http://numpy.scipy.org/numpydoc/numpy-13.html">http://numpy.scipy.org/numpydoc/numpy-13.html</A> mentions this must be done in module init, otherwise we will crash
+-	import_array();
+-
+-	def(&quot;PWaveTimeStep&quot;,PWaveTimeStep,&quot;Get timestep accoring to the velocity of P-Wave propagation; computed from sphere radii, rigidities and masses.&quot;);
+-	def(&quot;aabbExtrema&quot;,aabbExtrema,aabbExtrema_overloads(args(&quot;cutoff&quot;,&quot;centers&quot;),&quot;Return coordinates of box enclosing all bodies\n centers: do not take sphere radii in account, only their centroids (default=False)\n cutoff: 0-1 number by which the box will be scaled around its center (default=0)&quot;));
+-	def(&quot;ptInAABB&quot;,ptInAABB,&quot;Return True/False whether the point (3-tuple) p is within box given by its min (3-tuple) and max (3-tuple) corners&quot;);
+-	def(&quot;negPosExtremeIds&quot;,negPosExtremeIds,negPosExtremeIds_overloads(args(&quot;axis&quot;,&quot;distFactor&quot;),&quot;Return list of ids for spheres (only) that are on extremal ends of the specimen along given axis; distFactor multiplies their radius so that sphere that do not touch the boundary coordinate can also be returned.&quot;));
+-	def(&quot;approxSectionArea&quot;,approxSectionArea,&quot;Compute area of convex hull when when taking (swept) spheres crossing the plane at coord, perpendicular to axis.&quot;);
+-	def(&quot;coordsAndDisplacements&quot;,coordsAndDisplacements,coordsAndDisplacements_overloads(args(&quot;AABB&quot;),&quot;Return tuple of 2 same-length lists for coordinates and displacements (coordinate minus reference coordinate) along given axis (1st arg); if the AABB=((x_min,y_min,z_min),(x_max,y_max,z_max)) box is given, only bodies within this box will be considered.&quot;));
+-	def(&quot;setRefSe3&quot;,setRefSe3,&quot;Set reference positions and orientation of all bodies equal to their current ones.&quot;);
+-	def(&quot;interactionAnglesHistogram&quot;,interactionAnglesHistogram,interactionAnglesHistogram_overloads(args(&quot;axis&quot;,&quot;mask&quot;,&quot;bins&quot;,&quot;aabb&quot;)));
+-	def(&quot;bodyNumInteractionsHistogram&quot;,bodyNumInteractionsHistogram,bodyNumInteractionsHistogram_overloads(args(&quot;aabb&quot;)));
+-	def(&quot;elasticEnergy&quot;,elasticEnergyInAABB);
+-	def(&quot;inscribedCircleCenter&quot;,inscribedCircleCenter);
+-	def(&quot;getViscoelasticFromSpheresInteraction&quot;,getViscoelasticFromSpheresInteraction);
+-	def(&quot;unbalancedForce&quot;,&amp;Shop::unbalancedForce,unbalancedForce_overloads(args(&quot;useMaxForce&quot;)));
+-	def(&quot;kineticEnergy&quot;,Shop__kineticEnergy);
+-	def(&quot;sumBexForces&quot;,sumBexForces);
+-	def(&quot;sumBexTorques&quot;,sumBexTorques);
+-	def(&quot;forcesOnPlane&quot;,forcesOnPlane);
+-	def(&quot;forcesOnCoordPlane&quot;,forcesOnCoordPlane);
+-	def(&quot;createInteraction&quot;,Shop__createExplicitInteraction);
+-	def(&quot;spiralProject&quot;,spiralProject,spiralProject_overloads(args(&quot;axis&quot;,&quot;periodStart&quot;,&quot;theta0&quot;)));
+-	def(&quot;pointInsidePolygon&quot;,pointInsidePolygon);
+-	def(&quot;scalarOnColorScale&quot;,Shop__scalarOnColorScale);
+-	def(&quot;highlightNone&quot;,highlightNone);
+-	def(&quot;wireAll&quot;,wireAll);
+-	def(&quot;wireNone&quot;,wireNone);
+-	def(&quot;wireNoSpheres&quot;,wireNoSpheres);
+-}
+-
+-
+
+Deleted: trunk/gui/py/eudoxos.py
+===================================================================
+--- trunk/gui/py/eudoxos.py	2009-07-01 12:00:32 UTC (rev 1828)
++++ trunk/gui/py/eudoxos.py	2009-07-01 18:27:44 UTC (rev 1829)
+@@ -1,244 +0,0 @@
+-# encoding: utf-8
+-# 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+-#
+-# I doubt there functions will be useful for anyone besides me.
+-#
+-from yade.wrapper import *
+-from math import *
+-from yade._eudoxos import * ## c++ implementations
+-
+-def estimateStress(strain,cutoff=0.):
+-	&quot;&quot;&quot;Use summed stored energy in contacts to compute macroscopic stress over the same volume, provided known strain.&quot;&quot;&quot;
+-	# E=(1/2)&#963;&#949;Al # global stored energy
+-	# &#963;=EE/(.5&#949;Al)=EE/(.5&#949;V)
+-	from yade import utils
+-	dim=utils.aabbDim(cutoff,centers=False)
+-	return utils.elasticEnergy(utils.aabbExtrema(cutoff))/(.5*strain*dim[0]*dim[1]*dim[2])
+-
+-def estimatePoissonYoung(principalAxis,stress=0,plot=False,cutoff=0.):
+-	&quot;&quot;&quot;Estimate Poisson's ration given the &quot;principal&quot; axis of straining.
+-	For every base direction, homogenized strain is computed
+-	(slope in linear regression on discrete function particle coordinate &#8594;
+-	&#8594; particle displacement	in the same direction as returned by
+-	utils.coordsAndDisplacements) and, (if axis '0' is the strained 
+-	axis) the poisson's ratio is given as -&#189;(&#949;&#8321;+&#949;&#8322;)/&#949;&#8320;.
+-
+-	Young's modulus is computed as &#963;/&#949;&#8320;; if stress &#963; is not given (default 0),
+-	the result is 0.
+-
+-	cutoff, if &gt; 0., will take only smaller part (centered) or the specimen into account
+-	&quot;&quot;&quot;
+-	dd=[] # storage for linear regression parameters
+-	import pylab,numpy,stats
+-	from yade import utils
+-	if cutoff&gt;0: cut=utils.fractionalBox(fraction=1-cutoff)
+-	for axis in [0,1,2]:
+-		if cutoff&gt;0:
+-			w,dw=utils.coordsAndDisplacements(axis,AABB=cut)
+-		else:
+-			w,dw=utils.coordsAndDisplacements(axis)
+-		l,ll=stats.linregress(w,dw)[0:2] # use only tangent and section
+-		dd.append((l,ll,min(w),max(w)))
+-		if plot: pylab.plot(w,dw,'.',label='xyz'[axis])
+-	if plot:
+-		for axis in [0,1,2]:
+-			dist=dd[axis][-1]-dd[axis][-2]
+-			c=numpy.linspace(dd[axis][-2]-.2*dist,dd[axis][-1]+.2*dist)
+-			d=[dd[axis][0]*cc+dd[axis][1] for cc in c]
+-			pylab.plot(c,d,label='interp '+'xyz'[axis])
+-		pylab.legend()
+-		pylab.show()
+-	otherAxes=(principalAxis+1)%3,(principalAxis+2)%3
+-	avgTransHomogenizedStrain=.5*(dd[otherAxes[0]][0]+dd[otherAxes[1]][0])
+-	principalHomogenizedStrain=dd[principalAxis][0]
+-	return -avgTransHomogenizedStrain/principalHomogenizedStrain,stress/principalHomogenizedStrain
+-
+-
+-def oofemTextExport(fName):
+-	&quot;&quot;&quot;Export simulation data in text format 
+-	
+-	The format is line-oriented as follows:
+-		# 3 lines of material parameters:
+-		1. E G # elastic
+-		2. epsCrackOnset relDuctility xiShear transStrainCoeff #tension; epsFr=epsCrackOnset*relDuctility
+-		3. cohesionT tanPhi # shear
+-		4. [number of spheres] [number of links]
+-		5. id x y z r -1/0/1[on negative/no/positive boundary] # spheres
+-		&#8230;
+-		n. id1 id2 contact_point_x cp_y cp_z A # interactions &quot;&quot;&quot;
+-	from yade.wrapper import Omega
+-	material,bodies,interactions=[],[],[]
+-	o=Omega()
+-
+-	f=open(fName,'w') # fail early on I/O problem
+-
+-	ph=o.interactions.nth(0).phys # some params are the same everywhere
+-	material.append(&quot;%g %g&quot;%(ph['E'],ph['G']))
+-	material.append(&quot;%g %g %g %g&quot;%(ph['epsCrackOnset'],ph['epsFracture'],1e50,0.0))
+-	material.append(&quot;%g %g&quot;%(ph['undamagedCohesion'],ph['tanFrictionAngle']))
+-
+-	# need strainer for getting bodies in positive/negative boundary
+-	strainers=[e for e in o.engines if e.name=='UniaxialStrainer']
+-	if len(strainers)&gt;0: strainer=strainers[0]
+-	else: strainer=None
+-
+-	for b in o.bodies:
+-		if strainer and b.id in strainer['negIds']: boundary=-1
+-		elif strainer and b.id in strainer['posIds']: boundary=1
+-		else: boundary=0
+-		bodies.append(&quot;%d %g %g %g %g %d&quot;%(b.id,b.phys['se3'][0],b.phys['se3'][1],b.phys['se3'][2],b.shape['radius'],boundary))
+-
+-	for i in o.interactions:
+-		if not i.geom or not i.phys: continue
+-		cp=i.geom['contactPoint']
+-		interactions.append(&quot;%d %d %g %g %g %g&quot;%(i.id1,i.id2,cp[0],cp[1],cp[2],i.phys['crossSection']))
+-	
+-	f.write('\n'.join(material+[&quot;%d %d&quot;%(len(bodies),len(interactions))]+bodies+interactions))
+-	f.close()
+-
+-def oofemPrescribedDisplacementsExport(fileName):
+-	f=open(fileName,'w')
+-	f.write(fileName+'.out\n'+'''All Yade displacements prescribed as boundary conditions
+-NonLinearStatic nsteps 2 contextOutputStep 1 rtolv 1.e-2 stiffMode 2 maxiter 50 controllmode 1 nmodules 0
+-domain 3dshell
+-OutputManager tstep_all dofman_all element_all
+-''')
+-	inters=[i for i in O.interactions if (i.geom and i.phys)]
+-	f.write(&quot;ndofman %d nelem %d ncrosssect 1 nmat 1 nbc %d nic 0 nltf 1 nbarrier 0\n&quot;%(len(O.bodies),len(inters),len(O.bodies)*6))
+-	bcMax=0; bcMap={}
+-	for b in O.bodies:
+-		mf=' '.join([str(a) for a in list(O.actions.f(b.id))+list(O.actions.m(b.id))])
+-		f.write(&quot;## #%d: forces %s\n&quot;%(b.id+1,mf))
+-		f.write(&quot;Particle %d coords 3 %.15e %.15e %.15e rad %g&quot;%(b.id+1,b.phys['se3'][0],b.phys['se3'][1],b.phys['se3'][2],b.shape['radius']))
+-		bcMap[b.id]=tuple([bcMax+i for i in [1,2,3,4,5,6]])
+-		bcMax+=6
+-		f.write(' bc '+' '.join([str(i) for i in bcMap[b.id]])+'\n')
+-	for j,i in enumerate(inters):
+-		epsTNorm=sqrt(sum([e**2 for e in i.phys['epsT']]))
+-		epsT='epsT [ %g %g %g ] %g'%(i.phys['epsT'][0],i.phys['epsT'][1],i.phys['epsT'][2],epsTNorm)
+-		en=i.phys['epsN']; n=i.geom['normal']
+-		epsN='epsN [ %g %g %g ] %g'%(en*n[0],en*n[1],en*n[2],en)
+-		Fn='Fn [ %g %g %g ] %g'%(i.phys['normalForce'][0],i.phys['normalForce'][1],i.phys['normalForce'][2],i.phys['Fn'])
+-		Fs='Fs [ %lf %lf %lf ] %lf'%(i.phys['shearForce'][0],i.phys['shearForce'][1],i.phys['shearForce'][2],sqrt(sum([fs**2 for fs in i.phys['shearForce']])))
+-		f.write('## #%d #%d: %s %s %s %s\n'%(i.id1+1,i.id2+1,epsN,epsT,Fn,Fs))
+-		f.write('CohSur3d %d nodes 2 %d %d mat 1 crossSect 1 area %g\n'%(j+1,i.id1+1,i.id2+1,i.phys['crossSection']))
+-	# crosssection
+-	f.write(&quot;SimpleCS 1 thick 1.0 width 1.0\n&quot;)
+-	# material
+-	ph=inters[0].phys
+-	f.write(&quot;CohInt 1 kn %g ks %g e0 %g ef %g c 0. ksi %g coh %g tanphi %g d 1.0 conf 0.0 maxdist 0.0\n&quot;%(ph['E'],ph['G'],ph['epsCrackOnset'],ph['epsFracture'],ph['xiShear'],ph['undamagedCohesion'],ph['tanFrictionAngle']))
+-	# boundary conditions
+-	for b in O.bodies:
+-		displ=b.phys.displ; rot=b.phys.rot
+-		dofs=[displ[0],displ[1],displ[2],rot[0],rot[1],rot[2]]
+-		f.write('# particle %d\n'%b.id)
+-		for dof in range(6):
+-			f.write('BoundaryCondition %d loadTimeFunction 1 prescribedvalue %.15e\n'%(bcMap[b.id][dof],dofs[dof]))
+-	#f.write('PiecewiseLinFunction 1 npoints 3 t 3 0. 10. 1000.  f(t) 3 0. 10. 1000.\n')
+-	f.write('ConstantFunction 1 f(t) 1.0\n')
+-
+-
+-
+-
+-def oofemDirectExport(fileBase,title=None,negIds=[],posIds=[]):
+-	from yade.wrapper import Omega
+-	material,bodies,interactions=[],[],[]
+-	o=Omega()
+-	strainers=[e for e in o.engines if e.name=='UniaxialStrainer']
+-	if len(strainers)&gt;0:
+-		strainer=strainers[0]
+-		posIds,negIds=strainer['posIds'],strainer['negIds']
+-	else: strainer=None
+-	f=open(fileBase+'.in','w')
+-	# header
+-	f.write(fileBase+'.out\n')
+-	f.write((title if title else 'Yade simulation for '+fileBase)+'\n')
+-	f.write(&quot;NonLinearStatic nsteps 2 contextOutputStep 1 rtolv 1.e-2 stiffMode 2 maxiter 50 controllmode 1 nmodules 0\n&quot;)
+-	f.write(&quot;domain 3dShell\n&quot;)
+-	f.write(&quot;OutputManager tstep_all dofman_all element_all\n&quot;)
+-	inters=[i for i in o.interactions if (i.geom and i.phys)]
+-	f.write(&quot;ndofman %d nelem %d ncrosssect 1 nmat 1 nbc 2 nic 0 nltf 1 nbarrier 0\n&quot;%(len(o.bodies)+2,len(inters)))
+-	# elements
+-	f.write(&quot;Node 1 coords 3 0.0 0.0 0.0 bc 6 1 1 1 1 1 1\n&quot;)
+-	f.write(&quot;Node 2 coords 3 0.0 0.0 0.0 bc 6 1 2 1 1 1 1\n&quot;)
+-	for b in o.bodies:
+-		f.write(&quot;Particle %d coords 3 %g %g %g rad %g&quot;%(b.id+3,b.phys.refPos[0],b.phys.refPos[1],b.phys.refPos[2],b.shape['radius']))
+-		if b.id in negIds: f.write(&quot; dofType 6 1 1 1 1 1 1 masterMask 6 0 1 0 0 0 0 &quot;)
+-		elif b.id in posIds: f.write(&quot; dofType 6 1 1 1 1 1 1 masterMask 6 0 2 0 0 0 0 0&quot;)
+-		f.write('\n')
+-	j=1
+-	for i in inters:
+-		f.write('CohSur3d %d nodes 2 %d %d mat 1 crossSect 1 area %g\n'%(j,i.id1+3,i.id2+3,i.phys['crossSection']))
+-		j+=1
+-	# crosssection
+-	f.write(&quot;SimpleCS 1 thick 1.0 width 1.0\n&quot;)
+-	# material
+-	ph=inters[0].phys
+-	f.write(&quot;CohInt 1 kn %g ks %g e0 %g ef %g c 0. ksi %g coh %g tanphi %g damchartime %g damrateexp %g plchartime %g plrateexp %g d 1.0\n&quot;%(ph['E'],ph['G'],ph['epsCrackOnset'],ph['epsFracture'],0.0,ph['undamagedCohesion'],ph['tanFrictionAngle'],ph['dmgTau'],ph['dmgRateExp'],ph['plTau'],ph['plRateExp']))
+-	# boundary conditions
+-	f.write('BoundaryCondition 1 loadTimeFunction 1 prescribedvalue 0.0\n')
+-	f.write('BoundaryCondition 2 loadTimeFunction 1 prescribedvalue 1.e-4\n')
+-	f.write('PiecewiseLinFunction 1 npoints 3 t 3 0. 10. 1000.  f(t) 3 0. 10. 1000.\n')
+-
+-
+-def displacementsInteractionsExport(fName):
+-	f=open(fName,'w')
+-	print &quot;Writing body displacements and interaction strains.&quot;
+-	o=Omega()
+-	for b in o.bodies:
+-		x0,y0,z0=b.phys['refSe3'][0:3]; x,y,z=b.phys.pos
+-		rx,ry,rz,rr=b.phys['se3'][3:7]
+-		f.write('%d xyz [ %g %g %g ] dxyz [ %g %g %g ] rxyz [ %g %g %g ] \n'%(b.id,x0,y0,z0,x-x0,y-y0,z-z0,rr*rx,rr*ry,rr*rz))
+-	f.write('\n')
+-	for i in o.interactions:
+-		if not i['isReal']:continue
+-		epsTNorm=sqrt(sum([e**2 for e in i.phys['epsT']]))
+-		epsT='epsT [ %g %g %g ] %g'%(i.phys['epsT'][0],i.phys['epsT'][1],i.phys['epsT'][2],epsTNorm)
+-		en=i.phys['epsN']; n=i.geom['normal']
+-		epsN='epsN [ %g %g %g ] %g'%(en*n[0],en*n[1],en*n[2],en)
+-		Fn='Fn [ %g %g %g ] %g'%(i.phys['normalForce'][0],i.phys['normalForce'][1],i.phys['normalForce'][2],i.phys['Fn'])
+-		Fs='Fs [ %lf %lf %lf ] %lf'%(i.phys['shearForce'][0],i.phys['shearForce'][1],i.phys['shearForce'][2],sqrt(sum([fs**2 for fs in i.phys['shearForce']])))
+-		f.write('%d %d %s %s %s %s\n'%(i.id1,i.id2,epsN,epsT,Fn,Fs))
+-		# f.write('%d %d %g %g %g %g %g\n'%(i.id1,i.id2,i.phys['epsN'],i.phys['epsT'][0],i.phys['epsT'][1],i.phys['epsT'][2],epsTNorm))
+-	f.close()
+-
+-
+-
+-
+-
+-def eliminateJumps(eps,sigma,numSteep=10,gapWidth=5,movWd=40):
+-	from matplotlib.mlab import movavg
+-	from numpy import diff,abs
+-	import numpy
+-	# get histogram of 'derivatives'
+-	ds=abs(diff(sigma))
+-	n,bins=numpy.histogram(ds)
+-	i=1; sum=0
+-	# numSteep steepest pieces will be discarded
+-	while sum&lt;numSteep:
+-		#print n[-i],bins[-i]
+-		sum+=n[-i]; i+=1
+-	#print n[-i],bins[-i]
+-	threshold=bins[-i]
+-	# old algo: replace with nan's
+-	##rEps,rSigma=eps[:],sigma[:]; nan=float('nan')
+-	##indices=where(ds&gt;threshold)[0]
+-	##for i in indices:
+-	##	for ii in range(max(0,i-gapWidth),min(len(rEps),i+gapWidth+1)): rEps[ii]=rSigma[ii]=nan
+-
+-	## doesn't work with older numpy (?)
+-	# indices1=where(ds&gt;threshold)[0]
+-	indices1=[]
+-	for i in range(len(ds)):
+-		if ds[i]&gt;threshold: indices1.append(i)
+-	indices=[]
+-	for i in indices1:
+-		for ii in range(i-gapWidth,i+gapWidth+1): indices.append(ii)
+-	#print indices1, indices
+-	rEps=[eps[i] for i in range(0,len(eps)) if i not in indices]
+-	rSigma=[sigma[i] for i in range(0,len(sigma)) if i not in indices]
+-	# apply moving average to the result
+-	rSigma=movavg(rSigma,movWd)
+-	rEps=rEps[movWd/2:-movWd/2+1]
+-	return rEps,rSigma.flatten().tolist()
+-
+
+Deleted: trunk/gui/py/linterpolation.py
+===================================================================
+--- trunk/gui/py/linterpolation.py	2009-07-01 12:00:32 UTC (rev 1828)
++++ trunk/gui/py/linterpolation.py	2009-07-01 18:27:44 UTC (rev 1829)
+@@ -1,99 +0,0 @@
+-# encoding: utf-8
+-#
+-# &#169; 2009 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+-#
+-
+-&quot;&quot;&quot;
+-Module for rudimentary support of manipulation with piecewise-linear
+-functions (which are usually interpolations of higher-order functions,
+-whence the module name). Interpolation is always given as two lists
+-of the same length, where the x-list must be increasing.
+-
+-Periodicity is supported by supposing that the interpolation
+-can wrap from the last x-value to the first x-value (which
+-should be 0 for meaningful results).
+-
+-Non-periodic interpolation can be converted to periodic one
+-by padding the interpolation with constant head and tail using
+-the sanitizeInterpolation function.
+-
+-There is a c++ template function for interpolating on such sequences in
+-pkg/common/Engine/DeusExMachina/LinearInterpolate.hpp (stateful, therefore
+-fast for sequential reads).
+-
+-TODO: Interpolating from within python is not (yet) supported.
+-&quot;&quot;&quot;
+-
+-def revIntegrateLinear(I,x0,y0,x1,y1):
+-	&quot;&quot;&quot;Helper function, returns value of integral variable x for
+-	linear function f passing through (x0,y0),(x1,y1) such that
+-	1. x&#8712;[x0,x1]
+-	2. &#8747;_x0^x f dx=I
+-	and raise exception if such number doesn't exist or the solution
+-	is not unique (possible?)
+-	&quot;&quot;&quot;
+-	from math import sqrt
+-	dx,dy=x1-x0,y1-y0
+-	if dy==0: # special case, degenerates to linear equation
+-		return (x0*y0+I)/y0
+-	a=dy/dx; b=2*(y0-x0*dy/dx); c=x0**2*dy/dx-2*x0*y0-2*I
+-	det=b**2-4*a*c; assert(det&gt;0)
+-	p,q=(-b+sqrt(det))/(2*a),(-b-sqrt(det))/(2*a)
+-	pOK,qOK=x0&lt;=p&lt;=x1,x0&lt;=q&lt;=x1
+-	if pOK and qOK: raise ValueError(&quot;Both radices within interval!?&quot;)
+-	if not pOK and not qOK: raise ValueError(&quot;No radix in given interval!&quot;)
+-	return p if pOK else q
+-
+-def integral(x,y):
+-	&quot;&quot;&quot;Return integral of piecewise-linear function given by points
+-	x0,x1,&#8230; and y0,y1,&#8230; &quot;&quot;&quot;
+-	assert(len(x)==len(y))
+-	sum=0
+-	for i in range(1,len(x)): sum+=(x[i]-x[i-1])*.5*(y[i]+y[i-1])
+-	return sum
+-
+-def xFractionalFromIntegral(integral,x,y):
+-	&quot;&quot;&quot;Return x within range x0&#8230;xn such that &#8747;_x0^x f dx==integral.
+-	Raises error if the integral value is not reached within the x-range.
+-	&quot;&quot;&quot;
+-	sum=0
+-	for i in range(1,len(x)):
+-		diff=(x[i]-x[i-1])*.5*(y[i]+y[i-1])
+-		if sum+diff&gt;integral:
+-			return revIntegrateLinear(integral-sum,x[i-1],y[i-1],x[i],y[i])
+-		else: sum+=diff
+-	raise &quot;Integral not reached within the interpolation range!&quot;
+-
+-
+-def xFromIntegral(integralValue,x,y):
+-	&quot;&quot;&quot;Return x such that &#8747;_x0^x f dx==integral.
+-	x wraps around at xn. For meaningful results, therefore, x0 should == 0 &quot;&quot;&quot;
+-	from math import floor
+-	period=x[-1]-x[0]
+-	periodIntegral=integral(x,y)
+-	numPeriods=floor(integralValue/periodIntegral)
+-	xFrac=xFractionalFromIntegral(integralValue-numPeriods*periodIntegral,x,y)
+-	#print '### wanted _%g; period=%g; periodIntegral=_%g (numPeriods=%g); rests _%g (xFrac=%g)'%(integralValue,period,periodIntegral,numPeriods,integralValue-numPeriods*periodIntegral,xFrac)
+-	#print '### returning %g*%g+%g=%g'%(period,numPeriods,xFrac,period*numPeriods+xFrac)
+-	return period*numPeriods+xFrac
+-
+-def sanitizeInterpolation(x,y,x0,x1):
+-	&quot;&quot;&quot;Extends piecewise-linear function in such way that it spans at least
+-	the x0&#8230;x1 interval, by adding constant padding at the beginning (using y0)
+-	and/or at the end (using y1) or not at all.&quot;&quot;&quot;
+-	xx,yy=[],[]
+-	if x0&lt;x[0]:
+-		xx+=[x0]; yy+=[y[0]]
+-	xx+=x; yy+=y
+-	if x1&gt;x[-1]:
+-		xx+=[x1]; yy+=[y[-1]]
+-	return xx,yy
+-
+-if __name__==&quot;main&quot;:
+-	xx,yy=sanitizeInterpolation([1,2,3],[1,1,2],0,4)
+-	print xx,yy
+-	print integral(xx,yy) # 5.5
+-	print revIntegrateLinear(.625,1,1,2,2) # 1.5
+-	print xFractionalFromIntegral(1.625,xx,yy) # 1.625
+-	print xFractionalFromIntegral(2.625,xx,yy) # 2.5
+-
+
+Deleted: trunk/gui/py/log.cpp
+===================================================================
+--- trunk/gui/py/log.cpp	2009-07-01 12:00:32 UTC (rev 1828)
++++ trunk/gui/py/log.cpp	2009-07-01 18:27:44 UTC (rev 1829)
+@@ -1,55 +0,0 @@
+-#include&lt;boost/python.hpp&gt;
+-#include&lt;string&gt;
+-#include&lt;yade/lib-base/Logging.hpp&gt;
+-using namespace boost;
+-enum{ll_TRACE,ll_DEBUG,ll_INFO,ll_WARN,ll_ERROR,ll_FATAL};
+-
+-#ifdef LOG4CXX
+-	#include&lt;log4cxx/logmanager.h&gt;
+-
+-	void logSetLevel(std::string loggerName,int level){
+-		std::string fullName(loggerName.empty()?&quot;yade&quot;:(&quot;yade.&quot;+loggerName));
+-		if(!log4cxx::LogManager::exists(fullName)) throw std::invalid_argument(&quot;No logger named `&quot;+fullName+&quot;'&quot;);
+-		log4cxx::LevelPtr l;
+-		switch(level){
+-			#ifdef LOG4CXX_TRACE
+-				case ll_TRACE: l=log4cxx::Level::getTrace(); break;
+-				case ll_DEBUG: l=log4cxx::Level::getDebug(); break;
+-				case ll_INFO:  l=log4cxx::Level::getInfo(); break;
+-				case ll_WARN:  l=log4cxx::Level::getWarn(); break;
+-				case ll_ERROR: l=log4cxx::Level::getError(); break;
+-				case ll_FATAL: l=log4cxx::Level::getFatal(); break;
+-			#else
+-				case ll_TRACE: l=log4cxx::Level::DEBUG; break;
+-				case ll_DEBUG: l=log4cxx::Level::DEBUG; break;
+-				case ll_INFO:  l=log4cxx::Level::INFO; break;
+-				case ll_WARN:  l=log4cxx::Level::WARN; break;
+-				case ll_ERROR: l=log4cxx::Level::ERROR; break;
+-				case ll_FATAL: l=log4cxx::Level::FATAL; break;
+-			#endif
+-			default: throw std::invalid_argument(&quot;Unrecognized logging level &quot;+lexical_cast&lt;std::string&gt;(level));
+-		}
+-		log4cxx::LogManager::getLogger(&quot;yade.&quot;+loggerName)-&gt;setLevel(l);
+-	}
+-#else
+-	bool warnedOnce=false;
+-	void logSetLevel(std::string loggerName, int level){
+-		// better somehow python's raise RuntimeWarning, but not sure how to do that from c++
+-		// it shouldn't be trapped by boost::python's exception translator, just print warning
+-		// Do like this for now.
+-		if(!warnedOnce){
+-			LOG_WARN(&quot;Yade was compiled without log4cxx support. Setting log levels from python will have no effect (warn once).&quot;);
+-			warnedOnce=true;
+-		}
+-	}
+-#endif
+-
+-BOOST_PYTHON_MODULE(log){
+-	python::def(&quot;setLevel&quot;,logSetLevel,&quot;Set minimum severity level (constants TRACE,DEBUG,INFO,WARN,ERROR,FATAL) for given logger\nleading 'yade.' will be appended automatically to the logger name; if logger is '', the root logger 'yade' will be operated on.&quot;);
+-	python::scope().attr(&quot;TRACE&quot;)=(int)ll_TRACE;
+-	python::scope().attr(&quot;DEBUG&quot;)=(int)ll_DEBUG;
+-	python::scope().attr(&quot;INFO&quot;)= (int)ll_INFO;
+-	python::scope().attr(&quot;WARN&quot;)= (int)ll_WARN;
+-	python::scope().attr(&quot;ERROR&quot;)=(int)ll_ERROR;
+-	python::scope().attr(&quot;FATAL&quot;)=(int)ll_FATAL;
+-}
+
+Deleted: trunk/gui/py/pack.py
+===================================================================
+--- trunk/gui/py/pack.py	2009-07-01 12:00:32 UTC (rev 1828)
++++ trunk/gui/py/pack.py	2009-07-01 18:27:44 UTC (rev 1829)
+@@ -1,135 +0,0 @@
+-
+-import itertools,warnings
+-from numpy import arange
+-from math import sqrt
+-from yade import utils
+-
+-# for now skip the import, but try in inGtsSurface constructor again, to give error if we really use it
+-try:
+-	import gts
+-except ImportError: pass
+-
+-
+-# make c++ predicates available in this module
+-from _packPredicates import *
+-
+-class inGtsSurface_py(Predicate):
+-	&quot;&quot;&quot;This class was re-implemented in c++, but should stay here to serve as reference for implementing
+-	Predicates in pure python code. C++ allows us to play dirty tricks in GTS which are not accessible
+-	through pygts itself; the performance penalty of pygts comes from fact that if constructs and destructs
+-	bb tree for the surface at every invocation of gts.Point().is_inside(). That is cached in the c++ code,
+-	provided that the surface is not manipulated with during lifetime of the object (user's responsibility).
+-
+-	---
+-	
+-	Predicate for GTS surfaces. Constructed using an already existing surfaces, which must be closed.
+-
+-		import gts
+-		surf=gts.read(open('horse.gts'))
+-		inGtsSurface(surf)
+-
+-	Note: padding is optionally supported by testing 6 points along the axes in the pad distance. This
+-	must be enabled in the ctor by saying doSlowPad=True. If it is not enabled and pad is not zero,
+-	warning is issued.
+-	&quot;&quot;&quot;
+-	def __init__(self,surf,noPad=False):
+-		# call base class ctor; necessary for virtual methods to work as expected.
+-		# see comments in _packPredicates.cpp for struct PredicateWrap.
+-		super(inGtsSurface,self).__init__()
+-		if not surf.is_closed(): raise RuntimeError(&quot;Surface for inGtsSurface predicate must be closed.&quot;)
+-		self.surf=surf
+-		self.noPad=noPad
+-		inf=float('inf')
+-		mn,mx=[inf,inf,inf],[-inf,-inf,-inf]
+-		for v in surf.vertices():
+-			c=v.coords()
+-			mn,mx=[min(mn[i],c[i]) for i in 0,1,2],[max(mx[i],c[i]) for i in 0,1,2]
+-		self.mn,self.mx=tuple(mn),tuple(mx)
+-		import gts
+-	def aabb(self): return self.mn,self.mx
+-	def __call__(self,_pt,pad=0.):
+-		p=gts.Point(*_pt)
+-		if self.noPad:
+-			if pad!=0: warnings.warn(&quot;Padding disabled in ctor, using 0 instead.&quot;)
+-			return p.is_inside(self.surf)
+-		pp=[gts.Point(_pt[0]-pad,_pt[1],_pt[2]),gts.Point(_pt[0]+pad,_pt[1],_pt[2]),gts.Point(_pt[0],_pt[1]-pad,_pt[2]),gts.Point(_pt[0],_pt[1]+pad,_pt[2]),gts.Point(_pt[0],_pt[1],_pt[2]-pad),gts.Point(_pt[0],_pt[1],_pt[2]+pad)]
+-		return p.is_inside(self.surf) and pp[0].is_inside(self.surf) and pp[1].is_inside(self.surf) and pp[2].is_inside(self.surf) and pp[3].is_inside(self.surf) and pp[4].is_inside(self.surf) and pp[5].is_inside(self.surf)
+-
+-def gtsSurface2Facets(surf,**kw):
+-	&quot;&quot;&quot;Construct facets from given GTS surface. **kw is passed to utils.facet.&quot;&quot;&quot;
+-	return [utils.facet([v.coords() for v in face.vertices()],**kw) for face in surf]
+-
+-def sweptPolylines2gtsSurface(pts,threshold=0,capStart=False,capEnd=False):
+-	&quot;&quot;&quot;Create swept suface (as GTS triangulation) given same-length sequences of points (as 3-tuples).
+-	If threshold is given (&gt;0), gts.Surface().cleanup(threshold) will be called before returning.
+-	This removes vrtices closer than threshold. Can be used to create closed swept surface (revolved), as
+-	we don't check for coincident vertices otherwise.
+-	&quot;&quot;&quot;
+-	if not len(set([len(pts1) for pts1 in pts]))==1: raise RuntimeError(&quot;Polylines must be all of the same length!&quot;)
+-	vtxs=[[gts.Vertex(x,y,z) for x,y,z in pts1] for pts1 in pts]
+-	sectEdges=[[gts.Edge(vtx[i],vtx[i+1]) for i in xrange(0,len(vtx)-1)] for vtx in vtxs]
+-	interSectEdges=[[] for i in range(0,len(vtxs)-1)]
+-	for i in range(0,len(vtxs)-1):
+-		for j in range(0,len(vtxs[i])):
+-			interSectEdges[i].append(gts.Edge(vtxs[i][j],vtxs[i+1][j]))
+-			if j&lt;len(vtxs[i])-1: interSectEdges[i].append(gts.Edge(vtxs[i][j],vtxs[i+1][j+1]))
+-	surf=gts.Surface()
+-	for i in range(0,len(vtxs)-1):
+-		for j in range(0,len(vtxs[i])-1):
+-			surf.add(gts.Face(interSectEdges[i][2*j+1],sectEdges[i+1][j],interSectEdges[i][2*j]))
+-			surf.add(gts.Face(sectEdges[i][j],interSectEdges[i][2*j+2],interSectEdges[i][2*j+1]))
+-	def doCap(vtx,edg,start):
+-		ret=[]
+-		eFan=[edg[0]]+[gts.Edge(vtx[i],vtx[0]) for i in range(2,len(vtx))]
+-		for i in range(1,len(edg)):
+-			ret+=[gts.Face(eFan[i-1],eFan[i],edg[i]) if start else gts.Face(eFan[i-1],edg[i],eFan[i])]
+-		return ret
+-	caps=[]
+-	if capStart: caps+=doCap(vtxs[0],sectEdges[0],start=True)
+-	if capEnd: caps+=doCap(vtxs[-1],sectEdges[-1],start=False)
+-	for cap in caps: surf.add(cap)
+-	if threshold&gt;0: surf.cleanup(threshold)
+-	return surf
+-
+-import euclid
+-
+-def revolutionSurfaceMeridians(sects,angles,origin=euclid.Vector3(0,0,0),orientation=euclid.Quaternion()):
+-	&quot;&quot;&quot;Revolution surface given sequences of 2d points and sequence of corresponding angles,
+-	returning sequences of 3d points representing meridian sections of the revolution surface.
+-	The 2d sections are turned around z-axis, but they can be transformed
+-	using the origin and orientation arguments to give arbitrary spiral orientation.&quot;&quot;&quot;
+-	import math
+-	def toGlobal(x,y,z):
+-		return tuple(origin+orientation*(euclid.Vector3(x,y,z)))
+-	return [[toGlobal(x2d*math.cos(angles[i]),x2d*math.sin(angles[i]),y2d) for x2d,y2d in sects[i]] for i in range(0,len(sects))]
+-
+-
+-
+-def regularOrtho(predicate,radius,gap,**kw):
+-	&quot;&quot;&quot;Return set of spheres in regular orthogonal grid, clipped inside solid given by predicate.
+-	Created spheres will have given radius and will be separated by gap space.&quot;&quot;&quot;
+-	ret=[]
+-	mn,mx=predicate.aabb()
+-	if(max([mx[i]-mn[i] for i in 0,1,2])==float('inf')): raise ValueError(&quot;AABB of the predicate must not be infinite (didn't you use union | instead of intersection &amp; for unbounded predicate such as notInNotch?&quot;);
+-	xx,yy,zz=[arange(mn[i]+radius,mx[i]-radius,2*radius+gap) for i in 0,1,2]
+-	for xyz in itertools.product(xx,yy,zz):
+-		if predicate(xyz,radius): ret+=[utils.sphere(xyz,radius=radius,**kw)]
+-	return ret
+-
+-def regularHexa(predicate,radius,gap,**kw):
+-	&quot;&quot;&quot;Return set of spheres in regular hexagonal grid, clipped inside solid given by predicate.
+-	Created spheres will have given radius and will be separated by gap space.&quot;&quot;&quot;
+-	ret=[]
+-	a=2*radius+gap
+-	h=a*sqrt(3)/2.
+-	mn,mx=predicate.aabb()
+-	dim=[mx[i]-mn[i] for i in 0,1,2]
+-	if(max(dim)==float('inf')): raise ValueError(&quot;AABB of the predicate must not be infinite (didn't you use union | instead of intersection &amp; for unbounded predicate such as notInNotch?&quot;);
+-	ii,jj,kk=[range(0,int(dim[0]/a)+1),range(0,int(dim[1]/h)+1),range(0,int(dim[2]/h)+1)]
+-	for i,j,k in itertools.product(ii,jj,kk):
+-		x,y,z=mn[0]+radius+i*a,mn[1]+radius+j*h,mn[2]+radius+k*h
+-		if j%2==0: x+= a/2. if k%2==0 else -a/2.
+-		if k%2!=0: x+=a/2.; y+=h/2.
+-		if predicate((x,y,z),radius): ret+=[utils.sphere((x,y,z),radius=radius,**kw)]
+-	return ret
+-
+
+Deleted: trunk/gui/py/plot.py
+===================================================================
+--- trunk/gui/py/plot.py	2009-07-01 12:00:32 UTC (rev 1828)
++++ trunk/gui/py/plot.py	2009-07-01 18:27:44 UTC (rev 1829)
+@@ -1,190 +0,0 @@
+-# encoding: utf-8
+-# 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt; 
+-&quot;&quot;&quot;
+-Module containing utility functions for plotting inside yade.
+-
+-Experimental, interface may change (even drastically).
+-
+-&quot;&quot;&quot;
+-import matplotlib
+-matplotlib.use('TkAgg')
+-#matplotlib.use('GTKCairo')
+-#matplotlib.use('QtAgg')
+-matplotlib.rc('axes',grid=True) # put grid in all figures
+-import pylab
+-
+-
+-data={} # global, common for all plots: {'name':[value,...],...}
+-plots={} # dictionary x-name -&gt; (yspec,...), where yspec is either y-name or (y-name,'line-specification')
+-plotsFilled={} # same as plots but with standalone plot specs filled to tuples (used internally only)
+-plotLines={} # dictionary x-name -&gt; Line2d objects (that hopefully still correspond to yspec in plots)
+-needsFullReplot=True
+-
+-def reset():
+-	global data, plots, plotsFilled, plotLines, needsFullReplot
+-	data={}; plots={}; plotsFilled={}; plotLines={}; needsFullReplot=True; 
+-	pylab.close('all')
+-
+-# we could have a yplot class, that would hold: (yspec,...), (Line2d,Line2d,...) ?
+-
+-
+-plotDataCollector=None
+-import yade.wrapper
+-o=yade.wrapper.Omega()
+-
+-maxDataLen=1000
+-
+-def reduceData(l):
+-	&quot;&quot;&quot;If we have too much data, take every second value and double the step for DateGetterEngine. This will keep the samples equidistant.
+-	&quot;&quot;&quot;
+-	if l&gt;maxDataLen:
+-		global plotDataCollector
+-		if not plotDataCollector: plotDataCollector=o.labeledEngine('plotDataCollector') # will raise RuntimeError if not found
+-		if plotDataCollector['mayStretch']: # may we double the period without getting over limits?
+-			plotDataCollector['stretchFactor']=2. # just to make sure
+-			print &quot;Reducing data: %d &gt; %d&quot;%(l,maxDataLen)
+-			for d in data: data[d]=data[d][::2]
+-			for attr in ['virtPeriod','realPeriod','iterPeriod']:
+-				if(plotDataCollector[attr]&gt;0): plotDataCollector[attr]=2*plotDataCollector[attr]
+-
+-def splitData():
+-	&quot;Make all plots discontinuous at this point (adds nan's to all data fields)&quot;
+-	addData({})
+-
+-
+-def reverseData():
+-	for k in data: data[k].reverse()
+-
+-def addData(d):
+-	&quot;&quot;&quot;Add data from argument {'name':value,...} to yade.plot.data.
+-
+-	New data will be left-padded with nan's, unspecified data will be nan.
+-	This way, equal length of all data is assured so that they can be plotted one against any other.
+-
+-	Nan's don't appear in graphs.&quot;&quot;&quot;
+-	import numpy
+-	if len(data)&gt;0: numSamples=len(data[data.keys()[0]])
+-	else: numSamples=0
+-	reduceData(numSamples)
+-	nan=float('nan')
+-	for name in d:
+-		if not name in data.keys():
+-			data[name]=[nan for i in range(numSamples)] #numpy.array([nan for i in range(numSamples)])
+-	for name in data:
+-		if name in d: data[name].append(d[name]) #numpy.append(data[name],[d[name]],1)
+-		else: data[name].append(nan)
+-
+-def fillNonSequence(o):
+-	if o.__class__==tuple().__class__ or o.__class__==list().__class__: return o
+-	else: return (o,'')
+-
+-def show(): plot()
+-
+-def plot():
+-	pylab.ion() ## # no interactive mode (hmmm, I don't know why actually...)
+-	for p in plots:
+-		pylab.figure()
+-		plots_p=[fillNonSequence(o) for o in plots[p]]
+-		plotsFilled[p]=plots_p
+-		plotLines[p]=pylab.plot(*sum([[data[p],data[d[0]],d[1]] for d in plots_p],[]))
+-		pylab.legend([_p[0] for _p in plots_p])
+-		pylab.xlabel(p)
+-		if 'title' in O.tags.keys(): pylab.title(O.tags['title'])
+-	pylab.show()
+-updatePeriod=0
+-def periodicUpdate(period):
+-	import time
+-	global updatePeriod
+-	while updatePeriod&gt;0:
+-		doUpdate()
+-		time.sleep(updatePeriod)
+-def startUpdate(period=10):
+-	global updatePeriod
+-	updatePeriod=period
+-	import threading
+-	threading.Thread(target=periodicUpdate,args=(period,),name='Thread-update').start()
+-def stopUpdate():
+-	global updatePeriod
+-	updatePeriod=0
+-def doUpdate():
+-	pylab.close('all')
+-	plot()
+-
+-
+-def saveGnuplot(baseName,term='wxt',extension=None,timestamp=False,comment=None,title=None,varData=False):
+-	&quot;&quot;&quot;baseName: used for creating baseName.gnuplot (command file for gnuplot),
+-			associated baseName.data (data) and output files (if applicable) in the form baseName.[plot number].extension
+-		term: specify the gnuplot terminal;
+-			defaults to x11, in which case gnuplot will draw persistent windows to screen and terminate
+-			other useful terminals are 'png', 'cairopdf' and so on
+-		extension: defaults to terminal name
+-			fine for png for example; if you use 'cairopdf', you should also say extension='pdf' however
+-		timestamp: append numeric time to the basename
+-		varData: whether file to plot will be declared as variable or be in-place in the plot expression
+-		comment: a user comment (may be multiline) that will be embedded in the control file
+-
+-		Returns name fo the gnuplot file created.
+-	&quot;&quot;&quot;
+-	import time,bz2
+-	vars=data.keys(); vars.sort()
+-	lData=len(data[vars[0]])
+-	if timestamp: baseName+=time.strftime('_%Y%m%d_%H:%M')
+-	baseNameNoPath=baseName.split('/')[-1]
+-	fData=bz2.BZ2File(baseName+&quot;.data.bz2&quot;,'w');
+-	fData.write(&quot;# &quot;+&quot;\t\t&quot;.join(vars)+&quot;\n&quot;)
+-	for i in range(lData):
+-		fData.write(&quot;\t&quot;.join([str(data[var][i]) for var in vars])+&quot;\n&quot;)
+-	fData.close()
+-	fPlot=file(baseName+&quot;.gnuplot&quot;,'w')
+-	fPlot.write('#!/usr/bin/env gnuplot\n#\n# created '+time.asctime()+' ('+time.strftime('%Y%m%d_%H:%M')+')\n#\n')
+-	if comment: fPlot.write('# '+comment.replace('\n','\n# ')+'#\n')
+-	dataFile='&quot;&lt; bzcat %s.data.bz2&quot;'%(baseNameNoPath)
+-	if varData:
+-		fPlot.write('dataFile=%s'%dataFile); dataFile='dataFile'
+-	if not extension: extension=term
+-	i=0
+-	for p in plots:
+-		# print p
+-		plots_p=[fillNonSequence(o) for o in plots[p]]
+-		if term in ['wxt','x11']: fPlot.write(&quot;set term %s %d persist\n&quot;%(term,i))
+-		else: fPlot.write(&quot;set term %s; set output '%s.%d.%s'\n&quot;%(term,baseNameNoPath,i,extension))
+-		fPlot.write(&quot;set xlabel '%s'\n&quot;%p)
+-		fPlot.write(&quot;set grid\n&quot;)
+-		fPlot.write(&quot;set datafile missing 'nan'\n&quot;)
+-		if title: fPlot.write(&quot;set title '%s'\n&quot;%title)
+-		fPlot.write(&quot;plot &quot;+&quot;,&quot;.join([&quot; %s using %d:%d title '%s(%s)' with lines&quot;%(dataFile,vars.index(p)+1,vars.index(pp[0])+1,pp[0],p) for pp in plots_p])+&quot;\n&quot;)
+-		i+=1
+-	fPlot.close()
+-	return baseName+'.gnuplot'
+-
+-
+-	
+-import random
+-if __name__ == &quot;__main__&quot;:
+-	for i in range(10):
+-		addData({'a':random.random(),'b':random.random(),'t':i*.001,'i':i})
+-	print data
+-	for i in range(15):
+-		addData({'a':random.random(),'c':random.random(),'d':random.random(),'one':1,'t':(i+10)*.001,'i':i+10})
+-	print data
+-	# all lists must have the same length
+-	l=set([len(data[n]) for n in data])
+-	print l
+-	assert(len(l)==1)
+-	plots={'t':('a',('b','g^'),'d'),'i':('a',('one','g^'))}
+-	fullPlot()
+-	print &quot;PLOT DONE!&quot;
+-	fullPlot()
+-	plots['t']=('a',('b','r^','d'))
+-	print &quot;FULL&#160;PLOT&#160;DONE!&quot;
+-	for i in range(20):
+-		addData({'d':.1,'a':.5,'c':.6,'c':random.random(),'t':(i+25)*0.001,'i':i+25})
+-	updatePlot()
+-	print &quot;UPDATED!&quot;
+-	print data['d']
+-	import time
+-	#time.sleep(60)
+-	killPlots()
+-	#pylab.clf()
+-
+-
+
+Deleted: trunk/gui/py/timing.py
+===================================================================
+--- trunk/gui/py/timing.py	2009-07-01 12:00:32 UTC (rev 1828)
++++ trunk/gui/py/timing.py	2009-07-01 18:27:44 UTC (rev 1829)
+@@ -1,64 +0,0 @@
+-# encoding: utf-8
+-def _resetEngine(e):
+-	if e.timingDeltas: e.timingDeltas.reset()
+-	if e.__class__.__name__=='EngineUnit': return
+-	if e.__class__.__name__=='MetaEngine':
+-		for f in e.functors: _resetEngine(f)
+-	elif e.__class__.__name__=='ParallelEngine':
+-		for s in e.slaves: _resetEngine(s)
+-	e.execTime,e.execCount=0,0
+-
+-def reset():
+-	for e in O.engines: _resetEngine(e)
+-
+-_statCols={'label':40,'count':20,'time':20,'relTime':20}
+-_maxLev=3
+-
+-def _formatLine(label,time,count,totalTime,level):
+-	sp,negSp=' '*level*2,' '*(_maxLev-level)*2
+-	raw=[]
+-	raw.append(label)
+-	raw.append(str(count) if count&gt;=0 else '')
+-	raw.append((str(time/1000)+u'us') if time&gt;=0 else '')
+-	raw.append(('%6.2f%%'%(time*100./totalTime)) if totalTime&gt;0 else '')
+-	return u' '.join([
+-		(sp+raw[0]).ljust(_statCols['label']),
+-		(raw[1]+negSp).rjust(_statCols['count']),
+-		(raw[2]+negSp).rjust(_statCols['time']),
+-		(raw[3]+negSp).rjust(_statCols['relTime']),
+-	])
+-
+-def _delta_stats(deltas,totalTime,level):
+-	ret=0
+-	deltaTime=sum([d[1] for d in deltas.data])
+-	for d in deltas.data:
+-		print _formatLine(d[0],d[1],d[2],totalTime,level); ret+=1
+-	if len(deltas.data)&gt;1:
+-		print _formatLine('TOTAL',deltaTime,-1,totalTime,level); ret+=1
+-	return ret
+-
+-def _engines_stats(engines,totalTime,level):
+-	lines=0; hereLines=0
+-	for e in engines:
+-		if e.__class__.__name__!='EngineUnit': print _formatLine(u'&quot;'+e['label']+'&quot;' if e['label'] else e.name,e.execTime,e.execCount,totalTime,level); lines+=1; hereLines+=1
+-		if e.timingDeltas: 
+-			if e.__class__.__name__=='EngineUnit':
+-				print _formatLine(e.name,-1,-1,-1,level); lines+=1; hereLines+=1
+-				execTime=sum([d[1] for d in e.timingDeltas.data])
+-			else: execTime=e.execTime
+-			lines+=_delta_stats(e.timingDeltas,execTime,level+1)
+-		if e.__class__.__name__=='MetaEngine': lines+=_engines_stats(e.functors,e.execTime,level+1)
+-		if e.__class__.__name__=='InteractionDispatcher':
+-			lines+=_engines_stats(e.geomDispatcher.functors,e.execTime,level+1)
+-			lines+=_engines_stats(e.physDispatcher.functors,e.execTime,level+1)
+-			lines+=_engines_stats(e.constLawDispatcher.functors,e.execTime,level+1)
+-		elif e.__class__.__name__=='ParallelEngine': lines+=_engines_stats(e.slave,e.execTime,level+1)
+-	if hereLines&gt;1:
+-		print _formatLine('TOTAL',totalTime,-1,totalTime,level); lines+=1
+-	return lines
+-
+-def stats():
+-	print 'Name'.ljust(_statCols['label'])+' '+'Count'.rjust(_statCols['count'])+' '+'Time'.rjust(_statCols['time'])+' '+'Rel. time'.rjust(_statCols['relTime'])
+-	print '-'*(sum([_statCols[k] for k in _statCols])+len(_statCols)-1)
+-	_engines_stats(O.engines,sum([e.execTime for e in O.engines]),0)
+-	print
+
+Deleted: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2009-07-01 12:00:32 UTC (rev 1828)
++++ trunk/gui/py/utils.py	2009-07-01 18:27:44 UTC (rev 1829)
+@@ -1,452 +0,0 @@
+-# encoding: utf-8
+-#
+-# utility functions for yade
+-#
+-# 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+-
+-import math,random
+-from yade.wrapper import *
+-try: # use psyco if available
+-	import psyco
+-	psyco.full()
+-except ImportError: pass
+-
+-# c++ implementations for performance reasons
+-from yade._utils import *
+-
+-def saveVars(mark='',loadNow=False,**kw):
+-	&quot;&quot;&quot;Save passed variables into the simulation so that it can be recovered when the simulation is loaded again.
+-
+-	For example, variables a=5, b=66 and c=7.5e-4 are defined. To save those, use
+-
+-	 utils.saveVars(a=a,b=b,c=c)
+-
+-	those variables will be save in the .xml file, when the simulation itself is saved. To recover those variables once
+-	the .xml is loaded again, use
+-
+-	 utils.loadVars(mark)
+-
+-	and they will be defined in the __builtin__ namespace (i.e. available from anywhere in the python code).
+-
+-	If loadParam==True, variables will be loaded immediately after saving. That effectively makes **kw available in builtin namespace.
+-	&quot;&quot;&quot;
+-	import cPickle
+-	Omega().tags['pickledPythonVariablesDictionary'+mark]=cPickle.dumps(kw)
+-	if loadNow: loadVars(mark)
+-
+-def loadVars(mark=None):
+-	&quot;&quot;&quot;Load variables from saveVars, which are saved inside the simulation.
+-	If mark==None, all save variables are loaded. Otherwise only those with
+-	the mark passed.&quot;&quot;&quot;
+-	import cPickle
+-	import __builtin__
+-	if mark!=None:
+-		d=cPickle.loads(Omega().tags['pickledPythonVariablesDictionary'+mark])
+-		for k in d: __builtin__.__dict__[k]=d[k]
+-	else: # load everything one by one
+-		for m in Omega().tags.keys():
+-			if m.startswith('pickledPythonVariablesDictionary'):
+-				loadVars(m[len('pickledPythonVariableDictionary')+1:])
+-
+-
+-def SpherePWaveTimeStep(radius,density,young):
+-	&quot;&quot;&quot;Compute P-wave critical timestep for a single sphere.
+-	If you want to compute minimum critical timestep for all spheres in the simulation, use utils.PWaveTimeStep() instead.&quot;&quot;&quot;
+-	from math import sqrt
+-	return radius/sqrt(young/density)
+-
+-def randomColor(): return [random.random(),random.random(),random.random()]
+-
+-def typedEngine(name): return [e for e in Omega().engines if e.name==name][0]
+-
+-def downCast(obj,newClassName):
+-	&quot;&quot;&quot;Cast given object to class deriving from the same yade root class and copy all parameters from given object.
+-	Obj should be up in the inheritance tree, otherwise some attributes may not be defined in the new class.&quot;&quot;&quot;
+-	return obj.__class__(newClassName,dict([ (key,obj[key]) for key in obj.keys() ]))
+-
+-def sphere(center,radius,density=1,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=True,wire=False,color=None,physParamsClass='BodyMacroParameters',physParamsAttr={},velocity=[0,0,0]):
+-	&quot;&quot;&quot;Create default sphere, with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
+-	s=Body()
+-	if not color: color=randomColor()
+-	s.shape=GeometricalModel('Sphere',{'radius':radius,'diffuseColor':color,'wire':wire})
+-	s.mold=InteractingGeometry('InteractingSphere',{'radius':radius,'diffuseColor':color})
+-	V=(4./3)*math.pi*radius**3
+-	inert=(2./5.)*V*density*radius**2
+-	pp={'se3':[center[0],center[1],center[2],1,0,0,0],'refSe3':[center[0],center[1],center[2],1,0,0,0],'mass':V*density,'inertia':[inert,inert,inert],'young':young,'poisson':poisson,'frictionAngle':frictionAngle, 'velocity':[velocity[0],velocity[1],velocity[2]]}
+-	pp.update(physParamsAttr)
+-	s.phys=PhysicalParameters(physParamsClass)
+-	for k in [attr for attr in pp.keys() if attr in s.phys.keys()]:
+-		s.phys[k]=pp[k]
+-	s.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+-	s['isDynamic']=dynamic
+-	return s
+-
+-def box(center,extents,orientation=[1,0,0,0],density=1,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=True,wire=False,color=None,physParamsClass='BodyMacroParameters',physParamsAttr={}):
+-	&quot;&quot;&quot;Create default box (cuboid), with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
+-	b=Body()
+-	if not color: color=randomColor()
+-	b.shape=GeometricalModel('Box',{'extents':extents,'diffuseColor':color,'wire':wire})
+-	b.mold=InteractingGeometry('InteractingBox',{'extents':extents,'diffuseColor':color})
+-	mass=8*extents[0]*extents[1]*extents[2]*density
+-
+-	V=extents[0]*extents[1]*extents[2]
+-	
+-	Pp={'se3':[center[0],center[1],center[2],orientation[0],orientation[1],orientation[2],orientation[3]],'refSe3':[center[0],center[1],center[2],orientation[0],orientation[1],orientation[2],orientation[3]],'mass':V*density,'inertia':[mass*4*(extents[1]**2+extents[2]**2),mass*4*(extents[0]**2+extents[2]**2),mass*4*(extents[0]**2+extents[1]**2)],'young':young,'poisson':poisson,'frictionAngle':frictionAngle}
+-
+-	b.phys=PhysicalParameters(physParamsClass)
+-	for k in [attr for attr in Pp.keys() if attr in b.phys.keys()]:
+-		b.phys[k]=Pp[k]
+-
+-	b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+-	b['isDynamic']=dynamic
+-	return b
+-
+-def alignedFacetBox(center,extents,wallMask=63,**kw):
+-	&quot;&quot;&quot;Create axis-aligned box composed of facets, with given center and extents. wallMask determines which walls will be created,
+-	in the order -x (1), +x (2), -y (4), +y (8), -z (16), +z (32). The numbers are ANDed; the default 63 means to create all walls.
+-	Remaining **kw arguments are passed to utils.facet. The facets are oriented outwards from the box.&quot;&quot;&quot;
+-	mn,mx=[center[i]-extents[i] for i in 0,1,2],[center[i]+extents[i] for i in 0,1,2]
+-	def doWall(a,b,c,d):
+-		return [facet((a,b,c),**kw),facet((a,c,d),**kw)]
+-	ret=[]
+-	A,B,C,D=(mn[0],mn[1],mn[2]),(mx[0],mn[1],mn[2]),(mx[0],mx[1],mn[2]),(mn[0],mx[1],mn[2])
+-	E,F,G,H=(mn[0],mn[1],mx[2]),(mx[0],mn[1],mx[2]),(mx[0],mx[1],mx[2]),(mn[0],mx[1],mx[2])
+-	if wallMask&amp;1:  ret+=doWall(A,D,H,E)
+-	if wallMask&amp;2:  ret+=doWall(B,C,G,F)
+-	if wallMask&amp;4:  ret+=doWall(A,B,F,E)
+-	if wallMask&amp;8:  ret+=doWall(D,H,G,C)
+-	if wallMask&amp;16: ret+=doWall(A,D,C,B)
+-	if wallMask&amp;32: ret+=doWall(E,F,G,H)
+-	return ret
+-
+-def facet(vertices,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=False,wire=True,color=None,physParamsClass='BodyMacroParameters',physParamsAttr={}):
+-	&quot;&quot;&quot;Create default facet with given parameters. Vertices are given as sequence of 3 3-tuple and they, all in global coordinates.&quot;&quot;&quot;
+-	b=Body()
+-	if not color: color=randomColor()
+-	b.shape=GeometricalModel('Facet',{'diffuseColor':color,'wire':wire})
+-	b.mold=InteractingGeometry('InteractingFacet',{'diffuseColor':color})
+-	center=inscribedCircleCenter(list(vertices[0]),list(vertices[1]),list(vertices[2]))
+-	vertices=map(lambda a,b:map(lambda x,y:x-y,a,b),vertices,[center,center,center]) 
+-	vStr='['+' '.join(['{%g %g %g}'%(v[0],v[1],v[2]) for v in vertices])+']'
+-	b.shape.setRaw('vertices',vStr)
+-	b.mold.setRaw('vertices',vStr)
+-	pp={'se3':[center[0],center[1],center[2],1,0,0,0],'refSe3':[center[0],center[1],center[2],1,0,0,0],'young':young,'poisson':poisson,'frictionAngle':frictionAngle,'inertia':[0,0,0]}
+-	pp.update(physParamsAttr)
+-	b.phys=PhysicalParameters(physParamsClass)
+-	for k in [attr for attr in pp.keys() if attr in b.phys.keys()]:
+-		b.phys[k]=pp[k]
+-	b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+-	b['isDynamic']=dynamic
+-	b.mold.postProcessAttributes()
+-	return b
+-
+-def aabbWalls(extrema=None,thickness=None,oversizeFactor=1.5,**kw):
+-	&quot;&quot;&quot;return 6 walls that will wrap existing packing;
+-	extrema are extremal points of the AABB of the packing (will be calculated if not specified)
+-	thickness is wall thickness (will be 1/10 of the X-dimension if not specified)
+-	Walls will be enlarged in their plane by oversizeFactor.
+-	returns list of 6 wall Bodies enclosing the packing, in the order minX,maxX,minY,maxY,minZ,maxZ.
+-	&quot;&quot;&quot;
+-	walls=[]
+-	if not extrema: extrema=aabbExtrema()
+-	if not thickness: thickness=(extrema[1][0]-extrema[0][0])/10.
+-	for axis in [0,1,2]:
+-		mi,ma=extrema
+-		center=[(mi[i]+ma[i])/2. for i in range(3)]
+-		extents=[.5*oversizeFactor*(ma[i]-mi[i]) for i in range(3)]
+-		extents[axis]=thickness/2.
+-		for j in [0,1]:
+-			center[axis]=extrema[j][axis]+(j-.5)*thickness
+-			walls.append(box(center=center,extents=extents,dynamic=False,**kw))
+-			walls[-1].shape['wire']=True
+-	return walls
+-
+-
+-def aabbDim(cutoff=0.,centers=False):
+-	&quot;&quot;&quot;return dimensions of the bounding box, optionally cut.&quot;&quot;&quot;
+-	a=aabbExtrema(cutoff,centers)
+-	return (a[1][0]-a[0][0],a[1][1]-a[0][1],a[1][2]-a[0][2])
+-
+-def aabbExtrema2d(pts):
+-	&quot;&quot;&quot;return 2d bounding box for a sequence of 2-tuples&quot;&quot;&quot;
+-	inf=float('inf')
+-	min,max=[inf,inf],[-inf,-inf]
+-	for pt in pts:
+-		if pt[0]&lt;min[0]: min[0]=pt[0]
+-		elif pt[0]&gt;max[0]: max[0]=pt[0]
+-		if pt[1]&lt;min[1]: min[1]=pt[1]
+-		elif pt[1]&gt;max[1]: max[1]=pt[1]
+-	return tuple(min),tuple(max)
+-
+-def perpendicularArea(axis):
+-	&quot;&quot;&quot;return area perpendicular to given axis (0=x,1=y,2=z) generated by bodies
+-	for which the function consider returns True (defaults to returning True always)
+-	and which is of the type &quot;Sphere&quot;
+-	&quot;&quot;&quot;
+-	ext=aabbExtrema()
+-	other=((axis+1)%3,(axis+2)%3)
+-	return (ext[1][other[0]]-ext[0][other[0]])*(ext[1][other[1]]-ext[0][other[1]])
+-
+-def fractionalBox(fraction=1.,minMax=None):
+-	&quot;&quot;&quot;retrurn (min,max) that is the original minMax box (or aabb of the whole simulation if not specified)
+-	linearly scaled around its center to the fraction factor&quot;&quot;&quot;
+-	if not minMax: minMax=aabbExtrema()
+-	half=[.5*(minMax[1][i]-minMax[0][i]) for i in [0,1,2]]
+-	return (tuple([minMax[0][i]+(1-fraction)*half[i] for i in [0,1,2]]),tuple([minMax[1][i]-(1-fraction)*half[i] for i in [0,1,2]]))
+-
+-
+-def randomizeColors(onShapes=True,onMolds=False,onlyDynamic=False):
+-	&quot;&quot;&quot;Assign random colors to shape's (GeometricalModel) and/or mold's (InteractingGeometry) diffuseColor.
+-	
+-	onShapes and onMolds turn on/off operating on the respective colors.
+-	If onlyDynamic is true, only dynamic bodies will have the color changed.
+-	&quot;&quot;&quot;
+-	if not onShapes and not onMolds: return
+-	o=Omega()
+-	for b in o.bodies:
+-		color=(random.random(),random.random(),random.random())
+-		if onShapes and (b['isDynamic'] or not onlyDynamic): b.shape['diffuseColor']=color
+-		if onMolds  and (b['isDynamic'] or not onlyDynamic): b.mold['diffuseColor']=color
+-
+-
+-def spheresFromFile(filename,scale=1.,wenjieFormat=False,**kw):
+-	&quot;&quot;&quot;Load sphere coordinates from file, create spheres, insert them to the simulation.
+-
+-	filename is the file holding ASCII numbers (at least 4 colums that hold x_center, y_center, z_center, radius).
+-	All remaining arguments are passed the the yade.utils.sphere function that creates the bodies.
+-
+-	wenjieFormat will skip all lines that have exactly 5 numbers and where the 4th one is exactly 1.0 -
+-	this was used by a fellow developer called Wenjie to mark box elements.
+-	
+-	Returns list of body ids that were inserted into simulation.&quot;&quot;&quot;
+-	o=Omega()
+-	ret=[]
+-	for l in open(filename):
+-		ss=[float(i) for i in l.split()]
+-		if wenjieFormat and len(ss)==5 and ss[4]==1.0: continue
+-		id=o.bodies.append(sphere([scale*ss[0],scale*ss[1],scale*ss[2]],scale*ss[3],**kw))
+-		ret.append(id)
+-	return ret
+-
+-def spheresToFile(filename,consider=lambda id: True):
+-	&quot;&quot;&quot;Save sphere coordinates into ASCII file; the format of the line is: x y z r.
+-	Non-spherical bodies are silently skipped.
+-	
+-	Returns number of spheres that were written.&quot;&quot;&quot;
+-	o=Omega()
+-	out=open(filename,'w')
+-	count=0
+-	for b in o.bodies:
+-		if not b.shape or not b.shape.name=='Sphere' or not consider(b.id): continue
+-		out.write('%g\t%g\t%g\t%g\n'%(b.phys['se3'][0],b.phys['se3'][1],b.phys['se3'][2],b.shape['radius']))
+-		count+=1
+-	out.close()
+-	return count
+-
+-def avgNumInteractions(cutoff=0.):
+-	nums,counts=bodyNumInteractionsHistogram(aabbExtrema(cutoff))
+-	return sum([nums[i]*counts[i] for i in range(len(nums))])/(1.*sum(counts))
+-
+-def plotNumInteractionsHistogram(cutoff=0.):
+-	nums,counts=bodyNumInteractionsHistogram(aabbExtrema(cutoff))
+-	import pylab
+-	pylab.bar(nums,counts)
+-	pylab.title('Number of interactions histogram, average %g (cutoff=%g)'%(avgNumInteractions(cutoff),cutoff))
+-	pylab.xlabel('Number of interactions')
+-	pylab.ylabel('Body count')
+-	pylab.show()
+-
+-def plotDirections(aabb=(),mask=0,bins=20,numHist=True):
+-	&quot;&quot;&quot;Plot 3 histograms for distribution of interaction directions, in yz,xz and xy planes and
+-	(optional but default) histogram of number of interactions per body.&quot;&quot;&quot;
+-	import pylab,math
+-	from yade import utils
+-	for axis in [0,1,2]:
+-		d=utils.interactionAnglesHistogram(axis,mask=mask,bins=bins,aabb=aabb)
+-		fc=[0,0,0]; fc[axis]=1.
+-		subp=pylab.subplot(220+axis+1,polar=True);
+-		# 1.1 makes small gaps between values (but the column is a bit decentered)
+-		pylab.bar(d[0],d[1],width=math.pi/(1.1*bins),fc=fc,alpha=.7,label=['yz','xz','xy'][axis])
+-		#pylab.title(['yz','xz','xy'][axis]+' plane')
+-		pylab.text(.5,.25,['yz','xz','xy'][axis],horizontalalignment='center',verticalalignment='center',transform=subp.transAxes,fontsize='xx-large')
+-	if numHist:
+-		pylab.subplot(224,polar=False)
+-		nums,counts=utils.bodyNumInteractionsHistogram(aabb if len(aabb)&gt;0 else utils.aabbExtrema())
+-		avg=sum([nums[i]*counts[i] for i in range(len(nums))])/(1.*sum(counts))
+-		pylab.bar(nums,counts,fc=[1,1,0],alpha=.7,align='center')
+-		pylab.xlabel('Interactions per body (avg. %g)'%avg)
+-		pylab.axvline(x=avg,linewidth=3,color='r')
+-		pylab.ylabel('Body count')
+-	pylab.show()
+-
+-
+-def import_stl_geometry(file, young=30e9,poisson=.3,color=[0,1,0],frictionAngle=0.5236,wire=True,noBoundingVolume=False,noInteractingGeometry=False,physParamsClass='BodyMacroParameters',physParamsAttr={}):
+-	&quot;&quot;&quot; Import geometry from stl file, create facets and return list of their ids.&quot;&quot;&quot;
+-	imp = STLImporter()
+-	imp.wire = wire
+-	imp.open(file)
+-	o=Omega()
+-	begin=len(o.bodies)
+-	for i in xrange(imp.number_of_facets):
+-		b=Body()
+-		b['isDynamic']=False
+-		pp={'se3':[0,0,0,1,0,0,0],'young':young,'poisson':poisson,'frictionAngle':frictionAngle}
+-		pp.update(physParamsAttr)
+-		b.phys=PhysicalParameters(physParamsClass)
+-		for k in [attr for attr in pp.keys() if attr in b.phys.keys()]:
+-			b.phys[k]=pp[k]
+-		if not noBoundingVolume:
+-			b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+-		o.bodies.append(b)
+-	imp.import_geometry(o.bodies,begin,noInteractingGeometry)
+-	imported=range(begin,begin+imp.number_of_facets)
+-	for i in imported:
+-		if not noInteractingGeometry:
+-			o.bodies[i].mold.postProcessAttributes()
+-		o.bodies[i].shape['diffuseColor']=color
+-	return imported
+-
+-def encodeVideoFromFrames(wildcard,out,renameNotOverwrite=True,fps=24):
+-	import pygst,sys,gobject,os
+-	pygst.require(&quot;0.10&quot;)
+-	import gst
+-	if renameNotOverwrite and os.path.exists(out):
+-		i=0;
+-		while(os.path.exists(out+&quot;~%d&quot;%i)): i+=1
+-		os.rename(out,out+&quot;~%d&quot;%i); print &quot;Output file `%s' already existed, old file renamed to `%s'&quot;%(out,out+&quot;~%d&quot;%i)
+-	print &quot;Encoding video from %s to %s&quot;%(wildcard,out)
+-	pipeline=gst.parse_launch('multifilesrc location=&quot;%s&quot; index=0 caps=&quot;image/png,framerate=\(fraction\)%d/1&quot; ! pngdec ! ffmpegcolorspace ! theoraenc sharpness=2 quality=63 ! oggmux ! filesink location=&quot;%s&quot;'%(wildcard,fps,out))
+-	bus=pipeline.get_bus()
+-	bus.add_signal_watch()
+-	mainloop=gobject.MainLoop();
+-	bus.connect(&quot;message::eos&quot;,lambda bus,msg: mainloop.quit())
+-	pipeline.set_state(gst.STATE_PLAYING)
+-	mainloop.run()
+-	pipeline.set_state(gst.STATE_NULL); pipeline.get_state()
+-
+-def readParamsFromTable(tableFileLine=None,noTableOk=False,unknownOk=False,**kw):
+-	&quot;&quot;&quot;
+-	Read parameters from a file and assign them to __builtin__ variables.
+-
+-	tableFile is a text file (with one value per blank-separated columns)
+-	tableLine is number of line where to get the values from
+-
+-		The format of the file is as follows (commens starting with # and empty lines allowed)
+-		
+-		name1 name2 &#8230; # 0th line
+-		val1  val2  &#8230; # 1st line
+-		val2  val2  &#8230; # 2nd line
+-		&#8230;
+-
+-	The name `description' is special and is assigned to Omega().tags['description']
+-
+-	assigns Omega().tags['params']=&quot;name1=val1,name2=val2,&#8230;&quot;
+-	
+-	assigns Omega().tags['defaultParams']=&quot;unassignedName1=defaultValue1,&#8230;&quot;
+-
+-	saves all parameters (default as well as settable) using saveVars('table')
+-
+-	return value is the number of assigned parameters.
+-	&quot;&quot;&quot;
+-	o=Omega()
+-	tagsParams=[]
+-	dictDefaults,dictParams={},{}
+-	import os, __builtin__
+-	if not tableFileLine and not os.environ.has_key('PARAM_TABLE'):
+-		if not noTableOk: raise EnvironmentError(&quot;PARAM_TABLE is not defined in the environment&quot;)
+-		o.tags['line']='l!'
+-	else:
+-		if not tableFileLine: tableFileLine=os.environ['PARAM_TABLE']
+-		env=tableFileLine.split(':')
+-		tableDesc=None
+-		tableFile,tableLine=env[0],env[1]
+-		if len(env)&gt;2: tableDesc=env[3]
+-		o.tags['line']='l'+tableLine
+-		ll=[l.split('#')[0] for l in ['']+open(tableFile).readlines()]; names=ll[1].split(); values=ll[int(tableLine)].split()
+-		assert(len(names)==len(values))
+-		if 'description' in names: O.tags['description']=values[names.index('description')]
+-		else:
+-			bangCols=[i for i,h in enumerate(names) if h[-1]=='!']
+-			if len(bangCols)==0: bangCols=range(len(names))
+-			for i in range(len(names)):
+-				if names[i][-1]=='!': names[i]=names[i][:-1] # strip trailing !
+-			O.tags['description']=','.join(names[col]+'='+('%g'%values[col] if isinstance(values[col],float) else str(values[col])) for col in bangCols).replace(&quot;'&quot;,'').replace('&quot;','')
+-		for i in range(len(names)):
+-			if names[i]=='description': continue
+-			if names[i] not in kw.keys():
+-				if (not unknownOk) and names[i][0]!='!': raise NameError(&quot;Parameter `%s' has no default value assigned&quot;%names[i])
+-			else: kw.pop(names[i])
+-			if names[i][0]!='!':
+-				exec('%s=%s'%(names[i],values[i])) in __builtins__; tagsParams+=['%s=%s'%(names[i],values[i])]; dictParams[names[i]]=values[i]
+-	defaults=[]
+-	for k in kw.keys():
+-		exec(&quot;%s=%s&quot;%(k,repr(kw[k]))) in __builtins__
+-		defaults+=[&quot;%s=%s&quot;%(k,kw[k])]; dictDefaults[k]=kw[k]
+-	o.tags['defaultParams']=&quot;,&quot;.join(defaults)
+-	o.tags['params']=&quot;,&quot;.join(tagsParams)
+-	dictParams.update(dictDefaults); saveVars('table',**dictParams)
+-	return len(tagsParams)
+-
+-def ColorizedVelocityFilter(isFilterActivated=True,autoScale=True,minValue=0,maxValue=0,posX=0,posY=0.2,width=0.05,height=0.5,title='Velocity, m/s'):
+-    f = DeusExMachina('ColorizedVelocityFilter',{'isFilterActivated':isFilterActivated,'autoScale':autoScale,'minValue':minValue,'maxValue':maxValue,'posX':posX,'posY':posY,'width':width,'height':height,'title':title})
+-    O.engines+=[f]
+-    return f
+-
+-def ColorizedTimeFilter(point=[0,0,0],normal=[0,1,0],isFilterActivated=True,autoScale=True,minValue=0,maxValue=0,posX=0,posY=0.2,width=0.05,height=0.5,title='Time, m/s'):
+-    f = DeusExMachina('ColorizedTimeFilter',{'point':point,'normal':normal,'isFilterActivated':isFilterActivated,'autoScale':autoScale,'minValue':minValue,'maxValue':maxValue,'posX':posX,'posY':posY,'width':width,'height':height,'title':title})
+-    O.engines+=[f]
+-    return f
+-
+-def PythonRunnerFilter(command='pass',isFilterActivated=True):
+-    f = DeusExMachina('PythonRunnerFilter',{'command':command,'isFilterActivated':isFilterActivated})
+-    O.engines+=[f]
+-    return f
+-
+-def replaceCollider(colliderEngine):
+-	&quot;&quot;&quot;Replaces collider (Collider) engine with the engine supplied. Raises error if no collider is in engines.&quot;&quot;&quot;
+-	colliderIdx=-1
+-	for i,e in enumerate(O.engines):
+-		if O.isChildClassOf(e.name,&quot;Collider&quot;):
+-			colliderIdx=i
+-			break
+-	if colliderIdx&lt;0: raise RuntimeError(&quot;No Collider found within O.engines.&quot;)
+-	O.engines=O.engines[:colliderIdx]+[colliderEngine]+O.engines[colliderIdx+1:]
+-
+-
+-def procStatus(name):
+-	import os
+-	for l in open('/proc/%d/status'%os.getpid()):
+-		if l.split(':')[0]==name: return l
+-	raise &quot;No such line in /proc/[pid]/status: &quot;+name
+-def vmData():
+-	l=procStatus('VmData'); ll=l.split(); assert(ll[2]=='kB')
+-	return int(ll[1])
+-
+-def spheresFromFileUniaxial(filename,areaSections=10,**kw):
+-	&quot;&quot;&quot;Load spheres from file, but do some additional work useful for uniaxial test:
+-	
+-	1. Find the dimensions that is the longest (uniaxial loading axis)
+-	2. Find the minimum cross-section area of the speciment by examining several (areaSections)
+-		sections perpendicular to axis, computing area of the convex hull for each one. This will
+-		work also for non-prismatic specimen.
+-	3. Find the bodies that are on the negative/positive boundary, to which the straining condition
+-		should be applied.
+-
+-	Returns dictionary with keys 'negIds', 'posIds', 'axis', 'area'.
+-	&quot;&quot;&quot;
+-	ids=spheresFromFile(filename,**kw)
+-	mm,mx=aabbExtrema()
+-	dim=aabbDim(); axis=dim.index(max(dim))
+-	import numpy
+-	areas=[approxSectionArea(coord,axis) for coord in numpy.linspace(mm[axis],mx[axis],num=10)[1:-1]]
+-	negIds,posIds=negPosExtremeIds(axis=axis,distFactor=2.2)
+-	return {'negIds':negIds,'posIds':posIds,'axis':axis,'area':min(areas)}
+-
+-def NormalRestitution2DampingRate(en):
+-        &quot;&quot;&quot;Compute the normal damping rate as a function of the normal coefficient of restitution.
+-        &quot;&quot;&quot;
+-	if en == 0.0: return 0.999999999
+-	if en == 1.0: return 0.0
+-	from math import sqrt,log,pi
+-	ln_en = math.log(en)
+-	return (-ln_en/math.sqrt((math.pow(ln_en,2) + math.pi*math.pi)))
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2009-07-01 12:00:32 UTC (rev 1828)
++++ trunk/gui/py/yadeControl.cpp	2009-07-01 18:27:44 UTC (rev 1829)
+@@ -524,7 +524,6 @@
+ 	void saveTmp(string mark=&quot;&quot;){ save(&quot;:memory:&quot;+mark);}
+ 	void loadTmp(string mark=&quot;&quot;){ load(&quot;:memory:&quot;+mark);}
+ 	void tmpToFile(string mark, string filename){
+-		// FIXME: memSavedSimulations are private, but I don't want to recompile all yade now; move it to public and uncomment these few lines at some point
+ 		if(OMEGA.memSavedSimulations.count(&quot;:memory:&quot;+mark)==0) throw runtime_error(&quot;No memory-saved simulation named &quot;+mark);
+ 		iostreams::filtering_ostream out;
+ 		if(boost::algorithm::ends_with(filename,&quot;.bz2&quot;)) out.push(iostreams::bzip2_compressor());
+@@ -538,6 +537,7 @@
+ 
+ 	void reset(){Py_BEGIN_ALLOW_THREADS; OMEGA.reset(); Py_END_ALLOW_THREADS; }
+ 	void resetTime(){ OMEGA.getRootBody()-&gt;currentIteration=0; OMEGA.getRootBody()-&gt;simulationTime=0; OMEGA.timeInit(); }
++	void switchWorld(){ std::swap(OMEGA.rootBody,OMEGA.rootBodyAnother); }
+ 
+ 	void save(std::string fileName){
+ 		assertRootBody();
+@@ -695,6 +695,7 @@
+ 		.def(&quot;step&quot;,&amp;pyOmega::step)
+ 		.def(&quot;wait&quot;,&amp;pyOmega::wait)
+ 		.def(&quot;reset&quot;,&amp;pyOmega::reset)
++		.def(&quot;switchWorld&quot;,&amp;pyOmega::switchWorld)
+ 		.def(&quot;labeledEngine&quot;,&amp;pyOmega::labeled_engine_get)
+ 		.def(&quot;resetTime&quot;,&amp;pyOmega::resetTime)
+ 		.def(&quot;plugins&quot;,&amp;pyOmega::plugins_get)
+
+Modified: trunk/lib/SConscript
+===================================================================
+--- trunk/lib/SConscript	2009-07-01 12:00:32 UTC (rev 1828)
++++ trunk/lib/SConscript	2009-07-01 18:27:44 UTC (rev 1829)
+@@ -1,18 +1,38 @@
+ # vim: set filetype=python :
+ Import('*')
++import os.path 
+ 
+ if 'EMBED_PYTHON' in env['CPPDEFINES']:
+ 	env.Install('$PREFIX/lib/yade$SUFFIX/py/yade',[
+ 		env.SharedLibrary('WeightedAverage2d',['smoothing/WeightedAverage2d.cpp'],SHLIBPREFIX='',
+ 			LIBS=env['LIBS']+['yade-base']),
++		env.SharedLibrary('_eudoxos',['py/_eudoxos.cpp'],SHLIBPREFIX='',CXXFLAGS=env['CXXFLAGS']+([] if not os.path.exists('../../brefcom-mm.hh') else ['-include','../brefcom-mm.hh']),LIBS=env['LIBS']+['Shop','ConcretePM']),
++		env.SharedLibrary('log',['py/log.cpp'],SHLIBPREFIX=''),
++		env.SharedLibrary('_utils',['py/_utils.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['Shop','ConcretePM']),
++		env.SharedLibrary('_packPredicates',['py/_packPredicates.cpp'],SHLIBPREFIX='',
++			# if we compile with GTS, link to the python module, as inGtsSurface uses some of its symbols.
++			# because the module doesn't have the lib- suffix, we put it directly to SHLINKFLAGS
++			# using the -l: syntax (see man ld) and declare the dependency below
++			SHLINKFLAGS=env['SHLINKFLAGS']+(['-l:$PREFIX/lib/yade$SUFFIX/py/gts/_gts.so'] if 'GTS' in env['features'] else [])),
++		env.SharedLibrary('_packSpheres',['py/_packSpheres.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['Shop']),
++		env.File('utils.py','py'),
++		env.File('eudoxos.py','py'),
++		env.File('plot.py','py'),
++		env.File('linterpolation.py','py'),
++		env.File('timing.py','py'),
++		env.File('pack.py','py'),
++
+ 	])
+-	# do not install this under yade but to the top-level module path (external modules)
++	# 3rd party modules:
++	# ==================
++	# do not install them under yade but to the top-level module path
+ 	# say e.g. 'import euclid' (not 'import  yade.euclid')
+ 	env.Install('$PREFIX/lib/yade$SUFFIX/py',[
+ 		env.File('euclid.py','py'),
+ 	])
+ 
+ 
++
+ if 'qt3' not in env['exclude']:
+ 	env.Install('$PREFIX/lib/yade$SUFFIX/lib',[
+ 		env.SharedLibrary('yade-serialization-qt',
+@@ -79,12 +99,7 @@
+ 		env.File('py/pygts-0.3.1/__init__.py'),
+ 		env.File('py/pygts-0.3.1/pygts.py')
+ 	])
+-	#env.Install('$PREFIX/lib/yade$SUFFIX/lib',[
+-	#	# the same, but to link the pack module with
+-	#	env.SharedLibrary('_gts',['py/pygts-0.3.1/cleanup.c','py/pygts-0.3.1/edge.c','py/pygts-0.3.1/face.c','py/pygts-0.3.1/object.c','py/pygts-0.3.1/point.c','py/pygts-0.3.1/pygts.c','py/pygts-0.3.1/segment.c','py/pygts-0.3.1/surface.c','py/pygts-0.3.1/triangle.c','py/pygts-0.3.1/vertex.c'],CPPDEFINES=env['CPPDEFINES']+['PYGTS_HAS_NUMPY']),
+-	#])
+ 
+-
+ env.Install('$PREFIX/lib/yade$SUFFIX/lib',[
+ 
+ 	env.SharedLibrary('yade-base',
+
+Copied: trunk/lib/py/_eudoxos.cpp (from rev 1822, trunk/gui/py/_eudoxos.cpp)
+
+
+Property changes on: trunk/lib/py/_eudoxos.cpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/lib/py/_packPredicates.cpp (from rev 1826, trunk/gui/py/_packPredicates.cpp)
+===================================================================
+--- trunk/gui/py/_packPredicates.cpp	2009-06-30 20:10:30 UTC (rev 1826)
++++ trunk/lib/py/_packPredicates.cpp	2009-07-01 18:27:44 UTC (rev 1829)
+@@ -0,0 +1,355 @@
++// 2009 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++#include&lt;boost/python.hpp&gt;
++#include&lt;yade/extra/boost_python_len.hpp&gt;
++#include&lt;yade/lib-base/Logging.hpp&gt;
++#include&lt;yade/lib-base/yadeWm3.hpp&gt;
++#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++// #include&lt;yade/gui-py/_utils.hpp&gt; // will be: yade/lib-py/_utils.hpp&gt; at some point
++#include&lt;Wm3Vector3.h&gt;
++
++using namespace boost;
++using namespace std;
++#ifdef LOG4CXX
++	log4cxx::LoggerPtr logger=log4cxx::Logger::getLogger(&quot;yade.pack.predicates&quot;);
++#endif
++
++/*
++This file contains various predicates that say whether a given point is within the solid,
++or, not closer than &quot;pad&quot; to its boundary, if pad is nonzero
++Besides the (point,pad) operator, each predicate defines aabb() method that returns
++(min,max) tuple defining minimum and maximum point of axis-aligned bounding box 
++for the predicate.
++
++These classes are primarily used for yade.pack.* functions creating packings.
++See scripts/test/regular-sphere-pack.py for an example.
++
++*/
++
++// aux functions
++python::tuple vec2tuple(const Vector3r&amp; v){return boost::python::make_tuple(v[0],v[1],v[2]);}
++python::tuple vec2tuple(const Vector2r&amp; v){return boost::python::make_tuple(v[0],v[1]);}
++Vector3r tuple2vec(const python::tuple&amp; t){return Vector3r(python::extract&lt;double&gt;(t[0])(),python::extract&lt;double&gt;(t[1])(),python::extract&lt;double&gt;(t[2])());}
++Vector2r tuple2vec2d(const python::tuple&amp; t){return Vector2r(python::extract&lt;double&gt;(t[0])(),python::extract&lt;double&gt;(t[1])());}
++void ttuple2vvec(const python::tuple&amp; t, Vector3r&amp; v1, Vector3r&amp; v2){ v1=tuple2vec(python::extract&lt;python::tuple&gt;(t[0])()); v2=tuple2vec(python::extract&lt;python::tuple&gt;(t[1])()); }
++python::tuple vvec2ttuple(const Vector3r&amp;v1, const Vector3r&amp;v2){ return python::make_tuple(vec2tuple(v1),vec2tuple(v2)); }
++
++struct Predicate{
++	public:
++		virtual bool operator() (python::tuple pt,Real pad=0.) const = 0;
++		virtual python::tuple aabb() const = 0;
++		python::tuple dim() const { Vector3r mn,mx; ttuple2vvec(aabb(),mn,mx); return vec2tuple(mx-mn); }
++		python::tuple center() const { Vector3r mn,mx; ttuple2vvec(aabb(),mn,mx); return vec2tuple(.5*(mn+mx)); }
++};
++// make the pad parameter optional
++BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(PredicateCall_overloads,operator(),1,2);
++
++/* Since we want to make Predicate::operator() and Predicate::aabb() callable from c++ on python::object
++with the right virtual method resolution, we have to wrap the class in the following way. See 
++<A HREF="http://www.boost.org/doc/libs/1_38_0/libs/python/doc/tutorial/doc/html/python/exposing.html">http://www.boost.org/doc/libs/1_38_0/libs/python/doc/tutorial/doc/html/python/exposing.html</A> for documentation
++on exposing virtual methods.
++
++This makes it possible to derive a python class from Predicate, override its aabb() method, for instance,
++and use it in PredicateUnion, which will call the python implementation of aabb() as it should. This
++approach is used in the inGtsSurface class defined in pack.py.
++
++See scripts/test/gts-operators.py for an example.
++
++NOTE: you still have to call base class ctor in your class' ctor derived in python, e.g.
++super(inGtsSurface,self).__init__() so that virtual methods work as expected.
++*/
++struct PredicateWrap: Predicate, python::wrapper&lt;Predicate&gt;{
++	bool operator()(python::tuple pt, Real pad=0.) const { return this-&gt;get_override(&quot;__call__&quot;)(pt,pad);}
++	python::tuple aabb() const { return this-&gt;get_override(&quot;aabb&quot;)(); }
++};
++// make the pad parameter optional
++BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(PredicateWrapCall_overloads,operator(),1,2);
++
++/*********************************************************************************
++****************** Boolean operations on predicates ******************************
++*********************************************************************************/
++
++const Predicate&amp; obj2pred(python::object obj){ return python::extract&lt;const Predicate&amp;&gt;(obj)();}
++
++class PredicateBoolean: public Predicate{
++	protected:
++		const python::object A,B;
++	public:
++		PredicateBoolean(const python::object _A, const python::object _B): A(_A), B(_B){}
++		const python::object getA(){ return A;}
++		const python::object getB(){ return B;}
++};
++
++// <A HREF="http://www.linuxtopia.org/online_books/programming_books/python_programming/python_ch16s03.html">http://www.linuxtopia.org/online_books/programming_books/python_programming/python_ch16s03.html</A>
++class PredicateUnion: public PredicateBoolean{
++	public:
++		PredicateUnion(const python::object _A, const python::object _B): PredicateBoolean(_A,_B){}
++		virtual bool operator()(python::tuple pt,Real pad) const {return obj2pred(A)(pt,pad)||obj2pred(B)(pt,pad);}
++		virtual python::tuple aabb() const { Vector3r minA,maxA,minB,maxB; ttuple2vvec(obj2pred(A).aabb(),minA,maxA); ttuple2vvec(obj2pred(B).aabb(),minB,maxB); return vvec2ttuple(componentMinVector(minA,minB),componentMaxVector(maxA,maxB));}
++};
++PredicateUnion makeUnion(const python::object&amp; A, const python::object&amp; B){ return PredicateUnion(A,B);}
++
++class PredicateIntersection: public PredicateBoolean{
++	public:
++		PredicateIntersection(const python::object _A, const python::object _B): PredicateBoolean(_A,_B){}
++		virtual bool operator()(python::tuple pt,Real pad) const {return obj2pred(A)(pt,pad) &amp;&amp; obj2pred(B)(pt,pad);}
++		virtual python::tuple aabb() const { Vector3r minA,maxA,minB,maxB; ttuple2vvec(obj2pred(A).aabb(),minA,maxA); ttuple2vvec(obj2pred(B).aabb(),minB,maxB); return vvec2ttuple(componentMaxVector(minA,minB),componentMinVector(maxA,maxB));}
++};
++PredicateIntersection makeIntersection(const python::object&amp; A, const python::object&amp; B){ return PredicateIntersection(A,B);}
++
++class PredicateDifference: public PredicateBoolean{
++	public:
++		PredicateDifference(const python::object _A, const python::object _B): PredicateBoolean(_A,_B){}
++		virtual bool operator()(python::tuple pt,Real pad) const {return obj2pred(A)(pt,pad) &amp;&amp; !obj2pred(B)(pt,-pad);}
++		virtual python::tuple aabb() const { return obj2pred(A).aabb(); }
++};
++PredicateDifference makeDifference(const python::object&amp; A, const python::object&amp; B){ return PredicateDifference(A,B);}
++
++class PredicateSymmetricDifference: public PredicateBoolean{
++	public:
++		PredicateSymmetricDifference(const python::object _A, const python::object _B): PredicateBoolean(_A,_B){}
++		virtual bool operator()(python::tuple pt,Real pad) const {bool inA=obj2pred(A)(pt,pad), inB=obj2pred(B)(pt,pad); return (inA &amp;&amp; !inB) || (!inA &amp;&amp; inB);}
++		virtual python::tuple aabb() const { Vector3r minA,maxA,minB,maxB; ttuple2vvec(obj2pred(A).aabb(),minA,maxA); ttuple2vvec(obj2pred(B).aabb(),minB,maxB); return vvec2ttuple(componentMinVector(minA,minB),componentMaxVector(maxA,maxB));}
++};
++PredicateSymmetricDifference makeSymmetricDifference(const python::object&amp; A, const python::object&amp; B){ return PredicateSymmetricDifference(A,B);}
++
++/*********************************************************************************
++****************************** Primitive predicates ******************************
++*********************************************************************************/
++
++
++/*! Sphere predicate */
++class inSphere: public Predicate {
++	Vector3r center; Real radius;
++public:
++	inSphere(python::tuple _center, Real _radius){center=tuple2vec(_center); radius=_radius;}
++	virtual bool operator()(python::tuple _pt, Real pad=0.) const {
++		Vector3r pt=tuple2vec(_pt);
++		return ((pt-center).Length()-pad&lt;=radius-pad);
++	}
++	virtual python::tuple aabb() const {return vvec2ttuple(Vector3r(center[0]-radius,center[1]-radius,center[2]-radius),Vector3r(center[0]+radius,center[1]+radius,center[2]+radius));}
++};
++
++/*! Axis-aligned box predicate */
++class inAlignedBox: public Predicate{
++	Vector3r mn, mx;
++public:
++	inAlignedBox(python::tuple _mn, python::tuple _mx){mn=tuple2vec(_mn); mx=tuple2vec(_mx);}
++	virtual bool operator()(python::tuple _pt, Real pad=0.) const {
++		Vector3r pt=tuple2vec(_pt);
++		return
++			mn[0]+pad&lt;=pt[0] &amp;&amp; mx[0]-pad&gt;=pt[0] &amp;&amp;
++			mn[1]+pad&lt;=pt[1] &amp;&amp; mx[1]-pad&gt;=pt[1] &amp;&amp;
++			mn[2]+pad&lt;=pt[2] &amp;&amp; mx[2]-pad&gt;=pt[2];
++	}
++	virtual python::tuple aabb() const { return vvec2ttuple(mn,mx); }
++};
++
++/*! Arbitrarily oriented cylinder predicate */
++class inCylinder: public Predicate{
++	Vector3r c1,c2,c12; Real radius,ht;
++public:
++	inCylinder(python::tuple _c1, python::tuple _c2, Real _radius){c1=tuple2vec(_c1); c2=tuple2vec(_c2); c12=c2-c1; radius=_radius; ht=c12.Length(); }
++	bool operator()(python::tuple _pt, Real pad=0.) const {
++		Vector3r pt=tuple2vec(_pt);
++		Real u=(pt.Dot(c12)-c1.Dot(c12))/(ht*ht); // normalized coordinate along the c1--c2 axis
++		if((u*ht&lt;0+pad) || (u*ht&gt;ht-pad)) return false; // out of cylinder along the axis
++		Real axisDist=((pt-c1).Cross(pt-c2)).Length()/ht;
++		if(axisDist&gt;radius-pad) return false;
++		return true;
++	}
++	python::tuple aabb() const {
++		// see <A HREF="http://www.gamedev.net/community/forums/topic.asp?topic_id=338522&amp;forum_id=20&amp;gforum_id=0">http://www.gamedev.net/community/forums/topic.asp?topic_id=338522&amp;forum_id=20&amp;gforum_id=0</A> for the algorithm
++		const Vector3r&amp; A(c1); const Vector3r&amp; B(c2); 
++		Vector3r k(
++			sqrt((pow(A[1]-B[1],2)+pow(A[2]-B[2],2)))/ht,
++			sqrt((pow(A[0]-B[0],2)+pow(A[2]-B[2],2)))/ht,
++			sqrt((pow(A[0]-B[0],2)+pow(A[1]-B[1],2)))/ht);
++		Vector3r mn(min(A[0],B[0]),min(A[1],B[1]),min(A[2],B[2])), mx(max(A[0],B[0]),max(A[1],B[1]),max(A[2],B[2]));
++		return vvec2ttuple(mn-radius*k,mx+radius*k);
++	}
++};
++
++/*! Oriented hyperboloid predicate (cylinder as special case).
++
++See <A HREF="http://mathworld.wolfram.com/Hyperboloid.html">http://mathworld.wolfram.com/Hyperboloid.html</A> for the parametrization and meaning of symbols
++*/
++class inHyperboloid: public Predicate{
++	Vector3r c1,c2,c12; Real R,a,ht,c;
++public:
++	inHyperboloid(python::tuple _c1, python::tuple _c2, Real _R, Real _r){
++		c1=tuple2vec(_c1); c2=tuple2vec(_c2); R=_R; a=_r;
++		c12=c2-c1; ht=c12.Length();
++		Real uMax=sqrt(pow(R/a,2)-1); c=ht/(2*uMax);
++	}
++	// WARN: this is not accurate, since padding is taken as perpendicular to the axis, not the the surface
++	bool operator()(python::tuple _pt, Real pad=0.) const {
++		Vector3r pt=tuple2vec(_pt);
++		Real v=(pt.Dot(c12)-c1.Dot(c12))/(ht*ht); // normalized coordinate along the c1--c2 axis
++		if((v*ht&lt;0+pad) || (v*ht&gt;ht-pad)) return false; // out of cylinder along the axis
++		Real u=(v-.5)*ht/c; // u from the wolfram parametrization; u is 0 in the center
++		Real rHere=a*sqrt(1+u*u); // pad is taken perpendicular to the axis, not to the surface (inaccurate)
++		Real axisDist=((pt-c1).Cross(pt-c2)).Length()/ht;
++		if(axisDist&gt;rHere-pad) return false;
++		return true;
++	}
++	python::tuple aabb() const {
++		// the lazy way
++		return inCylinder(vec2tuple(c1),vec2tuple(c2),R).aabb();
++	}
++};
++
++/*! Axis-aligned ellipsoid predicate */
++class inEllipsoid: public Predicate{
++	Vector3r c, abc;
++public:
++	inEllipsoid(python::tuple _c, python::tuple _abc) {c=tuple2vec(_c); abc=tuple2vec(_abc);}
++	bool operator()(python::tuple _pt, Real pad=0.) const {
++		Vector3r pt=tuple2vec(_pt);
++		//Define the ellipsoid X-coordinate of given Y and Z
++		Real x = sqrt((1-pow((pt[1]-c[1]),2)/((abc[1]-pad)*(abc[1]-pad))-pow((pt[2]-c[2]),2)/((abc[2]-pad)*(abc[2]-pad)))*((abc[0]-pad)*(abc[0]-pad)))+c[0]; 
++		Vector3r edgeEllipsoid(x,pt[1],pt[2]); // create a vector of these 3 coordinates
++		//check whether given coordinates lie inside ellipsoid or not
++		if ((pt-c).Length()&lt;=(edgeEllipsoid-c).Length()) return true;
++		else return false;
++	}
++	python::tuple aabb() const {
++		const Vector3r&amp; center(c); const Vector3r&amp; ABC(abc);
++		return vvec2ttuple(Vector3r(center[0]-ABC[0],center[1]-ABC[1],center[2]-ABC[2]),Vector3r(center[0]+ABC[0],center[1]+ABC[1],center[2]+ABC[2]));
++	}
++};
++
++/*! Negative notch predicate.
++
++Use intersection (&amp; operator) of another predicate with notInNotch to create notched solid.
++
++
++		
++		geometry explanation:
++		
++			c: the center
++			normalHalfHt (in constructor): A-C
++			inside: perpendicular to notch edge, points inside the notch (unit vector)
++			normal: perpendicular to inside, perpendicular to both notch planes
++			edge: unit vector in the direction of the edge
++
++		          &#8593; distUp        A
++		-------------------------
++		                        | C
++		         inside(unit) &#8592; * &#8594; distInPlane
++		                        |
++		-------------------------
++		          &#8595; distDown      B
++
++*/
++class notInNotch: public Predicate{
++	Vector3r c, edge, normal, inside; Real aperture;
++public:
++	notInNotch(python::tuple _c, python::tuple _edge, python::tuple _normal, Real _aperture){
++		c=tuple2vec(_c);
++		edge=tuple2vec(_edge); edge.Normalize();
++		normal=tuple2vec(_normal); normal-=edge*edge.Dot(normal); normal.Normalize();
++		inside=edge.Cross(normal);
++		aperture=_aperture;
++		// LOG_DEBUG(&quot;edge=&quot;&lt;&lt;edge&lt;&lt;&quot;, normal=&quot;&lt;&lt;normal&lt;&lt;&quot;, inside=&quot;&lt;&lt;inside&lt;&lt;&quot;, aperture=&quot;&lt;&lt;aperture);
++	}
++	bool operator()(python::tuple _pt, Real pad=0.) const {
++		Vector3r pt=tuple2vec(_pt);
++		Real distUp=normal.Dot(pt-c)-aperture/2, distDown=-normal.Dot(pt-c)-aperture/2, distInPlane=-inside.Dot(pt-c);
++		// LOG_DEBUG(&quot;pt=&quot;&lt;&lt;pt&lt;&lt;&quot;, distUp=&quot;&lt;&lt;distUp&lt;&lt;&quot;, distDown=&quot;&lt;&lt;distDown&lt;&lt;&quot;, distInPlane=&quot;&lt;&lt;distInPlane);
++		if(distInPlane&gt;=pad) return true;
++		if(distUp     &gt;=pad) return true;
++		if(distDown   &gt;=pad) return true;
++		if(distInPlane&lt;0) return false;
++		if(distUp  &gt;0) return sqrt(pow(distInPlane,2)+pow(distUp,2))&gt;=pad;
++		if(distDown&gt;0) return sqrt(pow(distInPlane,2)+pow(distUp,2))&gt;=pad;
++		// between both notch planes, closer to the edge than pad (distInPlane&lt;pad)
++		return false;
++	}
++	// This predicate is not bounded, return infinities
++	python::tuple aabb() const {
++		Real inf=std::numeric_limits&lt;Real&gt;::infinity();
++		return vvec2ttuple(Vector3r(-inf,-inf,-inf),Vector3r(inf,inf,inf)); }
++};
++
++#ifdef YADE_GTS
++extern &quot;C&quot; {
++#include&lt;yade/lib-py/pygts.h&gt;
++}
++/* Helper function for inGtsSurface::aabb() */
++static void vertex_aabb(GtsVertex *vertex, pair&lt;Vector3r,Vector3r&gt; *bb)
++{
++	GtsPoint *_p=GTS_POINT(vertex);
++	Vector3r p(_p-&gt;x,_p-&gt;y,_p-&gt;z);
++	bb-&gt;first=componentMinVector(bb-&gt;first,p);
++	bb-&gt;second=componentMaxVector(bb-&gt;second,p);
++}
++
++/*
++This class plays tricks getting aroung pyGTS to get GTS objects and cache bb tree to speed
++up point inclusion tests. For this reason, we have to link with _gts.so (see corresponding
++SConscript file), which is at the same time the python module.
++*/
++class inGtsSurface: public Predicate{
++	python::object pySurf; // to hold the reference so that surf is valid
++	GtsSurface *surf;
++	bool is_open, noPad, noPadWarned;
++	GNode* tree;
++public:
++	inGtsSurface(python::object _surf, bool _noPad=false): pySurf(_surf), noPad(_noPad), noPadWarned(false) {
++		if(!pygts_surface_check(_surf.ptr())) throw invalid_argument(&quot;Ctor must receive a gts.Surface() instance.&quot;); 
++		surf=PYGTS_SURFACE_AS_GTS_SURFACE(PYGTS_SURFACE(_surf.ptr()));
++	 	if(!gts_surface_is_closed(surf)) throw invalid_argument(&quot;Surface is not closed.&quot;);
++		is_open=gts_surface_volume(surf)&lt;0.;
++		if((tree=gts_bb_tree_surface(surf))==NULL) throw runtime_error(&quot;Could not create GTree.&quot;);
++	}
++	~inGtsSurface(){g_node_destroy(tree);}
++	python::tuple aabb() const {
++		Real inf=std::numeric_limits&lt;Real&gt;::infinity();
++		pair&lt;Vector3r,Vector3r&gt; bb; bb.first=Vector3r(inf,inf,inf); bb.second=Vector3r(-inf,-inf,-inf);
++		gts_surface_foreach_vertex(surf,(GtsFunc)vertex_aabb,&amp;bb);
++		return vvec2ttuple(bb.first,bb.second);
++	}
++	bool ptCheck(Vector3r pt) const{
++		GtsPoint gp; gp.x=pt[0]; gp.y=pt[1]; gp.z=pt[2];
++		return (bool)gts_point_is_inside_surface(&amp;gp,tree,is_open);
++	}
++	bool operator()(python::tuple _pt, Real pad=0.) const {
++		Vector3r pt=tuple2vec(_pt);
++		if(noPad){
++			if(pad!=0. &amp;&amp; noPadWarned) LOG_WARN(&quot;inGtsSurface constructed with noPad; requested non-zero pad set to zero.&quot;);
++			return ptCheck(pt);
++		}
++		return ptCheck(pt) &amp;&amp; ptCheck(pt-Vector3r(pad,0,0)) &amp;&amp; ptCheck(pt+Vector3r(pad,0,0)) &amp;&amp; ptCheck(pt-Vector3r(0,pad,0))&amp;&amp; ptCheck(pt+Vector3r(0,pad,0)) &amp;&amp; ptCheck(pt-Vector3r(0,0,pad))&amp;&amp; ptCheck(pt+Vector3r(0,0,pad));
++	}
++};
++
++#endif
++
++
++BOOST_PYTHON_MODULE(_packPredicates){
++	// base predicate class
++	python::class_&lt;PredicateWrap,/* necessary, as methods are pure virtual*/ boost::noncopyable&gt;(&quot;Predicate&quot;)
++		.def(&quot;__call__&quot;,python::pure_virtual(&amp;Predicate::operator()))
++		.def(&quot;aabb&quot;,python::pure_virtual(&amp;Predicate::aabb))
++		.def(&quot;dim&quot;,&amp;Predicate::dim)
++		.def(&quot;center&quot;,&amp;Predicate::center)
++		.def(&quot;__or__&quot;,makeUnion).def(&quot;__and__&quot;,makeIntersection).def(&quot;__sub__&quot;,makeDifference).def(&quot;__xor__&quot;,makeSymmetricDifference);
++	// boolean operations
++	python::class_&lt;PredicateBoolean,python::bases&lt;Predicate&gt;,boost::noncopyable&gt;(&quot;PredicateBoolean&quot;,&quot;Boolean operation on 2 predicates (abstract class)&quot;,python::no_init)
++		.add_property(&quot;A&quot;,&amp;PredicateBoolean::getA).add_property(&quot;B&quot;,&amp;PredicateBoolean::getB);
++	python::class_&lt;PredicateUnion,python::bases&lt;PredicateBoolean&gt; &gt;(&quot;PredicateUnion&quot;,&quot;Union of 2 predicates&quot;,python::init&lt;python::object,python::object&gt;());
++	python::class_&lt;PredicateIntersection,python::bases&lt;PredicateBoolean&gt; &gt;(&quot;PredicateIntersection&quot;,&quot;Intersection of 2 predicates&quot;,python::init&lt;python::object,python::object &gt;());
++	python::class_&lt;PredicateDifference,python::bases&lt;PredicateBoolean&gt; &gt;(&quot;PredicateDifference&quot;,&quot;Difference of 2 predicates&quot;,python::init&lt;python::object,python::object &gt;());
++	python::class_&lt;PredicateSymmetricDifference,python::bases&lt;PredicateBoolean&gt; &gt;(&quot;PredicateSymmetricDifference&quot;,&quot;SymmetricDifference of 2 predicates&quot;,python::init&lt;python::object,python::object &gt;());
++	// primitive predicates
++	python::class_&lt;inSphere,python::bases&lt;Predicate&gt; &gt;(&quot;inSphere&quot;,&quot;Sphere predicate.&quot;,python::init&lt;python::tuple,Real&gt;(python::args(&quot;center&quot;,&quot;radius&quot;),&quot;Ctor taking center (as a 3-tuple) and radius&quot;));
++	python::class_&lt;inAlignedBox,python::bases&lt;Predicate&gt; &gt;(&quot;inAlignedBox&quot;,&quot;Axis-aligned box predicate&quot;,python::init&lt;python::tuple,python::tuple&gt;(python::args(&quot;minAABB&quot;,&quot;maxAABB&quot;),&quot;Ctor taking minumum and maximum points of the box (as 3-tuples).&quot;));
++	python::class_&lt;inCylinder,python::bases&lt;Predicate&gt; &gt;(&quot;inCylinder&quot;,&quot;Cylinder predicate&quot;,python::init&lt;python::tuple,python::tuple,Real&gt;(python::args(&quot;centerBottom&quot;,&quot;centerTop&quot;,&quot;radius&quot;),&quot;Ctor taking centers of the lateral walls (as 3-tuples) and radius.&quot;));
++	python::class_&lt;inHyperboloid,python::bases&lt;Predicate&gt; &gt;(&quot;inHyperboloid&quot;,&quot;Hyperboloid predicate&quot;,python::init&lt;python::tuple,python::tuple,Real,Real&gt;(python::args(&quot;centerBottom&quot;,&quot;centerTop&quot;,&quot;radius&quot;,&quot;skirt&quot;),&quot;Ctor taking centers of the lateral walls (as 3-tuples), radius at bases and skirt (middle radius).&quot;));
++	python::class_&lt;inEllipsoid,python::bases&lt;Predicate&gt; &gt;(&quot;inEllipsoid&quot;,&quot;Ellipsoid predicate&quot;,python::init&lt;python::tuple,python::tuple&gt;(python::args(&quot;centerPoint&quot;,&quot;abc&quot;),&quot;Ctor taking center of the ellipsoid (3-tuple) and its 3 radii (3-tuple).&quot;));
++	python::class_&lt;notInNotch,python::bases&lt;Predicate&gt; &gt;(&quot;notInNotch&quot;,&quot;Outside of infinite, rectangle-shaped notch predicate&quot;,python::init&lt;python::tuple,python::tuple,python::tuple,Real&gt;(python::args(&quot;centerPoint&quot;,&quot;edge&quot;,&quot;normal&quot;,&quot;aperture&quot;),&quot;Ctor taking point in the symmetry plane, vector pointing along the edge, plane normal and aperture size.\nThe side inside the notch is edge&#215;normal.\nNormal is made perpendicular to the edge.\nAll vectors are normalized at construction time.&quot;)); 
++	#ifdef YADE_GTS
++		python::class_&lt;inGtsSurface,python::bases&lt;Predicate&gt; &gt;(&quot;inGtsSurface&quot;,&quot;GTS surface predicate&quot;,python::init&lt;python::object,python::optional&lt;bool&gt; &gt;(python::args(&quot;surface&quot;,&quot;noPad&quot;),&quot;Ctor taking a gts.Surface() instance, which must not be modified during instance lifetime.\nThe optional noPad can disable padding (if set to True), which speeds up calls several times.\nNote: padding checks inclusion of 6 points along +- cardinal directions in the pad distance from given point, which is not exact.&quot;));
++	#endif
++}
++
+
+
+Property changes on: trunk/lib/py/_packPredicates.cpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/lib/py/_utils.cpp (from rev 1824, trunk/gui/py/_utils.cpp)
+
+
+Property changes on: trunk/lib/py/_utils.cpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/lib/py/eudoxos.py (from rev 1822, trunk/gui/py/eudoxos.py)
+
+
+Property changes on: trunk/lib/py/eudoxos.py
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/lib/py/linterpolation.py (from rev 1822, trunk/gui/py/linterpolation.py)
+
+
+Property changes on: trunk/lib/py/linterpolation.py
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/lib/py/log.cpp (from rev 1822, trunk/gui/py/log.cpp)
+
+
+Property changes on: trunk/lib/py/log.cpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/lib/py/pack.py (from rev 1826, trunk/gui/py/pack.py)
+===================================================================
+--- trunk/gui/py/pack.py	2009-06-30 20:10:30 UTC (rev 1826)
++++ trunk/lib/py/pack.py	2009-07-01 18:27:44 UTC (rev 1829)
+@@ -0,0 +1,249 @@
++# encoding: utf-8
++#
++import itertools,warnings
++from numpy import arange
++from math import sqrt
++from yade import utils
++
++# for now skip the import, but try in inGtsSurface constructor again, to give error if we really use it
++try:
++	import gts
++except ImportError: pass
++
++# make c++ predicates available in this module
++from _packPredicates import *
++# import SpherePack
++from _packSpheres import *
++
++class inGtsSurface_py(Predicate):
++	&quot;&quot;&quot;This class was re-implemented in c++, but should stay here to serve as reference for implementing
++	Predicates in pure python code. C++ allows us to play dirty tricks in GTS which are not accessible
++	through pygts itself; the performance penalty of pygts comes from fact that if constructs and destructs
++	bb tree for the surface at every invocation of gts.Point().is_inside(). That is cached in the c++ code,
++	provided that the surface is not manipulated with during lifetime of the object (user's responsibility).
++
++	---
++	
++	Predicate for GTS surfaces. Constructed using an already existing surfaces, which must be closed.
++
++		import gts
++		surf=gts.read(open('horse.gts'))
++		inGtsSurface(surf)
++
++	Note: padding is optionally supported by testing 6 points along the axes in the pad distance. This
++	must be enabled in the ctor by saying doSlowPad=True. If it is not enabled and pad is not zero,
++	warning is issued.
++	&quot;&quot;&quot;
++	def __init__(self,surf,noPad=False):
++		# call base class ctor; necessary for virtual methods to work as expected.
++		# see comments in _packPredicates.cpp for struct PredicateWrap.
++		super(inGtsSurface,self).__init__()
++		if not surf.is_closed(): raise RuntimeError(&quot;Surface for inGtsSurface predicate must be closed.&quot;)
++		self.surf=surf
++		self.noPad=noPad
++		inf=float('inf')
++		mn,mx=[inf,inf,inf],[-inf,-inf,-inf]
++		for v in surf.vertices():
++			c=v.coords()
++			mn,mx=[min(mn[i],c[i]) for i in 0,1,2],[max(mx[i],c[i]) for i in 0,1,2]
++		self.mn,self.mx=tuple(mn),tuple(mx)
++		import gts
++	def aabb(self): return self.mn,self.mx
++	def __call__(self,_pt,pad=0.):
++		p=gts.Point(*_pt)
++		if self.noPad:
++			if pad!=0: warnings.warn(&quot;Padding disabled in ctor, using 0 instead.&quot;)
++			return p.is_inside(self.surf)
++		pp=[gts.Point(_pt[0]-pad,_pt[1],_pt[2]),gts.Point(_pt[0]+pad,_pt[1],_pt[2]),gts.Point(_pt[0],_pt[1]-pad,_pt[2]),gts.Point(_pt[0],_pt[1]+pad,_pt[2]),gts.Point(_pt[0],_pt[1],_pt[2]-pad),gts.Point(_pt[0],_pt[1],_pt[2]+pad)]
++		return p.is_inside(self.surf) and pp[0].is_inside(self.surf) and pp[1].is_inside(self.surf) and pp[2].is_inside(self.surf) and pp[3].is_inside(self.surf) and pp[4].is_inside(self.surf) and pp[5].is_inside(self.surf)
++
++class inSpace(Predicate):
++	&quot;&quot;&quot;Predicate returning True for any points, with infinite bounding box.&quot;&quot;&quot;
++	def aabb(self):
++		inf=float('inf'); return [-inf,-inf,-inf],[inf,inf,inf]
++	def __call__(self,pt): return True
++
++#####
++## surface construction and manipulation
++#####
++
++def gtsSurface2Facets(surf,**kw):
++	&quot;&quot;&quot;Construct facets from given GTS surface. **kw is passed to utils.facet.&quot;&quot;&quot;
++	return [utils.facet([v.coords() for v in face.vertices()],**kw) for face in surf]
++
++def sweptPolylines2gtsSurface(pts,threshold=0,capStart=False,capEnd=False):
++	&quot;&quot;&quot;Create swept suface (as GTS triangulation) given same-length sequences of points (as 3-tuples).
++	If threshold is given (&gt;0), gts.Surface().cleanup(threshold) will be called before returning, which
++	removes vertices mutually closer than threshold. Can be used to create closed swept surface (revolved), as
++	we don't check for coincident vertices otherwise.
++	&quot;&quot;&quot;
++	if not len(set([len(pts1) for pts1 in pts]))==1: raise RuntimeError(&quot;Polylines must be all of the same length!&quot;)
++	vtxs=[[gts.Vertex(x,y,z) for x,y,z in pts1] for pts1 in pts]
++	sectEdges=[[gts.Edge(vtx[i],vtx[i+1]) for i in xrange(0,len(vtx)-1)] for vtx in vtxs]
++	interSectEdges=[[] for i in range(0,len(vtxs)-1)]
++	for i in range(0,len(vtxs)-1):
++		for j in range(0,len(vtxs[i])):
++			interSectEdges[i].append(gts.Edge(vtxs[i][j],vtxs[i+1][j]))
++			if j&lt;len(vtxs[i])-1: interSectEdges[i].append(gts.Edge(vtxs[i][j],vtxs[i+1][j+1]))
++	surf=gts.Surface()
++	for i in range(0,len(vtxs)-1):
++		for j in range(0,len(vtxs[i])-1):
++			surf.add(gts.Face(interSectEdges[i][2*j+1],sectEdges[i+1][j],interSectEdges[i][2*j]))
++			surf.add(gts.Face(sectEdges[i][j],interSectEdges[i][2*j+2],interSectEdges[i][2*j+1]))
++	def doCap(vtx,edg,start):
++		ret=[]
++		eFan=[edg[0]]+[gts.Edge(vtx[i],vtx[0]) for i in range(2,len(vtx))]
++		for i in range(1,len(edg)):
++			ret+=[gts.Face(eFan[i-1],eFan[i],edg[i]) if start else gts.Face(eFan[i-1],edg[i],eFan[i])]
++		return ret
++	caps=[]
++	if capStart: caps+=doCap(vtxs[0],sectEdges[0],start=True)
++	if capEnd: caps+=doCap(vtxs[-1],sectEdges[-1],start=False)
++	for cap in caps: surf.add(cap)
++	if threshold&gt;0: surf.cleanup(threshold)
++	return surf
++
++import euclid
++
++def revolutionSurfaceMeridians(sects,angles,origin=euclid.Vector3(0,0,0),orientation=euclid.Quaternion()):
++	&quot;&quot;&quot;Revolution surface given sequences of 2d points and sequence of corresponding angles,
++	returning sequences of 3d points representing meridian sections of the revolution surface.
++	The 2d sections are turned around z-axis, but they can be transformed
++	using the origin and orientation arguments to give arbitrary orientation.&quot;&quot;&quot;
++	import math
++	def toGlobal(x,y,z):
++		return tuple(origin+orientation*(euclid.Vector3(x,y,z)))
++	return [[toGlobal(x2d*math.cos(angles[i]),x2d*math.sin(angles[i]),y2d) for x2d,y2d in sects[i]] for i in range(0,len(sects))]
++
++########
++## packing generators
++########
++
++
++def regularOrtho(predicate,radius,gap,**kw):
++	&quot;&quot;&quot;Return set of spheres in regular orthogonal grid, clipped inside solid given by predicate.
++	Created spheres will have given radius and will be separated by gap space.&quot;&quot;&quot;
++	ret=[]
++	mn,mx=predicate.aabb()
++	if(max([mx[i]-mn[i] for i in 0,1,2])==float('inf')): raise ValueError(&quot;AABB of the predicate must not be infinite (didn't you use union | instead of intersection &amp; for unbounded predicate such as notInNotch?&quot;);
++	xx,yy,zz=[arange(mn[i]+radius,mx[i]-radius,2*radius+gap) for i in 0,1,2]
++	for xyz in itertools.product(xx,yy,zz):
++		if predicate(xyz,radius): ret+=[utils.sphere(xyz,radius=radius,**kw)]
++	return ret
++
++def regularHexa(predicate,radius,gap,**kw):
++	&quot;&quot;&quot;Return set of spheres in regular hexagonal grid, clipped inside solid given by predicate.
++	Created spheres will have given radius and will be separated by gap space.&quot;&quot;&quot;
++	ret=[]
++	a=2*radius+gap
++	h=a*sqrt(3)/2.
++	mn,mx=predicate.aabb()
++	dim=[mx[i]-mn[i] for i in 0,1,2]
++	if(max(dim)==float('inf')): raise ValueError(&quot;AABB of the predicate must not be infinite (didn't you use union | instead of intersection &amp; for unbounded predicate such as notInNotch?&quot;);
++	ii,jj,kk=[range(0,int(dim[0]/a)+1),range(0,int(dim[1]/h)+1),range(0,int(dim[2]/h)+1)]
++	for i,j,k in itertools.product(ii,jj,kk):
++		x,y,z=mn[0]+radius+i*a,mn[1]+radius+j*h,mn[2]+radius+k*h
++		if j%2==0: x+= a/2. if k%2==0 else -a/2.
++		if k%2!=0: x+=a/2.; y+=h/2.
++		if predicate((x,y,z),radius): ret+=[utils.sphere((x,y,z),radius=radius,**kw)]
++	return ret
++
++def filterSpherePack(predicate,spherePack,**kw):
++	&quot;&quot;&quot;Using given SpherePack instance, return spheres the satisfy predicate.
++	The packing will be recentered to match the predicate and warning is given if the predicate
++	is larger than the packing.&quot;&quot;&quot;
++	mn,mx=predicate.aabb()
++	dimP,centP=predicate.dim(),predicate.center()
++	dimS,centS=spherePack.dim(),spherePack.center()
++	if dimP[0]&gt;dimS[0] or dimP[1]&gt;dimS[1] or dimP[2]&gt;dimS[2]: warnings.warn(&quot;Packing's dimension (%s) doesn't fully contain dimension of the predicate (%s).&quot;%(dimS,dimP))
++	spherePack.translate(tuple([centP[i]-centS[i] for i in 0,1,2]))
++	ret=[]
++	for s in spherePack:
++		if predicate(s[0],s[1]): ret+=[utils.sphere(s[0],radius=s[1],**kw)]
++	return ret
++
++def triaxialPack(predicate,radius,dim=None,cropLayers=1,radiusStDev=0.,assumedFinalDensity=.6,memoizeDb=None,**kw):
++	&quot;&quot;&quot;Generator of triaxial packing, using TriaxialTest. Radius is radius of spheres, radiusStDev is its standard deviation.
++	By default, all spheres are of the same radius. cropLayers is how many layer of spheres will be added to the computed
++	dimension of the box so that there no (or not so much, at least) boundary effects at the boundaris of the predicate.
++	assumedFinalDensity should be OK as it is, it is used to compute necessary number of spheres for the packing.
++
++	The memoizeDb parameter can be passed a file (existent or nonexistent). If the file exists, it will be first looked
++	for a suitable packing that was previously saved already (known as memoization). Saved packings will be scaled to
++	requested sphere radius; those that are smaller are distcarded as well as those with different radiusStDev. From
++	the remaining ones, the one with the least spheres will be loaded and returned. If no suitable packing is found, it
++	is generated as usually, but saved into the database for later use.
++
++	O.switchWorld() magic is used to have clean simulation for TriaxialTest without deleting the original simulation.
++	This function therefore should never run in parallel with some code accessing your simulation.
++	&quot;&quot;&quot;
++	import sqlite3, os.path, cPickle, time
++	from yade import log
++	from math import pi
++	if not dim: dim=predicate.dim()
++	if max(dim)==float('inf'): raise RuntimeError(&quot;Infinite predicate and no dimension of packing requested.&quot;)
++	fullDim=tuple([dim[i]+4*cropLayers*radius for i in 0,1,2])
++	if(memoizeDb and os.path.exists(memoizeDb)):
++		# find suitable packing and return it directly
++		conn=sqlite3.connect(memoizeDb); c=conn.cursor();
++		c.execute('select radius,radiusStDev,dimx,dimy,dimz,N,timestamp from packings order by N')
++		for row in c:
++			R,rDev,X,Y,Z,NN,timestamp=row[0:7]; scale=radius/R
++			rDev*=scale; X*=scale; Y*=scale; Z*=scale
++			if (radiusStDev==0 and rDev!=0) or (radiusStDev==0 and rDev!=0) or (radiusStDev!=0 and abs((rDev-radiusStDev)/radiusStDev)&gt;1e-2): continue # not suitable, standard deviation differs too much
++			if X&lt;fullDim[0] or Y&lt;fullDim[1] or Z&lt;fullDim[2]: continue # not suitable, not large enough
++			print &quot;Found suitable packing in database (radius=%g&#177;%g,N=%g,dim=%g&#215;%g&#215;%g,scale=%g), created %s&quot;%(R,rDev,NN,X,Y,Z,scale,time.asctime(time.gmtime(timestamp)))
++			c.execute('select pack from packings where timestamp=?',(timestamp,))
++			sp=SpherePack(cPickle.loads(str(c.fetchone()[0])))
++			sp.scale(scale)
++			return filterSpherePack(predicate,sp,**kw)
++		print &quot;No suitable packing in database found, running triaxial&quot;
++	#if len(O.bodies)!=0 or len(O.engines)!=0: raise RuntimeError(&quot;triaxialPack needs empty simulation (no bodies, no engines) to run.&quot;)
++	V=(4/3)*pi*radius**3; N=assumedFinalDensity*fullDim[0]*fullDim[1]*fullDim[2]/V;
++	##
++	O.switchWorld()
++	##
++	TriaxialTest(
++		numberOfGrains=int(N),
++		radiusMean=radius,
++		# this is just size ratio if radiusMean is specified
++		# if you comment out the line above, it will be the corner (before compaction) and radiusMean will be set accordingly
++		upperCorner=fullDim,
++		radiusStdDev=radiusStDev,
++		## no need to touch any the following, I think
++		noFiles=True,
++		lowerCorner=[0,0,0],
++		sigmaIsoCompaction=1e7,
++		sigmaLateralConfinement=1e3,
++		StabilityCriterion=.05,
++		strainRate=.2,
++		fast=True,
++		thickness=-1, # will be set to sphere radius if negative
++		maxWallVelocity=.1,
++		wallOversizeFactor=1.5,
++		autoUnload=True, # unload after isotropic compaction
++		autoCompressionActivation=False # stop once unloaded
++	).load()
++	log.setLevel('TriaxialCompressionEngine',log.WARN)
++	O.run(); O.wait()
++	sp=SpherePack(); sp.fromSimulation()
++	##
++	O.switchWorld()
++	##
++	if(memoizeDb):
++		if os.path.exists(memoizeDb):
++			conn=sqlite3.connect(memoizeDb)
++		else:
++			conn=sqlite3.connect(memoizeDb)
++			c=conn.cursor()
++			c.execute('create table packings (radius real, radiusStDev real, dimx real, dimy real, dimz real, N integer, timestamp real, pack blob)')
++		c=conn.cursor()
++		packBlob=buffer(cPickle.dumps(sp.toList(),cPickle.HIGHEST_PROTOCOL))
++		c.execute('insert into packings values (?,?,?,?,?,?,?,?)',(radius,radiusStDev,fullDim[0],fullDim[1],fullDim[2],len(sp),time.time(),packBlob,))
++		c.close()
++		conn.commit()
++		print &quot;Packing saved to the database&quot;,memoizeDb
++	return filterSpherePack(predicate,sp,**kw)
++
++
++
+
+
+Property changes on: trunk/lib/py/pack.py
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/lib/py/plot.py (from rev 1822, trunk/gui/py/plot.py)
+
+
+Property changes on: trunk/lib/py/plot.py
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/lib/py/timing.py (from rev 1822, trunk/gui/py/timing.py)
+
+
+Property changes on: trunk/lib/py/timing.py
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/lib/py/utils.py (from rev 1822, trunk/gui/py/utils.py)
+
+
+Property changes on: trunk/lib/py/utils.py
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-07-01 12:00:32 UTC (rev 1828)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-07-01 18:27:44 UTC (rev 1829)
+@@ -287,6 +287,8 @@
+ 		if(radiusMean&gt;0) LOG_WARN(&quot;radiusMean ignored, since importFilename specified.&quot;);
+ 		sphere_list=Shop::loadSpheresFromFile(importFilename,lowerCorner,upperCorner);
+ 	}
++
++	if(thickness&lt;0) thickness=radiusMean;
+ 	
+ 	if(boxWalls)
+ 	{
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001086.html">[deprecated list] [Yade-dev] [svn] r1828 - trunk/extra/mgpost/src
+</A></li>
+	<LI>Next message: <A HREF="001088.html">[deprecated list] [Yade-dev] [svn] r1829 - in trunk: core extra	gui gui/py lib	lib/py pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1087">[ date ]</a>
+              <a href="thread.html#1087">[ thread ]</a>
+              <a href="subject.html#1087">[ subject ]</a>
+              <a href="author.html#1087">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

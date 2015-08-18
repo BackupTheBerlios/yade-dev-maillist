@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1780 - in trunk:	.	pkg/common/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1780%20-%20in%20trunk%3A%0A%09.%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200905242028.n4OKSNuj007262%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000979.html">
+   <LINK REL="Next"  HREF="000981.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1780 - in trunk:	.	pkg/common/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1780%20-%20in%20trunk%3A%0A%09.%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200905242028.n4OKSNuj007262%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1780 - in trunk:	.	pkg/common/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun May 24 22:28:23 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000979.html">[deprecated list] [Yade-dev] [svn] r1779 -	trunk/pkg/dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000981.html">[deprecated list] [Yade-dev] [svn] r1781 - in trunk:	core/containers	pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#980">[ date ]</a>
+              <a href="thread.html#980">[ thread ]</a>
+              <a href="subject.html#980">[ subject ]</a>
+              <a href="author.html#980">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-05-24 22:28:22 +0200 (Sun, 24 May 2009)
+New Revision: 1780
+
+Modified:
+   trunk/SConstruct
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+Log:
+1. Fix hopefully last relict of pkg-config
+2. Degrade deleting non-existent interaction from fatal erro to warning only (not sure where that can come from, though.)
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-05-24 18:47:16 UTC (rev 1779)
++++ trunk/SConstruct	2009-05-24 20:28:22 UTC (rev 1780)
+@@ -377,7 +377,7 @@
+ # directory for yade-$version.pc
+ pcDir=os.path.join('$PREFIX','lib','pkgconfig')
+ # will install in the following dirs (needed?)
+-instDirs=[os.path.join('$PREFIX','bin')]+instLibDirs+[pcDir]
++instDirs=[os.path.join('$PREFIX','bin')]+instLibDirs # +[pcDir]
+ # where are we going to be run - may be different (packaging)
+ runtimeLibDirs=[os.path.join('$runtimePREFIX','lib','yade$SUFFIX',x.replace('/','-')) for x in libDirs]
+ 
+@@ -436,20 +436,6 @@
+ env.Append(LIBPATH=instLibDirs) # this is if we link to libs that are installed, which is the case now
+ 
+ 
+-### this workaround is only needed for scons&lt;=0.96.92, will disappear soon
+-###  (env.Install method chokes on no-existing directories)
+-if sconsVersion&lt;=9692:
+-	## should reside in prepareIncludes or sth similar
+-	def createDirs(dirList):
+-		for d in dirList:
+-			dd=env.subst(d) #d.replace('$PREFIX',env['PREFIX'])
+-			if not os.path.exists(dd):
+-				print dd
+-				os.makedirs(dd)
+-			elif not os.path.isdir(dd): raise OSError(&quot;Installation directory `%s' is a file?!&quot;%dd)
+-	createDirs(instDirs)
+-	#createDirs(instIncludeDirs)
+-	
+ def installHeaders(prefix=None):
+ 	&quot;&quot;&quot;symlink all in-tree headers into  some include directory so that we can build before headers are installed.
+ 	If prefix is given, headers will be copied there.
+@@ -537,6 +523,7 @@
+ 		installHeaders(env.subst('$PREFIX')) # install to $PREFIX if specifically requested: like &quot;scons /usr/local/include&quot;
+ 		makePkgConfig('$buildDir/yade${SUFFIX}.pc')
+ 		env.Install(pcDir,'$buildDir/yade${SUFFIX}.pc')
++		#  add pcDir to instDirs if you install pkg-config stuff at some point
+ 	if not env['haveForeach']:
+ 		boostDir=buildDir+'/include/yade-'+env['version']+'/boost'
+ 		foreachLink=boostDir+'/foreach.hpp'
+@@ -546,7 +533,7 @@
+ 			if lexists(foreachLink): os.remove(foreachLink) # broken symlink: remove it
+ 			os.symlink(relpath(foreachLink,foreachTarget),foreachLink)
+ 		env.InstallAs(env['PREFIX']+'/include/yade-'+env['version']+'/boost/foreach.hpp',foreachTarget)
+-	installAlias=env.Alias('install',instDirs) # build and install everything that should go to instDirs, which are $PREFIX/{bin,lib} (uses scons' Install); include pkgconfig stuff
++	installAlias=env.Alias('install',instDirs) # build and install everything that should go to instDirs, which are $PREFIX/{bin,lib} (uses scons' Install)
+ 	env.Default([installAlias,'$PREFIX'])
+ 
+ env.Export('env');
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-05-24 18:47:16 UTC (rev 1779)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-05-24 20:28:22 UTC (rev 1780)
+@@ -116,7 +116,7 @@
+ 		else
+ 		{
+ 			const shared_ptr&lt;Interaction&gt;&amp; I=interactions-&gt;find(p[0],p[1]);
+-			if(!I){ LOG_FATAL(&quot;Requested deletion of a non-existent interaction #&quot;&lt;&lt;p[0]&lt;&lt;&quot;+#&quot;&lt;&lt;p[1]&lt;&lt;&quot;?!&quot;); throw; }
++			if(!I){ LOG_WARN(&quot;Requested deletion of a non-existent interaction #&quot;&lt;&lt;p[0]&lt;&lt;&quot;+#&quot;&lt;&lt;p[1]&lt;&lt;&quot;?!&quot;); /* LOG_FATAL(&#8230;); throw; */ }
+ 			I-&gt;reset();
+ 		}
+ 	}
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000979.html">[deprecated list] [Yade-dev] [svn] r1779 -	trunk/pkg/dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000981.html">[deprecated list] [Yade-dev] [svn] r1781 - in trunk:	core/containers	pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#980">[ date ]</a>
+              <a href="thread.html#980">[ thread ]</a>
+              <a href="subject.html#980">[ subject ]</a>
+              <a href="author.html#980">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

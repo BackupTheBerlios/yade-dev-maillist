@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] Note on optimized compilation / optimized coding / profiling results
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Note%20on%20optimized%20compilation%20/%20optimized%20coding%20/%0A%20profiling%20results&In-Reply-To=%3C47BE747A.9070603%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000050.html">
+   <LINK REL="Next"  HREF="000055.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] Note on optimized compilation / optimized coding / profiling results</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Note%20on%20optimized%20compilation%20/%20optimized%20coding%20/%0A%20profiling%20results&In-Reply-To=%3C47BE747A.9070603%40arcig.cz%3E"
+       TITLE="[yade-dev] Note on optimized compilation / optimized coding / profiling results">eudoxos at arcig.cz
+       </A><BR>
+    <I>Fri Feb 22 08:06:34 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000050.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+        <LI>Next message: <A HREF="000055.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#51">[ date ]</a>
+              <a href="thread.html#51">[ thread ]</a>
+              <a href="subject.html#51">[ subject ]</a>
+              <a href="author.html#51">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> ok, this one is easy - just declare another variable before the loop,
+</I>&gt;<i>
+</I>&gt;<i> InteractionContainer::iterator e=interactions-&gt;end();
+</I>&gt;<i>  for(InteractionContainer::iterator I=interactions-&gt;begin(); I!=e; ++I)
+</I>&gt;<i>   
+</I>I was trying to adapt Yade containers to boost::range recently so that
+BOOST_FOREACH would work with them. It does exactly this optimization
+(it is called &quot;hoisting&quot;, they say) and is much nicer:
+foreach(interactions,I){...}. Will retry.
+
+It can't be optimized by the compiler, since the container may change
+during the loop body execution... (perhaps I did say once it would...
+sorry).
+&gt;&gt;<i> (3) actionStiffness-&gt;getClassIndex() is always executed too. It is 
+</I>&gt;&gt;<i> better to add a member data stiffnessIndex to the engine, then define it 
+</I>&gt;&gt;<i> only once as stiffnessIndex=actionStiffness-&gt;getClassIndex() in the 
+</I>&gt;&gt;<i> constructor, and finally use stiffnessIndex for internal tests instead 
+</I>&gt;&gt;<i> of getClassIndex(). 
+</I>&gt;&gt;<i>     
+</I>&gt;<i>
+</I>&gt;<i> getClassIndex() returns only a member static variable of a class.
+</I>&gt;<i> I can't belive that it will be faster more than 0.5% if you create
+</I>&gt;<i> another variable and access this one instead of that original static
+</I>&gt;<i> one. Is that really the case?
+</I>&gt;<i>   
+</I>getClassIndex is still a virtual function which has some dispatch
+overhead, and there is a function call (getClassIndexStatic) inside.
+There will be some cost of that.
+&gt;<i> &quot;Premature optimization is the root of all evil&quot;.
+</I>&gt;<i>   
+</I>Last time I had flu and headache it was not because of premature
+optimization. If that is not &quot;evil&quot;, consider 2nd world was, which was
+not caused by premature optimization either.
+&gt;<i>   
+</I>&gt;&gt;<i> (what is the optimization level whith scons flag &quot;optimization=True&quot;, is it 
+</I>&gt;&gt;<i> equivalent to -O3?).
+</I>&gt;&gt;<i>     
+</I>&gt;<i>
+</I>&gt;<i> if you look into SConscript, you will see that it's '-O3 -ffast-math'
+</I>&gt;<i>   
+</I>Or if you run scons pretty=0, which will show all commands.
+&gt;&gt;<i> Afer fixing things here and there concerning those 3 points above (e.g. 
+</I>&gt;&gt;<i> I added a member data called &quot;size&quot; to the container to avoid computing 
+</I>&gt;&gt;<i> it all the time), 
+</I>&gt;&gt;<i>     
+</I>&gt;<i>
+</I>&gt;<i> in fact you can do whatever you want with the containers, because we
+</I>&gt;<i> are switching boost::multi_index as soon as I ... do all my non-yade
+</I>&gt;<i> development work. Uh, I wish I've been paid to work on yade, not some
+</I>&gt;<i> other unrelated stuff, this is killing me. I want to develop yade
+</I>&gt;<i> itself but I can't. But everyone is using yade and they need it better.
+</I>&gt;<i> But now I have to do snow, concrete and that stuff...
+</I>&gt;<i>   
+</I>Janek, is multi_index random-access in O(1)? That is important if we try
+to use openMP, which can parallelize some loops by itself.
+&gt;&gt;<i> I could run the triaxial test around 25% faster.
+</I>&gt;&gt;<i> I can commit those changes soon, I'm curious to know the results on 
+</I>&gt;&gt;<i> other computers.
+</I>&gt;&gt;<i>     
+</I>Great improvement, Bruno. I will run kcallgrind also, it seems very useful.
+
+V.
+
+
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000050.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+	<LI>Next message: <A HREF="000055.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#51">[ date ]</a>
+              <a href="thread.html#51">[ thread ]</a>
+              <a href="subject.html#51">[ subject ]</a>
+              <a href="author.html#51">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

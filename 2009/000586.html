@@ -1,0 +1,1261 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1619 - trunk/extra/SpherePadder
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1619%20-%20trunk/extra/SpherePadder&In-Reply-To=%3C200901091444.n09EiioG011932%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000585.html">
+   <LINK REL="Next"  HREF="000587.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1619 - trunk/extra/SpherePadder</H1>
+    <B>richefeu at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1619%20-%20trunk/extra/SpherePadder&In-Reply-To=%3C200901091444.n09EiioG011932%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1619 - trunk/extra/SpherePadder">richefeu at mail.berlios.de
+       </A><BR>
+    <I>Fri Jan  9 15:44:44 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000585.html">[deprecated list] [Yade-dev] [svn] r1618 - in trunk/pkg/snow:	DataClass Engine	PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000587.html">[deprecated list] [Yade-dev] [svn] r1620 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#586">[ date ]</a>
+              <a href="thread.html#586">[ thread ]</a>
+              <a href="subject.html#586">[ subject ]</a>
+              <a href="author.html#586">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: richefeu
+Date: 2009-01-09 15:44:43 +0100 (Fri, 09 Jan 2009)
+New Revision: 1619
+
+Modified:
+   trunk/extra/SpherePadder/SpherePadder.cpp
+   trunk/extra/SpherePadder/SpherePadder.hpp
+   trunk/extra/SpherePadder/TetraMesh.cpp
+   trunk/extra/SpherePadder/TetraMesh.hpp
+   trunk/extra/SpherePadder/main.cpp
+Log:
+- SpherePadder update
+- add a basic 'user friend' interface for sphere packing generation. The module can of course be used without this interface.
+
+
+
+Modified: trunk/extra/SpherePadder/SpherePadder.cpp
+===================================================================
+--- trunk/extra/SpherePadder/SpherePadder.cpp	2009-01-09 13:09:26 UTC (rev 1618)
++++ trunk/extra/SpherePadder/SpherePadder.cpp	2009-01-09 14:44:43 UTC (rev 1619)
+@@ -35,12 +35,10 @@
+                 combination.push_back(lst);
+         }
+         
+-   max_overlap_rate = 1e-7;   
++   max_overlap_rate = 1e-3;   
+    n1 = n2 = n3 = n4 = n5 = n_densify = 0;  
+-   
+-   //FIXME : 
+-   // si on utilise la class dans un autre programme c'est peu etre pas util
+-                
++   trace_functions = true;
++   meshIsPlugged = false;             
+    //rmin = 1e-2;
+    //rmax = 2e-2;
+    //rmoy = 0.5 * (rmin + rmax);
+@@ -55,268 +53,290 @@
+ 	
+ void SpherePadder::plugTetraMesh (TetraMesh * pluggedMesh)
+ {
+-	mesh = pluggedMesh;
++  mesh = pluggedMesh;
++  meshIsPlugged = true;
+ 	
+-        // TODO mettre ce qui suite dans une fonction 'init()'
+-	// Si l'utilisateur n'a choisi qu'une valeur de ratio, 
+-    // on cree les valeur de rmin et rmax:
+-	if (rmoy == 0 &amp;&amp; ratio &gt; 0)
+-	{
+-		rmoy = 0.125 * mesh-&gt;mean_segment_length; // 1/8
+-	    rmin = (2.0 * rmoy) / (ratio + 1.0);
+-	    //rmax = (2.0 * ratio * rmoy) / (ratio + 1.0); 
+-		rmax = 2.0 * rmoy - rmin;
+-	    //dr	 = 0.5 * (rmax - rmin); 
+-		dr = rmax - rmoy;
+-	}
++  // TODO mettre ce qui suite dans une fonction 'init()'
++  // Si l'utilisateur n'a choisi qu'une valeur de ratio, 
++  // on cree les valeur de rmin et rmax:
++  if (rmoy == 0 &amp;&amp; ratio &gt; 0)
++  {
++	rmoy = 0.125 * mesh-&gt;mean_segment_length; // 1/8
++	rmin = (2.0 * rmoy) / (ratio + 1.0);
++	//rmax = (2.0 * ratio * rmoy) / (ratio + 1.0); 
++	rmax = 2.0 * rmoy - rmin;
++	//dr	 = 0.5 * (rmax - rmin); 
++	dr = rmax - rmoy;
++  }
+ }
+ 
+ void SpherePadder::pad_5 ()
+ {
+-	// TODO check if all si ok (mesh exist...)
+-	place_at_nodes();
+-	place_at_segment_middle();
+-        cancel_overlap();
+-        place_at_faces();
+-        place_at_tetra_centers();
+-        //place_at_tetra_vertexes ();
++  if (mesh == 0) 
++  {
++    cerr &lt;&lt; &quot;SpherePadder::pad_5, no mesh defined!&quot; &lt;&lt; endl;
++    return;
++  }
++    
++  if (!(mesh-&gt;isOrganized)) 
++  {
++    cerr &lt;&lt; &quot;SpherePadder::pad_5, mesh is not valid!&quot; &lt;&lt; endl;
++    return;
++  }
++  
++  place_at_nodes();
++  place_at_segment_middle();
++  cancel_overlaps();
++  place_at_faces();
++  place_at_tetra_centers();
++  place_at_tetra_vertexes ();
+ 
+-        cerr &lt;&lt; &quot;nb spheres = &quot; &lt;&lt; sphere.size() &lt;&lt; endl;
+-	
++  cerr &lt;&lt; &quot;Total number of spheres = &quot; &lt;&lt; sphere.size() &lt;&lt; endl;
++        
+ }
+ 
+ void SpherePadder::save_mgpost (const char* name)
+ {
+-  cerr &lt;&lt; &quot;save mgp... &quot;;
++  BEGIN_FUNCTION (&quot;Save mgp&quot;);
+   
+   ofstream fmgpost(name);
+-
++  
++  double xtrans = mesh-&gt;xtrans;
++  double ytrans = mesh-&gt;ytrans;
++  double ztrans = mesh-&gt;ztrans;
++  
+   fmgpost &lt;&lt; &quot;&lt;?xml version=\&quot;1.0\&quot;?&gt;&quot; &lt;&lt; endl
+-	      &lt;&lt; &quot; &lt;mgpost mode=\&quot;3D\&quot;&gt;&quot; &lt;&lt; endl
+-	      &lt;&lt; &quot;  &lt;newcolor name=\&quot;at nodes\&quot;/&gt;&quot; &lt;&lt; endl
+-	      &lt;&lt; &quot;  &lt;newcolor name=\&quot;at segments\&quot;/&gt;&quot; &lt;&lt; endl	
+-	      &lt;&lt; &quot;  &lt;newcolor name=\&quot;at faces\&quot;/&gt;&quot; &lt;&lt; endl
+-              &lt;&lt; &quot;  &lt;newcolor name=\&quot;at tetra centers\&quot;/&gt;&quot; &lt;&lt; endl
+-              &lt;&lt; &quot;  &lt;newcolor name=\&quot;at tetra vertexes\&quot;/&gt;&quot; &lt;&lt; endl
+-	      &lt;&lt; &quot;  &lt;state id=\&quot;&quot; &lt;&lt; 1 
+-	      &lt;&lt; &quot;\&quot; time=\&quot;&quot; &lt;&lt; 0.0 &lt;&lt; &quot;\&quot;&gt;&quot; &lt;&lt; endl;
++      &lt;&lt; &quot; &lt;mgpost mode=\&quot;3D\&quot;&gt;&quot; &lt;&lt; endl
++      &lt;&lt; &quot;  &lt;newcolor name=\&quot;at nodes\&quot;/&gt;&quot; &lt;&lt; endl
++      &lt;&lt; &quot;  &lt;newcolor name=\&quot;at segments\&quot;/&gt;&quot; &lt;&lt; endl   
++      &lt;&lt; &quot;  &lt;newcolor name=\&quot;at faces\&quot;/&gt;&quot; &lt;&lt; endl
++      &lt;&lt; &quot;  &lt;newcolor name=\&quot;at tetra centers\&quot;/&gt;&quot; &lt;&lt; endl
++      &lt;&lt; &quot;  &lt;newcolor name=\&quot;at tetra vertexes\&quot;/&gt;&quot; &lt;&lt; endl
++      &lt;&lt; &quot;  &lt;state id=\&quot;&quot; &lt;&lt; 1 
++      &lt;&lt; &quot;\&quot; time=\&quot;&quot; &lt;&lt; 0.0 &lt;&lt; &quot;\&quot;&gt;&quot; &lt;&lt; endl;
+ 
+   for (unsigned int i = 0 ; i &lt; sphere.size() ; ++i)
+   {
+-        fmgpost &lt;&lt; &quot;   &lt;body&gt;&quot; &lt;&lt; endl;
+-        fmgpost &lt;&lt; &quot;    &lt;SPHER id=\&quot;&quot; &lt;&lt; i+1 &lt;&lt; &quot;\&quot; col=\&quot;&quot; &lt;&lt; sphere[i].type &lt;&lt; &quot;\&quot; r=\&quot;&quot; &lt;&lt; sphere[i].R &lt;&lt; &quot;\&quot;&gt;&quot; &lt;&lt; endl
+-		        &lt;&lt; &quot;     &lt;position x=\&quot;&quot; &lt;&lt; sphere[i].x &lt;&lt; &quot;\&quot; y=\&quot;&quot; &lt;&lt; sphere[i].y &lt;&lt; &quot;\&quot; z=\&quot;&quot; &lt;&lt; sphere[i].z &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl	 
+-                &lt;&lt; &quot;    &lt;/SPHER&gt;&quot; &lt;&lt; endl &lt;&lt; flush;
++    fmgpost &lt;&lt; &quot;   &lt;body&gt;&quot; &lt;&lt; endl;
++    fmgpost &lt;&lt; &quot;    &lt;SPHER id=\&quot;&quot; &lt;&lt; i+1 &lt;&lt; &quot;\&quot; col=\&quot;&quot; &lt;&lt; sphere[i].type &lt;&lt; &quot;\&quot; r=\&quot;&quot; &lt;&lt; sphere[i].R &lt;&lt; &quot;\&quot;&gt;&quot; &lt;&lt; endl
++        &lt;&lt; &quot;     &lt;position x=\&quot;&quot; &lt;&lt; sphere[i].x + xtrans &lt;&lt; &quot;\&quot; y=\&quot;&quot; 
++        &lt;&lt; sphere[i].y + ytrans &lt;&lt; &quot;\&quot; z=\&quot;&quot; &lt;&lt; sphere[i].z + ztrans &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl   
++        &lt;&lt; &quot;    &lt;/SPHER&gt;&quot; &lt;&lt; endl &lt;&lt; flush;
+ 
+         // tmp (bricolage)
+-        if (i &lt; mesh-&gt;node.size())
+-	        for (unsigned int s = 0 ; s &lt; mesh-&gt;segment.size() ; ++s)
+-	        {
+-		        if (mesh-&gt;segment[s].nodeId[0] == i)
+-		        {
+-			        fmgpost &lt;&lt; &quot;    &lt;SPSPx antac=\&quot;&quot; &lt;&lt; mesh-&gt;segment[s].nodeId[1] + 1 &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl;
+-		        }
+-	        }
++    if (i &lt; mesh-&gt;node.size())
++      for (unsigned int s = 0 ; s &lt; mesh-&gt;segment.size() ; ++s)
++    {
++      if (mesh-&gt;segment[s].nodeId[0] == i)
++      {
++        fmgpost &lt;&lt; &quot;    &lt;SPSPx antac=\&quot;&quot; &lt;&lt; mesh-&gt;segment[s].nodeId[1] + 1 &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl;
++      }
++    }
+ 
+ 
+-        fmgpost &lt;&lt; &quot;   &lt;/body&gt;&quot; &lt;&lt; endl;
+-   }
++    fmgpost &lt;&lt; &quot;   &lt;/body&gt;&quot; &lt;&lt; endl;
++  }
+ 
+   fmgpost &lt;&lt; &quot;  &lt;/state&gt;&quot; &lt;&lt; endl
+-	  &lt;&lt; &quot; &lt;/mgpost&gt;&quot; &lt;&lt; endl;
+-		
+-  cerr &lt;&lt; &quot;Done&quot; &lt;&lt; endl;
++      &lt;&lt; &quot; &lt;/mgpost&gt;&quot; &lt;&lt; endl;
++                
++  END_FUNCTION;
+ }
+ 	
+ void SpherePadder::save_Rxyz (const char* name)
+ {
+-  cerr &lt;&lt; &quot;save Rxyz... &quot;;
++  BEGIN_FUNCTION(&quot;Save Rxyz&quot;);
+   
+   ofstream file(name);
++  
++  double xtrans = mesh-&gt;xtrans;
++  double ytrans = mesh-&gt;ytrans;
++  double ztrans = mesh-&gt;ztrans;
+ 
+   for (unsigned int i = 0 ; i &lt; sphere.size() ; ++i)
+   {
+-    file &lt;&lt; sphere[i].R &lt;&lt; &quot; &quot; &lt;&lt; sphere[i].x &lt;&lt; &quot; &quot; &lt;&lt; sphere[i].y &lt;&lt; &quot; &quot; &lt;&lt; sphere[i].z &lt;&lt; endl;
++    file &lt;&lt; sphere[i].R &lt;&lt; &quot; &quot; &lt;&lt; sphere[i].x + xtrans &lt;&lt; &quot; &quot; &lt;&lt; sphere[i].y + ytrans &lt;&lt; &quot; &quot; &lt;&lt; sphere[i].z + ztrans &lt;&lt; endl;
+   }
+                 
+-  cerr &lt;&lt; &quot;Done&quot; &lt;&lt; endl;
++  END_FUNCTION;
+ }
+         
+ void SpherePadder::place_at_nodes ()
+ {
+-	unsigned int segId;
+-	Sphere S;
+-	S.type = AT_NODE;
+-	
+-	cerr &lt;&lt; &quot;place at nodes... &quot;;
+-	
+-	for (unsigned int n = 0 ; n &lt; mesh-&gt;node.size() ; ++n)
+-	{
+-		S.x = mesh-&gt;node[n].x;
+-		S.y = mesh-&gt;node[n].y;
+-		S.z = mesh-&gt;node[n].z;
+-		S.R = mesh-&gt;segment[ mesh-&gt;node[n].segmentOwner[0] ].length;
+-		for (unsigned int i = 1 ; i &lt; mesh-&gt;node[n].segmentOwner.size() ; ++i)
+-		{
+-			segId = mesh-&gt;node[n].segmentOwner[i];
+-			S.R = (S.R &lt; mesh-&gt;segment[segId].length) ? S.R : mesh-&gt;segment[segId].length;
+-		}	
+-		S.R /= 4.0;
+-		
+-		S.tetraOwner = mesh-&gt;node[n].tetraOwner[0];
+-		mesh-&gt;tetraedre[S.tetraOwner].sphereId.push_back(n);
+-		
+-		sphere.push_back(S); ++(n1);	
+-	}
+-	cerr &lt;&lt; &quot;Done&quot; &lt;&lt; endl;
++  BEGIN_FUNCTION(&quot;Place at nodes&quot;);
++        
++  unsigned int segId;
++  Sphere S;
++  S.type = AT_NODE;
++        
++  for (unsigned int n = 0 ; n &lt; mesh-&gt;node.size() ; ++n)
++  {
++    S.x = mesh-&gt;node[n].x;
++    S.y = mesh-&gt;node[n].y;
++    S.z = mesh-&gt;node[n].z;
++    S.R = mesh-&gt;segment[ mesh-&gt;node[n].segmentOwner[0] ].length;
++    for (unsigned int i = 1 ; i &lt; mesh-&gt;node[n].segmentOwner.size() ; ++i)
++    {
++      segId = mesh-&gt;node[n].segmentOwner[i];
++      S.R = (S.R &lt; mesh-&gt;segment[segId].length) ? S.R : mesh-&gt;segment[segId].length;
++    }       
++    S.R /= 4.0;
++                
++    S.tetraOwner = mesh-&gt;node[n].tetraOwner[0];
++    mesh-&gt;tetraedre[S.tetraOwner].sphereId.push_back(n);
++                
++    sphere.push_back(S); ++(n1);    
++  }
++        
++  END_FUNCTION;
+ }
+ 
+ void SpherePadder::place_at_segment_middle ()
+-{	
+-	cerr &lt;&lt; &quot;place at segment middle... &quot;;
+-	Sphere S;
+-	S.type = AT_SEGMENT;
+-	double x1,y1,z1;
+-	double x2,y2,z2;
+-	unsigned int id1,id2;
+-	unsigned int n0 = sphere.size();
+-	
+-	for (unsigned int s = 0 ; s &lt; mesh-&gt;segment.size() ; ++s)
+-	{
+-		id1 = mesh-&gt;segment[s].nodeId[0];
+-		id2 = mesh-&gt;segment[s].nodeId[1];
+-		
+-		x1  = mesh-&gt;node[id1].x;
+-		y1  = mesh-&gt;node[id1].y;
+-		z1  = mesh-&gt;node[id1].z;
+-		
+-		x2  = mesh-&gt;node[id2].x;
+-		y2  = mesh-&gt;node[id2].y;
+-		z2  = mesh-&gt;node[id2].z;
+-		
+-		S.x = 0.5 * (x1 + x2);
+-		S.y = 0.5 * (y1 + y2);
+-		S.z = 0.5 * (z1 + z2);
+-		S.R = 0.125 * mesh-&gt;segment[s].length;
+-		if (S.R &lt; rmin) S.R = rmin;
+-                else if (S.R &gt; rmax) S.R = rmoy + dr * (double)rand()/(double)RAND_MAX;
+-		
+-		S.tetraOwner = mesh-&gt;node[id1].tetraOwner[0];
+-		mesh-&gt;tetraedre[S.tetraOwner].sphereId.push_back(n0 + s);
+-                sphere.push_back(S); ++(n2);
++{       
++  BEGIN_FUNCTION(&quot;Place at segment middle&quot;);
++  Sphere S;
++  S.type = AT_SEGMENT;
++  double x1,y1,z1;
++  double x2,y2,z2;
++  unsigned int id1,id2;
++  unsigned int n0 = sphere.size();
++        
++  for (unsigned int s = 0 ; s &lt; mesh-&gt;segment.size() ; ++s)
++  {
++    id1 = mesh-&gt;segment[s].nodeId[0];
++    id2 = mesh-&gt;segment[s].nodeId[1];
+                 
+-		mesh-&gt;segment[s].sphereId = n0 + s;
+-		
+-	}	
+-	cerr &lt;&lt; &quot;Done&quot; &lt;&lt; endl;	
++    x1  = mesh-&gt;node[id1].x;
++    y1  = mesh-&gt;node[id1].y;
++    z1  = mesh-&gt;node[id1].z;
++                
++    x2  = mesh-&gt;node[id2].x;
++    y2  = mesh-&gt;node[id2].y;
++    z2  = mesh-&gt;node[id2].z;
++                
++    S.x = 0.5 * (x1 + x2);
++    S.y = 0.5 * (y1 + y2);
++    S.z = 0.5 * (z1 + z2);
++    S.R = 0.125 * mesh-&gt;segment[s].length;
++    if (S.R &lt; rmin) S.R = rmin;
++    else if (S.R &gt; rmax) S.R = rmoy + dr * (double)rand()/(double)RAND_MAX;
++                
++    S.tetraOwner = mesh-&gt;node[id1].tetraOwner[0];
++    mesh-&gt;tetraedre[S.tetraOwner].sphereId.push_back(n0 + s);
++    sphere.push_back(S); ++(n2);
++                
++    mesh-&gt;segment[s].sphereId = n0 + s;
++                
++  }       
++  END_FUNCTION;   
+ }
+ 
+ 
+ void SpherePadder::place_at_faces ()
+ {
+-	cerr &lt;&lt; &quot;place at barycentre 3... &quot;;
++  BEGIN_FUNCTION(&quot;Place at faces&quot;);
+  
+-        // FIXME move the following loops in TetraMesh or at the end of place_at_segment_middle ??
+-	unsigned int sphereId,faceId;
+-	for (unsigned int s = 0 ; s &lt; mesh-&gt;segment.size() ; ++s)
+-	{
+-		sphereId = mesh-&gt;segment[s].sphereId;
+-		for (unsigned int f = 0 ; f &lt; mesh-&gt;segment[s].faceOwner.size() ; ++f)
+-		{
+-			faceId = mesh-&gt;segment[s].faceOwner[f];
+-			mesh-&gt;face[ faceId ].sphereId.push_back( sphereId );
+-		}
+-	}
+-	
+-	Sphere S;
+-	S.type = AT_FACE;
++  // FIXME move the following loops in TetraMesh or at the end of place_at_segment_middle ??
++  unsigned int sphereId,faceId;
++  for (unsigned int s = 0 ; s &lt; mesh-&gt;segment.size() ; ++s)
++  {
++    sphereId = mesh-&gt;segment[s].sphereId;
++    for (unsigned int f = 0 ; f &lt; mesh-&gt;segment[s].faceOwner.size() ; ++f)
++    {
++      faceId = mesh-&gt;segment[s].faceOwner[f];
++      mesh-&gt;face[ faceId ].sphereId.push_back( sphereId );
++    }
++  }
++        
++  Sphere S;
++  S.type = AT_FACE;
+ 
+-	unsigned int ns = sphere.size();
+-        const double div3 = 0.3333333333333;
+-        Sphere S1,S2,S3;
++  unsigned int ns = sphere.size();
++  const double div3 = 0.3333333333333;
++  Sphere S1,S2,S3;
+ 
+-	for (unsigned int f = 0 ; f &lt; mesh-&gt;face.size() ; ++f)
+-	{
++  for (unsigned int f = 0 ; f &lt; mesh-&gt;face.size() ; ++f)
++  {
+ 
+-		S1 = sphere[ mesh-&gt;face[f].sphereId[0] ];
+-		S2 = sphere[ mesh-&gt;face[f].sphereId[1] ];
+-		S3 = sphere[ mesh-&gt;face[f].sphereId[2] ];
++    S1 = sphere[ mesh-&gt;face[f].sphereId[0] ];
++    S2 = sphere[ mesh-&gt;face[f].sphereId[1] ];
++    S3 = sphere[ mesh-&gt;face[f].sphereId[2] ];
+ 
+-                S.x = div3 * (S1.x + S2.x + S3.x); 
+-                S.y = div3 * (S1.y + S2.y + S3.y); 
+-                S.z = div3 * (S1.z + S2.z + S3.z);                 
+-                S.R = rmin;
+-		
+-		S.tetraOwner = mesh-&gt;node[ mesh-&gt;face[f].nodeId[0] ].tetraOwner[0];
+-		mesh-&gt;tetraedre[S.tetraOwner].sphereId.push_back(ns++);
+-                sphere.push_back(S); ++(n3);
+-	}
+-	
+-        for (unsigned int n = (n1+n2) ; n &lt; sphere.size() ; ++n)
+-        {
+-          place_sphere_4contacts(n);
+-        }
++    S.x = div3 * (S1.x + S2.x + S3.x); 
++    S.y = div3 * (S1.y + S2.y + S3.y); 
++    S.z = div3 * (S1.z + S2.z + S3.z);                 
++    S.R = rmin;
++                
++    S.tetraOwner = mesh-&gt;node[ mesh-&gt;face[f].nodeId[0] ].tetraOwner[0];
++    mesh-&gt;tetraedre[S.tetraOwner].sphereId.push_back(ns++);
++    sphere.push_back(S); ++(n3);
++  }
+         
+-        cerr &lt;&lt; &quot;Done&quot; &lt;&lt; endl;  
++  for (unsigned int n = (n1+n2) ; n &lt; sphere.size() ; ++n)
++  {
++    place_sphere_4contacts(n);
++  }
++        
++  END_FUNCTION;  
+ }
+ 
+ 
+ double SpherePadder::distance_spheres(unsigned int i, unsigned int j)
+ {
+-	double lx,ly,lz;
+-	lx  = sphere[j].x - sphere[i].x;
+-	ly  = sphere[j].y - sphere[i].y;
+-	lz  = sphere[j].z - sphere[i].z;
+-	return (sqrt(lx*lx + ly*ly + lz*lz) - sphere[i].R - sphere[j].R);
++  double lx,ly,lz;
++  lx  = sphere[j].x - sphere[i].x;
++  ly  = sphere[j].y - sphere[i].y;
++  lz  = sphere[j].z - sphere[i].z;
++  return (sqrt(lx*lx + ly*ly + lz*lz) - sphere[i].R - sphere[j].R);
+ }
+ 
+ double SpherePadder::distance_centre_spheres(Sphere&amp; S1, Sphere&amp; S2)
+ {
+-	double lx,ly,lz;
+-	lx  = S2.x - S1.x;
+-	ly  = S2.y - S1.y;
+-	lz  = S2.z - S1.z;
+-	return (sqrt(lx*lx + ly*ly + lz*lz));
++  double lx,ly,lz;
++  lx  = S2.x - S1.x;
++  ly  = S2.y - S1.y;
++  lz  = S2.z - S1.z;
++  return (sqrt(lx*lx + ly*ly + lz*lz));
+ }
+ 
+ 
+-void SpherePadder::cancel_overlap() // FIXME rename cancel_overlaps
++void SpherePadder::cancel_overlaps()
+ {
+-	
+-	cerr &lt;&lt; &quot;cancel_overlaps... &quot;;
+-	unsigned int current_tetra_id,tetra_neighbor_id,j;
+-	Tetraedre current_tetra, tetra_neighbor;
+-	double distance,k;
+-        double distance_max = -max_overlap_rate * rmax;
+-	
+-	for(unsigned int i = 0 ; i &lt;  sphere.size(); ++i)
+-	{
+-		if (sphere[i].R &lt; 0.0) continue;
+-		current_tetra_id = sphere[i].tetraOwner;
+-		current_tetra = mesh-&gt;tetraedre[current_tetra_id];
+-		
+-		for (unsigned int t = 0 ; t &lt; current_tetra.tetraNeighbor.size() ; ++t)
+-		{
+-			tetra_neighbor_id = current_tetra.tetraNeighbor[t];
+-			tetra_neighbor = mesh-&gt;tetraedre[tetra_neighbor_id];
+-			for (unsigned int n = 0 ; n &lt; tetra_neighbor.sphereId.size() ; ++n)
+-			{
+-				j = tetra_neighbor.sphereId[n];
++        
++  BEGIN_FUNCTION(&quot;Cancel_overlaps&quot;);
++  unsigned int current_tetra_id,tetra_neighbor_id,j;
++  Tetraedre current_tetra, tetra_neighbor;
++  double distance,k;
++  double distance_max = -max_overlap_rate * rmax;
++        
++  for(unsigned int i = 0 ; i &lt;  sphere.size(); ++i)
++  {
++    if (sphere[i].R &lt; 0.0) continue;
++    current_tetra_id = sphere[i].tetraOwner;
++    current_tetra = mesh-&gt;tetraedre[current_tetra_id];
++                
++    for (unsigned int t = 0 ; t &lt; current_tetra.tetraNeighbor.size() ; ++t)
++    {
++      tetra_neighbor_id = current_tetra.tetraNeighbor[t];
++      tetra_neighbor = mesh-&gt;tetraedre[tetra_neighbor_id];
++      for (unsigned int n = 0 ; n &lt; tetra_neighbor.sphereId.size() ; ++n)
++      {
++        j = tetra_neighbor.sphereId[n];
+ 
+-				if (sphere[j].R &lt; 0.0) continue;
+-				if (i &lt; j)
+-				{
+-					while ( (distance = distance_spheres(i,j)) &lt; distance_max )
+-					{						
+-						k = 1.0 + distance / (sphere[i].R + sphere[j].R);
+-						sphere[i].R *= k;
+-						sphere[j].R *= k;
+-					}
+-				}
+-			}
+-		}
+-	}
+-	cerr &lt;&lt; &quot;Done&quot; &lt;&lt; endl;
++        if (sphere[j].R &lt; 0.0) continue;
++        if (i &lt; j)
++        {
++          while ( (distance = distance_spheres(i,j)) &lt; distance_max )
++          {                                               
++            k = 1.0 + distance / (sphere[i].R + sphere[j].R);
++            sphere[i].R *= k;
++            sphere[j].R *= k;
++          }
++        }
++      }
++    }
++  }
++  END_FUNCTION;
+ }
+ 
+ 
+@@ -400,9 +420,11 @@
+ //         if ((distance_centre_spheres(S,sphere[n]) - (S.R + sphere[n].R)) &lt; -max_overlap_rate * rmin) { failure = 128; break; }
+ //       }
+       
++      double distance_max = -max_overlap_rate * rmin;
+       for (unsigned n = 0 ; n &lt; neighbor.size() ; ++n)
+       {
+-        if ((distance_centre_spheres(S,sphere[neighbor[n].sphereId]) - (S.R + sphere[neighbor[n].sphereId].R)) &lt; -max_overlap_rate * rmin) { failure = 128; break; }
++        if ((distance_centre_spheres(S,sphere[neighbor[n].sphereId]) - (S.R + sphere[neighbor[n].sphereId].R)) &lt; distance_max) 
++        { failure = 128; break; }
+       }
+       
+     }  
+@@ -417,7 +439,7 @@
+     }
+ 
+   }
+-  // sphere[sphereId].R = 0.0; //debug
++
+   return 0;
+ }
+ 
+@@ -537,8 +559,10 @@
+   }
+   else return fail_det;
+   
++  // FIXME use not sqrt to speed up... (squared_distance_vector3)
++  // for the moment it is not critical
++  
+   // Check interpenetration between spheres
+-
+   double distance1 = distance_vector3 (centre,C1) - (R + R1);
+   double distance2 = distance_vector3 (centre,C2) - (R + R2);
+   double distance3 = distance_vector3 (centre,C3) - (R + R3);
+@@ -552,7 +576,7 @@
+   { return fail_overlap; }
+   
+   // The gap between spheres must not be too large
+-  double distance_max = max_overlap_rate * rmin; // FIXME should be imposed by the user? for example max_gap_rate
++  double distance_max = max_overlap_rate * rmin;
+   if (     ( distance1 &gt; distance_max) 
+         || ( distance2 &gt; distance_max)
+         || ( distance3 &gt; distance_max) 
+@@ -577,7 +601,7 @@
+ 
+ void SpherePadder::place_at_tetra_centers ()
+ {
+-  cerr &lt;&lt; &quot;place at tetra centers... &quot;;
++  BEGIN_FUNCTION(&quot;Place at tetra centers&quot;);
+     
+   Sphere S;
+   S.type = AT_TETRA_CENTER;
+@@ -610,12 +634,12 @@
+     place_sphere_4contacts(n);
+   }
+         
+-  cerr &lt;&lt; &quot;Done&quot; &lt;&lt; endl;  
++  END_FUNCTION;  
+ }
+ 
+ void SpherePadder::place_at_tetra_vertexes ()
+ {
+-  cerr &lt;&lt; &quot;place at tetra vertexes... &quot;;
++  BEGIN_FUNCTION(&quot;Place at tetra vertexes&quot;);
+     
+   Sphere S;
+   S.type = AT_TETRA_VERTEX;
+@@ -639,7 +663,7 @@
+ 
+     S.R = rmin;
+                 
+-    double pondere = 1.0 / 3.0; // FIXME parametrable
++    double pondere = .333333333; // FIXME parametrable
+     for (unsigned int n = 0 ; n &lt; 4 ; ++n)
+     {
+       S.x = pondere * mesh-&gt;node[ T.nodeId[n] ].x + (1.0-pondere) * centre[0];
+@@ -657,7 +681,7 @@
+     place_sphere_4contacts(n);
+   }
+         
+-  cerr &lt;&lt; &quot;Done&quot; &lt;&lt; endl; 
++  END_FUNCTION; 
+ }
+     
+ 
+
+Modified: trunk/extra/SpherePadder/SpherePadder.hpp
+===================================================================
+--- trunk/extra/SpherePadder/SpherePadder.hpp	2009-01-09 13:09:26 UTC (rev 1618)
++++ trunk/extra/SpherePadder/SpherePadder.hpp	2009-01-09 14:44:43 UTC (rev 1619)
+@@ -13,6 +13,9 @@
+ 
+ #include &quot;TetraMesh.hpp&quot;
+ 
++# define BEGIN_FUNCTION(arg) if (trace_functions) cerr &lt;&lt; (arg) &lt;&lt; &quot;... &quot;
++# define END_FUNCTION        if (trace_functions) cerr &lt;&lt; &quot;Done\n&quot; 
++
+ enum SphereType {AT_NODE, AT_SEGMENT, AT_FACE, AT_TETRA_CENTER, AT_TETRA_VERTEX};
+ 
+ struct Sphere
+@@ -35,41 +38,46 @@
+ 
+ class SpherePadder
+ {
+-protected:
+-        	
+-        vector&lt;vector&lt;unsigned int&gt; &gt; combination;
++  protected:
++                
++    vector&lt;vector&lt;unsigned int&gt; &gt; combination;
+   
+-	double       distance_spheres (unsigned int i, unsigned int j);
+-        double       distance_centre_spheres(Sphere&amp; S1, Sphere&amp; S2);
+-        double       distance_vector3 (double V1[],double V2[]);
+-	void         place_at_nodes ();
+-        void         place_at_segment_middle ();
+-	void         place_at_faces ();
+-        void         place_at_tetra_centers ();
+-        void         place_at_tetra_vertexes ();
+-	void         cancel_overlap ();
+-        unsigned int place_fifth_sphere(unsigned int s1, unsigned int s2, unsigned int s3, unsigned int s4, Sphere&amp; S);
+-        unsigned int place_sphere_4contacts (unsigned int sphereId);
+-        	 
+-	double rmin,rmax,rmoy,dr;
+-	double ratio;
+-	double max_overlap_rate;
+-        unsigned int n1,n2,n3,n4,n5,n_densify;
+-	
+-	TetraMesh * mesh;
+-	vector&lt;Sphere&gt; sphere;
+-
+- public:
++    double       distance_spheres (unsigned int i, unsigned int j);
++    double       distance_centre_spheres(Sphere&amp; S1, Sphere&amp; S2);
++    double       distance_vector3 (double V1[],double V2[]);
++    void         place_at_nodes ();
++    void         place_at_segment_middle ();
++    void         place_at_faces ();
++    void         place_at_tetra_centers ();
++    void         place_at_tetra_vertexes ();
++    void         cancel_overlaps ();
++    unsigned int place_fifth_sphere(unsigned int s1, unsigned int s2, unsigned int s3, unsigned int s4, Sphere&amp; S);
++    unsigned int place_sphere_4contacts (unsigned int sphereId);
++                 
++    double       rmin,rmax,rmoy,dr;
++    double       ratio;
++    double       max_overlap_rate;
++    unsigned int n1,n2,n3,n4,n5,n_densify;
++    unsigned int nb_iter_max;
++        
++    TetraMesh *     mesh;
++    vector &lt;Sphere&gt; sphere;
++        
++    bool trace_functions;
++ 
++  public:
+    
+-	void plugTetraMesh (TetraMesh * mesh);
+-	void save_mgpost (const char* name);
+-	void save_Rxyz   (const char* name);
+-	
+-        SpherePadder();
+-        // TODO destructor that clean TetraMesh*
++    bool meshIsPlugged;
++   
++    void plugTetraMesh (TetraMesh * mesh);
++    void save_mgpost (const char* name);
++    void save_Rxyz   (const char* name);
+         
+-	void pad_5 ();
+-        // void densify ();	
++    SpherePadder();
++    // TODO destructor that clean TetraMesh*?
++        
++    void pad_5 ();
++    // void densify ();     
+ };
+ 
+ 
+
+Modified: trunk/extra/SpherePadder/TetraMesh.cpp
+===================================================================
+--- trunk/extra/SpherePadder/TetraMesh.cpp	2009-01-09 13:09:26 UTC (rev 1618)
++++ trunk/extra/SpherePadder/TetraMesh.cpp	2009-01-09 14:44:43 UTC (rev 1619)
+@@ -10,8 +10,93 @@
+ 
+ #include &quot;TetraMesh.hpp&quot;
+ 
+-void TetraMesh::read_data (const char* name)
++TetraMesh::TetraMesh ()   
+ {
++  isOrganized = false;
++}
++
++void TetraMesh::read_gmsh (const char* name)
++{
++  ifstream meshFile(name);
++  if(!meshFile)
++  {
++    cerr &lt;&lt; &quot;TetraMesh::read_gmsh, cannot open file &quot; &lt;&lt; name &lt;&lt; endl;
++    return;
++  }  
++
++  string token;
++  char not_read[150];
++  meshFile &gt;&gt; token;
++
++  while(meshFile)
++  {
++    if (token == &quot;$Nodes&quot;) 
++    {
++      unsigned int nbnodes;
++      unsigned int num_node;
++      Node N;
++
++      meshFile &gt;&gt; nbnodes; 
++      for (unsigned int n = 0 ; n &lt; nbnodes ; ++n)
++      {
++        meshFile &gt;&gt; num_node &gt;&gt; N.x &gt;&gt; N.y &gt;&gt; N.z;
++        node.push_back(N);      
++      }
++    }
++
++    if (token == &quot;$Elements&quot;) 
++    {
++      unsigned int nbElements;
++      unsigned int num_element, element_type, nbTags ;
++      Tetraedre T;
++      unsigned int t = 0;
++                        
++      meshFile &gt;&gt; nbElements;
++      for (unsigned int e = 0 ; e &lt; nbElements ; ++e)
++      {
++        meshFile &gt;&gt; num_element &gt;&gt; element_type;
++        if (element_type != 4)  // 4-node tetrahedron
++        {
++          meshFile.getline(not_read,150);
++          continue;
++        }
++          
++        
++        meshFile &gt;&gt; nbTags;
++        // the third tag is the number of a mesh partition to which the element belongs
++        unsigned int tag;
++        for (unsigned int tg = 0 ; tg &lt; nbTags ; ++(tg))
++        { meshFile &gt;&gt; tag; }
++        
++        meshFile &gt;&gt; T.nodeId[0] &gt;&gt; T.nodeId[1] &gt;&gt; T.nodeId[2] &gt;&gt; T.nodeId[3];
++                      
++        // numbers begin at 0 instead of 1
++        // (0 in C/C++ corresponds to 1 in the file)
++        T.nodeId[0] -= 1;
++        T.nodeId[1] -= 1;
++        T.nodeId[2] -= 1;
++        T.nodeId[3] -= 1;
++                                
++        node[T.nodeId[0]].tetraOwner.push_back(t);
++        node[T.nodeId[1]].tetraOwner.push_back(t);
++        node[T.nodeId[2]].tetraOwner.push_back(t);
++        node[T.nodeId[3]].tetraOwner.push_back(t);
++                                
++        tetraedre.push_back(T); 
++        ++t;
++      }                       
++    }
++                
++    if (token == &quot;$EndElements&quot;) break;
++                
++    meshFile &gt;&gt; token;
++  }
++   
++  organize ();
++}
++
++void TetraMesh::read (const char* name)
++{
+ 	ifstream meshFile(name);
+ 	if(!meshFile)
+ 	{
+@@ -19,7 +104,6 @@
+ 		return;
+ 	}  
+ 
+-    cout &lt;&lt; &quot;Read data... &quot; &lt;&lt; flush;
+ 	string token;
+ 	meshFile &gt;&gt; token;
+ 
+@@ -49,7 +133,7 @@
+ 				meshFile &gt;&gt; T.nodeId[0] &gt;&gt; T.nodeId[1] &gt;&gt; T.nodeId[2] &gt;&gt; T.nodeId[3];
+ 				
+ 				// numbers begin at 0 instead of 1
+-				// (0 in C corresponds to 1 in the file)
++				// (0 in C/C++ corresponds to 1 in the file)
+ 				T.nodeId[0] -= 1;
+ 				T.nodeId[1] -= 1;
+ 				T.nodeId[2] -= 1;
+@@ -68,7 +152,6 @@
+ 		
+ 		meshFile &gt;&gt; token;
+ 	}
+-	cout &lt;&lt; &quot;Done&quot; &lt;&lt; endl;
+ 	
+ 	organize ();
+ }
+@@ -80,7 +163,7 @@
+ 
+ void TetraMesh::organize ()
+ {
+-	cout &lt;&lt; &quot;Organize data... &quot; &lt;&lt; flush;
++	//cout &lt;&lt; &quot;Organize data... &quot; &lt;&lt; flush;
+ 	
+ 	// Translate all nodes in such a manner that all coordinates are &gt; 0
+ 	xtrans = node[0].x;
+@@ -92,9 +175,9 @@
+ 		ytrans = (ytrans &lt; node[i].y) ? ytrans : node[i].y;
+ 		ztrans = (ztrans &lt; node[i].z) ? ztrans : node[i].z;
+ 	}
+-	xtrans = (xtrans&lt;0.0) ? -xtrans : 0.0;
+-	ytrans = (ytrans&lt;0.0) ? -ytrans : 0.0;
+-	ztrans = (ztrans&lt;0.0) ? -ztrans : 0.0;
++	xtrans = (xtrans &lt; 0.0) ? -xtrans : 0.0;
++	ytrans = (ytrans &lt; 0.0) ? -ytrans : 0.0;
++	ztrans = (ztrans &lt; 0.0) ? -ztrans : 0.0;
+ 	for (unsigned int i = 0 ; i &lt; node.size() ; ++i)
+ 	{
+ 		node[i].x += xtrans;
+@@ -109,7 +192,7 @@
+ 	}
+ 	
+ 	// Face creation
+-	vector &lt;Face&gt; tmpFace; // This will contain all faces more than one time
++	vector &lt;Face&gt; tmpFace; // This will contain all faces more than one time (with duplications)
+ 	Face F;
+ 	F.tetraOwner.push_back(0);
+ 	F.belongBoundary = true;
+@@ -175,7 +258,7 @@
+ 	vector &lt;Segment&gt; tmpSegment;
+ 	Segment S;
+ 	S.faceOwner.push_back(0);
+-	//S.belongBoundary = true; // a voir
++
+ 	for (unsigned int i = 0 ; i &lt; face.size() ; ++i)
+ 	{
+ 		S.faceOwner[0] = i;
+@@ -251,7 +334,7 @@
+ 			if (   (tetraedre[t1].nodeId[0] &gt; tetraedre[t2].nodeId[3]) 
+ 				|| (tetraedre[t1].nodeId[3] &lt; tetraedre[t2].nodeId[0]) ) continue;
+                         
+-                        // TODO mettre du while...
++                        // FIXME mettre du while... (?)
+ 			for (unsigned int i = 0 ; i &lt; 4 ; i++)
+                         {
+ 			        for (unsigned int j = 0 ; j &lt; 4 ; j++)
+@@ -267,17 +350,7 @@
+ 		}
+ 	}
+ 	
+-	// Define Owners FIXME :  a voir plus tard
+-	/*
+-	for (unsigned int t = 0 ; t &lt; tetraedre.size() ; ++t)
+-	{
+-		node[tetraedre[t].nodeId[0]].tetraOwner.push_back(t);
+-		node[tetraedre[t].nodeId[1]].tetraOwner.push_back(t);
+-		node[tetraedre[t].nodeId[2]].tetraOwner.push_back(t);
+-		node[tetraedre[t].nodeId[3]].tetraOwner.push_back(t);
+-	}
+-	*/
+-	cout &lt;&lt; &quot;Done&quot; &lt;&lt; endl;
++        isOrganized = true;
+ }
+ 
+ 
+
+Modified: trunk/extra/SpherePadder/TetraMesh.hpp
+===================================================================
+--- trunk/extra/SpherePadder/TetraMesh.hpp	2009-01-09 13:09:26 UTC (rev 1618)
++++ trunk/extra/SpherePadder/TetraMesh.hpp	2009-01-09 14:44:43 UTC (rev 1619)
+@@ -14,7 +14,7 @@
+ #include &lt;vector&gt;
+ #include &lt;iostream&gt;
+ #include &lt;fstream&gt;
+-#include &lt;stdlib.h&gt; // for qsort
++#include &lt;stdlib.h&gt;
+ #include &lt;math.h&gt;
+ 
+ using namespace std;
+@@ -54,22 +54,27 @@
+ {
+ protected:
+     
+-  double xtrans,ytrans,ztrans;
+-  void organize (); 
++
++  void organize ();   
+   	
+ public:
+   
+-  vector&lt;Node&gt;       node;
+-  vector&lt;Segment&gt;    segment;
+-  vector&lt;Face&gt;       face;
+-  vector&lt;Tetraedre&gt;  tetraedre;
++  vector &lt;Node&gt;       node;
++  vector &lt;Segment&gt;    segment;
++  vector &lt;Face&gt;       face;
++  vector &lt;Tetraedre&gt;  tetraedre;
+   
+   double mean_segment_length;
+   double min_segment_length;
+   double max_segment_length;
+   
+-  void read_data (const char* name);
+-
++  TetraMesh();
++  
++  double xtrans,ytrans,ztrans;
++  bool   isOrganized;
++  
++  void read      (const char* name);
++  void read_gmsh (const char* name);
+ };
+ 
+ #endif // TETRA_MESH_HPP
+
+Modified: trunk/extra/SpherePadder/main.cpp
+===================================================================
+--- trunk/extra/SpherePadder/main.cpp	2009-01-09 13:09:26 UTC (rev 1618)
++++ trunk/extra/SpherePadder/main.cpp	2009-01-09 14:44:43 UTC (rev 1619)
+@@ -10,21 +10,231 @@
+ 
+ #include &quot;SpherePadder.hpp&quot;
+ 
++//#define DEBUG
++
++unsigned int           mesh_format;
++vector &lt;unsigned int&gt;  output_format;
++char                   mesh_file_name[100];
++char                   output_file_name[100];
++void resume();
++
+ int main()
+-{
+-	TetraMesh * mesh = new TetraMesh();
+-	mesh-&gt;read_data(&quot;test.msh&quot;);
++{ 
++#ifdef DEBUG
++  
++  TetraMesh * mesh = new TetraMesh();
++  mesh-&gt;read_gmsh(&quot;test2.msh&quot;);
+         
+-        SpherePadder * padder = new SpherePadder();
+-	padder-&gt;plugTetraMesh(mesh);
+-	
+-	padder-&gt;pad_5();
+-	
+-	padder-&gt;save_mgpost(&quot;mgp.out.001&quot;);
+-        padder-&gt;save_Rxyz(&quot;out.Rxyz&quot;);
++  SpherePadder * padder = new SpherePadder();
++  padder-&gt;plugTetraMesh(mesh);
+         
+-	return 0;
++  padder-&gt;pad_5();
++        
++  padder-&gt;save_mgpost(&quot;mgp.out.001&quot;);
++  padder-&gt;save_Rxyz(&quot;out.Rxyz&quot;);
++        
++  return 0;  
++
++#else
++  
++  char                   name_with_ext[100];
++  
++  bool mesh_format_is_defined      = false;
++  bool mesh_file_name_is_defined   = false;  
++  bool output_file_name_is_defined = false;
++      
++  // default parameters
++  mesh_format = 1;
++  strcpy(mesh_file_name,&quot;unknown&quot;);
++  strcpy(output_file_name,&quot;unknown&quot;);
++  
++  TetraMesh    * mesh   = new TetraMesh();
++  SpherePadder * padder = new SpherePadder();
++  
++  unsigned int answer = 99;
++  
++  while(1)
++  {
++    answer = 99;
++    cout &lt;&lt; endl;
++    cout &lt;&lt; &quot;1. Define mesh format&quot; &lt;&lt; endl;
++    cout &lt;&lt; &quot;2. Define mesh file name&quot; &lt;&lt; endl;
++    cout &lt;&lt; &quot;3. Define output format&quot; &lt;&lt; endl;
++    cout &lt;&lt; &quot;4. Define output file name&quot; &lt;&lt; endl;
++    cout &lt;&lt; &quot;5. Resume&quot; &lt;&lt; endl;
++    cout &lt;&lt; &quot;6. GO&quot; &lt;&lt; endl;
++    cout &lt;&lt; endl;
++    cout &lt;&lt; &quot;0. Quit&quot; &lt;&lt; endl;
++    cout &lt;&lt; endl &lt;&lt; &quot;&gt; &quot;;
++    cin &gt;&gt; answer;
++    
++    switch (answer)
++    {
++      case 0: return 0;
++      
++      case 1:
++        answer = 99;
++        cout &lt;&lt; endl;
++        cout &lt;&lt; &quot;1. SpherePadder&quot; &lt;&lt; endl;
++        cout &lt;&lt; &quot;2. gmsh&quot; &lt;&lt; endl;
++        cout &lt;&lt; endl &lt;&lt; &quot;&gt; &quot;;
++        cin &gt;&gt; answer;
++        if (answer &gt;= 1 &amp;&amp; answer &lt;=2)
++        {
++          mesh_format = answer;
++          mesh_format_is_defined = true;
++        }
++        break;
++      
++      case 2:
++        cout &lt;&lt; &quot;Enter mesh file name: &quot;;
++        cin &gt;&gt; mesh_file_name;
++        mesh_file_name_is_defined = true;
++        resume();
++        break;
++        
++      case 3:
++        answer = 99;
++        cout &lt;&lt; endl;
++        cout &lt;&lt; &quot;1. mgpost&quot; &lt;&lt; endl;
++        cout &lt;&lt; &quot;2. Rxyz&quot; &lt;&lt; endl;
++        cout &lt;&lt; endl;
++        cout &lt;&lt; &quot;0. Done&quot; &lt;&lt; endl;
++        cout &lt;&lt; endl &lt;&lt; &quot;&gt; &quot;;
++        cin &gt;&gt; answer;
++        
++        if (answer == 0) break;
++        else if (answer &gt;= 1 &amp;&amp; answer &lt;= 2)
++        {
++          bool added = false;
++          for (unsigned int i = 0 ; i &lt; output_format.size() ; i++)
++          {
++            if (answer == output_format[i]) { added = true; break;} 
++          }
++          if (!added) output_format.push_back(answer);
++        }
++        break;
++        
++      case 4:
++        cout &lt;&lt; &quot;Enter output file name (without extension): &quot;;
++        cin &gt;&gt; output_file_name;
++        output_file_name_is_defined = true;
++        resume();
++        break;
++        
++        case 5: resume(); break;        
++        
++      case 6:
++        
++        if (!mesh_file_name_is_defined)
++        {
++          cout &lt;&lt; &quot;mesh file name is not defined!&quot; &lt;&lt; endl;
++          break; 
++        }
++        
++        if (!output_file_name_is_defined)
++        {
++          cout &lt;&lt; &quot;output file name is not defined!&quot; &lt;&lt; endl;
++          break; 
++        }
++          
++        if (mesh_format_is_defined)
++        {
++          switch (mesh_format)
++          {
++            case 1:
++              mesh-&gt;read(mesh_file_name);
++              break;
++              
++            case 2:
++              mesh-&gt;read_gmsh(mesh_file_name);
++              break;
++          }
++        }
++        else
++        {
++          cout &lt;&lt; &quot;mesh format is not defined!&quot; &lt;&lt; endl;
++          break; 
++        }
++        
++        if (!(padder-&gt;meshIsPlugged)) padder-&gt;plugTetraMesh(mesh);
++        
++        if (output_format.empty())
++        {
++          cout &lt;&lt; &quot;output format not defined!&quot; &lt;&lt; endl;
++          break; 
++        }
++        
++        padder-&gt;pad_5(); // TODO controlled by user...
++        
++        for (unsigned int i = 0 ; i &lt; output_format.size() ; i++)
++        {
++          switch (output_format[i])
++          {
++            case 1:
++              strcpy(name_with_ext,output_file_name);
++              strcat(name_with_ext,&quot;.mgp&quot;);
++              padder-&gt;save_mgpost(name_with_ext);
++              cout &lt;&lt; &quot;file &quot; &lt;&lt; name_with_ext &lt;&lt; &quot; has been created&quot; &lt;&lt; endl;
++              break;
++              
++            case 2:
++              strcpy(name_with_ext,output_file_name);
++              strcat(name_with_ext,&quot;.Rxyz&quot;);
++              padder-&gt;save_Rxyz(name_with_ext);
++              cout &lt;&lt; &quot;file &quot; &lt;&lt; name_with_ext &lt;&lt; &quot; has been created&quot; &lt;&lt; endl;
++              break;
++          }
++        }
++        
++        return 0;
++      
++      default: 
++        break;
++      
++    }
++  }
++        
++  return 0;
++  
++#endif // DEBUG 
+ }
+ 
+ 
++void resume()
++{
++  cout &lt;&lt; &quot;--------------------------------------------------------&quot; &lt;&lt; endl;
++  cout &lt;&lt; &quot;mesh format: &quot;;
++  switch (mesh_format)
++  {
++    case 1: cout &lt;&lt; &quot;SpherePadder&quot; &lt;&lt; endl; break;
++    case 2: cout &lt;&lt; &quot;gmsh&quot; &lt;&lt; endl;break;
++    default: cout &lt;&lt; &quot;unknown&quot; &lt;&lt; endl;
++  }
++  
++  cout &lt;&lt; &quot;mesh file name: &quot; &lt;&lt; mesh_file_name &lt;&lt; endl;
+ 
++  cout &lt;&lt; &quot;output format: &quot;;
++  if ((!output_format.empty()))
++  {
++    cout &lt;&lt; &quot;[&quot;;
++    for (unsigned int i = 0 ; i &lt; output_format.size() ; i++)
++    {
++      switch (output_format[i])
++      {
++        case 1: cout &lt;&lt; &quot; mgpost &quot;;break;
++        case 2: cout &lt;&lt; &quot; Rxyz &quot;;break;
++        default: break;
++      }
++    }
++    cout &lt;&lt; &quot;]&quot; &lt;&lt; endl;
++  }
++  else cout &lt;&lt; &quot;unknown&quot; &lt;&lt; endl;
++    
++  cout &lt;&lt; &quot;output file name (without extension): &quot; &lt;&lt; output_file_name &lt;&lt; endl;
++  
++  cout &lt;&lt; &quot;--------------------------------------------------------&quot; &lt;&lt; endl;
++}
++
++
++
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000585.html">[deprecated list] [Yade-dev] [svn] r1618 - in trunk/pkg/snow:	DataClass Engine	PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000587.html">[deprecated list] [Yade-dev] [svn] r1620 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#586">[ date ]</a>
+              <a href="thread.html#586">[ thread ]</a>
+              <a href="subject.html#586">[ subject ]</a>
+              <a href="author.html#586">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

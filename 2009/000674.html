@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1664 - trunk
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1664%20-%20trunk&In-Reply-To=%3C200902111132.n1BBWvO6017619%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000671.html">
+   <LINK REL="Next"  HREF="000677.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1664 - trunk</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1664%20-%20trunk&In-Reply-To=%3C200902111132.n1BBWvO6017619%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1664 - trunk">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Feb 11 12:32:57 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000671.html">[deprecated list] [Yade-dev] [svn] r1662 - in	trunk:	examples/dynamic_simulation_tests gui/qt3	pkg/dem	pkg/dem/Engine/EngineUnit
+</A></li>
+        <LI>Next message: <A HREF="000677.html">[deprecated list] [Yade-dev] Profile-guided optimization
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#674">[ date ]</a>
+              <a href="thread.html#674">[ thread ]</a>
+              <a href="subject.html#674">[ subject ]</a>
+              <a href="author.html#674">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-02-11 12:32:56 +0100 (Wed, 11 Feb 2009)
+New Revision: 1664
+
+Modified:
+   trunk/SConstruct
+Log:
+(remove no-warn for c++0x since that flag is not known to gcc-3.4)
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-02-11 10:36:16 UTC (rev 1663)
++++ trunk/SConstruct	2009-02-11 11:32:56 UTC (rev 1664)
+@@ -412,7 +412,7 @@
+ 	env.Append(CPPDEFINES=[('YADE_CAST','dynamic_cast'),('YADE_PTR_CAST','dynamic_pointer_cast')])
+ 
+ if env['gprof']: env.Append(CXXFLAGS=['-pg'],LINKFLAGS=['-pg'],SHLINKFLAGS=['-pg'])
+-env.Prepend(CXXFLAGS=['-pipe','-Wall','-Wc++0x-compat'])
++env.Prepend(CXXFLAGS=['-pipe','-Wall']) # '-Wc++0x-compat' ## not know to gcc-3.*
+ 
+ if env['arcs']=='gen': env.Append(CXXFLAGS=['-fprofile-generate'],LINKFLAGS=['-fprofile-generate'])
+ if env['arcs']=='use': env.Append(CXXFLAGS=['-fprofile-use'],LINKFLAGS=['-fprofile-use'])
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000671.html">[deprecated list] [Yade-dev] [svn] r1662 - in	trunk:	examples/dynamic_simulation_tests gui/qt3	pkg/dem	pkg/dem/Engine/EngineUnit
+</A></li>
+	<LI>Next message: <A HREF="000677.html">[deprecated list] [Yade-dev] Profile-guided optimization
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#674">[ date ]</a>
+              <a href="thread.html#674">[ thread ]</a>
+              <a href="subject.html#674">[ subject ]</a>
+              <a href="author.html#674">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

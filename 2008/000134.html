@@ -1,0 +1,88 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] cmdGui
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20cmdGui&In-Reply-To=%3C20080326110209.7f66950a%40absurd%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000130.html">
+   <LINK REL="Next"  HREF="000131.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] cmdGui</H1>
+    <B>Janek Kozicki</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20cmdGui&In-Reply-To=%3C20080326110209.7f66950a%40absurd%3E"
+       TITLE="[yade-dev] cmdGui">janek_listy at wp.pl
+       </A><BR>
+    <I>Wed Mar 26 11:02:09 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000130.html">[yade-dev] cmdGui
+</A></li>
+        <LI>Next message: <A HREF="000131.html">[yade-dev] svn-1284 compile error
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#134">[ date ]</a>
+              <a href="thread.html#134">[ thread ]</a>
+              <a href="subject.html#134">[ subject ]</a>
+              <a href="author.html#134">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Janek Kozicki said:     (by the date of Tue, 25 Mar 2008 20:48:28 +0100)
+
+&gt;<i> V&#225;clav S(milauer said:     (by the date of Tue, 25 Mar 2008 20:01:56 +0100)
+</I>&gt;<i> 
+</I>&gt;<i> &gt; I am unable to test on 32bit i386, all my machines are native amd64.
+</I>&gt;<i> &gt; (There is some typeid() logic in IOFormatManager and maybe older compilers get it wrong?)
+</I>&gt;<i> 
+</I>&gt;<i> I can create an account for you on my computer I use in Grenoble. It's 32bit.
+</I>&gt;<i> 
+</I>&gt;<i> &gt; Janek, you know the serializer well, can you comment on that? Are you
+</I>&gt;<i> &gt; able to reproduce it? (I am not.)
+</I>&gt;<i> 
+</I>&gt;<i> not yet, I need to reproduce first. I will try...
+</I>
+OK, I reproduced this, both optimized and non-optimized build have
+this problem. For some reason the static methods from
+BINFormatManager are called instead of XMLFormatManager. Totally
+strange. I tried several various hacks to fix this and none worked.
+So after few hours I would prefer to give up instead of spend more time
+on this, because yade::serialization is flawed anyway and if all goes
+well we all will be using boost::serialization in 3 or 4 weeks.
+
+Assuming that this will not render useless the regression tests. We
+will see.
+
+-- 
+Janek Kozicki                                                         |
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000130.html">[yade-dev] cmdGui
+</A></li>
+	<LI>Next message: <A HREF="000131.html">[yade-dev] svn-1284 compile error
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#134">[ date ]</a>
+              <a href="thread.html#134">[ thread ]</a>
+              <a href="subject.html#134">[ subject ]</a>
+              <a href="author.html#134">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

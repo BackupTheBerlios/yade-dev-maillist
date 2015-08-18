@@ -1,0 +1,460 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1513 - in trunk: core extra gui	gui/py	pkg/common/DataClass/InteractionPhysics	pkg/common/DataClass/PhysicalAction
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1513%20-%20in%20trunk%3A%20core%20extra%20gui%0A%09gui/py%09pkg/common/DataClass/InteractionPhysics%09pkg/common/DataClass/PhysicalAction&In-Reply-To=%3C200809091007.m89A7A14032494%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000350.html">
+   <LINK REL="Next"  HREF="000352.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1513 - in trunk: core extra gui	gui/py	pkg/common/DataClass/InteractionPhysics	pkg/common/DataClass/PhysicalAction</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1513%20-%20in%20trunk%3A%20core%20extra%20gui%0A%09gui/py%09pkg/common/DataClass/InteractionPhysics%09pkg/common/DataClass/PhysicalAction&In-Reply-To=%3C200809091007.m89A7A14032494%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1513 - in trunk: core extra gui	gui/py	pkg/common/DataClass/InteractionPhysics	pkg/common/DataClass/PhysicalAction">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Sep  9 12:07:10 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000350.html">[deprecated list] [Yade-dev] [svn] r1512 - trunk/gui/py
+</A></li>
+        <LI>Next message: <A HREF="000352.html">[deprecated list] [Yade-dev] new algorithm for facets
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#351">[ date ]</a>
+              <a href="thread.html#351">[ thread ]</a>
+              <a href="subject.html#351">[ subject ]</a>
+              <a href="author.html#351">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-09-09 12:07:09 +0200 (Tue, 09 Sep 2008)
+New Revision: 1513
+
+Modified:
+   trunk/core/yade.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/gui/SConscript
+   trunk/gui/py/_utils.cpp
+   trunk/gui/py/eudoxos.py
+   trunk/gui/py/utils.py
+   trunk/pkg/common/DataClass/InteractionPhysics/NormalShearInteractions.hpp
+   trunk/pkg/common/DataClass/PhysicalAction/Force.cpp
+   trunk/pkg/common/DataClass/PhysicalAction/Force.hpp
+   trunk/pkg/common/DataClass/PhysicalAction/Momentum.cpp
+   trunk/pkg/common/DataClass/PhysicalAction/Momentum.hpp
+Log:
+1. add utility function to compute elastic energy within a volume (the dynamic_cast to NormalShearInteraction still fails; what is going on?)
+2. add utils.fractionalBox, an AABB reduced to its fraction
+3. fix fixmes in Force and Momentum about unused functions about to be deleted
+4. plotting interaction direction histogram now works on contrained volume (to study boundary influence on the distribution)
+
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2008-09-08 08:56:42 UTC (rev 1512)
++++ trunk/core/yade.cpp	2008-09-09 10:07:09 UTC (rev 1513)
+@@ -171,7 +171,7 @@
+ 		std::string logConf=configPath+&quot;/logging.conf&quot;;
+ 		if(filesystem::exists(logConf)){
+ 			log4cxx::PropertyConfigurator::configure(logConf);
+-			LOG_INFO(&quot;Loading  &quot;&lt;&lt;logConf);
++			LOG_INFO(&quot;Loading &quot;&lt;&lt;logConf);
+ 		} else { // otherwise use simple console-directed logging
+ 			log4cxx::BasicConfigurator::configure();
+ 			logger-&gt;setLevel(log4cxx::Level::WARN);
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2008-09-08 08:56:42 UTC (rev 1512)
++++ trunk/extra/Brefcom.hpp	2008-09-09 10:07:09 UTC (rev 1513)
+@@ -95,9 +95,10 @@
+ 
+ 		BrefcomContact(): NormalShearInteraction(),E(0), G(0), tanFrictionAngle(0), undamagedCohesion(0), equilibriumDist(0), crossSection(0), xiShear(0), tau(0), expDmgRate(0) { createIndex(); epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; neverDamage=false; omega=0; Fn=0; Fs=Vector3r::ZERO; }
+ 		//	BrefcomContact(Real _E, Real _G, Real _tanFrictionAngle, Real _undamagedCohesion, Real _equilibriumDist, Real _crossSection, Real _epsCrackOnset, Real _epsFracture, Real _expBending, Real _xiShear, Real _tau=0, Real _expDmgRate=1): InteractionPhysics(), E(_E), G(_G), tanFrictionAngle(_tanFrictionAngle), undamagedCohesion(_undamagedCohesion), equilibriumDist(_equilibriumDist), crossSection(_crossSection), epsCrackOnset(_epsCrackOnset), epsFracture(_epsFracture), expBending(_expBending), xiShear(_xiShear), tau(_tau), expDmgRate(_expDmgRate) { epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; neverDamage=false; omega=0; Fn=0; Fs=Vector3r::ZERO; /*TRVAR5(epsCrackOnset,epsFracture,Kn,crossSection,equilibriumDist); */ }
++		virtual ~BrefcomContact(){}
+ 
+ 
+-		void registerAttributes(){
++		virtual void registerAttributes(){
+ 			InteractionPhysics::registerAttributes();
+ 			REGISTER_ATTRIBUTE(E);
+ 			REGISTER_ATTRIBUTE(G);
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2008-09-08 08:56:42 UTC (rev 1512)
++++ trunk/gui/SConscript	2008-09-09 10:07:09 UTC (rev 1513)
+@@ -65,7 +65,7 @@
+ 			],
+ 			),
+ 		env.SharedLibrary('_utils',['py/_utils.cpp'],SHLIBPREFIX='',
+-			LIBS=env['LIBS']+['Shop','libboost_python']),
++			LIBS=env['LIBS']+['Shop','libboost_python','Brefcom']),
+ 		env.SharedLibrary('log',['py/log.cpp'],SHLIBPREFIX=''),
+ 		env.File('__init__.py','py'),
+ 		env.File('utils.py','py'),
+
+Modified: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2008-09-08 08:56:42 UTC (rev 1512)
++++ trunk/gui/py/_utils.cpp	2008-09-09 10:07:09 UTC (rev 1513)
+@@ -4,9 +4,14 @@
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/extra/Brefcom.hpp&gt;
+ #include&lt;cmath&gt;
+ using namespace boost::python;
+ 
++#ifdef LOG4CXX
++	log4cxx::LoggerPtr logger=log4cxx::Logger::getLogger(&quot;yade.utils&quot;);
++#endif
++
+ python::tuple vec2tuple(const Vector3r&amp; v){return boost::python::make_tuple(v[0],v[1],v[2]);}
+ Vector3r tuple2vec(const python::tuple&amp; t){return Vector3r(extract&lt;double&gt;(t[0])(),extract&lt;double&gt;(t[1])(),extract&lt;double&gt;(t[2])());}
+ bool isInBB(Vector3r p, Vector3r bbMin, Vector3r bbMax){return p[0]&gt;bbMin[0] &amp;&amp; p[0]&lt;bbMax[0] &amp;&amp; p[1]&gt;bbMin[1] &amp;&amp; p[1]&lt;bbMax[1] &amp;&amp; p[2]&gt;bbMin[2] &amp;&amp; p[2]&lt;bbMax[2];}
+@@ -59,7 +64,37 @@
+ 
+ Real PWaveTimeStep(){return Shop::PWaveTimeStep();};
+ 
++Real elasticEnergyInAABB(python::tuple AABB){
++	Vector3r bbMin=tuple2vec(extract&lt;python::tuple&gt;(AABB[0])()), bbMax=tuple2vec(extract&lt;python::tuple&gt;(AABB[1])());
++	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
++	Real E=0;
++	FOREACH(const shared_ptr&lt;Interaction&gt;&amp;i, *rb-&gt;transientInteractions){
++		if(!i-&gt;interactionPhysics) continue;
++		//FIXME: dynamic_pointer_cast instead of static should be used here, but the downcast fails for reasons that are not know :-(
++		shared_ptr&lt;BrefcomContact&gt; bc=static_pointer_cast&lt;BrefcomContact&gt;(i-&gt;interactionPhysics); if(!bc) continue;
++		const shared_ptr&lt;Body&gt;&amp; b1=Body::byId(i-&gt;getId1(),rb), b2=Body::byId(i-&gt;getId2(),rb);
++		bool isIn1=isInBB(b1-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax), isIn2=isInBB(b2-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax);
++		if(!isIn1 &amp;&amp; !isIn2) continue;
++		LOG_DEBUG(&quot;Interaction #&quot;&lt;&lt;i-&gt;getId1()&lt;&lt;&quot;--#&quot;&lt;&lt;i-&gt;getId2());
++		//cerr&lt;&lt;&quot;Interaction #&quot;&lt;&lt;i-&gt;getId1()&lt;&lt;&quot;--#&quot;&lt;&lt;i-&gt;getId2()&lt;&lt;endl;
++		Real weight=1.;
++		if((!isIn1 &amp;&amp; isIn2) || (isIn1 &amp;&amp; !isIn2)){
++			//shared_ptr&lt;Body&gt; bIn=isIn1?b1:b2, bOut=isIn2?b2:b1;
++			Vector3r vIn=(isIn1?b1:b2)-&gt;physicalParameters-&gt;se3.position, vOut=(isIn2?b1:b2)-&gt;physicalParameters-&gt;se3.position;
++			#define _WEIGHT_COMPONENT(axis) if(vOut[axis]&lt;bbMin[axis]) weight=min(weight,abs((vOut[axis]-bbMin[axis])/(vOut[axis]-vIn[axis]))); else if(vOut[axis]&gt;bbMax[axis]) weight=min(weight,abs((vOut[axis]-bbMax[axis])/(vOut[axis]-vIn[axis])));
++			_WEIGHT_COMPONENT(0); _WEIGHT_COMPONENT(1); _WEIGHT_COMPONENT(2);
++			assert(weight&gt;=0 &amp;&amp; weight&lt;=1);
++			//cerr&lt;&lt;&quot;Interaction crosses AABB boundary, weight is &quot;&lt;&lt;weight&lt;&lt;endl;
++			//LOG_DEBUG(&quot;Interaction crosses AABB boundary, weight is &quot;&lt;&lt;weight);
++		} else {assert(isIn1 &amp;&amp; isIn2); /* cerr&lt;&lt;&quot;Interaction inside, weight is &quot;&lt;&lt;weight&lt;&lt;endl;*/ /*LOG_DEBUG(&quot;Interaction inside, weight is &quot;&lt;&lt;weight);*/}
++		E+=weight*(.5*bc-&gt;E*bc-&gt;crossSection*pow(bc-&gt;epsN,2)+.5*bc-&gt;G*bc-&gt;crossSection*pow(bc-&gt;epsT.Length(),2));
++		//TRVAR5(bc-&gt;crossSection,bc-&gt;E,bc-&gt;G,bc-&gt;epsN,bc-&gt;epsT.Length());;
++		//cerr&lt;&lt;bc-&gt;crossSection&lt;&lt;&quot;,&quot;&lt;&lt;bc-&gt;E&lt;&lt;&quot;,&quot;&lt;&lt;bc-&gt;G&lt;&lt;&quot;,&quot;&lt;&lt;bc-&gt;epsN&lt;&lt;&quot;,&quot;&lt;&lt;bc-&gt;epsT.Length()&lt;&lt;endl;
++	}
++	return E;
++}
+ 
++
+ /* return histogram ([bin1Min,bin2Min,&#8230;],[value1,value2,&#8230;]) from projections of interactions
+  * to the plane perpendicular to axis&#8712;[0,1,2]; the number of bins can be specified and they cover
+  * the range (0,&#960;), since interactions are bidirecional, hence periodically the same on (&#960;,2&#960;).
+@@ -68,16 +103,20 @@
+  * Both bodies must be in the mask (except if mask is 0, when all bodies are considered)
+  * If the projection is shorter than minProjLen, it is skipped.
+  *
+- * @todo implement groupMask
++ * If both bodies are _outside_ the aabb (if specified), the interaction is skipped.
++ *
+  */
+-python::tuple interactionAnglesHistogram(int axis, int mask=0, size_t bins=20, Real minProjLen=1e-6){
++python::tuple interactionAnglesHistogram(int axis, int mask=0, size_t bins=20, python::tuple aabb=python::tuple(), Real minProjLen=1e-6){
+ 	if(axis&lt;0||axis&gt;2) throw invalid_argument(&quot;Axis must be from {0,1,2}=x,y,z.&quot;);
++	Vector3r bbMin(Vector3r::ZERO), bbMax(Vector3r::ZERO); bool useBB=python::len(aabb)&gt;0; if(useBB){bbMin=tuple2vec(extract&lt;python::tuple&gt;(aabb[0])());bbMax=tuple2vec(extract&lt;python::tuple&gt;(aabb[1])());}
+ 	Real binStep=Mathr::PI/bins; int axis2=(axis+1)%3, axis3=(axis+2)%3;
+ 	vector&lt;Real&gt; cummProj(bins,0.);
+ 	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
+ 	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; i, *rb-&gt;transientInteractions){
+ 		if(!i-&gt;isReal) continue;
+-		if(!(mask==0 || (mask&gt;0 &amp;&amp; (Body::byId(i-&gt;getId1(),rb)-&gt;getGroupMask() &amp; mask) &amp;&amp; (Body::byId(i-&gt;getId2(),rb)-&gt;getGroupMask() &amp; mask)))) continue;
++		const shared_ptr&lt;Body&gt;&amp; b1=Body::byId(i-&gt;getId1(),rb), b2=Body::byId(i-&gt;getId2(),rb);
++		if(!b1-&gt;maskOk(mask) || !b2-&gt;maskOk(mask)) continue;
++		if(useBB &amp;&amp; !isInBB(b1-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax) &amp;&amp; !isInBB(b2-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax)) continue;
+ 		shared_ptr&lt;SpheresContactGeometry&gt; scg=dynamic_pointer_cast&lt;SpheresContactGeometry&gt;(i-&gt;interactionGeometry); if(!scg) continue;
+ 		Vector3r n(scg-&gt;normal); n[axis]=0.; Real nLen=n.Length();
+ 		if(nLen&lt;minProjLen) continue; // this interaction is (almost) exactly parallel to our axis; skip that one
+@@ -89,7 +128,7 @@
+ 	for(size_t i=0; i&lt;(size_t)bins; i++){ val.append(cummProj[i]); binMid.append(i*binStep);}
+ 	return python::make_tuple(binMid,val);
+ }
+-BOOST_PYTHON_FUNCTION_OVERLOADS(interactionAnglesHistogram_overloads,interactionAnglesHistogram,1,3);
++BOOST_PYTHON_FUNCTION_OVERLOADS(interactionAnglesHistogram_overloads,interactionAnglesHistogram,1,4);
+ 
+ 
+ BOOST_PYTHON_MODULE(_utils){
+@@ -98,7 +137,8 @@
+ 	def(&quot;negPosExtremeIds&quot;,negPosExtremeIds,negPosExtremeIds_overloads(args(&quot;axis&quot;,&quot;distFactor&quot;)));
+ 	def(&quot;coordsAndDisplacements&quot;,coordsAndDisplacements,coordsAndDisplacements_overloads(args(&quot;AABB&quot;)));
+ 	def(&quot;setRefSe3&quot;,setRefSe3);
+-	def(&quot;interactionAnglesHistogram&quot;,interactionAnglesHistogram,interactionAnglesHistogram_overloads(args(&quot;axis&quot;,&quot;mask&quot;,&quot;bins&quot;)));
++	def(&quot;interactionAnglesHistogram&quot;,interactionAnglesHistogram,interactionAnglesHistogram_overloads(args(&quot;axis&quot;,&quot;mask&quot;,&quot;bins&quot;,&quot;aabb&quot;)));
++	def(&quot;elasticEnergy&quot;,elasticEnergyInAABB);
+ }
+ 
+ 
+
+Modified: trunk/gui/py/eudoxos.py
+===================================================================
+--- trunk/gui/py/eudoxos.py	2008-09-08 08:56:42 UTC (rev 1512)
++++ trunk/gui/py/eudoxos.py	2008-09-09 10:07:09 UTC (rev 1513)
+@@ -5,15 +5,15 @@
+ #
+ 
+ 
+-def plotDirections(mask=0,bins=20):
++def plotDirections(mask=0,bins=20,aabb=()):
+ 	&quot;Plot 3 histograms for distribution of interaction directions, in yz,xz and xy planes.&quot;
+-	import pylab
++	import pylab,math
+ 	from yade import utils
+ 	for axis in [0,1,2]:
+-		d=utils.interactionAnglesHistogram(axis,mask=mask,bins=bins)
++		d=utils.interactionAnglesHistogram(axis,mask=mask,bins=bins,aabb=aabb)
+ 		fc=[0,0,0]; fc[axis]=1.
+ 		pylab.subplot(220+axis+1,polar=True);
+-		bar(d[0],d[1],width=math.pi/(1.2*bins),fc=fc,alpha=.7,label=['yz','xz','xy'][axis])
++		pylab.bar(d[0],d[1],width=math.pi/(1.2*bins),fc=fc,alpha=.7,label=['yz','xz','xy'][axis])
+ 	pylab.show()
+ 
+ def estimatePoissonYoung(principalAxis,stress=0,plot=False,cutoff=0.):
+@@ -32,9 +32,7 @@
+ 	dd=[] # storage for linear regression parameters
+ 	import pylab,numpy,stats
+ 	from yade import utils
+-	if cutoff&gt;0:
+-		aabb=utils.aabbExtrema(); half=[.5*(aabb[1][i]-aabb[0][i]) for i in [0,1,2]]
+-		cut=(tuple([aabb[0][i]+cutoff*half[i] for i in [0,1,2]]),tuple([aabb[1][i]-cutoff*half[i] for i in [0,1,2]]))
++	if cutoff&gt;0: cut=utils.fractionalBox(fraction=1-cutoff)
+ 	for axis in [0,1,2]:
+ 		if cutoff&gt;0:
+ 			#print cutoff,utils.aabbExtrema(),cut
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-09-08 08:56:42 UTC (rev 1512)
++++ trunk/gui/py/utils.py	2008-09-09 10:07:09 UTC (rev 1513)
+@@ -72,6 +72,14 @@
+ 	other=((axis+1)%3,(axis+2)%3)
+ 	return (ext[1][other[0]]-ext[0][other[0]])*(ext[1][other[1]]-ext[0][other[1]])
+ 
++def fractionalBox(fraction=1.,minMax=None):
++	&quot;&quot;&quot;retrurn (min,max) that is the original minMax box (or aabb of the whole simulation if not specified)
++	linearly scaled around its center to the fraction factor&quot;&quot;&quot;
++	if not minMax: minMax=aabbExtrema()
++	half=[.5*(minMax[1][i]-minMax[0][i]) for i in [0,1,2]]
++	return (tuple([minMax[0][i]+(1-fraction)*half[i] for i in [0,1,2]]),tuple([minMax[1][i]-(1-fraction)*half[i] for i in [0,1,2]]))
++
++
+ def randomizeColors(onShapes=True,onMolds=False,onlyDynamic=False):
+ 	&quot;&quot;&quot;Assign random colors to shape's (GeometricalModel) and/or mold's (InteractingGeometry) diffuseColor.
+ 	
+
+Modified: trunk/pkg/common/DataClass/InteractionPhysics/NormalShearInteractions.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/InteractionPhysics/NormalShearInteractions.hpp	2008-09-08 08:56:42 UTC (rev 1512)
++++ trunk/pkg/common/DataClass/InteractionPhysics/NormalShearInteractions.hpp	2008-09-09 10:07:09 UTC (rev 1513)
+@@ -28,7 +28,7 @@
+ 	public:
+ 		//! shear stiffness
+ 		Real ks;
+-		NormalShearInteraction(){createIndex(); }
++		NormalShearInteraction(){ createIndex(); }
+ 		virtual ~NormalShearInteraction(){};
+ 	protected:
+ 		virtual void registerAttributes(){	
+
+Modified: trunk/pkg/common/DataClass/PhysicalAction/Force.cpp
+===================================================================
+--- trunk/pkg/common/DataClass/PhysicalAction/Force.cpp	2008-09-08 08:56:42 UTC (rev 1512)
++++ trunk/pkg/common/DataClass/PhysicalAction/Force.cpp	2008-09-09 10:07:09 UTC (rev 1513)
+@@ -10,41 +10,12 @@
+ 
+ #include &quot;Force.hpp&quot;
+ 
++Force::Force() : PhysicalAction(){ createIndex(); }
+ 
+-Force::Force() : PhysicalAction()
+-{
+-	createIndex();
+-}
++Force::~Force(){}
+ 
+-Force::~Force()
+-{
+-}
++void Force::reset(){	force = Vector3r::ZERO; }
+ 
++shared_ptr&lt;PhysicalAction&gt; Force::clone(){ return shared_ptr&lt;Force&gt;(new Force(*this));}
+ 
+-/* FIXME - not used
+-void Force::add(const shared_ptr&lt;PhysicalAction&gt;&amp; a)
+-{
+-	Force * f = static_cast&lt;Force*&gt;(a.get());
+-	force += f-&gt;force;
+-}
+-
+-
+-void Force::sub(const shared_ptr&lt;PhysicalAction&gt;&amp; a)
+-{
+-	Force * f = static_cast&lt;Force*&gt;(a.get());
+-	force -= f-&gt;force;
+-}
+-*/
+-
+-void Force::reset()
+-{
+-	force = Vector3r::ZERO;
+-}
+-
+-
+-shared_ptr&lt;PhysicalAction&gt; Force::clone()
+-{
+-	return shared_ptr&lt;Force&gt;(new Force(*this));
+-}
+-
+ YADE_PLUGIN();
+
+Modified: trunk/pkg/common/DataClass/PhysicalAction/Force.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/PhysicalAction/Force.hpp	2008-09-08 08:56:42 UTC (rev 1512)
++++ trunk/pkg/common/DataClass/PhysicalAction/Force.hpp	2008-09-09 10:07:09 UTC (rev 1513)
+@@ -21,20 +21,14 @@
+ 		Force();
+ 		virtual ~Force();
+ 
+-/// Methods
+-//		virtual void add(const shared_ptr&lt;PhysicalAction&gt;&amp; a); // FIXME - not used
+-//		virtual void sub(const shared_ptr&lt;PhysicalAction&gt;&amp; a); // FIXME - not used
+-
+ 		virtual void reset();
+ 		virtual shared_ptr&lt;PhysicalAction&gt; clone();
+ 		
+-/// Serialization
+ 	REGISTER_CLASS_NAME(Force);
+ 	REGISTER_BASE_CLASS_NAME(PhysicalAction);
++	virtual void registerAttributes(){REGISTER_ATTRIBUTE(force);}
+ 
+-/// Indexable
+ 	REGISTER_CLASS_INDEX(Force,PhysicalAction);
+-	
+ };
+ 
+ REGISTER_SERIALIZABLE(Force,false);
+
+Modified: trunk/pkg/common/DataClass/PhysicalAction/Momentum.cpp
+===================================================================
+--- trunk/pkg/common/DataClass/PhysicalAction/Momentum.cpp	2008-09-08 08:56:42 UTC (rev 1512)
++++ trunk/pkg/common/DataClass/PhysicalAction/Momentum.cpp	2008-09-09 10:07:09 UTC (rev 1513)
+@@ -10,40 +10,12 @@
+ 
+ #include &quot;Momentum.hpp&quot;
+ 
++Momentum::Momentum() : PhysicalAction(){createIndex();}
+ 
+-Momentum::Momentum() : PhysicalAction()
+-{
+-	createIndex();
+-}
++Momentum::~Momentum(){}
+ 
+-Momentum::~Momentum()
+-{
+-}
++void Momentum::reset(){	momentum = Vector3r::ZERO; }
+ 
+-/* FIXME - not used
+-void Momentum::add(const shared_ptr&lt;PhysicalAction&gt;&amp; a)
+-{
+-	Momentum * m = static_cast&lt;Momentum*&gt;(a.get());
+-	momentum += m-&gt;momentum;
+-}
++shared_ptr&lt;PhysicalAction&gt; Momentum::clone(){return shared_ptr&lt;Momentum&gt;(new Momentum(*this));}
+ 
+-
+-void Momentum::sub(const shared_ptr&lt;PhysicalAction&gt;&amp; a)
+-{
+-	Momentum * m = static_cast&lt;Momentum*&gt;(a.get());
+-	momentum -= m-&gt;momentum;
+-}
+-*/
+-
+-void Momentum::reset()
+-{
+-	momentum = Vector3r::ZERO;
+-}
+-
+-
+-shared_ptr&lt;PhysicalAction&gt; Momentum::clone()
+-{
+-	return shared_ptr&lt;Momentum&gt;(new Momentum(*this));
+-}
+-
+ YADE_PLUGIN();
+
+Modified: trunk/pkg/common/DataClass/PhysicalAction/Momentum.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/PhysicalAction/Momentum.hpp	2008-09-08 08:56:42 UTC (rev 1512)
++++ trunk/pkg/common/DataClass/PhysicalAction/Momentum.hpp	2008-09-09 10:07:09 UTC (rev 1513)
+@@ -22,20 +22,15 @@
+ 		Momentum();
+ 		virtual ~Momentum();
+ 
+-//		virtual void add(const shared_ptr&lt;PhysicalAction&gt;&amp; a); // FIXME - not used
+-//		virtual void sub(const shared_ptr&lt;PhysicalAction&gt;&amp; a); // FIXME - not used
+-
+ 		virtual void reset();
+ 		virtual shared_ptr&lt;PhysicalAction&gt; clone();
+ 	
+-/// Serialization
+ 	REGISTER_CLASS_NAME(Momentum);
+ 	REGISTER_BASE_CLASS_NAME(PhysicalAction);
++	virtual void registerAttributes(){REGISTER_ATTRIBUTE(momentum);}
+ 	
+-/// Indexable
+ 	REGISTER_CLASS_INDEX(Momentum,PhysicalAction);
+ };
+-
+ REGISTER_SERIALIZABLE(Momentum,false);
+ 
+ #endif // MOMENTUM_HPP
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000350.html">[deprecated list] [Yade-dev] [svn] r1512 - trunk/gui/py
+</A></li>
+	<LI>Next message: <A HREF="000352.html">[deprecated list] [Yade-dev] new algorithm for facets
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#351">[ date ]</a>
+              <a href="thread.html#351">[ thread ]</a>
+              <a href="subject.html#351">[ subject ]</a>
+              <a href="author.html#351">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

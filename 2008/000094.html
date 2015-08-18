@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] Could I ask the method to calculate the shear forces?
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Could%20I%20ask%20the%20method%20to%20calculate%20the%20shear%20forces%3F&In-Reply-To=%3C47CEE421.8090701%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000092.html">
+   <LINK REL="Next"  HREF="000095.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] Could I ask the method to calculate the shear forces?</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Could%20I%20ask%20the%20method%20to%20calculate%20the%20shear%20forces%3F&In-Reply-To=%3C47CEE421.8090701%40hmg.inpg.fr%3E"
+       TITLE="[yade-dev] Could I ask the method to calculate the shear forces?">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Wed Mar  5 19:19:13 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000092.html">[yade-dev] Could I ask the method to calculate the shear forces?
+</A></li>
+        <LI>Next message: <A HREF="000095.html">[yade-dev] Could I ask the method to calculate the shear forces?
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#94">[ date ]</a>
+              <a href="thread.html#94">[ thread ]</a>
+              <a href="subject.html#94">[ subject ]</a>
+              <a href="author.html#94">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+
+
+kan a &#233;crit :
+&gt;<i> Hi, dear all,
+</I>&gt;<i>  
+</I>&gt;<i> When I develop my code to calculate the shear force I meet some problem.
+</I>&gt;<i> From the literature, we know that
+</I>&gt;<i> Deta_Shear Force = ks*deta_shear_displacement
+</I>&gt;<i> while the deta_shear_displacement is the deta displacement at the 
+</I>&gt;<i> shear direction at each contact.
+</I>&gt;<i> my problem now is that, how to calculate this displacement ?
+</I>&gt;<i>  
+</I>&gt;<i> I know for normal displacement at each contact, at each time step, 
+</I>&gt;<i> when we get the resultant displacement during this time step, then we 
+</I>&gt;<i> get the new position for each particle, so we can get the distance 
+</I>&gt;<i> between the center of the particles, which is the normal distance. so 
+</I>&gt;<i> we can get the normal displacement and use the 
+</I>&gt;<i> NormalForce=kn*normal_displacement.
+</I>Its a matter of vocabulary.
+I think you make a confusion between &quot;displacement&quot; and &quot;position&quot;. In 
+the normal direction, you get at each time-step the &quot;POSITION&quot; (i.e. 
+interpenetration), not the displacement.
+So that NormalForce=kn*interpenetration.
+
+&gt;<i>  
+</I>&gt;<i> but how can I calculate the deta shear displacement? it seems that I 
+</I>&gt;<i> need to store the old position of each particles, which means a 
+</I>&gt;<i> doubled storage of the memory and lower speed.
+</I>shear_displacement = (velocity1 - velocity2 + r1*rotational_velocity1 - 
+r2*rotational_velocity2)*dt
+
+This IS a displacement.
+
+So that shear_force = shear_force + shear_displacement*ks
+
+No need to store initial orientations.
+
+Check ElasticContactLaw.
+
+Bruno
+
+&gt;<i>  
+</I>&gt;<i> ------------------------------------------------------------------------
+</I>&gt;<i>
+</I>&gt;<i> _______________________________________________
+</I>&gt;<i> yade-dev mailing list
+</I>&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.berlios.de</A>
+</I>&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">https://lists.berlios.de/mailman/listinfo/yade-dev</A>
+</I>&gt;<i>   
+</I>
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Institut National Polytechnique de Grenoble
+Laboratoire 3S (Soils Solids Structures) - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000092.html">[yade-dev] Could I ask the method to calculate the shear forces?
+</A></li>
+	<LI>Next message: <A HREF="000095.html">[yade-dev] Could I ask the method to calculate the shear forces?
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#94">[ date ]</a>
+              <a href="thread.html#94">[ thread ]</a>
+              <a href="subject.html#94">[ subject ]</a>
+              <a href="author.html#94">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,254 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1874 - in trunk: py scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1874%20-%20in%20trunk%3A%20py%20scripts&In-Reply-To=%3C200907161659.n6GGxDmS026330%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001243.html">
+   <LINK REL="Next"  HREF="001245.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1874 - in trunk: py scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1874%20-%20in%20trunk%3A%20py%20scripts&In-Reply-To=%3C200907161659.n6GGxDmS026330%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1874 - in trunk: py scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Jul 16 18:59:13 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001243.html">[deprecated list] [Yade-dev] [svn] r1873 - trunk/py
+</A></li>
+        <LI>Next message: <A HREF="001245.html">[deprecated list] [Yade-dev] yade crash launching xml
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1244">[ date ]</a>
+              <a href="thread.html#1244">[ thread ]</a>
+              <a href="subject.html#1244">[ subject ]</a>
+              <a href="author.html#1244">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-16 18:59:11 +0200 (Thu, 16 Jul 2009)
+New Revision: 1874
+
+Modified:
+   trunk/py/plot.py
+   trunk/scripts/simple-scene-graph.py
+Log:
+1. Adapt simple-scene-graph.py to new instance syntax
+2. Add support to y2axis to saved gnuplot plots
+3. Change interface for yade.plot.addData to take **kw instead of straight dict (still backwards-compatible)
+
+
+Modified: trunk/py/plot.py
+===================================================================
+--- trunk/py/plot.py	2009-07-16 15:25:19 UTC (rev 1873)
++++ trunk/py/plot.py	2009-07-16 16:59:11 UTC (rev 1874)
+@@ -59,8 +59,9 @@
+ def reverseData():
+ 	for k in data: data[k].reverse()
+ 
+-def addData(d):
+-	&quot;&quot;&quot;Add data from argument {'name':value,...} to yade.plot.data.
++def addData(*d_in,**kw):
++	&quot;&quot;&quot;Add data from arguments name1=value1,name2=value2 to yade.plot.data.
++	(the old {'name1':value1,'name2':value2} is deprecated, but still supported)
+ 
+ 	New data will be left-padded with nan's, unspecified data will be nan.
+ 	This way, equal length of all data is assured so that they can be plotted one against any other.
+@@ -71,6 +72,8 @@
+ 	else: numSamples=0
+ 	reduceData(numSamples)
+ 	nan=float('nan')
++	d=(d_in[0] if len(d_in)&gt;0 else {})
++	d.update(**kw)
+ 	for name in d:
+ 		if not name in data.keys():
+ 			data[name]=[nan for i in range(numSamples)] #numpy.array([nan for i in range(numSamples)])
+@@ -105,9 +108,13 @@
+ 		pylab.legend([_p[0] for _p in plots_p_y1],loc=('upper left' if len(plots_p_y2)&gt;0 else 'best'))
+ 		pylab.ylabel(','.join([_p[0] for _p in plots_p_y1]))
+ 		if len(plots_p_y2)&gt;0:
++			# try to move in the color palette a little further (magenta is 5th): r,g,b,c,m,y,k
++			origLinesColor=pylab.rcParams['lines.color']; pylab.rcParams['lines.color']='m'
++			# create the y2 axis
+ 			pylab.twinx()
+ 			plotLines[p]+=[pylab.plot(*sum([[data[p],data[d[0]],d[1]] for d in plots_p_y2],[]))]
+ 			pylab.legend([_p[0] for _p in plots_p_y2],loc='upper right')
++			pylab.rcParams['lines.color']=origLinesColor
+ 			pylab.ylabel(','.join([_p[0] for _p in plots_p_y2]))
+ 		pylab.xlabel(p)
+ 		if 'title' in O.tags.keys(): pylab.title(O.tags['title'])
+@@ -166,14 +173,27 @@
+ 	i=0
+ 	for p in plots:
+ 		# print p
+-		plots_p=[fillNonSequence(o) for o in plots[p]]
++		plots_p=[addPointTypeSpecifier(o) for o in tuplifyYAxis(plots[p])]
+ 		if term in ['wxt','x11']: fPlot.write(&quot;set term %s %d persist\n&quot;%(term,i))
+ 		else: fPlot.write(&quot;set term %s; set output '%s.%d.%s'\n&quot;%(term,baseNameNoPath,i,extension))
+ 		fPlot.write(&quot;set xlabel '%s'\n&quot;%p)
+ 		fPlot.write(&quot;set grid\n&quot;)
+ 		fPlot.write(&quot;set datafile missing 'nan'\n&quot;)
+ 		if title: fPlot.write(&quot;set title '%s'\n&quot;%title)
+-		fPlot.write(&quot;plot &quot;+&quot;,&quot;.join([&quot; %s using %d:%d title '%s(%s)' with lines&quot;%(dataFile,vars.index(p)+1,vars.index(pp[0])+1,pp[0],p) for pp in plots_p])+&quot;\n&quot;)
++		y1=True; plots_y1,plots_y2=[],[]
++		for d in plots_p:
++			if d[0]=='|||':
++				y1=False; continue
++			if y1: plots_y1.append(d)
++			else: plots_y2.append(d)
++		fPlot.write(&quot;set ylabel '%s'\n&quot;%(','.join([_p[0] for _p in plots_y1]))) 
++		if len(plots_y2)&gt;0:
++			fPlot.write(&quot;set y2label '%s'\n&quot;%(','.join([_p[0] for _p in plots_y2])))
++			fPlot.write(&quot;set y2tics\n&quot;)
++		ppp=[]
++		for pp in plots_y1: ppp.append(&quot; %s using %d:%d title '&#8592; %s(%s)' with lines&quot;%(dataFile,vars.index(p)+1,vars.index(pp[0])+1,pp[0],p,))
++		for pp in plots_y2: ppp.append(&quot; %s using %d:%d title '%s(%s) &#8594;' with lines axes x1y2&quot;%(dataFile,vars.index(p)+1,vars.index(pp[0])+1,pp[0],p,))
++		fPlot.write(&quot;plot &quot;+&quot;,&quot;.join(ppp)+&quot;\n&quot;)
+ 		i+=1
+ 	fPlot.close()
+ 	return baseName+'.gnuplot'
+
+Modified: trunk/scripts/simple-scene-graph.py
+===================================================================
+--- trunk/scripts/simple-scene-graph.py	2009-07-16 15:25:19 UTC (rev 1873)
++++ trunk/scripts/simple-scene-graph.py	2009-07-16 16:59:11 UTC (rev 1874)
+@@ -1,35 +1,20 @@
+ #!/usr/local/bin/yade-trunk -x
+ # -*- encoding=utf-8 -*-
+ 
+-o=Omega()
+-o.initializers=[
++O.initializers=[
+ 	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
+ 	]
+-o.engines=[
+-	StandAloneEngine('PhysicalActionContainerReseter'),
+-	MetaEngine('BoundingVolumeMetaEngine',[
+-		EngineUnit('InteractingSphere2AABB'),
+-		EngineUnit('InteractingBox2AABB'),
+-		EngineUnit('MetaInteractingGeometry2AABB')
+-	]),
+-	StandAloneEngine('PersistentSAPCollider'),
+-	MetaEngine('InteractionGeometryMetaEngine',[
+-		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
+-		EngineUnit('InteractingBox2InteractingSphere4SpheresContactGeometry')
+-	]),
+-	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+-	StandAloneEngine('ElasticContactLaw'),
+-	DeusExMachina('GravityEngine',{'gravity':[0,0,-9.81]}),
+-	MetaEngine('PhysicalActionDamper',[
+-		EngineUnit('CundallNonViscousForceDamping',{'damping':0.2}),
+-		EngineUnit('CundallNonViscousMomentumDamping',{'damping':0.2})
+-	]),
+-	MetaEngine('PhysicalActionApplier',[
+-		EngineUnit('NewtonsForceLaw'),
+-		EngineUnit('NewtonsMomentumLaw'),
+-	]),
+-	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogPositionIntegrator')]),
+-	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogOrientationIntegrator')]),
++O.engines=[
++	BexResetter(),
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingBox2AABB(),MetaInteractingGeometry2AABB()]),
++	InsertionSortCollider(),
++	InteractionDispatchers(
++		[InteractingSphere2InteractingSphere4SpheresContactGeometry(),InteractingBox2InteractingSphere4SpheresContactGeometry()],
++		[SimpleElasticRelationships()],
++		[ef2_Spheres_Elastic_ElasticLaw()]
++	),
++	GravityEngine(gravity=(0,0,-9.81)),
++	NewtonsDampedLaw(damping=.2),
+ 	###
+ 	### NOTE&#160;this extra engine:
+ 	###
+@@ -40,12 +25,12 @@
+ 	### 
+ 	### The engine _must_ be labeled 'plotDataCollector', so that the reducer may find it and adjust its periods if necessary.
+ 	###
+-	StandAloneEngine('PeriodicPythonRunner',{'realPeriod':1,'realLim':10,'iterPeriod':1000,'iterLim':10000,'command':'myAddPlotData()','label':'plotDataCollector'})
++	PeriodicPythonRunner(iterPeriod=200,command='myAddPlotData()',label='plotDataCollector')
+ ]
+ from yade import utils
+-o.bodies.append(utils.box(center=[0,0,0],extents=[.5,.5,.5],dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=2400))
+-o.bodies.append(utils.sphere([0,0,2],1,color=[0,1,0],young=30e9,poisson=.3,density=2400))
+-o.dt=.2*utils.PWaveTimeStep()
++O.bodies.append(utils.box(center=[0,0,0],extents=[.5,.5,.5],dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=2400))
++O.bodies.append(utils.sphere([0,0,2],1,color=[0,1,0],young=30e9,poisson=.3,density=2400))
++O.dt=.2*utils.PWaveTimeStep()
+ 
+ 
+ ############################################
+@@ -56,22 +41,18 @@
+ import yade.plot
+ ## we will have 2 plots:
+ ## 1. t as function of i (joke test function)
+-## 2. z_sph and v_sph (rendered as green triangles, 'g^') as function of t
+-yade.plot.plots={'i':('t'),'t':('z_sph','|||',('v_sph','go-'))}
++## 2. i as function of t on left y-axis ('|||' makes the separation) and z_sph, v_sph (as green circles connected with line) and z_sph_half again as function of t
++yade.plot.plots={'i':('t'),'t':('z_sph','|||',('v_sph','go-'),'z_sph_half')}
+ 
+-## static var to specify max number of samples we want to have (1000 is default, no change)
+-# yade.plot.maxDataLen=1000
+-## this function will be called by PlotDataGetter
++## this function is called by plotDataCollector
+ ## it should add data with the labels that we will plot
+ ## if a datum is not specified (but exists), it will be NaN and will not be plotted
+ def myAddPlotData():
+ 	## store some numbers under some labels
+-	sph=o.bodies[1]
+-	yade.plot.addData({'t':o.time,'i':o.iter,'z_sph':sph.phys['se3'][2],'v_sph':sqrt(sum([v**2 for v in sph.phys['velocity']]))})
++	sph=O.bodies[1]
++	yade.plot.addData(t=O.time,i=O.iter,z_sph=sph.phys.pos[2],z_sph_half=.5*sph.phys.pos[2],v_sph=sqrt(sum([v**2 for v in sph.phys['velocity']])))
+ 
+-
+-
+-o.run(int(2./o.dt));
++O.run(int(2./O.dt),True);
+ print &quot;&quot;&quot;Now, you can say
+ 
+  yade.plot.plot()
+@@ -79,4 +60,4 @@
+ to see figures.
+ &quot;&quot;&quot;
+ import yade.plot as yp
+-yp.plot()
++yp.saveGnuplot('/tmp/a')
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001243.html">[deprecated list] [Yade-dev] [svn] r1873 - trunk/py
+</A></li>
+	<LI>Next message: <A HREF="001245.html">[deprecated list] [Yade-dev] yade crash launching xml
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1244">[ date ]</a>
+              <a href="thread.html#1244">[ thread ]</a>
+              <a href="subject.html#1244">[ subject ]</a>
+              <a href="author.html#1244">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

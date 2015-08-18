@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] yade crash launching xml
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20yade%20crash%20launching%20xml&In-Reply-To=%3C1247674039.24977.41.camel%40flux%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001213.html">
+   <LINK REL="Next"  HREF="001216.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] yade crash launching xml</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20yade%20crash%20launching%20xml&In-Reply-To=%3C1247674039.24977.41.camel%40flux%3E"
+       TITLE="[deprecated list] [Yade-dev] yade crash launching xml">eudoxos at arcig.cz
+       </A><BR>
+    <I>Wed Jul 15 18:07:19 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001213.html">[deprecated list] [Yade-dev] Re :  yade crash launching xml
+</A></li>
+        <LI>Next message: <A HREF="001216.html">[deprecated list] [Yade-dev] [svn] r1868 - in trunk:	core	pkg/common/Engine/StandAloneEngine pkg/dem/PreProcessor	py	scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1215">[ date ]</a>
+              <a href="thread.html#1215">[ thread ]</a>
+              <a href="subject.html#1215">[ subject ]</a>
+              <a href="author.html#1215">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>&gt;<i> yade-trunk: /usr/include/boost/shared_ptr.hpp :315 : T*
+</I>&gt;<i> boost::shared_ptr&lt;T&gt;::operator-&gt;() const [with T = Engine]:  L'assertion
+</I>&gt;<i> &#171; px != 0 &#187; a &#233;chou&#233;.
+</I>[...]
+&gt;<i> #6  &lt;signal handler called&gt;
+</I>[...]
+&gt;<i> #10 0xb711410e in __assert_fail () from /lib/tls/i686/cmov/libc.so.6
+</I>&gt;<i> #11 0x081737b4 in boost::shared_ptr&lt;Engine&gt;::operator-&gt; (this=0x8a56650)
+</I>&gt;<i> at /usr/include/boost/shared_ptr.hpp:315
+</I>&gt;<i> #12 0x081a430e in Omega::containTimeStepper (this=0x825f350) at
+</I>&gt;<i> core/Omega.cpp:291
+</I>&gt;<i> #13 0xb1a7cee2 in SimulationController::doUpdate (this=0x8398be0) at
+</I>&gt;<i> gui/qt3/SimulationController.cpp:504
+</I>
+Oh, obviously SimulationController (#13) is trying to find out if we are
+using time stepper (asks Omega, #12), but dereference zero (assertion
+&quot;px!=0&quot;) shared_ptr (#11, called at Omega.cpp:291). Apparently, since
+the other thread is just reading the .xml file, the engine is not
+constructed yet, just the empty vector of (empty) shared_ptr&lt;Engine&gt;. I
+added a check for that in Omega. Will be in the next commit in a few
+moments, try it out.
+
+Thanks for spotting that. Yade should never crash when you do normal
+things.
+
+As workaround, do not open the controller until the .xml file will have
+been fully loaded.
+
+I filed <A HREF="https://bugs.launchpad.net/yade/+bug/399810,">https://bugs.launchpad.net/yade/+bug/399810,</A> please close it if
+it no longer happens.
+
+Best, Vaclav
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001213.html">[deprecated list] [Yade-dev] Re :  yade crash launching xml
+</A></li>
+	<LI>Next message: <A HREF="001216.html">[deprecated list] [Yade-dev] [svn] r1868 - in trunk:	core	pkg/common/Engine/StandAloneEngine pkg/dem/PreProcessor	py	scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1215">[ date ]</a>
+              <a href="thread.html#1215">[ thread ]</a>
+              <a href="subject.html#1215">[ subject ]</a>
+              <a href="author.html#1215">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

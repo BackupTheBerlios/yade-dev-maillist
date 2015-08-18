@@ -1,0 +1,181 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] The meaning of &quot;isDynamic&quot;
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20The%20meaning%20of%20%22isDynamic%22&In-Reply-To=%3C49B69048.5000501%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000847.html">
+   <LINK REL="Next"  HREF="000838.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] The meaning of &quot;isDynamic&quot;</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20The%20meaning%20of%20%22isDynamic%22&In-Reply-To=%3C49B69048.5000501%40hmg.inpg.fr%3E"
+       TITLE="[deprecated list] [Yade-dev] The meaning of &quot;isDynamic&quot;">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Tue Mar 10 17:07:36 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000847.html">[deprecated list] [Yade-dev] installation YADE on openSUSE 11.1
+</A></li>
+        <LI>Next message: <A HREF="000838.html">[deprecated list] [Yade-dev] The meaning of &quot;isDynamic&quot;
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#834">[ date ]</a>
+              <a href="thread.html#834">[ thread ]</a>
+              <a href="subject.html#834">[ subject ]</a>
+              <a href="author.html#834">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Hello
+
+I'd like to discuss the meaning of isDynamic and how it modifies the 
+behaviour of a body on one timestep (especialy with Va&#231;lav and Sega. I 
+also changed my mind concerning shearForce vs. shearDisp updating - see 
+the end of this message).
+There are currently some inconsistencies, some due to the fact I 
+sometimes used isDynamic to test if a body was actually a box or a 
+sphere, then others used it to test if a kinematicEngine was assigned to 
+the body, etc.
+
+I explain here the isDynamic logic as I would like it.
+
+isDynamic means : acceleration = force/mass.
+!isDynamic means : acceleration is something else, or even it is left 
+undefined.
+
+However, !isDynamic doesn't mean that a body has no velocity. This 
+velocity can be constantly zero, or constantly something, or constantly 
+changing based on a kinematic engine.
+
+Variables like shear diplacements should be computed exactly the same 
+way, based on motion, whatever the dynamic status. It is the 
+responsability of the user to define correct velocities/positions if 
+needed for non-dynamic bodies (in the simplest case vel=0, there is 
+nothing special to do).
+
+The advantage of this approach is that the we don't need to develop 
+different code for dynamic and non-dynamic spheres.
+
+This simple thing should be possible :
+- Set a sphere !isDynamic (or block some DOF's)
+- Assign it a velocity and a rotationalVelocity (or assign components 
+corresponding to the fixed DOF's)
+- Run
+- The sphere move at constant velocity (or with one component constant), 
+and interact with other bodies the usual way, with no extra engine.
+
+It is currently not possible for at least two reasons. One reason can be 
+seen in updateShearForce :
+
+if (isDynamic1) summaryAngularVelocity += rbp1-&gt;angularVelocity;
+if (isDynamic2) summaryAngularVelocity += rbp2-&gt;angularVelocity;
+angle = dt*0.5*normal.Dot(summaryAngularVelocity);
+
+So, the motion of non-dynamic spheres will be ignored : not good. I 
+would disregard isDyn1/isDyn2 in this part of the code. I would also 
+disregard it here (svn blame-&gt;Sega) :
+
+Vector3r _c1x_    = (isDynamic1) ? 
+currentContactGeometry-&gt;radius1*currentContactGeometry-&gt;normal : x - 
+de1-&gt;zeroPoint;
+Vector3r _c2x_    = (isDynamic2) ? 
+-currentContactGeometry-&gt;radius2*currentContactGeometry-&gt;normal : x - 
+de2-&gt;zeroPoint;
+
+And I would always set : Vector3r _c1x_    = 
+currentContactGeometry-&gt;radius1*currentContactGeometry-&gt;normal.
+
+ From my point of view, the elastic law is broken for rotating spheres 
+now, since I will never set zeroPoint for non-dynamic spheres.
+This code I suggest will not work for non-spherical rotating bodies, but 
+this class is for sphere/sphere contacts, so...
+
+The second reason : Newtons law is skipping bodies as soon as !isDynamic 
+currently. It should pass the acceleration part of the code only.
+
+Conclusion : I would remove the parameters ks, isDynamic1, isDynamic2 
+from the function :
+
+updateShearForce(Vector3r&amp; shearForce, Real ks, const Vector3r&amp; 
+prevNormal, const RigidBodyParameters* rbp1, const RigidBodyParameters* 
+rbp2, bool isDynamic1, bool isDynamic2, Real dt, bool 
+avoidGranularRatcheting)
+
+Updating the shear force (instead of shear disp.) is correct, I changed 
+my mind while typing this mail. We need to rotate the current force, not 
+only compute the new displacement. The multiplication by ks can still be 
+moved out of the update function.
+
+I could modify the Newtons law quickly if everybody agree that the 
+position of a !dynamic body can be time-integrated the usual way based 
+on velocities.
+However, I suspect there would be a problem with kinematic engines, 
+because Newtons law and engines would both set the positions.
+There could be different flags for acceleration and velocity (isDynamic 
+:<i> acceleration time-integration gives vel / isKinematic : velocity 
+</I>time-integration gives position), but I don't like new flags...
+Kinematic engines could perhaps just erase the result of Newton 
+integration and set its own independent values if it is put after time 
+integration in the loop? Any toher idea?
+
+Side note : another question about zeroPoint is a bit the same as the 
+previous one about interaction data, do we really need this for all 
+bodies in all simulations?
+
+Bruno
+
+
+
+
+
+
+
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Grenoble INP
+Laboratoire 3SR - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000847.html">[deprecated list] [Yade-dev] installation YADE on openSUSE 11.1
+</A></li>
+	<LI>Next message: <A HREF="000838.html">[deprecated list] [Yade-dev] The meaning of &quot;isDynamic&quot;
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#834">[ date ]</a>
+              <a href="thread.html#834">[ thread ]</a>
+              <a href="subject.html#834">[ subject ]</a>
+              <a href="author.html#834">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

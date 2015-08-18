@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] QGL cutting plane
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20QGL%20cutting%20plane&In-Reply-To=%3C47F3B115.1090200%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000142.html">
+   <LINK REL="Next"  HREF="000144.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] QGL cutting plane</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20QGL%20cutting%20plane&In-Reply-To=%3C47F3B115.1090200%40hmg.inpg.fr%3E"
+       TITLE="[yade-dev] QGL cutting plane">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Wed Apr  2 18:15:17 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000142.html">[yade-dev] [Yade-commits] r1290 - in trunk: core extra extra/usct gui/cmd gui/qt3 pkg/common/Engine/EngineUnit	pkg/common/Engine/MetaEngine pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000144.html">[yade-dev] QGL cutting plane
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#143">[ date ]</a>
+              <a href="thread.html#143">[ thread ]</a>
+              <a href="subject.html#143">[ subject ]</a>
+              <a href="author.html#143">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Hello
+
+I found a fast, dirty, and lazy way of implementing a cutting plane in 
+the QGL view.
+
+Line 215 of camera.cpp :
+
+ const float cuttingDistance = 0.5;// 0 = see the full view, 1=see 
+nothing, 0.5=cut half of the volume
+  float z = distanceToSceneCenter() - 
+zClippingCoefficient()*sceneRadius()*(1.f-2*cuttingDistance);
+
+Now, as I would need days to create new widgets alone, could somebody 
+link this &quot;cuttingDistance&quot; float to a nice button in the QtGUI?
+
+Perhaps a setCuttingDistance function could be created and Python-binded 
+too?
+
+Bruno
+
+
+ 
+
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Institut National Polytechnique de Grenoble
+Laboratoire 3S (Soils Solids Structures) - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000142.html">[yade-dev] [Yade-commits] r1290 - in trunk: core extra extra/usct gui/cmd gui/qt3 pkg/common/Engine/EngineUnit	pkg/common/Engine/MetaEngine pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000144.html">[yade-dev] QGL cutting plane
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#143">[ date ]</a>
+              <a href="thread.html#143">[ thread ]</a>
+              <a href="subject.html#143">[ subject ]</a>
+              <a href="author.html#143">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

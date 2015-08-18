@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] contact login yet again
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20contact%20login%20yet%20again&In-Reply-To=%3C1243326051.9846.34.camel%40flux%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000981.html">
+   <LINK REL="Next"  HREF="001052.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] contact login yet again</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20contact%20login%20yet%20again&In-Reply-To=%3C1243326051.9846.34.camel%40flux%3E"
+       TITLE="[deprecated list] [Yade-dev] contact login yet again">eudoxos at arcig.cz
+       </A><BR>
+    <I>Tue May 26 10:20:51 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000981.html">[deprecated list] [Yade-dev] [svn] r1781 - in trunk:	core/containers	pkg/common/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="001052.html">[deprecated list] [Yade-dev] contact login yet again
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#982">[ date ]</a>
+              <a href="thread.html#982">[ thread ]</a>
+              <a href="subject.html#982">[ subject ]</a>
+              <a href="author.html#982">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>In last few months I had suspicious problems of bodies that obviously
+didn't interact even when physically overlapping (one going through
+another). As a result of me writing from scratch InsertionSortCollider,
+thinking that PersistentSAPCollider might be wrongly detecting contacts,
+I have the following conclusions for interactions:
+
+1. Some colliders (jsut 2: InsertionSort and PersistentSAP, which uses
+the same algo but is slower ;-) ) only see interactions when either the
+AABB's didn't overlap in last step and now do, or the other way
+(inversion in the ordering, using the computing terminology).
+
+2. For non-cohesive interactions (those that should exist only if there
+is overlap of bodies, therefore of AABBs), we used to delete interaction
+by saying I-&gt;isReal=false. That returns the interaction back to
+potential state, as the collider will set I-&gt;isNew=true. If there is
+again real overlap, the InterGeom and InterPhys functors will create the
+interaction again. If there is no overlap, the collider will delete the
+interaction for good at the point the AABBs don't overlap anymore.
+
+3. For cohesive (that is, possibly distant) interactions, this doesn't
+work anymore. Suppose a constitutive law wants to delete an interaction
+when normal elongation of the contact exceeds some positive value (think
+tensile damage). If you use I-&gt;isReal=false, then the interaction falls
+to the potential state. Now: if the AABBs don't overlap at this point
+anymore, the interaction will be in the potential state possibly
+forever, since the collider will never see such interaction again, as
+the AABBs have already separated _before_ the contact was marked
+isReal=false. This slows down the computation by keeping useless
+interactions around. (PersistentSAPCollider has an extra loop over
+interactions, that detects such cases; but it slows down).
+
+4. If I set I-&gt;isReal=false, it doens't follow that the collider will
+also set I-&gt;isNew=true, as it will not see the interaction unless AABBs
+enter/quit the overlap. I-&gt;isNew is NOT always equal to
+(bool)I-&gt;interactionPhysics or (bool)I-&gt;interactionGeometry: a once
+existing interaction, after setting I-&gt;isReal=false, will still have
+I-&gt;isNew=false. If geometry/physics functor sees such interaction, it
+will only UPDATE (not create a new) geometry and physics for the
+interactions, i.e. using values of internal variables from the
+interaction before!
+
+The solution I created is to hint the collider that an interaction is
+not needed anymoer and let it decide whether to really erase it or what
+else to do. Instead of saying I-&gt;isReal=false, you call
+interactions-&gt;requestErase(id1,id2) and the collider will, at the next
+step, look at the pair; if there is still AABB overlap, the interaction
+is kept as potential; if there is no AABB overlap anymore, it will
+delete the interaction for good. Then the list of interactions to delete
+is cleared. (this solves point 3.)
+
+Moreover, interactions-&gt;requestErase will call Interaction::reset()
+which will make sure that interactionGeometry, interactionPhysics,
+isReal, isNew, ... are reset to the initial state of an interaction that
+was never real. (this solves point 4.)
+
+(At this point, I think we are ready to remove haveDistantTransient flag
+from the colldiers.)
+
+I will try to go through the code to erradicate all occurences of
+isReal=false and such. Maybe we better get rid of isNew as well, instead
+of having to keep it in sync with (bool)I-&gt;interactionPhysics and (bool)
+I-&gt;interactionGeometry all the time?
+
+Best regards, Vaclav
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000981.html">[deprecated list] [Yade-dev] [svn] r1781 - in trunk:	core/containers	pkg/common/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="001052.html">[deprecated list] [Yade-dev] contact login yet again
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#982">[ date ]</a>
+              <a href="thread.html#982">[ thread ]</a>
+              <a href="subject.html#982">[ subject ]</a>
+              <a href="author.html#982">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

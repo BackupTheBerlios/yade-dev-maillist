@@ -1,0 +1,1150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1813 - in trunk/pkg/dem: .	Engine/DeusExMachina	Engine/StandAloneEngine PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1813%20-%20in%20trunk/pkg/dem%3A%20.%0A%09Engine/DeusExMachina%09Engine/StandAloneEngine%20PreProcessor&In-Reply-To=%3C200906241704.n5OH4fTi003029%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001049.html">
+   <LINK REL="Next"  HREF="001050.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1813 - in trunk/pkg/dem: .	Engine/DeusExMachina	Engine/StandAloneEngine PreProcessor</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1813%20-%20in%20trunk/pkg/dem%3A%20.%0A%09Engine/DeusExMachina%09Engine/StandAloneEngine%20PreProcessor&In-Reply-To=%3C200906241704.n5OH4fTi003029%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1813 - in trunk/pkg/dem: .	Engine/DeusExMachina	Engine/StandAloneEngine PreProcessor">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Wed Jun 24 19:04:41 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001049.html">[deprecated list] [Yade-dev] Questions on contact logic and the new	&quot;requestErase&quot;	approach
+</A></li>
+        <LI>Next message: <A HREF="001050.html">[deprecated list] [Yade-dev] [Yade-users] YADE documentation
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1051">[ date ]</a>
+              <a href="thread.html#1051">[ thread ]</a>
+              <a href="subject.html#1051">[ subject ]</a>
+              <a href="author.html#1051">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2009-06-24 19:04:39 +0200 (Wed, 24 Jun 2009)
+New Revision: 1813
+
+Added:
+   trunk/pkg/dem/Engine/DeusExMachina/SampleCapillaryPressureEngine.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/SampleCapillaryPressureEngine.hpp
+Modified:
+   trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+   trunk/pkg/dem/SConscript
+Log:
+1. Update capillary files and add a new engine for them.
+2. Prepare for removing old useless classes (typically some variants of engines with &quot;water&quot; at the end)
+
+
+
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp	2009-06-24 16:28:58 UTC (rev 1812)
++++ trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp	2009-06-24 17:04:39 UTC (rev 1813)
+@@ -43,7 +43,10 @@
+ {
+ 	if(deserializing)
+ 	{
+-		ofile.open(outputFile.c_str());
++		//bool file_exists = std::ifstream (outputFile.c_str()); //if file does not exist, we will write colums titles
++		ofile.open(outputFile.c_str(), std::ios::app);
++		//if (!file_exists) ofile&lt;&lt;&quot;iteration s11 s22 s33 e11 e22 e33 unb_force porosity kineticE&quot; &lt;&lt; endl;
++		
+ 	}
+ }
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp	2009-06-24 16:28:58 UTC (rev 1812)
++++ trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp	2009-06-24 17:04:39 UTC (rev 1813)
+@@ -9,6 +9,7 @@
+ #include &quot;ContactStressRecorder.hpp&quot;
+ #include &lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+ #include &lt;yade/pkg-common/ParticleParameters.hpp&gt;
++//#include &lt;yade/pkg-common/Force.hpp&gt;
+ #include &lt;yade/pkg-common/Sphere.hpp&gt;
+ #include &lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+ #include &lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
+@@ -22,35 +23,34 @@
+ #include &lt;yade/core/MetaBody.hpp&gt;
+ #include &lt;boost/lexical_cast.hpp&gt;
+ 
+-CREATE_LOGGER(ContactStressRecorder);
++CREATE_LOGGER ( ContactStressRecorder );
+ 
+-ContactStressRecorder::ContactStressRecorder () : DataRecorder()
+-
++ContactStressRecorder::ContactStressRecorder () : DataRecorder()/*, actionForce ( new Force )*/
+ {
+ 	outputFile = &quot;&quot;;
+ 	interval = 1;
+-	
++
+ 	height = 0;
+ 	width = 0;
+ 	depth = 0;
+ 	thickness = 0;
+-	upperCorner = Vector3r(0,0,0);
+-	lowerCorner = Vector3r(0,0,0);
+-	
+-	sphere_ptr = shared_ptr&lt;GeometricalModel&gt; (new Sphere);
++	upperCorner = Vector3r ( 0,0,0 );
++	lowerCorner = Vector3r ( 0,0,0 );
++
++	sphere_ptr = shared_ptr&lt;GeometricalModel&gt; ( new Sphere );
+ 	SpheresClassIndex = sphere_ptr-&gt;getClassIndex();
+-	
++
+ 	//triaxCompEng = NULL;
+ 	//sampleCapPressEng = new SampleCapillaryPressureEngine;
+-	
++
+ }
+ 
+ 
+-void ContactStressRecorder::postProcessAttributes(bool deserializing)
++void ContactStressRecorder::postProcessAttributes ( bool deserializing )
+ {
+-	if(deserializing)
++	if ( deserializing )
+ 	{
+-		ofile.open(outputFile.c_str());
++		ofile.open ( outputFile.c_str() );
+ 	}
+ }
+ 
+@@ -58,36 +58,36 @@
+ void ContactStressRecorder::registerAttributes()
+ {
+ 	DataRecorder::registerAttributes();
+-	REGISTER_ATTRIBUTE(outputFile);
+-	REGISTER_ATTRIBUTE(interval);
+-	
+-	REGISTER_ATTRIBUTE(wall_bottom_id);
+- 	REGISTER_ATTRIBUTE(wall_top_id);
+- 	REGISTER_ATTRIBUTE(wall_left_id);
+- 	REGISTER_ATTRIBUTE(wall_right_id);
+- 	REGISTER_ATTRIBUTE(wall_front_id);
+- 	REGISTER_ATTRIBUTE(wall_back_id);
+- 	
+- 	REGISTER_ATTRIBUTE(height);
+-	REGISTER_ATTRIBUTE(width);
+-	REGISTER_ATTRIBUTE(depth);
+-	REGISTER_ATTRIBUTE(thickness);
+-	REGISTER_ATTRIBUTE(upperCorner);
+-	REGISTER_ATTRIBUTE(lowerCorner);
++	REGISTER_ATTRIBUTE ( outputFile );
++	REGISTER_ATTRIBUTE ( interval );
+ 
++	REGISTER_ATTRIBUTE ( wall_bottom_id );
++	REGISTER_ATTRIBUTE ( wall_top_id );
++	REGISTER_ATTRIBUTE ( wall_left_id );
++	REGISTER_ATTRIBUTE ( wall_right_id );
++	REGISTER_ATTRIBUTE ( wall_front_id );
++	REGISTER_ATTRIBUTE ( wall_back_id );
++
++	REGISTER_ATTRIBUTE ( height );
++	REGISTER_ATTRIBUTE ( width );
++	REGISTER_ATTRIBUTE ( depth );
++	REGISTER_ATTRIBUTE ( thickness );
++	REGISTER_ATTRIBUTE ( upperCorner );
++	REGISTER_ATTRIBUTE ( lowerCorner );
++
+ }
+ 
+ 
+ bool ContactStressRecorder::isActivated()
+ {
+-	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile));
++	return ( ( Omega::instance().getCurrentIteration() % interval == 0 ) &amp;&amp; ( ofile ) );
+ }
+ 
+ 
+-void ContactStressRecorder::action(MetaBody * ncb)
++void ContactStressRecorder::action ( MetaBody * ncb )
+ {
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-	
++
+ 	if ( !triaxCompEng )
+ 	{
+ 		vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator itFirst = ncb-&gt;engines.begin();
+@@ -103,259 +103,253 @@
+ 		}
+ 		if ( !triaxCompEng ) LOG_DEBUG ( &quot;stress controller engine NOT found&quot; );
+ 	}
+-		
++
+ 	Real f1_el_x=0, f1_el_y=0, f1_el_z=0, x1=0, y1=0, z1=0, x2=0, y2=0, z2=0;
+-	
+-	Real sig11_el=0, sig22_el=0, sig33_el=0, sig12_el=0, sig13_el=0,
+-	sig23_el=0;
++
++	Real sig11_el=0, sig22_el=0, sig33_el=0, sig12_el=0, sig13_el=0,  sig23_el=0;
+ 	//, Vwater = 0,
+ 	Real kinematicE = 0;
+-	
++
+ 	InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
+-        InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
+-        
+-        Real j = 0;
+-        Real FT[3][3] = {{0,0,0},{0,0,0},{0,0,0}};
+-        
+-        for(  ; ii!=iiEnd ; ++ii ) 
+-        {
+-                if ((*ii)-&gt;isReal())
+-                {	
+-                	const shared_ptr&lt;Interaction&gt;&amp; interaction = *ii;
+-                
+-                	unsigned int id1 = interaction -&gt; getId1();
++	InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
++
++	Real j = 0;
++	Real FT[3][3] = {{0,0,0},{0,0,0},{0,0,0}};
++
++	for ( ; ii!=iiEnd ; ++ii )
++	{
++		if ( ( *ii )-&gt;isReal() )
++		{
++			const shared_ptr&lt;Interaction&gt;&amp; interaction = *ii;
++
++			unsigned int id1 = interaction -&gt; getId1();
+ 			unsigned int id2 = interaction -&gt; getId2();
+-						
+-			SpheresContactGeometry* currentContactGeometry 	=
+-	static_cast&lt;SpheresContactGeometry*&gt;(interaction-&gt;interactionGeometry.
+-	get());
+-			
++
++			SpheresContactGeometry* currentContactGeometry  =
++				static_cast&lt;SpheresContactGeometry*&gt; ( interaction-&gt;interactionGeometry.get() );
++
+ 			ElasticContactInteraction* currentContactPhysics =
+-	static_cast&lt;ElasticContactInteraction*&gt;
+-	(interaction-&gt;interactionPhysics.get());
+-			
++				static_cast&lt;ElasticContactInteraction*&gt; ( interaction-&gt;interactionPhysics.get() );
++
+ 			Real fn = currentContactPhysics-&gt;normalForce.Length();
+ 
+-			if (fn!=0)
+-			
+-			//if (currentContactGeometry-&gt;penetrationDepth &gt;= 0)
+-			
+-			{
+-			j=j+1;
+-			
+-			Vector3r fel =
+-currentContactPhysics-&gt;normalForce + currentContactPhysics-&gt;shearForce;
+-			
+-			f1_el_x=fel[0];
+-			f1_el_y=fel[1];
+-			f1_el_z=fel[2];
+-			
+-			int geometryIndex1 =
+-		(*bodies)[id1]-&gt;geometricalModel-&gt;getClassIndex();
+-			int geometryIndex2 =
+-		(*bodies)[id2]-&gt;geometricalModel-&gt;getClassIndex();
+-			
+-  			if (geometryIndex1 == geometryIndex2)
+-			
+-			{ BodyMacroParameters* de1 =
+-static_cast&lt;BodyMacroParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
+-			x1 = de1-&gt;se3.position[0];
+-			y1 = de1-&gt;se3.position[1];
+-			z1 = de1-&gt;se3.position[2];
++			if ( fn!=0 )
+ 
++				//if (currentContactGeometry-&gt;penetrationDepth &gt;= 0)
+ 
+-			BodyMacroParameters* de2 =
+-static_cast&lt;BodyMacroParameters*&gt;((*bodies)[id2]-&gt;physicalParameters.get());
+-			x2 = de2-&gt;se3.position[0];
+-			y2 = de2-&gt;se3.position[1];
+-			z2 = de2-&gt;se3.position[2];
+-			
+-			///Calcul des contraintes elastiques spheres/spheres
+-			
+-			sig11_el = sig11_el + f1_el_x*(x2 - x1);
+-			sig22_el = sig22_el + f1_el_y*(y2 - y1);
+-			sig33_el = sig33_el + f1_el_z*(z2 - z1);
+-			sig12_el = sig12_el + f1_el_x*(y2 - y1);
+-			sig13_el = sig13_el + f1_el_x*(z2 - z1);
+-			sig23_el = sig23_el + f1_el_y*(z2 - z1);
+-			
+-			}
+-			
+-			else 
+-			
+ 			{
+-			Vector3r l = 
+-		std::min(currentContactGeometry-&gt;radius2,
+-		currentContactGeometry-&gt;radius1)	
+-			*currentContactGeometry-&gt;normal;
+-			
+-			/// Calcul des contraintes elastiques spheres/parois
+-			
+-			sig11_el = sig11_el + f1_el_x*l[0];
+-			sig22_el = sig22_el + f1_el_y*l[1];
+-			sig33_el = sig33_el + f1_el_z*l[2];
+-			sig12_el = sig12_el + f1_el_x*l[1];
+-			sig13_el = sig13_el + f1_el_x*l[2];
+-			sig23_el = sig23_el + f1_el_y*l[2];
+-			
+-			}
++				j=j+1;
+ 
+-			/// fabric tensor
++				Vector3r fel = currentContactPhysics-&gt;normalForce + currentContactPhysics-&gt;shearForce;
+ 
+-			Vector3r normal = currentContactGeometry-&gt;normal;
+-			
+-			for (int i=0; i&lt;3; ++i)
+-			{	
+-				for (int n=0; n&lt;3; ++n)
+-				{	
+-					//fabricTensor[i][n]
+-					FT[i][n]
+-					+= normal[i]*normal[n];
++				f1_el_x=fel[0];
++				f1_el_y=fel[1];
++				f1_el_z=fel[2];
++
++				int geometryIndex1 =
++					( *bodies ) [id1]-&gt;geometricalModel-&gt;getClassIndex();
++				int geometryIndex2 =
++					( *bodies ) [id2]-&gt;geometricalModel-&gt;getClassIndex();
++
++				if ( geometryIndex1 == geometryIndex2 )
++
++				{
++					BodyMacroParameters* de1 = static_cast&lt;BodyMacroParameters*&gt; ( ( *bodies ) [id1]-&gt;physicalParameters.get() );
++					x1 = de1-&gt;se3.position[0];
++					y1 = de1-&gt;se3.position[1];
++					z1 = de1-&gt;se3.position[2];
++
++
++					BodyMacroParameters* de2 = static_cast&lt;BodyMacroParameters*&gt; ( ( *bodies ) [id2]-&gt;physicalParameters.get() );
++					x2 = de2-&gt;se3.position[0];
++					y2 = de2-&gt;se3.position[1];
++					z2 = de2-&gt;se3.position[2];
++
++					///Calcul des contraintes elastiques spheres/spheres
++
++					sig11_el = sig11_el + f1_el_x* ( x2 - x1 );
++					sig22_el = sig22_el + f1_el_y* ( y2 - y1 );
++					sig33_el = sig33_el + f1_el_z* ( z2 - z1 );
++					sig12_el = sig12_el + f1_el_x* ( y2 - y1 );
++					sig13_el = sig13_el + f1_el_x* ( z2 - z1 );
++					sig23_el = sig23_el + f1_el_y* ( z2 - z1 );
++
+ 				}
++
++				else
++
++				{
++					Vector3r l = std::min ( currentContactGeometry-&gt;radius2, currentContactGeometry-&gt;radius1 ) *currentContactGeometry-&gt;normal;
++
++					/// Calcul des contraintes elastiques spheres/parois
++
++					sig11_el = sig11_el + f1_el_x*l[0];
++					sig22_el = sig22_el + f1_el_y*l[1];
++					sig33_el = sig33_el + f1_el_z*l[2];
++					sig12_el = sig12_el + f1_el_x*l[1];
++					sig13_el = sig13_el + f1_el_x*l[2];
++					sig23_el = sig23_el + f1_el_y*l[2];
++
++				}
++
++				/// fabric tensor
++
++				Vector3r normal = currentContactGeometry-&gt;normal;
++
++				for ( int i=0; i&lt;3; ++i )
++				{
++					for ( int n=0; n&lt;3; ++n )
++					{
++						//fabricTensor[i][n]
++						FT[i][n]
++						+= normal[i]*normal[n];
++					}
++				}
++
+ 			}
+-			
+-			}
+-                }
+-        }	
++		}
++	}
+ 
+ 	/// FabricTensor
+-	
++
+ 	//Real traceFT = (FT[0][0]+FT[1][1]+FT[2][2])/j;
+-	
++
+ 	/// calcul de l'energie cinetique:
+ 
+ 	Real nbElt = 0, SR = 0, Vs=0, Rbody=0, Rmin=1, Rmax=0;
+-	
++
+ 	BodyContainer::iterator bi = bodies-&gt;begin();
+ 	BodyContainer::iterator biEnd = bodies-&gt;end();
+-	
+-	for ( ; bi!=biEnd; ++bi) 
+-	
+-	{	
++
++	for ( ; bi!=biEnd; ++bi )
++
++	{
+ 		shared_ptr&lt;Body&gt; b = *bi;
+-		
++
+ 		int geometryIndex = b-&gt;geometricalModel-&gt;getClassIndex();
+-	
+-		if (geometryIndex == SpheresClassIndex)
++
++		if ( geometryIndex == SpheresClassIndex )
+ 		{
+ 			nbElt +=1;
+-			ParticleParameters* pp =
+-		static_cast&lt;ParticleParameters*&gt;(b-&gt;physicalParameters.get());
++			ParticleParameters* pp = static_cast&lt;ParticleParameters*&gt; ( b-&gt;physicalParameters.get() );
+ 			Vector3r v = pp-&gt;velocity;
+ 			kinematicE +=
+-			0.5*(pp-&gt;mass)*(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
+-			
+-			Sphere* sphere =
+-		static_cast&lt;Sphere*&gt;(b-&gt;geometricalModel.get());
++				0.5* ( pp-&gt;mass ) * ( v[0]*v[0]+v[1]*v[1]+v[2]*v[2] );
++
++			Sphere* sphere = static_cast&lt;Sphere*&gt; ( b-&gt;geometricalModel.get() );
+ 			Rbody = sphere-&gt;radius;
+-			if (Rbody&lt;Rmin) Rmin = Rbody;
+-			if (Rbody&gt;Rmax) Rmax = Rbody;
++			if ( Rbody&lt;Rmin ) Rmin = Rbody;
++			if ( Rbody&gt;Rmax ) Rmax = Rbody;
+ 			SR+=Rbody;
+-			
+-			Vs += 1.3333333*Mathr::PI*(Rbody*Rbody*Rbody);
+-			
++
++			Vs += 1.3333333*Mathr::PI* ( Rbody*Rbody*Rbody );
++
+ 		}
+ 	}
+ 
+ 	/// coordination number
+-	
++
+ 	Real coordN = 0;
+-	coordN = 2*(j/nbElt);	// ????????????????????????????????????????????
+-	
++	coordN = 2* ( j/nbElt ); // ????????????????????????????????????????????
++
+ 	/// Calcul des contraintes &quot;globales&quot;
+-	
++
+ 	Real SIG_11_el=0, SIG_22_el=0, SIG_33_el=0, SIG_12_el=0, SIG_13_el=0, SIG_23_el=0;
+-	
++
+ 	// volume de l'echantillon
+-	
+ 
+-// 	PhysicalParameters* p_bottom = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;physicalParameters.get());
+-// 	PhysicalParameters* p_top   =	 static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_top_id]-&gt;physicalParameters.get());
+-// 	PhysicalParameters* p_left 	= static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_left_id]-&gt;physicalParameters.get());
+-// 	PhysicalParameters* p_right = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_right_id]-&gt;physicalParameters.get());
+-// 	PhysicalParameters* p_front = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_front_id]-&gt;physicalParameters.get());
+-// 	PhysicalParameters* p_back 	= static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_back_id]-&gt;physicalParameters.get());
+-	
+-	
+-// 	height = p_top-&gt;se3.position.Y() - p_bottom-&gt;se3.position.Y() - thickness;
+-// 	width = p_right-&gt;se3.position.X() - p_left-&gt;se3.position.X() - thickness;
+-// 	depth = p_front-&gt;se3.position.Z() - p_back-&gt;se3.position.Z() - thickness;
+-	
++
++//  PhysicalParameters* p_bottom = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;physicalParameters.get());
++//  PhysicalParameters* p_top   =  static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_top_id]-&gt;physicalParameters.get());
++//  PhysicalParameters* p_left  = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_left_id]-&gt;physicalParameters.get());
++//  PhysicalParameters* p_right = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_right_id]-&gt;physicalParameters.get());
++//  PhysicalParameters* p_front = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_front_id]-&gt;physicalParameters.get());
++//  PhysicalParameters* p_back  = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_back_id]-&gt;physicalParameters.get());
++
++
++//  height = p_top-&gt;se3.position.Y() - p_bottom-&gt;se3.position.Y() - thickness;
++//  width = p_right-&gt;se3.position.X() - p_left-&gt;se3.position.X() - thickness;
++//  depth = p_front-&gt;se3.position.Z() - p_back-&gt;se3.position.Z() - thickness;
++
+ 	Real Rmoy = SR/nbElt;
+-	if (Omega::instance().getCurrentIteration() == 1)
+-	{cerr &lt;&lt; &quot;Rmoy = &quot;&lt;&lt; Rmoy &lt;&lt; &quot;  Rmin = &quot; &lt;&lt; Rmin &lt;&lt; &quot;  Rmax = &quot; &lt;&lt;
+-	Rmax &lt;&lt; endl;}
+-	
++	if ( Omega::instance().getCurrentIteration() == 1 )
++	{
++		cerr &lt;&lt; &quot;Rmoy = &quot;&lt;&lt; Rmoy &lt;&lt; &quot;  Rmin = &quot; &lt;&lt; Rmin &lt;&lt; &quot;  Rmax = &quot; &lt;&lt;
++		Rmax &lt;&lt; endl;
++	}
++
+ 	Real V = ( triaxCompEng-&gt;height ) * ( triaxCompEng-&gt;width ) * ( triaxCompEng-&gt;depth );
+-	
++
+ 	SIG_11_el = sig11_el/V;
+ 	SIG_22_el = sig22_el/V;
+ 	SIG_33_el = sig33_el/V;
+ 	SIG_12_el = sig12_el/V;
+ 	SIG_13_el = sig13_el/V;
+ 	SIG_23_el = sig23_el/V;
+-	
++
+ 	/// calcul des deformations
+-	
+-// 	Real EPS_11=0, EPS_22=0, EPS_33=0;
+-// 	
+-// 	Real width_0 = upperCorner[0]-lowerCorner[0], height_0 =
+-// 	upperCorner[1]-lowerCorner[1],
+-// 	depth_0 = upperCorner[2]-lowerCorner[2];
+-// 	
+-// //	EPS_11 = (width_0 - width)/width_0;
+-// 	EPS_11 = std::log(width_0) - std::log(width);
+-// //	EPS_22 = (height_0 - height)/height_0;
+-// 	EPS_22 = std::log(height_0) - std::log(height);
+-// //	EPS_33 = (depth_0 - depth)/depth_0;
+-// 	EPS_33 = std::log(depth_0) - std::log(depth);
+-	
+-	/// porosity 
+-	
++
++//  Real EPS_11=0, EPS_22=0, EPS_33=0;
++//
++//  Real width_0 = upperCorner[0]-lowerCorner[0], height_0 =
++//  upperCorner[1]-lowerCorner[1],
++//  depth_0 = upperCorner[2]-lowerCorner[2];
++//
++// // EPS_11 = (width_0 - width)/width_0;
++//  EPS_11 = std::log(width_0) - std::log(width);
++// // EPS_22 = (height_0 - height)/height_0;
++//  EPS_22 = std::log(height_0) - std::log(height);
++// // EPS_33 = (depth_0 - depth)/depth_0;
++//  EPS_33 = std::log(depth_0) - std::log(depth);
++
++	/// porosity
++
+ 	Real Vv = V - Vs;
+-	
++
+ 	Real n = Vv/V;
+-// 	Real e = Vv/Vs;
++//  Real e = Vv/Vs;
+ 
+-// 	mise a zero des deformations qd comp triaxiale commence
+-// 	if (triaxCompEng-&gt;compressionActivated) {  }
+-	
++//  mise a zero des deformations qd comp triaxiale commence
++//  if (triaxCompEng-&gt;compressionActivated) {  }
++
+ 	/// UnbalancedForce
+-	
+-	Real equilibriumForce = triaxCompEng-&gt;ComputeUnbalancedForce(ncb);
+-// 	Real equilibriumForce = sampleCapPressEng-&gt;ComputeUnbalancedForce(body);
+ 
+-	if (Omega::instance().getCurrentIteration() % 100 == 0)
+-	{cerr &lt;&lt; &quot;current Iteration &quot; &lt;&lt; Omega::instance().getCurrentIteration()
+-	&lt;&lt; endl;}
+-		
+-	ofile /*&lt;&lt; lexical_cast&lt;string&gt;(Omega::instance().getSimulationTime()) &lt;&lt; &quot; &quot;*/
+-		&lt;&lt; lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) &lt;&lt; &quot;  &quot; 
+-		&lt;&lt; lexical_cast&lt;string&gt;(kinematicE)&lt;&lt; &quot; &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(equilibriumForce)&lt;&lt;&quot; &quot;
+- 		&lt;&lt; lexical_cast&lt;string&gt;(n)&lt;&lt;&quot; &quot;
+-// 		&lt;&lt; lexical_cast&lt;string&gt;(e)&lt;&lt;&quot; &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(coordN)&lt;&lt;&quot;   &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(SIG_11_el) &lt;&lt; &quot; &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(SIG_22_el) &lt;&lt; &quot; &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(SIG_33_el) &lt;&lt; &quot; &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(SIG_12_el) &lt;&lt; &quot; &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(SIG_13_el)&lt;&lt; &quot; &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(SIG_23_el)&lt;&lt; &quot;   &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(triaxCompEng-&gt;strain[0]) &lt;&lt; &quot; &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(triaxCompEng-&gt;strain[1]) &lt;&lt; &quot; &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(triaxCompEng-&gt;strain[2]) &lt;&lt; &quot;   &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(FT[0][0]/j)&lt;&lt;&quot; &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(FT[0][1]/j)&lt;&lt;&quot; &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(FT[0][2]/j)&lt;&lt;&quot; &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(FT[1][0]/j)&lt;&lt;&quot; &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(FT[1][1]/j)&lt;&lt;&quot; &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(FT[1][2]/j)&lt;&lt;&quot; &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(FT[2][0]/j)&lt;&lt;&quot; &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(FT[2][1]/j)&lt;&lt;&quot; &quot;
+-		&lt;&lt; lexical_cast&lt;string&gt;(FT[2][2]/j)&lt;&lt;&quot; &quot;
++	Real equilibriumForce = triaxCompEng-&gt;ComputeUnbalancedForce ( ncb );
++//  Real equilibriumForce = sampleCapPressEng-&gt;ComputeUnbalancedForce(body);
++
++	if ( Omega::instance().getCurrentIteration() % 100 == 0 )
++	{
++		cerr &lt;&lt; &quot;current Iteration &quot; &lt;&lt; Omega::instance().getCurrentIteration()
+ 		&lt;&lt; endl;
+-	
++	}
++
++	ofile /*&lt;&lt; lexical_cast&lt;string&gt;(Omega::instance().getSimulationTime()) &lt;&lt; &quot; &quot;*/
++	&lt;&lt; lexical_cast&lt;string&gt; ( Omega::instance().getCurrentIteration() ) &lt;&lt; &quot;  &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( kinematicE ) &lt;&lt; &quot; &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( equilibriumForce ) &lt;&lt;&quot; &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( n ) &lt;&lt;&quot; &quot;
++//   &lt;&lt; lexical_cast&lt;string&gt;(e)&lt;&lt;&quot; &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( coordN ) &lt;&lt;&quot;   &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( SIG_11_el ) &lt;&lt; &quot; &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( SIG_22_el ) &lt;&lt; &quot; &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( SIG_33_el ) &lt;&lt; &quot; &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( SIG_12_el ) &lt;&lt; &quot; &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( SIG_13_el ) &lt;&lt; &quot; &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( SIG_23_el ) &lt;&lt; &quot;   &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( triaxCompEng-&gt;strain[0] ) &lt;&lt; &quot; &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( triaxCompEng-&gt;strain[1] ) &lt;&lt; &quot; &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( triaxCompEng-&gt;strain[2] ) &lt;&lt; &quot;   &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( FT[0][0]/j ) &lt;&lt;&quot; &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( FT[0][1]/j ) &lt;&lt;&quot; &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( FT[0][2]/j ) &lt;&lt;&quot; &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( FT[1][0]/j ) &lt;&lt;&quot; &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( FT[1][1]/j ) &lt;&lt;&quot; &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( FT[1][2]/j ) &lt;&lt;&quot; &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( FT[2][0]/j ) &lt;&lt;&quot; &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( FT[2][1]/j ) &lt;&lt;&quot; &quot;
++	&lt;&lt; lexical_cast&lt;string&gt; ( FT[2][2]/j ) &lt;&lt;&quot; &quot;
++	&lt;&lt; endl;
++
+ }
+ 
+ YADE_PLUGIN();
+
+Added: trunk/pkg/dem/Engine/DeusExMachina/SampleCapillaryPressureEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/SampleCapillaryPressureEngine.cpp	2009-06-24 16:28:58 UTC (rev 1812)
++++ trunk/pkg/dem/Engine/DeusExMachina/SampleCapillaryPressureEngine.cpp	2009-06-24 17:04:39 UTC (rev 1813)
+@@ -0,0 +1,152 @@
++/*************************************************************************
++*  Copyright (C) 2006 by Luc Scholtes                                    *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">luc.scholtes at hmg.inpg.fr</A>                                              *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;SampleCapillaryPressureEngine.hpp&quot;
++#include &lt;yade/pkg-dem/CapillaryCohesiveLaw.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/core/Omega.hpp&gt;
++//#include&lt;yade/pkg-common/Force.hpp&gt;
++#include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
++#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++#include &lt;boost/lexical_cast.hpp&gt;
++
++using namespace boost;
++using namespace std;
++
++SampleCapillaryPressureEngine::SampleCapillaryPressureEngine()
++{	
++	//cerr &lt;&lt; &quot;constructeur de SamplePressureEngine&quot; &lt;&lt; endl;
++	
++	capillaryCohesiveLaw = new CapillaryCohesiveLaw;
++	capillaryCohesiveLaw-&gt;CapillaryPressure= 0;
++	capillaryCohesiveLaw-&gt;sdecGroupMask = 2;
++	
++	StabilityCriterion=0.01;
++	SigmaPrecision = 0.001;
++	Phase1=false;
++	Phase1End = &quot;Phase1End&quot;;
++	Iteration = 0;
++	UnbalancedForce = 0.01;
++
++	pressureVariationActivated=false;
++	Pressure = 0;
++	PressureVariation = 1000;
++	fusionDetection = true;
++	binaryFusion = true;
++	
++	pressureIntervalRec = 10000;
++	
++	//cerr &lt;&lt; &quot;fin du constructeur de SamplePressureEngine&quot; &lt;&lt; endl;
++	
++}
++
++SampleCapillaryPressureEngine::~SampleCapillaryPressureEngine()
++{
++}
++
++void SampleCapillaryPressureEngine::registerAttributes()
++{
++	TriaxialStressController::registerAttributes();
++	REGISTER_ATTRIBUTE(PressureVariation);
++	REGISTER_ATTRIBUTE(Pressure);
++ 	REGISTER_ATTRIBUTE(UnbalancedForce);
++	REGISTER_ATTRIBUTE(StabilityCriterion);
++	REGISTER_ATTRIBUTE(SigmaPrecision);
++	REGISTER_ATTRIBUTE(pressureVariationActivated);
++	REGISTER_ATTRIBUTE(fusionDetection);
++	REGISTER_ATTRIBUTE(binaryFusion);
++	REGISTER_ATTRIBUTE(pressureIntervalRec);
++
++}
++
++void SampleCapillaryPressureEngine::updateParameters(MetaBody * ncb)
++{
++	//cerr &lt;&lt; &quot;updateParameters&quot; &lt;&lt; endl;
++// 	MetaBody * ncb = static_cast&lt;MetaBody*&gt;(body);
++
++	UnbalancedForce = ComputeUnbalancedForce(ncb);
++
++	if (Omega::instance().getCurrentIteration() % 100 == 0) cerr &lt;&lt; &quot;UnbalancedForce=&quot; &lt;&lt; UnbalancedForce &lt;&lt; endl;
++
++	if (!Phase1 &amp;&amp; UnbalancedForce&lt;=StabilityCriterion &amp;&amp; !pressureVariationActivated)
++	{	
++		internalCompaction = false;
++		Phase1 = true;
++	}
++	
++	if ( Phase1 &amp;&amp; UnbalancedForce&lt;=StabilityCriterion &amp;&amp; !pressureVariationActivated)
++	
++	{
++		Real S = meanStress; // revoir ici comment acceder &#224; computeStress(ncb);
++		//abs ( (meanStress-sigma_iso ) /sigma_iso ) &lt;0.005
++
++		cerr &lt;&lt; &quot;Smoy = &quot; &lt;&lt; meanStress &lt;&lt; endl;
++		if ((S &gt; (sigma_iso - (sigma_iso*SigmaPrecision))) &amp;&amp; (S &lt; (sigma_iso + (sigma_iso*SigmaPrecision))))
++		{
++			//Iteration = Omega::instance().getCurrentIteration();
++
++			// saving snapshot.xml
++			string fileName = &quot;../data/&quot; + Phase1End + &quot;_&quot; + 
++			lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) + &quot;.xml&quot;;
++			cerr &lt;&lt; &quot;saving snapshot: &quot; &lt;&lt; fileName &lt;&lt; &quot; ...&quot;;
++			Omega::instance().saveSimulation(fileName);
++			
++			//recordStructure(ncb, Omega::instance().getCurrentIteration());
++
++			pressureVariationActivated = true;
++		}
++	
++	}
++
++// 	if (pressureVariationActivated)
++// 	
++// 	{
++// 		autoCompressionActivation = true;
++// 	}
++
++	//cerr &lt;&lt; &quot;fin updateParameters&quot; &lt;&lt; endl;
++}
++	
++void SampleCapillaryPressureEngine::applyCondition(MetaBody * ncb)
++{	
++	//cerr &lt;&lt; &quot;applyConditionSampleCapillaryPressure&quot; &lt;&lt; endl;
++// 	MetaBody* ncb = static_cast&lt;MetaBody*&gt;(body);
++
++	updateParameters(ncb);
++	
++	TriaxialStressController::applyCondition(ncb);
++
++	//cerr &lt;&lt; &quot;1&quot; &lt;&lt; endl;
++
++		if (pressureVariationActivated)
++		
++		{
++			//if ((Omega::instance().getCurrentIteration()) % pressureIntervalRec == 0) recordStructure(ncb, Omega::instance().getCurrentIteration());
++
++			if (Omega::instance().getCurrentIteration() % 100 == 0) cerr &lt;&lt; &quot;pressure variation!!&quot; &lt;&lt; endl;
++		
++			if ((Pressure&gt;=0) &amp;&amp; (Pressure&lt;=1000000000)) Pressure += PressureVariation;
++			capillaryCohesiveLaw-&gt;CapillaryPressure = Pressure;
++
++ 			capillaryCohesiveLaw-&gt;fusionDetection = fusionDetection;
++			capillaryCohesiveLaw-&gt;binaryFusion = binaryFusion;
++		
++		}
++		
++		else { capillaryCohesiveLaw-&gt;CapillaryPressure = Pressure;
++		       capillaryCohesiveLaw-&gt;fusionDetection = fusionDetection;
++		       capillaryCohesiveLaw-&gt;binaryFusion = binaryFusion;}
++
++		if (Omega::instance().getCurrentIteration() % 100 == 0) cerr &lt;&lt; &quot;capillary pressure = &quot; &lt;&lt; Pressure &lt;&lt; endl;
++		
++		//cerr &lt;&lt; &quot;3&quot; &lt;&lt; endl;
++		capillaryCohesiveLaw-&gt;action(ncb);
++		//cerr &lt;&lt; &quot;4&quot; &lt;&lt; endl;	
++		
++		UnbalancedForce = ComputeUnbalancedForce(ncb);
++} 
+
+
+Property changes on: trunk/pkg/dem/Engine/DeusExMachina/SampleCapillaryPressureEngine.cpp
+___________________________________________________________________
+Name: svn:executable
+   + *
+
+Added: trunk/pkg/dem/Engine/DeusExMachina/SampleCapillaryPressureEngine.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/SampleCapillaryPressureEngine.hpp	2009-06-24 16:28:58 UTC (rev 1812)
++++ trunk/pkg/dem/Engine/DeusExMachina/SampleCapillaryPressureEngine.hpp	2009-06-24 17:04:39 UTC (rev 1813)
+@@ -0,0 +1,65 @@
++/*************************************************************************
++*  Copyright (C) 2006 by Luc Scholtes                                    *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">luc.scholtes at hmg.inpg.fr</A>                                              *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef SAMPLE_CAPILLARY_PRESSURE_ENGINE_HPP
++#define SAMPLE_CAPILLARY_PRESSURE_ENGINE_HPP
++
++#include&lt;yade/core/DeusExMachina.hpp&gt;
++#include &lt;Wm3Vector3.h&gt;
++#include&lt;yade/lib-base/yadeWm3.hpp&gt;
++#include &quot;TriaxialStressController.hpp&quot;
++#include &lt;string&gt;
++
++/*! \brief Isotropic compression + suction variation test */
++
++class CapillaryCohesiveLaw;
++class PhysicalAction;
++
++
++class SampleCapillaryPressureEngine : public TriaxialStressController
++{
++	private :
++		//shared_ptr&lt;PhysicalAction&gt; actionForce;
++	
++	public :
++		SampleCapillaryPressureEngine();
++		virtual ~SampleCapillaryPressureEngine();
++		
++		unsigned int	 interval, VariationInterval;
++		
++		//! Max ratio of resultant forces on mean contact force
++		Real UnbalancedForce;
++		//! Value of UnbalancedForce for which the system is considered
++		Real StabilityCriterion, SigmaPrecision;
++		//! is isotropicInternalCompactionFinished?
++		bool Phase1;
++		int Iteration, pressureIntervalRec;
++		std::string Phase1End;
++		//! pressure affectation
++		Real Pressure;
++		Real PressureVariation;
++		//! Is pressure variation currently activated?
++		bool pressureVariationActivated, fusionDetection, binaryFusion;
++			
++		//shared_ptr&lt;CapillaryCohesiveLaw&gt;  capillaryCohesiveLaw;
++		CapillaryCohesiveLaw* capillaryCohesiveLaw;
++			
++		virtual void applyCondition(MetaBody * ncb);
++		void updateParameters(MetaBody * ncb);
++		
++
++	protected :
++		virtual void registerAttributes();
++	REGISTER_CLASS_NAME(SampleCapillaryPressureEngine);
++	REGISTER_BASE_CLASS_NAME(TriaxialStressController);
++};
++
++REGISTER_SERIALIZABLE(SampleCapillaryPressureEngine);
++
++#endif //  SAMPLECAPILLARYPRESSUREENGINE_HPP
++
+
+
+Property changes on: trunk/pkg/dem/Engine/DeusExMachina/SampleCapillaryPressureEngine.hpp
+___________________________________________________________________
+Name: svn:executable
+   + *
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp	2009-06-24 16:28:58 UTC (rev 1812)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CapillaryCohesiveLaw.cpp	2009-06-24 17:04:39 UTC (rev 1813)
+@@ -9,6 +9,7 @@
+ //Modifs : Parameters renamed as MeniscusParameters
+ //id1/id2 class&#233;s pour que id1 soit toujours le plus petit grain, FIXME : angle de mouillage?
+ //FIXME : dans triaxialStressController, changer le test de nullit&#233; de la force dans updateStiffness
++//FIXME : needs &quot;requestErase&quot; somewhere
+ 
+ 
+ #include &quot;CapillaryCohesiveLaw.hpp&quot;
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2009-06-24 16:28:58 UTC (rev 1812)
++++ trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2009-06-24 17:04:39 UTC (rev 1813)
+@@ -18,7 +18,7 @@
+ #include&lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
+ #include &lt;yade/pkg-dem/CapillaryCohesiveLaw.hpp&gt;
+ // #include&lt;yade/pkg-dem/SimpleElasticRelationships.hpp&gt;
+-/////////////#include&lt;yade/pkg-dem/SimpleElasticRelationshipsWater.hpp&gt;
++#include&lt;yade/pkg-dem/SimpleElasticRelationshipsWater.hpp&gt;
+ #include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+ #include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
+ 
+@@ -44,6 +44,7 @@
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/MetaInteractingGeometry2AABB.hpp&gt;
+ #include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
++#include&lt;yade/pkg-common/InteractingSphere2AABB.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+@@ -57,6 +58,7 @@
+ #include&lt;yade/core/Body.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingBox.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++#include&lt;yade/pkg-dem/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/PhysicalActionContainerReseter.hpp&gt;
+ 
+@@ -503,9 +505,17 @@
+ void TriaxialTestWater::createActors(shared_ptr&lt;MetaBody&gt;&amp; rootBody)
+ {
+ 	
++	Real distanceFactor = 1.3;//Create potential interactions as soon as the distance is less than factor*(rad1+rad2) 
++	
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+-	interactionGeometryDispatcher-&gt;add(&quot;InteractingSphere2InteractingSphere4SpheresContactGeometry&quot;);
++	
++	shared_ptr&lt;InteractingSphere2InteractingSphere4SpheresContactGeometry&gt; iS2IS4SContactGeometry(new InteractingSphere2InteractingSphere4SpheresContactGeometry);
++	iS2IS4SContactGeometry-&gt;interactionDetectionFactor = distanceFactor;//Detect potential distant interaction (meniscii)
++	
++	interactionGeometryDispatcher-&gt;add(iS2IS4SContactGeometry);
+ 	interactionGeometryDispatcher-&gt;add(&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;);
++	
++	
+ 
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
+ //	interactionPhysicsDispatcher-&gt;add(&quot;SimpleElasticRelationships&quot;);
+@@ -513,12 +523,16 @@
+ 	/// OLD
+ 	//interactionPhysicsDispatcher-&gt;add(&quot;BodyMacroParameters&quot;,&quot;BodyMacroParameters&quot;,&quot;MacroMicroElasticRelationshipsWater&quot;);
+ 	/// NEW
+-/////////////	shared_ptr&lt;InteractionPhysicsEngineUnit&gt; ss(new SimpleElasticRelationshipsWater);
+-/////////////	interactionPhysicsDispatcher-&gt;add(ss);
++	shared_ptr&lt;InteractionPhysicsEngineUnit&gt; ss(new SimpleElasticRelationshipsWater);
++	interactionPhysicsDispatcher-&gt;add(ss);
+ 	
+ 		
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;);
++	
++	shared_ptr&lt;InteractingSphere2AABB&gt; interactingSphere2AABB(new InteractingSphere2AABB);
++	interactingSphere2AABB-&gt;aabbEnlargeFactor = distanceFactor;//Detect potential distant interaction (meniscii)
++	
++	boundingVolumeDispatcher-&gt;add(interactingSphere2AABB);
+ 	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox2AABB&quot;);
+ 	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
+ 
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2009-06-24 16:28:58 UTC (rev 1812)
++++ trunk/pkg/dem/SConscript	2009-06-24 17:04:39 UTC (rev 1813)
+@@ -3,23 +3,23 @@
+ 
+ import os.path,os
+ #  Dir('#') expands to the root of the source tree -- that is done by scons
+-if os.path.exists(Dir('#').abspath+'/extra/triangulation/libTesselationWrapper.a'):
+-	print &quot;Will build VolumetricContactLaw since libTesselationWrapper.a was found.&quot;
+-	env.Install('$PREFIX/lib/yade$SUFFIX/pkg-dem',[
+-		env.SharedLibrary('VolumicContactLaw',
+-			['Engine/StandAloneEngine/VolumicContactLaw.cpp'],
+-			LIBPATH=env['LIBPATH']+['../extra/triangulation'],
+-			LIBS=env['LIBS']+['SDECLinkPhysics',
+-				'ElasticContactInteraction',
+-				'SDECLinkGeometry',
+-				'SpheresContactGeometry',
+-				'BodyMacroParameters',
+-				'Sphere',
+-				'RigidBodyParameters',
+-				'InteractingSphere',
+-				'TesselationWrapper',
+-				'CGAL'])
+-		])
++#if os.path.exists(Dir('#').abspath+'/extra/triangulation/libTesselationWrapper.a'):
++	#print &quot;Will build VolumetricContactLaw since libTesselationWrapper.a was found.&quot;
++	#env.Install('$PREFIX/lib/yade$SUFFIX/pkg-dem',[
++		#env.SharedLibrary('VolumicContactLaw',
++			#['Engine/StandAloneEngine/VolumicContactLaw.cpp'],
++			#LIBPATH=env['LIBPATH']+['../extra/triangulation'],
++			#LIBS=env['LIBS']+['SDECLinkPhysics',
++				#'ElasticContactInteraction',
++				#'SDECLinkGeometry',
++				#'SpheresContactGeometry',
++				#'BodyMacroParameters',
++				#'Sphere',
++				#'RigidBodyParameters',
++				#'InteractingSphere',
++				#'TesselationWrapper',
++				#'CGAL'])
++		#])
+ 
+ cpmModel='../brefcom-mm.hh'
+ if os.path.exists('../../'+cpmModel):
+@@ -313,7 +313,6 @@
+ 			
+ 			'ElasticContactInteraction',
+ 			'SpheresContactGeometry',
+-			'MacroMicroElasticRelationships',
+ 			'Sphere',
+ 			]),
+ 
+@@ -793,7 +792,7 @@
+         TriaxialStateRecorder
+         CapillaryStressRecorder
+         ContactStressRecorder
+-        MacroMicroElasticRelationships
++        SimpleElasticRelationshipsWater
+         ElasticCriterionTimeStepper
+         InteractingSphere
+         InteractingBox
+@@ -806,6 +805,7 @@
+         PhysicalActionContainerReseter
+         InteractionGeometryMetaEngine
+         InteractionPhysicsMetaEngine
++        InteractingSphere2InteractingSphere4SpheresContactGeometry
+         PhysicalActionApplier
+         PhysicalParametersMetaEngine
+         BoundingVolumeMetaEngine
+@@ -815,8 +815,8 @@
+         AABB
+         PersistentSAPCollider
+         MetaInteractingGeometry2AABB
++        InteractingSphere2AABB
+ 	TriaxialStressController
+-	MacroMicroElasticRelationshipsWater
+ 	TriaxialCompressionEngine
+ 	GlobalStiffnessTimeStepper''')),
+ 
+@@ -859,21 +859,21 @@
+ 			'InteractingSphere',
+ 			'InteractingBox' ]),
+ 
+-env.SharedLibrary('MacroMicroElasticRelationshipsWater',
+-		['Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp'],
+-		LIBS=env['LIBS']+['SDECLinkPhysics',
+-			'SDECLinkGeometry',
+-			'ElasticContactInteraction',
+-			'SpheresContactGeometry',
+-			'BodyMacroParameters',
+-			'RigidBodyParameters',
+-			'ParticleParameters',
+-			'InteractionPhysicsMetaEngine',
+-			'CapillaryParameters']),
++#env.SharedLibrary('MacroMicroElasticRelationshipsWater',
++		#['Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp'],
++		#LIBS=env['LIBS']+['SDECLinkPhysics',
++			#'SDECLinkGeometry',
++			#'ElasticContactInteraction',
++			#'SpheresContactGeometry',
++			#'BodyMacroParameters',
++			#'RigidBodyParameters',
++			#'ParticleParameters',
++			#'InteractionPhysicsMetaEngine',
++			#'CapillaryParameters']),
+ 
+-env.SharedLibrary('InteractingSphere2AABBwater',
+-		['Engine/EngineUnit/InteractingSphere2AABBwater.cpp'],
+-		LIBS=env['LIBS']+['InteractingSphere', 'AABB', 'BoundingVolumeMetaEngine']),
++#env.SharedLibrary('InteractingSphere2AABBwater',
++		#['Engine/EngineUnit/InteractingSphere2AABBwater.cpp'],
++		#LIBS=env['LIBS']+['InteractingSphere', 'AABB', 'BoundingVolumeMetaEngine']),
+ 		
+ env.SharedLibrary('HydraulicForceEngine',
+ 		['Engine/DeusExMachina/HydraulicForceEngine.cpp'],
+@@ -883,6 +883,15 @@
+ 			'$PREFIX/include',
+ 			'DataClass/PhysicalParameters']),
+ 			
++env.SharedLibrary('SampleCapillaryPressureEngine',
++		['Engine/DeusExMachina/SampleCapillaryPressureEngine.cpp'],
++		LIBS=env['LIBS']+['yade-factory',
++			'yade-base',
++			'CapillaryCohesiveLaw',
++			'ParticleParameters',
++			'ElasticContactInteraction',
++			'TriaxialStressController']),
++			
+ env.SharedLibrary('StaticSpheresAttractionEngine',
+ 		['Engine/DeusExMachina/StaticSpheresAttractionEngine.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',  'Sphere', 'StaticAttractionEngine', 'ElasticContactInteraction'],
+@@ -1079,9 +1088,21 @@
+ 			#'/home/bruno/YADE/trunk_svn/extra/triangulation/TriaxialState.cpp'],
+ 			#&quot;make&quot;,
+ 			#chdir='/home/bruno/YADE/trunk_svn/extra/triangulation')
++			
++	env.SharedLibrary('SimpleElasticRelationshipsWater',
++		['Engine/EngineUnit/SimpleElasticRelationshipsWater.cpp'],
++		LIBS=env['LIBS']+['SDECLinkPhysics',
++			'ElasticContactInteraction',
++			'CapillaryParameters',
++			'SpheresContactGeometry',
++			'BodyMacroParameters',
++			'RigidBodyParameters',
++			'ParticleParameters',
++			'InteractionPhysicsMetaEngine']),
+ ])
+ 
+ 
++
+ if 'YADE_OPENGL' in env['CPPDEFINES']:
+ 	env.Install('$PREFIX/lib/yade$SUFFIX/pkg-dem',[
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001049.html">[deprecated list] [Yade-dev] Questions on contact logic and the new	&quot;requestErase&quot;	approach
+</A></li>
+	<LI>Next message: <A HREF="001050.html">[deprecated list] [Yade-dev] [Yade-users] YADE documentation
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1051">[ date ]</a>
+              <a href="thread.html#1051">[ thread ]</a>
+              <a href="subject.html#1051">[ subject ]</a>
+              <a href="author.html#1051">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

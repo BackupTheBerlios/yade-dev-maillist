@@ -1,0 +1,207 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] Automated crash report for	/tmp/yade-18233/bin/yade-svn1455:	SDECLinkedSpheres,	ThreePointBending
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Automated%20crash%20report%20for%0A%09/tmp/yade-18233/bin/yade-svn1455%3A%09SDECLinkedSpheres%2C%0A%09ThreePointBending&In-Reply-To=%3C20080802221151.DECCD188011%40delta%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000301.html">
+   <LINK REL="Next"  HREF="000303.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] Automated crash report for	/tmp/yade-18233/bin/yade-svn1455:	SDECLinkedSpheres,	ThreePointBending</H1>
+    <B>eudoxos at arcig.cz</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Automated%20crash%20report%20for%0A%09/tmp/yade-18233/bin/yade-svn1455%3A%09SDECLinkedSpheres%2C%0A%09ThreePointBending&In-Reply-To=%3C20080802221151.DECCD188011%40delta%3E"
+       TITLE="[yade-dev] Automated crash report for	/tmp/yade-18233/bin/yade-svn1455:	SDECLinkedSpheres,	ThreePointBending">eudoxos at arcig.cz
+       </A><BR>
+    <I>Sun Aug  3 00:11:51 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000301.html">[yade-dev] [Yade-commits] r1455 - in trunk: core extra gui/py gui/qt3	lib/miniWm3 pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000303.html">[yade-dev] DistantSpheresContactGeometry
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#302">[ date ]</a>
+              <a href="thread.html#302">[ thread ]</a>
+              <a href="subject.html#302">[ subject ]</a>
+              <a href="author.html#302">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>################################################################################
+SDECLinkedSpheres: simulation CRASH
+################################################################################
+yade-svn1455: /usr/include/boost/shared_ptr.hpp:315: T* boost::shared_ptr&lt;T&gt;::operator-&gt;() const [with T = SpheresContactGeometry]: Assertion `px != 0' failed.
+Running script /tmp/yade-test-21151.py
+SIGSEGV/SIGABRT handler called; gdb batch file is `/home/profesori/eudoxos/.yade-svn1455/gdb_crash_batch-pid21210'
+GNU gdb 6.8-debian
+Copyright (C) 2008 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later &lt;<A HREF="http://gnu.org/licenses/gpl.html">http://gnu.org/licenses/gpl.html</A>&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type &quot;show copying&quot;
+and &quot;show warranty&quot; for details.
+This GDB was configured as &quot;x86_64-linux-gnu&quot;.
+[Thread debugging using libthread_db enabled]
+[New Thread 0x7fd7fee5b730 (LWP 21210)]
+[New Thread 0x41370950 (LWP 21211)]
+warning: Lowest section in /usr/lib/libicudata.so.38 is .hash at 0000000000000120
+0x00007fd7fe700e81 in nanosleep () from /lib/libpthread.so.0
+No symbol &quot;info&quot; in current context.
+
+Thread 2 (Thread 0x41370950 (LWP 21211)):
+#0  0x00007fd7faaf44df in waitpid () from /lib/libc.so.6
+#1  0x00007fd7faa95461 in ?? () from /lib/libc.so.6
+#2  0x00007fd7faa957e7 in system () from /lib/libc.so.6
+#3  0x000000000058b66d in sigHandler (sig=6) at core/yade.cpp:58
+#4  &lt;signal handler called&gt;
+#5  0x00007fd7faa89095 in raise () from /lib/libc.so.6
+#6  0x00007fd7faa8aaf0 in abort () from /lib/libc.so.6
+#7  0x00007fd7faa822df in __assert_fail () from /lib/libc.so.6
+#8  0x00007fd7eeb0bc53 in boost::shared_ptr&lt;SpheresContactGeometry&gt;::operator-&gt; (this=0x4136fbc0) at /usr/include/boost/shared_ptr.hpp:315
+#9  0x00007fd7eeaff638 in InteractingSphere2InteractingSphere4SpheresContactGeometry::go (this=0xa9aba0, cm1=@0xaa04b8, cm2=@0xaa1238, se31=@0xaa2af0, se32=@0xaa2790, c=@0x4136fd00) at pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp:69
+#10 0x00007fd7f1539b5d in DynLibDispatcher&lt;Loki::Typelist&lt;InteractingGeometry, Loki::Typelist&lt;InteractingGeometry, Loki::NullType&gt; &gt;, InteractionGeometryEngineUnit, bool, Loki::Typelist&lt;boost::shared_ptr&lt;InteractingGeometry&gt; const&amp;, Loki::Typelist&lt;boost::shared_ptr&lt;InteractingGeometry&gt; const&amp;, Loki::Typelist&lt;Se3&lt;double&gt; const&amp;, Loki::Typelist&lt;Se3&lt;double&gt; const&amp;, Loki::Typelist&lt;boost::shared_ptr&lt;Interaction&gt; const&amp;, Loki::NullType&gt; &gt; &gt; &gt; &gt;, false&gt;::operator() (this=0xa9a9a8, base1=@0xaa04b8, base2=@0xaa1238, p3=@0xaa2af0, p4=@0xaa2790, p5=@0x4136fd00) at /tmp/yade-18233/build-svn1455/include/yade-svn1455/yade/lib-multimethods/DynLibDispatcher.hpp:882
+#11 0x00007fd7f152de34 in InteractionGeometryMetaEngine::action (this=0xa9a960, ncb=0xa98100) at pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp:31
+#12 0x000000000052c13b in MetaBody::moveToNextTimeStep (this=0xa98100) at core/MetaBody.cpp:95
+#13 0x00000000005827db in SimulationFlow::singleAction (this=0x833c10) at core/SimulationFlow.cpp:18
+#14 0x000000000058472f in ThreadWorker::callSingleAction (this=0x833c10) at core/ThreadWorker.cpp:71
+#15 0x0000000000583f22 in ThreadRunner::call (this=0xa60bc0) at core/ThreadRunner.cpp:44
+#16 0x0000000000583f88 in ThreadRunner::run (this=0xa60bc0) at core/ThreadRunner.cpp:23
+#17 0x0000000000584400 in boost::_mfi::mf0&lt;void, ThreadRunner&gt;::operator() (this=0x413700c8, p=0xa60bc0) at /usr/include/boost/bind/mem_fn_template.hpp:49
+#18 0x000000000058446d in boost::_bi::list1&lt;boost::_bi::value&lt;ThreadRunner*&gt; &gt;::operator()&lt;boost::_mfi::mf0&lt;void, ThreadRunner&gt;, boost::_bi::list0&gt; (this=0x413700d8, f=@0x413700c8, a=@0x4137002f) at /usr/include/boost/bind.hpp:231
+#19 0x00000000005844aa in boost::_bi::bind_t&lt;void, boost::_mfi::mf0&lt;void, ThreadRunner&gt;, boost::_bi::list1&lt;boost::_bi::value&lt;ThreadRunner*&gt; &gt; &gt;::operator() (this=0x413700c8) at /usr/include/boost/bind/bind_template.hpp:20
+#20 0x00000000005844c9 in boost::detail::function::void_function_obj_invoker0&lt;boost::_bi::bind_t&lt;void, boost::_mfi::mf0&lt;void, ThreadRunner&gt;, boost::_bi::list1&lt;boost::_bi::value&lt;ThreadRunner*&gt; &gt; &gt;, void&gt;::invoke (function_obj_ptr=@0x413700c8) at /usr/include/boost/function/function_template.hpp:155
+#21 0x00007fd7fe09a537 in boost::function0&lt;void, std::allocator&lt;boost::function_base&gt; &gt;::operator() () from /usr/lib/libboost_thread-gcc42-mt-1_34_1.so.1.34.1
+#22 0x00007fd7fe09a1a2 in ?? () from /usr/lib/libboost_thread-gcc42-mt-1_34_1.so.1.34.1
+#23 0x00007fd7fe6f93f7 in start_thread () from /lib/libpthread.so.0
+#24 0x00007fd7fab2eb2d in clone () from /lib/libc.so.6
+#25 0x0000000000000000 in ?? ()
+
+Thread 1 (Thread 0x7fd7fee5b730 (LWP 21210)):
+#0  0x00007fd7fe700e81 in nanosleep () from /lib/libpthread.so.0
+#1  0x00007fd7d048c8b7 in pyOmega::wait (this=0xa93110) at gui/py/yadeControl.cpp:397
+#2  0x00007fd7d038986b in boost::python::detail::invoke&lt;int, void (pyOmega::*)(), boost::python::arg_from_python&lt;pyOmega&amp;&gt; &gt; (f=@0xa6d0c8, tc=@0x7fff06e99e20) at /usr/include/boost/python/detail/invoke.hpp:94
+#3  0x00007fd7d042b19c in boost::python::detail::caller_arity&lt;1u&gt;::impl&lt;void (pyOmega::*)(), boost::python::default_call_policies, boost::mpl::vector2&lt;void, pyOmega&amp;&gt; &gt;::operator() (this=0xa6d0c8, args_=0x7fd7fed9bd50) at /usr/include/boost/python/detail/caller.hpp:199
+#4  0x00007fd7d042b1ef in boost::python::objects::caller_py_function_impl&lt;boost::python::detail::caller&lt;void (pyOmega::*)(), boost::python::default_call_policies, boost::mpl::vector2&lt;void, pyOmega&amp;&gt; &gt; &gt;::operator() (this=0xa6d0c0, args=0x7fd7fed9bd50, kw=0x0) at /usr/include/boost/python/object/py_function.hpp:38
+#5  0x00007fd7fc417abe in boost::python::objects::function::call () from /usr/lib/libboost_python-gcc42-mt-1_34_1.so.1.34.1
+#6  0x00007fd7fc417de8 in ?? () from /usr/lib/libboost_python-gcc42-mt-1_34_1.so.1.34.1
+#7  0x00007fd7fe09a537 in boost::function0&lt;void, std::allocator&lt;boost::function_base&gt; &gt;::operator() () from /usr/lib/libboost_thread-gcc42-mt-1_34_1.so.1.34.1
+#8  0x00007fd7fc41f9f8 in boost::python::handle_exception_impl () from /usr/lib/libboost_python-gcc42-mt-1_34_1.so.1.34.1
+#9  0x00007fd7fc415127 in ?? () from /usr/lib/libboost_python-gcc42-mt-1_34_1.so.1.34.1
+#10 0x00007fd7fe946f23 in PyObject_Call () from /usr/lib/libpython2.5.so.1.0
+#11 0x00007fd7fe9c4bb0 in PyEval_EvalFrameEx () from /usr/lib/libpython2.5.so.1.0
+#12 0x00007fd7fe9c8a86 in PyEval_EvalCodeEx () from /usr/lib/libpython2.5.so.1.0
+#13 0x00007fd7fe9c8ba2 in PyEval_EvalCode () from /usr/lib/libpython2.5.so.1.0
+#14 0x00007fd7fe9ebda1 in PyRun_FileExFlags () from /usr/lib/libpython2.5.so.1.0
+#15 0x00007fd7fe9c08d6 in ?? () from /usr/lib/libpython2.5.so.1.0
+#16 0x00007fd7fe9c7940 in PyEval_EvalFrameEx () from /usr/lib/libpython2.5.so.1.0
+#17 0x00007fd7fe9c8a86 in PyEval_EvalCodeEx () from /usr/lib/libpython2.5.so.1.0
+#18 0x00007fd7fe9c8ba2 in PyEval_EvalCode () from /usr/lib/libpython2.5.so.1.0
+#19 0x00007fd7fe9ebda1 in PyRun_FileExFlags () from /usr/lib/libpython2.5.so.1.0
+#20 0x00007fd7fe9ec03b in PyRun_SimpleFileExFlags () from /usr/lib/libpython2.5.so.1.0
+#21 0x00007fd7eb213a56 in PythonUI::execScript (script={static npos = 18446744073709551615, _M_dataplus = {&lt;std::allocator&lt;char&gt;&gt; = {&lt;__gnu_cxx::new_allocator&lt;char&gt;&gt; = {&lt;No data fields&gt;}, &lt;No data fields&gt;}, _M_p = 0x7fff06e9ae60 &quot;&#184;)&#167;&quot;}}) at gui/py/PythonUI.cpp:44
+#22 0x00007fd7eb214d59 in PythonUI::pythonSession () at gui/py/PythonUI.cpp:95
+#23 0x00007fd7eb215d17 in PythonUI::run (this=0x8346b0, argc=3, argv=0x7fff06e9bb70) at gui/py/PythonUI.cpp:127
+#24 0x000000000058affb in main (argc=3, argv=0x7fff06e9bb70) at core/yade.cpp:248
+#0  0x00007fd7fe700e81 in nanosleep () from /lib/libpthread.so.0
+
+################################################################################
+ThreePointBending: simulation CRASH
+################################################################################
+Running script /tmp/yade-test-21151.py
+SIGSEGV/SIGABRT handler called; gdb batch file is `/home/profesori/eudoxos/.yade-svn1455/gdb_crash_batch-pid21255'
+GNU gdb 6.8-debian
+Copyright (C) 2008 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later &lt;<A HREF="http://gnu.org/licenses/gpl.html">http://gnu.org/licenses/gpl.html</A>&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type &quot;show copying&quot;
+and &quot;show warranty&quot; for details.
+This GDB was configured as &quot;x86_64-linux-gnu&quot;.
+[Thread debugging using libthread_db enabled]
+[New Thread 0x7f91d9a2f730 (LWP 21255)]
+[New Thread 0x40897950 (LWP 21259)]
+warning: Lowest section in /usr/lib/libicudata.so.38 is .hash at 0000000000000120
+0x00007f91d92d4e81 in nanosleep () from /lib/libpthread.so.0
+No symbol &quot;info&quot; in current context.
+
+Thread 2 (Thread 0x40897950 (LWP 21259)):
+#0  0x00007f91d56c84df in waitpid () from /lib/libc.so.6
+#1  0x00007f91d5669461 in ?? () from /lib/libc.so.6
+#2  0x00007f91d56697e7 in system () from /lib/libc.so.6
+#3  0x000000000058b66d in sigHandler (sig=11) at core/yade.cpp:58
+#4  &lt;signal handler called&gt;
+#5  0x000000000058ef3d in BodyRedirectionVector::operator[] (this=0xa9e490, id=0) at core/DefaultContainerImplementations/BodyRedirectionVector.cpp:205
+#6  0x00007f91bc54dfd3 in TranslationEngine::applyCondition (this=0xa9b0c0, ncb=0xa98100) at pkg/common/Engine/DeusExMachina/TranslationEngine.cpp:38
+#7  0x0000000000500638 in DeusExMachina::action (this=0xa9b0c0, b=0xa98100) at core/DeusExMachina.cpp:21
+#8  0x000000000052c13b in MetaBody::moveToNextTimeStep (this=0xa98100) at core/MetaBody.cpp:95
+#9  0x00000000005827db in SimulationFlow::singleAction (this=0x833c10) at core/SimulationFlow.cpp:18
+#10 0x000000000058472f in ThreadWorker::callSingleAction (this=0x833c10) at core/ThreadWorker.cpp:71
+#11 0x0000000000583f22 in ThreadRunner::call (this=0xa60bc0) at core/ThreadRunner.cpp:44
+#12 0x0000000000583f88 in ThreadRunner::run (this=0xa60bc0) at core/ThreadRunner.cpp:23
+#13 0x0000000000584400 in boost::_mfi::mf0&lt;void, ThreadRunner&gt;::operator() (this=0x408970c8, p=0xa60bc0) at /usr/include/boost/bind/mem_fn_template.hpp:49
+#14 0x000000000058446d in boost::_bi::list1&lt;boost::_bi::value&lt;ThreadRunner*&gt; &gt;::operator()&lt;boost::_mfi::mf0&lt;void, ThreadRunner&gt;, boost::_bi::list0&gt; (this=0x408970d8, f=@0x408970c8, a=@0x4089702f) at /usr/include/boost/bind.hpp:231
+#15 0x00000000005844aa in boost::_bi::bind_t&lt;void, boost::_mfi::mf0&lt;void, ThreadRunner&gt;, boost::_bi::list1&lt;boost::_bi::value&lt;ThreadRunner*&gt; &gt; &gt;::operator() (this=0x408970c8) at /usr/include/boost/bind/bind_template.hpp:20
+#16 0x00000000005844c9 in boost::detail::function::void_function_obj_invoker0&lt;boost::_bi::bind_t&lt;void, boost::_mfi::mf0&lt;void, ThreadRunner&gt;, boost::_bi::list1&lt;boost::_bi::value&lt;ThreadRunner*&gt; &gt; &gt;, void&gt;::invoke (function_obj_ptr=@0x408970c8) at /usr/include/boost/function/function_template.hpp:155
+#17 0x00007f91d8c6e537 in boost::function0&lt;void, std::allocator&lt;boost::function_base&gt; &gt;::operator() () from /usr/lib/libboost_thread-gcc42-mt-1_34_1.so.1.34.1
+#18 0x00007f91d8c6e1a2 in ?? () from /usr/lib/libboost_thread-gcc42-mt-1_34_1.so.1.34.1
+#19 0x00007f91d92cd3f7 in start_thread () from /lib/libpthread.so.0
+#20 0x00007f91d5702b2d in clone () from /lib/libc.so.6
+#21 0x0000000000000000 in ?? ()
+
+Thread 1 (Thread 0x7f91d9a2f730 (LWP 21255)):
+#0  0x00007f91d92d4e81 in nanosleep () from /lib/libpthread.so.0
+#1  0x00007f91ab0608b7 in pyOmega::wait (this=0xa93110) at gui/py/yadeControl.cpp:397
+#2  0x00007f91aaf5d86b in boost::python::detail::invoke&lt;int, void (pyOmega::*)(), boost::python::arg_from_python&lt;pyOmega&amp;&gt; &gt; (f=@0xa6d0c8, tc=@0x7fffe1a6fa00) at /usr/include/boost/python/detail/invoke.hpp:94
+#3  0x00007f91aafff19c in boost::python::detail::caller_arity&lt;1u&gt;::impl&lt;void (pyOmega::*)(), boost::python::default_call_policies, boost::mpl::vector2&lt;void, pyOmega&amp;&gt; &gt;::operator() (this=0xa6d0c8, args_=0x7f91d996fd50) at /usr/include/boost/python/detail/caller.hpp:199
+#4  0x00007f91aafff1ef in boost::python::objects::caller_py_function_impl&lt;boost::python::detail::caller&lt;void (pyOmega::*)(), boost::python::default_call_policies, boost::mpl::vector2&lt;void, pyOmega&amp;&gt; &gt; &gt;::operator() (this=0xa6d0c0, args=0x7f91d996fd50, kw=0x0) at /usr/include/boost/python/object/py_function.hpp:38
+#5  0x00007f91d6febabe in boost::python::objects::function::call () from /usr/lib/libboost_python-gcc42-mt-1_34_1.so.1.34.1
+#6  0x00007f91d6febde8 in ?? () from /usr/lib/libboost_python-gcc42-mt-1_34_1.so.1.34.1
+#7  0x00007f91d8c6e537 in boost::function0&lt;void, std::allocator&lt;boost::function_base&gt; &gt;::operator() () from /usr/lib/libboost_thread-gcc42-mt-1_34_1.so.1.34.1
+#8  0x00007f91d6ff39f8 in boost::python::handle_exception_impl () from /usr/lib/libboost_python-gcc42-mt-1_34_1.so.1.34.1
+#9  0x00007f91d6fe9127 in ?? () from /usr/lib/libboost_python-gcc42-mt-1_34_1.so.1.34.1
+#10 0x00007f91d951af23 in PyObject_Call () from /usr/lib/libpython2.5.so.1.0
+#11 0x00007f91d9598bb0 in PyEval_EvalFrameEx () from /usr/lib/libpython2.5.so.1.0
+#12 0x00007f91d959ca86 in PyEval_EvalCodeEx () from /usr/lib/libpython2.5.so.1.0
+#13 0x00007f91d959cba2 in PyEval_EvalCode () from /usr/lib/libpython2.5.so.1.0
+#14 0x00007f91d95bfda1 in PyRun_FileExFlags () from /usr/lib/libpython2.5.so.1.0
+#15 0x00007f91d95948d6 in ?? () from /usr/lib/libpython2.5.so.1.0
+#16 0x00007f91d959b940 in PyEval_EvalFrameEx () from /usr/lib/libpython2.5.so.1.0
+#17 0x00007f91d959ca86 in PyEval_EvalCodeEx () from /usr/lib/libpython2.5.so.1.0
+#18 0x00007f91d959cba2 in PyEval_EvalCode () from /usr/lib/libpython2.5.so.1.0
+#19 0x00007f91d95bfda1 in PyRun_FileExFlags () from /usr/lib/libpython2.5.so.1.0
+#20 0x00007f91d95c003b in PyRun_SimpleFileExFlags () from /usr/lib/libpython2.5.so.1.0
+#21 0x00007f91c5de7a56 in PythonUI::execScript (script={static npos = 18446744073709551615, _M_dataplus = {&lt;std::allocator&lt;char&gt;&gt; = {&lt;__gnu_cxx::new_allocator&lt;char&gt;&gt; = {&lt;No data fields&gt;}, &lt;No data fields&gt;}, _M_p = 0x7fffe1a70a40 &quot;&#184;)&#167;&quot;}}) at gui/py/PythonUI.cpp:44
+#22 0x00007f91c5de8d59 in PythonUI::pythonSession () at gui/py/PythonUI.cpp:95
+#23 0x00007f91c5de9d17 in PythonUI::run (this=0x8346b0, argc=3, argv=0x7fffe1a71750) at gui/py/PythonUI.cpp:127
+#24 0x000000000058affb in main (argc=3, argv=0x7fffe1a71750) at core/yade.cpp:248
+#0  0x00007f91d92d4e81 in nanosleep () from /lib/libpthread.so.0
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000301.html">[yade-dev] [Yade-commits] r1455 - in trunk: core extra gui/py gui/qt3	lib/miniWm3 pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000303.html">[yade-dev] DistantSpheresContactGeometry
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#302">[ date ]</a>
+              <a href="thread.html#302">[ thread ]</a>
+              <a href="subject.html#302">[ subject ]</a>
+              <a href="author.html#302">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

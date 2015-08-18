@@ -1,0 +1,355 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1896 - in trunk:	lib	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	pkg/mass-spring/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1896%20-%20in%20trunk%3A%0A%09lib%09pkg/dem/DataClass/InteractionGeometry%09pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%09pkg/dem/RenderingEngine%09pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry%09pkg/mass-spring/PreProcessor&In-Reply-To=%3C200907281346.n6SDkKQe011401%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001277.html">
+   <LINK REL="Next"  HREF="001284.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1896 - in trunk:	lib	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	pkg/mass-spring/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1896%20-%20in%20trunk%3A%0A%09lib%09pkg/dem/DataClass/InteractionGeometry%09pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%09pkg/dem/RenderingEngine%09pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry%09pkg/mass-spring/PreProcessor&In-Reply-To=%3C200907281346.n6SDkKQe011401%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1896 - in trunk:	lib	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	pkg/mass-spring/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jul 28 15:46:20 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001277.html">[deprecated list] [Yade-dev] [svn] r1895 - in trunk/pkg/dem:	Engine/EngineUnit	PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="001284.html">[deprecated list] [Yade-dev] libWm3Foundation linking problems
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1283">[ date ]</a>
+              <a href="thread.html#1283">[ thread ]</a>
+              <a href="subject.html#1283">[ subject ]</a>
+              <a href="author.html#1283">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-28 15:46:19 +0200 (Tue, 28 Jul 2009)
+New Revision: 1896
+
+Removed:
+   trunk/pkg/dem/DataClass/InteractionGeometry/SDECLinkGeometry.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/SDECLinkGeometry.hpp
+   trunk/pkg/dem/RenderingEngine/GLDrawSDECLinkGeometry/
+Modified:
+   trunk/lib/SConscript
+   trunk/pkg/dem/Engine/EngineUnit/CL1Relationships.cpp
+   trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.cpp
+   trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticCohesiveLaw.cpp
+   trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp
+   trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+Log:
+Remove SDECLinkGeometry, replaced by SpheresContactGeometry at a few places. Not checked for functionality. This avoid many warnings.
+
+
+Modified: trunk/lib/SConscript
+===================================================================
+--- trunk/lib/SConscript	2009-07-28 13:15:09 UTC (rev 1895)
++++ trunk/lib/SConscript	2009-07-28 13:46:19 UTC (rev 1896)
+@@ -48,9 +48,10 @@
+ 		# since the generated header is #include'd &quot;...&quot;, it looks for it in the original dir
+ 		# no idea why this _does_ work with gui/qt3. Go figure.
+ 		CPPPATH=env['CPPPATH']+['${TARGET.dir}'],
++		LIBS=env['LIBS']+['GL']
+ 	)
+ if 'YADE_OPENGL' in env['CPPDEFINES']:
+-	yadeStaticOrSharedLib('yade-opengl',env.Combine('yade-opengl.cpp',['opengl/FpsTracker.cpp','opengl/GLTextLabel.cpp','opengl/GLWindow.cpp','opengl/GLWindowsManager.cpp','opengl/GLUtils.cpp']),LIBS=env['LIBS']+['glut','$QGLVIEWER_LIB']),
++	yadeStaticOrSharedLib('yade-opengl',env.Combine('yade-opengl.cpp',['opengl/FpsTracker.cpp','opengl/GLTextLabel.cpp','opengl/GLWindow.cpp','opengl/GLWindowsManager.cpp','opengl/GLUtils.cpp']),LIBS=env['LIBS']+['glut','GL','$QGLVIEWER_LIB']),
+ 
+ yadeStaticOrSharedLib('yade-support',env.Combine('yade-support.cpp',[
+ 	'base/yadeWm3Extra.cpp',
+
+Deleted: trunk/pkg/dem/DataClass/InteractionGeometry/SDECLinkGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SDECLinkGeometry.cpp	2009-07-28 13:15:09 UTC (rev 1895)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SDECLinkGeometry.cpp	2009-07-28 13:46:19 UTC (rev 1896)
+@@ -1,22 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include &quot;SDECLinkGeometry.hpp&quot;
+-
+-SDECLinkGeometry::SDECLinkGeometry()
+-{
+-	createIndex();
+-}
+-
+-SDECLinkGeometry::~SDECLinkGeometry()
+-{
+-}
+-
+-YADE_PLUGIN(&quot;SDECLinkGeometry&quot;);
+\ No newline at end of file
+
+Deleted: trunk/pkg/dem/DataClass/InteractionGeometry/SDECLinkGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SDECLinkGeometry.hpp	2009-07-28 13:15:09 UTC (rev 1895)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SDECLinkGeometry.hpp	2009-07-28 13:46:19 UTC (rev 1896)
+@@ -1,37 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#pragma once
+-
+-#include &lt;vector&gt;
+-#include&lt;yade/core/InteractionGeometry.hpp&gt;
+-#include &lt;Wm3Vector3.h&gt;
+-#include&lt;yade/lib-base/yadeWm3.hpp&gt;
+-#include &lt;Wm3Quaternion.h&gt;
+-
+-
+-class __attribute__((__deprecated__)) SDECLinkGeometry : public InteractionGeometry
+-{
+-	public :
+-		SDECLinkGeometry();
+-		virtual ~SDECLinkGeometry();
+-
+-		Real		 radius1 // FIXME : lots of stuff is the same as in SpheresContactGeometry, so it should inherit from it.
+-				,radius2;
+-
+-		Vector3r	normal;			// new unit normal of the contact plane.
+-	REGISTER_ATTRIBUTES(InteractionGeometry,(radius1)(radius2));
+-	REGISTER_CLASS_NAME(SDECLinkGeometry);
+-	REGISTER_BASE_CLASS_NAME(InteractionGeometry);
+-
+-	REGISTER_CLASS_INDEX(SDECLinkGeometry,InteractionGeometry);
+-};
+-
+-REGISTER_SERIALIZABLE(SDECLinkGeometry);
+-
+-
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/CL1Relationships.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/CL1Relationships.cpp	2009-07-28 13:15:09 UTC (rev 1895)
++++ trunk/pkg/dem/Engine/EngineUnit/CL1Relationships.cpp	2009-07-28 13:46:19 UTC (rev 1896)
+@@ -9,8 +9,8 @@
+ #include&quot;CL1Relationships.hpp&quot;
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/ContactLaw1Interaction.hpp&gt;
+-#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt; // FIXME - I can't dispatch by SDECLinkGeometry &lt;-&gt; SpheresContactGeometry !!?
+-#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt; // FIXME
++// #include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt; // FIXME - I can't dispatch by SDECLinkGeometry &lt;-&gt; SpheresContactGeometry !!?
++// #include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt; // FIXME
+ #include&lt;yade/pkg-dem/CohesiveFrictionalBodyParameters.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+@@ -173,6 +173,7 @@
+ 		}	
+ 		
+ 	}
++#if 0
+ 	else   // this is PERMANENT LINK because previous dynamic_cast failed, dispatcher should do this job
+ 	{
+ 		SDECLinkGeometry* sdecLinkGeometry =  dynamic_cast&lt;SDECLinkGeometry*&gt;(interaction-&gt;interactionGeometry.get());
+@@ -185,5 +186,6 @@
+ 			linkPhysics-&gt;equilibriumDistance 	= linkPhysics-&gt;initialEquilibriumDistance;
+ 		}
+ 	}
++#endif
+ };
+-YADE_PLUGIN(&quot;CL1Relationships&quot;);
+\ No newline at end of file
++YADE_PLUGIN(&quot;CL1Relationships&quot;);
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.cpp	2009-07-28 13:15:09 UTC (rev 1895)
++++ trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.cpp	2009-07-28 13:46:19 UTC (rev 1896)
+@@ -9,8 +9,8 @@
+ #include&quot;CohesiveFrictionalRelationships.hpp&quot;
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/CohesiveFrictionalContactInteraction.hpp&gt;
+-#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt; // FIXME - I can't dispatch by SDECLinkGeometry &lt;-&gt; SpheresContactGeometry !!?
+-#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt; // FIXME
++//#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt; // FIXME - I can't dispatch by SDECLinkGeometry &lt;-&gt; SpheresContactGeometry !!?
++//#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt; // FIXME
+ #include&lt;yade/pkg-dem/CohesiveFrictionalBodyParameters.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+@@ -179,6 +179,7 @@
+ 		}	
+ 		
+ 	}
++#if 0
+ 	else   // this is PERMANENT LINK because previous dynamic_cast failed, dispatcher should do this job
+ 	{
+ 		SDECLinkGeometry* sdecLinkGeometry =  dynamic_cast&lt;SDECLinkGeometry*&gt;(interaction-&gt;interactionGeometry.get());
+@@ -191,5 +192,6 @@
+ 			linkPhysics-&gt;equilibriumDistance 	= linkPhysics-&gt;initialEquilibriumDistance;
+ 		}
+ 	}
++#endif
+ };
+-YADE_PLUGIN(&quot;CohesiveFrictionalRelationships&quot;);
+\ No newline at end of file
++YADE_PLUGIN(&quot;CohesiveFrictionalRelationships&quot;);
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp	2009-07-28 13:15:09 UTC (rev 1895)
++++ trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp	2009-07-28 13:46:19 UTC (rev 1896)
+@@ -11,8 +11,8 @@
+ #include&quot;MacroMicroElasticRelationships.hpp&quot;
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
+-#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt; // FIXME - I can't dispatch by SDECLinkGeometry &lt;-&gt; SpheresContactGeometry !!?
+-#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt; // FIXME
++//#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt; // FIXME - I can't dispatch by SDECLinkGeometry &lt;-&gt; SpheresContactGeometry !!?
++//#include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt; // FIXME
+ #include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+ #include&lt;yade/pkg-dem/Tetra.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+@@ -111,6 +111,7 @@
+ 	}
+ 	else   // this is PERMANENT LINK because previous dynamic_cast failed, dispatcher should do this job
+ 	{
++#if 0
+ 		SDECLinkGeometry* sdecLinkGeometry =  dynamic_cast&lt;SDECLinkGeometry*&gt;(interaction-&gt;interactionGeometry.get());
+ 		if (sdecLinkGeometry)
+ 		{		
+@@ -120,7 +121,9 @@
+ 			linkPhysics-&gt;ks 			= linkPhysics-&gt;initialKs;
+ 			linkPhysics-&gt;equilibriumDistance 	= linkPhysics-&gt;initialEquilibriumDistance;
+ 		}
+-		else if(dynamic_cast&lt;TetraBang*&gt;(interaction-&gt;interactionGeometry.get()) &amp;&amp; !interaction-&gt;interactionPhysics){
++		else
++#endif			
++		if(dynamic_cast&lt;TetraBang*&gt;(interaction-&gt;interactionGeometry.get()) &amp;&amp; !interaction-&gt;interactionPhysics){
+ 			// TetraLaw doesn't use InteractionPhysics anyway, it accesses bodies' parameters directly
+ 			interaction-&gt;interactionPhysics=shared_ptr&lt;InteractionPhysics&gt;(new InteractionPhysics);
+ 		}
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticCohesiveLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticCohesiveLaw.cpp	2009-07-28 13:15:09 UTC (rev 1895)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticCohesiveLaw.cpp	2009-07-28 13:46:19 UTC (rev 1896)
+@@ -10,7 +10,7 @@
+ #include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
+-#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
++//#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
+ 
+ 
+@@ -53,7 +53,7 @@
+ 			BodyMacroParameters* de1			= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
+ 			BodyMacroParameters* de2			= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id2]-&gt;physicalParameters.get());
+ 			SDECLinkPhysics* currentContactPhysics		= YADE_CAST&lt;SDECLinkPhysics*&gt;(contact2-&gt;interactionPhysics.get());
+-			SDECLinkGeometry* currentContactGeometry	= YADE_CAST&lt;SDECLinkGeometry*&gt;(contact2-&gt;interactionGeometry.get());
++			SpheresContactGeometry* currentContactGeometry	= YADE_CAST&lt;SpheresContactGeometry*&gt;(contact2-&gt;interactionGeometry.get());
+ 			if((!currentContactPhysics)||(!currentContactGeometry)) continue;
+ 	
+ 			Real un 					= currentContactPhysics-&gt;equilibriumDistance-(de2-&gt;se3.position-de1-&gt;se3.position).Length();
+@@ -230,4 +230,4 @@
+ }
+ 
+ 
+-YADE_PLUGIN(&quot;ElasticCohesiveLaw&quot;);
+\ No newline at end of file
++YADE_PLUGIN(&quot;ElasticCohesiveLaw&quot;);
+
+Modified: trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp	2009-07-28 13:15:09 UTC (rev 1895)
++++ trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp	2009-07-28 13:46:19 UTC (rev 1896)
+@@ -27,8 +27,10 @@
+ {
+ 	SpheresContactGeometry* sc = static_cast&lt;SpheresContactGeometry*&gt;(ig.get());
+ 
+-	const Se3r&amp; se31=b1-&gt;physicalParameters-&gt;dispSe3,se32=b2-&gt;physicalParameters-&gt;dispSe3;
+-	const Vector3r&amp; pos1=se31.position,pos2=se32.position;
++	#if 0
++		const Se3r&amp; se31=b1-&gt;physicalParameters-&gt;dispSe3,se32=b2-&gt;physicalParameters-&gt;dispSe3;
++		const Vector3r&amp; pos1=se31.position,pos2=se32.position;
++	#endif
+ 
+ 	if(wireFrame)
+ 	{
+
+Modified: trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+===================================================================
+--- trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2009-07-28 13:15:09 UTC (rev 1895)
++++ trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2009-07-28 13:46:19 UTC (rev 1896)
+@@ -47,7 +47,7 @@
+ #include&lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
+ #include&lt;yade/pkg-dem/MacroMicroElasticRelationships.hpp&gt;
+ #include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+-#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
++//#include&lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
+ //#include&lt;yade/pkg-common/MassSpringBody2RigidBodyLaw.hpp&gt;
+ 
+@@ -365,7 +365,7 @@
+ 				if ( a &amp;&amp; b &amp;&amp; as &amp;&amp; bs &amp;&amp; (a-&gt;se3.position - b-&gt;se3.position).Length() &lt; (as-&gt;radius + bs-&gt;radius))  
+ 				{
+ 					shared_ptr&lt;Interaction&gt; 		link(new Interaction( bodyA-&gt;getId() , bodyB-&gt;getId() ));
+-					shared_ptr&lt;SDECLinkGeometry&gt;		geometry(new SDECLinkGeometry);
++					shared_ptr&lt;SpheresContactGeometry&gt;		geometry(new SpheresContactGeometry);
+ 					shared_ptr&lt;SDECLinkPhysics&gt;	physics(new SDECLinkPhysics);
+ 					
+ 					geometry-&gt;radius1			= as-&gt;radius - fabs(as-&gt;radius - bs-&gt;radius)*0.5;
+@@ -505,4 +505,4 @@
+ 	body-&gt;physicalParameters	= physics;
+ }
+ 
+-YADE_PLUGIN(&quot;HangingCloth&quot;);
+\ No newline at end of file
++YADE_PLUGIN(&quot;HangingCloth&quot;);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001277.html">[deprecated list] [Yade-dev] [svn] r1895 - in trunk/pkg/dem:	Engine/EngineUnit	PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="001284.html">[deprecated list] [Yade-dev] libWm3Foundation linking problems
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1283">[ date ]</a>
+              <a href="thread.html#1283">[ thread ]</a>
+              <a href="subject.html#1283">[ subject ]</a>
+              <a href="author.html#1283">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

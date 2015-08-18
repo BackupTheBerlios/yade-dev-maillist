@@ -1,0 +1,154 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] facets
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20facets&In-Reply-To=%3C49C2BAEE.9000903%40yandex.ru%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000919.html">
+   <LINK REL="Next"  HREF="000880.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] facets</H1>
+    <B>Sergei D.</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20facets&In-Reply-To=%3C49C2BAEE.9000903%40yandex.ru%3E"
+       TITLE="[deprecated list] [Yade-dev] facets">sj2001 at yandex.ru
+       </A><BR>
+    <I>Thu Mar 19 22:36:46 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000919.html">[deprecated list] [Yade-dev] facets
+</A></li>
+        <LI>Next message: <A HREF="000880.html">[deprecated list] [Yade-dev] facets
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#878">[ date ]</a>
+              <a href="thread.html#878">[ thread ]</a>
+              <a href="subject.html#878">[ subject ]</a>
+              <a href="author.html#878">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> 2. The shrinkFactor, if I understand, is there to make the surface
+</I>&gt;<i> smoother. We still may have two interactions at the edge at the same
+</I>&gt;<i> time, which means that the surface rigidity doubles at those points. 
+</I>Yes, it is. If shrinkFactor&gt;0, we just have a gap between  a facets
+equal to 2*R*shrinkFactor, where R is a radius of sphere. Me seems, what
+this has little benefit...
+
+&gt;<i> I propose to add the following topology information to InteractingFacet:
+</I>&gt;<i>
+</I>&gt;<i>  bool edgeActive[3];
+</I>&gt;<i>  bool vertexActive[3];
+</I>&gt;<i>  body_id_t edgeNeighbours[3];
+</I>&gt;<i>  // maybe also vector&lt;body_id_t&gt; vertexNeighbours[3]
+</I>&gt;<i>
+</I>&gt;<i> (the names would be different to match spartan naming onf the other
+</I>&gt;<i> data members). Then I would make some initializer called, for example,
+</I>&gt;<i> FacetTopologyAnalyzer, that would fill those information. Common
+</I>&gt;<i> edges/vertices would be active only on one the adjacent facets and the
+</I>&gt;<i> inactive ones wouldn't interact at all (in the sense of
+</I>&gt;<i> InteractionGeometry).
+</I>I considered this option, and me seems that task more difficult.
+If we enable the active and inactive edges, then the algorithm is as
+follows:
+
+FOR contact IN contacts_list:
+(1) IF contact with facet's plane THEN resolve contact;
+(2) ELSE IF contact with facet's edge THEN:
+(2a) IF the edge is active THEN resolve contact;
+(2b) ELSE (the edge is inactive) return false;
+
+Consider the two faces fA and fB and a edge between them.
+Let eA is  the edge belong to the facet fA, and eB is the edge belong to
+the facet fB:
+
+      fA  eA  eB     fB  
+       |       \   /          |
+-------------**---------------
+                
+Let eB be an active edge. If a sphere S is on fB near eB (and, so, eA)
+then S has real contact with only fB because eA is inactive . But if S
+is on fA near eA (and, so, eB) then S has real contact with fA AND with
+eB because eB is active!
+Thus, we will have a surface anisotropy in this case...
+
+I see the another algorithm:
+
+FOR contact IN contacts_list:
+(1) IF contact with fA  THEN resolve the contact;
+(2) ELSE IF contact with eA THEN consider the contact with fB:
+(2a) IF contact with fB OR with eB  THEN resolve the contact.
+
+But in this algo, when we consider a contact with fB, we need to know
+the status of contact with fA...
+If we add the static function Interaction::byId(body_id_t, body_id_t) by
+analogy with Body::byId, then the algorithm can be modified as follows:
+
+First, to add the following topology information to InteractingFacet:
+
+body_id_t edgesNeighbours[3];
+vector&lt;body_id_t&gt; vertexNeighbours[3]
+
+Then,
+
+FOR contact IN contacts_list:
+(1) IF contact with facet's plane THEN resolve contact;
+(2) ELSE IF contact with facet's edge N THEN:
+(2a) IF contact with edgesNeighbours[N] is fresh AND false THEN resolve
+contact;
+(2b) ELSE return false.
+
+Where a status &quot;fresh&quot; means that the contact have been processed at the
+current time step (it can be used interaction's cycle variable for it).
+
+For case of contact with the vertex N step 2a will be as follows:
+
+FOR adjacentFacet IN vertexNeighbours[N]:
+    IF contact with adjacentFacet is !fresh OR true THEN return false;
+resolve contact;
+
+ps. If we added Interaction::byId then if the contact with the facet's
+plane is true, then all contacts with the neighbours facets (across
+vertices) can be set to false automatically...
+
+
+
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000919.html">[deprecated list] [Yade-dev] facets
+</A></li>
+	<LI>Next message: <A HREF="000880.html">[deprecated list] [Yade-dev] facets
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#878">[ date ]</a>
+              <a href="thread.html#878">[ thread ]</a>
+              <a href="subject.html#878">[ subject ]</a>
+              <a href="author.html#878">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

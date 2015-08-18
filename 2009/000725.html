@@ -1,0 +1,622 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1678 - in trunk:	core	core/DefaultContainerImplementations extra extra/clump	gui/py	lib/base	pkg/common/Engine/MetaEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1678%20-%20in%20trunk%3A%0A%09core%09core/DefaultContainerImplementations%20extra%20extra/clump%0A%09gui/py%09lib/base%0A%09pkg/common/Engine/MetaEngine%09pkg/dem/Engine/DeusExMachina%0A%09pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200902221030.n1MAUEwe010824%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000723.html">
+   <LINK REL="Next"  HREF="000726.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1678 - in trunk:	core	core/DefaultContainerImplementations extra extra/clump	gui/py	lib/base	pkg/common/Engine/MetaEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1678%20-%20in%20trunk%3A%0A%09core%09core/DefaultContainerImplementations%20extra%20extra/clump%0A%09gui/py%09lib/base%0A%09pkg/common/Engine/MetaEngine%09pkg/dem/Engine/DeusExMachina%0A%09pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200902221030.n1MAUEwe010824%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1678 - in trunk:	core	core/DefaultContainerImplementations extra extra/clump	gui/py	lib/base	pkg/common/Engine/MetaEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Feb 22 11:30:14 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000723.html">[deprecated list] [Yade-dev] [svn] r1677 - in	trunk/pkg/common/Engine: DeusExMachina	MetaEngine
+</A></li>
+        <LI>Next message: <A HREF="000726.html">[deprecated list] [Yade-dev] [svn] r1679 - in trunk/pkg/snow:	PreProcessor/Voxel	RenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#725">[ date ]</a>
+              <a href="thread.html#725">[ thread ]</a>
+              <a href="subject.html#725">[ subject ]</a>
+              <a href="author.html#725">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-02-22 11:30:11 +0100 (Sun, 22 Feb 2009)
+New Revision: 1678
+
+Modified:
+   trunk/core/DefaultContainerImplementations/PhysicalActionVectorVector.cpp
+   trunk/core/MetaBody.cpp
+   trunk/core/MetaBody.hpp
+   trunk/extra/Brefcom.cpp
+   trunk/extra/clump/Shop.cpp
+   trunk/gui/py/yadeControl.cpp
+   trunk/lib/base/yadeWm3Extra.hpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp
+Log:
+1. Adapted TriaxialTest and ElasticContactLaw to BexContainer (switchable at compile-time).
+2. Adapter GlobalStiffnessTimeStepper to BexContainer (GlobalStiffnessCounter code put to a function inside this one, hence that engine is not needed anymore).
+3. Adapted Shop::Bex to BexContainer (probably not needed anymore?)
+4. Exception is thrown in PhysicalActionVectorVector is used &amp;&amp; built with BEX_CONTAINER?\194?\160(would most likely crash anyway).
+5. transientInteractions and persistentInteractions are only references to MetaBody::interactions now. Removed extra loops in InteractionPhysicsMetaEngine and InteractionGeometryMetaEngine.
+6. Remove including qglviewer into miniWm3, as it breaks compilation if using miniWm3 separately from yade (for testing purposes).
+
+
+Modified: trunk/core/DefaultContainerImplementations/PhysicalActionVectorVector.cpp
+===================================================================
+--- trunk/core/DefaultContainerImplementations/PhysicalActionVectorVector.cpp	2009-02-21 20:14:55 UTC (rev 1677)
++++ trunk/core/DefaultContainerImplementations/PhysicalActionVectorVector.cpp	2009-02-22 10:30:11 UTC (rev 1678)
+@@ -164,6 +164,10 @@
+ // should be always succesfull. if it is not - you forgot to call prepare()
+ shared_ptr&lt;PhysicalAction&gt;&amp; PhysicalActionVectorVector::find(unsigned int id , int actionIndex )
+ {
++	#ifdef BEX_CONTAINER
++		cerr&lt;&lt;&quot;FATAL: This build of yade uses nex BexContainer instead of PhysicalActionContainer.\nFATAL: However, your simulation still uses PhysicalActionContainer.\nFATAL: Update your code, see backtrace (if in debug build) to find where the old container is used.&quot;&lt;&lt;endl;
++		throw std::runtime_error(&quot;Deprecated PhysicalActionContainer is not supported in this build!&quot;);
++	#endif
+ 	if( current_size &lt;= id ) // this is very rarely executed, only at beginning.
+ 	// somebody is accesing out of bounds, make sure he will find, what he needs - a resetted PhysicalAction of his type
+ 	{
+
+Modified: trunk/core/MetaBody.cpp
+===================================================================
+--- trunk/core/MetaBody.cpp	2009-02-21 20:14:55 UTC (rev 1677)
++++ trunk/core/MetaBody.cpp	2009-02-22 10:30:11 UTC (rev 1678)
+@@ -30,7 +30,7 @@
+ #include&lt;unistd.h&gt;
+ 
+ MetaBody::MetaBody() :
+-	  Body(),bodies(new BodyRedirectionVector),persistentInteractions(new InteractionVecSet),transientInteractions(new InteractionVecSet),physicalActions(new PhysicalActionVectorVector)
++	  Body(),bodies(new BodyRedirectionVector), interactions(new InteractionVecSet), persistentInteractions(interactions),transientInteractions(interactions),physicalActions(new PhysicalActionVectorVector)
+ {	
+ 	engines.clear();
+ 	initializers.clear();
+
+Modified: trunk/core/MetaBody.hpp
+===================================================================
+--- trunk/core/MetaBody.hpp	2009-02-21 20:14:55 UTC (rev 1677)
++++ trunk/core/MetaBody.hpp	2009-02-22 10:30:11 UTC (rev 1678)
+@@ -23,8 +23,12 @@
+ 		shared_ptr&lt;BodyContainer&gt;		bodies;
+ 		vector&lt;shared_ptr&lt;Engine&gt; &gt;		engines;
+ 		vector&lt;shared_ptr&lt;Engine&gt; &gt;		initializers; // FIXME: see MovingSupport:50
+-		__attribute__((__deprecated__)) shared_ptr&lt;InteractionContainer&gt;	persistentInteractions; // disappear, reappear according to physical (or any other non-spatial) criterion
+-		shared_ptr&lt;InteractionContainer&gt;	transientInteractions;	// disappear, reappear according to spatial criterion
++		shared_ptr&lt;InteractionContainer&gt; interactions;
++
++		// only aliases for interactions
++		__attribute__((__deprecated__)) shared_ptr&lt;InteractionContainer&gt;&amp;	persistentInteractions; // disappear, reappear according to physical (or any other non-spatial) criterion
++		shared_ptr&lt;InteractionContainer&gt;&amp;	transientInteractions;	// disappear, reappear according to spatial criterion
++
+ 		shared_ptr&lt;PhysicalActionContainer&gt;	physicalActions;
+ 		#ifdef BEX_CONTAINER
+ 			BexContainer bex;
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-02-21 20:14:55 UTC (rev 1677)
++++ trunk/extra/Brefcom.cpp	2009-02-22 10:30:11 UTC (rev 1678)
+@@ -28,7 +28,7 @@
+ 	// commulate normal strains from contacts
+ 	// get max force on contacts
+ 	Real maxContactF=0;
+-	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rb-&gt;transientInteractions){
++	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rb-&gt;interactions){
+ 		if(!I-&gt;isReal) continue;
+ 		shared_ptr&lt;BrefcomContact&gt; BC=YADE_PTR_CAST&lt;BrefcomContact&gt;(I-&gt;interactionPhysics); assert(BC);
+ 		maxContactF=max(maxContactF,max(BC-&gt;Fn,BC-&gt;Fs.Length()));
+@@ -39,7 +39,7 @@
+ 	}
+ 	unbalancedForce=(useMaxForce?maxF:meanF)/maxContactF;
+ 
+-	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rb-&gt;transientInteractions){
++	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rb-&gt;interactions){
+ 		if(!I-&gt;isReal) continue;
+ 		shared_ptr&lt;BrefcomContact&gt; BC=YADE_PTR_CAST&lt;BrefcomContact&gt;(I-&gt;interactionPhysics); assert(BC);
+ 		BrefcomPhysParams* bpp1(YADE_CAST&lt;BrefcomPhysParams*&gt;(Body::byId(I-&gt;getId1())-&gt;physicalParameters.get()));
+@@ -183,14 +183,14 @@
+ 	if(useFunctor){ // testing the functor
+ 		if(!functor) functor=shared_ptr&lt;ef2_Spheres_Brefcom_BrefcomLaw&gt;(new ef2_Spheres_Brefcom_BrefcomLaw);
+ 		functor-&gt;logStrain=logStrain;
+-		FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rootBody-&gt;transientInteractions){
++		FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rootBody-&gt;interactions){
+ 			if(!I-&gt;isReal) continue;
+ 			functor-&gt;go(I-&gt;interactionGeometry, I-&gt;interactionPhysics, I.get(), rootBody);
+ 		}
+ 		return;
+ 	}
+ 	
+-	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rootBody-&gt;transientInteractions){
++	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rootBody-&gt;interactions){
+ 		if(!I-&gt;isReal) continue;
+ 		BC=YADE_PTR_CAST&lt;BrefcomContact&gt;(I-&gt;interactionPhysics);
+ 		contGeom=YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(I-&gt;interactionGeometry);
+@@ -328,7 +328,7 @@
+ 	//vector&lt;pair&lt;short,
+ 	vector&lt;BodyStats&gt; bodyStats; bodyStats.resize(rootBody-&gt;bodies-&gt;size());
+ 	assert(bodyStats[0].nCohLinks==0); // should be initialized by dfault ctor
+-	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rootBody-&gt;transientInteractions){
++	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rootBody-&gt;interactions){
+ 		shared_ptr&lt;BrefcomContact&gt; BC=dynamic_pointer_cast&lt;BrefcomContact&gt;(I-&gt;interactionPhysics);
+ 		if(!BC || !BC-&gt;isCohesive) continue;
+ 		const body_id_t id1=I-&gt;getId1(), id2=I-&gt;getId2();
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2009-02-21 20:14:55 UTC (rev 1677)
++++ trunk/extra/clump/Shop.cpp	2009-02-22 10:30:11 UTC (rev 1678)
+@@ -96,14 +96,16 @@
+ 		Shop::Bex::globalStiffnessIdx=shared_ptr&lt;PhysicalAction&gt;(new GlobalStiffness())-&gt;getClassIndex();
+ 	}
+ }
++#ifdef BEX_CONTAINER
++	Vector3r&amp; Shop::Bex::force(body_id_t id,MetaBody* rb){ return rb-&gt;bex.force(id);}
++	Vector3r&amp; Shop::Bex::momentum(body_id_t id,MetaBody* rb){ return rb-&gt;bex.force(id);}
++#else
++	#define __BEX_ACCESS(retType,shopBexMember,bexClass,bexIdx,bexAttribute) retType&amp; Shop::Bex::shopBexMember(body_id_t id,MetaBody* mb){ assert(bexIdx&gt;=0); shared_ptr&lt;PhysicalActionContainer&gt; pac=(mb?mb:Omega::instance().getRootBody().get())-&gt;physicalActions; /*if((long)pac-&gt;size()&lt;=id) throw invalid_argument(&quot;No &quot; #shopBexMember &quot; for #&quot;+lexical_cast&lt;string&gt;(id)+&quot; (max=&quot;+lexical_cast&lt;string&gt;(((long)pac-&gt;size()-1))+&quot;)&quot;);*/ return static_pointer_cast&lt;bexClass&gt;(pac-&gt;find(id,bexIdx))-&gt;bexAttribute; }
++	__BEX_ACCESS(Vector3r,force,Force,forceIdx,force);
++	__BEX_ACCESS(Vector3r,momentum,Momentum,momentumIdx,momentum);
++	#undef __BEX_ACCESS
++#endif
+ 
+-#define __BEX_ACCESS(retType,shopBexMember,bexClass,bexIdx,bexAttribute) retType&amp; Shop::Bex::shopBexMember(body_id_t id,MetaBody* mb){ assert(bexIdx&gt;=0); shared_ptr&lt;PhysicalActionContainer&gt; pac=(mb?mb:Omega::instance().getRootBody().get())-&gt;physicalActions; /*if((long)pac-&gt;size()&lt;=id) throw invalid_argument(&quot;No &quot; #shopBexMember &quot; for #&quot;+lexical_cast&lt;string&gt;(id)+&quot; (max=&quot;+lexical_cast&lt;string&gt;(((long)pac-&gt;size()-1))+&quot;)&quot;);*/ return static_pointer_cast&lt;bexClass&gt;(pac-&gt;find(id,bexIdx))-&gt;bexAttribute; }
+-__BEX_ACCESS(Vector3r,force,Force,forceIdx,force);
+-__BEX_ACCESS(Vector3r,momentum,Momentum,momentumIdx,momentum);
+-__BEX_ACCESS(Vector3r,globalStiffness,GlobalStiffness,globalStiffnessIdx,stiffness);
+-__BEX_ACCESS(Vector3r,globalRStiffness,GlobalStiffness,globalStiffnessIdx,Rstiffness);
+-#undef __BEX_ACCESS
+-
+ /* Apply force on contact point to 2 bodies; the force is oriented as it applies on the first body and is reversed on the second.
+  *
+  * Shop::Bex::initCache must have been called at some point. */
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2009-02-21 20:14:55 UTC (rev 1677)
++++ trunk/gui/py/yadeControl.cpp	2009-02-22 10:30:11 UTC (rev 1678)
+@@ -522,7 +522,7 @@
+ 
+ 	
+ 	pyBodyContainer bodies_get(void){assertRootBody(); return pyBodyContainer(OMEGA.getRootBody()-&gt;bodies); }
+-	pyInteractionContainer interactions_get(void){assertRootBody(); return pyInteractionContainer(OMEGA.getRootBody()-&gt;transientInteractions); }
++	pyInteractionContainer interactions_get(void){assertRootBody(); return pyInteractionContainer(OMEGA.getRootBody()-&gt;interactions); }
+ 	
+ 	#ifdef BEX_CONTAINER
+ 		pyBexContainer actions_get(void){return pyBexContainer();}
+@@ -541,11 +541,11 @@
+ 
+ 	void interactionContainer_set(string clss){
+ 		MetaBody* rb=OMEGA.getRootBody().get();
+-		if(rb-&gt;transientInteractions-&gt;size()&gt;0) throw std::runtime_error(&quot;Interaction container not empty, will not change its class.&quot;);
++		if(rb-&gt;interactions-&gt;size()&gt;0) throw std::runtime_error(&quot;Interaction container not empty, will not change its class.&quot;);
+ 		shared_ptr&lt;InteractionContainer&gt; ic=dynamic_pointer_cast&lt;InteractionContainer&gt;(ClassFactory::instance().createShared(clss));
+-		rb-&gt;transientInteractions=ic;
++		rb-&gt;interactions=ic;
+ 	}
+-	string interactionContainer_get(string clss){ return OMEGA.getRootBody()-&gt;transientInteractions-&gt;getClassName(); }
++	string interactionContainer_get(string clss){ return OMEGA.getRootBody()-&gt;interactions-&gt;getClassName(); }
+ 
+ 	void bodyContainer_set(string clss){
+ 		MetaBody* rb=OMEGA.getRootBody().get();
+
+Modified: trunk/lib/base/yadeWm3Extra.hpp
+===================================================================
+--- trunk/lib/base/yadeWm3Extra.hpp	2009-02-21 20:14:55 UTC (rev 1677)
++++ trunk/lib/base/yadeWm3Extra.hpp	2009-02-22 10:30:11 UTC (rev 1678)
+@@ -143,9 +143,8 @@
+ } // namespace serialization
+ } // namespace boost
+ 
+-
++#if 0
+ #include&lt;yade/lib-QGLViewer/qglviewer.h&gt;
+-
+ inline qglviewer::Vec toQGLViewierVec(Vector3r v){return qglviewer::Vec(v[0],v[1],v[2]);};
+ inline Vector3r       toVec(qglviewer::Vec v){return Vector3r(v[0],v[1],v[2]);};
+-
++#endif
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp	2009-02-21 20:14:55 UTC (rev 1677)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp	2009-02-22 10:30:11 UTC (rev 1678)
+@@ -5,7 +5,7 @@
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
++*  GNUGeneral Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+ #include &quot;InteractionGeometryMetaEngine.hpp&quot;
+@@ -43,32 +43,12 @@
+ void InteractionGeometryMetaEngine::action(MetaBody* ncb)
+ {
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; interaction, *ncb-&gt;persistentInteractions){
+-		shared_ptr&lt;Body&gt;&amp; b1=(*bodies)[interaction-&gt;getId1()];
+-		shared_ptr&lt;Body&gt;&amp; b2=(*bodies)[interaction-&gt;getId2()];
+-		interaction-&gt;isReal = true;
+-		operator()( b1-&gt;interactingGeometry , b2-&gt;interactingGeometry , b1-&gt;physicalParameters-&gt;se3 , b2-&gt;physicalParameters-&gt;se3 , interaction );
+-	}
+-	
+-	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; interaction, *ncb-&gt;transientInteractions){
++	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; interaction, *ncb-&gt;interactions){
+ 		const shared_ptr&lt;Body&gt;&amp; b1=(*bodies)[interaction-&gt;getId1()];
+ 		const shared_ptr&lt;Body&gt;&amp; b2=(*bodies)[interaction-&gt;getId2()];
+-		//bool wasReal = interaction-&gt;isReal;
+ 		interaction-&gt;isReal =
+ 			b1-&gt;interactingGeometry &amp;&amp; b2-&gt;interactingGeometry &amp;&amp; // some bodies do not have interactingGeometry
+-			( ncb-&gt;persistentInteractions-&gt;find(interaction-&gt;getId1(),interaction-&gt;getId2()) == 0 )
+-		 	&amp;&amp;
+-			operator()( b1-&gt;interactingGeometry , b2-&gt;interactingGeometry , b1-&gt;physicalParameters-&gt;se3 , b2-&gt;physicalParameters-&gt;se3 , interaction );
+-
+-		//if(wasReal==false &amp;&amp; interaction-&gt;isReal)
+-		//	interaction-&gt;isNew=true;
+-		//cerr&lt;&lt;&quot;isReal=&quot;&lt;&lt;interaction-&gt;isReal&lt;&lt;&quot;, wasReal=&quot;&lt;&lt;wasReal&lt;&lt;&quot;, isNew=&quot;&lt;&lt;interaction-&gt;isNew&lt;&lt;endl;
+-
+-		//tmp
+-		//if(!(b1-&gt;interactingGeometry&amp;&amp;b2-&gt;interactingGeometry)){
+-			//cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot;: no interacting geometry &quot;&lt;&lt; (b1-&gt;interactingGeometry?b1-&gt;getId():-1)&lt;&lt;&quot; &quot;&lt;&lt;(b2-&gt;interactingGeometry?b2-&gt;getId():-1)&lt;&lt;endl;
+-		//}
+-			
++			operator()(b1-&gt;interactingGeometry, b2-&gt;interactingGeometry, b1-&gt;physicalParameters-&gt;se3, b2-&gt;physicalParameters-&gt;se3, interaction);
+ 	}
+ }
+ 
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp	2009-02-21 20:14:55 UTC (rev 1677)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp	2009-02-22 10:30:11 UTC (rev 1678)
+@@ -24,32 +24,11 @@
+ void InteractionPhysicsMetaEngine::action(MetaBody* ncb)
+ {
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-	
+-	shared_ptr&lt;InteractionContainer&gt;&amp; persistentInteractions = ncb-&gt;persistentInteractions;
+-	InteractionContainer::iterator ii    = persistentInteractions-&gt;begin();
+-	InteractionContainer::iterator iiEnd = persistentInteractions-&gt;end(); 
+-	for( ; ii!=iiEnd ; ++ii)
+-	{
+-		const shared_ptr&lt;Interaction&gt; interaction = *ii;
+-
++	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; interaction, *ncb-&gt;interactions){
+ 		shared_ptr&lt;Body&gt;&amp; b1 = (*bodies)[interaction-&gt;getId1()];
+ 		shared_ptr&lt;Body&gt;&amp; b2 = (*bodies)[interaction-&gt;getId2()];
+-		if( b1-&gt;physicalParameters &amp;&amp; b2-&gt;physicalParameters )
+-			operator()( b1-&gt;physicalParameters , b2-&gt;physicalParameters , interaction );
+-	}
+-
+-	shared_ptr&lt;InteractionContainer&gt;&amp; transientInteractions = ncb-&gt;transientInteractions;
+-	ii    = transientInteractions-&gt;begin();
+-	iiEnd = transientInteractions-&gt;end(); 
+-	for( ; ii!=iiEnd ; ++ii)
+-	{
+-		const shared_ptr&lt;Interaction&gt; interaction = *ii;
+-		
+-		shared_ptr&lt;Body&gt;&amp; b1 = (*bodies)[interaction-&gt;getId1()];
+-		shared_ptr&lt;Body&gt;&amp; b2 = (*bodies)[interaction-&gt;getId2()];
+-
+ 		if (interaction-&gt;isReal)
+-			operator()( b1-&gt;physicalParameters , b2-&gt;physicalParameters , interaction );
++			operator()(b1-&gt;physicalParameters, b2-&gt;physicalParameters, interaction);
+ 	}
+ }
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2009-02-21 20:14:55 UTC (rev 1677)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2009-02-22 10:30:11 UTC (rev 1678)
+@@ -168,11 +168,10 @@
+ 
+ void TriaxialStressController::controlExternalStress(int wall, MetaBody* ncb, Vector3r resultantForce, PhysicalParameters* p, Real wall_max_vel)
+ {
+-	Real translation=normal[wall].Dot(static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall],ForceClassIndex).get() )-&gt;force - resultantForce);
++	Real translation=normal[wall].Dot( getForce(ncb,wall_id[wall]) - resultantForce);
+ 	//bool log=((wall==3) &amp;&amp; (Omega::instance().getCurrentIteration()%200==0));
+ 	const bool log=false;
+-	if(log) LOG_DEBUG(&quot;wall=&quot;&lt;&lt;wall&lt;&lt;&quot; actualForce=&quot;&lt;&lt;static_cast&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find(wall_id[wall],ForceClassIndex).get() )-&gt;force&lt;&lt;&quot;, resultantForce=&quot;&lt;&lt;resultantForce&lt;&lt;&quot;, translation=&quot;&lt;&lt;translation);
+-	//cerr &lt;&lt; &quot;wall=&quot;&lt;&lt;wall&lt;&lt;&quot; actualForce=&quot;&lt;&lt;static_cast&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find(wall_id[wall],ForceClassIndex).get() )-&gt;force&lt;&lt;&quot;, resultantForce=&quot;&lt;&lt;resultantForce&lt;&lt;&quot;, deltaF=&quot;&lt;&lt;translation &lt;&lt; endl;
++	if(log) LOG_DEBUG(&quot;wall=&quot;&lt;&lt;wall&lt;&lt;&quot; actualForce=&quot;&lt;&lt;getForce(ncb,wall_id[wall])&lt;&lt;&quot;, resultantForce=&quot;&lt;&lt;resultantForce&lt;&lt;&quot;, translation=&quot;&lt;&lt;translation);
+ 	if (translation!=0)
+ 	{
+ 	//cerr &lt;&lt; &quot;stiffness = &quot; &lt;&lt; stiffness[wall];
+@@ -318,7 +317,16 @@
+ 	Real invXSurface = 1.f/(height*depth);
+ 	Real invYSurface = 1.f/(width*depth);
+ 	Real invZSurface = 1.f/(width*height);
+-		
++	
++	force[wall_bottom]=getForce(ncb,wall_id[wall_bottom]); stress[wall_bottom]=force[wall_bottom]*invYSurface;
++	force[wall_top]=   getForce(ncb,wall_id[wall_top]);    stress[wall_top]=   force[wall_top]   *invYSurface;
++	force[wall_left]=  getForce(ncb,wall_id[wall_left]);   stress[wall_left]=  force[wall_left]  *invXSurface;
++	force[wall_right]= getForce(ncb,wall_id[wall_right]);  stress[wall_right]= force[wall_right] *invXSurface;
++	force[wall_front]= getForce(ncb,wall_id[wall_front]);  stress[wall_front]= force[wall_front] *invZSurface;
++	force[wall_back]=  getForce(ncb,wall_id[wall_back]);   stress[wall_back]=  force[wall_back]  *invZSurface;
++
++// remove this, it is in the 6 lines above now
++#if 0	
+ 	stress[wall_bottom] = ( static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_bottom],ForceClassIndex).get() )-&gt;force ) * invYSurface;
+ 	stress[wall_top] = static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_top],ForceClassIndex).get() )-&gt;force * invYSurface;
+ 	stress[wall_left] = ( static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_left],ForceClassIndex).get() )-&gt;force ) * invXSurface;
+@@ -326,8 +334,6 @@
+ 	stress[wall_front] = ( static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_front],ForceClassIndex).get() )-&gt;force ) * invZSurface;
+ 	stress[wall_back] = ( static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_back],ForceClassIndex).get() )-&gt;force ) * invZSurface;	
+ 
+-
+-
+ // ==================================================== jf
+ 	force[wall_bottom] = ( static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_bottom],ForceClassIndex).get() )-&gt;force );
+ 	force[wall_top] = static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_top],ForceClassIndex).get() )-&gt;force ;
+@@ -336,8 +342,8 @@
+ 	force[wall_front] = ( static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_front],ForceClassIndex).get() )-&gt;force ) ;
+ 	force[wall_back] = ( static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find(wall_id[wall_back],ForceClassIndex).get() )-&gt;force ) ;	
+ // ====================================================
++#endif
+ 
+-
+  	//cerr &lt;&lt; &quot;stresses : &quot; &lt;&lt;  stress[wall_bottom] &lt;&lt; &quot; &quot; &lt;&lt;
+  //stress[wall_top]&lt;&lt; &quot; &quot; &lt;&lt; stress[wall_left]&lt;&lt; &quot; &quot; &lt;&lt; stress[wall_right]&lt;&lt; &quot; &quot;
+  //&lt;&lt; stress[wall_front] &lt;&lt; &quot; &quot; &lt;&lt; stress[wall_back] &lt;&lt; endl;
+@@ -422,7 +428,7 @@
+ 		Real f;
+ 		for(  ; bi!=biEnd ; ++bi ) {
+ 			if ((*bi)-&gt;isDynamic) {
+-				f= (static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( (*bi)-&gt;getId() , ForceClassIndex).get() )-&gt;force).Length();
++				f=getForce(ncb,(*bi)-&gt;getId()).Length();
+ 				MeanUnbalanced += f;
+ 				if (f!=0) ++nBodies;
+ 			}
+@@ -436,7 +442,7 @@
+ 		BodyContainer::iterator biEnd = bodies-&gt;end();
+ 		for(  ; bi!=biEnd ; ++bi ) {
+ 			if ((*bi)-&gt;isDynamic) {
+-				MaxUnbalanced = std::max((static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( (*bi)-&gt;getId() , ForceClassIndex).get() )-&gt;force).Length(), MaxUnbalanced);
++				MaxUnbalanced = std::max(getForce(ncb,(*bi)-&gt;getId()).Length(),MaxUnbalanced);
+ 			}
+ 		}
+ 		if (MeanForce != 0) MaxUnbalanced = MaxUnbalanced/MeanForce;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2009-02-21 20:14:55 UTC (rev 1677)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2009-02-22 10:30:11 UTC (rev 1678)
+@@ -9,7 +9,7 @@
+ #pragma once
+ 
+ #include&lt;yade/core/DeusExMachina.hpp&gt;
+-#include &lt;Wm3Vector3.h&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ 
+ #define TR {if (Omega::instance().getCurrentIteration()%100==0) TRACE; }
+@@ -31,6 +31,13 @@
+ 		int ForceClassIndex;
+ 		Real previousStress, previousMultiplier; //previous mean stress and size multiplier		
+ 		bool firstRun;
++		inline const Vector3r getForce(MetaBody* rb, body_id_t id){
++			#ifdef BEX_CONTAINER
++				return rb-&gt;bex.force(id);
++			#else
++				return static_cast&lt;Force*&gt;(rb-&gt;physicalActions-&gt;find(id,ForceClassIndex).get())-&gt;force				
++			#endif
++		}
+ 		
+ 		 	
+ 	public :
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2009-02-21 20:14:55 UTC (rev 1677)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2009-02-22 10:30:11 UTC (rev 1678)
+@@ -169,14 +169,18 @@
+ 	////////// PFC3d SlipModel
+ 	
+ 			Vector3r f				= currentContactPhysics-&gt;normalForce + shearForce;
++			#ifdef BEX_CONTAINER
++				ncb-&gt;bex.force(id1)-=f;
++				ncb-&gt;bex.force(id2)+=f;
++				ncb-&gt;bex.torque(id1)-=c1x.Cross(f);
++				ncb-&gt;bex.torque(id2)+=c2x.Cross(f);
++			#else
++				static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( id1 , actionForceIndex).get() )-&gt;force    -= f;
++				static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( id2 , actionForceIndex ).get() )-&gt;force    += f;
++				static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id1 , actionMomentumIndex ).get() )-&gt;momentum -= c1x.Cross(f);
++				static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id2 , actionMomentumIndex ).get() )-&gt;momentum += c2x.Cross(f);
++			#endif
+ 			
+-	// it will be some macro(	body-&gt;physicalActions,	ActionType , bodyId )
+-			static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( id1 , actionForceIndex).get() )-&gt;force    -= f;
+-			static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( id2 , actionForceIndex ).get() )-&gt;force    += f;
+-			
+-			static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id1 , actionMomentumIndex ).get() )-&gt;momentum -= c1x.Cross(f);
+-			static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id2 , actionMomentumIndex ).get() )-&gt;momentum += c2x.Cross(f);
+-			
+ 			currentContactPhysics-&gt;prevNormal = currentContactGeometry-&gt;normal;
+ 		}
+ 	}
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp	2009-02-21 20:14:55 UTC (rev 1677)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessCounter.cpp	2009-02-22 10:30:11 UTC (rev 1678)
+@@ -54,6 +54,9 @@
+ #endif
+ 
+ void GlobalStiffnessCounter::traverseInteractions(MetaBody* ncb, const shared_ptr&lt;InteractionContainer&gt;&amp; interactions){
++	#ifdef BEX_CONTAINER
++		return;
++	#endif
+ 	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; contact, *interactions){
+ 		if(!contact-&gt;isReal) continue;
+ 
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2009-02-21 20:14:55 UTC (rev 1677)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2009-02-22 10:30:11 UTC (rev 1678)
+@@ -17,6 +17,7 @@
+ #include&lt;yade/pkg-dem/GlobalStiffness.hpp&gt;
+ 
+ CREATE_LOGGER(GlobalStiffnessTimeStepper);
++YADE_PLUGIN(&quot;GlobalStiffnessTimeStepper&quot;);
+ 
+ GlobalStiffnessTimeStepper::GlobalStiffnessTimeStepper() : TimeStepper() , sdecContactModel(new MacroMicroElasticRelationships), actionParameterGlobalStiffness(new GlobalStiffness)
+ {
+@@ -54,10 +55,14 @@
+ 	
+ 	// Sphere* sphere = static_cast&lt;Sphere*&gt;(body-&gt;geometricalModel.get());
+ 	
+-	Vector3r&amp; stiffness = (static_cast&lt;GlobalStiffness*&gt;( ncb-&gt;physicalActions-&gt;find (body-&gt;getId(), globalStiffnessClassIndex).get()))-&gt;stiffness;
+-	Vector3r&amp; Rstiffness = (static_cast&lt;GlobalStiffness*&gt;( ncb-&gt;physicalActions-&gt;find (body-&gt;getId(), globalStiffnessClassIndex).get()))-&gt;Rstiffness;
++	#ifdef BEX_CONTAINER
++		Vector3r&amp;  stiffness= stiffnesses[body-&gt;getId()];
++		Vector3r&amp; Rstiffness=Rstiffnesses[body-&gt;getId()];
++	#else
++		Vector3r&amp; stiffness = (static_cast&lt;GlobalStiffness*&gt;( ncb-&gt;physicalActions-&gt;find (body-&gt;getId(), globalStiffnessClassIndex).get()))-&gt;stiffness;
++		Vector3r&amp; Rstiffness = (static_cast&lt;GlobalStiffness*&gt;( ncb-&gt;physicalActions-&gt;find (body-&gt;getId(), globalStiffnessClassIndex).get()))-&gt;Rstiffness;
++	#endif
+ 
+-
+ 	//cerr &lt;&lt; &quot;Vector3r&amp; stiffness = (static_cast&lt;GlobalStiffness*&gt;( ncb&quot; &lt;&lt; endl;
+ 	if(! ( /* sphere &amp;&amp; */ sdec &amp;&amp; stiffness) )
+ 		return; // not possible to compute!
+@@ -133,6 +138,10 @@
+ void GlobalStiffnessTimeStepper::computeTimeStep(MetaBody* ncb)
+ {
+ 
++	#ifdef BEX_CONTAINER
++		computeStiffnesses(ncb);
++	#endif
++
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ // 	shared_ptr&lt;InteractionContainer&gt;&amp; transientInteractions = ncb-&gt;transientInteractions;
+ 
+@@ -180,4 +189,53 @@
+ 			string(&quot;, BUT timestep is &quot;)+lexical_cast&lt;string&gt;(Omega::instance().getTimeStep()))&lt;&lt;&quot;.&quot;);
+ }
+ 
+-YADE_PLUGIN();
++#ifdef BEX_CONTAINER
++	void GlobalStiffnessTimeStepper::computeStiffnesses(MetaBody* rb){
++		/* check size */
++		size_t size=stiffnesses.size();
++		if(size&lt;rb-&gt;bodies-&gt;size()){
++			size=rb-&gt;bodies-&gt;size();
++			stiffnesses.resize(size); Rstiffnesses.resize(size);
++		}
++		/* reset stored values */
++		memset(stiffnesses[0], 0,sizeof(Vector3r)*size);
++		memset(Rstiffnesses[0],0,sizeof(Vector3r)*size);
++		/* loop copied verbatim from GlobalStiffnessCounter */
++		FOREACH(const shared_ptr&lt;Interaction&gt;&amp; contact, *rb-&gt;interactions){
++			if(!contact-&gt;isReal) continue;
++
++			SpheresContactGeometry* geom=YADE_CAST&lt;SpheresContactGeometry*&gt;(contact-&gt;interactionGeometry.get()); assert(geom);
++			NormalShearInteraction* phys=YADE_CAST&lt;NormalShearInteraction*&gt;(contact-&gt;interactionPhysics.get()); assert(phys);
++			// all we need for getting stiffness
++			Vector3r&amp; normal=geom-&gt;normal; Real&amp; kn=phys-&gt;kn; Real&amp; ks=phys-&gt;ks; Real&amp; radius1=geom-&gt;radius1; Real&amp; radius2=geom-&gt;radius2;
++			// FIXME? NormalShearInteraction knows nothing about whether the contact is &quot;active&quot; (force!=0) or not;
++			// former code: if(force==0) continue; /* disregard this interaction, it is not active */.
++			// It seems though that in such case either the interaction is accidentally at perfect equilibrium (unlikely)
++			// or it should have been deleted already. Right? 
++			//ANSWER : some interactions can exist without fn, e.g. distant capillary force, wich does not contribute to the overall stiffness via kn. The test is needed.
++			Real fn = (static_cast&lt;NormalShearInteraction *&gt; (contact-&gt;interactionPhysics.get()))-&gt;normalForce.SquaredLength();
++
++			if (fn!=0) {
++				//Diagonal terms of the translational stiffness matrix
++				Vector3r diag_stiffness = Vector3r(std::pow(normal.X(),2),std::pow(normal.Y(),2),std::pow(normal.Z(),2));
++				diag_stiffness *= kn-ks;
++				diag_stiffness = diag_stiffness + Vector3r(1,1,1)*ks;
++
++				//diagonal terms of the rotational stiffness matrix
++				// Vector3r branch1 = currentContactGeometry-&gt;normal*currentContactGeometry-&gt;radius1;
++				// Vector3r branch2 = currentContactGeometry-&gt;normal*currentContactGeometry-&gt;radius2;
++				Vector3r diag_Rstiffness =
++					Vector3r(std::pow(normal.Y(),2)+std::pow(normal.Z(),2),
++						std::pow(normal.X(),2)+std::pow(normal.Z(),2),
++						std::pow(normal.X(),2)+std::pow(normal.Y(),2));
++				diag_Rstiffness *= ks;
++				//cerr &lt;&lt; &quot;diag_Rstifness=&quot; &lt;&lt; diag_Rstiffness &lt;&lt; endl;
++				
++				stiffnesses [contact-&gt;getId1()]+=diag_stiffness;
++				Rstiffnesses[contact-&gt;getId1()]+=diag_Rstiffness*pow(radius1,2);
++				stiffnesses [contact-&gt;getId2()]+=diag_stiffness;
++				Rstiffnesses[contact-&gt;getId2()]+=diag_Rstiffness*pow(radius2,2);
++			}
++		}
++	}
++#endif
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp	2009-02-21 20:14:55 UTC (rev 1677)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp	2009-02-22 10:30:11 UTC (rev 1678)
+@@ -26,6 +26,12 @@
+ class GlobalStiffnessTimeStepper : public TimeStepper
+ {
+ 	private :
++	#ifdef BEX_CONTAINER
++		vector&lt;Vector3r&gt; stiffnesses;
++		vector&lt;Vector3r&gt; Rstiffnesses;
++		void computeStiffnesses(MetaBody*); // what GlobalStiffnessCounter used to do
++	#endif
++
+ 		Real		newDt, previousDt;
+ 		bool		computedSomething,
+ 				computedOnce;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000723.html">[deprecated list] [Yade-dev] [svn] r1677 - in	trunk/pkg/common/Engine: DeusExMachina	MetaEngine
+</A></li>
+	<LI>Next message: <A HREF="000726.html">[deprecated list] [Yade-dev] [svn] r1679 - in trunk/pkg/snow:	PreProcessor/Voxel	RenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#725">[ date ]</a>
+              <a href="thread.html#725">[ thread ]</a>
+              <a href="subject.html#725">[ subject ]</a>
+              <a href="author.html#725">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

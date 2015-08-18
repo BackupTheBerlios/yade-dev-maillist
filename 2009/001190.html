@@ -1,0 +1,548 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1863 - in trunk: core	core/containers pkg/common	pkg/common/DataClass	pkg/common/Engine/MetaEngine	pkg/dem/Engine/DeusExMachina scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1863%20-%20in%20trunk%3A%20core%0A%09core/containers%20pkg/common%09pkg/common/DataClass%0A%09pkg/common/Engine/MetaEngine%09pkg/dem/Engine/DeusExMachina%20scripts&In-Reply-To=%3C200907132139.n6DLdTq5023470%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001189.html">
+   <LINK REL="Next"  HREF="001191.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1863 - in trunk: core	core/containers pkg/common	pkg/common/DataClass	pkg/common/Engine/MetaEngine	pkg/dem/Engine/DeusExMachina scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1863%20-%20in%20trunk%3A%20core%0A%09core/containers%20pkg/common%09pkg/common/DataClass%0A%09pkg/common/Engine/MetaEngine%09pkg/dem/Engine/DeusExMachina%20scripts&In-Reply-To=%3C200907132139.n6DLdTq5023470%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1863 - in trunk: core	core/containers pkg/common	pkg/common/DataClass	pkg/common/Engine/MetaEngine	pkg/dem/Engine/DeusExMachina scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Jul 13 23:39:29 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001189.html">[deprecated list] [Yade-dev] [svn] r1862 - in trunk: gui/qt3	pkg/common	pkg/common/DataClass	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem	pkg/dem/Engine/DeusExMachina scripts/test
+</A></li>
+        <LI>Next message: <A HREF="001191.html">[deprecated list] [Yade-dev] DistantPersistentSAPCollider
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1190">[ date ]</a>
+              <a href="thread.html#1190">[ thread ]</a>
+              <a href="subject.html#1190">[ subject ]</a>
+              <a href="author.html#1190">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-13 23:39:27 +0200 (Mon, 13 Jul 2009)
+New Revision: 1863
+
+Modified:
+   trunk/core/BodyContainer.hpp
+   trunk/core/containers/BodyAssocVector.cpp
+   trunk/core/containers/BodyAssocVector.hpp
+   trunk/core/containers/BodyRedirectionVector.cpp
+   trunk/core/containers/BodyRedirectionVector.hpp
+   trunk/pkg/common/DataClass/VelocityBins.cpp
+   trunk/pkg/common/DataClass/VelocityBins.hpp
+   trunk/pkg/common/Engine/MetaEngine/EngineUnits.cpp
+   trunk/pkg/common/Engine/MetaEngine/PhysicalActionApplierUnit.hpp
+   trunk/pkg/common/Engine/MetaEngine/PhysicalActionDamperUnit.hpp
+   trunk/pkg/common/SConscript
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+   trunk/scripts/simple-scene.py
+Log:
+1. Parallelized NewtonsDampedLaw (scales very well)
+2. Parallelized VelocityBins
+3. Add const modifier to BodyContainer::size
+4. Add virtual dtors to PhysicalAction{Damper,Applier}Unit (for dynamic_cast'ing)
+
+
+Modified: trunk/core/BodyContainer.hpp
+===================================================================
+--- trunk/core/BodyContainer.hpp	2009-07-13 19:31:44 UTC (rev 1862)
++++ trunk/core/BodyContainer.hpp	2009-07-13 21:39:27 UTC (rev 1863)
+@@ -87,14 +87,14 @@
+ 		virtual bool erase(unsigned int) 				{throw;};
+ 		virtual bool find(unsigned int , shared_ptr&lt;Body&gt;&amp;) const	{throw;};
+ 		virtual bool exists(unsigned int id) const 			{throw;};
+-		virtual shared_ptr&lt;Body&gt;&amp; operator[](unsigned int)		{throw;};
+-		virtual const shared_ptr&lt;Body&gt;&amp; operator[](unsigned int) const	{throw;};
++		virtual shared_ptr&lt;Body&gt;&amp; operator[](unsigned int) {throw;};
++		virtual const shared_ptr&lt;Body&gt;&amp; operator[](unsigned int) const {throw;};
+ 		
+ 		typedef BodyContainerIteratorPointer iterator;
+ 		virtual BodyContainer::iterator begin()				{throw;};
+ 		virtual BodyContainer::iterator end()				{throw;};
+ 		
+-		virtual unsigned int size() 					{throw;};
++		virtual unsigned int size() const {throw;};
+ 
+ 	protected :
+ 		void setId(shared_ptr&lt;Body&gt;&amp; , unsigned int);
+
+Modified: trunk/core/containers/BodyAssocVector.cpp
+===================================================================
+--- trunk/core/containers/BodyAssocVector.cpp	2009-07-13 19:31:44 UTC (rev 1862)
++++ trunk/core/containers/BodyAssocVector.cpp	2009-07-13 21:39:27 UTC (rev 1863)
+@@ -210,7 +210,7 @@
+ // }
+ // 
+ 
+-unsigned int BodyAssocVector::size()
++unsigned int BodyAssocVector::size() const
+ {
+ 	return bodies.size();
+ }
+
+Modified: trunk/core/containers/BodyAssocVector.hpp
+===================================================================
+--- trunk/core/containers/BodyAssocVector.hpp	2009-07-13 19:31:44 UTC (rev 1862)
++++ trunk/core/containers/BodyAssocVector.hpp	2009-07-13 21:39:27 UTC (rev 1863)
+@@ -60,7 +60,7 @@
+ 		virtual BodyContainer::iterator begin();
+         	virtual BodyContainer::iterator end();
+ 
+-		virtual unsigned int size();
++		virtual unsigned int size() const;
+ 
+ 	REGISTER_CLASS_NAME(BodyAssocVector);
+ 	REGISTER_BASE_CLASS_NAME(BodyContainer);
+
+Modified: trunk/core/containers/BodyRedirectionVector.cpp
+===================================================================
+--- trunk/core/containers/BodyRedirectionVector.cpp	2009-07-13 19:31:44 UTC (rev 1862)
++++ trunk/core/containers/BodyRedirectionVector.cpp	2009-07-13 21:39:27 UTC (rev 1863)
+@@ -255,7 +255,7 @@
+ // }
+ // 
+ 
+-unsigned int BodyRedirectionVector::size()
++unsigned int BodyRedirectionVector::size() const
+ {
+ 	return bodies.size();
+ }
+
+Modified: trunk/core/containers/BodyRedirectionVector.hpp
+===================================================================
+--- trunk/core/containers/BodyRedirectionVector.hpp	2009-07-13 19:31:44 UTC (rev 1862)
++++ trunk/core/containers/BodyRedirectionVector.hpp	2009-07-13 21:39:27 UTC (rev 1863)
+@@ -55,7 +55,7 @@
+ 		virtual BodyContainer::iterator begin();
+ 	        virtual BodyContainer::iterator end();
+ 		
+-		virtual unsigned int size();
++		virtual unsigned int size() const;
+ 
+ 	// serialization of this class...
+ 	REGISTER_CLASS_NAME(BodyRedirectionVector);
+
+Modified: trunk/pkg/common/DataClass/VelocityBins.cpp
+===================================================================
+--- trunk/pkg/common/DataClass/VelocityBins.cpp	2009-07-13 19:31:44 UTC (rev 1862)
++++ trunk/pkg/common/DataClass/VelocityBins.cpp	2009-07-13 21:39:27 UTC (rev 1863)
+@@ -38,7 +38,7 @@
+ 		if(refMaxVelSq&lt;0){ refMaxVelSq=currMaxVelSq; /* first time */}
+ 		else {
+ 			// there should be some maximum speed change parameter, so that bins do not change their limits (and therefore bodies, also!) too often, depending on 1 particle going crazy
+-			refMaxVelSq=min(max(refMaxVelSq*pow(1-maxRefRelStep,2),currMaxVelSq),refMaxVelSq*pow(1+maxRefRelStep,2));
++			refMaxVelSq=min(max(refMaxVelSq/pow(1+maxRefRelStep,2),currMaxVelSq),refMaxVelSq*pow(1+maxRefRelStep,2));
+ 			if(refMaxVelSq==0) refMaxVelSq=currMaxVelSq;
+ 		}
+ 		LOG_TRACE(&quot;new refMaxVel: &quot;&lt;&lt;sqrt(refMaxVelSq));
+@@ -86,12 +86,23 @@
+ }
+ 
+ /* non-parallel implementations */
+-void VelocityBins::binVelSqInitialize(){ FOREACH(Bin&amp; bin, bins) bin.currMaxVelSq=0; }
+-void VelocityBins::binVelSqUse(body_id_t id, Real velSq){
+-	#ifdef YADE_OPENMP
+-		if(omp_get_thread_num()&gt;0) {LOG_FATAL(&quot;VelocityBins do not support multiple openMP threads yet!&quot;); abort(); }
+-	#endif
+-	Real&amp; maxVelSq(bins[bodyBins[id]].currMaxVelSq);
+-	maxVelSq=max(maxVelSq,velSq);
+-}
+-void VelocityBins::binVelSqFinalize(){}
++#ifdef YADE_OPENMP
++	void VelocityBins::binVelSqInitialize(){ FOREACH(Bin&amp; bin, bins){ FOREACH(Real&amp; vSq, bin.threadMaxVelSq) vSq=0.; }}
++	void VelocityBins::binVelSqUse(body_id_t id, Real velSq){
++		Real&amp; maxVelSq(bins[bodyBins[id]].threadMaxVelSq[omp_get_thread_num()]);
++		maxVelSq=max(maxVelSq,velSq);
++	}
++	void VelocityBins::binVelSqFinalize(){
++		FOREACH(Bin&amp; bin, bins){
++			bin.currMaxVelSq=0;
++			FOREACH(const Real&amp; vSq, bin.threadMaxVelSq) bin.currMaxVelSq=max(bin.currMaxVelSq,vSq);
++		}
++	}
++#else
++	void VelocityBins::binVelSqInitialize(){ FOREACH(Bin&amp; bin, bins) bin.currMaxVelSq=0; }
++	void VelocityBins::binVelSqUse(body_id_t id, Real velSq){
++		Real&amp; maxVelSq(bins[bodyBins[id]].currMaxVelSq);
++		maxVelSq=max(maxVelSq,velSq);
++	}
++	void VelocityBins::binVelSqFinalize(){}
++#endif
+
+Modified: trunk/pkg/common/DataClass/VelocityBins.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/VelocityBins.hpp	2009-07-13 19:31:44 UTC (rev 1862)
++++ trunk/pkg/common/DataClass/VelocityBins.hpp	2009-07-13 21:39:27 UTC (rev 1863)
+@@ -4,6 +4,9 @@
+ #include&lt;yade/core/Interaction.hpp&gt; // for body_id_t
+ #include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+ #include&lt;vector&gt;
++#ifdef YADE_OPENMP
++	#include&lt;omp.h&gt;
++#endif
+ 
+ class MetaBody;
+ 
+@@ -14,10 +17,14 @@
+ */
+ class VelocityBins{
+ 	public:
+-	VelocityBins(int _nBins, Real _refMaxVelSq, Real _binCoeff=10, Real _binOverlap=0.8): refMaxVelSq(_refMaxVelSq), binCoeff(_binCoeff), binOverlap(_binOverlap), maxRefRelStep(0.05), nBins(_nBins), histInterval(200), histLast(-1){};
++	VelocityBins(int _nBins, Real _refMaxVelSq, Real _binCoeff=10, Real _binOverlap=0.8): refMaxVelSq(_refMaxVelSq), binCoeff(_binCoeff), binOverlap(_binOverlap), maxRefRelStep(100), nBins(_nBins), histInterval(200), histLast(-1){}
+ 	typedef signed char binNo_t;
+ 	struct Bin{
+-		Bin(): binMinVelSq(-1), binMaxVelSq(-1), maxDist(0), currDistSq(0), currMaxVelSq(0), nBodies(0){}
++		Bin(): binMinVelSq(-1), binMaxVelSq(-1), maxDist(0), currDistSq(0), currMaxVelSq(0), nBodies(0){
++			#ifdef YADE_OPENMP
++				threadMaxVelSq.resize(omp_get_max_threads());
++			#endif
++		};
+ 		// limits for bin memebrship
+ 		Real binMinVelSq, binMaxVelSq;
+ 		// maximum distance that body in this bin can travel before it goes out of its swept bbox
+@@ -28,6 +35,9 @@
+ 		Real currMaxVelSq;
+ 		// number of bodies in this bin (for informational purposes only)
+ 		long nBodies;
++		#ifdef YADE_OPENMP
++			vector&lt;Real&gt; threadMaxVelSq;
++		#endif
+ 	};
+ 	// bins themselves (their number is nBins)
+ 	vector&lt;Bin&gt; bins;
+
+Modified: trunk/pkg/common/Engine/MetaEngine/EngineUnits.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/EngineUnits.cpp	2009-07-13 19:31:44 UTC (rev 1862)
++++ trunk/pkg/common/Engine/MetaEngine/EngineUnits.cpp	2009-07-13 21:39:27 UTC (rev 1863)
+@@ -4,6 +4,8 @@
+ #include&lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionPhysicsEngineUnit.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalParametersEngineUnit.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionDamperUnit.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionApplierUnit.hpp&gt;
+ #include&lt;yade/pkg-common/ConstitutiveLaw.hpp&gt;
+ 
+ BoundingVolumeEngineUnit::~BoundingVolumeEngineUnit(){};
+@@ -12,5 +14,7 @@
+ InteractionGeometryEngineUnit::~InteractionGeometryEngineUnit(){};
+ InteractionPhysicsEngineUnit::~InteractionPhysicsEngineUnit(){};
+ PhysicalParametersEngineUnit::~PhysicalParametersEngineUnit(){};
++PhysicalActionDamperUnit::~PhysicalActionDamperUnit(){};
++PhysicalActionApplierUnit::~PhysicalActionApplierUnit(){};
+ ConstitutiveLaw::~ConstitutiveLaw(){};
+ 
+
+Modified: trunk/pkg/common/Engine/MetaEngine/PhysicalActionApplierUnit.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/PhysicalActionApplierUnit.hpp	2009-07-13 19:31:44 UTC (rev 1862)
++++ trunk/pkg/common/Engine/MetaEngine/PhysicalActionApplierUnit.hpp	2009-07-13 21:39:27 UTC (rev 1863)
+@@ -14,6 +14,7 @@
+ #include&lt;yade/core/EngineUnit1D.hpp&gt;
+ 
+ class PhysicalActionApplierUnit: public EngineUnit1D&lt;void,TYPELIST_3(const shared_ptr&lt;PhysicalParameters&gt;&amp;,const Body*, MetaBody*)&gt;{
++	public: virtual ~PhysicalActionApplierUnit();
+ 	REGISTER_CLASS_AND_BASE(PhysicalActionApplierUnit,EngineUnit1D);
+ 	REGISTER_ATTRIBUTES(EngineUnit, /* nothing here */ );
+ };
+
+Modified: trunk/pkg/common/Engine/MetaEngine/PhysicalActionDamperUnit.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/PhysicalActionDamperUnit.hpp	2009-07-13 19:31:44 UTC (rev 1862)
++++ trunk/pkg/common/Engine/MetaEngine/PhysicalActionDamperUnit.hpp	2009-07-13 21:39:27 UTC (rev 1863)
+@@ -17,6 +17,8 @@
+ class PhysicalActionDamperUnit: public EngineUnit1D&lt;void,TYPELIST_3(const shared_ptr&lt;PhysicalParameters&gt;&amp;,const Body*, MetaBody*)&gt;{
+ 	REGISTER_CLASS_AND_BASE(PhysicalActionDamperUnit,EngineUnit1D);
+ 	REGISTER_ATTRIBUTES(EngineUnit,/* nothing here */);
++	public: virtual ~PhysicalActionDamperUnit();
++	protected:
+ 	/* We are friend of BexContainer. These functions can be used safely provided that bex is NEVER read after being modified. */
+ 	Vector3r getForceUnsynced (body_id_t id, MetaBody* rb){ return rb-&gt;bex.getForceUnsynced (id);}
+ 	Vector3r getTorqueUnsynced(body_id_t id, MetaBody* rb){ return rb-&gt;bex.getTorqueUnsynced(id);}
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2009-07-13 19:31:44 UTC (rev 1862)
++++ trunk/pkg/common/SConscript	2009-07-13 21:39:27 UTC (rev 1863)
+@@ -97,7 +97,7 @@
+ 		LIBS=env['LIBS']+['FilterEngine','ColorScale']),
+ 	env.SharedLibrary('ColorizedTimeFilter',['Engine/FilterEngine/ColorizedTimeFilter.cpp'],
+ 		LIBS=env['LIBS']+['FilterEngine','ColorScale']),
+-	env.SharedLibrary('BoundingVolumeMetaEngine',['Engine/MetaEngine/BoundingVolumeMetaEngine.cpp'],LIBS=env['LIBS']+['RigidBodyParameters','AABB','EngineUnits']),
++	env.SharedLibrary('BoundingVolumeMetaEngine',['Engine/MetaEngine/BoundingVolumeMetaEngine.cpp'],LIBS=env['LIBS']+['RigidBodyParameters','AABB','EngineUnits','VelocityBins']),
+ 	env.SharedLibrary('GeometricalModelMetaEngine',['Engine/MetaEngine/GeometricalModelMetaEngine.cpp'],LIBS=env['LIBS']+['EngineUnits']),
+ 	env.SharedLibrary('InteractingGeometryMetaEngine',['Engine/MetaEngine/InteractingGeometryMetaEngine.cpp'],LIBS=env['LIBS']+['EngineUnits']),
+ 	env.SharedLibrary('PhysicalParametersMetaEngine',['Engine/MetaEngine/PhysicalParametersMetaEngine.cpp'],LIBS=env['LIBS']+['EngineUnits']),
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-07-13 19:31:44 UTC (rev 1862)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-07-13 21:39:27 UTC (rev 1863)
+@@ -36,7 +36,11 @@
+ 	clumpRBP-&gt;acceleration+=diffClumpAccel;
+ 	clumpRBP-&gt;angularAcceleration+=diffClumpAngularAccel;
+ 	if(haveBins) velocityBins-&gt;binVelSqUse(memberId,VelocityBins::getBodyVelSq(rb));
+-	maxVelocitySq=max(maxVelocitySq,rb-&gt;velocity.SquaredLength());
++	#ifdef YADE_OPENMP
++		Real&amp; thrMaxVSq=threadMaxVelocitySq[omp_get_thread_num()]; thrMaxVSq=max(thrMaxVSq,rb-&gt;velocity.SquaredLength());
++	#else
++		maxVelocitySq=max(maxVelocitySq,rb-&gt;velocity.SquaredLength());
++	#endif
+ }
+ 
+ void NewtonsDampedLaw::action(MetaBody * ncb)
+@@ -47,59 +51,85 @@
+ 	haveBins=(bool)velocityBins;
+ 	if(haveBins) velocityBins-&gt;binVelSqInitialize();
+ 
+-	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *ncb-&gt;bodies){
+-		// clump members are non-dynamic; they skip the rest of loop once their forces are properly taken into account, however
+-		if (!b-&gt;isDynamic || b-&gt;isClumpMember()) continue;
+-		RigidBodyParameters* rb = YADE_CAST&lt;RigidBodyParameters*&gt;(b-&gt;physicalParameters.get());
+-		const body_id_t&amp; id=b-&gt;getId();
+-		const Vector3r&amp; m=ncb-&gt;bex.getTorque(id); const Vector3r&amp; f=ncb-&gt;bex.getForce(id);
++	#ifdef YADE_OPENMP
++		FOREACH(Real&amp; thrMaxVSq, threadMaxVelocitySq) { thrMaxVSq=0; }
++		const BodyContainer&amp; bodies=*(ncb-&gt;bodies.get());
++		const long size=(long)bodies.size();
++		#pragma omp parallel for schedule(static)
++		for(long _id=0; _id&lt;size; _id++){
++			const shared_ptr&lt;Body&gt;&amp; b(bodies[_id]);
++	#else
++		FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *ncb-&gt;bodies){
++	#endif
++			RigidBodyParameters* rb = YADE_CAST&lt;RigidBodyParameters*&gt;(b-&gt;physicalParameters.get());
++			const body_id_t&amp; id=b-&gt;getId();
++			// clump members are non-dynamic; we only get their velocities here
++			if (!b-&gt;isDynamic || b-&gt;isClumpMember()){
++				// FIXME: duplicated code from below; awaits <A HREF="https://bugs.launchpad.net/yade/+bug/398089">https://bugs.launchpad.net/yade/+bug/398089</A> to be solved
++				if(haveBins) {velocityBins-&gt;binVelSqUse(id,VelocityBins::getBodyVelSq(rb));}
++				#ifdef YADE_OPENMP
++					Real&amp; thrMaxVSq=threadMaxVelocitySq[omp_get_thread_num()]; thrMaxVSq=max(thrMaxVSq,rb-&gt;velocity.SquaredLength());
++				#else
++					maxVelocitySq=max(maxVelocitySq,rb-&gt;velocity.SquaredLength());
++				#endif
++				continue;
++			}
++			const Vector3r&amp; m=ncb-&gt;bex.getTorque(id); const Vector3r&amp; f=ncb-&gt;bex.getForce(id);
+ 
+-		if (b-&gt;isStandalone()){
+-			rb-&gt;acceleration=f/rb-&gt;mass;
+-			rb-&gt;angularAcceleration=diagDiv(m,rb-&gt;inertia);
+-			cundallDamp(dt,f,rb-&gt;velocity,rb-&gt;acceleration,m,rb-&gt;angularVelocity,rb-&gt;angularAcceleration);
+-		}
+-		else if (b-&gt;isClump()){
+-			rb-&gt;acceleration=rb-&gt;angularAcceleration=Vector3r::ZERO; // to make sure; should be reset in Clump::moveMembers
+-			FOREACH(Clump::memberMap::value_type mm, static_cast&lt;Clump*&gt;(b.get())-&gt;members){
+-				handleClumpMember(ncb,mm.first,rb);
++			if (b-&gt;isStandalone()){
++				rb-&gt;acceleration=f/rb-&gt;mass;
++				rb-&gt;angularAcceleration=diagDiv(m,rb-&gt;inertia);
++				cundallDamp(dt,f,rb-&gt;velocity,rb-&gt;acceleration,m,rb-&gt;angularVelocity,rb-&gt;angularAcceleration);
+ 			}
+-			// at this point, forces from clump members are already summed up, this is just for forces applied to clump proper, if there are such
+-			Vector3r dLinAccel=f/rb-&gt;mass, dAngAccel=diagDiv(m,rb-&gt;inertia);
+-			cundallDamp(dt,f,rb-&gt;velocity,dLinAccel,m,rb-&gt;angularVelocity,dAngAccel);
+-			rb-&gt;acceleration+=dLinAccel;
+-			rb-&gt;angularAcceleration+=dAngAccel;
+-		}
++			else if (b-&gt;isClump()){
++				rb-&gt;acceleration=rb-&gt;angularAcceleration=Vector3r::ZERO; // to make sure; should be reset in Clump::moveMembers
++				// sum force on clump memebrs, add them to the clump itself
++				FOREACH(Clump::memberMap::value_type mm, static_cast&lt;Clump*&gt;(b.get())-&gt;members){
++					handleClumpMember(ncb,mm.first,rb);
++				}
++				// at this point, forces from clump members are already summed up, this is just for forces applied to clump proper, if there are such
++				Vector3r dLinAccel=f/rb-&gt;mass, dAngAccel=diagDiv(m,rb-&gt;inertia);
++				cundallDamp(dt,f,rb-&gt;velocity,dLinAccel,m,rb-&gt;angularVelocity,dAngAccel);
++				rb-&gt;acceleration+=dLinAccel;
++				rb-&gt;angularAcceleration+=dAngAccel;
++			}
+ 
+-		if(haveBins) {velocityBins-&gt;binVelSqUse(id,VelocityBins::getBodyVelSq(rb));}
+-		maxVelocitySq=max(maxVelocitySq,rb-&gt;velocity.SquaredLength());
++			// blocking DOFs
++			if(rb-&gt;blockedDOFs==0){ /* same as: rb-&gt;blockedDOFs==PhysicalParameters::DOF_NONE */
++				rb-&gt;angularVelocity=rb-&gt;angularVelocity+dt*rb-&gt;angularAcceleration;
++				rb-&gt;velocity=rb-&gt;velocity+dt*rb-&gt;acceleration;
++			} else {
++				if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_X)==0) rb-&gt;velocity[0]+=dt*rb-&gt;acceleration[0];
++				if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_Y)==0) rb-&gt;velocity[1]+=dt*rb-&gt;acceleration[1];
++				if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_Z)==0) rb-&gt;velocity[2]+=dt*rb-&gt;acceleration[2];
++				if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_RX)==0) rb-&gt;angularVelocity[0]+=dt*rb-&gt;angularAcceleration[0];
++				if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_RY)==0) rb-&gt;angularVelocity[1]+=dt*rb-&gt;angularAcceleration[1];
++				if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_RZ)==0) rb-&gt;angularVelocity[2]+=dt*rb-&gt;angularAcceleration[2];
++			}
+ 
+-		// blocking DOFs
+-		if(rb-&gt;blockedDOFs==0){ /* same as: rb-&gt;blockedDOFs==PhysicalParameters::DOF_NONE */
+-			rb-&gt;angularVelocity=rb-&gt;angularVelocity+dt*rb-&gt;angularAcceleration;
+-			rb-&gt;velocity=rb-&gt;velocity+dt*rb-&gt;acceleration;
+-		} else {
+-			if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_X)==0) rb-&gt;velocity[0]+=dt*rb-&gt;acceleration[0];
+-			if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_Y)==0) rb-&gt;velocity[1]+=dt*rb-&gt;acceleration[1];
+-			if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_Z)==0) rb-&gt;velocity[2]+=dt*rb-&gt;acceleration[2];
+-			if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_RX)==0) rb-&gt;angularVelocity[0]+=dt*rb-&gt;angularAcceleration[0];
+-			if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_RY)==0) rb-&gt;angularVelocity[1]+=dt*rb-&gt;angularAcceleration[1];
+-			if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_RZ)==0) rb-&gt;angularVelocity[2]+=dt*rb-&gt;angularAcceleration[2];
+-		}
++			// velocities are ready now, save maxima
++				if(haveBins) {velocityBins-&gt;binVelSqUse(id,VelocityBins::getBodyVelSq(rb));}
++				#ifdef YADE_OPENMP
++					Real&amp; thrMaxVSq=threadMaxVelocitySq[omp_get_thread_num()]; thrMaxVSq=max(thrMaxVSq,rb-&gt;velocity.SquaredLength());
++				#else
++					maxVelocitySq=max(maxVelocitySq,rb-&gt;velocity.SquaredLength());
++				#endif
+ 
+-		Vector3r axis = rb-&gt;angularVelocity;
+-		Real angle = axis.Normalize();
+-		Quaternionr q;
+-		q.FromAxisAngle ( axis,angle*dt );
+-		rb-&gt;se3.orientation = q*rb-&gt;se3.orientation;
+-		if(ncb-&gt;bex.getMoveRotUsed() &amp;&amp; ncb-&gt;bex.getRot(id)!=Vector3r::ZERO){ Vector3r r(ncb-&gt;bex.getRot(id)); Real norm=r.Normalize(); q.FromAxisAngle(r,norm); rb-&gt;se3.orientation=q*rb-&gt;se3.orientation; }
+-		rb-&gt;se3.orientation.Normalize();
++			Vector3r axis = rb-&gt;angularVelocity;
++			Real angle = axis.Normalize();
++			Quaternionr q;
++			q.FromAxisAngle ( axis,angle*dt );
++			rb-&gt;se3.orientation = q*rb-&gt;se3.orientation;
++			if(ncb-&gt;bex.getMoveRotUsed() &amp;&amp; ncb-&gt;bex.getRot(id)!=Vector3r::ZERO){ Vector3r r(ncb-&gt;bex.getRot(id)); Real norm=r.Normalize(); q.FromAxisAngle(r,norm); rb-&gt;se3.orientation=q*rb-&gt;se3.orientation; }
++			rb-&gt;se3.orientation.Normalize();
+ 
+-		rb-&gt;se3.position += rb-&gt;velocity*dt + ncb-&gt;bex.getMove(id);
++			rb-&gt;se3.position += rb-&gt;velocity*dt + ncb-&gt;bex.getMove(id);
+ 
+-		if(b-&gt;isClump()) static_cast&lt;Clump*&gt;(b.get())-&gt;moveMembers();
++			if(b-&gt;isClump()) static_cast&lt;Clump*&gt;(b.get())-&gt;moveMembers();
+ 	}
+-
++	#ifdef YADE_OPENMP
++		FOREACH(const Real&amp; thrMaxVSq, threadMaxVelocitySq) { maxVelocitySq=max(maxVelocitySq,thrMaxVSq); }
++	#endif
+ 	if(haveBins) velocityBins-&gt;binVelSqFinalize();
+ }
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2009-07-13 19:31:44 UTC (rev 1862)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2009-07-13 21:39:27 UTC (rev 1863)
+@@ -9,6 +9,9 @@
+ 
+ #include&lt;yade/core/StandAloneEngine.hpp&gt;
+ #include&lt;Wm3Vector3.h&gt;
++#ifdef YADE_OPENMP
++	#include&lt;omp.h&gt;
++#endif
+ 
+ /*! An engine that can replace the usual series of engines used for integrating the laws of motion.
+ 
+@@ -43,10 +46,17 @@
+ 		Real damping;
+ 		/// store square of max. velocity, for informative purposes; computed again at every step
+ 		Real maxVelocitySq;
++		#ifdef YADE_OPENMP
++			vector&lt;Real&gt; threadMaxVelocitySq;
++		#endif
+ 		/// velocity bins (not used if not created)
+ 		shared_ptr&lt;VelocityBins&gt; velocityBins;
+ 		virtual void action(MetaBody *);		
+-		NewtonsDampedLaw(): damping(0.2), maxVelocitySq(-1){}
++		NewtonsDampedLaw(): damping(0.2), maxVelocitySq(-1){
++			#ifdef YADE_OPENMP
++				threadMaxVelocitySq.resize(omp_get_max_threads());
++			#endif
++		}
+ 
+ 	REGISTER_ATTRIBUTES(StandAloneEngine,(damping)(maxVelocitySq));
+ 	REGISTER_CLASS_AND_BASE(NewtonsDampedLaw,StandAloneEngine);
+
+Modified: trunk/scripts/simple-scene.py
+===================================================================
+--- trunk/scripts/simple-scene.py	2009-07-13 19:31:44 UTC (rev 1862)
++++ trunk/scripts/simple-scene.py	2009-07-13 21:39:27 UTC (rev 1863)
+@@ -55,21 +55,21 @@
+ 	## This MetaEngine acts on all PhysicalActions and selects the right EngineUnit base on type of the PhysicalAction.
+ 	#
+ 	# note that following 4 engines (till the end) can be replaced by an optimized monolithic version:
+-	# NewtonsDampedLaw(damping=0.1)
++	NewtonsDampedLaw(damping=0.1)
+ 	#
+-	PhysicalActionDamper([
+-		CundallNonViscousForceDamping(damping=0.2),
+-		CundallNonViscousMomentumDamping(damping=0.2)
+-	]),
+-	## Now we have forces and momenta acting on bodies. Newton's law calculates acceleration that corresponds to them.
+-	PhysicalActionApplier([
+-		NewtonsForceLaw(),
+-		NewtonsMomentumLaw(),
+-	]),
+-	## Acceleration results in velocity change. Integrating the velocity over dt, position of the body will change.
+-	PhysicalParametersMetaEngine([LeapFrogPositionIntegrator()]),
+-	## Angular acceleration changes angular velocity, resulting in position and/or orientation change of the body.
+-	PhysicalParametersMetaEngine([LeapFrogOrientationIntegrator()])
++#	PhysicalActionDamper([
++#		CundallNonViscousForceDamping(damping=0.2),
++#		CundallNonViscousMomentumDamping(damping=0.2)
++#	]),
++#	## Now we have forces and momenta acting on bodies. Newton's law calculates acceleration that corresponds to them.
++#	PhysicalActionApplier([
++#		NewtonsForceLaw(),
++#		NewtonsMomentumLaw(),
++#	]),
++#	## Acceleration results in velocity change. Integrating the velocity over dt, position of the body will change.
++#	PhysicalParametersMetaEngine([LeapFrogPositionIntegrator()]),
++#	## Angular acceleration changes angular velocity, resulting in position and/or orientation change of the body.
++#	PhysicalParametersMetaEngine([LeapFrogOrientationIntegrator()])
+ ]
+ 
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001189.html">[deprecated list] [Yade-dev] [svn] r1862 - in trunk: gui/qt3	pkg/common	pkg/common/DataClass	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem	pkg/dem/Engine/DeusExMachina scripts/test
+</A></li>
+	<LI>Next message: <A HREF="001191.html">[deprecated list] [Yade-dev] DistantPersistentSAPCollider
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1190">[ date ]</a>
+              <a href="thread.html#1190">[ thread ]</a>
+              <a href="subject.html#1190">[ subject ]</a>
+              <a href="author.html#1190">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

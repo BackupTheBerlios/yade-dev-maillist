@@ -1,0 +1,91 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] Shear force computation
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Shear%20force%20computation&In-Reply-To=%3C49B689B5.6040303%40icp.ac.ru%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000831.html">
+   <LINK REL="Next"  HREF="000836.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] Shear force computation</H1>
+    <B>Sergei</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Shear%20force%20computation&In-Reply-To=%3C49B689B5.6040303%40icp.ac.ru%3E"
+       TITLE="[deprecated list] [Yade-dev] Shear force computation">dorofeenko at icp.ac.ru
+       </A><BR>
+    <I>Tue Mar 10 16:39:33 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000831.html">[deprecated list] [Yade-dev] Shear force computation
+</A></li>
+        <LI>Next message: <A HREF="000836.html">[deprecated list] [Yade-dev] Shear force computation
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#832">[ date ]</a>
+              <a href="thread.html#832">[ thread ]</a>
+              <a href="subject.html#832">[ subject ]</a>
+              <a href="author.html#832">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;&gt;<i> I will be glad if someone could review the code, notably if it is
+</I>&gt;&gt;<i> appropriate to have zeroPoint in this general piece of code or if it
+</I>&gt;&gt;<i> would be better better to keep that separate, and how to handle
+</I>&gt;&gt;<i> non-dynamic bodies. These are 2 points that are not same across the
+</I>&gt;&gt;<i> copies of the same original code.
+</I>&gt;&gt;<i>
+</I>&gt;<i> I would remove the zero point (I'm just discorvering it btw).
+</I>&gt;<i> And I would not make a difference at all between dynamic and !dynamic
+</I>&gt;<i> bodies.
+</I>&gt;<i>
+</I>&gt;<i> This is a fundamental question, and I perhaps don't fully agree with
+</I>&gt;<i> some current trends regarding this.
+</I>&gt;<i> I'll suggest something in a next mail.
+</I>&gt;<i>
+</I>zeroPoint is the point through which passes the axis of rotation of a
+rigid body. It is used to calculate the linear velocity of the contact
+point on the surface of the body, not rotating around its center of
+inertia (se3). For example, to set facets set zeroPoint, and sets the
+angular velocity of rotation. Then all facets rotate around the axis
+passing through this point, the direction of the axis defined by
+direction of the vector of angular velocity.
+
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000831.html">[deprecated list] [Yade-dev] Shear force computation
+</A></li>
+	<LI>Next message: <A HREF="000836.html">[deprecated list] [Yade-dev] Shear force computation
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#832">[ date ]</a>
+              <a href="thread.html#832">[ thread ]</a>
+              <a href="subject.html#832">[ subject ]</a>
+              <a href="author.html#832">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

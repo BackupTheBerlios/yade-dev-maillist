@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] python-scientific problems on debian etch.
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20python-scientific%20problems%20on%20debian%20etch.&In-Reply-To=%3C20080212003020.4d547d84%40szpak%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000024.html">
+   <LINK REL="Next"  HREF="000009.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] python-scientific problems on debian etch.</H1>
+    <B>Janek Kozicki</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20python-scientific%20problems%20on%20debian%20etch.&In-Reply-To=%3C20080212003020.4d547d84%40szpak%3E"
+       TITLE="[yade-dev] python-scientific problems on debian etch.">janek_listy at wp.pl
+       </A><BR>
+    <I>Tue Feb 12 00:30:20 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000024.html">[yade-dev] Triaxial classes &quot;cerr&quot; output
+</A></li>
+        <LI>Next message: <A HREF="000009.html">[yade-dev] python-scientific problems on debian etch.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#7">[ date ]</a>
+              <a href="thread.html#7">[ thread ]</a>
+              <a href="subject.html#7">[ subject ]</a>
+              <a href="author.html#7">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>OK, I thought I'll give it a try and installed:
+
+  [INSTALL, DEPENDENCIES] blt
+  [INSTALL, DEPENDENCIES] liblog4cxx9c2a
+  [INSTALL, DEPENDENCIES] libnetcdf3
+  [INSTALL, DEPENDENCIES] python-netcdf
+  [INSTALL, DEPENDENCIES] python-numeric-ext
+  [INSTALL, DEPENDENCIES] python-tk
+  [INSTALL] liblog4cxx9-dev
+  [INSTALL] python-scientific
+
+that's a copy'n'paste from /var/log/aptitude
+
+
+So I got this:
+
+Checking whether c++ compiler &quot;distcc g++&quot; works...yes
+Checking for pthread_exit(NULL) in C library pthread... yes
+Checking for glutGetModifiers() in C library glut... yes
+Checking for boost::posix_time::time_duration::time_duration() in C++ library boost_date_time-mt... no
+Checking for boost::posix_time::time_duration::time_duration() in C++ library boost_date_time... yes
+Checking for boost::thread::thread() in C++ library boost_thread-mt... no
+Checking for boost::thread::thread() in C++ library boost_thread... yes
+Checking for boost::filesystem::path() in C++ library boost_filesystem-mt... no
+Checking for boost::filesystem::path() in C++ library boost_filesystem... yes
+Checking for Wm3::Math&lt;double&gt;::PI in C++ library Wm3Foundation... yes
+Checking for qt-mt in /usr/share/qt3... yes
+Checking for QGLViewer(1) in C++ library QGLViewer... no
+Checking for QGLViewer(1) in C++ library qglviewer... yes
+Checking for log4cxx::Logger::getLogger(&quot;foo&quot;) in C++ library log4cxx... yes
+Checking for Python development files... yes
+Checking for scientific python module (debian: python-scientific)... (cached) yes
+Checking for boost::python::scope() in C++ library boost_python-mt... no
+Checking for boost::python::scope() in C++ library boost_python... yes
+scons: done reading SConscript files.
+
+
+And so I got this error:
+
+
+/usr/include/python2.4/object.h:343: error: expected unqualified-id before ';' token
+/usr/include/python2.4/object.h:343: error: abstract declarator 'PyObject*' used as declaration
+distcc[9016] ERROR: compile gui/qt3/GLViewer.cpp on localhost failed
+scons: *** [/home/janek/20-Programowanie/10-cpp/50-Yade/Code/CURRENT/build-svn1244-moment_law2/gui/qt3/GLViewer.os] Error 1
+/usr/include/python2.4/object.h:343: error: expected unqualified-id before ';' token
+/usr/include/python2.4/object.h:343: error: abstract declarator 'PyObject*' used as declaration
+distcc[9031] ERROR: compile gui/qt3/QtCodeGenerator.cpp on localhost failed
+scons: *** [/home/janek/20-Programowanie/10-cpp/50-Yade/Code/CURRENT/build-svn1244-moment_law2/gui/qt3/QtCodeGenerator.os] Error 1
+extra/BrefcomTestGen.cpp: In member function 'virtual bool BrefcomTestGen::generate()':
+extra/BrefcomTestGen.cpp:136: warning: unused variable 'id3'
+/usr/include/python2.4/object.h:343: error: expected unqualified-id before ';' token
+/usr/include/python2.4/object.h:343: error: abstract declarator 'PyObject*' used as declaration
+distcc[9015] ERROR: compile gui/qt3/GLSimulationPlayerViewer.cpp on tien/2 failed
+scons: *** [/home/janek/20-Programowanie/10-cpp/50-Yade/Code/CURRENT/build-svn1244-moment_law2/gui/qt3/GLSimulationPlayerViewer.os] Error 1
+scons: building terminated because of errors.
+
+Vaclav, I have no idea how to fix those python 2.4 related errors. I
+guess that I cannot run pyView in that case?
+
+
+
+So now I'm gonna uninstall those packages and use yade as before. BUT
+I had python-devel installed. So yade is compiling when following
+stuff is detected:
+
+
+Checking whether c++ compiler &quot;distcc g++&quot; works...yes
+Checking for pthread_exit(NULL) in C library pthread... yes
+Checking for glutGetModifiers() in C library glut... yes
+Checking for boost::posix_time::time_duration::time_duration() in C++ library boost_date_time-mt... no
+Checking for boost::posix_time::time_duration::time_duration() in C++ library boost_date_time... yes
+Checking for boost::thread::thread() in C++ library boost_thread-mt... no 
+Checking for boost::thread::thread() in C++ library boost_thread... yes 
+Checking for boost::filesystem::path() in C++ library boost_filesystem-mt... no
+Checking for boost::filesystem::path() in C++ library boost_filesystem... yes
+Checking for Wm3::Math&lt;double&gt;::PI in C++ library Wm3Foundation... yes
+Checking for qt-mt in /usr/share/qt3... yes 
+Checking for QGLViewer(1) in C++ library QGLViewer... no
+Checking for QGLViewer(1) in C++ library qglviewer... yes 
+Checking for log4cxx::Logger::getLogger(&quot;foo&quot;) in C++ library log4cxx... no
+Checking for Python development files... yes 
+Checking for scientific python module (debian: python-scientific)... (cached) no
+scons: done reading SConscript files.
+
+
+Care to help with that?
+
+-- 
+Janek Kozicki
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000024.html">[yade-dev] Triaxial classes &quot;cerr&quot; output
+</A></li>
+	<LI>Next message: <A HREF="000009.html">[yade-dev] python-scientific problems on debian etch.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#7">[ date ]</a>
+              <a href="thread.html#7">[ thread ]</a>
+              <a href="subject.html#7">[ subject ]</a>
+              <a href="author.html#7">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

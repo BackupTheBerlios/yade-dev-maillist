@@ -1,0 +1,108 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] Exposing SpherePadder to python
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Exposing%20SpherePadder%20to%20python&In-Reply-To=%3C4A1D2B1F.7050309%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000985.html">
+   <LINK REL="Next"  HREF="000987.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] Exposing SpherePadder to python</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Exposing%20SpherePadder%20to%20python&In-Reply-To=%3C4A1D2B1F.7050309%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev] Exposing SpherePadder to python">eudoxos at arcig.cz
+       </A><BR>
+    <I>Wed May 27 13:59:27 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000985.html">[deprecated list] [Yade-dev] Exposing SpherePadder to python
+</A></li>
+        <LI>Next message: <A HREF="000987.html">[deprecated list] [Yade-dev] Exposing SpherePadder to python
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#986">[ date ]</a>
+              <a href="thread.html#986">[ thread ]</a>
+              <a href="subject.html#986">[ subject ]</a>
+              <a href="author.html#986">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> I've got an other question about boost::python and dynamic libraries 
+</I>&gt;<i> widely used in yade.
+</I>&gt;<i> I would like to expose the class SpherePadder (and maybe TetraMesh) to 
+</I>&gt;<i> python.
+</I>&gt;<i> I think that it could be possible (?) to add something like:
+</I>&gt;<i>
+</I>&gt;<i> class_&lt;SpherePadder&gt;()
+</I>&gt;<i>     .def(&quot;pad5&quot;,&amp;SpherePadder::pad5)
+</I>&gt;<i>     ...
+</I>&gt;<i>     ;
+</I>&gt;<i>
+</I>&gt;<i> in the BOOST_PYTHON_MODULE(_utils).  But, what about the compilation 
+</I>&gt;<i> of SpherePadder in this case?
+</I>&gt;<i> Must I create a libSpherePadder.so with REGISTER_CLASS_AND_BASE?
+</I>1. You should just add python interface to SpherePadder itself, instead 
+of putting that to _utils: (a) utils has already way too much things 
+inside,  (b) SpherePadder depends on CGAL and yade must compile without 
+CGAL as well (for legal reasons).
+
+2. No need to use REGISTER_CLASS_AND_BASE, unless you want yade to know 
+about inheritance of your class etc. That is needed for serialization, 
+for instance, but in this case I don't see the point.
+
+3. SpherePadder should be added to scons (as an optional part), since it 
+will also install the python module tothe appropriate place.
+
+For yade classes I (ab)use the serialization system to get access to 
+attributes via the ['attribute'] operator, but in your case you can just 
+wrap the variables inside SpherePadder by hand.
+
+sp=SpherePadder()
+sp.zmin=-10
+sp.gap_max=.01
+sp.pack5()
+
+Then you need to think how to pass the result back to python. For 
+pack5(), you could for example return list of (x,y,z,r) tuples or 
+something similar, which could be used in turn to create spheres.
+
+HTH, Vaclav
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000985.html">[deprecated list] [Yade-dev] Exposing SpherePadder to python
+</A></li>
+	<LI>Next message: <A HREF="000987.html">[deprecated list] [Yade-dev] Exposing SpherePadder to python
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#986">[ date ]</a>
+              <a href="thread.html#986">[ thread ]</a>
+              <a href="subject.html#986">[ subject ]</a>
+              <a href="author.html#986">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

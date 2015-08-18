@@ -1,0 +1,238 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1789 - trunk/pkg/dem
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1789%20-%20trunk/pkg/dem&In-Reply-To=%3C200906041417.n54EHSii031588%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001011.html">
+   <LINK REL="Next"  HREF="001013.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1789 - trunk/pkg/dem</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1789%20-%20trunk/pkg/dem&In-Reply-To=%3C200906041417.n54EHSii031588%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1789 - trunk/pkg/dem">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Jun  4 16:17:28 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001011.html">[deprecated list] [Yade-dev] Yade Wiki : how to find a (all)	page(s)?
+</A></li>
+        <LI>Next message: <A HREF="001013.html">[deprecated list] [Yade-dev] [svn] r1790 - in trunk: . core extra	extra/tetra lib	lib/opengl pkg/common	pkg/common/DataClass/BoundingVolume	pkg/common/DataClass/GeometricalModel	pkg/common/DataClass/Widgets	pkg/dem	pkg/dem/DataClass/InteractionGeometry pkg/lattice pkg/snow
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1012">[ date ]</a>
+              <a href="thread.html#1012">[ thread ]</a>
+              <a href="subject.html#1012">[ subject ]</a>
+              <a href="author.html#1012">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-06-04 16:17:27 +0200 (Thu, 04 Jun 2009)
+New Revision: 1789
+
+Modified:
+   trunk/pkg/dem/ConcretePM.cpp
+   trunk/pkg/dem/ConcretePM.hpp
+Log:
+Fixes and cleanups in the CPM code.
+
+
+Modified: trunk/pkg/dem/ConcretePM.cpp
+===================================================================
+--- trunk/pkg/dem/ConcretePM.cpp	2009-06-02 22:02:25 UTC (rev 1788)
++++ trunk/pkg/dem/ConcretePM.cpp	2009-06-04 14:17:27 UTC (rev 1789)
+@@ -118,54 +118,59 @@
+ 
+ /********************** Law2_Dem3DofGeom_CpmPhys_Cpm ****************************/
+ 
+-Real Law2_Dem3DofGeom_CpmPhys_Cpm::minStrain_moveBody2=1.; /* deactivated if &gt; 0 */
+-Real Law2_Dem3DofGeom_CpmPhys_Cpm::yieldLogSpeed=1.;
+-Real Law2_Dem3DofGeom_CpmPhys_Cpm::yieldEllipseShift=0.;
++/// yield surface parameters
++int  Law2_Dem3DofGeom_CpmPhys_Cpm::yieldSurfType=2;
++Real Law2_Dem3DofGeom_CpmPhys_Cpm::yieldLogSpeed=.1;
++Real Law2_Dem3DofGeom_CpmPhys_Cpm::yieldEllipseShift=0.; // deprecated
++/// compressive plasticity parameters
++// approximates confinement -20MPa precisely, -100MPa a little over, -200 and -400 are OK (secant)
++Real Law2_Dem3DofGeom_CpmPhys_Cpm::epsSoft=-3e-3; // deactivated if &gt;=0
++Real Law2_Dem3DofGeom_CpmPhys_Cpm::relKnSoft=.25;
++// &gt;=1. to deactivate (never delete damaged contacts)
+ Real Law2_Dem3DofGeom_CpmPhys_Cpm::omegaThreshold=1.;
+-Real Law2_Dem3DofGeom_CpmPhys_Cpm::epsSoft=0.;
+-Real Law2_Dem3DofGeom_CpmPhys_Cpm::relKnSoft=.5;
+ 
+ void Law2_Dem3DofGeom_CpmPhys_Cpm::go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody){
+-	//timingDeltas-&gt;start();
+ 	Dem3DofGeom* contGeom=static_cast&lt;Dem3DofGeom*&gt;(_geom.get());
+ 	CpmPhys* BC=static_cast&lt;CpmPhys*&gt;(_phys.get());
+ 
+ 	// shorthands
+-	Real&amp; epsN(BC-&gt;epsN); Real&amp; epsNPl(BC-&gt;epsNPl); Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); Real&amp; epsPlSum(BC-&gt;epsPlSum); const Real&amp; E(BC-&gt;E); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle); const Real&amp; G(BC-&gt;G); const Real&amp; crossSection(BC-&gt;crossSection); const Real&amp; omegaThreshold(Law2_Dem3DofGeom_CpmPhys_Cpm::omegaThreshold); const Real&amp; epsCrackOnset(BC-&gt;epsCrackOnset); Real&amp; relResidualStrength(BC-&gt;relResidualStrength); const Real&amp; dt=Omega::instance().getTimeStep();  const Real&amp; epsFracture(BC-&gt;epsFracture); const bool&amp; neverDamage(BC-&gt;neverDamage); const Real&amp; dmgTau(BC-&gt;dmgTau); const Real&amp; plTau(BC-&gt;plTau); const bool&amp; isCohesive(BC-&gt;isCohesive);
+-	Real&amp; omega(BC-&gt;omega); Real&amp; sigmaN(BC-&gt;sigmaN);  Vector3r&amp; sigmaT(BC-&gt;sigmaT); Real&amp; Fn(BC-&gt;Fn); Vector3r&amp; Fs(BC-&gt;Fs); // for python access
+-	const Real&amp; yieldLogSpeed(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldLogSpeed); const int&amp; yieldSurfType(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldSurfType);
+-	const Real&amp; yieldEllipseShift(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldEllipseShift); 
+-	const Real&amp; epsSoft(Law2_Dem3DofGeom_CpmPhys_Cpm::epsSoft); 
+-	const Real&amp; relKnSoft(Law2_Dem3DofGeom_CpmPhys_Cpm::relKnSoft); 
++		Real&amp; epsN(BC-&gt;epsN); Real&amp; epsNPl(BC-&gt;epsNPl); Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); Real&amp; epsPlSum(BC-&gt;epsPlSum); const Real&amp; E(BC-&gt;E); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle); const Real&amp; G(BC-&gt;G); const Real&amp; crossSection(BC-&gt;crossSection); const Real&amp; omegaThreshold(Law2_Dem3DofGeom_CpmPhys_Cpm::omegaThreshold); const Real&amp; epsCrackOnset(BC-&gt;epsCrackOnset); Real&amp; relResidualStrength(BC-&gt;relResidualStrength); const Real&amp; dt=Omega::instance().getTimeStep();  const Real&amp; epsFracture(BC-&gt;epsFracture); const bool&amp; neverDamage(BC-&gt;neverDamage); const Real&amp; dmgTau(BC-&gt;dmgTau); const Real&amp; plTau(BC-&gt;plTau); const bool&amp; isCohesive(BC-&gt;isCohesive);
++		Real&amp; omega(BC-&gt;omega); Real&amp; sigmaN(BC-&gt;sigmaN);  Vector3r&amp; sigmaT(BC-&gt;sigmaT); Real&amp; Fn(BC-&gt;Fn); Vector3r&amp; Fs(BC-&gt;Fs); // for python access
++		const Real&amp; yieldLogSpeed(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldLogSpeed); const int&amp; yieldSurfType(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldSurfType);
++		const Real&amp; yieldEllipseShift(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldEllipseShift); 
++		const Real&amp; epsSoft(Law2_Dem3DofGeom_CpmPhys_Cpm::epsSoft); 
++		const Real&amp; relKnSoft(Law2_Dem3DofGeom_CpmPhys_Cpm::relKnSoft); 
+ 
+-	#define YADE_VERIFY(condition) if(!(condition)){LOG_FATAL(&quot;Verification `&quot;&lt;&lt;#condition&lt;&lt;&quot;' failed!&quot;); throw;}
+-	
+-	#define NNAN(a) YADE_VERIFY(!isnan(a));
+-	#define NNANV(v) YADE_VERIFY(!isnan(v[0])); assert(!isnan(v[1])); assert(!isnan(v[2]));
+ 
+-	//timingDeltas-&gt;checkpoint(&quot;setup&quot;);
+-	// if(contGeom-&gt;refR1&lt;0) contGeom-&gt;refLength=contGeom-&gt;refR2; // make facet-sphere contact always at equilibrium when touching exactly (and not the initial distance)
+ 	epsN=contGeom-&gt;strainN(); epsT=contGeom-&gt;strainT();
+-	#ifdef YADE_DEBUG
+-		if(isnan(epsN)){
+-			LOG_FATAL(&quot;refLength=&quot;&lt;&lt;contGeom-&gt;refLength&lt;&lt;&quot;; pos1=&quot;&lt;&lt;contGeom-&gt;se31.position&lt;&lt;&quot;; pos2=&quot;&lt;&lt;contGeom-&gt;se32.position&lt;&lt;&quot;; displacementN=&quot;&lt;&lt;contGeom-&gt;displacementN());
++	
++	// debugging
++		#define YADE_VERIFY(condition) if(!(condition)){LOG_FATAL(&quot;Verification `&quot;&lt;&lt;#condition&lt;&lt;&quot;' failed!&quot;); throw;}
++		#define NNAN(a) YADE_VERIFY(!isnan(a));
++		#define NNANV(v) YADE_VERIFY(!isnan(v[0])); assert(!isnan(v[1])); assert(!isnan(v[2]));
++		#ifdef YADE_DEBUG
++			if(isnan(epsN)){
++				LOG_FATAL(&quot;refLength=&quot;&lt;&lt;contGeom-&gt;refLength&lt;&lt;&quot;; pos1=&quot;&lt;&lt;contGeom-&gt;se31.position&lt;&lt;&quot;; pos2=&quot;&lt;&lt;contGeom-&gt;se32.position&lt;&lt;&quot;; displacementN=&quot;&lt;&lt;contGeom-&gt;displacementN());
+ 			throw runtime_error(&quot;!! epsN==NaN !!&quot;);
+-		}
++			}
++			NNAN(epsN); NNANV(epsT);
++		#endif
+ 		NNAN(epsN); NNANV(epsT);
+-	#endif
+-	// already in SpheresContactGeometry:
+-	// contGeom-&gt;relocateContactPoints(); // allow very large mutual rotations
+-	if(logStrain &amp;&amp; epsN&lt;0){
+-		Real epsN0=epsN;
+-		epsN=log(epsN0+1); epsT*=epsN/epsN0;
+-	}
+-	NNAN(epsN); NNANV(epsT);
+-	//timingDeltas-&gt;checkpoint(&quot;geom&quot;);
+ 
+-	epsN+=BC-&gt;isoPrestress/E;
++	// constitutive law 
+ 	#ifdef CPM_MATERIAL_MODEL
++		// complicated version
++		if(epsSoft&gt;=0)	epsN+=BC-&gt;isoPrestress/E;
++		else{ // take softening into account for the prestress
++			Real sigmaSoft=E*epsSoft;
++			if(BC-&gt;isoPrestress&gt;=sigmaSoft) epsN+=BC-&gt;isoPrestress/E; // on the non-softened branch yet
++			// otherwise take the regular and softened branches separately (different moduli)
++			else epsN+=sigmaSoft/E+(BC-&gt;isoPrestress-sigmaSoft)/(E*relKnSoft);
++		}
+ 		CPM_MATERIAL_MODEL
+ 	#else
++		// simplified public model
++		epsN+=BC-&gt;isoPrestress/E;
+ 		// very simplified version of the constitutive law
+ 		kappaD=max(max(0.,epsN),kappaD); // internal variable, max positive strain (non-decreasing)
+ 		omega=isCohesive?funcG(kappaD,epsCrackOnset,epsFracture,neverDamage):1.; // damage variable (non-decreasing, as funcG is also non-decreasing)
+@@ -179,18 +184,11 @@
+ 		relResidualStrength=isCohesive?(kappaD&lt;epsCrackOnset?1.:(1-omega)*(kappaD)/epsCrackOnset):0;
+ 	#endif
+ 	sigmaN-=BC-&gt;isoPrestress;
+-	if(contGeom-&gt;refR1&lt;0 &amp;&amp; Law2_Dem3DofGeom_CpmPhys_Cpm::minStrain_moveBody2&lt;=0 &amp;&amp; epsN&lt;Law2_Dem3DofGeom_CpmPhys_Cpm::minStrain_moveBody2){
+-		/* move Body2 (the sphere) so that minStrain is satisfied */
+-		rootBody-&gt;bex.addMove(I-&gt;getId2(),contGeom-&gt;normal*(Law2_Dem3DofGeom_CpmPhys_Cpm::minStrain_moveBody2-epsN)*contGeom-&gt;refLength);
+-		LOG_TRACE(&quot;Moving by &quot;&lt;&lt;contGeom-&gt;normal*(Law2_Dem3DofGeom_CpmPhys_Cpm::minStrain_moveBody2-epsN)*contGeom-&gt;refLength);
+-	}
++
+ 	NNAN(kappaD); NNAN(epsCrackOnset); NNAN(epsFracture); NNAN(omega);
+ 	NNAN(sigmaN); NNANV(sigmaT); NNAN(crossSection);
+-	//timingDeltas-&gt;checkpoint(&quot;material&quot;);
+ 
+-	//const int watch1=6300, watch2=6299;
+-	//#define SHOW(a) if((I-&gt;getId1()==watch1 &amp;&amp; I-&gt;getId2()==watch2) || (I-&gt;getId2()==watch1 &amp;&amp; I-&gt;getId1()==watch2)) cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; &quot;&lt;&lt;a&lt;&lt;endl;
+-	//SHOW(&quot;epsN&quot;&lt;&lt;epsN);
++	// handle broken contacts
+ 	if(epsN&gt;0. &amp;&amp; ((isCohesive &amp;&amp; omega&gt;omegaThreshold) || !isCohesive)){
+ 		rootBody-&gt;interactions-&gt;requestErase(I-&gt;getId1(),I-&gt;getId2());
+ 		if(isCohesive){
+@@ -206,7 +204,6 @@
+ 	Fs=sigmaT*crossSection; BC-&gt;shearForce=Fs;
+ 
+ 	applyForceAtContactPoint(BC-&gt;normalForce+BC-&gt;shearForce, contGeom-&gt;contactPoint, I-&gt;getId1(), contGeom-&gt;se31.position, I-&gt;getId2(), contGeom-&gt;se32.position, rootBody);
+-	//timingDeltas-&gt;checkpoint(&quot;rest&quot;);
+ }
+ 
+ 
+
+Modified: trunk/pkg/dem/ConcretePM.hpp
+===================================================================
+--- trunk/pkg/dem/ConcretePM.hpp	2009-06-02 22:02:25 UTC (rev 1788)
++++ trunk/pkg/dem/ConcretePM.hpp	2009-06-04 14:17:27 UTC (rev 1789)
+@@ -248,26 +248,23 @@
+ 		if(kappaD&lt;epsCrackOnset || neverDamage) return 0;
+ 		return 1.-(epsCrackOnset/kappaD)*exp(-(kappaD-epsCrackOnset)/epsFracture);
+ 	}
+-		bool logStrain;
+ 		//! yield function: 0: mohr-coulomb (original); 1: parabolic; 2: logarithmic, 3: log+lin_tension, 4: elliptic, 5: elliptic+log
+-		int yieldSurfType;
++		static int yieldSurfType;
+ 		//! scaling in the logarithmic yield surface (should be &lt;1 for realistic results; &gt;=0 for meaningful results)
+ 		static Real yieldLogSpeed;
+ 		//! horizontal scaling of the ellipse (shifts on the +x axis as interactions with +y are given)
+ 		static Real yieldEllipseShift;
+ 		//! damage after which the contact disappears (&lt;1), since omega reaches 1 only for strain &#8594;+&#8734;
+ 		static Real omegaThreshold;
+-		//! HACK: limit strain on some contacts by moving body #2 in the contact; only if refR1&lt;0 (facet); deactivated if &gt; 0
+-		static Real minStrain_moveBody2;
+ 		//! Strain at which softening in compression starts (set to 0. (default) or positive value to deactivate)
+ 		static Real epsSoft;
+ 		//! Relative rigidity of the softening branch in compression (0=perfect elastic-plastic, 1=no softening, &gt;1=hardening)
+ 		static Real relKnSoft;
+-		Law2_Dem3DofGeom_CpmPhys_Cpm(): logStrain(false), yieldSurfType(0) { /*timingDeltas=shared_ptr&lt;TimingDeltas&gt;(new TimingDeltas);*/ }
++		Law2_Dem3DofGeom_CpmPhys_Cpm() { }
+ 		void go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody);
+ 	FUNCTOR2D(Dem3DofGeom,CpmPhys);
+ 	REGISTER_CLASS_AND_BASE(Law2_Dem3DofGeom_CpmPhys_Cpm,ConstitutiveLaw);
+-	REGISTER_ATTRIBUTES(ConstitutiveLaw,(logStrain)(yieldSurfType)(yieldLogSpeed)(yieldEllipseShift)(minStrain_moveBody2)(omegaThreshold)(epsSoft)(relKnSoft));
++	REGISTER_ATTRIBUTES(ConstitutiveLaw,(yieldSurfType)(yieldLogSpeed)(yieldEllipseShift)(omegaThreshold)(epsSoft)(relKnSoft));
+ 	DECLARE_LOGGER;
+ };
+ REGISTER_SERIALIZABLE(Law2_Dem3DofGeom_CpmPhys_Cpm);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001011.html">[deprecated list] [Yade-dev] Yade Wiki : how to find a (all)	page(s)?
+</A></li>
+	<LI>Next message: <A HREF="001013.html">[deprecated list] [Yade-dev] [svn] r1790 - in trunk: . core extra	extra/tetra lib	lib/opengl pkg/common	pkg/common/DataClass/BoundingVolume	pkg/common/DataClass/GeometricalModel	pkg/common/DataClass/Widgets	pkg/dem	pkg/dem/DataClass/InteractionGeometry pkg/lattice pkg/snow
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1012">[ date ]</a>
+              <a href="thread.html#1012">[ thread ]</a>
+              <a href="subject.html#1012">[ subject ]</a>
+              <a href="author.html#1012">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

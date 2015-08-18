@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] scons -h not working with profiles.
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20scons%20-h%20not%20working%20with%20profiles.&In-Reply-To=%3C20080926203159.4d837cec%40szpak%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000399.html">
+   <LINK REL="Next"  HREF="000402.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] scons -h not working with profiles.</H1>
+    <B>Janek Kozicki</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20scons%20-h%20not%20working%20with%20profiles.&In-Reply-To=%3C20080926203159.4d837cec%40szpak%3E"
+       TITLE="[deprecated list] [Yade-dev] scons -h not working with profiles.">janek_listy at wp.pl
+       </A><BR>
+    <I>Fri Sep 26 20:31:59 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000399.html">[deprecated list] [Yade-dev] r1529 - in trunk:	core/DefaultContainerImplementations gui/py pkg/common/Container
+</A></li>
+        <LI>Next message: <A HREF="000402.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-29163/bin/yade-svn1529:	DirectShearCis, FEMBeam,	HydraulicTest, SDECImpactTest, STLImporterTest, SimpleShear
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#398">[ date ]</a>
+              <a href="thread.html#398">[ thread ]</a>
+              <a href="subject.html#398">[ subject ]</a>
+              <a href="author.html#398">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Hi,
+
+I wanted to check the compilation options, quickly, with 'scons -h'.
+
+And so I had to wait about 3 minutes.... and didn't see the options:
+
+
+<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">janek at szpak</A>:~/40-Yade/Code/HEAD/trunk$ scons -h
+scons: Reading SConscript files ...
+@@@ Using profile fast (scons.profile-fast) @@@
+@@@ Using profile slow (scons.profile-slow) @@@
+Yade version is `0.12', installed files will be suffixed with `-0.12-fast'.
+All intermediary files will be in `/home/janek/20-Programowanie/10-cpp/50-Yade/Code/HEAD/build-0.12-fast'.
+Yade version is `0.12', installed files will be suffixed with `-0.12-slow'.
+All intermediary files will be in `/home/janek/20-Programowanie/10-cpp/50-Yade/Code/HEAD/build-0.12-slow'.
+scons: `install' is up to date.
+scons: `/home/janek/40-Yade/Bin/HEAD-fast' is up to date.
+scons: `install' is up to date.
+scons: `/home/janek/40-Yade/Bin/HEAD-slow' is up to date.
+<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">janek at szpak</A>:~/40-Yade/Code/HEAD/trunk$ 
+
+
+Obviously it's because of profiles. So I do this:
+
+$ scons profile=slow -h
+
+and it works.
+
+-- 
+Janek Kozicki                                                         |
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000399.html">[deprecated list] [Yade-dev] r1529 - in trunk:	core/DefaultContainerImplementations gui/py pkg/common/Container
+</A></li>
+	<LI>Next message: <A HREF="000402.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-29163/bin/yade-svn1529:	DirectShearCis, FEMBeam,	HydraulicTest, SDECImpactTest, STLImporterTest, SimpleShear
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#398">[ date ]</a>
+              <a href="thread.html#398">[ thread ]</a>
+              <a href="subject.html#398">[ subject ]</a>
+              <a href="author.html#398">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

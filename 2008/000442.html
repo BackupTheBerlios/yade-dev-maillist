@@ -1,0 +1,309 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1543 - in trunk: extra gui/py	gui/qt3	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1543%20-%20in%20trunk%3A%20extra%20gui/py%0A%09gui/qt3%09pkg/common/Engine/StandAloneEngine%0A%09pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200810130738.m9D7cOIk003647%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000441.html">
+   <LINK REL="Next"  HREF="000446.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1543 - in trunk: extra gui/py	gui/qt3	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1543%20-%20in%20trunk%3A%20extra%20gui/py%0A%09gui/qt3%09pkg/common/Engine/StandAloneEngine%0A%09pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200810130738.m9D7cOIk003647%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1543 - in trunk: extra gui/py	gui/qt3	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Oct 13 09:38:24 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000441.html">[deprecated list] [Yade-dev] r1542 static variables
+</A></li>
+        <LI>Next message: <A HREF="000446.html">[deprecated list] [Yade-dev] Error during compiling
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#442">[ date ]</a>
+              <a href="thread.html#442">[ thread ]</a>
+              <a href="subject.html#442">[ subject ]</a>
+              <a href="author.html#442">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-10-13 09:38:23 +0200 (Mon, 13 Oct 2008)
+New Revision: 1543
+
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/gui/py/PeriodicPythonRunner.hpp
+   trunk/gui/qt3/QtGUI-python.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+Log:
+1. Fix crasher (under special circumstances) in PersistentSAPCollider (deletion invalidating iterator)
+2. PeriodicEngine now takes nDo and nDone attributes, limitng number of activations
+3. Fix minor things is BrefcomDamageColorizer, add normalized damage to BrefcomPhysParams
+4. Fix some indents in Triaxial
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-10-11 14:23:53 UTC (rev 1542)
++++ trunk/extra/Brefcom.cpp	2008-10-13 07:38:23 UTC (rev 1543)
+@@ -233,7 +233,7 @@
+ void BrefcomDamageColorizer::action(MetaBody* rootBody){
+ 	vector&lt;pair&lt;short,Real&gt; &gt; bodyDamage; /* number of cohesive interactions per body; cummulative damage of interactions */
+ 	bodyDamage.resize(rootBody-&gt;bodies-&gt;size(),pair&lt;short,Real&gt;(0,0));
+-	FOREACH(shared_ptr&lt;Interaction&gt; I, *rootBody-&gt;transientInteractions){
++	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rootBody-&gt;transientInteractions){
+ 		shared_ptr&lt;BrefcomContact&gt; BC=dynamic_pointer_cast&lt;BrefcomContact&gt;(I-&gt;interactionPhysics);
+ 		if(!BC || !BC-&gt;isCohesive) continue;
+ 		const body_id_t id1=I-&gt;getId1(), id2=I-&gt;getId2();
+@@ -242,11 +242,14 @@
+ 		maxOmega=max(maxOmega,BC-&gt;omega);
+ 	}
+ 	FOREACH(shared_ptr&lt;Body&gt; B, *rootBody-&gt;bodies){
++		body_id_t id=B-&gt;getId();
+ 		// add damaged contacts that have already been deleted
+-		unsigned numBrokenCohesive=YADE_PTR_CAST&lt;BrefcomPhysParams&gt;(B-&gt;physicalParameters)-&gt;numBrokenCohesive;
+-		if(bodyDamage[B-&gt;getId()].first==0) {B-&gt;geometricalModel-&gt;diffuseColor=Vector3r(0.5,0.5,B-&gt;isDynamic?0:1); continue; }
+-		Real normDmg=(bodyDamage[B-&gt;getId()].second+numBrokenCohesive)/(bodyDamage[B-&gt;getId()].first+numBrokenCohesive);
+-		B-&gt;geometricalModel-&gt;diffuseColor=Vector3r(normDmg,1-normDmg,B-&gt;isDynamic?0:1);
++		shared_ptr&lt;BrefcomPhysParams&gt; bpp=YADE_PTR_CAST&lt;BrefcomPhysParams&gt;(B-&gt;physicalParameters);
++		//if(bodyDamage[B-&gt;getId()].first==0) {B-&gt;geometricalModel-&gt;diffuseColor=Vector3r(0.5,0.5,B-&gt;isDynamic?0:1); continue; }
++		int pastOrPresentContacts=bodyDamage[id].first+bpp-&gt;numBrokenCohesive;
++		if(pastOrPresentContacts&gt;0) bpp-&gt;normDmg=(bodyDamage[id].second+bpp-&gt;numBrokenCohesive)/pastOrPresentContacts;
++		else bpp-&gt;normDmg=0;
++		B-&gt;geometricalModel-&gt;diffuseColor=Vector3r(bpp-&gt;normDmg,1-bpp-&gt;normDmg,B-&gt;isDynamic?0:1);
+ 	}
+ }
+ 
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2008-10-11 14:23:53 UTC (rev 1542)
++++ trunk/extra/Brefcom.hpp	2008-10-13 07:38:23 UTC (rev 1543)
+@@ -137,8 +137,10 @@
+ 		int numBrokenCohesive;
+ 		//! number of contacts with this body
+ 		int numContacts;
+-		BrefcomPhysParams(): epsVolumetric(0.), numBrokenCohesive(0), numContacts(0) {createIndex();};
+-		virtual void registerAttributes(){BodyMacroParameters::registerAttributes(); REGISTER_ATTRIBUTE(epsVolumetric); REGISTER_ATTRIBUTE(numBrokenCohesive); REGISTER_ATTRIBUTE(numContacts); }
++		//! average damage including already deleted contacts
++		Real normDmg;
++		BrefcomPhysParams(): epsVolumetric(0.), numBrokenCohesive(0), numContacts(0), normDmg(0.) {createIndex();};
++		virtual void registerAttributes(){BodyMacroParameters::registerAttributes(); REGISTER_ATTRIBUTE(epsVolumetric); REGISTER_ATTRIBUTE(numBrokenCohesive); REGISTER_ATTRIBUTE(numContacts); REGISTER_ATTRIBUTE(normDmg); }
+ 		REGISTER_CLASS_NAME(BrefcomPhysParams);
+ 		REGISTER_BASE_CLASS_NAME(BodyMacroParameters);
+ };
+
+Modified: trunk/gui/py/PeriodicPythonRunner.hpp
+===================================================================
+--- trunk/gui/py/PeriodicPythonRunner.hpp	2008-10-11 14:23:53 UTC (rev 1542)
++++ trunk/gui/py/PeriodicPythonRunner.hpp	2008-10-13 07:38:23 UTC (rev 1543)
+@@ -14,7 +14,7 @@
+ 		string command;
+ 	public :
+ 		PeriodicPythonRunner(): command(&quot;pass&quot;){};
+-		/* virtual bool isActivated: not overridden, PeriodicEngine handles that */
++		/* virtual bool isActivated: not overridden, StretchPeriodicEngine handles that */
+ 		virtual void action(MetaBody* b){
+ 			PyGILState_STATE gstate;
+ 				gstate = PyGILState_Ensure();
+
+Modified: trunk/gui/qt3/QtGUI-python.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI-python.cpp	2008-10-11 14:23:53 UTC (rev 1542)
++++ trunk/gui/qt3/QtGUI-python.cpp	2008-10-13 07:38:23 UTC (rev 1543)
+@@ -96,7 +96,9 @@
+ 	if(dispParamsNo&gt;=0) { LOG_INFO(&quot;Loading view state from state #&quot;&lt;&lt;dispParamsNo); glv-&gt;useDisplayParameters(dispParamsNo);}
+ 	glv-&gt;raise();
+ 	glv-&gt;startAnimation();
++	Py_BEGIN_ALLOW_THREADS;
+ 	while(glv-&gt;animationIsStarted()) { usleep(2000000); LOG_DEBUG(&quot;Last msg: &quot;&lt;&lt;*player-&gt;messages.rbegin()); }
++	Py_END_ALLOW_THREADS;
+ 	python::list snaps; FOREACH(string s, glv-&gt;snapshots){snaps.append(s);}
+ 	return python::make_tuple(snapBase2+&quot;-%.04d.png&quot;,snaps);
+ }
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2008-10-11 14:23:53 UTC (rev 1542)
++++ trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2008-10-13 07:38:23 UTC (rev 1543)
+@@ -5,21 +5,26 @@
+ #include&lt;yade/core/StandAloneEngine.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+ /* run an action with given fixed periodicity (real time, virtual time, iteration number), by setting any of 
+- * those criteria to a number &gt; 0. */
++ * those criteria to a number &gt; 0.
++ *
++ * The number of times this engine is activated can be limited by setting nDo&gt;0. In the contrary case, or if
++ * the number of activations was already reached, no action will be called even if any of active period has elapsed.
++ */
+ class PeriodicEngine:  public StandAloneEngine {
+ 	protected:
+ 		static Real getClock(){ timeval tp; gettimeofday(&amp;tp,NULL); return tp.tv_sec+tp.tv_usec/1e6; }
+ 	public:
+-		Real virtPeriod, virtLast, realPeriod, realLast; long iterPeriod,iterLast;
+-		PeriodicEngine(): virtPeriod(0),virtLast(0),realPeriod(0),realLast(0),iterPeriod(0),iterLast(0) { realLast=getClock(); }
++		Real virtPeriod, virtLast, realPeriod, realLast; long iterPeriod,iterLast,nDo,nDone;
++		PeriodicEngine(): virtPeriod(0),virtLast(0),realPeriod(0),realLast(0),iterPeriod(0),iterLast(0),nDo(-1),nDone(0) { realLast=getClock(); }
+ 		virtual bool isActivated(){
+ 			Real virtNow=Omega::instance().getSimulationTime();
+ 			Real realNow=getClock();
+ 			long iterNow=Omega::instance().getCurrentIteration();
+-			if((virtPeriod&gt;0 &amp;&amp; virtNow-virtLast&gt;=virtPeriod) ||
+-				(realPeriod&gt;0 &amp;&amp; realNow-realLast&gt;=realPeriod) ||
+-				(iterPeriod&gt;0 &amp;&amp; iterNow-iterLast&gt;=iterPeriod)){
+-				realLast=realNow; virtLast=virtNow; iterLast=iterNow;
++			if((nDo&lt;0 || nDone&lt;nDo) &amp;&amp;
++				((virtPeriod&gt;0 &amp;&amp; virtNow-virtLast&gt;=virtPeriod) ||
++				 (realPeriod&gt;0 &amp;&amp; realNow-realLast&gt;=realPeriod) ||
++				 (iterPeriod&gt;0 &amp;&amp; iterNow-iterLast&gt;=iterPeriod))){
++				realLast=realNow; virtLast=virtNow; iterLast=iterNow; nDone++;
+ 				return true;
+ 			}
+ 			return false;
+@@ -33,12 +38,21 @@
+ 			REGISTER_ATTRIBUTE(virtLast);
+ 			REGISTER_ATTRIBUTE(realLast);
+ 			REGISTER_ATTRIBUTE(iterLast);
++			REGISTER_ATTRIBUTE(nDo);
++			REGISTER_ATTRIBUTE(nDone);
+ 		}
+ 	REGISTER_CLASS_NAME(PeriodicEngine);
+ 	REGISTER_BASE_CLASS_NAME(StandAloneEngine);
+ };
+ REGISTER_SERIALIZABLE(PeriodicEngine,false);
+ 
++#if 0
++class StridePeriodicEngine: public PeriodicEngine{
++	public:
++		StridePeriodicEngine(): stride, maxStride
++}
++#endif
++
+ /* PeriodicEngine but with constraint that may be stretched by a given stretchFactor (default 2).
+  * Limits for each periodicity criterion may be set and the mayStretch bool says whether the period
+  * can be stretched (default: doubled) without active criteria getting off limits.
+@@ -55,7 +69,7 @@
+ 	StretchPeriodicEngine(): PeriodicEngine(), realLim(0.), virtLim(0.), iterLim(0), stretchFactor(2.){}
+ 	Real realLim, virtLim; long iterLim;
+ 	Real stretchFactor;
+-	int mayStretch;
++	bool mayStretch;
+ 	virtual bool isActivated(){
+ 		assert(stretchFactor&gt;0);
+ 		if(iterLim==0 &amp;&amp; iterPeriod!=0){iterLim=iterPeriod;} else if(iterLim!=0 &amp;&amp; iterPeriod==0){iterPeriod=iterLim;}
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2008-10-11 14:23:53 UTC (rev 1542)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2008-10-13 07:38:23 UTC (rev 1543)
+@@ -71,10 +71,12 @@
+ 			maxima[offset+0]=pos[0]; maxima[offset+1]=pos[1]; maxima[offset+2]=pos[2];
+ 		}
+ 	}
++	typedef pair&lt;body_id_t,body_id_t&gt; bodyIdPair;
++	list&lt;bodyIdPair&gt; toBeDeleted;
+ 	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I,*ncb-&gt;transientInteractions){
+ 		// remove interactions deleted by the constitutive law: thay are not new, but nor real either
+ 		// to make sure, do that only with haveDistantTransient
+-		if(haveDistantTransient &amp;&amp; !I-&gt;isNew &amp;&amp; !I-&gt;isReal) { transientInteractions-&gt;erase(I-&gt;getId1(),I-&gt;getId2()); continue; }
++		if(haveDistantTransient &amp;&amp; !I-&gt;isNew &amp;&amp; !I-&gt;isReal) { toBeDeleted.push_back(bodyIdPair(I-&gt;getId1(),I-&gt;getId2())); continue; }
+ 		// Once the interaction has been fully created, it is not &quot;new&quot; anymore
+ 		if (I-&gt;isReal) I-&gt;isNew=false;
+ 		// OTOH if is is now real anymore, it falls back to the potential state
+@@ -85,6 +87,7 @@
+ 		if(!haveDistantTransient) I-&gt;isReal=false;
+ 		//if(!I-&gt;isReal){LOG_DEBUG(&quot;Interaction #&quot;&lt;&lt;I-&gt;getId1()&lt;&lt;&quot;=#&quot;&lt;&lt;I-&gt;getId2()&lt;&lt;&quot; is not real.&quot;);}
+ 	}
++	FOREACH(const bodyIdPair&amp; p, toBeDeleted){ transientInteractions-&gt;erase(p.first,p.second); }
+ 	
+ 	updateIds(bodies-&gt;size());
+ 	nbObjects=bodies-&gt;size();
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-10-11 14:23:53 UTC (rev 1542)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-10-13 07:38:23 UTC (rev 1543)
+@@ -269,27 +269,21 @@
+ 	}
+ 		
+ 	InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
+-        InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
+-        
+-        for(  ; ii!=iiEnd ; ++ii ) 
+-        {
+-        	if ((*ii)-&gt;isReal)
+-                {	
+-                       	const shared_ptr&lt;BodyMacroParameters&gt;&amp; sdec1 = YADE_PTR_CAST&lt;BodyMacroParameters&gt;((*bodies)[(body_id_t) ((*ii)-&gt;getId1())]-&gt;physicalParameters);
+-			const shared_ptr&lt;BodyMacroParameters&gt;&amp; sdec2 = YADE_PTR_CAST&lt;BodyMacroParameters&gt;((*bodies)[(body_id_t) ((*ii)-&gt;getId2())]-&gt;physicalParameters);
+-						
+-			//FIXME - why dynamic_cast fails here?
+-			//const shared_ptr&lt;ElasticContactInteraction&gt;&amp; contactPhysics = YADE_PTR_CAST&lt;ElasticContactInteraction&gt;((*ii)-&gt;interactionPhysics);
+-			const shared_ptr&lt;ElasticContactInteraction&gt;&amp; contactPhysics = static_pointer_cast&lt;ElasticContactInteraction&gt;((*ii)-&gt;interactionPhysics);
+-			
+-			Real fa 	= sdec1-&gt;frictionAngle;
+-			Real fb 	= sdec2-&gt;frictionAngle;
++	InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end(); 
++	for(  ; ii!=iiEnd ; ++ii ) {
++		if (!(*ii)-&gt;isReal) continue;
++		const shared_ptr&lt;BodyMacroParameters&gt;&amp; sdec1 = YADE_PTR_CAST&lt;BodyMacroParameters&gt;((*bodies)[(body_id_t) ((*ii)-&gt;getId1())]-&gt;physicalParameters);
++		const shared_ptr&lt;BodyMacroParameters&gt;&amp; sdec2 = YADE_PTR_CAST&lt;BodyMacroParameters&gt;((*bodies)[(body_id_t) ((*ii)-&gt;getId2())]-&gt;physicalParameters);		
++		//FIXME - why dynamic_cast fails here?
++		//const shared_ptr&lt;ElasticContactInteraction&gt;&amp; contactPhysics = YADE_PTR_CAST&lt;ElasticContactInteraction&gt;((*ii)-&gt;interactionPhysics);
++		const shared_ptr&lt;ElasticContactInteraction&gt;&amp; contactPhysics = static_pointer_cast&lt;ElasticContactInteraction&gt;((*ii)-&gt;interactionPhysics);
+ 
+-			contactPhysics-&gt;frictionAngle			= std::min(fa,fb);
+-			contactPhysics-&gt;tangensOfFrictionAngle		= std::tan(contactPhysics-&gt;frictionAngle); 
+-		}
+-	}
++		Real fa 	= sdec1-&gt;frictionAngle;
++		Real fb 	= sdec2-&gt;frictionAngle;
+ 
++		contactPhysics-&gt;frictionAngle			= std::min(fa,fb);
++		contactPhysics-&gt;tangensOfFrictionAngle		= std::tan(contactPhysics-&gt;frictionAngle); 
++	}
+ }
+ 
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000441.html">[deprecated list] [Yade-dev] r1542 static variables
+</A></li>
+	<LI>Next message: <A HREF="000446.html">[deprecated list] [Yade-dev] Error during compiling
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#442">[ date ]</a>
+              <a href="thread.html#442">[ thread ]</a>
+              <a href="subject.html#442">[ subject ]</a>
+              <a href="author.html#442">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

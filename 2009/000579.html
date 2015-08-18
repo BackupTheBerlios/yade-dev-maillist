@@ -1,0 +1,714 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1614 - trunk/extra/SpherePadder
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1614%20-%20trunk/extra/SpherePadder&In-Reply-To=%3C200901071556.n07FuTHk009711%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000577.html">
+   <LINK REL="Next"  HREF="000580.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1614 - trunk/extra/SpherePadder</H1>
+    <B>richefeu at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1614%20-%20trunk/extra/SpherePadder&In-Reply-To=%3C200901071556.n07FuTHk009711%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1614 - trunk/extra/SpherePadder">richefeu at mail.berlios.de
+       </A><BR>
+    <I>Wed Jan  7 16:56:29 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000577.html">[deprecated list] [Yade-dev] [svn] r1613 -	trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+        <LI>Next message: <A HREF="000580.html">[deprecated list] [Yade-dev] [svn] r1615 - trunk/extra/SpherePadder
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#579">[ date ]</a>
+              <a href="thread.html#579">[ thread ]</a>
+              <a href="subject.html#579">[ subject ]</a>
+              <a href="author.html#579">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: richefeu
+Date: 2009-01-07 16:56:28 +0100 (Wed, 07 Jan 2009)
+New Revision: 1614
+
+Modified:
+   trunk/extra/SpherePadder/Makefile
+   trunk/extra/SpherePadder/SpherePadder.cpp
+   trunk/extra/SpherePadder/SpherePadder.hpp
+   trunk/extra/SpherePadder/main.cpp
+Log:
+- SpherePadder devel...
+
+
+
+Modified: trunk/extra/SpherePadder/Makefile
+===================================================================
+--- trunk/extra/SpherePadder/Makefile	2009-01-07 13:47:35 UTC (rev 1613)
++++ trunk/extra/SpherePadder/Makefile	2009-01-07 15:56:28 UTC (rev 1614)
+@@ -22,4 +22,39 @@
+ 
+ # DO NOT DELETE
+ 
+-
++SpherePadder.o: SpherePadder.hpp TetraMesh.hpp /usr/include/stdlib.h
++SpherePadder.o: /usr/include/features.h /usr/include/sys/cdefs.h
++SpherePadder.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
++SpherePadder.o: /usr/include/gnu/stubs-32.h /usr/include/sys/types.h
++SpherePadder.o: /usr/include/bits/types.h /usr/include/bits/typesizes.h
++SpherePadder.o: /usr/include/time.h /usr/include/endian.h
++SpherePadder.o: /usr/include/bits/endian.h /usr/include/sys/select.h
++SpherePadder.o: /usr/include/bits/select.h /usr/include/bits/sigset.h
++SpherePadder.o: /usr/include/bits/time.h /usr/include/sys/sysmacros.h
++SpherePadder.o: /usr/include/bits/pthreadtypes.h /usr/include/alloca.h
++SpherePadder.o: /usr/include/math.h /usr/include/bits/huge_val.h
++SpherePadder.o: /usr/include/bits/mathdef.h /usr/include/bits/mathcalls.h
++TetraMesh.o: TetraMesh.hpp /usr/include/stdlib.h /usr/include/features.h
++TetraMesh.o: /usr/include/sys/cdefs.h /usr/include/bits/wordsize.h
++TetraMesh.o: /usr/include/gnu/stubs.h /usr/include/gnu/stubs-32.h
++TetraMesh.o: /usr/include/sys/types.h /usr/include/bits/types.h
++TetraMesh.o: /usr/include/bits/typesizes.h /usr/include/time.h
++TetraMesh.o: /usr/include/endian.h /usr/include/bits/endian.h
++TetraMesh.o: /usr/include/sys/select.h /usr/include/bits/select.h
++TetraMesh.o: /usr/include/bits/sigset.h /usr/include/bits/time.h
++TetraMesh.o: /usr/include/sys/sysmacros.h /usr/include/bits/pthreadtypes.h
++TetraMesh.o: /usr/include/alloca.h /usr/include/math.h
++TetraMesh.o: /usr/include/bits/huge_val.h /usr/include/bits/mathdef.h
++TetraMesh.o: /usr/include/bits/mathcalls.h
++main.o: SpherePadder.hpp TetraMesh.hpp /usr/include/stdlib.h
++main.o: /usr/include/features.h /usr/include/sys/cdefs.h
++main.o: /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h
++main.o: /usr/include/gnu/stubs-32.h /usr/include/sys/types.h
++main.o: /usr/include/bits/types.h /usr/include/bits/typesizes.h
++main.o: /usr/include/time.h /usr/include/endian.h /usr/include/bits/endian.h
++main.o: /usr/include/sys/select.h /usr/include/bits/select.h
++main.o: /usr/include/bits/sigset.h /usr/include/bits/time.h
++main.o: /usr/include/sys/sysmacros.h /usr/include/bits/pthreadtypes.h
++main.o: /usr/include/alloca.h /usr/include/math.h
++main.o: /usr/include/bits/huge_val.h /usr/include/bits/mathdef.h
++main.o: /usr/include/bits/mathcalls.h
+
+Modified: trunk/extra/SpherePadder/SpherePadder.cpp
+===================================================================
+--- trunk/extra/SpherePadder/SpherePadder.cpp	2009-01-07 13:47:35 UTC (rev 1613)
++++ trunk/extra/SpherePadder/SpherePadder.cpp	2009-01-07 15:56:28 UTC (rev 1614)
+@@ -12,9 +12,40 @@
+ 
+ double rand01()
+ {
+-	return (double)rand()/(double)RAND_MAX;
++  return (double)rand()/(double)RAND_MAX;
+ }
+ 
++int compare_neighbor_with_distance (const void * a, const void * b)
++{
++  double d1 = (*(neighbor_with_distance *)a).distance;
++  double d2 = (*(neighbor_with_distance *)b).distance;      
++  return ( d1 &gt; d2 ) ? 1 :-1;
++}
++
++
++SpherePadder::SpherePadder()
++{
++  vector &lt;unsigned int&gt; lst;
++  
++  for (unsigned int i = 0 ; i &lt;= 5 ; ++i)
++    for (unsigned int j = i+1 ; j &lt;= 6 ; ++j)
++      for (unsigned int k = j+1 ; k &lt;= 7 ; ++k)
++        for (unsigned int l = k+1 ; l &lt;= 8 ; ++l)
++        {
++                lst.clear();
++                lst.push_back(i);
++                lst.push_back(j);
++                lst.push_back(k);
++                lst.push_back(l);
++                //cout &lt;&lt; i &lt;&lt; ' ' &lt;&lt; j &lt;&lt; ' ' &lt;&lt; k &lt;&lt; ' ' &lt;&lt; l &lt;&lt; endl;
++                combination.push_back(lst);
++        }
++        
++   max_overlap_rate = 1e-2;   
++   n1 = n2 = n3 = n4 = n_densify = 0;  
++}
++
++
+ void SpherePadder::read_data (const char* filename)
+ {
+ 	//FIXME : 
+@@ -55,9 +86,11 @@
+ 	// TODO check if all si ok (mesh exist...)
+ 	place_at_nodes();
+ 	place_at_segment_middle();
+-	place_at_faces_barycentre(); // TODO tester avec barycentres
++	place_at_barycentre_3();
+ 	cancel_overlap();
+-	// ...
++        
++        cerr &lt;&lt; &quot;nb spheres = &quot; &lt;&lt; sphere.size() &lt;&lt; endl;
++	
+ }
+ 
+ void SpherePadder::save_mgpost (const char* name)
+@@ -66,9 +99,10 @@
+ 
+   fmgpost &lt;&lt; &quot;&lt;?xml version=\&quot;1.0\&quot;?&gt;&quot; &lt;&lt; endl
+ 	      &lt;&lt; &quot; &lt;mgpost mode=\&quot;3D\&quot;&gt;&quot; &lt;&lt; endl
+-	      &lt;&lt; &quot;  &lt;newcolor name=\&quot;nodes\&quot;/&gt;&quot; &lt;&lt; endl
+-	      &lt;&lt; &quot;  &lt;newcolor name=\&quot;middle nodes\&quot;/&gt;&quot; &lt;&lt; endl	
+-	      &lt;&lt; &quot;  &lt;newcolor name=\&quot;fixme\&quot;/&gt;&quot; &lt;&lt; endl
++	      &lt;&lt; &quot;  &lt;newcolor name=\&quot;at nodes\&quot;/&gt;&quot; &lt;&lt; endl
++	      &lt;&lt; &quot;  &lt;newcolor name=\&quot;at segments\&quot;/&gt;&quot; &lt;&lt; endl	
++	      &lt;&lt; &quot;  &lt;newcolor name=\&quot;at faces\&quot;/&gt;&quot; &lt;&lt; endl
++              &lt;&lt; &quot;  &lt;newcolor name=\&quot;debug\&quot;/&gt;&quot; &lt;&lt; endl
+ 	      &lt;&lt; &quot;  &lt;state id=\&quot;&quot; &lt;&lt; 1 
+ 	      &lt;&lt; &quot;\&quot; time=\&quot;&quot; &lt;&lt; 0.0 &lt;&lt; &quot;\&quot;&gt;&quot; &lt;&lt; endl;
+ 
+@@ -79,8 +113,8 @@
+ 		    &lt;&lt; &quot;     &lt;position x=\&quot;&quot; &lt;&lt; sphere[i].x &lt;&lt; &quot;\&quot; y=\&quot;&quot; &lt;&lt; sphere[i].y &lt;&lt; &quot;\&quot; z=\&quot;&quot; &lt;&lt; sphere[i].z &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl	 
+             &lt;&lt; &quot;    &lt;/SPHER&gt;&quot; &lt;&lt; endl &lt;&lt; flush;
+ 
+-// tmp (bricolage)
+-if (i &lt; mesh-&gt;node.size())
++  // tmp (bricolage)
++  if (i &lt; mesh-&gt;node.size())
+ 		for (unsigned int s = 0 ; s &lt; mesh-&gt;segment.size() ; ++s)
+ 		{
+ 			if (mesh-&gt;segment[s].nodeId[0] == i)
+@@ -124,12 +158,12 @@
+ 		S.tetraOwner = mesh-&gt;node[n].tetraOwner[0];
+ 		mesh-&gt;tetraedre[S.tetraOwner].sphereId.push_back(n);
+ 		
+-		sphere.push_back(S);	
++		sphere.push_back(S); ++(n1);	
+ 	}
+ 	cerr &lt;&lt; &quot;done&quot; &lt;&lt; endl;
+ }
+ 
+-void SpherePadder::place_at_segment_middle ()
++void SpherePadder::place_at_segment_middle () // barycentre_2 ??
+ {	
+ 	cerr &lt;&lt; &quot;place at segment middle... &quot;;
+ 	Sphere S;
+@@ -160,7 +194,7 @@
+ 		if (S.R &lt; rmin) S.R = rmin;
+ 		else if (S.R &gt; rmax) S.R = rmoy + dr * rand01();
+ 		S.owner[0] = s;
+-		sphere.push_back(S);	
++		sphere.push_back(S); ++(n2);	
+ 		
+ 		S.tetraOwner = mesh-&gt;node[id1].tetraOwner[0];
+ 		mesh-&gt;tetraedre[S.tetraOwner].sphereId.push_back(n0 + s);
+@@ -172,12 +206,11 @@
+ }
+ 
+ 
+-
+-
+-void SpherePadder::place_at_faces_barycentre ()
++void SpherePadder::place_at_barycentre_3 ()
+ {
+-	cerr &lt;&lt; &quot;place at faces_barycentre... &quot;;
+-
++	cerr &lt;&lt; &quot;place at barycentre 3... &quot;;
++ 
++        // FIXME move the following loops in TetraMesh
+ 	unsigned int sphereId,faceId;
+ 	for (unsigned int s = 0 ; s &lt; mesh-&gt;segment.size() ; ++s)
+ 	{
+@@ -192,42 +225,46 @@
+ 	Sphere S;
+ 	S.type = 2;
+ 	// todo S.owner ...
+-	unsigned int ns = sphere.size();
+-        const double untiers = 0.3333333333333;
++	unsigned int ns0 = sphere.size();
++        unsigned int ns = ns0; 
++        const double div3 = 0.3333333333333;
+ 	double R1,R2,R3;
++        Sphere S1,S2,S3;
+ 
+ 	for (unsigned int f = 0 ; f &lt; mesh-&gt;face.size() ; ++f)
+ 	{
+ 
+-		Sphere S1 = sphere[ mesh-&gt;face[f].sphereId[0] ];
+-		Sphere S2 = sphere[ mesh-&gt;face[f].sphereId[1] ];
+-		Sphere S3 = sphere[ mesh-&gt;face[f].sphereId[2] ];
++		S1 = sphere[ mesh-&gt;face[f].sphereId[0] ];
++		S2 = sphere[ mesh-&gt;face[f].sphereId[1] ];
++		S3 = sphere[ mesh-&gt;face[f].sphereId[2] ];
+ 
+-		S.x = untiers * (S1.x + S2.x + S3.x); 
+-		S.y = untiers * (S1.y + S2.y + S3.y); 
+-		S.z = untiers * (S1.z + S2.z + S3.z); 
++                S.x = div3 * (S1.x + S2.x + S3.x); 
++                S.y = div3 * (S1.y + S2.y + S3.y); 
++                S.z = div3 * (S1.z + S2.z + S3.z); 
+ 		
+ 		R1 = distance_centre_spheres(S1,S) - S1.R;
+ 		R2 = distance_centre_spheres(S2,S) - S2.R;
+ 		R3 = distance_centre_spheres(S3,S) - S3.R;
+-		S.R = (R1&gt;R2)    ? R2 : R1;
++		S.R = (R1  &gt; R2) ? R2 : R1;
+ 		S.R = (S.R &gt; R3) ? R3 : S.R;
+ 		
+-		sphere.push_back(S);
++		sphere.push_back(S); ++(n3);
+ 
+ 		S.tetraOwner = mesh-&gt;node[ mesh-&gt;face[f].nodeId[0] ].tetraOwner[0];
+ 		mesh-&gt;tetraedre[S.tetraOwner].sphereId.push_back(ns++);
+ 	}
+ 	cerr &lt;&lt; &quot;done&quot; &lt;&lt; endl;
++        
++
++        for (unsigned int n = (n1+n2) ; n &lt; sphere.size() ; ++n)
++        {
++          place_sphere_4contacts(n,20);
++        }
++            
+ }
+ 
+ 
+ 
+-
+-
+-
+-
+-
+ double SpherePadder::distance_spheres(unsigned int i, unsigned int j)
+ {
+ 	double lx,ly,lz;
+@@ -247,13 +284,14 @@
+ }
+ 
+ 
+-void SpherePadder::cancel_overlap()
++void SpherePadder::cancel_overlap() // FIXME rename cancel_overlaps
+ {
+ 	
+ 	cerr &lt;&lt; &quot;cancel_overlap... &quot;;
+ 	unsigned int current_tetra_id,tetra_neighbor_id,j;
+ 	Tetraedre current_tetra, tetra_neighbor;
+ 	double distance,k;
++        double distance_max = -max_overlap_rate * rmax;
+ 	
+ 	for(unsigned int i = 0 ; i &lt;  sphere.size(); ++i)
+ 	{
+@@ -272,7 +310,7 @@
+ 				if (sphere[j].R &lt; 0.0) continue;
+ 				if (i &lt; j)
+ 				{
+-					while ( (distance = distance_spheres(i,j)) &lt; -0.001)
++					while ( (distance = distance_spheres(i,j)) &lt; distance_max)
+ 					{						
+ 						k = 1.0 + distance / (sphere[i].R+ sphere[j].R);
+ 						sphere[i].R *= k;
+@@ -286,6 +324,297 @@
+ }
+ 
+ 
++
++// FIXME nom : find_4contacts(...)
++unsigned int SpherePadder::place_sphere_4contacts (unsigned int sphereId, unsigned int nb_iter_max) // FIXME nb_iter_max utile ???
++{ 
++  Sphere S = sphere[sphereId];
++  unsigned int current_tetra_id = S.tetraOwner;
++  Tetraedre current_tetra = mesh-&gt;tetraedre[current_tetra_id];
++  unsigned int j;
++  unsigned int tetra_neighbor_id;
++  Tetraedre tetra_neighbor;
++
++  vector&lt;neighbor_with_distance&gt; neighbor;
++  vector&lt;unsigned int&gt; j_ok;
++  neighbor_with_distance N;
++                
++  j_ok.push_back(sphereId);
++  bool added;
++  for (unsigned int t = 0 ; t &lt; current_tetra.tetraNeighbor.size() ; ++t)
++  {
++      tetra_neighbor_id = current_tetra.tetraNeighbor[t];
++      tetra_neighbor = mesh-&gt;tetraedre[tetra_neighbor_id];
++      for (unsigned int n = 0 ; n &lt; tetra_neighbor.sphereId.size() ; ++n)
++      {
++        j = tetra_neighbor.sphereId[n];
++
++        added = false;
++        for (unsigned int k = 0 ; k &lt; j_ok.size() ; ++k) 
++        {
++          if (j == j_ok[k]) 
++          {
++            added = true;
++            break;
++          }
++        }
++        
++        if (!added) 
++        {
++          N.sphereId = j;
++          N.distance = distance_spheres(sphereId,j);
++          // if (N.distance &lt; rmax)
++          neighbor.push_back(N);
++          j_ok.push_back(j);
++        }
++      }
++  }
++  
++  qsort(&amp;(neighbor[0]),neighbor.size(),sizeof(neighbor_with_distance),compare_neighbor_with_distance); 
++  
++  vector&lt;vector&lt;unsigned int&gt; &gt; possible_combination;
++  for (unsigned int c = 0 ; c &lt; combination.size() ; ++c)
++  {
++    if (combination[c][0] &gt;= neighbor.size()) continue;
++    if (combination[c][1] &gt;= neighbor.size()) continue;
++    if (combination[c][2] &gt;= neighbor.size()) continue;
++    if (combination[c][3] &gt;= neighbor.size()) continue;
++    possible_combination.push_back(combination[c]);
++  }
++  
++  unsigned int s1,s2,s3,s4;
++  unsigned int failure;
++  for (unsigned int c = 0 ; c &lt; possible_combination.size() ; ++c)
++  {
++    // check if combination is possible
++    
++    s1 = neighbor[ possible_combination[c][0] ].sphereId;
++    s2 = neighbor[ possible_combination[c][1] ].sphereId;
++    s3 = neighbor[ possible_combination[c][2] ].sphereId;
++    s4 = neighbor[ possible_combination[c][3] ].sphereId;
++    //cout &lt;&lt; sphereId &lt;&lt; ' ' &lt;&lt; s1 &lt;&lt; ' ' &lt;&lt; s2 &lt;&lt; ' ' &lt;&lt; s3 &lt;&lt; ' ' &lt;&lt; s4 &lt;&lt; endl;
++
++    failure = place_fifth_sphere(s1,s2,s3,s4,S);
++    //cerr &lt;&lt; success &lt;&lt; &quot; &quot; ;
++    if (!failure)
++    {
++      sphere[sphereId].x = S.x;
++      sphere[sphereId].y = S.y;
++      sphere[sphereId].z = S.z;
++      sphere[sphereId].R = S.R;
++      sphere[sphereId].type = 3; // debug
++      //cerr &lt;&lt; &quot;placed\n&quot; &lt;&lt; &quot;R = &quot; &lt;&lt; S.R &lt;&lt; endl;
++      return 1;
++    }
++
++  }
++  //cerr &lt;&lt; &quot;fail\n&quot;;
++  return 0;
++}
++
++double norm(double U[])
++{
++  int i;
++  double n = 0;
++  for (i = 0 ; i &lt;= 2 ; i++)
++  {
++    n += U[i] * U[i];
++  }
++  return sqrt(n);
++}
++
++void moins(double U[],double V[],double Rep[])
++{
++  int i;
++  for (i=0;i&lt;=2;i++)
++  {
++    Rep[i] = V[i] - U[i]; 
++  }
++}
++
++void product(double P[3][3],double U[],double Rep[])
++{
++  double var = 0;
++  double C[3];
++  int i,j;
++  for (j = 0 ; j &lt;= 2 ; j++)
++  {
++    for(i = 0 ; i &lt;= 2 ; i++)
++    {
++      var = var + P[j][i]*U[i];                          
++    }                      
++    C[j] = var;
++    var = 0;
++  }
++     
++  for (i = 0 ; i &lt;= 2 ; i++)
++  {
++    Rep[i] = C[i];
++  }
++}
++
++
++
++unsigned int SpherePadder::place_fifth_sphere(unsigned int s1, unsigned int s2, unsigned int s3, unsigned int s4, Sphere&amp; S)
++//void calcul_5(double C1[],double R1,double C2[],double R2,double C3[],double R3,double C4[],double R4,double Rep[],double valeur_interpenetration)
++{
++  double C1[3],C2[3],C3[3],C4[3];
++  double R1,R2,R3,R4;
++  C1[0] = sphere[s1].x ; C1[1] = sphere[s1].y ; C1[2] = sphere[s1].z ; R1 = sphere[s1].R;  
++  C2[0] = sphere[s2].x ; C2[1] = sphere[s2].y ; C2[2] = sphere[s2].z ; R2 = sphere[s2].R; 
++  C3[0] = sphere[s3].x ; C3[1] = sphere[s3].y ; C3[2] = sphere[s3].z ; R3 = sphere[s3].R; 
++  C4[0] = sphere[s4].x ; C4[1] = sphere[s4].y ; C4[2] = sphere[s4].z ; R4 = sphere[s4].R; 
++  
++  // bool -&gt; 1 2 4 8 et return (b1 | b2 | bool2 | bool4)
++  unsigned int fail_det          = 1;
++  unsigned int fail_delta        = 2;
++  unsigned int fail_radius       = 4;
++  unsigned int fail_overlap      = 8;
++  unsigned int fail_radius_range = 16;
++  
++ /*
++  *(x-x1)^2 + (y-y1)^2 + (z-z1)^2 = (r+r1)^2   (1)
++  *(x-x2)^2 + (y-y2)^2 + (z-z2)^2 = (r+r2)^2   (2)
++  *(x-x3)^2 + (y-y3)^2 + (z-z3)^2 = (r+r3)^2   (3)
++  *(x-x4)^2 + (y-y4)^2 + (z-z4)^2 = (r+r4)^2   (4)
++  */
++
++  /* (2)-(1) */
++
++  double a = 2.0 * (C1[0]-C2[0]);
++  double b = 2.0 * (C1[1]-C2[1]);
++  double c = 2.0 * (C1[2]-C2[2]);
++  double d = 2.0 * (R1-R2);
++  double e = (C1[0]*C1[0]+C1[1]*C1[1]+C1[2]*C1[2]-R1*R1)-(C2[0]*C2[0]+C2[1]*C2[1]+C2[2]*C2[2]-R2*R2);
++
++  /* (3)-(1) */
++
++  double aa = 2.0 * (C1[0]-C3[0]);
++  double bb = 2.0 * (C1[1]-C3[1]);
++  double cc = 2.0 * (C1[2]-C3[2]);
++  double dd = 2.0 * (R1-R3);
++  double ee = (C1[0]*C1[0]+C1[1]*C1[1]+C1[2]*C1[2]-R1*R1)-(C3[0]*C3[0]+C3[1]*C3[1]+C3[2]*C3[2]-R3*R3);
++
++  /* (4)-(1) */
++
++  double aaa = 2.0 *(C1[0]-C4[0]);
++  double bbb = 2.0 *(C1[1]-C4[1]);
++  double ccc = 2.0 *(C1[2]-C4[2]);
++  double ddd = 2.0 *(R1-R4);
++  double eee = (C1[0]*C1[0]+C1[1]*C1[1]+C1[2]*C1[2]-R1*R1)-(C4[0]*C4[0]+C4[1]*C4[1]+C4[2]*C4[2]-R4*R4);
++
++ /*
++  *calcul du determinant de la matrice A du systeme AX=B
++  *   [a  ,  b,  c];    [x]     [e  -  d*r]
++  * A=[aa ,bb ,cc ];  X=[y]   B=[ee - dd*r]
++  *   [aaa,bbb,ccc];    [z]     [eee-ddd*r]
++  * developpement par rapport &#65533; la 1&#65533;re colonne     
++  */
++
++  double DET=a*(bb*ccc-bbb*cc)-aa*(b*ccc-bbb*c)+aaa*(b*cc-bb*c);
++  double R = 0.0;
++  double centre[3];
++  if (DET != 0.0)
++  {
++
++   /*
++    * Calcul de A^-1
++    *       [a11,a12,a13]
++    * A^-1= [a21,a22,a23] *1/det(A)
++    *       [a31,a32,a33]        
++    */
++
++    double a11=(bb*ccc-bbb*cc)/DET;
++    double a12=-(b*ccc-bbb*c)/DET;
++    double a13=(b*cc-bb*c)/DET;
++    double a21=-(aa*ccc-aaa*cc)/DET;
++    double a22=(a*ccc-aaa*c)/DET;
++    double a23=-(a*cc-aa*c)/DET;
++    double a31=(aa*bbb-aaa*bb)/DET;
++    double a32=-(a*bbb-aaa*b)/DET;
++    double a33=(a*bb-aa*b)/DET;
++
++    double xa=-(a11*d+a12*dd+a13*ddd);
++    double xb=(a11*e+a12*ee+a13*eee);
++
++    double ya=-(a21*d+a22*dd+a23*ddd);
++    double yb=(a21*e+a22*ee+a23*eee);
++
++    double za=-(a31*d+a32*dd+a33*ddd);
++    double zb=(a31*e+a32*ee+a33*eee);
++
++/*On remplace x,y et z dans l'&#65533;quation (1) et on r&#65533;soud l'&#65533;quation
++ * du second degr&#65533; en r A*r^2+B*r+C=0 */
++
++    double A=xa*xa+ya*ya+za*za-1;
++    double B=2*(xa*(xb-C1[0]))+2*(ya*(yb-C1[1]))+2*(za*(zb-C1[2]))-2*R1;
++    double C=(xb-C1[0])*(xb-C1[0])+(yb-C1[1])*(yb-C1[1])+(zb-C1[2])*(zb-C1[2])-R1*R1;
++
++    double DELTA = B*B - 4.0*A*C;
++    double RR1,RR2;
++
++    if (DELTA &gt;= 0.0)
++    {
++      RR1 = (-B + sqrt(DELTA)) / (2.0*A);
++      RR2 = (-B - sqrt(DELTA)) / (2.0*A);
++    }
++    else return fail_delta;
++    
++
++    if      (RR1 &gt; 0.0) R = RR1;
++    else if (RR2 &gt; 0.0) R = RR2;
++
++    if (RR1 &lt;= 0.0 &amp;&amp; RR2 &lt;= 0.0) return fail_radius;
++    if (R &lt; rmin || R &gt; rmax) return fail_radius_range;
++
++    centre[0] = xa * R + xb;
++    centre[1] = ya * R + yb;
++    centre[2] = za * R + zb;
++  }
++  else return fail_det;
++
++/*------------------------------------------------------------------------------
++ * Interpenetration entre spheres (x, y , z, rayon )
++ *----------------------------------------------------------------------------*/
++  // U4 = C4 - centre
++  double U4[3];
++  moins(centre,C4,U4);
++
++  // U3 = C3 - centre
++  double U3[3];
++  moins(centre,C3,U3);
++
++  // U2 = C2 - centre
++  double U2[3];
++  moins(centre,C2,U2);
++
++  // U1 = C1 - centre
++  double U1[3];
++  moins(centre,C1,U1);
++
++  if (    (norm(U4)-(R4+R) &lt; -0.5 * max_overlap_rate*(R+R4)) 
++       || (norm(U3)-(R3+R) &lt; -0.5 * max_overlap_rate*(R+R3))
++       || (norm(U2)-(R2+R) &lt; -0.5 * max_overlap_rate*(R+R2)) 
++       || (norm(U1)-(R1+R) &lt; -0.5 * max_overlap_rate*(R+R1)) )
++  {
++    return fail_overlap;
++  }
++
++  S.x = centre[0];
++  S.y = centre[1];
++  S.z = centre[2];
++  S.R = R;
++  
++  return 0;
++}
++
++
++
++
++
++
++
++
+ void SpherePadder::place_at_tetra_centers ()
+ {
+ // TODO	
+
+Modified: trunk/extra/SpherePadder/SpherePadder.hpp
+===================================================================
+--- trunk/extra/SpherePadder/SpherePadder.hpp	2009-01-07 13:47:35 UTC (rev 1613)
++++ trunk/extra/SpherePadder/SpherePadder.hpp	2009-01-07 15:56:28 UTC (rev 1614)
+@@ -25,25 +25,39 @@
+ 
+ struct Neighbor
+ {
+-	unsigned int i,j;	
++        unsigned int i,j;	
+ };
+ 
++struct neighbor_with_distance
++{
++        unsigned int sphereId;
++        double       distance;
++};
++
+ class SpherePadder
+ {
+ protected:
+-	
++        	
++        vector&lt;vector&lt;unsigned int&gt; &gt; combination;
++  
+ 	double distance_spheres (unsigned int i, unsigned int j);
+         double distance_centre_spheres(Sphere&amp; S1, Sphere&amp; S2);
+ 	void place_at_nodes ();
+-	void place_at_segment_middle ();
+-	void place_at_faces_barycentre ();
++        void place_at_segment_middle (); // place_at_barycentre_2 ??
++	void place_at_barycentre_3 ();
++        // void place_at_barycentre_4 ();
+ 	void cancel_overlap ();
++        unsigned int place_fifth_sphere(unsigned int s1, unsigned int s2, unsigned int s3, unsigned int s4, Sphere&amp; S);
++        unsigned int place_sphere_4contacts (unsigned int sphereId, unsigned int nb_iter_max);
++        
+ 	void place_at_tetra_centers ();
+ 	
+ public:
++  
+ 	double rmin,rmax,rmoy,dr;
+ 	double ratio;
+-	double max_overlap; // ATTENTION negatif 
++	double max_overlap_rate;
++        unsigned int n1,n2,n3,n4,n_densify;
+ 	
+ 	TetraMesh * mesh;
+ 	vector&lt;Sphere&gt; sphere;
+@@ -53,7 +67,11 @@
+ 	void save_mgpost (const char* name);
+ 	//void save_Rxyz (const char* name);
+ 	
++        SpherePadder();
++        
+ 	void pad_5 ();		
+ };
+ 
++
+ #endif // SPHERE_PADDER_HPP
++
+
+Modified: trunk/extra/SpherePadder/main.cpp
+===================================================================
+--- trunk/extra/SpherePadder/main.cpp	2009-01-07 13:47:35 UTC (rev 1613)
++++ trunk/extra/SpherePadder/main.cpp	2009-01-07 15:56:28 UTC (rev 1614)
+@@ -15,7 +15,7 @@
+ 	SpherePadder * padder = new SpherePadder();
+ 	padder-&gt;read_data(&quot;padding.dat&quot;);
+ 	TetraMesh * mesh = new TetraMesh();
+-	mesh-&gt;read_data(&quot;test.msh&quot;);
++	mesh-&gt;read_data(&quot;small.msh&quot;);
+ 	padder-&gt;plugTetraMesh(mesh);
+ 	
+ 	padder-&gt;pad_5();
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000577.html">[deprecated list] [Yade-dev] [svn] r1613 -	trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+	<LI>Next message: <A HREF="000580.html">[deprecated list] [Yade-dev] [svn] r1615 - trunk/extra/SpherePadder
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#579">[ date ]</a>
+              <a href="thread.html#579">[ thread ]</a>
+              <a href="subject.html#579">[ subject ]</a>
+              <a href="author.html#579">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

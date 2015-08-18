@@ -1,0 +1,130 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1636 - in trunk: extra gui/qt3	scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1636%20-%20in%20trunk%3A%20extra%20gui/qt3%0A%09scripts&In-Reply-To=%3C200901240546.n0O5kZvu019752%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000613.html">
+   <LINK REL="Next"  HREF="000615.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1636 - in trunk: extra gui/qt3	scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1636%20-%20in%20trunk%3A%20extra%20gui/qt3%0A%09scripts&In-Reply-To=%3C200901240546.n0O5kZvu019752%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1636 - in trunk: extra gui/qt3	scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Jan 24 06:46:35 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000613.html">[deprecated list] [Yade-dev] [svn] r1635 - in trunk:	gui/qt3	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000615.html">[deprecated list] [Yade-dev] [svn] r1637 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#614">[ date ]</a>
+              <a href="thread.html#614">[ thread ]</a>
+              <a href="subject.html#614">[ subject ]</a>
+              <a href="author.html#614">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-01-24 06:46:31 +0100 (Sat, 24 Jan 2009)
+New Revision: 1636
+
+Modified:
+   trunk/extra/Brefcom.hpp
+   trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+   trunk/scripts/simple-scene-player.py
+Log:
+1. Make BrefcomDamageColorizer run at 0th iteration as well
+2. Make player set stopAtIter to last iteration in db so that percentage is displayed in the output.
+
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2009-01-24 00:25:04 UTC (rev 1635)
++++ trunk/extra/Brefcom.hpp	2009-01-24 05:46:31 UTC (rev 1636)
+@@ -237,7 +237,7 @@
+ 	public:
+ 		//! maximum damage over all contacts
+ 		Real maxOmega;
+-		BrefcomDamageColorizer(){maxOmega=0;}
++		BrefcomDamageColorizer(){maxOmega=0; /* run at the very beginning */ initRun=true;}
+ 		virtual void action(MetaBody*);
+ 	REGISTER_ATTRIBUTES(PeriodicEngine,(maxOmega));
+ 	REGISTER_CLASS_AND_BASE(BrefcomDamageColorizer,PeriodicEngine);
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2009-01-24 00:25:04 UTC (rev 1635)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2009-01-24 05:46:31 UTC (rev 1636)
+@@ -164,13 +164,16 @@
+ 		simPlayer-&gt;pushMessage(&quot;Simulation loaded.&quot;);
+ 		istringstream xmlStream(xml); Omega::instance().loadSimulationFromStream(xmlStream);
+ 		{
+-			sqlite3x::sqlite3_command cmd(*con,&quot;select bodyTable from 'records' ORDER BY iter;&quot;);
++			sqlite3x::sqlite3_command cmd(*con,&quot;select bodyTable,iter from 'records' ORDER BY iter;&quot;);
+ 			sqlite3x::sqlite3_cursor reader=cmd.executecursor();
+ 			assert(reader.colcount()==1);
++			long maxIter=0
+ 			while(reader.step()){
+ 				xyzNames.push_back(reader.getstring(0)); // first column
+ 				LOG_DEBUG(&quot;Added table &quot;&lt;&lt;reader.getstring(0));
++				maxIter=reader.getint(1);
+ 			}
++			Omega::instance().getRootBody()-&gt;stopAtIter=maxIter;
+ 		}
+ 	}
+ 	/* Filters */
+
+Modified: trunk/scripts/simple-scene-player.py
+===================================================================
+--- trunk/scripts/simple-scene-player.py	2009-01-24 00:25:04 UTC (rev 1635)
++++ trunk/scripts/simple-scene-player.py	2009-01-24 05:46:31 UTC (rev 1636)
+@@ -21,7 +21,7 @@
+ 	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+ 	StandAloneEngine('ElasticContactLaw'),
+ 	DeusExMachina('GravityEngine',{'gravity':[0,0,-9.81]}),
+-	DeusExMachina('NewtonsDampedLaw',{'damping':0.2})
++	DeusExMachina('NewtonsDampedLaw',{'damping':0.2}),
+ 	###
+ 	### NOTE&#160;this extra engine.
+ 	###
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000613.html">[deprecated list] [Yade-dev] [svn] r1635 - in trunk:	gui/qt3	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000615.html">[deprecated list] [Yade-dev] [svn] r1637 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#614">[ date ]</a>
+              <a href="thread.html#614">[ thread ]</a>
+              <a href="subject.html#614">[ subject ]</a>
+              <a href="author.html#614">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,192 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] TriaxialTest is broken in current SVN
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20TriaxialTest%20is%20broken%20in%20current%20SVN&In-Reply-To=%3C47BAF1C0.7010800%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000037.html">
+   <LINK REL="Next"  HREF="000039.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] TriaxialTest is broken in current SVN</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20TriaxialTest%20is%20broken%20in%20current%20SVN&In-Reply-To=%3C47BAF1C0.7010800%40hmg.inpg.fr%3E"
+       TITLE="[yade-dev] TriaxialTest is broken in current SVN">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Tue Feb 19 16:12:00 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000037.html">[yade-dev] TriaxialTest is broken in current SVN
+</A></li>
+        <LI>Next message: <A HREF="000039.html">[yade-dev] TriaxialTest is broken in current SVN
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#38">[ date ]</a>
+              <a href="thread.html#38">[ thread ]</a>
+              <a href="subject.html#38">[ subject ]</a>
+              <a href="author.html#38">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+
+
+
+V&#225;clav S a &#233;crit :
+&gt;<i> Don't go too far with code loading spheres, have a look at
+</I>&gt;<i> Shop::loadSpheresFromFile (just returns pairs of center-radius); and
+</I>&gt;<i> Shop::saveSpheresToFile. Vaclav
+</I>&gt;<i>   
+</I>Ok, I will look at this.
+
+I had this with last revision :
+
+155 [3056965904] FATAL yade.Omega  - core/Omega.cpp:252 scanPlugins: 
+Undefined symbol `vtable for GLDrawBrefcomContact' 
+(/home/bruno/YADE/lib/yade-svn1257/pkg-dem/libGlobalStiffnessCounter.so: 
+undefined symbol: _ZTV20GLDrawBrefcomContact).
+298 [3056965904] FATAL yade.Omega  - core/Omega.cpp:252 scanPlugins: 
+Undefined symbol `vtable for GLDrawBrefcomContact' 
+(/home/bruno/YADE/lib/yade-svn1257/pkg-dem/libGlobalStiffnessCounter.so: 
+undefined symbol: _ZTV20GLDrawBrefcomContact).
+348 [3056965904] FATAL yade.Omega  - core/Omega.cpp:252 scanPlugins: 
+Undefined symbol `vtable for GLDrawBrefcomContact' 
+(/home/bruno/YADE/lib/yade-svn1257/pkg-dem/libGlobalStiffnessCounter.so: 
+undefined symbol: _ZTV20GLDrawBrefcomContact).
+358 [3056965904] FATAL yade.Omega  - core/Omega.cpp:252 scanPlugins: 
+Undefined symbol `vtable for GLDrawBrefcomContact' 
+(/home/bruno/YADE/lib/yade-svn1257/pkg-dem/libGlobalStiffnessCounter.so: 
+undefined symbol: _ZTV20GLDrawBrefcomContact).
+364 [3056965904] FATAL yade.Omega  - core/Omega.cpp:252 scanPlugins: 
+Undefined symbol `vtable for GLDrawBrefcomContact' 
+(/home/bruno/YADE/lib/yade-svn1257/pkg-dem/libGlobalStiffnessCounter.so: 
+undefined symbol: _ZTV20GLDrawBrefcomContact).
+433 [3056965904] FATAL yade.Omega  - core/Omega.cpp:252 scanPlugins: 
+Undefined symbol `vtable for GLDrawBrefcomContact' 
+(/home/bruno/YADE/lib/yade-svn1257/pkg-dem/libGlobalStiffnessCounter.so: 
+undefined symbol: _ZTV20GLDrawBrefcomContact).
+464 [3056965904] WARN yade.Omega  - core/Omega.cpp:267 scanPlugins: 
+Couldn't load everything, some stuff may work incorrectly.
+X Error: BadDevice, invalid or uninitialized input device
+
+
+
+
+&gt;&gt;<i> I
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> V&#225;clav S a &#233;crit :
+</I>&gt;&gt;<i>   
+</I>&gt;&gt;<i>     
+</I>&gt;&gt;&gt;&gt;<i> 4. Watch the compaction stage
+</I>&gt;&gt;&gt;&gt;<i> 5. See the spheres disapearing when compression is supposed toi start
+</I>&gt;&gt;&gt;&gt;<i>
+</I>&gt;&gt;&gt;&gt;<i> Also, I noticed that interaction types are SDECLinks in the triaxial 
+</I>&gt;&gt;&gt;&gt;<i> test, which is not supposed to happen.
+</I>&gt;&gt;&gt;&gt;<i>   
+</I>&gt;&gt;&gt;&gt;<i>     
+</I>&gt;&gt;&gt;&gt;<i>       
+</I>&gt;&gt;&gt;&gt;<i>         
+</I>&gt;&gt;&gt;<i> Huh, that is my fault again. TriaxialCompressionEngine:86 should be
+</I>&gt;&gt;&gt;<i> if(0), not if(1); and the whole block can be effectively deleted. It was
+</I>&gt;&gt;&gt;<i> an experimental stuff to test what happens if I glue particles together
+</I>&gt;&gt;&gt;<i> after compaction.  I just commited the fix.
+</I>&gt;&gt;&gt;<i>   
+</I>&gt;&gt;&gt;<i>     
+</I>&gt;&gt;&gt;<i>       
+</I>&gt;&gt;<i> Ok. Does it fix the SDECLink problem?
+</I>&gt;&gt;<i> TriaxialTest.cpp was also using elasticContactLaw and 
+</I>&gt;&gt;<i> elasticCohesiveContactLaw at the same time, I don't know if you or me 
+</I>&gt;&gt;<i> commited that but I reverted that and will commit soon : TriaxialTest is 
+</I>&gt;&gt;<i> not supposed to be cohesive + 2 simultaneous contact laws makes no sense.
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i>   
+</I>&gt;&gt;<i>     
+</I>&gt;&gt;&gt;<i> Do you have some precise idea what the regression test will look like?
+</I>&gt;&gt;&gt;<i> Notably, what will be the reference value checked after the run.
+</I>&gt;&gt;&gt;<i>
+</I>&gt;&gt;&gt;<i>   
+</I>&gt;&gt;&gt;<i>     
+</I>&gt;&gt;&gt;<i>       
+</I>&gt;&gt;<i> I think the value of stress and strain after X iterations + the peak 
+</I>&gt;&gt;<i> stress value would make good tests. If they don't change you can be sure 
+</I>&gt;&gt;<i> that the physics and mathematics in Yade were not affected, because they 
+</I>&gt;&gt;<i> result from very complex processes, highly sensitive to initial 
+</I>&gt;&gt;<i> conditions (Lorentz sort of).
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> The only thing is we need to swith from random positioning to a text 
+</I>&gt;&gt;<i> file, I still have to create this file and to get the code for loading 
+</I>&gt;&gt;<i> positions back.
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> Bruno
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i>   
+</I>&gt;&gt;<i>     
+</I>&gt;&gt;&gt;<i> V.
+</I>&gt;&gt;&gt;<i>
+</I>&gt;&gt;&gt;<i> _______________________________________________
+</I>&gt;&gt;&gt;<i> yade-dev mailing list
+</I>&gt;&gt;&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.berlios.de</A>
+</I>&gt;&gt;&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">https://lists.berlios.de/mailman/listinfo/yade-dev</A>
+</I>&gt;&gt;&gt;<i>
+</I>&gt;&gt;&gt;<i>   
+</I>&gt;&gt;&gt;<i>     
+</I>&gt;&gt;&gt;<i>       
+</I>&gt;&gt;<i>   
+</I>&gt;&gt;<i>     
+</I>&gt;<i>
+</I>&gt;<i> _______________________________________________
+</I>&gt;<i> yade-dev mailing list
+</I>&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.berlios.de</A>
+</I>&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">https://lists.berlios.de/mailman/listinfo/yade-dev</A>
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Institut National Polytechnique de Grenoble
+Laboratoire 3S (Soils Solids Structures) - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000037.html">[yade-dev] TriaxialTest is broken in current SVN
+</A></li>
+	<LI>Next message: <A HREF="000039.html">[yade-dev] TriaxialTest is broken in current SVN
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#38">[ date ]</a>
+              <a href="thread.html#38">[ thread ]</a>
+              <a href="subject.html#38">[ subject ]</a>
+              <a href="author.html#38">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] Note on optimized compilation / optimized coding / profiling results
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Note%20on%20optimized%20compilation%20/%20optimized%20coding%20/%0A%20profiling%20results&In-Reply-To=%3C47C417D1.4090004%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000066.html">
+   <LINK REL="Next"  HREF="000071.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] Note on optimized compilation / optimized coding / profiling results</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Note%20on%20optimized%20compilation%20/%20optimized%20coding%20/%0A%20profiling%20results&In-Reply-To=%3C47C417D1.4090004%40hmg.inpg.fr%3E"
+       TITLE="[yade-dev] Note on optimized compilation / optimized coding / profiling results">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Tue Feb 26 14:44:49 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000066.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+        <LI>Next message: <A HREF="000071.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#68">[ date ]</a>
+              <a href="thread.html#68">[ thread ]</a>
+              <a href="subject.html#68">[ subject ]</a>
+              <a href="author.html#68">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> 2. I will create a new class CundallForceAndMomentumDamping, which will
+</I>&gt;<i> act on RigidBodyParameters and will be inside the same dispatcher as
+</I>&gt;<i> CundallnonViscousForceDamping (for ParticleParameters). This way, one
+</I>&gt;<i> loop over bodies will be gotten rid of. I know the force damping code
+</I>&gt;<i> will be duplicated at 2 places, but it is just a few lines of code.
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>There is no need for a damping dispatcher IMHO.
+Damping is a part of the numerical integration scheme, and as such it 
+would be consistent to damp equations at the same time you integrate 
+laws of motion.
+What I plan is to simply merge MomentumDamping, ForceDamping, 
+LeapfrogMomentum and LeapFrogPosition.
+It will make only one loop for integrating damped equations of motion 
+(i.e. what 99% of simulations need), rather than 4.
+
+Bruno
+
+&gt;<i> 3. Physical action appliers could reset those physical actions that have
+</I>&gt;<i> been applied. This way, we save yet another loop, in
+</I>&gt;<i> PhysicalActionContainerResetter. LeapFrogPositionIntegrator will apply
+</I>&gt;<i> force and set it to 0 etc. Is that OK?
+</I>&gt;<i>
+</I>&gt;<i> Bruno, what do you use to measure time of execution? Small.xyz and
+</I>&gt;<i> TriaxialTest or something else?
+</I>&gt;<i>
+</I>&gt;<i> Vaclav
+</I>&gt;<i>
+</I>&gt;<i> _______________________________________________
+</I>&gt;<i> yade-dev mailing list
+</I>&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.berlios.de</A>
+</I>&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">https://lists.berlios.de/mailman/listinfo/yade-dev</A>
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Institut National Polytechnique de Grenoble
+Laboratoire 3S (Soils Solids Structures) - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000066.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+	<LI>Next message: <A HREF="000071.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#68">[ date ]</a>
+              <a href="thread.html#68">[ thread ]</a>
+              <a href="subject.html#68">[ subject ]</a>
+              <a href="author.html#68">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

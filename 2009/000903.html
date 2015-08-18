@@ -1,0 +1,280 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1742 - in trunk:	gui/py	pkg/common/Engine/MetaEngine scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1742%20-%20in%20trunk%3A%0A%09gui/py%09pkg/common/Engine/MetaEngine%20scripts&In-Reply-To=%3C200903312310.n2VNAuDg031431%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000902.html">
+   <LINK REL="Next"  HREF="000904.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1742 - in trunk:	gui/py	pkg/common/Engine/MetaEngine scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1742%20-%20in%20trunk%3A%0A%09gui/py%09pkg/common/Engine/MetaEngine%20scripts&In-Reply-To=%3C200903312310.n2VNAuDg031431%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1742 - in trunk:	gui/py	pkg/common/Engine/MetaEngine scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Apr  1 01:10:56 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000902.html">[deprecated list] [Yade-dev] [svn] r1741 - in trunk: extra gui/py	scripts/test
+</A></li>
+        <LI>Next message: <A HREF="000904.html">[deprecated list] [Yade-dev] [svn] r1743 - in trunk: extra	extra/usct gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#903">[ date ]</a>
+              <a href="thread.html#903">[ thread ]</a>
+              <a href="subject.html#903">[ subject ]</a>
+              <a href="author.html#903">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-04-01 01:10:43 +0200 (Wed, 01 Apr 2009)
+New Revision: 1742
+
+Modified:
+   trunk/gui/py/PythonUI_rc.py
+   trunk/gui/py/yadeControl.cpp
+   trunk/pkg/common/Engine/MetaEngine/PhysicalActionApplier.cpp
+   trunk/scripts/simple-scene.py
+Log:
+1. MAJOR change in python syntax (backwards-compatible, though): through small bit of very dirty code,  classes can be instantiated as python objects with keyowrd arguments, i.e. instead of
+
+	DeusExMachina('ForceEngine',{'subscribedBodies'=[1,2,3]})
+
+you can now (also) say
+
+	ForceEngine(subscribedBodies=[1,2,3])
+
+Changed simple-scene.py, looks much more readable now!
+
+2. Forgotten bex sync in PhysicalActionApplier.
+
+
+Modified: trunk/gui/py/PythonUI_rc.py
+===================================================================
+--- trunk/gui/py/PythonUI_rc.py	2009-03-31 20:23:18 UTC (rev 1741)
++++ trunk/gui/py/PythonUI_rc.py	2009-03-31 23:10:43 UTC (rev 1742)
+@@ -18,6 +18,29 @@
+ #	atexit.register(yade.qt.close)
+ #except ImportError: pass
+ 
++### direct object creation through automatic wrapper functions
++def listChildClassesRecursive(base):
++	ret=O.childClasses(base)
++	for bb in ret:
++		ret2=listChildClassesRecursive(bb)
++		if ret2: ret+=ret2
++	return ret
++# not sure whether __builtins__ is the right place?
++_dd=__builtins__.__dict__
++
++classTranslations={'FileGenerator':'Preprocessor','EngineUnit1D':'EngineUnit','EngineUnit2D':'EngineUnit'}
++for root in ['StandAloneEngine','DeusExMachina','EngineUnit1D','EngineUnit2D','GeometricalModel','InteractingGeometry','PhysicalParameters','BoundingVolume','InteractingGeometry','InteractionPhysics','FileGenerator','MetaEngine']:
++	root2=root if (root not in classTranslations.keys()) else classTranslations[root]
++	for p in listChildClassesRecursive(root):
++		class argStorage:
++			def __init__(self,_root,_class): self._root,self._class=_root,_class
++			def wrap(self,*args): return yade.wrapper.__dict__[self._root](self._class,*args)
++		if root=='MetaEngine': _dd[p]=argStorage(root2,p).wrap
++		else:                  _dd[p]=lambda __r_=root2,__p_=p,**kw : yade.wrapper.__dict__[__r_](__p_,kw) # eval(root2)(p,kw)
++### end wrappers
++
++
++
+ # python2.4 workaround (so that quit() works as it does in 2.5)
+ if not callable(__builtins__.quit):
+ 	def _quit(): import sys; sys.exit(0)
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2009-03-31 20:23:18 UTC (rev 1741)
++++ trunk/gui/py/yadeControl.cpp	2009-03-31 23:10:43 UTC (rev 1742)
+@@ -577,6 +577,13 @@
+ 		return (Omega::instance().isInheritingFrom(child,base));
+ 	}
+ 
++	boost::python::list plugins_get(){
++		const map&lt;string,DynlibDescriptor&gt;&amp; plugins=Omega::instance().getDynlibsDescriptor();
++		std::pair&lt;string,DynlibDescriptor&gt; p; boost::python::list ret;
++		FOREACH(p, plugins) ret.append(p.first);
++		return ret;
++	}
++
+ 	pyTags tags_get(void){assertRootBody(); return pyTags(OMEGA.getRootBody());}
+ 
+ 	void interactionContainer_set(string clss){
+@@ -641,6 +648,7 @@
+ 		.def(&quot;reset&quot;,&amp;pyOmega::reset)
+ 		.def(&quot;labeledEngine&quot;,&amp;pyOmega::labeled_engine_get)
+ 		.def(&quot;resetTime&quot;,&amp;pyOmega::resetTime)
++		.def(&quot;plugins&quot;,&amp;pyOmega::plugins_get)
+ 		.add_property(&quot;engines&quot;,&amp;pyOmega::engines_get,&amp;pyOmega::engines_set)
+ 		.add_property(&quot;miscParams&quot;,&amp;pyOmega::miscParams_get,&amp;pyOmega::miscParams_set)
+ 		.add_property(&quot;initializers&quot;,&amp;pyOmega::initializers_get,&amp;pyOmega::initializers_set)
+
+Modified: trunk/pkg/common/Engine/MetaEngine/PhysicalActionApplier.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/PhysicalActionApplier.cpp	2009-03-31 20:23:18 UTC (rev 1741)
++++ trunk/pkg/common/Engine/MetaEngine/PhysicalActionApplier.cpp	2009-03-31 23:10:43 UTC (rev 1742)
+@@ -10,6 +10,7 @@
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ 
+ void PhysicalActionApplier::action(MetaBody* ncb){
++	ncb-&gt;bex.sync();
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *ncb-&gt;bodies){
+ 		operator()(b-&gt;physicalParameters,b.get(),ncb);
+ 	}
+
+Modified: trunk/scripts/simple-scene.py
+===================================================================
+--- trunk/scripts/simple-scene.py	2009-03-31 20:23:18 UTC (rev 1741)
++++ trunk/scripts/simple-scene.py	2009-03-31 23:10:43 UTC (rev 1742)
+@@ -10,8 +10,8 @@
+ ## Initializers are run before the simulation.
+ o.initializers=[
+ 	## Create bounding boxes. They are needed to zoom the 3d view properly before we start the simulation.
+-	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
+-	]
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingBox2AABB(),MetaInteractingGeometry2AABB()])
++]
+ 
+ ## Engines are called consecutively at each iteration. Their order matters.
+ ##
+@@ -20,56 +20,56 @@
+ ## MetaEngines act as dispatchers and based on the type of objects they operate on, different EngineUnits are called.
+ o.engines=[
+ 	## Resets forces and momenta the act on bodies
+-	StandAloneEngine('PhysicalActionContainerReseter'),
++	PhysicalActionContainerReseter(),
+ 	## associates bounding volume - in this case, AxisAlignedBoundingBox (AABB) - to each body.
+ 	## MetaEngine calls corresponding EngineUnit, depending on whether the body is Sphere, Box, or MetaBody (rootBody).
+ 	## AABBs will be used to detect collisions later, by PersistentSAPCollider
+-	MetaEngine('BoundingVolumeMetaEngine',[
+-		EngineUnit('InteractingSphere2AABB'),
+-		EngineUnit('InteractingBox2AABB'),
+-		EngineUnit('MetaInteractingGeometry2AABB')
++	BoundingVolumeMetaEngine([
++		InteractingSphere2AABB(),
++		InteractingBox2AABB(),
++		MetaInteractingGeometry2AABB()
+ 	]),
+ 	## Using bounding boxes created by the previous engine, find possible body collisions.
+ 	## These possible collisions are inserted in Omega.interactions container (MetaBody::transientInteractions in c++).
+-	StandAloneEngine('PersistentSAPCollider'),
++	PersistentSAPCollider(),
+ 	## Decide whether the potential collisions are real; if so, create geometry information about each potential collision.
+ 	## Here, the decision about which EngineUnit to use depends on types of _both_ bodies.
+ 	## Note that there is no EngineUnit for box-box collision. They are not implemented.
+-	MetaEngine('InteractionGeometryMetaEngine',[
+-		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
+-		EngineUnit('InteractingBox2InteractingSphere4SpheresContactGeometry')
++	InteractionGeometryMetaEngine([
++		InteractingSphere2InteractingSphere4SpheresContactGeometry(),
++		InteractingBox2InteractingSphere4SpheresContactGeometry()
+ 	]),
+ 	## Create physical information about the interaction.
+ 	## This may consist in deriving contact rigidity from elastic moduli of each body, for example.
+ 	## The purpose is that the contact may be &quot;solved&quot; without reference to related bodies,
+ 	## only with the information contained in contact geometry and physics.
+-	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
++	InteractionPhysicsMetaEngine([SimpleElasticRelationships()]),
+ 	## &quot;Solver&quot; of the contact, also called (consitutive) law.
+ 	## Based on the information in interaction physics and geometry, it applies corresponding forces on bodies in interaction.
+-	StandAloneEngine('ElasticContactLaw'),
++	ElasticContactLaw(),
+ 	## Apply gravity: all bodies will have gravity applied on them.
+ 	## Note the engine parameter 'gravity', a vector that gives the acceleration.
+-	DeusExMachina('GravityEngine',{'gravity':[0,0,-9.81]}),
++	GravityEngine(gravity=[0,0,-9.81]),
+ 	## Forces acting on bodies are damped to artificially increase energy dissipation in simulation.
+ 	## (In this model, the restitution coefficient of interaction is 1, which is not realistic.)
+ 	## This MetaEngine acts on all PhysicalActions and selects the right EngineUnit base on type of the PhysicalAction.
+ 	#
+ 	# note that following 4 engines (till the end) can be replaced by an optimized monolithic version:
+-#	DeusExMachina('NewtonsDampedLaw',{'damping':0.0}),
++	# NewtonsDampedLaw(damping=0.1)
+ 	#
+-	MetaEngine('PhysicalActionDamper',[
+-		EngineUnit('CundallNonViscousForceDamping',{'damping':0.2}),
+-		EngineUnit('CundallNonViscousMomentumDamping',{'damping':0.2})
++	PhysicalActionDamper([
++		CundallNonViscousForceDamping(damping=0.2),
++		CundallNonViscousMomentumDamping(damping=0.2)
+ 	]),
+ 	## Now we have forces and momenta acting on bodies. Newton's law calculates acceleration that corresponds to them.
+-	MetaEngine('PhysicalActionApplier',[
+-		EngineUnit('NewtonsForceLaw'),
+-		EngineUnit('NewtonsMomentumLaw'),
++	PhysicalActionApplier([
++		NewtonsForceLaw(),
++		NewtonsMomentumLaw(),
+ 	]),
+ 	## Acceleration results in velocity change. Integrating the velocity over dt, position of the body will change.
+-	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogPositionIntegrator')]),
++	PhysicalParametersMetaEngine([LeapFrogPositionIntegrator()]),
+ 	## Angular acceleration changes angular velocity, resulting in position and/or orientation change of the body.
+-	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogOrientationIntegrator')]),
++	PhysicalParametersMetaEngine([LeapFrogOrientationIntegrator()])
+ ]
+ 
+ 
+@@ -97,16 +97,16 @@
+ 	# set the isDynamic body attribute
+ 	b['isDynamic']=False
+ 	# Assign geometrical model (shape) to the body: a box of given size
+-	b.shape=GeometricalModel('Box',{'extents':[.5,.5,.5],'diffuseColor':[1,0,0]})
++	b.shape=Box(extents=[.5,.5,.5],diffuseColor=[1,0,0])
+ 	# Assign computational model (mold; may be simplified form of shape) to the body
+-	b.mold=InteractingGeometry('InteractingBox',{'extents':[.5,.5,.5],'diffuseColor':[1,0,0]})
++	b.mold=InteractingBox(extents=[.5,.5,.5],diffuseColor=[1,0,0])
+ 	# physical parameters:
+ 	# store mass to a temporary
+ 	mass=8*.5*.5*.5*2400
+ 	# * se3 (position &amp; orientation) as 3 position coordinates, then 3 direction axis coordinates and rotation angle
+-	b.phys=PhysicalParameters('BodyMacroParameters',{'se3':[0,0,0,1,0,0,0],'mass':mass,'inertia':[mass*4*(.5**2+.5**2),mass*4*(.5**2+.5**2),mass*4*(.5**2+.5**2)],'young':30e9,'poisson':.3})
++	b.phys=BodyMacroParameters(se3=[0,0,0,1,0,0,0],mass=mass,inertia=[mass*4*(.5**2+.5**2),mass*4*(.5**2+.5**2),mass*4*(.5**2+.5**2)],young=30e9,poisson=.3)
+ 	# other information about AABB will be updated during simulation by relevant BoundingVolumeMetaEngine
+-	b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
++	b.bound=AABB(diffuseColor=[0,1,0])
+ 	# add the body to the simulation
+ 	o.bodies.append(b)
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000902.html">[deprecated list] [Yade-dev] [svn] r1741 - in trunk: extra gui/py	scripts/test
+</A></li>
+	<LI>Next message: <A HREF="000904.html">[deprecated list] [Yade-dev] [svn] r1743 - in trunk: extra	extra/usct gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#903">[ date ]</a>
+              <a href="thread.html#903">[ thread ]</a>
+              <a href="subject.html#903">[ subject ]</a>
+              <a href="author.html#903">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

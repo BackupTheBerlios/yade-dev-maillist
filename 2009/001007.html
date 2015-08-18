@@ -1,0 +1,387 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1788 - in trunk: core gui/py	lib/serialization	pkg/dem pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1788%20-%20in%20trunk%3A%20core%20gui/py%0A%09lib/serialization%09pkg/dem%20pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200906022202.n52M2QvL018202%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001006.html">
+   <LINK REL="Next"  HREF="001008.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1788 - in trunk: core gui/py	lib/serialization	pkg/dem pkg/dem/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1788%20-%20in%20trunk%3A%20core%20gui/py%0A%09lib/serialization%09pkg/dem%20pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200906022202.n52M2QvL018202%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1788 - in trunk: core gui/py	lib/serialization	pkg/dem pkg/dem/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jun  3 00:02:27 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001006.html">[deprecated list] [Yade-dev] [svn] r1787 - in trunk: core	examples/concrete/pack	gui/py	lib/computational-geometry	pkg/common/Engine/MetaEngine	pkg/dem pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="001008.html">[deprecated list] [Yade-dev] [svn] r1788 - in trunk: core	gui/py	lib/serialization pkg/dem pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1007">[ date ]</a>
+              <a href="thread.html#1007">[ thread ]</a>
+              <a href="subject.html#1007">[ subject ]</a>
+              <a href="author.html#1007">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-06-03 00:02:25 +0200 (Wed, 03 Jun 2009)
+New Revision: 1788
+
+Modified:
+   trunk/core/InteractionContainer.cpp
+   trunk/core/InteractionContainer.hpp
+   trunk/gui/py/_utils.cpp
+   trunk/gui/py/utils.py
+   trunk/lib/serialization/Archive.tpp
+   trunk/pkg/dem/ConcretePM.cpp
+   trunk/pkg/dem/ConcretePM.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.cpp
+Log:
+1. Add epsNPl to Cpm
+2. Replace vector&lt;body_id_t&gt; by Vector2&lt;body_id_t&gt; and make it properly serializable (should be faster)
+3. Add function to compute forces on interactions crossing plane.
+4. Replace custom xcombine function by itertools.product in grid sphere packing
+
+
+Modified: trunk/core/InteractionContainer.cpp
+===================================================================
+--- trunk/core/InteractionContainer.cpp	2009-05-31 10:09:14 UTC (rev 1787)
++++ trunk/core/InteractionContainer.cpp	2009-06-02 22:02:25 UTC (rev 1788)
+@@ -11,7 +11,7 @@
+ #include &quot;InteractionContainer.hpp&quot;
+ 
+ void InteractionContainer::requestErase(body_id_t id1, body_id_t id2){
+-	find(id1,id2)-&gt;reset(); bodyIdPair v(0,2); v.push_back(id1); v.push_back(id2); 
++	find(id1,id2)-&gt;reset(); bodyIdPair v(id1,id2); //v.push_back(id1); v.push_back(id2); 
+ 	#ifdef YADE_OPENMP
+ 		boost::mutex::scoped_lock lock(pendingEraseMutex);
+ 	#endif
+
+Modified: trunk/core/InteractionContainer.hpp
+===================================================================
+--- trunk/core/InteractionContainer.hpp	2009-05-31 10:09:14 UTC (rev 1787)
++++ trunk/core/InteractionContainer.hpp	2009-06-02 22:02:25 UTC (rev 1788)
+@@ -104,8 +104,8 @@
+ 		virtual shared_ptr&lt;Interaction&gt;&amp; operator[] (unsigned int) {throw;};
+ 		virtual const shared_ptr&lt;Interaction&gt;&amp; operator[] (unsigned int) const {throw;};
+ 
+-		// std::pair is not handle by yade::serialization, use vector&lt;body_id_t&gt; instead
+-		typedef vector&lt;body_id_t&gt; bodyIdPair;
++		// std::pair is not handled by yade::serialization, use vector&lt;body_id_t&gt; instead
++		typedef Vector2&lt;body_id_t&gt; bodyIdPair;
+ 		//! Ask for erasing the interaction given (from the constitutive law); this resets the interaction (to the initial=potential state)
+ 		//! and collider should traverse pendingErase to decide whether to delete the interaction completely or keep it potential
+ 		void requestErase(body_id_t id1, body_id_t id2);
+@@ -134,7 +134,7 @@
+ 			method which will be called for every interaction.
+ 		*/
+ 		template&lt;class T&gt; void erasePending(const T&amp; t){
+-			FOREACH(const vector&lt;body_id_t&gt;&amp; p, pendingErase){ if(t.shouldBeErased(p[0],p[1])) erase(p[0],p[1]); }
++			FOREACH(const Vector2&lt;body_id_t&gt;&amp; p, pendingErase){ if(t.shouldBeErased(p[0],p[1])) erase(p[0],p[1]); }
+ 			pendingErase.clear();
+ 		}
+ 	private :
+
+Modified: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2009-05-31 10:09:14 UTC (rev 1787)
++++ trunk/gui/py/_utils.cpp	2009-06-02 22:02:25 UTC (rev 1788)
+@@ -316,8 +316,41 @@
+ 	vector&lt;Vector2r&gt; hull=ch2d();
+ 	return simplePolygonArea2d(hull);
+ }
++/* Find all interactions deriving from NormalShearInteraction that cross plane given by a point and normal
++	(the normal may not be normalized in this case, though) and sum forces (both normal and shear) on them.
++	
++	Return a 3-tuple with the components along global x,y,z axes.
+ 
++	(This could be easily extended to return sum of only normal forces or only of shear forces.)
++*/
++python::tuple forcesOnPlane(python::tuple _planePt, python::tuple _normal){
++	Vector3r ret(Vector3r::ZERO), planePt(tuple2vec(_planePt)), normal(tuple2vec(_normal));
++	MetaBody* rootBody=Omega::instance().getRootBody().get();
++	FOREACH(const shared_ptr&lt;Interaction&gt;&amp;I, *rootBody-&gt;interactions){
++		if(!I-&gt;isReal()) continue;
++		NormalShearInteraction* nsi=dynamic_cast&lt;NormalShearInteraction*&gt;(I-&gt;interactionPhysics.get());
++		if(!nsi) continue;
++		Vector3r pos1,pos2;
++		Dem3DofGeom* d3dg=dynamic_cast&lt;Dem3DofGeom*&gt;(I-&gt;interactionGeometry.get()); // Dem3DofGeom has copy of se3 in itself, otherwise we have to look up the bodies
++		if(d3dg){ pos1=d3dg-&gt;se31.position; pos2=d3dg-&gt;se32.position; }
++		else{ pos1=Body::byId(I-&gt;getId1(),rootBody)-&gt;physicalParameters-&gt;se3.position; pos2=Body::byId(I-&gt;getId2(),rootBody)-&gt;physicalParameters-&gt;se3.position; }
++		Real dot1=(pos1-planePt).Dot(normal), dot2=(pos2-planePt).Dot(normal);
++		if(dot1*dot2&gt;0) continue; // both interaction points on the same side of the plane
++		// if pt1 is on the negative plane side, d3dg-&gt;normal.Dot(normal)&gt;0, the force is well oriented;
++		// otherwise, reverse its contribution
++		ret+=(dot1&lt;0.?1.:-1.)*(nsi-&gt;normalForce+nsi-&gt;shearForce);
++	}
++	return vec2tuple(ret);
++}
+ 
++/* Less general than forcesOnPlane, computes force on plane perpendicular to axis, passing through coordinate coord. */
++python::tuple forcesOnCoordPlane(Real coord, int axis){
++	Vector3r planePt(Vector3r::ZERO); planePt[axis]=coord;
++	Vector3r normal(Vector3r::ZERO); normal[axis]=1;
++	return forcesOnPlane(vec2tuple(planePt),vec2tuple(normal));
++}
++
++
+ /* Project 3d point into 2d using spiral projection along given axis;
+  * the returned tuple is
+  * 	
+@@ -383,6 +416,8 @@
+ 	def(&quot;kineticEnergy&quot;,Shop__kineticEnergy);
+ 	def(&quot;sumBexForces&quot;,sumBexForces);
+ 	def(&quot;sumBexTorques&quot;,sumBexTorques);
++	def(&quot;forcesOnPlane&quot;,forcesOnPlane);
++	def(&quot;forcesOnCoordPlane&quot;,forcesOnCoordPlane);
+ 	def(&quot;createInteraction&quot;,Shop__createExplicitInteraction);
+ 	def(&quot;spiralProject&quot;,spiralProject,spiralProject_overloads(args(&quot;axis&quot;,&quot;periodStart&quot;,&quot;theta0&quot;)));
+ 	def(&quot;pointInsidePolygon&quot;,pointInsidePolygon);
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2009-05-31 10:09:14 UTC (rev 1787)
++++ trunk/gui/py/utils.py	2009-06-02 22:02:25 UTC (rev 1788)
+@@ -404,42 +404,20 @@
+ 	l=procStatus('VmData'); ll=l.split(); assert(ll[2]=='kB')
+ 	return int(ll[1])
+ 
+-
+-
+-def xcombine(*seqin):
+-	'''returns a generator which returns combinations of argument sequences
+-for example xcombine((1,2),(3,4)) returns a generator; calling the next()
+-method on the generator will return [1,3], [1,4], [2,3], [2,4] and
+-StopIteration exception.  This will not create the whole list of 
+-combinations in memory at once.
+-
+-Source: <A HREF="http://code.activestate.com/recipes/302478/">http://code.activestate.com/recipes/302478/</A>'''
+-	def rloop(seqin,comb):
+-		'''recursive looping function'''
+-		if seqin:				   # any more sequences to process?
+-			for item in seqin[0]:
+-				newcomb=comb+[item]	 # add next item to current combination
+-				# call rloop w/ remaining seqs, newcomb
+-				for item in rloop(seqin[1:],newcomb):   
+-					yield item		  # seqs and newcomb
+-		else:						   # processing last sequence
+-			yield comb				  # comb finished, add to list
+-	return rloop(seqin,[])
+-
+-
+ def regularSphereOrthoPack(center,extents,radius,gap,**kw):
+ 	&quot;&quot;&quot;Return set of spheres regularly spaced in either a box or sphere centered around center.
+ 	If extents is a number, it is taken for sphere radius; if it is a sequence, it is 3 extents of the box.
+ 	Created spheres will have given radius and will be separated by gap space.
+ 	&quot;&quot;&quot;
+ 	from numpy import arange; from math import sqrt
++	import itertools
+ 	ret=[]
+ 	try: # extents is a single number, do sphere
+ 		doSphere=True; dim=float(extents),float(extents),float(extents)
+ 	except TypeError: # extents is a list, do box
+ 		doSphere=False; dim=extents
+ 	xx,yy,zz=[arange(center[i]-dim[i],center[i]+dim[i],2*radius+gap) for i in 0,1,2]
+-	for xyz in xcombine(xx,yy,zz):
++	for xyz in itertools.product(xx,yy,zz):
+ 		if doSphere and sqrt(sum([(xyz[i]-center[i])**2 for i in 0,1,2]))&gt;extents: continue
+ 		ret+=[sphere(xyz,radius=radius,**kw)]
+ 	return ret
+@@ -461,7 +439,7 @@
+ 	dim=aabbDim(); axis=dim.index(max(dim))
+ 	import numpy
+ 	areas=[approxSectionArea(coord,axis) for coord in numpy.linspace(mm[axis],mx[axis],num=10)[1:-1]]
+-	negIds,posIds=negPosExtremeIds(axis=axis)
++	negIds,posIds=negPosExtremeIds(axis=axis,distFactor=2.2)
+ 	return {'negIds':negIds,'posIds':posIds,'axis':axis,'area':min(areas)}
+ 
+ 
+
+Modified: trunk/lib/serialization/Archive.tpp
+===================================================================
+--- trunk/lib/serialization/Archive.tpp	2009-05-31 10:09:14 UTC (rev 1787)
++++ trunk/lib/serialization/Archive.tpp	2009-06-02 22:02:25 UTC (rev 1788)
+@@ -48,6 +48,10 @@
+ 			typeid(Type)==typeid(Vector2f)		||
+ 			typeid(Type)==typeid(Vector2d)		||
+ 			typeid(Type)==typeid(Vector2&lt;long double&gt;)		||
++			typeid(Type)==typeid(Vector2&lt;signed int&gt;)		||
++			typeid(Type)==typeid(Vector2&lt;unsigned int&gt;)		||
++			typeid(Type)==typeid(Vector2&lt;signed long&gt;)		||
++			typeid(Type)==typeid(Vector2&lt;unsigned long&gt;)		||
+ 			typeid(Type)==typeid(Vector3f)		||
+ 			typeid(Type)==typeid(Vector3d)		||
+ 			typeid(Type)==typeid(Vector3&lt;long double&gt;)		||
+
+Modified: trunk/pkg/dem/ConcretePM.cpp
+===================================================================
+--- trunk/pkg/dem/ConcretePM.cpp	2009-05-31 10:09:14 UTC (rev 1787)
++++ trunk/pkg/dem/ConcretePM.cpp	2009-06-02 22:02:25 UTC (rev 1788)
+@@ -116,13 +116,14 @@
+ }
+ 
+ 
+-
+ /********************** Law2_Dem3DofGeom_CpmPhys_Cpm ****************************/
+ 
+ Real Law2_Dem3DofGeom_CpmPhys_Cpm::minStrain_moveBody2=1.; /* deactivated if &gt; 0 */
+ Real Law2_Dem3DofGeom_CpmPhys_Cpm::yieldLogSpeed=1.;
+ Real Law2_Dem3DofGeom_CpmPhys_Cpm::yieldEllipseShift=0.;
+-Real Law2_Dem3DofGeom_CpmPhys_Cpm::omegaThreshold=0.;
++Real Law2_Dem3DofGeom_CpmPhys_Cpm::omegaThreshold=1.;
++Real Law2_Dem3DofGeom_CpmPhys_Cpm::epsSoft=0.;
++Real Law2_Dem3DofGeom_CpmPhys_Cpm::relKnSoft=.5;
+ 
+ void Law2_Dem3DofGeom_CpmPhys_Cpm::go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody){
+ 	//timingDeltas-&gt;start();
+@@ -130,10 +131,12 @@
+ 	CpmPhys* BC=static_cast&lt;CpmPhys*&gt;(_phys.get());
+ 
+ 	// shorthands
+-	Real&amp; epsN(BC-&gt;epsN); Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); Real&amp; epsPlSum(BC-&gt;epsPlSum); const Real&amp; E(BC-&gt;E); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle); const Real&amp; G(BC-&gt;G); const Real&amp; crossSection(BC-&gt;crossSection); const Real&amp; omegaThreshold(Law2_Dem3DofGeom_CpmPhys_Cpm::omegaThreshold); const Real&amp; epsCrackOnset(BC-&gt;epsCrackOnset); Real&amp; relResidualStrength(BC-&gt;relResidualStrength); const Real&amp; dt=Omega::instance().getTimeStep();  const Real&amp; epsFracture(BC-&gt;epsFracture); const bool&amp; neverDamage(BC-&gt;neverDamage); const Real&amp; dmgTau(BC-&gt;dmgTau); const Real&amp; plTau(BC-&gt;plTau); const bool&amp; isCohesive(BC-&gt;isCohesive);
++	Real&amp; epsN(BC-&gt;epsN); Real&amp; epsNPl(BC-&gt;epsNPl); Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); Real&amp; epsPlSum(BC-&gt;epsPlSum); const Real&amp; E(BC-&gt;E); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle); const Real&amp; G(BC-&gt;G); const Real&amp; crossSection(BC-&gt;crossSection); const Real&amp; omegaThreshold(Law2_Dem3DofGeom_CpmPhys_Cpm::omegaThreshold); const Real&amp; epsCrackOnset(BC-&gt;epsCrackOnset); Real&amp; relResidualStrength(BC-&gt;relResidualStrength); const Real&amp; dt=Omega::instance().getTimeStep();  const Real&amp; epsFracture(BC-&gt;epsFracture); const bool&amp; neverDamage(BC-&gt;neverDamage); const Real&amp; dmgTau(BC-&gt;dmgTau); const Real&amp; plTau(BC-&gt;plTau); const bool&amp; isCohesive(BC-&gt;isCohesive);
+ 	Real&amp; omega(BC-&gt;omega); Real&amp; sigmaN(BC-&gt;sigmaN);  Vector3r&amp; sigmaT(BC-&gt;sigmaT); Real&amp; Fn(BC-&gt;Fn); Vector3r&amp; Fs(BC-&gt;Fs); // for python access
+ 	const Real&amp; yieldLogSpeed(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldLogSpeed); const int&amp; yieldSurfType(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldSurfType);
+ 	const Real&amp; yieldEllipseShift(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldEllipseShift); 
++	const Real&amp; epsSoft(Law2_Dem3DofGeom_CpmPhys_Cpm::epsSoft); 
++	const Real&amp; relKnSoft(Law2_Dem3DofGeom_CpmPhys_Cpm::relKnSoft); 
+ 
+ 	#define YADE_VERIFY(condition) if(!(condition)){LOG_FATAL(&quot;Verification `&quot;&lt;&lt;#condition&lt;&lt;&quot;' failed!&quot;); throw;}
+ 	
+
+Modified: trunk/pkg/dem/ConcretePM.hpp
+===================================================================
+--- trunk/pkg/dem/ConcretePM.hpp	2009-05-31 10:09:14 UTC (rev 1787)
++++ trunk/pkg/dem/ConcretePM.hpp	2009-06-02 22:02:25 UTC (rev 1788)
+@@ -120,13 +120,15 @@
+ 			isoPrestress;
+ 		/*! Up to now maximum normal strain (semi-norm), non-decreasing in time. */
+ 		Real kappaD;
++		//! normal plastic strain (initially zero)
++		Real epsNPl;
+ 		/*! Transversal strain (perpendicular to the contact axis) */
+ 		Real epsTrans;
+ 		/*! if not cohesive, interaction is deleted when distance is greater than zero. */
+ 		bool isCohesive;
+ 		/*! the damage evlution function will always return virgin state */
+ 		bool neverDamage;
+-		/*! cummulative plastic strain measure (scalar) on this contact */
++		/*! cummulative shear plastic strain measure (scalar) on this contact */
+ 		Real epsPlSum;
+ 		//! debugging, to see convergence rate
+ 		static long cummBetaIter, cummBetaCount;
+@@ -142,7 +144,7 @@
+ 
+ 
+ 
+-		CpmPhys(): NormalShearInteraction(),E(0), G(0), tanFrictionAngle(0), undamagedCohesion(0), crossSection(0), dmgTau(-1), dmgRateExp(0), dmgStrain(0), plTau(-1), plRateExp(0), isoPrestress(0.), kappaD(0.), epsTrans(0.), epsPlSum(0.) { createIndex(); epsT=Vector3r::ZERO; isCohesive=false; neverDamage=false; omega=0; Fn=0; Fs=Vector3r::ZERO; epsPlSum=0; dmgOverstress=0; }
++		CpmPhys(): NormalShearInteraction(),E(0), G(0), tanFrictionAngle(0), undamagedCohesion(0), crossSection(0), dmgTau(-1), dmgRateExp(0), dmgStrain(0), plTau(-1), plRateExp(0), isoPrestress(0.), kappaD(0.), epsNPl(0.), epsTrans(0.), epsPlSum(0.) { createIndex(); epsT=Vector3r::ZERO; isCohesive=false; neverDamage=false; omega=0; Fn=0; Fs=Vector3r::ZERO; epsPlSum=0; dmgOverstress=0; }
+ 		virtual ~CpmPhys();
+ 
+ 		REGISTER_ATTRIBUTES(NormalShearInteraction,
+@@ -165,6 +167,7 @@
+ 			(cummBetaCount)
+ 
+ 			(kappaD)
++			(epsNPl)
+ 			(neverDamage)
+ 			(epsT)
+ 			(epsTrans)
+@@ -256,11 +259,15 @@
+ 		static Real omegaThreshold;
+ 		//! HACK: limit strain on some contacts by moving body #2 in the contact; only if refR1&lt;0 (facet); deactivated if &gt; 0
+ 		static Real minStrain_moveBody2;
++		//! Strain at which softening in compression starts (set to 0. (default) or positive value to deactivate)
++		static Real epsSoft;
++		//! Relative rigidity of the softening branch in compression (0=perfect elastic-plastic, 1=no softening, &gt;1=hardening)
++		static Real relKnSoft;
+ 		Law2_Dem3DofGeom_CpmPhys_Cpm(): logStrain(false), yieldSurfType(0) { /*timingDeltas=shared_ptr&lt;TimingDeltas&gt;(new TimingDeltas);*/ }
+ 		void go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody);
+ 	FUNCTOR2D(Dem3DofGeom,CpmPhys);
+ 	REGISTER_CLASS_AND_BASE(Law2_Dem3DofGeom_CpmPhys_Cpm,ConstitutiveLaw);
+-	REGISTER_ATTRIBUTES(ConstitutiveLaw,(logStrain)(yieldSurfType)(yieldLogSpeed)(yieldEllipseShift)(minStrain_moveBody2)(omegaThreshold));
++	REGISTER_ATTRIBUTES(ConstitutiveLaw,(logStrain)(yieldSurfType)(yieldLogSpeed)(yieldEllipseShift)(minStrain_moveBody2)(omegaThreshold)(epsSoft)(relKnSoft));
+ 	DECLARE_LOGGER;
+ };
+ REGISTER_SERIALIZABLE(Law2_Dem3DofGeom_CpmPhys_Cpm);
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.cpp	2009-05-31 10:09:14 UTC (rev 1787)
++++ trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.cpp	2009-06-02 22:02:25 UTC (rev 1788)
+@@ -81,7 +81,7 @@
+ 			YADE_CAST&lt;ParticleParameters*&gt;(b-&gt;physicalParameters.get())-&gt;velocity[axis]=pNormalized*(v1-v0)+v0;
+ 		}
+ 	}
+-	stressUpdateInterval=max(1,(int)(1e-5/(abs(strainRate)*Omega::instance().getTimeStep())));
++	stressUpdateInterval=min(1000,max(1,(int)(1e-5/(abs(strainRate)*Omega::instance().getTimeStep()))));
+ 	LOG_INFO(&quot;Stress will be updated every &quot;&lt;&lt;stressUpdateInterval&lt;&lt;&quot; steps.&quot;);
+ 
+ 	/* if we have default (&lt;0) crossSectionArea, try to get it from root's AABB;
+@@ -133,13 +133,17 @@
+ 		}
+ 	}
+ 	if(asymmetry==0) dAX*=.5; // apply half on both sides if straining symetrically
+-	for(size_t i=0; i&lt;negIds.size(); i++){
+-		if(asymmetry==0 || asymmetry==-1 /* for +1, don't move*/) negCoords[i]-=dAX;
+-		axisCoord(negIds[i])=negCoords[i]; // update current position
++	if(asymmetry!=1){
++		for(size_t i=0; i&lt;negIds.size(); i++){
++			negCoords[i]-=dAX;
++			axisCoord(negIds[i])=negCoords[i]; // update current position
++		}
+ 	}
+-	for(size_t i=0; i&lt;posIds.size(); i++){
+-		if(asymmetry==0 || asymmetry==1 /* for -1, don't move */) posCoords[i]+=dAX;
+-		axisCoord(posIds[i])=posCoords[i];
++	if(asymmetry!=-1){
++		for(size_t i=0; i&lt;posIds.size(); i++){
++			posCoords[i]+=dAX;
++			axisCoord(posIds[i])=posCoords[i];
++		}
+ 	}
+ 
+ 	Real axialLength=axisCoord(posIds[0])-axisCoord(negIds[0]);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001006.html">[deprecated list] [Yade-dev] [svn] r1787 - in trunk: core	examples/concrete/pack	gui/py	lib/computational-geometry	pkg/common/Engine/MetaEngine	pkg/dem pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="001008.html">[deprecated list] [Yade-dev] [svn] r1788 - in trunk: core	gui/py	lib/serialization pkg/dem pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1007">[ date ]</a>
+              <a href="thread.html#1007">[ thread ]</a>
+              <a href="subject.html#1007">[ subject ]</a>
+              <a href="author.html#1007">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

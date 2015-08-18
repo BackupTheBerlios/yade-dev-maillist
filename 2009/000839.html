@@ -1,0 +1,170 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] The meaning of &quot;isDynamic&quot;
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20The%20meaning%20of%20%22isDynamic%22&In-Reply-To=%3C49B6AD09.4090100%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000838.html">
+   <LINK REL="Next"  HREF="000843.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] The meaning of &quot;isDynamic&quot;</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20The%20meaning%20of%20%22isDynamic%22&In-Reply-To=%3C49B6AD09.4090100%40hmg.inpg.fr%3E"
+       TITLE="[deprecated list] [Yade-dev] The meaning of &quot;isDynamic&quot;">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Tue Mar 10 19:10:17 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000838.html">[deprecated list] [Yade-dev] The meaning of &quot;isDynamic&quot;
+</A></li>
+        <LI>Next message: <A HREF="000843.html">[deprecated list] [Yade-dev] The meaning of &quot;isDynamic&quot;
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#839">[ date ]</a>
+              <a href="thread.html#839">[ thread ]</a>
+              <a href="subject.html#839">[ subject ]</a>
+              <a href="author.html#839">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i>
+</I>&gt;&gt;<i> Variables like shear diplacements should be computed exactly the same 
+</I>&gt;&gt;<i> way, based on motion, whatever the dynamic status.
+</I>&gt;<i> I prefer to compute those based on position/orientation, although it 
+</I>&gt;<i> has nothing to do with the point and merits of clarifying isDynamic 
+</I>&gt;<i> position. The isDynamic switches everywhere are frustrating.
+</I>Yes, I typed &quot;motion&quot; instead of &quot;velocity&quot; because I knew we had the 
+choice between vel and pos in some places. The classical Cundall 
+equations use velocity, so we will have both cases.
+
+&gt;<i>
+</I>&gt;&gt;<i> - Set a sphere !isDynamic (or block some DOF's)
+</I>&gt;&gt;<i> - Assign it a velocity and a rotationalVelocity (or assign components 
+</I>&gt;&gt;<i> corresponding to the fixed DOF's)
+</I>&gt;&gt;<i> - Run
+</I>&gt;&gt;<i> - The sphere move at constant velocity (or with one component 
+</I>&gt;&gt;<i> constant), and interact with other bodies the usual way, with no 
+</I>&gt;&gt;<i> extra engine.
+</I>&gt;<i> I doubt this is terribly useful, it gives you just constant linear 
+</I>&gt;<i> motion (I never needed it, really). I think the clarity/simplicity 
+</I>&gt;<i> argument at other places is stronger.
+</I>You may be right. It would make translationEngine or rotationEngine 
+useless though, which is good in itslef (we can remove them :)). Also 
+think about all problems like rod penetration in a packing, or triaxial 
+test at constant strain rate, they all define a linear motion.
+
+&gt;&gt;<i>
+</I>&gt;&gt;<i> It is currently not possible for at least two reasons. One reason can 
+</I>&gt;&gt;<i> be seen in updateShearForce :
+</I>&gt;<i> Was copied from ElasticContactLaw, with all the peculiarities this 
+</I>&gt;<i> particular copy of the code has. And it is good that it will be 
+</I>&gt;<i> unified removing what is not universally needed.
+</I>Yes, that is why I was quoting your new class instead of the 6 separate 
+classes containing the same code. It prooves your change is usefull. ;)
+
+&gt;&gt;<i>
+</I>&gt;&gt;<i> Conclusion : I would remove the parameters ks, isDynamic1, isDynamic2 
+</I>&gt;&gt;<i> from the function :
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> updateShearForce(Vector3r&amp; shearForce, Real ks, const Vector3r&amp; 
+</I>&gt;&gt;<i> prevNormal, const RigidBodyParameters* rbp1, const 
+</I>&gt;&gt;<i> RigidBodyParameters* rbp2, bool isDynamic1, bool isDynamic2, Real dt, 
+</I>&gt;&gt;<i> bool avoidGranularRatcheting)
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> Updating the shear force (instead of shear disp.) is correct, I 
+</I>&gt;&gt;<i> changed my mind while typing this mail. We need to rotate the current 
+</I>&gt;&gt;<i> force, not only compute the new displacement. The multiplication by 
+</I>&gt;&gt;<i> ks can still be moved out of the update function.
+</I>&gt;<i> I would rather multiply it in the function itself. Otherwise (as far 
+</I>&gt;<i> as I see) the function would take shearForce as argument, modify it 
+</I>&gt;<i> in-place (rotation etc) but return displacement difference. Highly 
+</I>&gt;<i> unintuitive:
+</I>&gt;<i>
+</I>&gt;<i> shearForce+=ks*deltaShearDisplacement(shearForce,...); // broken: 
+</I>&gt;<i> shearForce will be modified in-place, but overwritten by the addition 
+</I>&gt;<i> again, with the first modification being lost.
+</I>&gt;<i>
+</I>The problem : people not using ElasticContact law (Tien, JF Jerier, 
+viscous law of Sergei perhaps, etc.) will have to define ks when this 
+parameter perhaps does not exist in their model. This code you 
+copy/pasted is the same in many constitutive laws, but not in _all_ 
+constitutive laws.
+
+Intuition is a matter of how you introduce things. Say, this function 
+rotates the interaction and return the shear displacement, would it make 
+more sense? Rotating the contact force is not really modifying it, is 
+it? ;)
+
+&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i> An alternative would be to store shearDisplacement (instead of 
+</I>&gt;<i> shearForce) from previous step and incrementally update that ones. 
+</I>&gt;<i> Then it would make sense to multiply by ks in the constitutive law itself.
+</I>Ok, we are facing the conflict between incremental and total 
+formulations again. It needs to think twice to keep both of them 
+possible in simple code.
+
+Incremental approach : the constitutive law needs current (rotated) 
+force AND the increment of shear displacement OR shear velocity. The 
+total displacement is undefined and we don't need it.
+
+Total approach : computing the interaction needs initial orientation 
+(stored in the geometry class already, storing the shear displacement 
+would be a bit redundant) and current orientation. Does it need to 
+rotate the force at all? Perhaps this updateShearForce is needed only 
+with the incremental approach after all?
+
+Bruno
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Grenoble INP
+Laboratoire 3SR - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000838.html">[deprecated list] [Yade-dev] The meaning of &quot;isDynamic&quot;
+</A></li>
+	<LI>Next message: <A HREF="000843.html">[deprecated list] [Yade-dev] The meaning of &quot;isDynamic&quot;
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#839">[ date ]</a>
+              <a href="thread.html#839">[ thread ]</a>
+              <a href="subject.html#839">[ subject ]</a>
+              <a href="author.html#839">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

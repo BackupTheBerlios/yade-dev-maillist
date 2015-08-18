@@ -1,0 +1,180 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1897 - in trunk:	.	pkg/common/Engine/StandAloneEngine py/yadeWrapper
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1897%20-%20in%20trunk%3A%0A%09.%09pkg/common/Engine/StandAloneEngine%20py/yadeWrapper&In-Reply-To=%3C200907282243.n6SMhdJf026721%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001287.html">
+   <LINK REL="Next"  HREF="001289.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1897 - in trunk:	.	pkg/common/Engine/StandAloneEngine py/yadeWrapper</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1897%20-%20in%20trunk%3A%0A%09.%09pkg/common/Engine/StandAloneEngine%20py/yadeWrapper&In-Reply-To=%3C200907282243.n6SMhdJf026721%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1897 - in trunk:	.	pkg/common/Engine/StandAloneEngine py/yadeWrapper">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul 29 00:43:39 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001287.html">[deprecated list] [Yade-dev] libWm3Foundation linking problems
+</A></li>
+        <LI>Next message: <A HREF="001289.html">[deprecated list] [Yade-dev] compiling wm3 on 64bit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1288">[ date ]</a>
+              <a href="thread.html#1288">[ thread ]</a>
+              <a href="subject.html#1288">[ subject ]</a>
+              <a href="author.html#1288">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-29 00:43:38 +0200 (Wed, 29 Jul 2009)
+New Revision: 1897
+
+Modified:
+   trunk/SConstruct
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+   trunk/py/yadeWrapper/yadeWrapper.cpp
+   trunk/yadeSCons.py
+Log:
+1. Fix linking with full Wm3 library
+2. Automatically add /usr/include/wm3 to CPPPATH if useMiniWm3=False
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-07-28 13:46:19 UTC (rev 1896)
++++ trunk/SConstruct	2009-07-28 22:43:38 UTC (rev 1897)
+@@ -307,7 +307,9 @@
+ 	env['haveForeach']=conf.CheckCXXHeader('boost/foreach.hpp','&lt;&gt;')
+ 	if not env['haveForeach']: print &quot;(OK, local version will be used instead)&quot;
+ 	ok&amp;=conf.CheckLibWithHeader('sqlite3','sqlite3.h','c++','sqlite3_close(0L);',autoadd=1)
+-	if not env['useMiniWm3']: ok&amp;=conf.CheckLibWithHeader('Wm3Foundation','Wm3Math.h','c++','Wm3::Math&lt;double&gt;::PI;',autoadd=1)
++	if not env['useMiniWm3']:
++		conf.env.Append(CPPPATH='/usr/include/wm3') # packaged version
++		ok&amp;=conf.CheckLibWithHeader('Wm3Foundation','Wm3Math.h','c++','Wm3::Math&lt;double&gt;::PI;',autoadd=1)
+ 
+ 
+ 	if not ok:
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-07-28 13:46:19 UTC (rev 1896)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-07-28 22:43:38 UTC (rev 1897)
+@@ -235,7 +235,7 @@
+ 						assert(V[k].id==iid); // if this fails, we didn't meet the other bound in the downwards sense either; that should never happen
+ 						assert(!V[k].flags.isMin); // the lower bound should be maximum in this (exceptional) case; we will fix that now
+ 						V[k].flags.isMin=true; V[i].flags.isMin=false;
+-						LOG_DEBUG(&quot;Swapping coincident min/max of #&quot;&lt;&lt;iid&lt;&lt;&quot; at positions &quot;&lt;&lt;k&lt;&lt;&quot; and &quot;&lt;&lt;i&lt;&lt;&quot;(coords: &quot;&lt;&lt;V[k].coord&lt;&lt;&quot; and &quot;&lt;&lt;V[i].coord);
++						LOG_DEBUG(&quot;Swapping coincident min/max of #&quot;&lt;&lt;iid&lt;&lt;&quot; at positions &quot;&lt;&lt;k&lt;&lt;&quot; and &quot;&lt;&lt;i&lt;&lt;&quot; (coords: &quot;&lt;&lt;V[k].coord&lt;&lt;&quot; and &quot;&lt;&lt;V[i].coord&lt;&lt;&quot;)&quot;);
+ 						break; // would happen anyways
+ 					}
+ 				}
+
+Modified: trunk/py/yadeWrapper/yadeWrapper.cpp
+===================================================================
+--- trunk/py/yadeWrapper/yadeWrapper.cpp	2009-07-28 13:46:19 UTC (rev 1896)
++++ trunk/py/yadeWrapper/yadeWrapper.cpp	2009-07-28 22:43:38 UTC (rev 1897)
+@@ -283,7 +283,7 @@
+ 			OMEGA.createSimulationLoop();
+ 		}
+ 	};
+-	/* Create variables in python's __builtin__ namespace that correspond to labeled objects. At this moment, only engines can be labeled. */
++	/* Create variables in python's __builtin__ namespace that correspond to labeled objects. At this moment, only engines and functors can be labeled (not bodies etc). */
+ 	void mapLabeledEntitiesToVariables(){
+ 		FOREACH(const shared_ptr&lt;Engine&gt;&amp; e, OMEGA.getRootBody()-&gt;engines){
+ 			if(!e-&gt;label.empty()){
+@@ -486,8 +486,7 @@
+ 
+ 
+ /*****************************************************************************
+-********** New helper functions 
+-****/
++********** New helper functions */
+ void Serializable_updateAttrs(const shared_ptr&lt;Serializable&gt;&amp; self, const python::dict&amp; d){
+ 	python::list l=d.items(); size_t ll=python::len(l);
+ 	for(size_t i=0; i&lt;ll; i++){
+@@ -757,13 +756,14 @@
+ 		.def_readonly(&quot;timingDeltas&quot;,&amp;Engine::timingDeltas);
+ 	python::class_&lt;StandAloneEngine,shared_ptr&lt;StandAloneEngine&gt;, python::bases&lt;Engine&gt;, noncopyable&gt;(&quot;StandAloneEngine&quot;).def(&quot;__init__&quot;,python::raw_constructor(Serializable_ctor_kwAttrs&lt;Engine&gt;));
+ 	python::class_&lt;DeusExMachina,shared_ptr&lt;DeusExMachina&gt;, python::bases&lt;Engine&gt;, noncopyable&gt;(&quot;DeusExMachina&quot;).def(&quot;__init__&quot;,python::raw_constructor(Serializable_ctor_kwAttrs&lt;Engine&gt;));
+-	python::class_&lt;EngineUnit, shared_ptr&lt;EngineUnit&gt;, python::bases&lt;Serializable&gt;, noncopyable &gt;(&quot;EngineUnit&quot;)
++	python::class_&lt;EngineUnit, shared_ptr&lt;EngineUnit&gt;, python::bases&lt;Serializable&gt;, noncopyable &gt;(&quot;EngineUnit&quot;,python::no_init)
+ 		.def_readonly(&quot;timingDeltas&quot;,&amp;EngineUnit::timingDeltas)
+ 		.add_property(&quot;bases&quot;,&amp;EngineUnit::getFunctorTypes);
++	python::class_&lt;MetaEngine, shared_ptr&lt;MetaEngine&gt;, python::bases&lt;Engine&gt;, noncopyable&gt;(&quot;MetaEngine&quot;,python::no_init);
+ 	python::class_&lt;TimingDeltas, shared_ptr&lt;TimingDeltas&gt;, noncopyable &gt;(&quot;TimingDeltas&quot;).add_property(&quot;data&quot;,&amp;TimingDeltas_pyData).def(&quot;reset&quot;,&amp;TimingDeltas::reset);
+ 
+ 	python::class_&lt;InteractionDispatchers,shared_ptr&lt;InteractionDispatchers&gt;, python::bases&lt;Engine&gt;, noncopyable &gt;(&quot;InteractionDispatchers&quot;).def(&quot;__init__&quot;,python::make_constructor(InteractionDispatchers_ctor_lists));
+-	#define EXPOSE_DISPATCHER(DispatcherT,functorT) python::class_&lt;DispatcherT, shared_ptr&lt;DispatcherT&gt;, python::bases&lt;Engine&gt;, noncopyable &gt;(#DispatcherT).def(&quot;__init__&quot;,python::make_constructor(Dispatcher_ctor_list&lt;DispatcherT,functorT&gt;));
++	#define EXPOSE_DISPATCHER(DispatcherT,functorT) python::class_&lt;DispatcherT, shared_ptr&lt;DispatcherT&gt;, python::bases&lt;MetaEngine&gt;, noncopyable &gt;(#DispatcherT).def(&quot;__init__&quot;,python::make_constructor(Dispatcher_ctor_list&lt;DispatcherT,functorT&gt;));
+ 		EXPOSE_DISPATCHER(BoundingVolumeMetaEngine,BoundingVolumeEngineUnit)
+ 		EXPOSE_DISPATCHER(GeometricalModelMetaEngine,GeometricalModelEngineUnit)
+ 		EXPOSE_DISPATCHER(InteractingGeometryMetaEngine,InteractingGeometryEngineUnit)
+@@ -824,9 +824,5 @@
+ 	EXPOSE_CXX_CLASS_RENAMED(FileGenerator,Preprocessor)
+ 		.def(&quot;generate&quot;,&amp;FileGenerator_generate)
+ 		.def(&quot;load&quot;,&amp;FileGenerator_load);
+-
+-	// containers &amp; iterators
+-	// BodyContainer
+-	
+ }
+ 
+
+Modified: trunk/yadeSCons.py
+===================================================================
+--- trunk/yadeSCons.py	2009-07-28 13:46:19 UTC (rev 1896)
++++ trunk/yadeSCons.py	2009-07-28 22:43:38 UTC (rev 1897)
+@@ -128,9 +128,9 @@
+ 		srcs=list(objs[obj][0])
+ 		if len(srcs)&gt;1: srcs=env.Combine('$buildDir/'+obj+'.cpp',srcs)
+ 		if linkStrategy!='static':
+-			env.Install('$PREFIX/lib/yade$SUFFIX/plugins',env.SharedLibrary(obj,srcs,LIBS=list(objs[obj][1])))
++			env.Install('$PREFIX/lib/yade$SUFFIX/plugins',env.SharedLibrary(obj,srcs,LIBS=env['LIBS']+list(objs[obj][1])))
+ 		else:
+-			env.Install('$PREFIX/lib/yade$SUFFIX/plugins',env.StaticLibrary(obj,srcs,LIBS=list(objs[obj][1])))
++			env.Install('$PREFIX/lib/yade$SUFFIX/plugins',env.StaticLibrary(obj,srcs,LIBS=env['LIBS']+list(objs[obj][1])))
+ 	
+ 
+ 	
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001287.html">[deprecated list] [Yade-dev] libWm3Foundation linking problems
+</A></li>
+	<LI>Next message: <A HREF="001289.html">[deprecated list] [Yade-dev] compiling wm3 on 64bit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1288">[ date ]</a>
+              <a href="thread.html#1288">[ thread ]</a>
+              <a href="subject.html#1288">[ subject ]</a>
+              <a href="author.html#1288">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

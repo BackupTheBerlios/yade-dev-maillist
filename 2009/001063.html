@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] Parallelepiped instead of cube
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Parallelepiped%20instead%20of%20cube&In-Reply-To=%3C930069bf0906170816h7ba6de3flb2cfa7fa126b7497%40mail.gmail.com%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001062.html">
+   <LINK REL="Next"  HREF="001029.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] Parallelepiped instead of cube</H1>
+    <B>Anton Gladky</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Parallelepiped%20instead%20of%20cube&In-Reply-To=%3C930069bf0906170816h7ba6de3flb2cfa7fa126b7497%40mail.gmail.com%3E"
+       TITLE="[deprecated list] [Yade-dev] Parallelepiped instead of cube">gladky.anton at gmail.com
+       </A><BR>
+    <I>Wed Jun 17 17:16:24 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001062.html">[deprecated list] [Yade-dev] Ellipsoid
+</A></li>
+        <LI>Next message: <A HREF="001029.html">[deprecated list] [Yade-dev] Parallelepiped instead of cube
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1063">[ date ]</a>
+              <a href="thread.html#1063">[ thread ]</a>
+              <a href="subject.html#1063">[ subject ]</a>
+              <a href="author.html#1063">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Right, that works.
+
+It seems, I have found the reason:
+This is a pack.py
+..
+..
+..
+
+ii,jj,kk=[range(0,int(2*dim[0]/a)+1),range(0,int(dim[1]/h)+1),range(0,int(dim[2]/h)+1)]
+    for i,j,k in itertools.product(ii,jj,kk):
+..
+..
+..
+Why there is &quot;2*&quot;? When I delete it, everything works normally.
+
+______________________________
+[ENG] Best Regards
+[GER] Mit freundlichen Gr&#252;&#223;en
+[RUS] &#1057; &#1085;&#1072;&#1080;&#1083;&#1091;&#1095;&#1096;&#1080;&#1084;&#1080; &#1087;&#1086;&#1078;&#1077;&#1083;&#1072;&#1085;&#1080;&#1103;&#1084;&#1080;
+[UKR] &#1047; &#1085;&#1072;&#1081;&#1082;&#1088;&#1072;&#1097;&#1080;&#1084;&#1080; &#1087;&#1086;&#1073;&#1072;&#1078;&#1072;&#1085;&#1085;&#1103;&#1084;&#1080;
+
+Anton Gladkyy
+
+2009/6/17 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+
+&gt;<i> Seems OK here:
+</I>&gt;<i>
+</I>&gt;<i> In [4]: yade.pack.inSphere((2,0,0),1).aabb()
+</I>&gt;<i> Out[4]: ((1.0, -1.0, -1.0), (3.0, 1.0, 1.0))
+</I>&gt;<i>
+</I>&gt;<i> In [6]: yade.pack.inAlignedBox((0,0,0),(2,2,2)).aabb()
+</I>&gt;<i> Out[6]: ((0.0, 0.0, 0.0), (2.0, 2.0, 2.0))
+</I>&gt;<i>
+</I>&gt;<i> (PS you can post to yade-dev instead of yade-users for this kind of
+</I>&gt;<i> things, perhaps?)
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i> _______________________________________________
+</I>&gt;<i> Mailing list: <A HREF="https://launchpad.net/~yade-users&lt;https://launchpad.net/%7Eyade-users">https://launchpad.net/~yade-users&lt;https://launchpad.net/%7Eyade-users</A>&gt;
+</I>&gt;<i> Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-users at lists.launchpad.net</A>
+</I>&gt;<i> Unsubscribe : <A HREF="https://launchpad.net/~yade-users&lt;https://launchpad.net/%7Eyade-users">https://launchpad.net/~yade-users&lt;https://launchpad.net/%7Eyade-users</A>&gt;
+</I>&gt;<i> More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</I>&gt;<i>
+</I>-------------- next part --------------
+An HTML attachment was scrubbed...
+URL: &lt;<A HREF="https://lists.berlios.de/pipermail/yade-dev/attachments/20090617/334f516b/attachment.html">https://lists.berlios.de/pipermail/yade-dev/attachments/20090617/334f516b/attachment.html</A>&gt;
+-------------- next part --------------
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001062.html">[deprecated list] [Yade-dev] Ellipsoid
+</A></li>
+	<LI>Next message: <A HREF="001029.html">[deprecated list] [Yade-dev] Parallelepiped instead of cube
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1063">[ date ]</a>
+              <a href="thread.html#1063">[ thread ]</a>
+              <a href="subject.html#1063">[ subject ]</a>
+              <a href="author.html#1063">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

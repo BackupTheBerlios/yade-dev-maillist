@@ -1,0 +1,550 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1674 - in trunk: core gui/py	lib/factory	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1674%20-%20in%20trunk%3A%20core%20gui/py%0A%09lib/factory%09pkg/common/Engine/StandAloneEngine%09pkg/common/RenderingEngine/OpenGLRenderingEngine&In-Reply-To=%3C200902202256.n1KMumIo009392%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000712.html">
+   <LINK REL="Next"  HREF="000716.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1674 - in trunk: core gui/py	lib/factory	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1674%20-%20in%20trunk%3A%20core%20gui/py%0A%09lib/factory%09pkg/common/Engine/StandAloneEngine%09pkg/common/RenderingEngine/OpenGLRenderingEngine&In-Reply-To=%3C200902202256.n1KMumIo009392%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1674 - in trunk: core gui/py	lib/factory	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Feb 20 23:56:48 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000712.html">[deprecated list] [Yade-dev] [svn] r1673 - in trunk: gui/py	pkg/common	pkg/common/Engine/FilterEngine
+</A></li>
+        <LI>Next message: <A HREF="000716.html">[deprecated list] [Yade-dev] removing PhysicalAction genericity?
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#715">[ date ]</a>
+              <a href="thread.html#715">[ thread ]</a>
+              <a href="subject.html#715">[ subject ]</a>
+              <a href="author.html#715">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-02-20 23:56:45 +0100 (Fri, 20 Feb 2009)
+New Revision: 1674
+
+Modified:
+   trunk/core/GeometricalModel.hpp
+   trunk/core/MetaBody.hpp
+   trunk/core/Omega.cpp
+   trunk/core/Omega.hpp
+   trunk/gui/py/PythonUI.cpp
+   trunk/lib/factory/ClassFactory.cpp
+   trunk/lib/factory/ClassFactory.hpp
+   trunk/lib/factory/DynLibManager.cpp
+   trunk/lib/factory/DynLibManager.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentTriangulationCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentTriangulationCollider.hpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+Log:
+1. removed persistentInteraction from most places; they are still present in MetaBody, but not serialized any more, most importantly (avoids warnings) and not GL-drawn.
+2. Plugin loading loginc completely changes, the underlying macro YADE_PLUGIN has still the same interface. We used __attribute__((constructor)), __attribute__((visibility(&quot;internal&quot;))) and anonymous namespace magic to get there. This will make it possible to put multiple plugins to a single shared library without touching the source, only fiddling with SConscript's.
+3. PythonUI is interactive by default (it was not?? weird.)
+
+
+Modified: trunk/core/GeometricalModel.hpp
+===================================================================
+--- trunk/core/GeometricalModel.hpp	2009-02-20 19:21:34 UTC (rev 1673)
++++ trunk/core/GeometricalModel.hpp	2009-02-20 22:56:45 UTC (rev 1674)
+@@ -9,7 +9,7 @@
+ #pragma once
+ 
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+-#include &lt;Wm3Vector3.h&gt;
++#include&lt;Wm3Vector3.h&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ #include&lt;yade/lib-serialization/Serializable.hpp&gt;
+ #include&lt;yade/lib-multimethods/Indexable.hpp&gt;
+
+Modified: trunk/core/MetaBody.hpp
+===================================================================
+--- trunk/core/MetaBody.hpp	2009-02-20 19:21:34 UTC (rev 1673)
++++ trunk/core/MetaBody.hpp	2009-02-20 22:56:45 UTC (rev 1674)
+@@ -57,7 +57,6 @@
+ 		(initializers)
+ 		(bodies)
+ 		(transientInteractions)
+-		(persistentInteractions)
+ 		(physicalActions)
+ 		(miscParams)
+ 		(dispParams)
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2009-02-20 19:21:34 UTC (rev 1673)
++++ trunk/core/Omega.cpp	2009-02-20 22:56:45 UTC (rev 1674)
+@@ -164,8 +164,7 @@
+ 	return (dynlibs[className].baseClasses.find(baseClassName)!=dynlibs[className].baseClasses.end());
+ }
+ 
+-void Omega::scanPlugins()
+-{
++void Omega::scanPlugins(){
+ 	FOREACH(string dld,preferences-&gt;dynlibDirectories) ClassFactory::instance().addBaseDirectory(dld);
+ 	vector&lt;string&gt; dynlibsList;
+ 	FOREACH(string si, preferences-&gt;dynlibDirectories){
+@@ -177,54 +176,28 @@
+ 			if (!filesystem::is_directory(*di) &amp;&amp; filesystem::exists(*di) &amp;&amp; filesystem::extension(*di)!=&quot;.a&quot; &amp;&amp;
+ 				ClassFactory::instance().libNameToSystemName(ClassFactory::instance().systemNameToLibName(filesystem::basename(pth)))==(pth.leaf())){
+ 				filesystem::path name(filesystem::basename(pth));
+-				// warning: this can produce invalid name (too short).
+-				// 0-length names are dumped directly
+-				// names 0&lt;length&lt;4 should fail assertion in DynLibManager::systemNameToLibName
+-				// the whole loading &quot;logic&quot; should be rewritten from scratch...
+ 				if(name.leaf().length()&lt;1) continue; // filter out 0-length filenames
+-				if(dynlibsList.size()==0 || ClassFactory::instance().systemNameToLibName(name.leaf())!=dynlibsList.back()) {
+-					LOG_DEBUG(&quot;Added plugin: &quot;&lt;&lt;si&lt;&lt;&quot;/&quot;&lt;&lt;pth.leaf()&lt;&lt;&quot;.&quot;);
+-					dynlibsList.push_back(ClassFactory::instance().systemNameToLibName(name.leaf()));
++				string plugin=name.leaf();
++				if(!ClassFactory::instance().load(ClassFactory::instance().systemNameToLibName(plugin))){
++					string err=ClassFactory::instance().lastError();
++					if(err.find(&quot;: undefined symbol: &quot;)!=std::string::npos){
++						size_t pos=err.rfind(&quot;:&quot;);	assert(pos!=std::string::npos);
++						std::string sym(err,pos+2); //2 removes &quot;: &quot; from the beginning
++						int status=0; char* demangled_sym=abi::__cxa_demangle(sym.c_str(),0,0,&amp;status);
++						LOG_FATAL(plugin&lt;&lt;&quot;: undefined symbol `&quot;&lt;&lt;demangled_sym&lt;&lt;&quot;'&quot;); LOG_FATAL(plugin&lt;&lt;&quot;: &quot;&lt;&lt;err); LOG_FATAL(&quot;Bailing out.&quot;);
++					}
++					else {
++						LOG_FATAL(plugin&lt;&lt;&quot;: &quot;&lt;&lt;err&lt;&lt;&quot; .&quot;); /* leave space to not to confuse c++filt */ LOG_FATAL(&quot;Bailing out.&quot;);
++					}
++					abort();
+ 				}
+-				else LOG_DEBUG(&quot;Possible plugin discarded: &quot;&lt;&lt;si&lt;&lt;&quot;/&quot;&lt;&lt;name.leaf()&lt;&lt;&quot;.&quot;);
+-			} else LOG_DEBUG(&quot;File not considered a plugin: &quot;&lt;&lt;pth.leaf()&lt;&lt;&quot;.&quot;);
+-		}
+-	}
+-
+-	bool allLoaded = true;
+-	vector&lt;string&gt; dynlibsClassList; // dynlibsList holds filenames, this holds classes defined inside (may be different if using yadePuginClasses)
+-	FOREACH(string dll, dynlibsList){
+-		bool thisLoaded = ClassFactory::instance().load(dll);
+-		if (!thisLoaded){
+-			string err=ClassFactory::instance().lastError();
+-			// HACK
+-			if(err.find(&quot;cannot open shared object file: No such file or directory&quot;)!=std::string::npos){
+-				LOG_INFO(&quot;Attempted to load nonexistent file; since this may be due to bad algorithm of filename construction, we pretend everything is OK (original error: `&quot;&lt;&lt;err&lt;&lt;&quot;').&quot;);
+-				thisLoaded=true;
+ 			}
+-			else if(err.find(&quot;: undefined symbol: &quot;)!=std::string::npos){
+-				size_t pos=err.rfind(&quot;:&quot;);
+-				assert(pos!=std::string::npos);
+-				std::string sym(err,pos+2); //2 removes &quot;: &quot; from the beginning
+-				int status=0;
+-				char* demangled_sym=abi::__cxa_demangle(sym.c_str(),0,0,&amp;status);
+-				LOG_FATAL(&quot;Undefined symbol `&quot;&lt;&lt;demangled_sym&lt;&lt;&quot;' (&quot;&lt;&lt;err&lt;&lt;&quot;).&quot;);
+-			}
+-			else LOG_ERROR(&quot;Error loading Library `&quot;&lt;&lt;dll&lt;&lt;&quot;': &quot;&lt;&lt;err&lt;&lt;&quot; .&quot;); // leave space to not to confuse c++filt
++			else LOG_DEBUG(&quot;File not considered a plugin: &quot;&lt;&lt;pth.leaf()&lt;&lt;&quot;.&quot;);
+ 		}
+-		else { // no error
+-			if (ClassFactory::instance().lastPluginClasses().size()==0){ // regular plugin, one class per file
+-				dynlibsClassList.push_back(dll);
+-				LOG_DEBUG(&quot;Plugin &quot;&lt;&lt;dll&lt;&lt;&quot;: loaded default class &quot;&lt;&lt;dll&lt;&lt;&quot;.&quot;);
+-			} else {// if plugin defines yadePluginClasses (has multiple classes), insert these into dynLibsList
+-				vector&lt;string&gt; css=ClassFactory::instance().lastPluginClasses();
+-				for(size_t i=0; i&lt;css.size();i++) { dynlibsClassList.push_back(css[i]); LOG_DEBUG(&quot;Plugin &quot;&lt;&lt;dll&lt;&lt;&quot;: loaded explicit class &quot;&lt;&lt;css[i]&lt;&lt;&quot;.&quot;);  }
+-			}
+-		}
+-		allLoaded &amp;= thisLoaded;
+ 	}
+-	if(!allLoaded) { LOG_FATAL(&quot;Error loading a plugin (see above; run with -v to see more), bailing out.&quot;); abort(); }
+-	buildDynlibDatabase(dynlibsClassList);
++	list&lt;string&gt;&amp; plugins(ClassFactory::instance().pluginClasses);
++	plugins.sort(); plugins.unique();
++	buildDynlibDatabase(vector&lt;string&gt;(plugins.begin(),plugins.end()));
+ }
+ 
+ void Omega::loadSimulationFromStream(std::istream&amp; stream){
+
+Modified: trunk/core/Omega.hpp
+===================================================================
+--- trunk/core/Omega.hpp	2009-02-20 19:21:34 UTC (rev 1673)
++++ trunk/core/Omega.hpp	2009-02-20 22:56:45 UTC (rev 1674)
+@@ -80,6 +80,7 @@
+ 		ptime				 msStartingPauseTime;
+ 		time_duration			 simulationPauseDuration;
+ 		string				 simulationFileName;
++
+ 		void buildDynlibDatabase(const vector&lt;string&gt;&amp; dynlibsList); // FIXME - maybe in ClassFactory ?
+ 
+ 		map&lt;string,string&gt; memSavedSimulations;
+
+Modified: trunk/gui/py/PythonUI.cpp
+===================================================================
+--- trunk/gui/py/PythonUI.cpp	2009-02-20 19:21:34 UTC (rev 1673)
++++ trunk/gui/py/PythonUI.cpp	2009-02-20 22:56:45 UTC (rev 1674)
+@@ -15,7 +15,7 @@
+ struct termios PythonUI::tios, PythonUI::tios_orig;
+ string PythonUI::runScript;
+ bool PythonUI::stopAfter=false;
+-bool PythonUI::nonInteractive=true;
++bool PythonUI::nonInteractive=false;
+ vector&lt;string&gt; PythonUI::scriptArgs;
+ 
+ PythonUI* PythonUI::self=NULL;
+
+Modified: trunk/lib/factory/ClassFactory.cpp
+===================================================================
+--- trunk/lib/factory/ClassFactory.cpp	2009-02-20 19:21:34 UTC (rev 1673)
++++ trunk/lib/factory/ClassFactory.cpp	2009-02-20 22:56:45 UTC (rev 1674)
+@@ -10,6 +10,8 @@
+ 
+ #include &quot;ClassFactory.hpp&quot;
+ 
++#include&lt;boost/algorithm/string/regex.hpp&gt;
++
+ CREATE_LOGGER(ClassFactory);
+ 
+ class Factorable;
+@@ -123,3 +125,21 @@
+ 	return dlm.systemNameToLibName(name);
+ }
+ 
++
++void ClassFactory::registerPluginClasses(const char* fileAndClasses[]){
++	assert(fileAndClasses[0]!=NULL); // must be file name
++	// only filename given, no classes names explicitly
++	if(fileAndClasses[1]==NULL){
++		/* strip leading path (if any; using / as path separator) and strip one suffix (if any) to get the contained class name */
++		string heldClass=boost::algorithm::replace_regex_copy(string(fileAndClasses[0]),boost::regex(&quot;^(.*/)?(.*?)(\\.[^.]*)?$&quot;),string(&quot;\\2&quot;));
++		LOG_DEBUG(&quot;Plugin &quot;&lt;&lt;fileAndClasses[0]&lt;&lt;&quot;, class &quot;&lt;&lt;heldClass&lt;&lt;&quot; (deduced)&quot;);
++		pluginClasses.push_back(heldClass); // last item with everything up to last / take off and .suffix strip
++	}
++	else {
++		for(int i=1; fileAndClasses[i]!=NULL; i++){
++			LOG_DEBUG(&quot;Plugin &quot;&lt;&lt;fileAndClasses[0]&lt;&lt;&quot;, class &quot;&lt;&lt;fileAndClasses[i]);
++			pluginClasses.push_back(fileAndClasses[i]);
++		}
++	}
++}
++
+
+Modified: trunk/lib/factory/ClassFactory.hpp
+===================================================================
+--- trunk/lib/factory/ClassFactory.hpp	2009-02-20 19:21:34 UTC (rev 1673)
++++ trunk/lib/factory/ClassFactory.hpp	2009-02-20 22:56:45 UTC (rev 1674)
+@@ -11,9 +11,10 @@
+ #pragma once
+ 
+ 
+-#include &lt;map&gt;
+-#include &lt;string&gt;
+-#include &lt;iostream&gt;
++#include&lt;map&gt;
++#include&lt;string&gt;
++#include&lt;list&gt;
++#include&lt;iostream&gt;
+ 
+ #ifndef  __GXX_EXPERIMENTAL_CXX0X__
+ #	include&lt;boost/shared_ptr.hpp&gt;
+@@ -141,8 +142,10 @@
+ 
+ 		bool load(const string&amp; name);
+ 		std::string lastError();
+-		vector&lt;string&gt; lastPluginClasses(){ return dlm.lastPluginClasses; }
+ 
++		void registerPluginClasses(const char* fileAndClasses[]);
++		list&lt;string&gt; pluginClasses;
++
+ 		string libNameToSystemName(const string&amp; name);
+ 		string systemNameToLibName(const string&amp; name);
+ 
+@@ -155,3 +158,11 @@
+ };
+ 
+ 
++/*! Macro defining what classes can be found in this plugin -- must always be used in the respective .cpp file. If left empty, filename will be used to deduce that.
++ *
++ * Note:
++ * 	1. Visibility must be set to &quot;internal&quot; (or &quot;protected&quot;) so that other plugins' init will not shadow this one and all of them get properly executed.
++ * 	2. The function must be enclosed in its own anonymous namespace, otherwise there will be clashes (liker errors) if more files with YADE_PLUGIN are linked together.
++ */
++#define YADE_PLUGIN(...) namespace{ __attribute__((constructor)) __attribute__((visibility(&quot;internal&quot;))) void registerThisPluginClasses(void){ const char* info[]={__FILE__ , ##__VA_ARGS__ , NULL}; ClassFactory::instance().registerPluginClasses(info);} }
++
+
+Modified: trunk/lib/factory/DynLibManager.cpp
+===================================================================
+--- trunk/lib/factory/DynLibManager.cpp	2009-02-20 19:21:34 UTC (rev 1673)
++++ trunk/lib/factory/DynLibManager.cpp	2009-02-20 22:56:45 UTC (rev 1674)
+@@ -50,84 +50,31 @@
+ }
+ 
+ 
+-/*Factory DynLibManager::resolve(const string libName, const string symb )
+-{
+-	if (isLoaded(libName))
+-	{
+-		string tmpSymb;
+-		tmpSymb = symb;
+-		tmpSymb.push_back('_');
+-		tmpSymb.append(libName);
+-		
+-		#ifdef WIN32
+-			void * sym = (void*)GetProcAddress(handles[libName], tmpSymb);
+-			if (sym==NULL)
+-				error();
+-			return (Factory)sym;
+-		#else
+-			void * sym = dlsym(handles[libName], tmpSymb.data());
+-		
+-			if (error())  
+-				return NULL;
+-			else
+-				return (Factory)sym;
+-		#endif
+-	}
+-	else
+-	{
+-		return NULL;
+-	}
+-}*/
+-
+-
+ bool DynLibManager::loadFromDirectoryList (const string&amp; libName )
+ {
+-	lastPluginClasses.clear();
+-
+ 	if (libName.empty()) return false;
+-
+ 	string libFileName = libNameToSystemName(libName);
+-
+ 	string baseDir = findLibDir(libName);
+-
+ 	string fullLibName;
+ 	if (baseDir.length()==0) return load(libFileName,libName);
+ 	else return load(baseDir+&quot;/&quot;+libFileName,libName);
+-	
+ }
+ 
+ 
+ bool DynLibManager::load (const string&amp; fullLibName, const string&amp; libName )
+ {
+-	lastPluginClasses.clear();
+-
+ 	if (libName.empty() || fullLibName.empty()){
+ 		LOG_ERROR(&quot;Empty filename for library `&quot;&lt;&lt;libName&lt;&lt;&quot;'.&quot;);
+ 		return false;
+ 	}
+-	/*if(!filesystem::exists(fullLibName)){
+-		LOG_ERROR(&quot;Trying to load library `&quot;&lt;&lt;libName&lt;&lt;&quot;' from nonexistent file `&quot;&lt;&lt;fullLibName&lt;&lt;&quot;'?! (still returning success)&quot;);
+-		return true;
+-	}*/
+-
+ #ifdef WIN32
+ 	if (isLoaded(libName)) return true;
+ 	HINSTANCE handle = LoadLibraryA(fullLibName.c_str());
+ #else
+ 	void * handle = dlopen(fullLibName.data(), RTLD_NOW);
+ #endif
+-
+ 	if (!handle) return !error();
+-
+ 	handles[libName] = handle;
+-
+-#ifndef WIN32
+-	char**yadePluginClasses=(char**)dlsym(handle, &quot;yadePluginClasses&quot;);
+-	// errors are ignored, since definition of this sybol is optional
+-	if(!dlerror()){ for(int i=0; yadePluginClasses[i]!=NULL &amp;&amp; strlen(yadePluginClasses[i])&gt;0; i++){
+-		lastPluginClasses.push_back(yadePluginClasses[i]); LOG_DEBUG(&quot;Pushed back `&quot;&lt;&lt;yadePluginClasses[i]&lt;&lt;&quot;'.&quot;); }
+-	}
+-#endif
+ 	return true;
+ }
+ 
+
+Modified: trunk/lib/factory/DynLibManager.hpp
+===================================================================
+--- trunk/lib/factory/DynLibManager.hpp	2009-02-20 19:21:34 UTC (rev 1673)
++++ trunk/lib/factory/DynLibManager.hpp	2009-02-20 22:56:45 UTC (rev 1674)
+@@ -27,12 +27,7 @@
+ 
+ using namespace std;
+ 
+-/*! Macro defining what classes can be found in this plugin -- must always be used in the respective .cpp file.
+ 
+-If left empty, filename will be used to deduce that.
+-*/
+-#define YADE_PLUGIN(...) const char* yadePluginClasses[]={ __VA_ARGS__ &quot;&quot;, NULL };
+-
+ class DynLibManager 
+ {
+ 	private :
+@@ -62,7 +57,6 @@
+ 		string systemNameToLibName(const string&amp; name);
+ 		string findLibDir(const string&amp; name);
+ 		string lastError();
+-		vector&lt;string&gt; lastPluginClasses;
+ 		DECLARE_LOGGER;
+ 
+ 	private :
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-02-20 19:21:34 UTC (rev 1673)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-02-20 22:56:45 UTC (rev 1674)
+@@ -18,7 +18,6 @@
+ 
+ PersistentSAPCollider::PersistentSAPCollider() : BroadInteractor()
+ {
+-	noTransientIfPersistentExists=false;
+ 	haveDistantTransient=false;
+ 
+ 	nbObjects=0;
+@@ -185,7 +184,6 @@
+ 	const shared_ptr&lt;Interaction&gt;&amp; interaction=transientInteractions-&gt;find(body_id_t(id1),body_id_t(id2));
+ 	bool found=(interaction!=0);//Bruno's Hack
+ 	// if there is persistent interaction, we will not create transient one!
+-	bool foundPersistent = noTransientIfPersistentExists ? (persistentInteractions-&gt;find(body_id_t(id1),body_id_t(id2))!=0) : false;
+ 	
+ 	// test if the AABBs of the spheres number &quot;id1&quot; and &quot;id2&quot; are overlapping
+ 	int offset1=3*id1, offset2=3*id2;
+@@ -205,7 +203,7 @@
+ 	// inserts the pair p=(id1,id2) if the two AABB overlaps and if p does not exists in the overlappingBB
+ 	//if((id1==0 &amp;&amp; id2==1) || (id1==1 &amp;&amp; id2==0)) LOG_DEBUG(&quot;Processing #0 #1&quot;);
+ 	//if(interaction&amp;&amp;!interaction-&gt;isReal){ LOG_DEBUG(&quot;Unreal interaction #&quot;&lt;&lt;id1&lt;&lt;&quot;=#&quot;&lt;&lt;id2&lt;&lt;&quot; (overlap=&quot;&lt;&lt;overlap&lt;&lt;&quot;, haveDistantTransient=&quot;&lt;&lt;haveDistantTransient&lt;&lt;&quot;)&quot;);}
+-	if(overlap &amp;&amp; !found &amp;&amp; !foundPersistent){
++	if(overlap &amp;&amp; !found){
+ 		//LOG_DEBUG(&quot;Creating interaction #&quot;&lt;&lt;id1&lt;&lt;&quot;=#&quot;&lt;&lt;id2);
+ 		transientInteractions-&gt;insert(body_id_t(id1),body_id_t(id2));
+ 	}
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp	2009-02-20 19:21:34 UTC (rev 1673)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp	2009-02-20 22:56:45 UTC (rev 1674)
+@@ -58,7 +58,6 @@
+ 		// collection of AABB that are in interaction
+ 		//protected : vector&lt; set&lt;unsigned int&gt; &gt; overlappingBB;
+ 		shared_ptr&lt;InteractionContainer&gt; transientInteractions;
+-		shared_ptr&lt;InteractionContainer&gt; persistentInteractions;
+ 		/// upper right corner of the AABB of the objects =&gt;  for spheres = center[i]-radius
+ 		vector&lt;Real&gt; maxima;
+ 
+@@ -97,14 +96,11 @@
+ 		/// return true if BoundingVolume is in potential interaction
+ 		bool probeBoundingVolume(const BoundingVolume&amp; bv);
+ 
+-		//! When creating transient interaction, look first if a persistent link between the pair in question exists; in that case, skip it.
+-		bool noTransientIfPersistentExists;
+ 		//! Don't break transient interaction once bodies don't overlap anymore; material law will be responsible for breaking it.
+ 		bool haveDistantTransient;
+ 
+ 		void registerAttributes(){
+ 			BroadInteractor::registerAttributes();
+-			REGISTER_ATTRIBUTE(noTransientIfPersistentExists);
+ 			REGISTER_ATTRIBUTE(haveDistantTransient);
+ 		}
+ 
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentTriangulationCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentTriangulationCollider.cpp	2009-02-20 19:21:34 UTC (rev 1673)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentTriangulationCollider.cpp	2009-02-20 22:56:45 UTC (rev 1674)
+@@ -117,8 +117,6 @@
+ 			// look if the pair (id1,id2) already exists in the overleppingBB collection
+ 			const shared_ptr&lt;Interaction&gt;&amp; interaction=transientInteractions-&gt;find ( body_id_t ( id1 ),body_id_t ( id2 ) );
+ 			bool found= ( interaction!=0 );//Bruno's Hack
+-			// if there is persistent interaction, we will not create transient one!
+-			//bool foundPersistent = noTransientIfPersistentExists ? ( persistentInteractions-&gt;find ( body_id_t ( id1 ),body_id_t ( id2 ) ) !=0 ) : false;
+ 
+ 			// inserts the pair p=(id1,id2) if the two AABB overlaps and if p does not exists in the overlappingBB
+ 			if ( !found )
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentTriangulationCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentTriangulationCollider.hpp	2009-02-20 19:21:34 UTC (rev 1673)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentTriangulationCollider.hpp	2009-02-20 22:56:45 UTC (rev 1674)
+@@ -71,7 +71,6 @@
+ 		// collection of AABB that are in interaction
+ 		//protected : vector&lt; set&lt;unsigned int&gt; &gt; overlappingBB;
+ 		shared_ptr&lt;InteractionContainer&gt; transientInteractions;
+-		shared_ptr&lt;InteractionContainer&gt; persistentInteractions;
+ 		/// upper right corner of the AABB of the objects =&gt;  for spheres = center[i]-radius
+ 		vector&lt;Real&gt; maxima;
+ 
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2009-02-20 19:21:34 UTC (rev 1673)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2009-02-20 22:56:45 UTC (rev 1674)
+@@ -380,15 +380,6 @@
+ 
+ void OpenGLRenderingEngine::renderInteractionGeometry(const shared_ptr&lt;MetaBody&gt;&amp; rootBody){	
+ 	{
+-		boost::mutex::scoped_lock lock(rootBody-&gt;persistentInteractions-&gt;drawloopmutex);
+-		FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rootBody-&gt;persistentInteractions){
+-			if(!I-&gt;interactionGeometry) continue;
+-			const shared_ptr&lt;Body&gt;&amp; b1=Body::byId(I-&gt;getId1(),rootBody), b2=Body::byId(I-&gt;getId2(),rootBody);
+-			if(!(b1-&gt;physicalParameters-&gt;isDisplayed||b2-&gt;physicalParameters-&gt;isDisplayed)) continue;
+-			glPushMatrix(); interactionGeometryDispatcher(I-&gt;interactionGeometry,I,b1,b2,Interaction_wire); glPopMatrix();
+-		}
+-	}
+-	{
+ 		boost::mutex::scoped_lock lock(rootBody-&gt;transientInteractions-&gt;drawloopmutex);
+ 		FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rootBody-&gt;transientInteractions){
+ 			if(!I-&gt;interactionGeometry) continue;
+@@ -402,15 +393,6 @@
+ 
+ void OpenGLRenderingEngine::renderInteractionPhysics(const shared_ptr&lt;MetaBody&gt;&amp; rootBody){	
+ 	{
+-		boost::mutex::scoped_lock lock(rootBody-&gt;persistentInteractions-&gt;drawloopmutex);
+-		FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rootBody-&gt;persistentInteractions){
+-			if(!I-&gt;interactionPhysics) continue;
+-			const shared_ptr&lt;Body&gt;&amp; b1=Body::byId(I-&gt;getId1(),rootBody), b2=Body::byId(I-&gt;getId2(),rootBody);
+-			if(!(b1-&gt;physicalParameters-&gt;isDisplayed||b2-&gt;physicalParameters-&gt;isDisplayed)) continue;
+-			glPushMatrix(); interactionPhysicsDispatcher(I-&gt;interactionPhysics,I,b1,b2,Interaction_wire); glPopMatrix();
+-		}
+-	}
+-	{
+ 		boost::mutex::scoped_lock lock(rootBody-&gt;transientInteractions-&gt;drawloopmutex);
+ 		FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rootBody-&gt;transientInteractions){
+ 			if(!I-&gt;interactionPhysics) continue;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000712.html">[deprecated list] [Yade-dev] [svn] r1673 - in trunk: gui/py	pkg/common	pkg/common/Engine/FilterEngine
+</A></li>
+	<LI>Next message: <A HREF="000716.html">[deprecated list] [Yade-dev] removing PhysicalAction genericity?
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#715">[ date ]</a>
+              <a href="thread.html#715">[ thread ]</a>
+              <a href="subject.html#715">[ subject ]</a>
+              <a href="author.html#715">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

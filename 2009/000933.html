@@ -1,0 +1,296 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1760 - in trunk:	core	pkg/dem/Engine/StandAloneEngine	pkg/lattice/PreProcessor	pkg/lattice/RenderingEngine/GLDrawLineSegment
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1760%20-%20in%20trunk%3A%0A%09core%09pkg/dem/Engine/StandAloneEngine%0A%09pkg/lattice/PreProcessor%09pkg/lattice/RenderingEngine/GLDrawLineSegment&In-Reply-To=%3C200905011410.n41EAcqb008787%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000932.html">
+   <LINK REL="Next"  HREF="000934.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1760 - in trunk:	core	pkg/dem/Engine/StandAloneEngine	pkg/lattice/PreProcessor	pkg/lattice/RenderingEngine/GLDrawLineSegment</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1760%20-%20in%20trunk%3A%0A%09core%09pkg/dem/Engine/StandAloneEngine%0A%09pkg/lattice/PreProcessor%09pkg/lattice/RenderingEngine/GLDrawLineSegment&In-Reply-To=%3C200905011410.n41EAcqb008787%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1760 - in trunk:	core	pkg/dem/Engine/StandAloneEngine	pkg/lattice/PreProcessor	pkg/lattice/RenderingEngine/GLDrawLineSegment">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Fri May  1 16:10:38 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000932.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-15290/bin/yade-svn1759:	TriaxialTestWater, USCTGen
+</A></li>
+        <LI>Next message: <A HREF="000934.html">[deprecated list] [Yade-dev] [svn] r1761 - in trunk: . core extra	extra/usct gui	gui/py pkg/common/Engine/EngineUnit	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#933">[ date ]</a>
+              <a href="thread.html#933">[ thread ]</a>
+              <a href="subject.html#933">[ subject ]</a>
+              <a href="author.html#933">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2009-05-01 16:10:37 +0200 (Fri, 01 May 2009)
+New Revision: 1760
+
+Modified:
+   trunk/core/Omega.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp
+   trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+   trunk/pkg/lattice/PreProcessor/LatticeExample.hpp
+   trunk/pkg/lattice/RenderingEngine/GLDrawLineSegment/GLDrawLineSegment.cpp
+Log:
+add option for horizontal or vertical wires in fibre reinforced concrete.
+
+
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2009-04-23 15:50:23 UTC (rev 1759)
++++ trunk/core/Omega.cpp	2009-05-01 14:10:37 UTC (rev 1760)
+@@ -213,7 +213,7 @@
+ void Omega::loadSimulation(){
+ 
+ 	if(Omega::instance().getSimulationFileName().size()==0) throw yadeBadFile(&quot;Simulation filename to load has zero length&quot;);
+-	if(!filesystem::exists(simulationFileName) &amp;&amp; !algorithm::starts_with(simulationFileName,&quot;:memory&quot;)) throw yadeBadFile(&quot;Simulation file to load doesn't exist&quot;);
++	if(!filesystem::exists(simulationFileName) &amp;&amp; !algorithm::starts_with(simulationFileName,&quot;:memory&quot;)) throw yadeBadFile((std::string(&quot;Simulation file to load doesn't exist&quot;)+simulationFileName).c_str());
+ 	
+ 	LOG_INFO(&quot;Loading file &quot; + simulationFileName);
+ 
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp	2009-04-23 15:50:23 UTC (rev 1759)
++++ trunk/pkg/dem/Engine/StandAloneEngine/SQLiteRecorder.cpp	2009-05-01 14:10:37 UTC (rev 1760)
+@@ -5,6 +5,8 @@
+ #include&lt;boost/filesystem/convenience.hpp&gt;
+ #include&lt;boost/algorithm/string/join.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;boost/algorithm/string/join.hpp&gt;
++
+ using namespace boost;
+ CREATE_LOGGER(SQLiteRecorder);
+ 
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2009-04-23 15:50:23 UTC (rev 1759)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2009-05-01 14:10:37 UTC (rev 1760)
+@@ -249,6 +249,9 @@
+ 	movSupp_D_pos=Vector3r(0,0,0);
+ 	movSupp_D_range=0;
+ 	movSupp_D_dir=-1;
++
++	fibres_horizontal = false;
++	fibres_vertical = false;
+ }
+ 
+ 
+@@ -441,6 +444,9 @@
+         REGISTER_ATTRIBUTE(fibre_bond_torsStiffness_noUnit);  // k_t fibre bond
+         REGISTER_ATTRIBUTE(fibre_bond_critCompressStrain);    // E.c fibre bond
+         REGISTER_ATTRIBUTE(fibre_bond_critTensileStrain);     // E.l fibre bond
++
++	REGISTER_ATTRIBUTE(fibres_horizontal);
++	REGISTER_ATTRIBUTE(fibres_vertical);
+ }
+ 
+ bool LatticeExample::generate()
+@@ -1644,12 +1650,62 @@
+                 Vector3r cc;
+ 		Vector3r del;
+                 cc[0]=random1()*AGGREGATES_X, cc[1]=random1()*AGGREGATES_Y, cc[2]=((AGGREGATES_Z==0)?(0):(random1()*AGGREGATES_Z));
+-                del[0]=random1()-0.5, del[1]=random1()-0.5, del[2]=((AGGREGATES_Z==0)?(0):(random1()-0.5));
++
++                //del[0]=random1()-0.5, del[1]=random1()-0.5, del[2]=((AGGREGATES_Z==0)?(0):(random1()-0.5));
++
++		if(fibres_horizontal || fibres_vertical)
++		{
++			if(fibres_horizontal)
++			{
++				std::cerr &lt;&lt; &quot;fibres_horizontal\n&quot;;
++
++				del[0]=0;
++				while(del[0]*del[0] &lt; 0.15) del[0]=random1()-0.5;
++
++				del[1]=(random1()-0.5)*0.2;
++
++				del[2]=((AGGREGATES_Z==0)?(0):(random1()-0.5));
++			}
++			else
++			{
++				std::cerr &lt;&lt; &quot;fibres_vertical\n&quot;;
++
++				del[0]=(random1()-0.5)*0.2;
++
++				del[1]=0;
++				while(del[1]*del[1] &lt; 0.15) del[1]=random1()-0.5;
++
++				del[2]=((AGGREGATES_Z==0)?(0):(random1()-0.5));
++			}
++		}
++		else
++		{
++			del[0]=random1()-0.5;
++			del[1]=random1()-0.5;
++			del[2]=((AGGREGATES_Z==0)?(0):(random1()-0.5));
++		}
++
+ 		del.Normalize();
+ 		del=cellsizeUnit_in_meters * del;
+ 		fibres.push_back(std::make_pair(cc,del));
+         }
++/*
++	   for(int i = 0 ; i &lt; fibre_count ; ++i)
++	   {
++		   Vector3r cc;
++		   Vector3r del;
++		   cc[0]=random1()*AGGREGATES_X, cc[1]=random1()*AGGREGATES_Y, cc[2]=((AGGREGATES_Z==0)?(0):(random1()*AGGREGATES_Z));
+ 
++		   del[0]=random1()-0.5;
++		   del[1]=random1()-0.5;
++		   del[2]=((AGGREGATES_Z==0)?(0):(random1()-0.5));
++
++		   del.Normalize();
++		   del=cellsizeUnit_in_meters * del;
++		   fibres.push_back(std::make_pair(cc,del));
++	   }
++*/
++
+ // repulsion !!
+ 	for(int frame=0; frame &lt; fibre_balancing_iterations ; ++frame)
+ 	{
+@@ -1658,7 +1714,13 @@
+ 		for(unsigned int i = 0 ; i &lt; fibres.size() ; ++i )
+ 		{
+ 			Vector3r d(0,0,0);
+-			Vector3r c1 = fibres[i].first + fibres[i].second*beams_per_fibre*0.5;
++
++			////Vector3r c1 = fibres[i].first + fibres[i].second*beams_per_fibre*0.5;
++
++		for(float PART_1 = 0 ; PART_1 &lt;= 1.0 ; PART_1 += 0.2 )
++		{
++			Vector3r c1 = fibres[i].first + fibres[i].second*beams_per_fibre*PART_1;
++
+ 			//emulate periodic boundary
+ 			for(int px = -1 ; px &lt; 2 ; ++px )
+ 			for(int py = -1 ; py &lt; 2 ; ++py )
+@@ -1668,7 +1730,14 @@
+ 				for(unsigned int j = 0 ; j &lt; fibres.size() ; ++j )
+ 					if(i != j)
+ 					{
+-						Vector3r c2 = fibres[j].first + fibres[j].second*beams_per_fibre*0.5 + PERIODIC_DELTA;
++						////Vector3r c2 = fibres[j].first + fibres[j].second*beams_per_fibre*0.5 + PERIODIC_DELTA;
++
++
++					for(float PART_2 = 0 ; PART_2 &lt;= 1.0 ; PART_2 += 0.2 )
++					{
++						Vector3r c2 = fibres[j].first + fibres[j].second*beams_per_fibre*PART_2 + PERIODIC_DELTA;
++
++
+ 						Vector3r dir=c1-c2;
+ 						Real r = dir.Normalize(); // dir is unit vector, r is a distance
+ 						if(r &lt; cellsizeUnit_in_meters)
+@@ -1700,6 +1769,8 @@
+ 								d += (dir * 1/(r*r))*10;
+ 						}
+ 					}
++
++					}
+ 			}
+ 			// repulsion from walls.
+ 			Vector3r MAX(AGGREGATES_X, AGGREGATES_Y, AGGREGATES_Z);
+@@ -1712,7 +1783,10 @@
+ 			}
+ 			moves.push_back(d);
+ 		}
+-		assert(moves.size() == fibres.size() );
++
++		}
++
++		assert(moves.size() == fibres.size()*6 );
+ 		Real maxl=0;
+ 		for(unsigned int i = 0 ; i &lt; moves.size() ; ++i )
+ 			maxl = std::max(moves[i].Length(),maxl);
+@@ -1720,8 +1794,11 @@
+ 		for(unsigned int i = 0 ; i &lt; moves.size() ; ++i )
+ 			moves[i] = cellsizeUnit_in_meters*moves[i]/maxl;
+ 	
+-		for(unsigned int i = 0 ; i &lt; fibres.size() ; ++i )
+-			fibres[i].first+=moves[i];
++//		for(unsigned int i = 0 ; i &lt; fibres.size() ; ++i )
++//			fibres[i].first+=moves[i];
++		for(unsigned int i = 0 ; i &lt; moves.size() ; ++i )
++			fibres[std::floor(((float)(i))/6.0f)].first+=moves[i];
++
+ 	
+ 		for(unsigned int i = 0 ; i &lt; fibres.size() ; ++i )
+ 		{
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.hpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.hpp	2009-04-23 15:50:23 UTC (rev 1759)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.hpp	2009-05-01 14:10:37 UTC (rev 1760)
+@@ -254,6 +254,10 @@
+ 
+                                  
+                 std::vector&lt; std::vector&lt; unsigned int &gt; &gt; connections; // which node is in touch with what beams.
++
++		bool             fibres_horizontal
++				,fibres_vertical;
++
+                                 
+         public : 
+ 		LatticeExample();
+
+Modified: trunk/pkg/lattice/RenderingEngine/GLDrawLineSegment/GLDrawLineSegment.cpp
+===================================================================
+--- trunk/pkg/lattice/RenderingEngine/GLDrawLineSegment/GLDrawLineSegment.cpp	2009-04-23 15:50:23 UTC (rev 1759)
++++ trunk/pkg/lattice/RenderingEngine/GLDrawLineSegment/GLDrawLineSegment.cpp	2009-05-01 14:10:37 UTC (rev 1760)
+@@ -21,6 +21,9 @@
+ 	glColor3v(gm-&gt;diffuseColor);
+ 	
+ 	Real len = (static_cast&lt;LineSegment*&gt;(gm.get()))-&gt;length;
++	if(len &gt;1.0)
++		return;
++
+ 	maxLen = std::max(len,maxLen);
+ 
+ 	// FIXME - there must be a way to tell this from outside
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000932.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-15290/bin/yade-svn1759:	TriaxialTestWater, USCTGen
+</A></li>
+	<LI>Next message: <A HREF="000934.html">[deprecated list] [Yade-dev] [svn] r1761 - in trunk: . core extra	extra/usct gui	gui/py pkg/common/Engine/EngineUnit	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#933">[ date ]</a>
+              <a href="thread.html#933">[ thread ]</a>
+              <a href="subject.html#933">[ subject ]</a>
+              <a href="author.html#933">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

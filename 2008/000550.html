@@ -1,0 +1,343 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1596 - in trunk: extra/clump	gui/py gui/qt3	pkg/common/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1596%20-%20in%20trunk%3A%20extra/clump%0A%09gui/py%20gui/qt3%09pkg/common/Engine/DeusExMachina&In-Reply-To=%3C200812091143.mB9BhVcW001851%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000549.html">
+   <LINK REL="Next"  HREF="000551.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1596 - in trunk: extra/clump	gui/py gui/qt3	pkg/common/Engine/DeusExMachina</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1596%20-%20in%20trunk%3A%20extra/clump%0A%09gui/py%20gui/qt3%09pkg/common/Engine/DeusExMachina&In-Reply-To=%3C200812091143.mB9BhVcW001851%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1596 - in trunk: extra/clump	gui/py gui/qt3	pkg/common/Engine/DeusExMachina">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Dec  9 12:43:31 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000549.html">[deprecated list] [Yade-dev] Yade wiki
+</A></li>
+        <LI>Next message: <A HREF="000551.html">[deprecated list] [Yade-dev] [robot] build failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#550">[ date ]</a>
+              <a href="thread.html#550">[ thread ]</a>
+              <a href="subject.html#550">[ subject ]</a>
+              <a href="author.html#550">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-12-09 12:43:29 +0100 (Tue, 09 Dec 2008)
+New Revision: 1596
+
+Modified:
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/clump/Shop.hpp
+   trunk/gui/py/_eudoxos.cpp
+   trunk/gui/py/_utils.cpp
+   trunk/gui/py/eudoxos.py
+   trunk/gui/py/utils.py
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/pkg/common/Engine/DeusExMachina/GravityEngines.cpp
+Log:
+1. Fix warnings in GLViewer
+2. Add (35.4%)-style counter if stopAtIteration is set to the OSD in gl view
+3. Add utils.downCast to downcast object to its derived class and copying all attributes.
+4. Add utils.SpherePWaveTimeStep to compute critical dt from a few parameters only
+5. Add routine to compute overall kinetic energy to Shop (indirectly to utils as well)
+6. Add routine to sum torque (momentum) with respect to an axis from forces and torques on given set of bodies.
+
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2008-12-08 09:27:08 UTC (rev 1595)
++++ trunk/extra/clump/Shop.cpp	2008-12-09 11:43:29 UTC (rev 1596)
+@@ -135,10 +135,23 @@
+ 	return (useMaxForce?maxF:meanF)/maxContactF;
+ }
+ 
++Real Shop::kineticEnergy(MetaBody* _rb){
++	MetaBody* rb=_rb ? _rb : Omega::instance().getRootBody().get();
++	Real ret=0.;
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rb-&gt;bodies){
++		if(!b-&gt;isDynamic) continue;
++		shared_ptr&lt;RigidBodyParameters&gt; rbp=YADE_PTR_CAST&lt;RigidBodyParameters&gt;(b-&gt;physicalParameters); assert(pp);
++		Matrix3r inertiaMatrix(rbp-&gt;inertia[0],rbp-&gt;inertia[1],rbp-&gt;inertia[2]);
++		// &#189;(mv&#178;+&#969;I&#969;)
++		ret+=.5*(rbp-&gt;mass*rbp-&gt;velocity.SquaredLength()+rbp-&gt;angularVelocity.Dot(diagMult(rbp-&gt;inertia,rbp-&gt;angularVelocity)));
++	}
++	return ret;
++}
+ 
+ 
+ 
+ 
++
+ template &lt;typename valType&gt; valType Shop::getDefault(const string&amp; key) {
+ 	ensureInit();
+ 	try{return boost::any_cast&lt;valType&gt;(defaults[key]);}
+
+Modified: trunk/extra/clump/Shop.hpp
+===================================================================
+--- trunk/extra/clump/Shop.hpp	2008-12-08 09:27:08 UTC (rev 1595)
++++ trunk/extra/clump/Shop.hpp	2008-12-09 11:43:29 UTC (rev 1596)
+@@ -101,6 +101,7 @@
+ 
+ 		//! Get unbalanced force of the whole simulation
+ 		static Real unbalancedForce(bool useMaxForce=false, MetaBody* _rb=NULL);
++		static Real kineticEnergy(MetaBody* _rb=NULL);
+ 
+ 		//! create transientInteraction between 2 bodies, using existing MetaEngine in Omega
+ 		static shared_ptr&lt;Interaction&gt; createExplicitInteraction(body_id_t id1, body_id_t id2);
+
+Modified: trunk/gui/py/_eudoxos.cpp
+===================================================================
+--- trunk/gui/py/_eudoxos.cpp	2008-12-08 09:27:08 UTC (rev 1595)
++++ trunk/gui/py/_eudoxos.cpp	2008-12-09 11:43:29 UTC (rev 1596)
+@@ -1,6 +1,6 @@
+ #include&lt;yade/extra/Brefcom.hpp&gt;
+ #include&lt;boost/python.hpp&gt;
+-using namespace boost;
++using namespace boost::python;
+ using namespace std;
+ # if 0
+ Real elasticEnergyDensityInAABB(python::tuple AABB){
+@@ -27,3 +27,34 @@
+ }
+ #endif
+ 
++// copied from _utils.cpp
++Vector3r tuple2vec(const python::tuple&amp; t){return Vector3r(extract&lt;double&gt;(t[0])(),extract&lt;double&gt;(t[1])(),extract&lt;double&gt;(t[2])());}
++
++/*! Set velocity of all dynamic particles so that if their motion were unconstrained,
++ * axis given by axisPoint and axisDirection would be reached in timeToAxis
++ * (or, point at distance subtractDist from axis would be reached).
++ *
++ * The code is analogous to AxialGravityEngine and is intended to give initial motion
++ * to particles subject to axial compaction to speed up the process. */
++void velocityTowardsAxis(python::tuple _axisPoint, python::tuple _axisDirection, Real timeToAxis, Real subtractDist=0.){
++	Vector3r axisPoint=tuple2vec(_axisPoint), axisDirection=tuple2vec(_axisDirection);
++	FOREACH(const shared_ptr&lt;Body&gt;&amp;b, *(Omega::instance().getRootBody()-&gt;bodies)){
++		if(!b-&gt;isDynamic) continue;
++		ParticleParameters* pp=YADE_CAST&lt;ParticleParameters*&gt;(b-&gt;physicalParameters.get());
++		const Vector3r&amp; x0=pp-&gt;se3.position;
++		const Vector3r&amp; x1=axisPoint;
++		const Vector3r x2=axisPoint+axisDirection;
++		Vector3r closestAxisPoint=(x2-x1) * /* t */ (-(x1-x0).Dot(x2-x1))/((x2-x1).SquaredLength());
++		Vector3r toAxis=closestAxisPoint-x0;
++		if(subtractDist&gt;0) toAxis*=(toAxis.Length()-subtractDist)/toAxis.Length();
++		pp-&gt;velocity=toAxis/timeToAxis;
++	}
++}
++BOOST_PYTHON_FUNCTION_OVERLOADS(velocityTowardsAxis_overloads,velocityTowardsAxis,3,4);
++
++
++
++BOOST_PYTHON_MODULE(_eudoxos){
++	def(&quot;velocityTowardsAxis&quot;,velocityTowardsAxis,velocityTowardsAxis_overloads(args(&quot;axisPoint&quot;,&quot;axisDirection&quot;,&quot;timeToAxis&quot;,&quot;subtractDist&quot;)));
++}
++
+
+Modified: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2008-12-08 09:27:08 UTC (rev 1595)
++++ trunk/gui/py/_utils.cpp	2008-12-09 11:43:29 UTC (rev 1596)
+@@ -171,7 +171,7 @@
+  * is position relative to axisPt; moment from moment is m; such moment per body is
+  * projected onto axis.
+  */
+-Real sumBexMoments(int mask, python::tuple _axis, python::tuple _axisPt){
++Real sumBexTorques(int mask, python::tuple _axis, python::tuple _axisPt){
+ 	Shop::Bex::initCache();
+ 	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
+ 	Real ret;
+@@ -264,6 +264,7 @@
+ void Shop__createExplicitInteraction(body_id_t id1, body_id_t id2){ (void) Shop::createExplicitInteraction(id1,id2);}
+ 
+ BOOST_PYTHON_FUNCTION_OVERLOADS(unbalancedForce_overloads,Shop::unbalancedForce,0,1);
++Real Shop__kineticEnergy(){return Shop::kineticEnergy();}
+ 
+ BOOST_PYTHON_MODULE(_utils){
+ 	// <A HREF="http://numpy.scipy.org/numpydoc/numpy-13.html">http://numpy.scipy.org/numpydoc/numpy-13.html</A> mentions this must be done in module init, otherwise we will crash
+@@ -279,8 +280,9 @@
+ 	def(&quot;elasticEnergy&quot;,elasticEnergyInAABB);
+ 	def(&quot;inscribedCircleCenter&quot;,inscribedCircleCenter);
+ 	def(&quot;unbalancedForce&quot;,&amp;Shop::unbalancedForce,unbalancedForce_overloads(args(&quot;useMaxForce&quot;)));
++	def(&quot;kineticEnergy&quot;,Shop__kineticEnergy);
+ 	def(&quot;sumBexForces&quot;,sumBexForces);
+-	def(&quot;sumBexMoments&quot;,sumBexMoments);
++	def(&quot;sumBexTorques&quot;,sumBexTorques);
+ 	def(&quot;createInteraction&quot;,Shop__createExplicitInteraction);
+ 	def(&quot;spiralProject&quot;,spiralProject,spiralProject_overloads(args(&quot;axis&quot;,&quot;theta0&quot;)));
+ 	def(&quot;pointInsidePolygon&quot;,pointInsidePolygon);
+
+Modified: trunk/gui/py/eudoxos.py
+===================================================================
+--- trunk/gui/py/eudoxos.py	2008-12-08 09:27:08 UTC (rev 1595)
++++ trunk/gui/py/eudoxos.py	2008-12-09 11:43:29 UTC (rev 1596)
+@@ -5,6 +5,7 @@
+ #
+ from yade.wrapper import *
+ from math import *
++from yade._eudoxos import * ## c++ implementations
+ 
+ def estimateStress(strain,cutoff=0.):
+ 	&quot;&quot;&quot;Use summed stored energy in contacts to compute macroscopic stress over the same volume, provided known strain.&quot;&quot;&quot;
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-12-08 09:27:08 UTC (rev 1595)
++++ trunk/gui/py/utils.py	2008-12-09 11:43:29 UTC (rev 1596)
+@@ -16,7 +16,7 @@
+ # c++ implementations for performance reasons
+ from yade._utils import *
+ 
+-def saveVars(mark='',**kw):
++def saveVars(mark='',loadNow=False,**kw):
+ 	&quot;&quot;&quot;Save passed variables into the simulation so that it can be recovered when the simulation is loaded again.
+ 
+ 	For example, variables a=5, b=66 and c=7.5e-4 are defined. To save those, use
+@@ -26,12 +26,15 @@
+ 	those variables will be save in the .xml file, when the simulation itself is saved. To recover those variables once
+ 	the .xml is loaded again, use
+ 
+-	 utils.loadVars()
++	 utils.loadVars(mark)
+ 
+ 	and they will be defined in the __builtin__ namespace (i.e. available from anywhere in the python code).
++
++	If loadParam==True, variables will be loaded immediately after saving. That effectively makes **kw available in builtin namespace.
+ 	&quot;&quot;&quot;
+ 	import cPickle
+ 	Omega().tags['pickledPythonVariablesDictionary'+mark]=cPickle.dumps(kw)
++	if loadNow: loadVars(mark)
+ 
+ def loadVars(mark=''):
+ 	import cPickle
+@@ -40,10 +43,21 @@
+ 	for k in d: __builtin__.__dict__[k]=d[k]
+ 
+ 
++def SpherePWaveTimeStep(radius,density,young):
++	&quot;&quot;&quot;Compute P-wave critical timestep for a single sphere.
++	If you want to compute minimum critical timestep for all spheres in the simulation, use utils.PWaveTimeStep() instead.&quot;&quot;&quot;
++	from math import sqrt
++	return radius/sqrt(young/density)
++
+ def randomColor(): return [random.random(),random.random(),random.random()]
+ 
+ def typedEngine(name): return [e for e in Omega().engines if e.name==name][0]
+ 
++def downCast(obj,newClassName):
++	&quot;&quot;&quot;Cast given object to class deriving from the same yade root class and copy all parameters from given object.
++	Obj should be up in the inheritance tree, otherwise some attributes may not be defined in the new class.&quot;&quot;&quot;
++	return obj.__class__(newClassName,dict([ (key,obj[key]) for key in obj.keys() ]))
++
+ def sphere(center,radius,density=1,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=True,wire=False,color=None,physParamsClass='BodyMacroParameters'):
+ 	&quot;&quot;&quot;Create default sphere, with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
+ 	s=Body()
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-12-08 09:27:08 UTC (rev 1595)
++++ trunk/gui/qt3/GLViewer.cpp	2008-12-09 11:43:29 UTC (rev 1596)
+@@ -149,7 +149,7 @@
+ 
+ string GLViewer::getState(){
+ 	QString origStateFileName=stateFileName();
+-	char tmpnam_str [L_tmpnam]; tmpnam(tmpnam_str);
++	char tmpnam_str [L_tmpnam]; char* result=tmpnam(tmpnam_str); if(!result) throw runtime_error(&quot;Failure getting temporary filename.&quot;);
+ 	setStateFileName(tmpnam_str); saveStateToFile(); setStateFileName(origStateFileName);
+ 	LOG_DEBUG(&quot;State saved to temp file &quot;&lt;&lt;tmpnam_str);
+ 	// read tmp file contents and return it as string
+@@ -160,7 +160,7 @@
+ }
+ 
+ void GLViewer::setState(string state){
+-	char tmpnam_str [L_tmpnam]; tmpnam(tmpnam_str);
++	char tmpnam_str [L_tmpnam]; char* result=tmpnam(tmpnam_str); if(!result) throw runtime_error(&quot;Failure getting temporary filename.&quot;);
+ 	std::ofstream out(tmpnam_str);
+ 	if(!out.good()){ LOG_ERROR(&quot;Error opening temp file `&quot;&lt;&lt;tmpnam_str&lt;&lt;&quot;', loading aborted.&quot;); return; }
+ 	out&lt;&lt;state; out.close();
+@@ -492,7 +492,8 @@
+ 			drawArrow(wholeDiameter/6);
+ 		glPopMatrix();
+ 	}
+-
++	
++	MetaBody* rb=Omega::instance().getRootBody().get();
+ 	#define _W3 setw(3)&lt;&lt;setfill('0')
+ 	#define _W2 setw(2)&lt;&lt;setfill('0')
+ 	if(timeDispMask!=0){
+@@ -519,6 +520,7 @@
+ 		if(timeDispMask &amp; GLViewer::TIME_ITER){
+ 			ostringstream oss;
+ 			oss&lt;&lt;&quot;#&quot;&lt;&lt;Omega::instance().getCurrentIteration();
++			if(rb-&gt;stopAtIteration&gt;rb-&gt;currentIteration) oss&lt;&lt;&quot; (&quot;&lt;&lt;setiosflags(ios::fixed)&lt;&lt;setw(3)&lt;&lt;setprecision(1)&lt;&lt;setfill('0')&lt;&lt;(100.*rb-&gt;currentIteration)/rb-&gt;stopAtIteration&lt;&lt;&quot;%)&quot;;
+ 			QGLViewer::drawText(x,y,oss.str());
+ 			y-=lineHt;
+ 		}
+@@ -530,7 +532,7 @@
+ 	ostringstream oss;
+ 	time_duration t=Omega::instance().getComputationDuration();
+ 	unsigned d=t.hours()/24,h=t.hours()%24,m=t.minutes(),s=t.seconds();
+-	oss&lt;&lt;&quot;wall &quot;;
++	oss&lt;&lt;&quot;clock &quot;;
+ 	if(d&gt;0) oss&lt;&lt;d&lt;&lt;&quot;days &quot;&lt;&lt;_W2&lt;&lt;h&lt;&lt;&quot;:&quot;&lt;&lt;_W2&lt;&lt;m&lt;&lt;&quot;:&quot;&lt;&lt;_W2&lt;&lt;s;
+ 	else if(h&gt;0) oss&lt;&lt;_W2&lt;&lt;h&lt;&lt;&quot;:&quot;&lt;&lt;_W2&lt;&lt;m&lt;&lt;&quot;:&quot;&lt;&lt;_W2&lt;&lt;s;
+ 	else oss&lt;&lt;_W2&lt;&lt;m&lt;&lt;&quot;:&quot;&lt;&lt;_W2&lt;&lt;s;
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/GravityEngines.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/GravityEngines.cpp	2008-12-08 09:27:08 UTC (rev 1595)
++++ trunk/pkg/common/Engine/DeusExMachina/GravityEngines.cpp	2008-12-09 11:43:29 UTC (rev 1596)
+@@ -40,9 +40,7 @@
+ }
+ 
+ void AxialGravityEngine::applyCondition(MetaBody* rootBody){
+-	BodyContainer::iterator Iend=rootBody-&gt;bodies-&gt;end();
+-	for(BodyContainer::iterator I=rootBody-&gt;bodies-&gt;begin(); I!=Iend; ++I){
+-		const shared_ptr&lt;Body&gt;&amp; b(*I);
++	FOREACH(const shared_ptr&lt;Body&gt;&amp;b, *rootBody-&gt;bodies){
+ 		if(b-&gt;isClumpMember()) continue;
+ 		Real myMass=YADE_PTR_CAST&lt;ParticleParameters&gt;(b-&gt;physicalParameters)-&gt;mass;
+ 		/* <A HREF="http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html">http://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html</A> */
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000549.html">[deprecated list] [Yade-dev] Yade wiki
+</A></li>
+	<LI>Next message: <A HREF="000551.html">[deprecated list] [Yade-dev] [robot] build failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#550">[ date ]</a>
+              <a href="thread.html#550">[ thread ]</a>
+              <a href="subject.html#550">[ subject ]</a>
+              <a href="author.html#550">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

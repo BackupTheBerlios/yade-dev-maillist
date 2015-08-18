@@ -1,0 +1,484 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1599 - trunk/extra/mgpost/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1599%20-%20trunk/extra/mgpost/src&In-Reply-To=%3C200812151508.mBFF8CQb009709%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000553.html">
+   <LINK REL="Next"  HREF="000555.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1599 - trunk/extra/mgpost/src</H1>
+    <B>richefeu at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1599%20-%20trunk/extra/mgpost/src&In-Reply-To=%3C200812151508.mBFF8CQb009709%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1599 - trunk/extra/mgpost/src">richefeu at mail.berlios.de
+       </A><BR>
+    <I>Mon Dec 15 16:08:12 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000553.html">[deprecated list] [Yade-dev] detecting cut&amp;paste in yade
+</A></li>
+        <LI>Next message: <A HREF="000555.html">[deprecated list] [Yade-dev] [Yade-users] dissipating all	energy in a packing
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#554">[ date ]</a>
+              <a href="thread.html#554">[ thread ]</a>
+              <a href="subject.html#554">[ subject ]</a>
+              <a href="author.html#554">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: richefeu
+Date: 2008-12-15 16:08:12 +0100 (Mon, 15 Dec 2008)
+New Revision: 1599
+
+Modified:
+   trunk/extra/mgpost/src/Makefile.linux
+   trunk/extra/mgpost/src/display_funcs.c
+   trunk/extra/mgpost/src/ihm.c
+   trunk/extra/mgpost/src/mgpost.c
+Log:
+- set menus in english mode
+
+
+Modified: trunk/extra/mgpost/src/Makefile.linux
+===================================================================
+--- trunk/extra/mgpost/src/Makefile.linux	2008-12-14 10:32:09 UTC (rev 1598)
++++ trunk/extra/mgpost/src/Makefile.linux	2008-12-15 15:08:12 UTC (rev 1599)
+@@ -14,8 +14,8 @@
+ #  _LINUX     : compil on linux OS
+ #  _WITH_TIFF : linked with libtiff
+ 
+-CC      =g++
+-CFLAGS  =-Wall -O3 -D_FR -D_GNU_SOURCE -D_LIBXML2 -D_LINUX -D_WITH_TIFF
++CC      =gcc
++CFLAGS  =-Wall -O3 -D_GNU_SOURCE -D_LIBXML2 -D_LINUX -D_WITH_TIFF
+ LIBS    =-lGL -lGLU -lglut -lm -lxml2 -ltiff -lX11 -lXmu -lXi
+ LIBSDIR =-L/usr/X11R6/lib 
+ INC_DIR =-I/usr/include/libxml2
+
+Modified: trunk/extra/mgpost/src/display_funcs.c
+===================================================================
+--- trunk/extra/mgpost/src/display_funcs.c	2008-12-14 10:32:09 UTC (rev 1598)
++++ trunk/extra/mgpost/src/display_funcs.c	2008-12-15 15:08:12 UTC (rev 1599)
+@@ -2053,8 +2053,7 @@
+   GLdouble Xcam = Xviewp * TRANS_CAM_FACTOR, Ycam = Yviewp * TRANS_CAM_FACTOR;
+   int coul;
+   float save_valc_bleu, save_valc_rouge;
+-  double dist;
+-  double l, ls, lc, sina, cosa;
++  double l;
+ 
+   save_valc_bleu = valc_bleu;
+   save_valc_rouge = valc_rouge;
+
+Modified: trunk/extra/mgpost/src/ihm.c
+===================================================================
+--- trunk/extra/mgpost/src/ihm.c	2008-12-14 10:32:09 UTC (rev 1598)
++++ trunk/extra/mgpost/src/ihm.c	2008-12-15 15:08:12 UTC (rev 1599)
+@@ -1974,184 +1974,190 @@
+ void 
+ mgp_buildmenu()
+ {
+-  int popupmenu, submenu1, submenu2, submenu3, submenu4, submenu5, submenu6;
++        int popupmenu, submenu1, submenu2, submenu3, submenu4, submenu5, submenu6;
+   
+ #ifdef _FR
+-  submenu1 = glutCreateMenu(traitsubmenu1);	/* OPTIONS */
+-  glutAddMenuEntry(&quot;Fond blanc&quot;, 0);
+-  glutAddMenuEntry(&quot;Fond fun&quot;, 1);
+-  glutAddMenuEntry(&quot;Fond Noir&quot;, 2);
+-  glutAddMenuEntry(&quot;Traits blanc&quot;, 5);
+-  glutAddMenuEntry(&quot;Traits bleu&quot;, 6);
+-  glutAddMenuEntry(&quot;Traits Noir&quot;, 7);
+-  glutAddMenuEntry(&quot;Transparence ON/OFF&quot;, 3);
+-  glutAddMenuEntry(&quot;Section ON/OFF&quot;, 4);
+-  
+-  submenu2 = glutCreateMenu(traitsubmenu2);	/* outils */
+-  glutAddMenuEntry(&quot;Informations sur l'echantillon&quot;, 15);
+-  glutAddMenuEntry(&quot;Quadrillage de l'echantillon&quot;, 2);
+-  if (with_layers) glutAddMenuEntry(&quot;Couches geologiques&quot;, 34);
+-  glutAddMenuEntry(&quot;Champ de vitesses&quot;, 12);
+-  glutAddMenuEntry(&quot;Anisotropie&quot;, 22);
+-  glutAddMenuEntry(&quot;Evolution Anisotropie&quot;, 24);
+-  glutAddMenuEntry(&quot;Informations sur les gaps&quot;, 26);
+-  glutAddMenuEntry(&quot;Direction des contacts&quot;, 30);
+-  glutAddMenuEntry(&quot;fn vs ft&quot;, 16);
+-  glutAddMenuEntry(&quot;pdf(fn)&quot;, 14);
+-  glutAddMenuEntry(&quot;Granulometrie&quot;, 27);
+-  glutAddMenuEntry(&quot;Forces locales&quot;, 35);
+-  
+-  submenu3 = glutCreateMenu(traitsubmenu2);	/* rendu des corps */
+-  glutAddMenuEntry(&quot;Rien&quot;, 10);
+-  glutAddMenuEntry(&quot;Nombre de coordination&quot;, 32);
+- 	glutAddMenuEntry(&quot;Contour&quot;, 13);
+-  glutAddMenuEntry(&quot;Couleurs&quot;, 19);
+-  glutAddMenuEntry(&quot;Tailles&quot;, 36);
+-    /* 	glutAddMenuEntry(&quot;Deformations 11&quot;, 27); */
+-    /* 	glutAddMenuEntry(&quot;Deformations 22&quot;, 28); */
+-	glutAddMenuEntry(&quot;Vitesses angulaires (2D)&quot;, 8);
+-	glutAddMenuEntry(&quot;Norme vitesses&quot;, 11);
+-	/* glutAddMenuEntry (&quot;Deplacements X cumul&#65533;s&quot;, 19); */
+-	/* glutAddMenuEntry (&quot;Deplacements Y cumul&#65533;s&quot;, 20); */
+-	glutAddMenuEntry(&quot;Distance / reference&quot;, 21);
+-    
+-	submenu4 = glutCreateMenu(traitsubmenu2);	/* rendu des
+-      * interactions */
+-	glutAddMenuEntry(&quot;Rien&quot;, 0);
+-	glutAddMenuEntry(&quot;Liste de Verlet&quot;, 1);
+-	glutAddMenuEntry(&quot;Liens colles&quot;, 9);
++        submenu1 = glutCreateMenu(traitsubmenu1);
++        glutAddMenuEntry(&quot;Fond blanc&quot;, 0);
++        glutAddMenuEntry(&quot;Fond fun&quot;, 1);
++        glutAddMenuEntry(&quot;Fond Noir&quot;, 2);
++        glutAddMenuEntry(&quot;Traits blanc&quot;, 5);
++        glutAddMenuEntry(&quot;Traits bleu&quot;, 6);
++        glutAddMenuEntry(&quot;Traits Noir&quot;, 7);
++        glutAddMenuEntry(&quot;Transparence ON/OFF&quot;, 3);
++        glutAddMenuEntry(&quot;Section ON/OFF&quot;, 4);
++        
++        submenu2 = glutCreateMenu(traitsubmenu2);
++        glutAddMenuEntry(&quot;Informations sur l'echantillon&quot;, 15);
++        glutAddMenuEntry(&quot;Quadrillage de l'echantillon&quot;, 2);
++        if (with_layers) glutAddMenuEntry(&quot;Couches geologiques&quot;, 34);
++        glutAddMenuEntry(&quot;Champ de vitesses&quot;, 12);
++        glutAddMenuEntry(&quot;Anisotropie&quot;, 22);
++        glutAddMenuEntry(&quot;Evolution Anisotropie&quot;, 24);
++        glutAddMenuEntry(&quot;Informations sur les gaps&quot;, 26);
++        glutAddMenuEntry(&quot;Direction des contacts&quot;, 30);
++        glutAddMenuEntry(&quot;fn vs ft&quot;, 16);
++        glutAddMenuEntry(&quot;pdf(fn)&quot;, 14);
++        glutAddMenuEntry(&quot;Granulometrie&quot;, 27);
++        glutAddMenuEntry(&quot;Forces locales&quot;, 35);
++        
++        submenu3 = glutCreateMenu(traitsubmenu2);
++        glutAddMenuEntry(&quot;Rien&quot;, 10);
++        glutAddMenuEntry(&quot;Nombre de coordination&quot;, 32);
++        glutAddMenuEntry(&quot;Contour&quot;, 13);
++        glutAddMenuEntry(&quot;Couleurs&quot;, 19);
++        glutAddMenuEntry(&quot;Tailles&quot;, 36);
++        glutAddMenuEntry(&quot;Vitesses angulaires (2D)&quot;, 8);
++        glutAddMenuEntry(&quot;Norme vitesses&quot;, 11);
++        glutAddMenuEntry(&quot;Distance / reference&quot;, 21);
++        
++        submenu4 = glutCreateMenu(traitsubmenu2);
++        glutAddMenuEntry(&quot;Rien&quot;, 0);
++        glutAddMenuEntry(&quot;Liste de Verlet&quot;, 1);
++        glutAddMenuEntry(&quot;Liens colles&quot;, 9);
+         glutAddMenuEntry(&quot;Fissures&quot;, 28);
+-	/* glutAddMenuEntry (&quot;Efforts normaux&quot;, 3); */
+-	glutAddMenuEntry(&quot;Forces normales sup. seuil&quot;, 31);
+-	glutAddMenuEntry(&quot;Forces&quot;, 33);
+-  glutAddMenuEntry(&quot;Forces des fichiers for.out.xxx&quot;, 3);
+-  glutAddMenuEntry(&quot;lignes de couleur pour fn&quot;, 20);
+-  glutAddMenuEntry(&quot;Forces en compression et en traction&quot;, 7);
+-	glutAddMenuEntry(&quot;Forces normales positives&quot;, 5);
+-	glutAddMenuEntry(&quot;Forces normales negatives&quot;, 6);
+-	glutAddMenuEntry(&quot;Forces tangentielles (val. abs.)&quot;, 4);
+-	glutAddMenuEntry(&quot;Efforts de couple&quot;, 25);
+-	glutAddMenuEntry(&quot;Vitesse relative tangente&quot;, 17);
+-	glutAddMenuEntry(&quot;Volumes des ponts liquides&quot;, 29);
+-    /* 	glutAddMenuEntry(&quot;Forces de cohesion&quot;, 34); */
+-    
+-	submenu5 = glutCreateMenu(traitsubmenu4);	/* Screenshots -
+-      * exportations */
+-	glutAddMenuEntry(&quot;Image TIFF&quot;, 0);
+-	glutAddMenuEntry(&quot;Serie d'images(TIFF)&quot;, 1);
+-	glutAddMenuEntry(&quot;Image EPS avec gl2ps&quot;, 2);
+-	glutAddMenuEntry(&quot;Image EPS (2D)&quot;, 6);
+-	glutAddMenuEntry(&quot;Fichier 'BODIES.DAT'&quot;, 3);
+-	glutAddMenuEntry(&quot;Fichier 'export.cin'&quot;, 4);
+-	glutAddMenuEntry(&quot;Fichier 'shot.pov'&quot;, 5);
++        glutAddMenuEntry(&quot;Forces normales sup. seuil&quot;, 31);
++        glutAddMenuEntry(&quot;Forces&quot;, 33);
++        glutAddMenuEntry(&quot;Forces des fichiers for.out.xxx&quot;, 3);
++        glutAddMenuEntry(&quot;lignes de couleur pour fn&quot;, 20);
++        glutAddMenuEntry(&quot;Forces en compression et en traction&quot;, 7);
++        glutAddMenuEntry(&quot;Forces normales positives&quot;, 5);
++        glutAddMenuEntry(&quot;Forces normales negatives&quot;, 6);
++        glutAddMenuEntry(&quot;Forces tangentielles (val. abs.)&quot;, 4);
++        glutAddMenuEntry(&quot;Efforts de couple&quot;, 25);
++        glutAddMenuEntry(&quot;Vitesse relative tangente&quot;, 17);
++        glutAddMenuEntry(&quot;Volumes des ponts liquides&quot;, 29);
++        
++        submenu5 = glutCreateMenu(traitsubmenu4);
++        glutAddMenuEntry(&quot;Image TIFF&quot;, 0);
++        glutAddMenuEntry(&quot;Serie d'images(TIFF)&quot;, 1);
++        glutAddMenuEntry(&quot;Image EPS avec gl2ps&quot;, 2);
++        glutAddMenuEntry(&quot;Image EPS (2D)&quot;, 6);
++        glutAddMenuEntry(&quot;Fichier 'BODIES.DAT'&quot;, 3);
++        glutAddMenuEntry(&quot;Fichier 'export.cin'&quot;, 4);
++        glutAddMenuEntry(&quot;Fichier 'shot.pov'&quot;, 5);
+         glutAddMenuEntry(&quot;Fichier 'particles.Rxy'&quot;, 7);
+         glutAddMenuEntry(&quot;Fichier 'deplacement.txt'&quot;, 8); 
+-  
++        
+         submenu6 = glutCreateMenu(traitsubmenuFluid);
+         glutAddMenuEntry(&quot;Rien&quot;, 0);
+         glutAddMenuEntry(&quot;Vitesses horizontales&quot;, 1);
+         glutAddMenuEntry(&quot;Vitesses verticales&quot;, 2);
+         glutAddMenuEntry(&quot;Norme vitesses&quot;, 3);
+         glutAddMenuEntry(&quot;Pressions&quot;, 4);
++        
++        popupmenu = glutCreateMenu(traitmenu);
++        glutAddMenuEntry(&quot;defiler les etats&quot;, 5);
++        if (multifiles) {
++                glutAddMenuEntry(&quot;Etat Precedent&quot;, 7);
++                glutAddMenuEntry(&quot;Etat Suivant&quot;, 8);
++        }
++        glutAddMenuEntry(&quot;Editer mgconf&quot;, 6);
++        glutAddMenuEntry(&quot;Recharger mgconf&quot;, 4);
++        glutAddMenuEntry(&quot;Sauver mgpview&quot;, 9);
++        glutAddMenuEntry(&quot;Recharger mgpview&quot;, 10);
++        glutAddMenuEntry(&quot;Vue 3D&quot;, 3);
++        glutAddMenuEntry(&quot;Plan XY&quot;, 2);
++        glutAddMenuEntry(&quot;Plan XZ&quot;, 1);
++        glutAddSubMenu(&quot;Options&quot;, submenu1);
++        glutAddSubMenu(&quot;Outils&quot;, submenu2);
++        glutAddSubMenu(&quot;Rendu des corps&quot;, submenu3);
++        glutAddSubMenu(&quot;Rendu des interactions&quot;, submenu4);
++        glutAddSubMenu(&quot;Exportations&quot;, submenu5);
++        if (with_fluid) glutAddSubMenu(&quot;Fluide&quot;, submenu6);
++        glutAddMenuEntry(&quot;Quitter&quot;, 0);
+     
+-	popupmenu = glutCreateMenu(traitmenu);	/* menu PRINCIPAL */
+-	glutAddMenuEntry(&quot;defiler les etats&quot;, 5);
+-	if (multifiles) {
+-      glutAddMenuEntry(&quot;Etat Precedent&quot;, 7);
+-      glutAddMenuEntry(&quot;Etat Suivant&quot;, 8);
+-	}
+-	glutAddMenuEntry(&quot;Editer mgconf&quot;, 6);
+-	glutAddMenuEntry(&quot;Recharger mgconf&quot;, 4);
+-	glutAddMenuEntry(&quot;Sauver mgpview&quot;, 9);
+-	glutAddMenuEntry(&quot;Recharger mgpview&quot;, 10);
+-	glutAddMenuEntry(&quot;Vue 3D&quot;, 3);
+-	glutAddMenuEntry(&quot;Plan XY&quot;, 2);
+-	glutAddMenuEntry(&quot;Plan XZ&quot;, 1);
+-	glutAddSubMenu(&quot;Options&quot;, submenu1);
+-	glutAddSubMenu(&quot;Outils&quot;, submenu2);
+-	glutAddSubMenu(&quot;Rendu des corps&quot;, submenu3);
+-	glutAddSubMenu(&quot;Rendu des interactions&quot;, submenu4);
+-	glutAddSubMenu(&quot;Exportations&quot;, submenu5);
+-  if (with_fluid) glutAddSubMenu(&quot;Fluide&quot;, submenu6);
+-	glutAddMenuEntry(&quot;Quitter&quot;, 0);
++#else	/* English */
+     
+-#else				/* English */
+-    
+-	submenu1 = glutCreateMenu(traitsubmenu1);	/* OPTIONS */
+-	glutAddMenuEntry(&quot;White background&quot;, 0);
+-	glutAddMenuEntry(&quot;Blue background&quot;, 1);
+-	glutAddMenuEntry(&quot;Black background&quot;, 2);
+-	glutAddMenuEntry(&quot;White foreground&quot;, 5);
+-	glutAddMenuEntry(&quot;Blue foreground&quot;, 6);
+-	glutAddMenuEntry(&quot;Black foreground&quot;, 7);
+-	glutAddMenuEntry(&quot;Transparency ON/OFF&quot;, 3);
+-	glutAddMenuEntry(&quot;Section      ON/OFF&quot;, 4);
+-    
+-	submenu2 = glutCreateMenu(traitsubmenu2);	/* tools */
+-	glutAddMenuEntry(&quot;Sample informations&quot;, 15);
+-	glutAddMenuEntry(&quot;Squared sample&quot;, 2);
+-	glutAddMenuEntry(&quot;Velocity field&quot;, 12);
+-	glutAddMenuEntry(&quot;Anisotropy&quot;, 22);
+-	glutAddMenuEntry(&quot;Anisotropy evolution&quot;, 24);
+-	glutAddMenuEntry(&quot;Informations on gaps&quot;, 26);
+-	glutAddMenuEntry(&quot;Contacts direction&quot;, 30);
+-    
+-	submenu3 = glutCreateMenu(traitsubmenu2);	/* bodies render */
+-	glutAddMenuEntry(&quot;Nothing&quot;, 10);
+-	glutAddMenuEntry(&quot;Coordination Number&quot;, 32);
+-    /* 	glutAddMenuEntry(&quot;Stresses 11&quot;, 13); */
+-    /* 	glutAddMenuEntry(&quot;Stresses 22&quot;, 14); */
+-    /* 	glutAddMenuEntry(&quot;Strains 11&quot;, 27); */
+-    /* 	glutAddMenuEntry(&quot;Strains 22&quot;, 28); */
+-	glutAddMenuEntry(&quot;Angular Velocity (2D)&quot;, 8);
+-	glutAddMenuEntry(&quot;Velocity magnitude&quot;, 11);
+-    /* 	glutAddMenuEntry(&quot;Cumulated X deplacements&quot;, 19); */
+-    /* 	glutAddMenuEntry(&quot;Cumulated Y deplacements&quot;, 20); */
+-	glutAddMenuEntry(&quot;Cumulated deplacements&quot;, 21);
+-    
+-	submenu4 = glutCreateMenu(traitsubmenu2);	/* interactions render */
+-	glutAddMenuEntry(&quot;Nothing&quot;, 0);
+-	glutAddMenuEntry(&quot;Verlet list&quot;, 1);
+-	glutAddMenuEntry(&quot;Sticks links&quot;, 9);
+-	/* glutAddMenuEntry (&quot;Normal strength&quot;, 3); */
+-	glutAddMenuEntry(&quot;Strong/weak Networks&quot;, 31);
+-	glutAddMenuEntry(&quot;Strength&quot;, 33);
+-	glutAddMenuEntry(&quot;Positives normal strength&quot;, 5);
+-	glutAddMenuEntry(&quot;Negatives normal strength&quot;, 6);
+-	glutAddMenuEntry(&quot;Tangentials strength&quot;, 4);
+-	glutAddMenuEntry(&quot;Couple strength&quot;, 25);
+-	glutAddMenuEntry(&quot;tangentials relatives velocities&quot;, 17);
+-	glutAddMenuEntry(&quot;Volume of liquid bonds&quot;, 29);
+-    
+-	submenu5 = glutCreateMenu(traitsubmenu4);	/* Screenshots */
+-	glutAddMenuEntry(&quot;Picture TIFF&quot;, 0);
+-	glutAddMenuEntry(&quot;List of pictures TIFF&quot;, 1);
+-	glutAddMenuEntry(&quot;Picture EPS using gl2ps&quot;, 2);
+-	glutAddMenuEntry(&quot;Picture EPS (2D)&quot;, 6);
+-	glutAddMenuEntry(&quot;File 'BODIES.DAT'&quot;, 3);
+-	glutAddMenuEntry(&quot;File 'export.cin'&quot;, 4);
+-	glutAddMenuEntry(&quot;File 'shot.pov'&quot;, 5);
++        submenu1 = glutCreateMenu(traitsubmenu1);
++        glutAddMenuEntry(&quot;White background&quot;, 0);
++        glutAddMenuEntry(&quot;Custom background&quot;, 1);
++        glutAddMenuEntry(&quot;Black background&quot;, 2);
++        glutAddMenuEntry(&quot;White foreground&quot;, 5);
++        glutAddMenuEntry(&quot;Blue foreground&quot;, 6);
++        glutAddMenuEntry(&quot;Black foreground&quot;, 7);
++        glutAddMenuEntry(&quot;Transparency ON/OFF&quot;, 3);
++        glutAddMenuEntry(&quot;Section      ON/OFF&quot;, 4);
++        
++        submenu2 = glutCreateMenu(traitsubmenu2);
++        glutAddMenuEntry(&quot;Sample informations&quot;, 15);
++        glutAddMenuEntry(&quot;Squared sample&quot;, 2);
++        if (with_layers) glutAddMenuEntry(&quot;Geologic layers&quot;, 34);
++        glutAddMenuEntry(&quot;Velocity field&quot;, 12);
++        glutAddMenuEntry(&quot;Anisotropy&quot;, 22);
++        glutAddMenuEntry(&quot;Anisotropy evolution&quot;, 24);
++        glutAddMenuEntry(&quot;Informations on gaps&quot;, 26);
++        glutAddMenuEntry(&quot;Contacts direction&quot;, 30);
++        glutAddMenuEntry(&quot;fn vs ft&quot;, 16);
++        glutAddMenuEntry(&quot;pdf(fn)&quot;, 14);
++        glutAddMenuEntry(&quot;Granulometry&quot;, 27);
++        glutAddMenuEntry(&quot;Local forces&quot;, 35);
++                
++        submenu3 = glutCreateMenu(traitsubmenu2);
++        glutAddMenuEntry(&quot;Nothing&quot;, 10);
++        glutAddMenuEntry(&quot;Coordination Number&quot;, 32);
++        glutAddMenuEntry(&quot;Outline&quot;, 13);
++        glutAddMenuEntry(&quot;Colors&quot;, 19);
++        glutAddMenuEntry(&quot;Sizes&quot;, 36);
++        glutAddMenuEntry(&quot;Angular Velocity (2D)&quot;, 8);
++        glutAddMenuEntry(&quot;Velocity magnitude&quot;, 11);
++        glutAddMenuEntry(&quot;Cumulated displacements&quot;, 21);
++        
++        submenu4 = glutCreateMenu(traitsubmenu2);
++        glutAddMenuEntry(&quot;Nothing&quot;, 0);
++        glutAddMenuEntry(&quot;Verlet list&quot;, 1);
++        glutAddMenuEntry(&quot;Sticks links&quot;, 9);
++        glutAddMenuEntry(&quot;Cracks&quot;, 28);
++        glutAddMenuEntry(&quot;Strong/weak Networks&quot;, 31);
++        glutAddMenuEntry(&quot;Forces&quot;, 33);
++        glutAddMenuEntry(&quot;Forces from files for.out.xxx&quot;, 3);
++        glutAddMenuEntry(&quot;Color lines for normal force&quot;, 20);
++        glutAddMenuEntry(&quot;Compressive and tensile force&quot;, 7);
++        glutAddMenuEntry(&quot;Positives normal force&quot;, 5);
++        glutAddMenuEntry(&quot;Negatives normal force&quot;, 6);
++        glutAddMenuEntry(&quot;Tangentials force&quot;, 4);
++        glutAddMenuEntry(&quot;Moment&quot;, 25);
++        glutAddMenuEntry(&quot;Tangential relative velocity&quot;, 17);
++        glutAddMenuEntry(&quot;Liquid bond Volume&quot;, 29);
++        
++        submenu5 = glutCreateMenu(traitsubmenu4);
++        glutAddMenuEntry(&quot;Picture TIFF&quot;, 0);
++        glutAddMenuEntry(&quot;List of pictures TIFF&quot;, 1);
++        glutAddMenuEntry(&quot;Picture EPS using gl2ps&quot;, 2);
++        glutAddMenuEntry(&quot;Picture EPS (2D)&quot;, 6);
++        glutAddMenuEntry(&quot;File 'BODIES.DAT'&quot;, 3);
++        glutAddMenuEntry(&quot;File 'export.cin'&quot;, 4);
++        glutAddMenuEntry(&quot;File 'shot.pov'&quot;, 5);
++        glutAddMenuEntry(&quot;File 'particles.Rxy'&quot;, 7);
+         glutAddMenuEntry(&quot;File 'deplacement.txt'&quot;, 8);        
+-    
+-	popupmenu = glutCreateMenu(traitmenu);	/* main menu */
+-	glutAddMenuEntry(&quot;Run the states&quot;, 5);
+-	if (multifiles) {
+-      glutAddMenuEntry(&quot;Previous state&quot;, 7);
+-      glutAddMenuEntry(&quot;Next state&quot;, 8);
+-	}
+-	glutAddMenuEntry(&quot;Edit mgconf&quot;, 6);
+-	glutAddMenuEntry(&quot;Reload mgconf&quot;, 4);
+-	glutAddMenuEntry(&quot;Save mgpview&quot;, 9);
+-	glutAddMenuEntry(&quot;Reload mgpview&quot;, 10);
+-	glutAddMenuEntry(&quot;3D view&quot;, 3);
+-	glutAddMenuEntry(&quot;XY plan&quot;, 2);
+-	glutAddMenuEntry(&quot;XZ plan&quot;, 1);
+-	glutAddSubMenu(&quot;Options&quot;, submenu1);
+-	glutAddSubMenu(&quot;Tools&quot;, submenu2);
+-	glutAddSubMenu(&quot;Bodies render&quot;, submenu3);
+-	glutAddSubMenu(&quot;Interactions render&quot;, submenu4);
+-	glutAddSubMenu(&quot;Export&quot;, submenu5);
+-	glutAddMenuEntry(&quot;Quit&quot;, 0);
++        
++        submenu6 = glutCreateMenu(traitsubmenuFluid);
++        glutAddMenuEntry(&quot;Nothing&quot;, 0);
++        glutAddMenuEntry(&quot;Horizontal velocity&quot;, 1);
++        glutAddMenuEntry(&quot;Vertical velocity&quot;, 2);
++        glutAddMenuEntry(&quot;Velocity magnitude&quot;, 3);
++        glutAddMenuEntry(&quot;Pressure&quot;, 4);
++        
++        popupmenu = glutCreateMenu(traitmenu);
++        glutAddMenuEntry(&quot;Run&quot;, 5);
++        if (multifiles) {
++                glutAddMenuEntry(&quot;Previous state&quot;, 7);
++                glutAddMenuEntry(&quot;Next state&quot;, 8);
++        }
++        glutAddMenuEntry(&quot;Edit mgconf&quot;, 6);
++        glutAddMenuEntry(&quot;Reload mgconf&quot;, 4);
++        glutAddMenuEntry(&quot;Save mgpview&quot;, 9);
++        glutAddMenuEntry(&quot;Reload mgpview&quot;, 10);
++        glutAddMenuEntry(&quot;3D view&quot;, 3);
++        glutAddMenuEntry(&quot;XY plan&quot;, 2);
++        glutAddMenuEntry(&quot;XZ plan&quot;, 1);
++        glutAddSubMenu(&quot;Options&quot;, submenu1);
++        glutAddSubMenu(&quot;Tools&quot;, submenu2);
++        glutAddSubMenu(&quot;Body rendering&quot;, submenu3);
++        glutAddSubMenu(&quot;Interaction rendering&quot;, submenu4);
++        glutAddSubMenu(&quot;Export&quot;, submenu5);
++        if (with_fluid) glutAddSubMenu(&quot;Fluide&quot;, submenu6);
++        glutAddMenuEntry(&quot;Quit&quot;, 0);
+ #endif
+     
+ }
+
+Modified: trunk/extra/mgpost/src/mgpost.c
+===================================================================
+--- trunk/extra/mgpost/src/mgpost.c	2008-12-14 10:32:09 UTC (rev 1598)
++++ trunk/extra/mgpost/src/mgpost.c	2008-12-15 15:08:12 UTC (rev 1599)
+@@ -72,7 +72,7 @@
+ 
+ 	mgpost_init(argc, argv);
+ 
+-	sprintf(mgpost_string, &quot;mgpost %s, 2001-2008 V.Richefeu &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">richefeu at lmgc.univ-montp2.fr</A>&gt;&quot;, MGP_VERSION);
++	sprintf(mgpost_string, &quot;mgpost %s, 2001-2008 V.Richefeu &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">vincent.richefeu at hmg.inpg.fr</A>&gt;&quot;, MGP_VERSION);
+ 
+ 	fprintf(stdout, &quot;\n    mgpost version %s,\n&quot;, MGP_VERSION);
+ 	fprintf(stdout, &quot;    Vincent Richefeu\n&quot;);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000553.html">[deprecated list] [Yade-dev] detecting cut&amp;paste in yade
+</A></li>
+	<LI>Next message: <A HREF="000555.html">[deprecated list] [Yade-dev] [Yade-users] dissipating all	energy in a packing
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#554">[ date ]</a>
+              <a href="thread.html#554">[ thread ]</a>
+              <a href="subject.html#554">[ subject ]</a>
+              <a href="author.html#554">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

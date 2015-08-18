@@ -1,0 +1,279 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Question%20about%20parameters%20in%0A%09SpheresContactGeometry&In-Reply-To=%3C499AFAFB.2030505%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000697.html">
+   <LINK REL="Next"  HREF="000707.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Question%20about%20parameters%20in%0A%09SpheresContactGeometry&In-Reply-To=%3C499AFAFB.2030505%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry">eudoxos at arcig.cz
+       </A><BR>
+    <I>Tue Feb 17 18:59:23 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000697.html">[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry
+</A></li>
+        <LI>Next message: <A HREF="000707.html">[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#702">[ date ]</a>
+              <a href="thread.html#702">[ thread ]</a>
+              <a href="subject.html#702">[ subject ]</a>
+              <a href="author.html#702">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;&gt;<i>  I don't use torsion and bending, but for the shear part,
+</I>&gt;&gt;<i> I never got the incremental algo to match with what small-strain FEM
+</I>&gt;&gt;<i> code computes for strains (production code, therefore assumed to be
+</I>&gt;&gt;<i> correct).   
+</I>&gt;<i> It is not the first time I read this but I must admit I never
+</I>&gt;<i> understodd what it means. What did you compare exactly?
+</I>Tension-compression test with 2000 particles of concrete, I gave some
+strain to the specimen (about 2e-6) and let it stabilize in DEM. In the
+(static) FE code, the same geometrical configuration was used,
+interactions are special kind of elements (with the same constitutive
+law) and spheres are nodes; I prescribe the same displacement to the
+boundary spheres (nodes).
+
+Then I compared strains and stresses on interactions (I picked a few of
+them randomly) and they matched (relative difference 1e-5 and such,
+perhaps due to slight geometrical non-linearity even at such small
+strain). That was for the elastic part. For non-elastic, I compared
+strain-stress curve and it nicely matched for DE/FE, except for dynamic
+effects that vanished for extremely slow loading in DE.
+&gt;&gt;<i> Besides that, implementing geometry algorithms inside constitutive laws
+</I>&gt;&gt;<i> is conceptually flawed, for 2 reasons.
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> 1. Constitutive law should operate just on interaction geometry and
+</I>&gt;&gt;<i> interaction physics. If it accesses rootBody-&gt;bodies, it is a design
+</I>&gt;&gt;<i> problem.   
+</I>&gt;<i> Agreed : we have a design problem. But I see no obvious solution for
+</I>&gt;<i> now (see below).
+</I>&gt;&gt;<i>  
+</I>&gt;<i> Well... my main point was to save your brain-time providing
+</I>&gt;<i> Janek-brained equations.
+</I>Eh, I've done it before Christmas. Adding bending/torsion (add
+initRelOri12 and methods to compute that) once shear was working was
+done in an hour, including testing, I think. I don't need
+bending/torsion myself, but I added it to ElasticContactLaw2: it has
+normal, shear, bending and torsion parts and has about 20 lines of code
+- it is really just demo, but you get the idea how simple it was to
+write such law once the geometry things were in place.
+&gt;<i> On the c++ part, one solution would be to inherit from
+</I>&gt;<i> CohesiveFrictionalContactLaw in some way, or develop the law itself to
+</I>&gt;<i> make it do what you need. This law is the most general in Yade
+</I>&gt;<i> currently, you can go from the simplest normal-elastic interaction to
+</I>&gt;<i> a complex force-moment creep law by playing with the parameters. I'm
+</I>&gt;<i> sure it is no big deal to add you own constitutive behaviour in this
+</I>&gt;<i> class. Of course, it would be no big deal probably to do the opposite
+</I>&gt;<i> : move the CohesiveFrictional stuff to your framework...
+</I>You cannot inherit from constitutive laws we have now easily, at least I
+don't see how, since it has the loop inside ::action. I _could_ of
+course add everything to CohesiveFrictionalContactLaw, but, heck, if I
+add viscoplasticity and damage and whatnot, isn't the law getting too
+much stuff? To me it seems like writing the whole yade inside main()
+with bunch of loops, if's and switches; it could be done, but it is ugly
+and difficult to maintain.
+
+&gt;&gt;<i> (well, let me add 3. Constitutive law should just map strains to
+</I>&gt;&gt;<i> stresses. It is not constitutive law's business to compute strains. You
+</I>&gt;&gt;<i> can have a look at ef2_Spheres_NormalShear_ElasticFrictionalLaw, this is
+</I>&gt;&gt;<i> what I think constitutive law should look like: get strains, compute
+</I>&gt;&gt;<i> stresses, apply forces. Finito.)
+</I>&gt;&gt;<i>   
+</I>&gt;<i> It makes sense, but it means each constitutive law will need its own
+</I>&gt;<i> specific geometry engine+dataClass class to compute/store the relevant
+</I>&gt;<i> &quot;strain&quot;, doesn't it?
+</I>&gt;<i> Janek, needs an initial relative orientation, Wenji needed maxUn, JF
+</I>&gt;<i> needs the volume of the cell from triangulation (stored at bodies
+</I>&gt;<i> level) before he can even define the stiffness, the first Yade
+</I>&gt;<i> developers thought everybody would need a contact point defined while
+</I>&gt;<i> most of us never used it, etc. And I'm sure the next person
+</I>&gt;<i> developping a constitutive law will need another geometrical
+</I>&gt;<i> information that nobody is expecting for now. Is it compatible with
+</I>&gt;<i> the design you plan?
+</I>You can always derive from the geometry class and add your own data
+members. But you still have access to inherited data members and
+methods, should you need those. maxUn can (should) be stored in
+InteractionPhysics, the same for cell volume, no?
+&gt;<i>
+</I>&gt;<i> Also, when you say &quot;constitutive law should look like: get strains,
+</I>&gt;<i> compute stresses, apply forces&quot;(*), I'd say it is perhaps a bit more
+</I>&gt;<i> complex.
+</I>&gt;<i> Take this equation : Fn = Kn (Un-Un_plastic), obviously an
+</I>&gt;<i> elasto-plastic framework.
+</I>&gt;<i> What is Un_plastic? Is it an internal parameter of the law or an
+</I>&gt;<i> external geometrical information? It is in fact something in between,
+</I>&gt;<i> since (1) it  is obviously a kinematic-like variable, but (2) at the
+</I>&gt;<i> same time it can't be defined from the current geometry. Un_plastic
+</I>&gt;<i> describes an history of the motion _with respect to_ one constitutive
+</I>&gt;<i> law. Even with the full record of all previous movements, you can't
+</I>&gt;<i> define Un_plastic if you don't know the constitutive law itself.
+</I>&gt;<i> Should Un_plastic be in contactPhysics or contactGeometry?
+</I>&gt;<i> Do we really need a rule?
+</I>Good point. I have SpheresContactGeometry::splitToEpsTMax(Real epsTMax),
+which adjusts the original contact points such that |epsT|&lt;epsTMax and
+returns increment of eps_plastic. I believe that most constitutive laws
+use similar notions of plasticity, so to me it made sense to add this to
+SpheresContactGeometry.
+&gt;<i> An exemple of this : in creep equations (creep, like plasticity, is
+</I>&gt;<i> changing the &quot;neutral&quot; position when it occures), the initial
+</I>&gt;<i> orientations (from wich total bending/twisting are defined) are
+</I>&gt;<i> updated to reflect creep. The way it is updated is valid only for the
+</I>&gt;<i> specific creep law considered here, another constitutive law would
+</I>&gt;<i> update the initial configuration differently.
+</I>&gt;<i>
+</I>&gt;<i> The conclusion is you can't avoid the manipulation/storage of
+</I>&gt;<i> geometrical data in some constitutive laws/physicalParameters.
+</I>Constitutive law can change geometry (as with the plasticity), in some
+special cases. I know that I say something more than just &quot;compute
+stresses from strains&quot;. I would say that what is useful for multiple
+constitutive laws could be defined as SpheresContactGeometry method
+(plasticity), otherwise just that single constitutive law can manipulate
+that.
+&gt;<i> (*) Quick note : I feel strange each time you speak about strain and
+</I>&gt;<i> stress in constitutive law, since the specificity of DEM is to
+</I>&gt;<i> consider disp./forces instead of strain/stress, usually...
+</I>That's just because the models I use are somehow derived from continuum
+models. But internally nevertheless, stresses are multiplied by link
+cross-sections etc, to it should really be the same after all.
+&gt;&gt;<i> What makes you think that contact of 2 spheres is describable just by
+</I>&gt;&gt;<i> penetrationDepth and radii?
+</I>&gt;<i> Answer 1 : Cundall (1988) ;-)
+</I>&gt;<i> Answer 2 : because I need nothing else.
+</I>&gt;&gt;<i>  That would be _normal_ contact. For shear,
+</I>&gt;&gt;<i> bending and torsion, it gets more complicated, and that's what all the
+</I>&gt;&gt;<i> cp1rel, cp2rel (and unrollSpherePtToPlane, for that matter, which
+</I>&gt;&gt;<i> computes the shear from the data) are for.
+</I>&gt;&gt;<i>   
+</I>&gt;<i> The incremental definition of the shear force allows to skip the
+</I>&gt;<i> definition and storage of cp1rel/cp2rel/unroll. It works very well and
+</I>&gt;<i> it has been used by hundreds of researchers since 1988 (so again, I'd
+</I>&gt;<i> like to know how you compared with E.F.).
+</I>If you say incremental shear, you still need access to 2 linear
+velocities and 2 angular velocities, not just penetrationDepth and radii.
+
+I personally don't trust the incremental code, although I admit that it
+can be my personal weakness that I wasn't able to derive it and verify
+myself. Besides that, it supposes that the rotation is such small that
+displacements can be linearized (if I understand what it does) and I
+think that could make for some problems in highly dynamic simulations.
+
+If you think it is realiable and useful, I would be all for extracting
+it to a stand-alone function that would get all the parameters it needs
+and return what it computes. Or shear strain could be added to
+SpheresContactGeometry (or a new class, if you like), but computed by
+InteractingSphere2InteractingSphere4SpheresContactGeometry. That would
+make more sense to me.
+&gt;&gt;<i> The &quot;abusive storage&quot; members were not added by me, except
+</I>&gt;&gt;<i> facetContactFace (abusive, because only used for sphere-facet contact).
+</I>&gt;&gt;<i> What I agree with is that hasNormalViscosity, NormalViscosity and
+</I>&gt;&gt;<i> NormalRelativeViscosity are clearly physical quantitites that should be
+</I>&gt;&gt;<i> in interaction physics.   
+</I>&gt;<i> So will you move them away at one point?
+</I>Oh, I didn't add those (except facetContactFace, which I'd like to keep
+until SphresFacetGeometry is done). &quot;svn blame&quot; gives me &quot;richefeu&quot;. But
+I can remove that, no problem at all ;-)
+&gt;&gt;<i> About my future plans: define abstract classes Dem3DofContactGeometry
+</I>&gt;&gt;<i> (better name?; for classes normal and shear) and Dem6DofContactGeometry
+</I>&gt;&gt;<i> (for classes with normal, shear, bending and torsion strains)
+</I>&gt;<i> So, first of all, I would define &quot;DemXDofContactGeometry&quot; with normal,
+</I>&gt;<i> Un, and incremental dUt (this code duplicated in different
+</I>&gt;<i> constitutive laws), nothing more. This is &quot;normal&quot; DEM, no reason to
+</I>&gt;<i> overload with more parameters.
+</I>&gt;<i> That is what I am a bit annoyed with the ammount of extra stuff that
+</I>&gt;<i> is in SpheresContactGeometry right now.
+</I>I put those extra things under condition 'hasShear', they are not
+assigned and should &quot;just&quot; take memory if you don't use them (29 bytes,
+if I calculate correctly: 5 quaternions, 2 Vector3, 3 Reals). If that is
+not OK and if other peoples will not use it, I can move it to a separate
+class. I thought it would be a way to clean lot of code elsewhere, though.
+&gt;&gt;<i> with
+</I>&gt;&gt;<i> virtual methods to get e.g. epsN(), epsT(), regardless of whether it is
+</I>&gt;&gt;<i> Sphere-Facet of Sphere-Sphere contact. Mapping sphere-facet to
+</I>&gt;&gt;<i> SpheresContactGeometry has not much physical meaning and will not work
+</I>&gt;&gt;<i> for more complex things like transferring plastic strain when going over
+</I>&gt;&gt;<i> facet boundary to its neighbor.   
+</I>&gt;<i> I think I get the idea. I admit I have no clear vision on all this for
+</I>&gt;<i> now, I'm just raising a few points.
+</I>And I am glad for your comments. Really.
+&gt;<i> The possible problem is that people could need to modify the abstract
+</I>&gt;<i> classes all the time because they need a geometrical information you
+</I>&gt;<i> disregarded
+</I>&gt;<i> One simple exemple comes to mind : center of mass of bodies. For
+</I>&gt;<i> spheres and simple elastic-frictional contacts, you can compute the
+</I>&gt;<i> moment generated by fs as M += radius.n x fs, but for non-sperical
+</I>&gt;<i> bodies (snow) you cannot do this. You need to compute M+=(ContPoint -
+</I>&gt;<i> CenterMass) x fs.
+</I>&gt;<i> In that case, with your approach, IntGeom would need to store not only
+</I>&gt;<i> rad1,rad2 but also the centers of mass of both particles.
+</I>It is already stored there (iff hasShear): pos1, pos2, ori1, ori2. But I
+have yet to see non-spherical particles in yade (if someone is serious
+about that, he'd better fix global/local mismatch of inertia in Newton's
+law first)
+&gt;<i> So, fundamentally, with you first statement in mind : &quot;Constitutive
+</I>&gt;<i> law should operate just on interaction geometry and interaction
+</I>&gt;<i> physics. If it accesses rootBody-&gt;bodies, it is a design problem&quot;, all
+</I>&gt;<i> information from bodies must be duplicated in interactionGeometry,
+</I>&gt;<i> which is a serious design problem too...
+</I>I know it is a hassle, it could be that SpheresContactGeometry would
+contain shared_ptr&lt;Se3&gt; shared with Body::physicalParameters, but
+current serialization wouldn't handle that correctly (it would create 2
+copies of the same Se3 instead of the shared one). I still have the
+parallel stuff in mind and it is advantageous if the computation is as
+local as possible (i.e. no access to rootBody-&gt;bodies and such).
+
+&gt;&gt;<i> Then SpheresContactGeometry inherits from Dem3DofContactGeometry, I will
+</I>&gt;&gt;<i> create (maybe) also SphereFacetContactGeometry etc, but the constitutive
+</I>&gt;&gt;<i> law will operate on Dem3DofContactGeometry and will not care, whether
+</I>&gt;&gt;<i> the underlying contact is sphere-sphere, sphere-facet (or sphere-box,
+</I>&gt;&gt;<i> whatever).  
+</I>&gt;<i> Agreed. The fact that SpheresContactGeometry can be used for others
+</I>&gt;<i> (body1,body2) is just a temporary trick.
+</I>(&quot;temporary&quot; = since as long as I remember...)
+
+Regards, vaclav.
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000697.html">[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry
+</A></li>
+	<LI>Next message: <A HREF="000707.html">[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#702">[ date ]</a>
+              <a href="thread.html#702">[ thread ]</a>
+              <a href="subject.html#702">[ subject ]</a>
+              <a href="author.html#702">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

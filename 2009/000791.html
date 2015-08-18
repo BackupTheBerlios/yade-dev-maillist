@@ -1,0 +1,3034 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1702 - in	trunk/pkg:	common/RenderingEngine/GLDrawInteractingGeometry	dem/DataClass/InteractionPhysics	dem/Engine/EngineUnit	dem/Engine/StandAloneEngine snow	snow/DataClass snow/Engine	snow/PreProcessor snow/RenderingEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1702%20-%20in%0A%09trunk/pkg%3A%09common/RenderingEngine/GLDrawInteractingGeometry%09dem/DataClass/InteractionPhysics%0A%09dem/Engine/EngineUnit%09dem/Engine/StandAloneEngine%20snow%0A%09snow/DataClass%20snow/Engine%09snow/PreProcessor%20snow/RenderingEngine&In-Reply-To=%3C200903010141.n211fftU028211%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000789.html">
+   <LINK REL="Next"  HREF="000792.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1702 - in	trunk/pkg:	common/RenderingEngine/GLDrawInteractingGeometry	dem/DataClass/InteractionPhysics	dem/Engine/EngineUnit	dem/Engine/StandAloneEngine snow	snow/DataClass snow/Engine	snow/PreProcessor snow/RenderingEngine</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1702%20-%20in%0A%09trunk/pkg%3A%09common/RenderingEngine/GLDrawInteractingGeometry%09dem/DataClass/InteractionPhysics%0A%09dem/Engine/EngineUnit%09dem/Engine/StandAloneEngine%20snow%0A%09snow/DataClass%20snow/Engine%09snow/PreProcessor%20snow/RenderingEngine&In-Reply-To=%3C200903010141.n211fftU028211%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1702 - in	trunk/pkg:	common/RenderingEngine/GLDrawInteractingGeometry	dem/DataClass/InteractionPhysics	dem/Engine/EngineUnit	dem/Engine/StandAloneEngine snow	snow/DataClass snow/Engine	snow/PreProcessor snow/RenderingEngine">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Sun Mar  1 02:41:41 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000789.html">[deprecated list] [Yade-dev] [svn] r1701 -	trunk/pkg/common/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000792.html">[deprecated list] [Yade-dev] [svn] r1702 - in	trunk/pkg:	common/RenderingEngine/GLDrawInteractingGeometry	dem/DataClass/InteractionPhysics	dem/Engine/EngineUnit	dem/Engine/StandAloneEngine snow	snow/DataClass snow/Engine	snow/PreProcessor snow/RenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#791">[ date ]</a>
+              <a href="thread.html#791">[ thread ]</a>
+              <a href="subject.html#791">[ subject ]</a>
+              <a href="author.html#791">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2009-03-01 02:41:37 +0100 (Sun, 01 Mar 2009)
+New Revision: 1702
+
+Modified:
+   trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.cpp
+   trunk/pkg/dem/DataClass/InteractionPhysics/CohesiveFrictionalContactInteraction.cpp
+   trunk/pkg/dem/DataClass/InteractionPhysics/CohesiveFrictionalContactInteraction.hpp
+   trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.cpp
+   trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp
+   trunk/pkg/snow/DataClass/BshSnowGrain.cpp
+   trunk/pkg/snow/DataClass/BshSnowGrain.hpp
+   trunk/pkg/snow/DataClass/BssSnowGrain.cpp
+   trunk/pkg/snow/DataClass/BssSnowGrain.hpp
+   trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.cpp
+   trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.hpp
+   trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.cpp
+   trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.hpp
+   trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.cpp
+   trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.hpp
+   trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.cpp
+   trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.hpp
+   trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp
+   trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.hpp
+   trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.cpp
+   trunk/pkg/snow/RenderingEngine/Ef1_BssSnowGrain_glDraw.cpp
+   trunk/pkg/snow/RenderingEngine/Ef1_BssSnowGrain_glDraw.hpp
+   trunk/pkg/snow/RenderingEngine/Ef1_IstSnowLayersContact_glDraw.cpp
+   trunk/pkg/snow/SConscript
+Log:
+Snow, as it is finished by me. Further work on it will to be done by next post-doc
+researcher who wants money from EU for working on this :)
+
+The current state is:
+
++ correctly loading experimentally obtained simulation data
+
++ correct moment law between bodies
+
++ working polyhedron collisions
+
++ working polyhedron deformation
+
++ working basis of layer sliding
+
++ prepared grounds for last fixes, listed below
+
+FIXMEs:
+
+- modify contact law so that the contact point can be lying NOT on the line
+  straight from center to the center of grain (as it is the case for the
+  spheres)
+
+- correctly calculate penetration depth between polyhedrons (not approximated by radii)
+  it's almost finished, in the commented part. But it depends on fixing first
+  that one listed above.
+
+- verify distribution of forces between layers (a very simple distribution is now)
+
+- the contect moments (twist and bending) are already correctly calculated but
+  are not distributed between layers (see above)
+
+- take into account the grains contact area when calculating viscosity
+
+- take into account the layers area when calculating layer sliding
+
+- verify that grains surface of contact is calculated correctly (it probably is)
+
+I guess that's all. Assuming that the post-doc researcher is familiar with yade
+this is a work for one month or maybe two (including testing).
+
+hint: disable layer sliding if you are not debugging it right now, because it's
+quite slow for regular work on other stuff. That's flag 'enable_layers_creep'
+in SnowVoxelsLoader.cpp
+
+
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.cpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.cpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -21,7 +21,7 @@
+ 
+ GLDrawInteractingSphere::GLDrawInteractingSphere(){first=true;};
+ 
+-void GLDrawInteractingSphere::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm, const shared_ptr&lt;PhysicalParameters&gt;&amp; ,bool)
++void GLDrawInteractingSphere::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm, const shared_ptr&lt;PhysicalParameters&gt;&amp; ,bool wire)
+ {
+ 	//first=true;
+ 	
+@@ -82,16 +82,16 @@
+ 	
+ 	glMaterialv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, Vector3f(cm-&gt;diffuseColor[0],cm-&gt;diffuseColor[1],cm-&gt;diffuseColor[2]));
+ 	glColor3v(cm-&gt;diffuseColor);
+-// 	if (cm-&gt;wire)
+-// 	{
+-// 		glScalef(radius,radius,radius);
+-// 		glCallList(glWiredSphereList);
+-// 	}
+-// 	else
+-// 	{
++ 	if (wire)
++ 	{
++ 		glScalef(radius,radius,radius);
++ 		glCallList(glWiredSphereList);
++ 	}
++ 	else
++ 	{
+ 		glScalef(radius,radius,radius);
+ 		glCallList(glSphereList);
+-//	}
++	}
+ }
+ 
+ 
+
+Modified: trunk/pkg/dem/DataClass/InteractionPhysics/CohesiveFrictionalContactInteraction.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionPhysics/CohesiveFrictionalContactInteraction.cpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/dem/DataClass/InteractionPhysics/CohesiveFrictionalContactInteraction.cpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2007 by Bruno Chareyre                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at imag.fr</A>                                               *
++*  Copyright (C) 2007 by Bruno Chareyre &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at imag.fr</A>&gt;         *
++*  Copyright (C) 2008 by Janek Kozicki &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>&gt;              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+@@ -17,6 +17,8 @@
+ 	fragile = true;
+ 	normalAdhesion = 0;
+ 	shearAdhesion = 0;
++	moment_twist = Vector3r(0,0,0);
++	moment_bending = Vector3r(0,0,0);
+ 
+ // assign neutral value	
+ 	orientationToContact1 = Quaternionr(1.0,0.0,0.0,0.0);
+@@ -76,6 +78,10 @@
+ 	REGISTER_ATTRIBUTE(initialPosition1);
+ 	REGISTER_ATTRIBUTE(initialPosition2);
+ 	REGISTER_ATTRIBUTE(twistCreep);
++
++	REGISTER_ATTRIBUTE(moment_twist);
++	REGISTER_ATTRIBUTE(moment_bending);
++
+ //	REGISTER_ATTRIBUTE(prevX1);
+ //	REGISTER_ATTRIBUTE(prevX2);
+ //	REGISTER_ATTRIBUTE(initX1);
+
+Modified: trunk/pkg/dem/DataClass/InteractionPhysics/CohesiveFrictionalContactInteraction.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionPhysics/CohesiveFrictionalContactInteraction.hpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/dem/DataClass/InteractionPhysics/CohesiveFrictionalContactInteraction.hpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2007 by Bruno Chareyre                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at imag.fr</A>                                               *
++*  Copyright (C) 2007 by Bruno Chareyre &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at imag.fr</A>&gt;         *
++*  Copyright (C) 2008 by Janek Kozicki &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>&gt;              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+@@ -27,6 +27,7 @@
+ 				twistCreep;
+ 		Vector3r	initialPosition1,initialPosition2;
+ 		Real		kr; // rolling stiffness
++		Vector3r	moment_twist,moment_bending;
+ 	
+ 		CohesiveFrictionalContactInteraction();
+ 		virtual ~CohesiveFrictionalContactInteraction();
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.cpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.cpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2007 by Bruno CHAREYRE                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at hmg.inpg.fr</A>                                        *
++*  Copyright (C) 2007 by Bruno Chareyre &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at imag.fr</A>&gt;         *
++*  Copyright (C) 2008 by Janek Kozicki &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>&gt;              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.hpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.hpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2007 by Bruno CHAREYRE                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at hmg.inpg.fr</A>                                        *
++*  Copyright (C) 2007 by Bruno Chareyre &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at imag.fr</A>&gt;         *
++*  Copyright (C) 2008 by Janek Kozicki &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>&gt;              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2007 by Bruno Chareyre, Janek Kozicki                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at hmg.inpg.fr</A>                                                *
++*  Copyright (C) 2007 by Bruno Chareyre &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at imag.fr</A>&gt;         *
++*  Copyright (C) 2008 by Janek Kozicki &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>&gt;              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+@@ -356,6 +356,8 @@
+ //Vector3r moment = axis * elasticMoment * (angle&lt;0.0?-1.0:1.0); // restore sign. (*)
+ 
+ 	Vector3r moment = moment_twist + moment_bending;
++currentContactPhysics-&gt;moment_twist = moment_twist;
++currentContactPhysics-&gt;moment_bending = moment_bending;
+ 
+ 			static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id1 , actionMomentum-&gt;getClassIndex() ).get() )-&gt;momentum -= moment;
+ 			static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id2 , actionMomentum-&gt;getClassIndex() ).get() )-&gt;momentum += moment;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.hpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+-*  Copyright (C) 2007 by Bruno Chareyre                                  *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at hmg.inpg.fr</A>                                            *
++*  Copyright (C) 2007 by Bruno Chareyre &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at imag.fr</A>&gt;         *
++*  Copyright (C) 2008 by Janek Kozicki &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>&gt;              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+
+Modified: trunk/pkg/snow/DataClass/BshSnowGrain.cpp
+===================================================================
+--- trunk/pkg/snow/DataClass/BshSnowGrain.cpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/snow/DataClass/BshSnowGrain.cpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -18,10 +18,12 @@
+ 	REGISTER_ATTRIBUTE(gr_gr); // slices
+ }
+ 
+-BshSnowGrain::BshSnowGrain(const T_DATA&amp; dat,Vector3r c_ax,int SELECTION,Vector3r col, Real one_voxel_in_meters_is) : GeometricalModel()
++BshSnowGrain::BshSnowGrain(const T_DATA&amp; dat,Vector3r c_ax,int SELECTION,Vector3r col, Real one_voxel_in_meters_is,Real layer_distance_voxels,Real angle_increment) : GeometricalModel()
+ {
+ 	createIndex();
+ 
++	layer_distance = layer_distance_voxels;
++
+ 	if(SELECTION!=0)
+ 	{
+ 		color=col;
+@@ -54,7 +56,7 @@
+ 		start=search_plane(dat,center,c_axis);
+ 		end  =search_plane(dat,center,-1.0*c_axis);
+ 		
+-		std::cout &lt;&lt; &quot;(start-end).length() &quot; &lt;&lt; ((start-end).Length()) &lt;&lt; &quot;\n&quot;;
++		std::cout &lt;&lt; &quot;(start-end).length() &quot; &lt;&lt; ((start-end).Length()) &lt;&lt; &quot; layer_distance (voxels): &quot; &lt;&lt; layer_distance &lt;&lt; &quot;\n&quot;;
+ 
+ 		Quaternionr q;
+ 		q.Align(Vector3r(0,0,1),c_axis);
+@@ -64,13 +66,16 @@
+ float tmpL;
+ Vector3r moving_center(0,0,0),moving_sum(0,0,0);
+ count=0;
+-layer_distance=3.0;
+-for(Vector3r S=start; (tmpL=(S-end).SquaredLength())&lt;=prevL ; S-=c_axis*layer_distance, ++II)
++//layer_distance=3.0;
++Vector3r S=start;
++std::cerr &lt;&lt; &quot;\n--------- &quot; &lt;&lt; (int)((bool)((tmpL=(S-end).SquaredLength())&lt;=prevL)) &lt;&lt; &quot;\n&quot;;
++std::cerr &lt;&lt; tmpL &lt;&lt; &quot; &quot; &lt;&lt; prevL &lt;&lt; &quot;\n&quot;;
++for(; (tmpL=(S-end).SquaredLength())&lt;=prevL ; S-=c_axis*layer_distance, ++II)
+ {
+ 	slices.resize(II+1);
+ 	float vectorY1=5.0;
+ 	float vectorX1=0.0;
+-	for(float angle=0.0f ; angle &lt;= (2.0f*3.14159) ; angle+=0.2f)
++	for(float angle=0.0f ; angle &lt;= (2.0f*3.14159) ; angle+=angle_increment)
+ 	{		
+ 		float vectorX=(5.0*sin(angle));
+ 		float vectorY=(5.0*cos(angle));		
+@@ -176,7 +181,7 @@
+ 	// first check point - plane distance
+ 	if(point_plane_distance == 0.0)
+ 		point_plane_distance = N.Dot(P - c);
+-	if( point_plane_distance &lt; 0 )            // point has to be inside - on negative side of the plane 
++	if( point_plane_distance &lt;= 0 )            // point has to be inside - on negative side of the plane 
+ 	{
+ 		// now calculate projection of point in the plane
+ 		Vector3r d(P - point_plane_distance*N);
+@@ -186,32 +191,27 @@
+ 		Vector3r c1((a - b).Cross(d - a)); // since points a,b,c are all clockwise, 
+ 		Vector3r c2((c - a).Cross(d - c)); // then if I put a point 'd' inside a triangle it will be clockwise
+ 		Vector3r c3((b - c).Cross(d - b)); // with each pair of other points, but will be counterclockwise if it's outside
+-		if(c1.Dot(N) &gt; 0 &amp;&amp; c2.Dot(N) &gt; 0 &amp;&amp; c3.Dot(N) &gt; 0) // therefore if any of them is counterclockwise, the dot product will be negative
++		if(c1.Dot(N) &gt;= 0 &amp;&amp; c2.Dot(N) &gt;= 0 &amp;&amp; c3.Dot(N) &gt;= 0) // therefore if any of them is counterclockwise, the dot product will be negative
+ 			return true;
+ 	}
+ 	return false;
+ };
+-		
+-bool BshSnowGrain::is_point_inside_polyhedron(Vector3r P)
++
++bool BshSnowGrain::check_if_point_is_inside_single_face(Vector3r P, size_t i)
+ {
+-	const std::vector&lt;boost::tuple&lt;Vector3r,Vector3r,Vector3r,Vector3r&gt; &gt;&amp; f(get_faces_const_ref());
+-	// loop on all faces
+-	size_t S(f.size());
+-	for(size_t i = 0; i &lt; S ; ++i)
++	Vector3r a(get&lt;0&gt;(m_faces[i]));
++	Vector3r b(get&lt;1&gt;(m_faces[i]));
++	Vector3r c(get&lt;2&gt;(m_faces[i]));
++	Vector3r N(get&lt;3&gt;(m_faces[i]));
++	Real depth = m_depths[i];
++	Real point_plane_distance = N.Dot(P - c);
++	if(   point_plane_distance &lt; 0             // point has to be inside - on negative side of the plane
++	   &amp;&amp; point_plane_distance &gt; depth ) // and has to be within the depth of this face 
+ 	{
+-		Vector3r a(get&lt;0&gt;(f[i]));
+-		Vector3r b(get&lt;1&gt;(f[i]));
+-		Vector3r c(get&lt;2&gt;(f[i]));
+-		Vector3r N(get&lt;3&gt;(f[i]));
+-		Real depth = m_depths[i];
+-		Real point_plane_distance = N.Dot(P - c);
+-		if(   point_plane_distance &lt; 0             // point has to be inside - on negative side of the plane
+-		   &amp;&amp; point_plane_distance &gt; depth ) // and has to be within the depth of this face 
++		if(is_point_orthogonally_projected_on_triangle(a,b,c,N,P,point_plane_distance))
+ 		{
+-			if(is_point_orthogonally_projected_on_triangle(a,b,c,N,P,point_plane_distance))
+-			{
+-				if( point_plane_distance &gt; depth*0.5 ) // (1-parallelepiped)
+-				{ // that's close enough. We can speed up the computation by returning true at this point
++			if( point_plane_distance &gt; depth*m_parallelepiped_depth ) // (1-parallelepiped)
++			{ // that's close enough. We can speed up the computation by returning true at this point
+ 
+ // therefore in fact, we are checking if point is inside a volume of parallelepiped (1-) the height of 1/2 depth
+ // within the polyhedron PLUS (that's the code below - the (2-)) a polyhedron the height given by depth
+@@ -246,30 +246,62 @@
+ // From this approach you can see that it's optimized for polyhedrons with large number of faces. For instance it will
+ // be terribly wrong if polyhedron is just a single four-noded tetrahedron. But it will work well if polyhedron
+ // is made from many triangles.
++				return true;
++			}
++			else
++			{ // (2-terhahdron)
++				// so a point orthogonally projected on triangle is crossing it
++				// now check if this point is inside a tetrahedron made by this triangle
++				// and a point 'Z' at 'depth', see picture
++				Vector3r Z((a+b+c)/3.0 + N*depth);
++				Vector3r N1((Z - a).Cross(a - b)); // normals of each face
++				Vector3r N2((Z - c).Cross(c - a)); // of tetrahedron a,b,c,Z
++				Vector3r N3((Z - b).Cross(b - c));
++				if(
++					is_point_orthogonally_projected_on_triangle(b,a,Z,N1,P) &amp;&amp;
++					is_point_orthogonally_projected_on_triangle(a,c,Z,N2,P) &amp;&amp;
++					is_point_orthogonally_projected_on_triangle(c,b,Z,N3,P)
++					)
+ 					return true;
+-				}
+-				else
+-				{ // (2-terhahdron)
+-					// so a point orthogonally projected on triangle is crossing it
+-					// now check if this point is inside a tetrahedron made by this triangle
+-					// and a point 'Z' at 'depth', see picture
+-					Vector3r Z((a+b+c)/3.0 + N*depth);
+-					Vector3r N1((Z - a).Cross(a - b)); // normals of each face
+-					Vector3r N2((Z - c).Cross(c - a)); // of tetrahedron a,b,c,Z
+-					Vector3r N3((Z - b).Cross(b - c));
+-					if(
+-						is_point_orthogonally_projected_on_triangle(b,a,Z,N1,P) &amp;&amp;
+-						is_point_orthogonally_projected_on_triangle(a,c,Z,N2,P) &amp;&amp;
+-						is_point_orthogonally_projected_on_triangle(c,b,Z,N3,P)
+-						)
+-						return true;
+-				}
+ 			}
+ 		}
+ 	}
+ 	return false;
++}
++
++bool BshSnowGrain::is_point_inside_polyhedron_without_quick_lookup(Vector3r P)
++{
++	how_many_faces();
++	// loop on all faces
++	size_t S(m_faces.size());
++	for(size_t i = 0; i &lt; S ; ++i)
++		if(check_if_point_is_inside_single_face(P,i))
++			return true;
++	return false;
+ };
+ 
++bool BshSnowGrain::is_point_inside_polyhedron(Vector3r P)
++{
++//	return is_point_inside_polyhedron_without_quick_lookup(P);
++
++	how_many_faces();
++	Vector3r Q(P-m_min);
++	int i = std::floor(Q[0]/m_dist[0]);
++	int j = std::floor(Q[1]/m_dist[1]);
++	int k = std::floor(Q[2]/m_dist[2]);
++	if(i&lt;0 || j&lt;0 || k&lt;0 || i&gt;= (int)m_lookup_resolution || j&gt;= (int)m_lookup_resolution || k&gt;= (int)m_lookup_resolution)
++		return false;
++	std::set&lt;int&gt;&amp; ids(m_quick_lookup[i][j][k]);
++	if(ids.empty())
++		return false;
++//	if(ids.size()==1 &amp;&amp; *(ids.begin())==-1)
++//		return true;
++	BOOST_FOREACH(int i,ids)
++		if(/*i != -1 &amp;&amp; */check_if_point_is_inside_single_face(P,i))
++			return true;
++	return false;
++};
++
+ bool BshSnowGrain::face_is_valid(Vector3r&amp; a,Vector3r&amp; b,Vector3r&amp; c)
+ {
+ 	if(a != b &amp;&amp; b != c &amp;&amp; c != a)
+@@ -277,6 +309,46 @@
+ 	return false;
+ };
+ 
++void BshSnowGrain::add_edge(Vector3r a,Vector3r b)
++{
++	if(m_edges.find(a) == m_edges.end())
++		m_edges[a]=std::set&lt;Vector3r&gt;();
++	if(m_edges.find(b) == m_edges.end())
++		m_edges[b]=std::set&lt;Vector3r&gt;();
++	m_edges[a].insert(b);
++	m_edges[b].insert(a);
++/*	
++	typedef std::pair&lt;Vector3r,Vector3r&gt; t_edge;
++//	std::map&lt;Vector3r, std::set&lt;Vector3r&gt; &gt; m_edges;
++	t_edge ab(std::make_pair(a,b));
++	t_edge ba(std::make_pair(b,a));
++
++	int a_first(0),b_first(0);
++	BOOST_FOREACH(t_edge&amp; e,m_edges)
++	{
++		if(e == ab || e == ba) return;
++		if(e.first == a) ++a_first;
++		if(e.first == b) ++b_first;
++	}
++	if((a_first == 0 &amp;&amp; b_first == 0) || (a_first == 0 &amp;&amp; b_first == 1))
++	{
++		m_edges.push_back(ab);
++		return;
++	}
++	if(a_first == 1 &amp;&amp; b_first == 0)
++	{
++		m_edges.push_back(ba);
++		return;
++	}
++	if(a_first == 1 &amp;&amp; b_first == 1)
++	{
++		std::cerr &lt;&lt; &quot;BshSnowGrain::add_edge error, both nodes already first.\n&quot;;
++		return;
++	}
++	std::cerr &lt;&lt; &quot;BshSnowGrain::add_edge error, both nodes present multiple times!!.\n&quot;;
++*/
++}
++
+ void BshSnowGrain::push_face(Vector3r a,Vector3r b,Vector3r c)
+ {
+ 	if(face_is_valid(a,b,c))
+@@ -286,6 +358,9 @@
+ 		{
+ 			n /= n.Length();
+ 			m_faces.push_back(boost::make_tuple(a,b,c,n));
++			add_edge(a,b);
++			add_edge(b,c);
++			add_edge(c,a);
+ 		} else
+ 		{
+ 			std::cerr &lt;&lt; &quot;Face has no normal!\n&quot;;
+@@ -296,17 +371,24 @@
+ 		
+ int BshSnowGrain::how_many_faces()
+ {
++	//boost::mutex::scoped_try_lock scoped_try_lock(m_mutex,boost::try_to_lock_t);
++	//if(! scoped_try_lock.owns_lock())
++	//{
++	//	std::cerr &lt;&lt; &quot;..lock failed\n&quot;;
++	//}
++
+ 	if(m_how_many_faces != -1)
+ 		return m_how_many_faces;
+ 
+ // sorry, I never got around to find time and to check out how LOG_WARN works .... std::cerr is fine for me ;)
+-	std::cerr &lt;&lt; &quot;\nrecalculating the depths of polyhedron triangular faces - for faster collision detection\n&quot;;
++//	std::cerr &lt;&lt; &quot;recalculating the depths of polyhedron triangular faces - for faster collision detection\n&quot;;
+ 
+ 
+ // CREATE TRIANGULAR FACES. usually a polyhedron has triangular faces, but here it's a snow grain.
+ // it has layers, not faces, I have to make faces from layers
+ 
+ 	m_faces.clear();
++	m_edges.clear();
+ 	//calculate amount of faces..
+ 
+ 	// connected to START - the middle point in first layer
+@@ -342,15 +424,130 @@
+ // calculating the depth for each face.
+ 
+ 	// now calculate the depth for each face
++	m_arbitrary_safety_coefficient = 0.7;
++	m_parallelepiped_depth = 0.5;
+ 	m_depths.resize(m_faces.size(),0);
+ 	// loop on all faces
+ 	size_t SS(m_faces.size());
+ 	for(size_t i = 0; i &lt; SS ; ++i)
+-		m_depths[i] = calc_depth(i)*0.7; // 0.7 is an arbitrary safety coefficient
++		m_depths[i] = calc_depth(i)*m_arbitrary_safety_coefficient; // 0.7 is an arbitrary safety coefficient
+ 
++// NOW let's calculate quick spatial lookup table
++
++	m_lookup_resolution=15;
++	// resize the table.
++	m_quick_lookup.resize(m_lookup_resolution);
++	BOOST_FOREACH(std::vector&lt;std::vector&lt;std::set&lt;int&gt; &gt; &gt;&amp; a,m_quick_lookup)
++	{
++		a.resize(m_lookup_resolution);
++		BOOST_FOREACH(std::vector&lt;std::set&lt;int&gt; &gt;&amp; b,a) b.resize(m_lookup_resolution);
++	}
++	// calculate min/max of AABB of polyhedron
++	m_min = get&lt;0&gt;(m_faces[0]);
++	m_max = m_min;
++	for(size_t i = 0; i &lt; SS ; ++i)
++	{
++		Vector3r A(get&lt;0&gt;(m_faces[i]));
++		Vector3r B(get&lt;1&gt;(m_faces[i]));
++		Vector3r C(get&lt;2&gt;(m_faces[i]));
++	 	m_max = componentMaxVector(m_max,A);m_min = componentMinVector(m_min,A);
++	 	m_max = componentMaxVector(m_max,B);m_min = componentMinVector(m_min,B);
++	 	m_max = componentMaxVector(m_max,C);m_min = componentMinVector(m_min,C);
++	}
++	m_dist=(m_max-m_min)/((Real)(m_lookup_resolution));
++//	// first a rough check - mark whatever is inside.
++//	for(size_t i=0 ; i&lt; m_lookup_resolution-1 ; ++i)
++//	for(size_t j=0 ; j&lt; m_lookup_resolution-1 ; ++j)
++//	for(size_t k=0 ; k&lt; m_lookup_resolution-1 ; ++k)
++//	{
++//		Vector3r pos_min(i  ,j  ,k  );pos_min=diagMult(pos_min,m_dist)+m_min;
++//		Vector3r pos_max(i+1,j+1,k+1);pos_max=diagMult(pos_max,m_dist)+m_min;
++//		Vector3r pos_1(pos_min[0],pos_min[1],pos_max[2]);
++//		Vector3r pos_2(pos_min[0],pos_max[1],pos_max[2]);
++//		Vector3r pos_3(pos_min[0],pos_max[1],pos_min[2]);
++//		Vector3r pos_4(pos_max[0],pos_min[1],pos_max[2]);
++//		Vector3r pos_5(pos_max[0],pos_min[1],pos_min[2]);
++//		Vector3r pos_6(pos_max[0],pos_max[1],pos_min[2]);
++//		if( // check all 8 corners
++//			   is_point_inside_polyhedron_without_quick_lookup(pos_min)
++//			&amp;&amp; is_point_inside_polyhedron_without_quick_lookup(pos_max)
++//			&amp;&amp; is_point_inside_polyhedron_without_quick_lookup(pos_1)
++//			&amp;&amp; is_point_inside_polyhedron_without_quick_lookup(pos_2)
++//			&amp;&amp; is_point_inside_polyhedron_without_quick_lookup(pos_3)
++//			&amp;&amp; is_point_inside_polyhedron_without_quick_lookup(pos_4)
++//			&amp;&amp; is_point_inside_polyhedron_without_quick_lookup(pos_5)
++//			&amp;&amp; is_point_inside_polyhedron_without_quick_lookup(pos_6)
++//		)
++//			m_quick_lookup[i][j][k].insert(-1);
++//	}
++	// now check all edges of the &quot;triangle&quot;'s volume
++//	Real D = m_dist.Length();
++	for(size_t i = 0; i &lt; SS ; ++i)
++	{
++		Vector3r a(get&lt;0&gt;(m_faces[i]));
++		Vector3r b(get&lt;1&gt;(m_faces[i]));
++		Vector3r c(get&lt;2&gt;(m_faces[i]));
++		Vector3r n(get&lt;3&gt;(m_faces[i]));
++		Real depth = m_depths[i];
++		// face of triangle
++		check_edge_with_quick_lookup_table(a,b,i);
++		check_edge_with_quick_lookup_table(b,c,i);
++		check_edge_with_quick_lookup_table(c,a,i);
++		
++		Vector3r Z((a+b+c)/3.0 + n*depth);
++		// its internal tetrahedron
++		check_edge_with_quick_lookup_table(a,Z,i);
++		check_edge_with_quick_lookup_table(b,Z,i);
++		check_edge_with_quick_lookup_table(c,Z,i);
++		// its internal parallelepiped
++		Real depth2 = depth*m_parallelepiped_depth;
++		Vector3r N(n*depth2);
++		Vector3r A(a+N);
++		Vector3r B(b+N);
++		Vector3r C(c+N);
++		// its top base face
++		check_edge_with_quick_lookup_table(A,B,i);
++		check_edge_with_quick_lookup_table(B,C,i);
++		check_edge_with_quick_lookup_table(C,A,i);
++		
++		// all connections between its nodes
++		check_edge_with_quick_lookup_table(A,a,i);
++		//check_edge_with_quick_lookup_table(A,b,i);
++		//check_edge_with_quick_lookup_table(A,c,i);
++		
++		//check_edge_with_quick_lookup_table(B,a,i);
++		check_edge_with_quick_lookup_table(B,b,i);
++		//check_edge_with_quick_lookup_table(B,c,i);
++		
++		//check_edge_with_quick_lookup_table(C,a,i);
++		//check_edge_with_quick_lookup_table(C,b,i);
++		check_edge_with_quick_lookup_table(C,c,i);
++	}
++
+ 	return m_how_many_faces;
+ };
+-		
++
++void BshSnowGrain::check_edge_with_quick_lookup_table(Vector3r A,Vector3r B,size_t triangle_id)
++{
++	Vector3r Z(A);
++	int sections = m_lookup_resolution;
++	Vector3r DD((B-A)/((Real)(sections)));
++	for(int zzz=0 ; zzz&lt;=sections ; ++zzz,Z+=DD)
++	{
++		Vector3r Q(Z-m_min);
++		int i = std::floor(Q[0]/m_dist[0]);
++		int j = std::floor(Q[1]/m_dist[1]);
++		int k = std::floor(Q[2]/m_dist[2]);
++		if(i&lt;0) i=0;
++		if(j&lt;0) j=0;
++		if(k&lt;0) k=0;
++		if(i&gt;=(int)m_lookup_resolution) i=m_lookup_resolution-1;
++		if(j&gt;=(int)m_lookup_resolution) j=m_lookup_resolution-1;
++		if(k&gt;=(int)m_lookup_resolution) k=m_lookup_resolution-1;
++		m_quick_lookup[i][j][k].insert(triangle_id);
++	}
++}
++
+ Real BshSnowGrain::calc_depth(size_t I)
+ {
+ 	Vector3r A(get&lt;0&gt;(m_faces[I]));
+@@ -376,16 +573,20 @@
+ 				Vector3r a(get&lt;0&gt;(f[i]));
+ 				Vector3r b(get&lt;1&gt;(f[i]));
+ 				Vector3r c(get&lt;2&gt;(f[i]));
+-				for(int Z = 0 ; Z &lt; 4 ; ++Z) // (ad. 1) OK, in fact it's not just from 'P' - we cast four rays.
++				for(int Z = 0 ; Z &lt; 3 ; ++Z) // (ad. 1) OK, in fact it's not just from 'P' - we cast four rays.
+ 				                             // From 'P' and all triangle nodes
+ 				{
+ 					Vector3r PP;
+ 					switch(Z)
+ 					{
+-						case 0 : PP = P; break;
+-						case 1 : PP = A; break;
+-						case 2 : PP = B; break;
+-						case 3 : PP = C; break;
++					//	case 0 : PP = P; break;
++					//	case 1 : PP = A; break;
++					//	case 2 : PP = B; break;
++					//	case 3 : PP = C; break;
++
++						case 0 : PP = (P+A)*0.5; break;
++						case 1 : PP = (P+B)*0.5; break;
++						case 2 : PP = (P+C)*0.5; break;
+ 					}
+ 					Real neg_point_plane_distance = n.Dot(c - PP);
+ 					if( neg_point_plane_distance &gt; 0 ) // (ad. 2) must be facing towards each other
+
+Modified: trunk/pkg/snow/DataClass/BshSnowGrain.hpp
+===================================================================
+--- trunk/pkg/snow/DataClass/BshSnowGrain.hpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/snow/DataClass/BshSnowGrain.hpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -4,10 +4,13 @@
+ #include&lt;Wm3Vector3.h&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ #include&lt;vector&gt;
++#include&lt;map&gt;
+ #include&lt;boost/serialization/vector.hpp&gt;
+ #include&lt;boost/serialization/shared_ptr.hpp&gt;
+ #include&lt;boost/tuple/tuple.hpp&gt;
++#include &lt;boost/thread.hpp&gt;
+ 
++
+ typedef std::vector&lt; std::vector&lt;std::vector&lt;unsigned char&gt; &gt; &gt; T_DATA;
+ 
+ // delete this class after we migrate to boost::serialization
+@@ -31,6 +34,8 @@
+ class BshSnowGrain : public GeometricalModel
+ {
+ 	public:
++		boost::mutex		m_mutex;
++
+ 		Vector3r center,c_axis;
+ 		Vector3r start,end;
+ 		Vector3r color;
+@@ -39,23 +44,36 @@
+ 		Real layer_distance;
+ 
+ 		int m_how_many_faces;
++		Real m_arbitrary_safety_coefficient,m_parallelepiped_depth;
+ 		std::vector&lt;boost::tuple&lt;Vector3r,Vector3r,Vector3r,Vector3r&gt; &gt; m_faces; // A,B,C,normal
+-		std::vector&lt;float&gt; m_depths; // depth for each face (allows faster checking of collision).
++		std::map&lt;Vector3r, std::set&lt;Vector3r&gt; &gt; m_edges;
++		std::vector&lt;Real&gt; m_depths; // depth for each face (allows faster checking of collision).
+ 		// depths are negative numbers! positive number would be an altitude and means that point is _above_ the face
++		size_t m_lookup_resolution;
++		Vector3r m_min,m_max,m_dist;
++		std::vector&lt;std::vector&lt;std::vector&lt;std::set&lt;int&gt; &gt; &gt; &gt; m_quick_lookup; // quick lookup table: x,y,z,face ids, when face ids is empty - then it's outside. /////////NOT: When face ids contain -1 - then it is inside. Otherwise it is face IDs .
+ 
+ 		std::vector&lt;Grrrr&gt; gr_gr;
+ 	public: 
+ 		BshSnowGrain():GeometricalModel(){createIndex(); m_how_many_faces=-1;};
+-		BshSnowGrain(const T_DATA&amp; dat,Vector3r c_axis,int SELECTION,Vector3r col,Real one_voxel_in_meters_is);
++		BshSnowGrain(const T_DATA&amp; dat,Vector3r c_axis,int SELECTION,Vector3r col,Real one_voxel_in_meters_is,Real layer_distance_voxels,Real angle_increment);
+ 		Vector3r search(const T_DATA&amp; dat,Vector3r c,Vector3r dir);
+ 		Vector3r search_plane(const T_DATA&amp; dat,Vector3r c,Vector3r dir);
+ 
+ 		bool is_point_inside_polyhedron(Vector3r point);
++		bool is_point_inside_polyhedron_without_quick_lookup(Vector3r P);
++		bool check_if_point_is_inside_single_face(Vector3r P, size_t i);
++		void check_edge_with_quick_lookup_table(Vector3r A,Vector3r B,size_t triangle_id);
++		void has_deformed(){m_faces.clear();m_edges.clear();m_how_many_faces=-1;};
+ 		int how_many_faces();
+ 		bool face_is_valid(Vector3r&amp;,Vector3r&amp;,Vector3r&amp;);
+ 		Real depth(int i){return m_depths[i];};
+ 		void push_face(Vector3r,Vector3r,Vector3r);
++		void add_edge(Vector3r a,Vector3r b);
+ 		const std::vector&lt;boost::tuple&lt;Vector3r,Vector3r,Vector3r,Vector3r&gt; &gt;&amp; get_faces_const_ref(){how_many_faces(); return m_faces;};
++		const std::map&lt;Vector3r, std::set&lt;Vector3r&gt; &gt;&amp; get_edges_const_ref(){how_many_faces(); return m_edges;};
++		std::vector&lt;boost::tuple&lt;Vector3r,Vector3r,Vector3r,Vector3r&gt; &gt; get_faces_copy(){how_many_faces(); boost::mutex::scoped_lock scoped_lock(m_mutex); return m_faces;};
++		std::map&lt;Vector3r, std::set&lt;Vector3r&gt; &gt; get_edges_copy(){how_many_faces(); boost::mutex::scoped_lock scoped_lock(m_mutex); return m_edges;};
+ 	
+ 	private:
+ 		Real calc_depth(size_t);
+
+Modified: trunk/pkg/snow/DataClass/BssSnowGrain.cpp
+===================================================================
+--- trunk/pkg/snow/DataClass/BssSnowGrain.cpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/snow/DataClass/BssSnowGrain.cpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -2,6 +2,7 @@
+ #include&quot;BssSnowGrain.hpp&quot;
+ #include&lt;Wm3Quaternion.h&gt;
+ 
++
+ BssSnowGrain::BssSnowGrain():InteractingSphere()
+ {
+ 	createIndex();
+
+Modified: trunk/pkg/snow/DataClass/BssSnowGrain.hpp
+===================================================================
+--- trunk/pkg/snow/DataClass/BssSnowGrain.hpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/snow/DataClass/BssSnowGrain.hpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -8,11 +8,47 @@
+ #include&lt;boost/serialization/shared_ptr.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
+ #include&quot;BshSnowGrain.hpp&quot;
++#include&lt;boost/tuple/tuple.hpp&gt;
+ 
++struct depth_one
++{
++	mutable Real current_depth;
++	Real original_depth;
++
++	int i;
++	int j;
++
++	depth_one(Real D,int I,int J):current_depth(D),original_depth(D),i(I),j(J){};
++	bool operator&lt; (const depth_one&amp; b) const
++	{
++		/* BAD, WRONG
++		if(i &lt; b.i);
++			return true;
++		if(i == b.i &amp;&amp; j &lt; b.j);
++			return true;
++		return false;
++		*/
++		// GOOD, CORRECT
++
++		if (i &lt; b.i) return true;
++		if (i &gt; b.i) return false;
++
++		if (j &lt; b.j) return true;
++		if (j &gt; b.j) return false;
++
++		return false;
++	};
++	void set_current_depth(Real d) const
++	{
++		current_depth=d;
++	};
++};
++
+ class BssSnowGrain : public InteractingSphere
+ {
+ 	public: 
+-		std::map&lt;int,Real&gt;	depth;
++		std::map&lt;int,std::set&lt;depth_one&gt; &gt;	depths; // body_id , &lt; depth, i, j (indexes of point on a slice) &gt;
++		std::map&lt;int,Real&gt;	sphere_depth;
+ 		BshSnowGrain	m_copy;
+ 
+ 		BssSnowGrain();
+@@ -27,6 +63,3 @@
+ 
+ REGISTER_SERIALIZABLE(BssSnowGrain);
+ 
+-
+-
+-
+
+Modified: trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.cpp
+===================================================================
+--- trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.cpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.cpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -5,13 +5,115 @@
+ 
+ #include&quot;Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.hpp&quot;
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-snow/IstSnowLayersContact.hpp&gt;
+ #include&lt;yade/pkg-snow/BssSnowGrain.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
+ 
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+ 
++#ifndef MINIWM3
++	#include &lt;Wm3ApprPlaneFit3.h&gt;
++	#include &lt;Wm3Plane3.h&gt;
++#endif
+ 
++
++bool is_point_orthogonally_projected_on_triangle_from_both_sides(const Vector3r&amp; a,const Vector3r&amp; b,const Vector3r c,Vector3r&amp; N,Vector3r&amp; P,Real point_plane_distance)
++{
++	Vector3r d(P - point_plane_distance*N);
++	// now check if the point (when projected on a plane) is within triangle a,b,c
++	// it could be faster with methods from <A HREF="http://softsurfer.com/Archive/algorithm_0105/algorithm_0105.htm">http://softsurfer.com/Archive/algorithm_0105/algorithm_0105.htm</A>
++	// but I don't understand them, so I prefer to use the method which I derived myself
++	Vector3r c1((a - b).Cross(d - a)); // a,b,c can be clockwise or counterclockwise, I don't know here
++	Vector3r c2((c - a).Cross(d - c)); // 'd' will be inside if it preserves clockwiseness
++	Vector3r c3((b - c).Cross(d - b));
++	if(c1.Dot(N) &gt;= 0 &amp;&amp; c2.Dot(N) &gt;= 0 &amp;&amp; c3.Dot(N) &gt;= 0)
++		return true;
++	if(c1.Dot(N) &lt;= 0 &amp;&amp; c2.Dot(N) &lt;= 0 &amp;&amp; c3.Dot(N) &lt;= 0) // so dot producs must all have the same sign
++		return true;
++	return false;
++};
++
++
++Vector3r find_cross_point(BssSnowGrain* m,Vector3r in,Vector3r out, Quaternionr q2, Quaternionr q1, Vector3r pos1, Vector3r pos2,int depth = 4)
++{
++	Vector3r mid((in+out)*0.5);
++	if(depth == 0)
++		return mid;
++	if(m-&gt;m_copy.is_point_inside_polyhedron( q2.Conjugate()*(q1 * mid + pos1-pos2)))
++	{
++		return find_cross_point(m,mid,out,q2,q1,pos1,pos2,depth-1);
++	}
++	else
++	{
++		return find_cross_point(m,in, mid,q2,q1,pos1,pos2,depth-1);
++	}
++}
++
++bool Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact::is_point_inside_cross_section(Vector3r v,Real point_plane_distance,const std::vector&lt;Vector3r&gt;&amp; cross_section_circumference,Vector3r center,Vector3r N)
++{
++	for(size_t i = 0 ; i&lt;cross_section_circumference.size() - 1 ; i++)
++	{
++		const Vector3r&amp; a(cross_section_circumference[i]);
++		const Vector3r&amp; b(cross_section_circumference[i+1]);
++		if(is_point_orthogonally_projected_on_triangle_from_both_sides(a,b,center,N,v,point_plane_distance))
++			return true;
++	}
++	return false;
++}
++
++/// all points must share the same plane!
++// points that are &quot;inside&quot; circumference of set of points are removed from the set of all points
++std::vector&lt;Vector3r&gt; Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact::find_boundary(std::vector&lt;Vector3r&gt; points)
++{
++	std::vector&lt;Vector3r&gt; res;
++	if(points.size()&gt;3)
++	{
++		Vector3r V(points[0].Cross(points[1]));
++		V.Normalize();
++		for(size_t I=0; I&lt;points.size()-1 ; I++)
++		for(size_t J=I+1; J&lt;points.size() ; J++)
++		//BOOST_FOREACH(Vector3r&amp; a,points)
++		//BOOST_FOREACH(Vector3r&amp; b,points) // line a-b
++		{
++			Vector3r&amp; a(points[I]);
++			Vector3r&amp; b(points[J]);
++			//if(a != b)
++			{
++				Vector3r N(V.Cross(b-a));
++				N.Normalize();
++				int side(0);
++				bool ok(true);
++				BOOST_FOREACH(Vector3r&amp; P,points) // checking side of c
++				{
++					if(P !=a &amp;&amp; P != b)
++					{
++						Real point_plane_distance = N.Dot(P - a);
++						int sign = ((point_plane_distance &gt; 0) ? (1) : (-1));
++						if(side == 0)
++							side = sign;
++						else
++						{
++							if(side != sign)
++								ok = false;
++						}
++						if(!ok)
++							break;
++					}
++				}
++				if(ok)
++				{
++					res.push_back(a);
++					res.push_back(b);
++				}
++			}
++		}
++	}
++	else
++		res=points;
++	return res;
++}
++
+ Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact::Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact()
+ {
+ }
+@@ -27,44 +129,302 @@
+ 							const shared_ptr&lt;Interaction&gt;&amp; c)
+ {
+ //	bool result = g.go(cm1,cm2,se31,se32,c);
+-//	std::cerr &lt;&lt; &quot;-----------------1- Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact\n&quot;;
++//	std::cerr &lt;&lt; &quot;------------------- &quot; &lt;&lt; __FILE__ &lt;&lt; &quot;\n&quot;;
+ //	return result;
++	//if(box)
++	//{
++	//	std::cerr &lt;&lt; &quot;----------------- box -- Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact\n&quot;;
++	//	return false;
++	//}
+ 
+-	BssSnowGrain* s1=static_cast&lt;BssSnowGrain*&gt;(cm1.get()), *s2=static_cast&lt;BssSnowGrain*&gt;(cm2.get());
+-	Vector3r normal=se32.position-se31.position;
+-	Real penetrationDepthSq=pow((s1-&gt;radius+s2-&gt;radius),2) - normal.SquaredLength();
+-	if (penetrationDepthSq&gt;0 || c-&gt;isReal)
++	BssSnowGrain* m1=static_cast&lt;BssSnowGrain*&gt;(cm1.get()), *m2=static_cast&lt;BssSnowGrain*&gt;(cm2.get());
++
++	shared_ptr&lt;IstSnowLayersContact&gt; scm;
++	if(c-&gt;interactionGeometry) scm=YADE_PTR_CAST&lt;IstSnowLayersContact&gt;(c-&gt;interactionGeometry);
++	else { scm=shared_ptr&lt;IstSnowLayersContact&gt;(new IstSnowLayersContact()); c-&gt;interactionGeometry=scm; }
++
++	//std::list&lt;Vector3r&gt; nodes;
++	//std::list&lt;Vector3r&gt; inside_nodes;
++
++	//Vector3r normal_from_to=se32.position-se31.position;
++	
++	std::vector&lt;Vector3r&gt; cross_section;
++	Vector3r    pos1(se31.position);
++	Vector3r    pos2(se32.position);
++	Quaternionr q1(se31.orientation);
++	Quaternionr q2(se32.orientation);
++	
++	typedef std::pair&lt;Vector3r, std::set&lt;Vector3r&gt; &gt; t_edge;
++	const std::map&lt;Vector3r, std::set&lt;Vector3r&gt; &gt;&amp; edges1 = m1-&gt;m_copy.get_edges_const_ref();
++	const std::map&lt;Vector3r, std::set&lt;Vector3r&gt; &gt;&amp; edges2 = m2-&gt;m_copy.get_edges_const_ref();
++	BOOST_FOREACH(const t_edge&amp; e,edges1)
+ 	{
+-		shared_ptr&lt;SpheresContactGeometry&gt; scm;
+-		if(c-&gt;interactionGeometry) scm=YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
+-		else { scm=shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry()); c-&gt;interactionGeometry=scm; }
++			Vector3r v(e.first);
++			if(m2-&gt;m_copy.is_point_inside_polyhedron( q2.Conjugate()*(q1 * v + pos1-pos2)))
++			{
++				BOOST_FOREACH(Vector3r v2,e.second)
++				{
++					if( ! (m2-&gt;m_copy.is_point_inside_polyhedron( q2.Conjugate()*(q1 * v2 + pos1-pos2))))
++					{
++						Vector3r v_c(q1 * find_cross_point(m2,v,v2, q2,q1,pos1,pos2) + pos1);
++						cross_section.push_back(v_c);
++					}
++				}
++//				Vector3r pos(q1 * v + pos1);
++//				inside_nodes.push_back(pos);
++			}
++	}
++	BOOST_FOREACH(const t_edge&amp; e,edges2)
++	{
++			Vector3r v(e.first);
++			if(m1-&gt;m_copy.is_point_inside_polyhedron( q1.Conjugate()*(q2 * v + pos2-pos1)))
++			{
++				BOOST_FOREACH(Vector3r v2,e.second)
++				{
++					if( ! (m1-&gt;m_copy.is_point_inside_polyhedron( q1.Conjugate()*(q2 * v2 + pos2-pos1))))
++					{
++						Vector3r v_c(q2 * find_cross_point(m1,v,v2, q1,q2,pos2,pos1) + pos2);
++						cross_section.push_back(v_c);
++					}
++				}
++//				Vector3r pos(q2 * v + pos2);
++//				inside_nodes.push_back(pos);
++			}
++	}
+ 
+-		Real penetrationDepth=s1-&gt;radius+s2-&gt;radius-normal.Normalize(); /* Normalize() works in-place and returns length before normalization; from here, normal is unit vector */
+-		scm-&gt;contactPoint=se31.position+(s1-&gt;radius-0.5*penetrationDepth)*normal;//0.5*(pt1+pt2);
+-		scm-&gt;normal=normal;
+-		scm-&gt;penetrationDepth=penetrationDepth;
+ 
++	int id1 = c-&gt;getId1();
++	int id2 = c-&gt;getId2();
++
++	if(!cross_section.empty())
++	{
++		// find the contact plane with least squre fitting from wm3 library
++		Plane3&lt;Real&gt; plane(OrthogonalPlaneFit3 (cross_section.size(), &amp;cross_section[0]));
++		Vector3r N = plane.Normal;
++		//const Vector3r N((normal_from_to.Dot(N) &gt; 0) ? plane.Normal : 1.0*plane.Normal);
++		Vector3r C = Vector3r(0,0,0);
++		int i=0;
++		if( std::abs(N[1]) &gt; std::abs(N[0]) &amp;&amp; std::abs(N[1]) &gt; std::abs(N[2]) ) i=1;
++		if( std::abs(N[2]) &gt; std::abs(N[1]) &amp;&amp; std::abs(N[2]) &gt; std::abs(N[0]) ) i=2;
++		C[i] = plane.Constant/N[i];
++
++		// project all points onto C,N
++		BOOST_FOREACH(Vector3r&amp; v,cross_section) v -= N.Dot(v - C) * N;
++		std::vector&lt;Vector3r&gt; cross_section_circumference(find_boundary(cross_section));
++		if(cross_section_circumference.size() &lt; 2)
++		{
++			std::cerr &lt;&lt; &quot;\n -------- WTF, wrong cross section &quot; &lt;&lt; __FILE__ &lt;&lt; &quot; --------- \n\n&quot;;
++			return false;
++		}
++		Vector3r center_point(0,0,0);
++		BOOST_FOREACH(Vector3r&amp; v,cross_section_circumference) center_point +=v;
++		center_point /= (Real)(cross_section_circumference.size());
++
++
++		//Real min_dist(0),max_dist(0),count(0); // that's for penetration depth
++		// find all points from layers projected on this plane
++		for(size_t i=0;i &lt; m1-&gt;m_copy.slices.size();++i)
++		{
++			for(size_t j=0 ; j &lt; m1-&gt;m_copy.slices[i].size() ; ++j)
++			{
++				Vector3r v(m1-&gt;m_copy.slices[i][j]);
++				v = q1 * v + pos1;
++				Real point_plane_distance = N.Dot(v - C);
++				
++				if(m1-&gt;depths.find(id2) == m1-&gt;depths.end())
++					m1-&gt;depths[id2] = std::set&lt; depth_one &gt;();
++
++				std::set&lt;depth_one&gt;::iterator it(m1-&gt;depths[id2].find(depth_one(0,i,j)));
++				if(it != m1-&gt;depths[id2].end()) it-&gt;set_current_depth(point_plane_distance);
++
++				if(std::abs(point_plane_distance) &lt; m1-&gt;radius*0.2 
++					&amp;&amp; is_point_inside_cross_section(v,point_plane_distance,cross_section_circumference,center_point,N))
++				{
++					m1-&gt;depths[id2].insert(depth_one(point_plane_distance , i ,j));
++
++				}
++				//it = m1-&gt;depths[id2].find(depth_one(0,i,j));
++				//min_dist += point_plane_distance - it-&gt;original_depth;
++				////max_dist = std::max(max_dist,point_plane_distance - it-&gt;original_depth);
++				//count++;
++			}
++		}
++		for(size_t i=0;i &lt; m2-&gt;m_copy.slices.size();++i)
++		{
++			for(size_t j=0 ; j &lt; m2-&gt;m_copy.slices[i].size() ; ++j)
++			{
++				Vector3r v(m2-&gt;m_copy.slices[i][j]);
++				v = q2 * v + pos2;
++				Real point_plane_distance = N.Dot(v - C);
++				
++				if(m2-&gt;depths.find(id1) == m2-&gt;depths.end())
++					m2-&gt;depths[id1] = std::set&lt; depth_one &gt;();
++
++				std::set&lt;depth_one&gt;::iterator it(m2-&gt;depths[id1].find(depth_one(0,i,j)));
++				if(it != m2-&gt;depths[id1].end()) it-&gt;set_current_depth(point_plane_distance);
++				
++				if(std::abs(point_plane_distance) &lt; m2-&gt;radius*0.2
++					&amp;&amp; is_point_inside_cross_section(v,point_plane_distance,cross_section_circumference,center_point,N))
++				{
++					m2-&gt;depths[id1].insert(depth_one(point_plane_distance , i ,j));
++		
++				}
++				//it=m2-&gt;depths[id1].find(depth_one(0,i,j));
++				//min_dist += point_plane_distance - it-&gt;original_depth;
++				////max_dist = std::max(max_dist,point_plane_distance - it-&gt;original_depth);
++				//count++;
++			}
++		}
++
++		//if(count == 0)	std::cerr &lt;&lt; &quot;.............\n&quot;;
++
++	//	Real penetrationDepth= (m1-&gt;radius+m2-&gt;radius) - (se32.position-se31.position).Length();
++	//	//Real penetrationDepth = /*max_dist -*/ -1.0* min_dist/count;
++	//	scm-&gt;contactPoint = center_point;
++	//	scm-&gt;normal = N;
++	//	//scm-&gt;normal = (normal_from_to.Dot(N) &gt; 0) ? N : -1.0*N; //N;
++	//	scm-&gt;penetrationDepth = penetrationDepth;
++        //
++	//	if(m1-&gt;sphere_depth.find(id2) == m1-&gt;sphere_depth.end())
++	//		m1-&gt;sphere_depth[id2] = penetrationDepth;
++	//	if(m2-&gt;sphere_depth.find(id1) == m2-&gt;sphere_depth.end())
++	//		m2-&gt;sphere_depth[id1] = penetrationDepth;
++        //
++	//	Real d1 = m1-&gt;sphere_depth[id2];
++	//	Real d2 = m2-&gt;sphere_depth[id1];
++	//	if(d1 != d2)
++	//		std::cerr &lt;&lt; &quot;bad initial penetration?\n&quot;;
++        //
++	//	penetrationDepth -= d1;
++	//	scm-&gt;penetrationDepth=penetrationDepth;
++        //
++	//	scm-&gt;radius1=m1-&gt;radius;
++	//	scm-&gt;radius2=m2-&gt;radius;
++
++		//std::cerr &lt;&lt; &quot;id1: &quot; &lt;&lt; id1 &lt;&lt; &quot; &quot; &lt;&lt; m2-&gt;depths[id1].size() &lt;&lt; &quot; ---- &quot; &lt;&lt; &quot;id2: &quot; &lt;&lt; id2 &lt;&lt; &quot; &quot; &lt;&lt; m1-&gt;depths[id2].size() &lt;&lt; &quot;\n&quot;;
++
++
++
++	//{
++	//	Vector3r n2(se32.position-se31.position);
++	//	Real penetrationDepth=m1-&gt;radius+m2-&gt;radius - n2.Normalize();
++	//	scm-&gt;contactPoint=se31.position+(m1-&gt;radius-0.5*penetrationDepth)*n2;//0.5*(pt1+pt2);
++	//	scm-&gt;normal=n2;
++	//	//scm-&gt;contactPoint=center_point;
++	//	//scm-&gt;normal=N;
++	//	scm-&gt;penetrationDepth=penetrationDepth;
++
++	//	if(m1-&gt;sphere_depth.find(id2) == m1-&gt;sphere_depth.end())
++	//		m1-&gt;sphere_depth[id2] = penetrationDepth;
++	//	if(m2-&gt;sphere_depth.find(id1) == m2-&gt;sphere_depth.end())
++	//		m2-&gt;sphere_depth[id1] = penetrationDepth;
++
++	//	Real d1 = m1-&gt;sphere_depth[id2];
++	//	Real d2 = m2-&gt;sphere_depth[id1];
++	//	if(d1 != d2)
++	//		std::cerr &lt;&lt; &quot;bad initial penetration?\n&quot;;
++
++	//	penetrationDepth -= d1;
++	//	scm-&gt;penetrationDepth=penetrationDepth;
++
++	//	scm-&gt;radius1=m1-&gt;radius;
++	//	scm-&gt;radius2=m2-&gt;radius;
++	//}
++
++
++		// FIXME: SpheresContactGeometry (components that are not from IstSnowLayersContact itself) are calculated by &quot;parent&quot; class
++		//        the penetration depth, contact point and normal. I couldn't make stimulation to be stable without this.
++		//g.assist=true;
++		return g.go(cm1,cm2,se31,se32,c);
++		
++		////bool old_n = c-&gt;isNew;
++		////c-&gt;isNew=false;
++		////g.assist=true;
++		/////*bool res = */g.go(cm1,cm2,se31,se32,c);
++		////c-&gt;isNew=old_n;
++
++		//return true;
++	}
++	if(! m1-&gt;depths[id2].empty()) m1-&gt;depths[id2].clear();
++	if(! m2-&gt;depths[id1].empty()) m2-&gt;depths[id1].clear();
++	return false;
++
++
++
++
++
++
++/*	
++	for(size_t i=0;i &lt; m1-&gt;m_copy.slices.size();++i)
++	{
++		for(size_t j=0 ; j &lt; m1-&gt;m_copy.slices[i].size() ; ++j)
++		{
++			Vector3r v(m1-&gt;m_copy.slices[i][j]);
++			if(m2-&gt;m_copy.is_point_inside_polyhedron( q2.Conjugate()*(q1 * v + pos1-pos2)))
++			{
++				nodes.push_back(q1 * v + pos1);
++			}
++		}
++	}
++	for(size_t i=0;i &lt; m2-&gt;m_copy.slices.size();++i)
++	{
++		for(size_t j=0 ; j &lt; m2-&gt;m_copy.slices[i].size() ; ++j)
++		{
++			Vector3r v(m2-&gt;m_copy.slices[i][j]);
++			if(m1-&gt;m_copy.is_point_inside_polyhedron( q1.Conjugate()*(q2 * v + pos2-pos1)))
++			{
++				nodes.push_back(q2 * v + pos2);
++			}
++		}
++	}
++*/
++/*
++	if(!nodes.empty())
++	{
++		// plane of contact will be C (average pos of all points),N (normal of the contact - between two grains)
++		Vector3r C(0,0,0);
++		Real count(0);
++		BOOST_FOREACH(Vector3r&amp; v,nodes) C+=v,++count;
++		C /= count;
++		Vector3r N = pos2 - pos1;
++		N.Normalize();
++		// project all points onto C,N
++		Real min_dist(0),max_dist(0); // that's for penetration depth
++		BOOST_FOREACH(Vector3r&amp; P,nodes)
++		{
++			Real point_plane_distance = N.Dot(P - C);
++			min_dist = std::min(min_dist,point_plane_distance);
++			max_dist = std::max(max_dist,point_plane_distance);
++			P -= point_plane_distance * N;
++		}
++		Real penetrationDepth = max_dist - min_dist;
++		scm-&gt;contactPoint = C;
++		scm-&gt;normal = N;
++		scm-&gt;penetrationDepth = penetrationDepth;
++
+ 		int id1 = c-&gt;getId1();
+ 		int id2 = c-&gt;getId2();
+ 
+-		if(s1-&gt;depth.find(id2) == s1-&gt;depth.end())
+-			s1-&gt;depth[id2] = penetrationDepth;
+-		if(s2-&gt;depth.find(id1) == s2-&gt;depth.end())
+-			s2-&gt;depth[id1] = penetrationDepth;
++		if(m1-&gt;depth.find(id2) == m1-&gt;depth.end())
++			m1-&gt;depth[id2] = penetrationDepth;
++		if(m2-&gt;depth.find(id1) == m2-&gt;depth.end())
++			m2-&gt;depth[id1] = penetrationDepth;
+ 
+-		Real d1 = s1-&gt;depth[id2];
+-		Real d2 = s2-&gt;depth[id1];
++		Real d1 = m1-&gt;depth[id2];
++		Real d2 = m2-&gt;depth[id1];
+ 		if(d1 != d2)
+ 			std::cerr &lt;&lt; &quot;bad initial penetration?\n&quot;;
+ 
+ 		penetrationDepth -= d1;
+ 		scm-&gt;penetrationDepth=penetrationDepth;
+ 
+-		scm-&gt;radius1=s1-&gt;radius;
+-		scm-&gt;radius2=s2-&gt;radius;
++		scm-&gt;radius1=m1-&gt;radius;
++		scm-&gt;radius2=m2-&gt;radius;
++
+ 		return true;
+ 	}
+ 	return false;
++*/
+ }
+ 
+ 
+@@ -74,8 +434,19 @@
+ 								const Se3r&amp; se32,
+ 								const shared_ptr&lt;Interaction&gt;&amp; c)
+ {
+-//	std::cerr &lt;&lt; &quot;-----------------2- Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact\n&quot;;
++	std::cerr &lt;&lt; &quot;---- goReverse ---- &quot; &lt;&lt; __FILE__ &lt;&lt; &quot;\n&quot;;
+ 	return go(cm1,cm2,se31,se32,c);
++//	
++//	bool result = go(cm2,cm1,se32,se31,c);
++//	if(result)
++//	{
++//		shared_ptr&lt;SpheresContactGeometry&gt; scm;
++//		if(c-&gt;interactionGeometry) scm=YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
++//		else { std::cerr &lt;&lt; &quot;whooooooooops_2!&quot; &lt;&lt; __FILE__ &lt;&lt; &quot;\n&quot;; return false; }
++//		scm-&gt;normal *= -1.0;
++//		std::swap(scm-&gt;radius1,scm-&gt;radius2);
++//	}
++//	return result;
+ }
+ 
+ YADE_PLUGIN();
+
+Modified: trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.hpp
+===================================================================
+--- trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.hpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.hpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -9,17 +9,23 @@
+ #pragma once
+ 
+ #include&lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
+-#include&lt;yade/pkg-dem/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp&gt;
++//#include&lt;yade/pkg-dem/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-snow/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.hpp&gt;
+ 
+ class Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact : public InteractionGeometryEngineUnit
+ {
+ 	public :
+-		InteractingSphere2InteractingSphere4SpheresContactGeometry g;
++		//InteractingSphere2InteractingSphere4SpheresContactGeometry g;
++		Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry g;
+ 
+ 		virtual bool go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1, const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2, const Se3r&amp; se31, const Se3r&amp; se32, const shared_ptr&lt;Interaction&gt;&amp; c);
+ 		virtual bool goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1, const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2, const Se3r&amp; se31, const Se3r&amp; se32, const shared_ptr&lt;Interaction&gt;&amp; c);
+ 					
+-		Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact();		
++		Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact();
++
++		//bool box;
++	std::vector&lt;Vector3r&gt; find_boundary(std::vector&lt;Vector3r&gt; points);
++	bool is_point_inside_cross_section(Vector3r v,Real point_plane_distance,const std::vector&lt;Vector3r&gt;&amp; cross_section_circumference,Vector3r center,Vector3r N);
+ 		
+ 	REGISTER_CLASS_NAME(Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact);
+ 	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
+
+Modified: trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.cpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.cpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -12,10 +12,6 @@
+ #include&lt;yade/core/Omega.hpp&gt;
+ 
+ 
+-Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry::Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry()
+-{
+-}
+-
+ void Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry::registerAttributes()
+ {	
+ }
+@@ -27,17 +23,21 @@
+ 							const shared_ptr&lt;Interaction&gt;&amp; c)
+ {
+ //	bool result = g.go(cm1,cm2,se31,se32,c);
+-////	std::cerr &lt;&lt; &quot;-------------------1a\n&quot;;
++//	std::cerr &lt;&lt; &quot;------------------- &quot; &lt;&lt; __FILE__ &lt;&lt; &quot;\n&quot;;
+ //	return result;
+ 
+-	BssSnowGrain* s1=static_cast&lt;BssSnowGrain*&gt;(cm1.get()), *s2=static_cast&lt;BssSnowGrain*&gt;(cm2.get());
++	BssSnowGrain* s1=dynamic_cast&lt;BssSnowGrain*&gt;(cm1.get()), *s2=dynamic_cast&lt;BssSnowGrain*&gt;(cm2.get());
+ 	Vector3r normal=se32.position-se31.position;
+ 	Real penetrationDepthSq=pow((s1-&gt;radius+s2-&gt;radius),2) - normal.SquaredLength();
+-	if (penetrationDepthSq&gt;0 || c-&gt;isReal)
++	if (penetrationDepthSq&gt;0 || c-&gt;isReal || assist)
+ 	{
+ 		shared_ptr&lt;SpheresContactGeometry&gt; scm;
+-		if(c-&gt;interactionGeometry) scm=YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
+-		else { scm=shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry()); c-&gt;interactionGeometry=scm; }
++		if(c-&gt;interactionGeometry) scm=dynamic_pointer_cast&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
++		else { scm=shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry()); c-&gt;interactionGeometry=scm; std::cerr &lt;&lt; &quot;new SpheresContactGeometry\n&quot;;}
++		if(scm==0)
++			std::cerr &lt;&lt; &quot;missing scm\n&quot;;
++	
++//	std::cerr &lt;&lt; __FILE__ &lt;&lt; &quot; &quot; &lt;&lt; scm-&gt;getClassName() &lt;&lt; &quot;\n&quot;;
+ 
+ 		Real penetrationDepth=s1-&gt;radius+s2-&gt;radius-normal.Normalize(); /* Normalize() works in-place and returns length before normalization; from here, normal is unit vector */
+ 		scm-&gt;contactPoint=se31.position+(s1-&gt;radius-0.5*penetrationDepth)*normal;//0.5*(pt1+pt2);
+@@ -47,13 +47,13 @@
+ 		int id1 = c-&gt;getId1();
+ 		int id2 = c-&gt;getId2();
+ 
+-		if(s1-&gt;depth.find(id2) == s1-&gt;depth.end())
+-			s1-&gt;depth[id2] = penetrationDepth;
+-		if(s2-&gt;depth.find(id1) == s2-&gt;depth.end())
+-			s2-&gt;depth[id1] = penetrationDepth;
++		if(s1-&gt;sphere_depth.find(id2) == s1-&gt;sphere_depth.end())
++			s1-&gt;sphere_depth[id2] = penetrationDepth;
++		if(s2-&gt;sphere_depth.find(id1) == s2-&gt;sphere_depth.end())
++			s2-&gt;sphere_depth[id1] = penetrationDepth;
+ 
+-		Real d1 = s1-&gt;depth[id2];
+-		Real d2 = s2-&gt;depth[id1];
++		Real d1 = s1-&gt;sphere_depth[id2];
++		Real d2 = s2-&gt;sphere_depth[id1];
+ 		if(d1 != d2)
+ 			std::cerr &lt;&lt; &quot;bad initial penetration?\n&quot;;
+ 
+@@ -74,7 +74,17 @@
+ 								const Se3r&amp; se32,
+ 								const shared_ptr&lt;Interaction&gt;&amp; c)
+ {
+-	return go(cm1,cm2,se31,se32,c);
++	std::cerr &lt;&lt; &quot;---- goReverse ---- &quot; &lt;&lt; __FILE__ &lt;&lt; &quot;\n&quot;;
++	bool result = go(cm2,cm1,se32,se31,c);
++	if(result)
++	{
++		shared_ptr&lt;SpheresContactGeometry&gt; scm;
++		if(c-&gt;interactionGeometry) scm=dynamic_pointer_cast&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
++		else { std::cerr &lt;&lt; &quot;whooooooooops_2!&quot; &lt;&lt; __FILE__ &lt;&lt; &quot;\n&quot;; return false; }
++		scm-&gt;normal *= -1.0;
++		std::swap(scm-&gt;radius1,scm-&gt;radius2);
++	}
++	return result;
+ }
+ 
+ YADE_PLUGIN();
+
+Modified: trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.hpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.hpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -19,7 +19,8 @@
+ 		virtual bool go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1, const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2, const Se3r&amp; se31, const Se3r&amp; se32, const shared_ptr&lt;Interaction&gt;&amp; c);
+ 		virtual bool goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1, const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2, const Se3r&amp; se31, const Se3r&amp; se32, const shared_ptr&lt;Interaction&gt;&amp; c);
+ 					
+-		Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry();		
++		bool assist;
++		Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry():assist(false){};
+ 		
+ 	REGISTER_CLASS_NAME(Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry);
+ 	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
+
+Modified: trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.cpp
+===================================================================
+--- trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.cpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.cpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -10,12 +10,42 @@
+ 
+ #include&quot;Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.hpp&quot;
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-snow/IstSnowLayersContact.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingBox.hpp&gt;
++#include&lt;yade/pkg-snow/BssSnowGrain.hpp&gt;
+ 
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ 
++#ifndef MINIWM3
++	#include &lt;Wm3ApprPlaneFit3.h&gt;
++	#include &lt;Wm3Plane3.h&gt;
++#endif
+ 
++bool is_point_inside_box(InteractingBox* b, Vector3r P)
++{
++	return		std::abs(P[0]) &lt; std::abs(b-&gt;extents[0])
++		 &amp;&amp;	std::abs(P[1]) &lt; std::abs(b-&gt;extents[1])
++		 &amp;&amp;	std::abs(P[2]) &lt; std::abs(b-&gt;extents[2]);
++};
++
++
++Vector3r find_cross_point(InteractingBox* m,Vector3r in,Vector3r out, Quaternionr q2, Quaternionr q1, Vector3r pos1, Vector3r pos2,int depth = 4)
++{
++	Vector3r mid((in+out)*0.5);
++	if(depth == 0)
++		return mid;
++	if(is_point_inside_box(m, q2.Conjugate()*(q1 * mid + pos1-pos2)))
++	{
++		return find_cross_point(m,mid,out,q2,q1,pos1,pos2,depth-1);
++	}
++	else
++	{
++		return find_cross_point(m,in, mid,q2,q1,pos1,pos2,depth-1);
++	}
++}
++
++
+ bool Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact::go(
+ 		const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+ 		const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+@@ -23,9 +53,186 @@
+ 		const Se3r&amp; se32,
+ 		const shared_ptr&lt;Interaction&gt;&amp; c)
+ {
+-	bool result = g.go(cm1,cm2,se31,se32,c);
+-//	std::cerr &lt;&lt; &quot;-----------------1- Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact\n&quot;;
+-	return result;
++
++	//InteractingBox* m1=static_cast&lt;InteractingBox*&gt;(cm1.get()), *m2=static_cast&lt;BssSnowGrain*&gt;(cm2.get());
++	//std::cerr &lt;&lt; &quot;------------------- &quot; &lt;&lt; __FILE__ &lt;&lt; &quot;\n&quot;;
++
++				InteractingBox* m1=dynamic_cast&lt;InteractingBox*&gt;(cm1.get()); BssSnowGrain *m2=dynamic_cast&lt;BssSnowGrain*&gt;(cm2.get());
++				if(m1==0 || m2==0)
++				{
++					std::cerr &lt;&lt; &quot;whooooooooops_2!&quot; &lt;&lt; __FILE__ &lt;&lt; &quot;\n&quot;; 
++					return false;
++				}
++
++	shared_ptr&lt;IstSnowLayersContact&gt; scm;
++	if(c-&gt;interactionGeometry) scm=dynamic_pointer_cast&lt;IstSnowLayersContact&gt;(c-&gt;interactionGeometry);
++	else { scm=shared_ptr&lt;IstSnowLayersContact&gt;(new IstSnowLayersContact()); c-&gt;interactionGeometry=scm; }
++	
++//	Vector3r normal_from_to=se32.position-se31.position;
++
++	std::vector&lt;Vector3r&gt; cross_section;
++	Vector3r    pos1(se31.position);
++	Vector3r    pos2(se32.position);
++	Quaternionr q1(se31.orientation);
++	Quaternionr q2(se32.orientation);
++	
++	typedef std::pair&lt;Vector3r, std::set&lt;Vector3r&gt; &gt; t_edge;
++//	const std::map&lt;Vector3r, std::set&lt;Vector3r&gt; &gt;&amp; edges1 = m1-&gt;m_copy.get_edges_const_ref();
++	const std::map&lt;Vector3r, std::set&lt;Vector3r&gt; &gt;&amp; edges2 = m2-&gt;m_copy.get_edges_const_ref();
++//	BOOST_FOREACH(const t_edge&amp; e,edges1)
++//	{
++//			Vector3r v(e.first);
++//			if(m2-&gt;m_copy.is_point_inside_polyhedron( q2.Conjugate()*(q1 * v + pos1-pos2)))
++//			{
++//				BOOST_FOREACH(Vector3r v2,e.second)
++//				{
++//					if( ! (m2-&gt;m_copy.is_point_inside_polyhedron( q2.Conjugate()*(q1 * v2 + pos1-pos2))))
++//					{
++//						Vector3r v_c(q1 * find_cross_point(m2,v,v2, q2,q1,pos1,pos2) + pos1);
++//						cross_section.push_back(v_c);
++//					}
++//				}
++//			}
++//	}
++	BOOST_FOREACH(const t_edge&amp; e,edges2)
++	{
++			Vector3r v(e.first);
++			if(is_point_inside_box(m1, q1.Conjugate()*(q2 * v + pos2-pos1)))
++			{
++				BOOST_FOREACH(Vector3r v2,e.second)
++				{
++					if( ! (is_point_inside_box(m1, q1.Conjugate()*(q2 * v2 + pos2-pos1))))
++					{
++						Vector3r v_c(q2 * find_cross_point(m1,v,v2, q1,q2,pos2,pos1) + pos2);
++						cross_section.push_back(v_c);
++					}
++				}
++			}
++	}
++
++
++	int id1 = c-&gt;getId1();
++	//int id2 = c-&gt;getId2();
++
++	if(!cross_section.empty())
++	{
++		// find the contact plane with least squre fitting from wm3 library
++		Plane3&lt;Real&gt; plane(OrthogonalPlaneFit3 (cross_section.size(), &amp;cross_section[0]));
++		Vector3r N = plane.Normal;
++		//const Vector3r N((normal_from_to.Dot(N) &gt; 0) ? plane.Normal : 1.0*plane.Normal);
++		Vector3r C = Vector3r(0,0,0);
++		int i=0;
++		if( std::abs(N[1]) &gt; std::abs(N[0]) &amp;&amp; std::abs(N[1]) &gt; std::abs(N[2]) ) i=1;
++		if( std::abs(N[2]) &gt; std::abs(N[1]) &amp;&amp; std::abs(N[2]) &gt; std::abs(N[0]) ) i=2;
++		C[i] = plane.Constant/N[i];
++
++		// project all points onto C,N
++		BOOST_FOREACH(Vector3r&amp; v,cross_section) v -= N.Dot(v - C) * N;
++		std::vector&lt;Vector3r&gt; cross_section_circumference(g.find_boundary(cross_section));
++		if(cross_section_circumference.size() &lt; 2)
++		{
++			std::cerr &lt;&lt; &quot;\n -------- WTF, wrong cross section &quot; &lt;&lt; __FILE__ &lt;&lt; &quot; --------- \n\n&quot;;
++			return false;
++		}
++		Vector3r center_point(0,0,0);
++		BOOST_FOREACH(Vector3r&amp; v,cross_section_circumference) center_point +=v;
++		center_point /= (Real)(cross_section_circumference.size());
++
++
++		//Real min_dist(0),max_dist(0),count(0); // that's for penetration depth
++		// find all points from layers projected on this plane
++//		for(size_t i=0;i &lt; m1-&gt;m_copy.slices.size();++i)
++//		{
++//			for(size_t j=0 ; j &lt; m1-&gt;m_copy.slices[i].size() ; ++j)
++//			{
++//				Vector3r v(m1-&gt;m_copy.slices[i][j]);
++//				v = q1 * v + pos1;
++//				Real point_plane_distance = N.Dot(v - C);
++//				
++//				if(m1-&gt;depths.find(id2) == m1-&gt;depths.end())
++//					m1-&gt;depths[id2] = std::set&lt; depth_one &gt;();
++//
++//				std::set&lt;depth_one&gt;::iterator it(m1-&gt;depths[id2].find(depth_one(0,i,j)));
++//				if(it != m1-&gt;depths[id2].end()) it-&gt;set_current_depth(point_plane_distance);
++//
++//				if(std::abs(point_plane_distance) &lt; m1-&gt;radius*0.2 
++//					&amp;&amp; is_point_inside_cross_section(v,point_plane_distance,cross_section_circumference,center_point,N))
++//				{
++//					m1-&gt;depths[id2].insert(depth_one(point_plane_distance , i ,j));
++//		
++//					min_dist = std::min(min_dist,point_plane_distance);
++//					max_dist = std::max(max_dist,point_plane_distance);
++//				}
++//			}
++//		}
++		for(size_t i=0;i &lt; m2-&gt;m_copy.slices.size();++i)
++		{
++			for(size_t j=0 ; j &lt; m2-&gt;m_copy.slices[i].size() ; ++j)
++			{
++				Vector3r v(m2-&gt;m_copy.slices[i][j]);
++				v = q2 * v + pos2;
++				Real point_plane_distance = N.Dot(v - C);
++				
++				if(m2-&gt;depths.find(id1) == m2-&gt;depths.end())
++					m2-&gt;depths[id1] = std::set&lt; depth_one &gt;();
++
++				std::set&lt;depth_one&gt;::iterator it(m2-&gt;depths[id1].find(depth_one(0,i,j)));
++				if(it != m2-&gt;depths[id1].end()) it-&gt;set_current_depth(point_plane_distance);
++				
++				if(std::abs(point_plane_distance) &lt; m2-&gt;radius*0.2
++					&amp;&amp; g.is_point_inside_cross_section(v,point_plane_distance,cross_section_circumference,center_point,N))
++				{
++					m2-&gt;depths[id1].insert(depth_one(point_plane_distance , i ,j));
++		
++					//std::set&lt;depth_one&gt;::iterator it(m2-&gt;depths[id1].find(depth_one(0,i,j)));
++					//min_dist = std::min(min_dist,point_plane_distance - it-&gt;original_depth);
++					//max_dist = std::max(max_dist,point_plane_distance - it-&gt;original_depth);
++					//count++;
++				}
++			}
++		}
++
++//		Real penetrationDepth = max_dist - min_dist;
++//		scm-&gt;contactPoint = center_point;
++//		scm-&gt;normal = N;
++//		//scm-&gt;normal = (normal_from_to.Dot(N) &gt; 0) ? N : -1.0*N; //N;
++//		scm-&gt;penetrationDepth = penetrationDepth;
++//
++////		if(m1-&gt;sphere_depth.find(id2) == m1-&gt;sphere_depth.end())
++////			m1-&gt;sphere_depth[id2] = penetrationDepth;
++//
++//		if(m2-&gt;sphere_depth.find(id1) == m2-&gt;sphere_depth.end())
++//			m2-&gt;sphere_depth[id1] = penetrationDepth;
++//
++////		Real d1 = m1-&gt;sphere_depth[id2];
++//		Real d2 = m2-&gt;sphere_depth[id1];
++////		if(d1 != d2)
++////			std::cerr &lt;&lt; &quot;bad initial penetration?\n&quot;;
++//
++//		penetrationDepth -= d2;
++//		scm-&gt;penetrationDepth=penetrationDepth;
++//
++//		scm-&gt;radius1=m2-&gt;radius*2.0;
++//		scm-&gt;radius2=m2-&gt;radius;
++
++		//std::cerr &lt;&lt; &quot;id1: &quot; &lt;&lt; id1 &lt;&lt; &quot; &quot; &lt;&lt; m2-&gt;depths[id1].size() &lt;&lt; &quot; ---- &quot; &lt;&lt; &quot;id2: &quot; &lt;&lt; id2 &lt;&lt; &quot; &quot; &lt;&lt; m1-&gt;depths[id2].size() &lt;&lt; &quot;\n&quot;;
++
++//	std::cerr &lt;&lt; __FILE__ &lt;&lt; &quot; &quot; &lt;&lt; scm-&gt;getClassName() &lt;&lt; &quot;\n&quot;;
++		
++		// FIXME: SpheresContactGeometry (components that are not from IstSnowLayersContact itself) are calculated by &quot;parent&quot; class
++		//        the penetration depth, contact point and normal. I couldn't make stimulation to be stable without this.
++		bool old_n = c-&gt;isNew;
++		c-&gt;isNew=false;
++		//ggg.assist=true;
++		bool res = ggg.go(cm1,cm2,se31,se32,c);
++		c-&gt;isNew=old_n;
++		return res;
++
++		//return true;
++	}
++//	if(! m1-&gt;depths[id2].empty()) m1-&gt;depths[id2].clear();
++	if(! m2-&gt;depths[id1].empty()) m2-&gt;depths[id1].clear();
++	return false;
+ }
+ 
+ 
+@@ -35,9 +242,198 @@
+ 						const Se3r&amp; se32,
+ 						const shared_ptr&lt;Interaction&gt;&amp; c)
+ {
+-	bool result = g.goReverse(cm1,cm2,se31,se32,c);
+-//	std::cerr &lt;&lt; &quot;-----------------2- Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact\n&quot;;
+-	return result;
++///	bool result = go(cm2,cm1,se32,se31,c);
++///	if(result)
++///	{
++///		shared_ptr&lt;SpheresContactGeometry&gt; scm;
++///		if(c-&gt;interactionGeometry) scm=YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
++///		else { std::cerr &lt;&lt; &quot;whooooooooops_2!&quot; &lt;&lt; __FILE__ &lt;&lt; &quot;\n&quot;; return false; }
++///		scm-&gt;normal *= -1.0;
++///		std::swap(scm-&gt;radius1,scm-&gt;radius2);
++///	}
++///	return result;
++
++
++	//InteractingBox* m1=static_cast&lt;InteractingBox*&gt;(cm1.get()), *m2=static_cast&lt;BssSnowGrain*&gt;(cm2.get());
++////	std::cerr &lt;&lt; &quot;----- reverse ----- &quot; &lt;&lt; __FILE__ &lt;&lt; &quot;\n&quot;;
++
++				InteractingBox* m2=dynamic_cast&lt;InteractingBox*&gt;(cm2.get()); BssSnowGrain *m1=dynamic_cast&lt;BssSnowGrain*&gt;(cm1.get());
++				if(m1==0 || m2==0)
++				{
++					std::cerr &lt;&lt; &quot;whooooooooops_2!&quot; &lt;&lt; __FILE__ &lt;&lt; &quot;\n&quot;; 
++					return false;
++				}
++
++	shared_ptr&lt;IstSnowLayersContact&gt; scm;
++	if(c-&gt;interactionGeometry) scm=dynamic_pointer_cast&lt;IstSnowLayersContact&gt;(c-&gt;interactionGeometry);
++	else { scm=shared_ptr&lt;IstSnowLayersContact&gt;(new IstSnowLayersContact()); c-&gt;interactionGeometry=scm; }
++
++	//Vector3r normal_from_to=se32.position-se31.position;
++	
++	std::vector&lt;Vector3r&gt; cross_section;
++	Vector3r    pos1(se31.position);
++	Vector3r    pos2(se32.position);
++	Quaternionr q1(se31.orientation);
++	Quaternionr q2(se32.orientation);
++	
++	typedef std::pair&lt;Vector3r, std::set&lt;Vector3r&gt; &gt; t_edge;
++	const std::map&lt;Vector3r, std::set&lt;Vector3r&gt; &gt;&amp; edges1 = m1-&gt;m_copy.get_edges_const_ref();
++//	const std::map&lt;Vector3r, std::set&lt;Vector3r&gt; &gt;&amp; edges2 = m2-&gt;m_copy.get_edges_const_ref();
++	BOOST_FOREACH(const t_edge&amp; e,edges1)
++	{
++			Vector3r v(e.first);
++			if(is_point_inside_box(m2, q2.Conjugate()*(q1 * v + pos1-pos2)))
++			{
++				BOOST_FOREACH(Vector3r v2,e.second)
++				{
++					if( ! (is_point_inside_box(m2, q2.Conjugate()*(q1 * v2 + pos1-pos2))))
++					{
++						Vector3r v_c(q1 * find_cross_point(m2,v,v2, q2,q1,pos1,pos2) + pos1);
++						cross_section.push_back(v_c);
++					}
++				}
++			}
++	}
++//	BOOST_FOREACH(const t_edge&amp; e,edges2)
++//	{
++//			Vector3r v(e.first);
++//			if(is_point_inside_box(m1, q1.Conjugate()*(q2 * v + pos2-pos1)))
++//			{
++//				BOOST_FOREACH(Vector3r v2,e.second)
++//				{
++//					if( ! (is_point_inside_box(m1, q1.Conjugate()*(q2 * v2 + pos2-pos1))))
++//					{
++//						Vector3r v_c(q2 * find_cross_point(m1,v,v2, q1,q2,pos2,pos1) + pos2);
++//						cross_section.push_back(v_c);
++//					}
++//				}
++//			}
++//	}
++
++
++	//int id1 = c-&gt;getId1();
++	int id2 = c-&gt;getId2();
++
++	if(!cross_section.empty())
++	{
++		// find the contact plane with least squre fitting from wm3 library
++		Plane3&lt;Real&gt; plane(OrthogonalPlaneFit3 (cross_section.size(), &amp;cross_section[0]));
++		Vector3r N = plane.Normal;
++		//const Vector3r N((normal_from_to.Dot(N) &gt; 0) ? plane.Normal : 1.0*plane.Normal);
++		Vector3r C = Vector3r(0,0,0);
++		int i=0;
++		if( std::abs(N[1]) &gt; std::abs(N[0]) &amp;&amp; std::abs(N[1]) &gt; std::abs(N[2]) ) i=1;
++		if( std::abs(N[2]) &gt; std::abs(N[1]) &amp;&amp; std::abs(N[2]) &gt; std::abs(N[0]) ) i=2;
++		C[i] = plane.Constant/N[i];
++
++		// project all points onto C,N
++		BOOST_FOREACH(Vector3r&amp; v,cross_section) v -= N.Dot(v - C) * N;
++		std::vector&lt;Vector3r&gt; cross_section_circumference(g.find_boundary(cross_section));
++		if(cross_section_circumference.size() &lt; 2)
++		{
++			std::cerr &lt;&lt; &quot;\n -------- WTF, wrong cross section &quot; &lt;&lt; __FILE__ &lt;&lt; &quot; --------- \n\n&quot;;
++			return false;
++		}
++		Vector3r center_point(0,0,0);
++		BOOST_FOREACH(Vector3r&amp; v,cross_section_circumference) center_point +=v;
++		center_point /= (Real)(cross_section_circumference.size());
++
++
++		//Real min_dist(0),max_dist(0),count(0); // that's for penetration depth
++		// find all points from layers projected on this plane
++		for(size_t i=0;i &lt; m1-&gt;m_copy.slices.size();++i)
++		{
++			for(size_t j=0 ; j &lt; m1-&gt;m_copy.slices[i].size() ; ++j)
++			{
++				Vector3r v(m1-&gt;m_copy.slices[i][j]);
++				v = q1 * v + pos1;
++				Real point_plane_distance = N.Dot(v - C);
++				
++				if(m1-&gt;depths.find(id2) == m1-&gt;depths.end())
++					m1-&gt;depths[id2] = std::set&lt; depth_one &gt;();
++
++				std::set&lt;depth_one&gt;::iterator it(m1-&gt;depths[id2].find(depth_one(0,i,j)));
++				if(it != m1-&gt;depths[id2].end()) it-&gt;set_current_depth(point_plane_distance);
++
++				if(std::abs(point_plane_distance) &lt; m1-&gt;radius*0.2 
++					&amp;&amp; g.is_point_inside_cross_section(v,point_plane_distance,cross_section_circumference,center_point,N))
++				{
++					m1-&gt;depths[id2].insert(depth_one(point_plane_distance , i ,j));
++		
++					//std::set&lt;depth_one&gt;::iterator it(m1-&gt;depths[id2].find(depth_one(0,i,j)));
++					//min_dist = std::min(min_dist,point_plane_distance - it-&gt;original_depth);
++					//max_dist = std::max(max_dist,point_plane_distance - it-&gt;original_depth);
++					//count++;
++				}
++			}
++		}
++//		for(size_t i=0;i &lt; m2-&gt;m_copy.slices.size();++i)
++//		{
++//			for(size_t j=0 ; j &lt; m2-&gt;m_copy.slices[i].size() ; ++j)
++//			{
++//				Vector3r v(m2-&gt;m_copy.slices[i][j]);
++//				v = q2 * v + pos2;
++//				Real point_plane_distance = N.Dot(v - C);
++//				
++//				if(m2-&gt;depths.find(id1) == m2-&gt;depths.end())
++//					m2-&gt;depths[id1] = std::set&lt; depth_one &gt;();
++//
++//				std::set&lt;depth_one&gt;::iterator it(m2-&gt;depths[id1].find(depth_one(0,i,j)));
++//				if(it != m2-&gt;depths[id1].end()) it-&gt;set_current_depth(point_plane_distance);
++//				
++//				if(std::abs(point_plane_distance) &lt; m2-&gt;radius*0.2
++//					&amp;&amp; g.is_point_inside_cross_section(v,point_plane_distance,cross_section_circumference,center_point,N))
++//				{
++//					m2-&gt;depths[id1].insert(depth_one(point_plane_distance , i ,j));
++//		
++//					min_dist = std::min(min_dist,point_plane_distance);
++//					max_dist = std::max(max_dist,point_plane_distance);
++//				}
++//			}
++//		}
++
++//		Real penetrationDepth = max_dist - min_dist;
++//		scm-&gt;contactPoint = center_point;
++//		scm-&gt;normal = N;
++//		//scm-&gt;normal = (normal_from_to.Dot(N) &gt; 0) ? N : -1.0*N; //N;
++//		scm-&gt;penetrationDepth = penetrationDepth;
++//
++//		if(m1-&gt;sphere_depth.find(id2) == m1-&gt;sphere_depth.end())
++//			m1-&gt;sphere_depth[id2] = penetrationDepth;
++//
++////		if(m2-&gt;sphere_depth.find(id1) == m2-&gt;sphere_depth.end())
++////			m2-&gt;sphere_depth[id1] = penetrationDepth;
++//
++//		Real d1 = m1-&gt;sphere_depth[id2];
++////		Real d2 = m2-&gt;sphere_depth[id1];
++////		if(d1 != d2)
++////			std::cerr &lt;&lt; &quot;bad initial penetration?\n&quot;;
++//
++//		penetrationDepth -= d1;
++//		scm-&gt;penetrationDepth=penetrationDepth;
++//
++//		scm-&gt;radius1=m1-&gt;radius;
++//		scm-&gt;radius2=m1-&gt;radius*2.0;
++//
++//		//std::cerr &lt;&lt; &quot;id1: &quot; &lt;&lt; id1 &lt;&lt; &quot; &quot; &lt;&lt; m2-&gt;depths[id1].size() &lt;&lt; &quot; ---- &quot; &lt;&lt; &quot;id2: &quot; &lt;&lt; id2 &lt;&lt; &quot; &quot; &lt;&lt; m1-&gt;depths[id2].size() &lt;&lt; &quot;\n&quot;;
++		
++//	std::cerr &lt;&lt; __FILE__ &lt;&lt; &quot; &quot; &lt;&lt; scm-&gt;getClassName() &lt;&lt; &quot;\n&quot;;
++		
++		// FIXME: SpheresContactGeometry (components that are not from IstSnowLayersContact itself) are calculated by &quot;parent&quot; class
++		//        the penetration depth, contact point and normal. I couldn't make stimulation to be stable without this.
++		bool old_n = c-&gt;isNew;
++		c-&gt;isNew=false;
++		//ggg.assist=true;
++		bool res = ggg.goReverse(cm1,cm2,se31,se32,c);
++		c-&gt;isNew=old_n;
++		return res;
++
++		//return true;
++	}
++	if(! m1-&gt;depths[id2].empty()) m1-&gt;depths[id2].clear();
++//	if(! m2-&gt;depths[id1].empty()) m2-&gt;depths[id1].clear();
++	return false;
++
+ }
+ 
+ YADE_PLUGIN();
+
+Modified: trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.hpp
+===================================================================
+--- trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.hpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.hpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -9,11 +9,14 @@
+ #pragma once
+ 
+ #include&lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
+-#include&lt;yade/pkg-dem/InteractingBox2InteractingSphere4SpheresContactGeometry.hpp&gt;
++//#include&lt;yade/pkg-dem/InteractingBox2InteractingSphere4SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-snow/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.hpp&gt;
++#include&lt;yade/pkg-snow/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.hpp&gt;
+ 
+ class Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact : public InteractionGeometryEngineUnit
+ {
+-	InteractingBox2InteractingSphere4SpheresContactGeometry g;
++	Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact g;
++	Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry ggg;
+ 	public :
+ 		virtual bool go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+ 					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+
+Modified: trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.cpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.cpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -1,6 +1,4 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
+ *  Copyright (C) 2004 by Janek Kozicki                                   *
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
+ *                                                                        *
+@@ -12,6 +10,7 @@
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingBox.hpp&gt;
++#include&lt;yade/pkg-snow/BssSnowGrain.hpp&gt;
+ 
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ 
+@@ -23,8 +22,41 @@
+ 		const Se3r&amp; se32,
+ 		const shared_ptr&lt;Interaction&gt;&amp; c)
+ {
+-	bool result = g.go(cm1,cm2,se31,se32,c);
+-//	std::cerr &lt;&lt; &quot;-------------------1\n&quot;;
++	bool result = g.go(cm1,cm2,se31,se32,c) || assist;
++	//std::cerr &lt;&lt; &quot;------------------- &quot; &lt;&lt; __FILE__ &lt;&lt; &quot;\n&quot;;
++
++	if(result)
++	{
++		//InteractingBox* s1=static_cast&lt;InteractingBox*&gt;(cm1.get()), *s2=static_cast&lt;BssSnowGrain*&gt;(cm2.get());
++				InteractingBox* s1=dynamic_cast&lt;InteractingBox*&gt;(cm1.get());BssSnowGrain *s2=dynamic_cast&lt;BssSnowGrain*&gt;(cm2.get());
++				if(s1==0 || s2==0)
++				{
++					std::cerr &lt;&lt; &quot;whooooooooops_2!&quot; &lt;&lt; __FILE__ &lt;&lt; &quot;\n&quot;; 
++					return false;
++				}
++			
++		shared_ptr&lt;SpheresContactGeometry&gt; scm;
++		if(c-&gt;interactionGeometry) scm=dynamic_pointer_cast&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
++		else { std::cerr &lt;&lt; &quot;whooooooooops!&quot; &lt;&lt; __FILE__ &lt;&lt; &quot;\n&quot;; }
++
++//	std::cerr &lt;&lt; __FILE__ &lt;&lt; &quot; &quot; &lt;&lt; scm-&gt;getClassName() &lt;&lt; &quot;\n&quot;;
++		
++		int id1 = c-&gt;getId1();
++//		int id2 = c-&gt;getId2();
++
++//		if(s1-&gt;sphere_depth.find(id2) == s1-&gt;sphere_depth.end())
++//			s1-&gt;sphere_depth[id2] = scm-&gt;penetrationDepth;
++		if(s2-&gt;sphere_depth.find(id1) == s2-&gt;sphere_depth.end())
++			s2-&gt;sphere_depth[id1] = scm-&gt;penetrationDepth;
++		
++//		Real d1 = s1-&gt;sphere_depth[id2];
++		Real d2 = s2-&gt;sphere_depth[id1];
++//		if(d1 != d2)
++//			std::cerr &lt;&lt; &quot;bad initial penetration?\n&quot;;
++		
++		scm-&gt;penetrationDepth -= d2;
++	}
++
+ 	return result;
+ }
+ 
+@@ -35,8 +67,19 @@
+ 						const Se3r&amp; se32,
+ 						const shared_ptr&lt;Interaction&gt;&amp; c)
+ {
+-	bool result = g.goReverse(cm1,cm2,se31,se32,c);
++//	bool result = g.goReverse(cm1,cm2,se31,se32,c);
+ //	std::cerr &lt;&lt; &quot;-------------------2\n&quot;;
++//	return result;
++	
++	bool result = go(cm2,cm1,se32,se31,c);
++	if(result)
++	{
++		shared_ptr&lt;SpheresContactGeometry&gt; scm;
++		if(c-&gt;interactionGeometry) scm=dynamic_pointer_cast&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
++		else { std::cerr &lt;&lt; &quot;whooooooooops_2!&quot; &lt;&lt; __FILE__ &lt;&lt; &quot;\n&quot;; return false; }
++		scm-&gt;normal *= -1.0;
++		std::swap(scm-&gt;radius1,scm-&gt;radius2);
++	}
+ 	return result;
+ }
+ 
+
+Modified: trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.hpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.hpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -27,6 +27,9 @@
+ 					const Se3r&amp; se32,
+ 					const shared_ptr&lt;Interaction&gt;&amp; c);
+ 
++		bool assist;
++		Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry():assist(false){};
++
+ 	REGISTER_CLASS_NAME(Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry);
+ 	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
+ 
+
+Modified: trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp
+===================================================================
+--- trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -1,6 +1,5 @@
+ /*************************************************************************
+-*  Copyright (C) 2008 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
++*  Copyright (C) 2008 by Janek Kozicki &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>&gt;              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+@@ -57,6 +56,7 @@
+ #include&lt;yade/pkg-common/InteractionVecSet.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionHashMap.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionVectorVector.hpp&gt;
++#include&lt;yade/pkg-snow/ElawSnowLayersDeformation.hpp&gt;
+ 
+ #include&lt;yade/extra/Shop.hpp&gt;
+ 
+@@ -73,6 +73,8 @@
+ //#include&lt;yade/pkg-snow/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.hpp&gt;
+ //#include&lt;yade/pkg-snow/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.hpp&gt;
+ 
++YADE_PLUGIN();
++
+ SnowVoxelsLoader::SnowVoxelsLoader() : FileGenerator()
+ {
+ 	voxel_binary_data_file = &quot;/home/janek/32-Snow-white/20-Programy/31-SNOW-read-data/RESULT.bz2&quot;;
+@@ -97,16 +99,21 @@
+ 	radiusControlInterval = 10;
+ 
+ 	spheresColor		= Vector3r(0.8,0.3,0.3);
++	use_grain_shear_creep	= true;
++	use_grain_twist_creep	= true;
+ 
+ // a pixel is 20.4 microns (2.04 &#215; 10-5 meters)
+ // the sample was 10.4mm high
+ 	one_voxel_in_meters_is	= 2.04e-5;
++	layer_distance_voxels   = 6.0;
++	angle_increment_radians = 0.3;
++	skip_small_grains       = 25000;
+ 
+ 	WallStressRecordFile	= &quot;./SnowWallStresses&quot;;
+ 
+ 	normalCohesion		= 50000000;
+ 	shearCohesion		= 50000000;
+-	setCohesionOnNewContacts= false;
++	setCohesionOnNewContacts= true;
+ 	
+ 	sigma_iso = 50000;
+ 	creep_viscosity = 4000000;
+@@ -122,6 +129,9 @@
+ 	
+ 	recordIntervalIter	= 20;
+ 
++	use_gravity_engine = false;
++	enable_layers_creep = true;
++	layers_creep_viscosity = 100000;
+ 	m_grains.clear();
+ }
+ 
+@@ -134,14 +144,24 @@
+ {
+ 	FileGenerator::registerAttributes();
+ 	REGISTER_ATTRIBUTE(voxel_binary_data_file);
+-	REGISTER_ATTRIBUTE(voxel_txt_dir);
+-	REGISTER_ATTRIBUTE(voxel_caxis_file);
+-	REGISTER_ATTRIBUTE(voxel_colors_file);
++// that was for integrating snow-read with this preprocessor, but for now it's not integrated. snow-read does the conversion separately
++//	REGISTER_ATTRIBUTE(voxel_txt_dir);
++//	REGISTER_ATTRIBUTE(voxel_caxis_file);
++//	REGISTER_ATTRIBUTE(voxel_colors_file);
+ 	REGISTER_ATTRIBUTE(grain_binary_data_file);
+ 	REGISTER_ATTRIBUTE(one_voxel_in_meters_is);
++	REGISTER_ATTRIBUTE(layer_distance_voxels);
++	REGISTER_ATTRIBUTE(angle_increment_radians);
++	REGISTER_ATTRIBUTE(skip_small_grains);
+ 
+ 	REGISTER_ATTRIBUTE(shearCohesion);
+ 	REGISTER_ATTRIBUTE(normalCohesion);
++        REGISTER_ATTRIBUTE(creep_viscosity)
++	REGISTER_ATTRIBUTE(use_grain_shear_creep);
++	REGISTER_ATTRIBUTE(use_grain_twist_creep);
++	REGISTER_ATTRIBUTE(enable_layers_creep);
++	REGISTER_ATTRIBUTE(layers_creep_viscosity);
++	REGISTER_ATTRIBUTE(sigma_iso);
+ 	REGISTER_ATTRIBUTE(setCohesionOnNewContacts);
+ 
+ 	REGISTER_ATTRIBUTE(sphereYoungModulus);
+@@ -151,14 +171,13 @@
+ 	REGISTER_ATTRIBUTE(boxPoissonRatio);
+ 	REGISTER_ATTRIBUTE(boxFrictionDeg);
+ 	REGISTER_ATTRIBUTE(density);
++	REGISTER_ATTRIBUTE(use_gravity_engine);
+ 	REGISTER_ATTRIBUTE(gravity);
+ 	REGISTER_ATTRIBUTE(dampingForce);
+ 	REGISTER_ATTRIBUTE(dampingMomentum);
+ 
+ 	REGISTER_ATTRIBUTE(WallStressRecordFile);
+ 	
+-	REGISTER_ATTRIBUTE(sigma_iso);
+-        REGISTER_ATTRIBUTE(creep_viscosity)
+ }
+ 
+ bool SnowVoxelsLoader::load_voxels()
+@@ -190,12 +209,23 @@
+ 	}
+ 	else
+ 	{
+-		message=&quot;cannot load txt yet, or nothing to load&quot;;
++		message=&quot;cannot load input file check if voxel_binary_data_file exists. Or check if grain_binary_data_file does not exist - because if it exists it is loaded first, skipping the layers generation.&quot;;
+ 		return false;
+ 	}
+ 	return false;
+ }
+ 
++int voxel_id_count(int id,const T_DATA&amp; dat)
++{	
++	int res=0;	
++	BOOST_FOREACH(const std::vector&lt;std::vector&lt;unsigned char&gt; &gt;&amp; a,dat)
++		BOOST_FOREACH(const std::vector&lt;unsigned char&gt;&amp; b,a)
++			BOOST_FOREACH(unsigned char c,b)
++				if(c==id)
++					++res;
++	return res;
++}
++
+ bool SnowVoxelsLoader::generate()
+ {
+ 	if(!load_voxels())
+@@ -210,6 +240,7 @@
+ 	
+ 	if(m_grains.size() == 0)
+ 	{
++		int skip_total(0);
+ 		const T_DATA&amp; dat(m_voxel.m_data.get_data_voxel_const_ref().get_a_voxel_const_ref());
+ 		std::set&lt;unsigned char&gt; done;done.clear();done.insert(0);
+ 		BOOST_FOREACH(const std::vector&lt;std::vector&lt;unsigned char&gt; &gt;&amp; a,dat)
+@@ -219,10 +250,23 @@
+ 					if(done.find(c)==done.end())
+ 					{
+ 						done.insert(c);
+-						boost::shared_ptr&lt;BshSnowGrain&gt; grain(new BshSnowGrain(dat,m_voxel.m_data.get_axes_const_ref()[c],c,m_voxel.m_data.get_colors_const_ref()[c],one_voxel_in_meters_is));
+-						m_grains.push_back(grain);
++						if(voxel_id_count(c,dat) &gt; skip_small_grains )
++						{
++							boost::shared_ptr&lt;BshSnowGrain&gt; grain(new BshSnowGrain(dat,m_voxel.m_data.get_axes_const_ref()[c],c,m_voxel.m_data.get_colors_const_ref()[c],one_voxel_in_meters_is,layer_distance_voxels,angle_increment_radians));
++							m_grains.push_back(grain);
++						}
++						else
++						// skip too small grains, because they require extremely small timestep, 
++						// and calculations will take forever.
++						// (they bounce a lot with bigger timestep)
++						{
++							std::cerr &lt;&lt; &quot;\n======= skipped grain id: &quot; &lt;&lt; ((int)(c)) &lt;&lt; &quot;\n&quot;;
++							++skip_total;
++						}
+ 					}
+ 				};
++		
++		std::cerr &lt;&lt; &quot;\n======= total skipped grains: &quot; &lt;&lt; ((int)(skip_total)) &lt;&lt; &quot;\n&quot;;
+ 
+ 		std::cerr &lt;&lt; &quot;saving &quot;&lt;&lt; grain_binary_data_file &lt;&lt; &quot; ...&quot;;
+ 		boost::iostreams::filtering_ostream ofs;
+@@ -254,6 +298,7 @@
+ 	}
+ 	Real sx = upperCorner[0] - lowerCorner[0];
+ 	Real sy = upperCorner[1] - lowerCorner[1];
++// make box a little bigger - the four walls are away 10% of size x (sx) and size y (sy)
+ 	upperCorner[0]+=sx*0.1;
+ 	lowerCorner[0]-=sx*0.1;
+ 	upperCorner[1]+=sy*0.1;
+@@ -410,12 +455,12 @@
+ 	globalStiffnessTimeStepper-&gt;sdecGroupMask = 2;
+ 	globalStiffnessTimeStepper-&gt;timeStepUpdateInterval = timeStepUpdateInterval;
+ 	globalStiffnessTimeStepper-&gt;defaultDt = defaultDt;
+-	globalStiffnessTimeStepper-&gt;timestepSafetyCoefficient = 0.2;
++	globalStiffnessTimeStepper-&gt;timestepSafetyCoefficient = 0.1;
+ 	
+ 	shared_ptr&lt;CohesiveFrictionalContactLaw&gt; cohesiveFrictionalContactLaw(new CohesiveFrictionalContactLaw);
+ 	cohesiveFrictionalContactLaw-&gt;sdecGroupMask = 2;
+-	cohesiveFrictionalContactLaw-&gt;shear_creep = true;
+-	cohesiveFrictionalContactLaw-&gt;twist_creep = true;
++	cohesiveFrictionalContactLaw-&gt;shear_creep = use_grain_shear_creep;
++	cohesiveFrictionalContactLaw-&gt;twist_creep = use_grain_twist_creep;
+ 	cohesiveFrictionalContactLaw-&gt;creep_viscosity = creep_viscosity;
+ 		
+ 	shared_ptr&lt;GlobalStiffnessCounter&gt; globalStiffnessCounter(new GlobalStiffnessCounter);
+@@ -449,7 +494,10 @@
+ 	triaxialStateRecorder-&gt; interval 		= recordIntervalIter;
+ 	//triaxialStateRecorder-&gt; thickness 		= thickness;
+ 	
+-	
++	shared_ptr&lt;ElawSnowLayersDeformation&gt;elawSnowLayersDeformation(new ElawSnowLayersDeformation);
++	elawSnowLayersDeformation-&gt;creep_viscosity = layers_creep_viscosity;
++	elawSnowLayersDeformation-&gt;sdecGroupMask = 2;
++
+ 	// moving walls to regulate the stress applied
+ 	//cerr &lt;&lt; &quot;triaxialstressController = shared_ptr&lt;TriaxialStressController&gt; (new TriaxialStressController);&quot; &lt;&lt; std::endl;
+ 	triaxialstressController = YADE_PTR_CAST&lt;TriaxialStressController&gt;(triaxialcompressionEngine);
+@@ -479,8 +527,11 @@
+ 	rootBody-&gt;engines.push_back(globalStiffnessCounter);
+ 	rootBody-&gt;engines.push_back(globalStiffnessTimeStepper);
+ 	rootBody-&gt;engines.push_back(triaxialStateRecorder);
+-/////	rootBody-&gt;engines.push_back(gravityCondition);
++	if(use_gravity_engine)
++		rootBody-&gt;engines.push_back(gravityCondition);
+ 	rootBody-&gt;engines.push_back(actionDampingDispatcher);
++	if(enable_layers_creep)
++		rootBody-&gt;engines.push_back(elawSnowLayersDeformation);
+ 	rootBody-&gt;engines.push_back(applyActionDispatcher);
+ 	rootBody-&gt;engines.push_back(positionIntegrator);
+ 	//if(!rotationBlocked)
+
+Modified: trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.hpp
+===================================================================
+--- trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.hpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.hpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -83,14 +83,23 @@
+ 		bool		 setCohesionOnNewContacts
+ 				,autoCompressionActivation
+ 				,internalCompaction
++				,use_grain_shear_creep
++				,use_grain_twist_creep
++				,enable_layers_creep
++				,use_gravity_engine
+ 				;
+-		Real		 one_voxel_in_meters_is;
++		Real		 one_voxel_in_meters_is
++				,layer_distance_voxels
++				,angle_increment_radians
++				,layers_creep_viscosity;
+ 
+ 		int		 timeStepUpdateInterval
+ 				,radiusControlInterval
+ 				,wallStiffnessUpdateInterval
+ 
+ 				,recordIntervalIter
++
++				,skip_small_grains
+ 				;
+ 				
+ 		std::string	WallStressRecordFile;
+
+Modified: trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.cpp
+===================================================================
+--- trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.cpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.cpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -15,6 +15,23 @@
+ 
+ inline qglviewer::Vec toQGLViewierVec(Vector3r v){return qglviewer::Vec(v[0],v[1],v[2]);};
+ 
++void triangle(Vector3r a,Vector3r b, Vector3r c,Vector3r n)
++{
++	glNormal3v(n);
++	glVertex3v(a);
++	glVertex3v(b);
++	glVertex3v(c);
++}
++
++void quad(Vector3r a,Vector3r b, Vector3r c, Vector3r d,Vector3r n)
++{
++	glNormal3v(n);
++	glVertex3v(a);
++	glVertex3v(b);
++	glVertex3v(c);
++	glVertex3v(d);
++}
++
+ bool light_selection(int which)
+ {
+ 	GLfloat matAmbient[4];
+@@ -53,19 +70,81 @@
+ 	glDisable(GL_CULL_FACE);
+ 	glEnable(GL_LIGHTING);
+ 	glShadeModel(GL_FLAT);
+-	const std::vector&lt;boost::tuple&lt;Vector3r,Vector3r,Vector3r,Vector3r&gt; &gt;&amp; f(gr-&gt;get_faces_const_ref());
++	
++	//if(surface)
++	{
++	std::vector&lt;boost::tuple&lt;Vector3r,Vector3r,Vector3r,Vector3r&gt; &gt; f(gr-&gt;get_faces_copy());
+ 	glBegin(GL_TRIANGLES);
+ 		for(size_t i = 0; i &lt; f.size() ; ++i)
+ 		{
+ 			if(light_selection(current++) || surface)
+ 			{
+-				glNormal3v(get&lt;3&gt;(f[i]));
+-				glVertex3v(get&lt;0&gt;(f[i]));
+-				glVertex3v(get&lt;1&gt;(f[i]));
+-				glVertex3v(get&lt;2&gt;(f[i]));
++//				glNormal3v(get&lt;3&gt;(f[i]));
++//				glVertex3v(get&lt;0&gt;(f[i]));
++//				glVertex3v(get&lt;1&gt;(f[i]));
++//				glVertex3v(get&lt;2&gt;(f[i]));
++
++				Vector3r a(get&lt;0&gt;(f[i]));
++				Vector3r b(get&lt;1&gt;(f[i]));
++				Vector3r c(get&lt;2&gt;(f[i]));
++				Vector3r n(get&lt;3&gt;(f[i]));
++				// plot the triangular face
++				triangle(a,b,c,n);
++				if(current - 1 == Omega::instance().isoSec &amp;&amp; !surface)
++				{
++					// plot the depth tetrahedron
++					Real depth = gr-&gt;depth(i);
++					Vector3r Z((a+b+c)/3.0 + n*depth);
++					Vector3r N1((Z - a).Cross(a - b));
++					Vector3r N2((Z - c).Cross(c - a));
++					Vector3r N3((Z - b).Cross(b - c));
++					
++					triangle(b,a,Z,N1);
++					triangle(a,c,Z,N2);
++					triangle(c,b,Z,N3);
++					
++					// plot the parallelepiped top-face at the half depth
++					Real depth2 = depth*0.5;
++					Vector3r N(n*depth2);
++					Vector3r A(a+N);
++					Vector3r B(b+N);
++					Vector3r C(c+N);
++					triangle(A,B,C,n);
++				}
+ 			}
+ 		}
+ 	glEnd();
++		glDisable(GL_LIGHTING);
++		glBegin(GL_LINES);
++			size_t i = Omega::instance().isoSec;
++			if(i &gt;= 0 &amp;&amp; i &lt; f.size() )
++			{
++				Vector3r a(get&lt;0&gt;(f[i]));
++				Vector3r b(get&lt;1&gt;(f[i]));
++				Vector3r c(get&lt;2&gt;(f[i]));
++				Vector3r n(get&lt;3&gt;(f[i]));
++				// plot the parallelepiped side faces (quads)
++				Real depth = gr-&gt;depth(i)*0.5;
++				Vector3r N(n*depth);
++				Vector3r A(a+N);
++				Vector3r B(b+N);
++				Vector3r C(c+N);
++
++				Vector3r Z((a+b+c)/3.0 + n*depth);
++				Vector3r N1((A - a).Cross(a - b));
++				Vector3r N2((C - c).Cross(c - a));
++				Vector3r N3((B - b).Cross(b - c));
++				
++				//quad(b,a,A,B,N1);
++				//quad(a,c,C,A,N2);
++				//quad(c,b,B,C,N3);
++				glVertex3v(a);glVertex3v(A);
++				glVertex3v(b);glVertex3v(B);
++				glVertex3v(c);glVertex3v(C);
++			}
++		glEnd();
++	}
++	glEnable(GL_LIGHTING);
+ 	glShadeModel(GL_SMOOTH);
+ 	glEnable(GL_CULL_FACE);
+ 
+
+Modified: trunk/pkg/snow/RenderingEngine/Ef1_BssSnowGrain_glDraw.cpp
+===================================================================
+--- trunk/pkg/snow/RenderingEngine/Ef1_BssSnowGrain_glDraw.cpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/snow/RenderingEngine/Ef1_BssSnowGrain_glDraw.cpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -10,6 +10,7 @@
+ #include&lt;yade/pkg-snow/BssSnowGrain.hpp&gt;
+ #include&lt;yade/pkg-snow/BshSnowGrain.hpp&gt;
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
++#include&lt;yade/core/Omega.hpp&gt;
+ 
+ void triangle(Vector3r a,Vector3r b, Vector3r c,Vector3r n)
+ {
+@@ -30,6 +31,9 @@
+ 
+ void Ef1_BssSnowGrain_glDraw::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm, const shared_ptr&lt;PhysicalParameters&gt;&amp; pp,bool wire)
+ {
++//	s.go(cm,pp,wire);
++//	return;
++
+ 	bool surface = !wire;
+ 	BssSnowGrain* bssgr = static_cast&lt;BssSnowGrain*&gt;(cm.get());
+ 	BshSnowGrain&amp; gr = bssgr-&gt;m_copy;
+@@ -37,7 +41,7 @@
+   	glMaterialv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, Vector3f(cm-&gt;diffuseColor[0],cm-&gt;diffuseColor[1],cm-&gt;diffuseColor[2]));
+ 	glColor3v(cm-&gt;diffuseColor);
+ 
+-	const std::vector&lt;boost::tuple&lt;Vector3r,Vector3r,Vector3r,Vector3r&gt; &gt;&amp; f(gr.get_faces_const_ref());
++	std::vector&lt;boost::tuple&lt;Vector3r,Vector3r,Vector3r,Vector3r&gt; &gt; f(gr.get_faces_copy());
+ 	if(surface)
+ 	{
+ 		glDisable(GL_CULL_FACE);
+@@ -112,6 +116,7 @@
+ 					glVertex3v(gr.slices[i][0]);
+ 				glEnd();
+ 			}
++		/*
+ 		glBegin(GL_LINES);
+ 			for(size_t i = 0; i &lt; f.size() ; ++i)
+ 			{
+@@ -142,8 +147,35 @@
+ 				glVertex3v(c);glVertex3v(C);
+ 			}
+ 		glEnd();
++		*/
+ 		glEnable(GL_LIGHTING);
+ 	}
++
++	// draw m_quick_lookup
++	size_t level = Omega::instance().isoSec;
++	const std::vector&lt;std::vector&lt;std::vector&lt;std::set&lt;int&gt; &gt; &gt; &gt;&amp; lookup(gr.m_quick_lookup);
++	Vector3r min(gr.m_min),max(gr.m_max),dist(gr.m_dist);
++	typedef std::set&lt;int&gt; t_set;
++
++	for(size_t x=0;x&lt;lookup.size();x++)
++	for(size_t y=0;y&lt;lookup[0].size();y++)
++	for(size_t z=0;z&lt;lookup[0][0].size();z++)
++	{
++		const t_set&amp; s(lookup[x][y][z]);
++		if(s.size() &gt;= level)
++		{
++			glPushMatrix();
++			glTranslatev(min + Vector3r(dist[0]*x , dist[1]*y, dist[2]*z ) + dist*0.5);
++			glScalev(dist);
++			glColor3(0.9,0.9,0.9);
++			if(wire)
++				glutWireCube(1.0);
++			else
++				glutSolidCube(1.0);
++			glPopMatrix();
++		}
++	}
++
+ }
+ 
+ 
+
+Modified: trunk/pkg/snow/RenderingEngine/Ef1_BssSnowGrain_glDraw.hpp
+===================================================================
+--- trunk/pkg/snow/RenderingEngine/Ef1_BssSnowGrain_glDraw.hpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/snow/RenderingEngine/Ef1_BssSnowGrain_glDraw.hpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -9,9 +9,11 @@
+ #pragma once
+ 
+ #include&lt;yade/pkg-common/GLDrawFunctors.hpp&gt;
++#include&lt;yade/pkg-common/GLDrawInteractingSphere.hpp&gt;
+ 
+ class Ef1_BssSnowGrain_glDraw : public GLDrawInteractingGeometryFunctor
+ {
++//	GLDrawInteractingSphere s;
+ 	public :
+ 		virtual void go(const shared_ptr&lt;InteractingGeometry&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool);
+ 
+
+Modified: trunk/pkg/snow/RenderingEngine/Ef1_IstSnowLayersContact_glDraw.cpp
+===================================================================
+--- trunk/pkg/snow/RenderingEngine/Ef1_IstSnowLayersContact_glDraw.cpp	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/snow/RenderingEngine/Ef1_IstSnowLayersContact_glDraw.cpp	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -5,12 +5,93 @@
+ #include&lt;yade/pkg-common/NormalShearInteractions.hpp&gt;
+ #include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
+ #include&lt;yade/pkg-snow/IstSnowLayersContact.hpp&gt;
++#include&lt;yade/pkg-snow/BshSnowGrain.hpp&gt;
++#include&lt;yade/pkg-snow/BssSnowGrain.hpp&gt;
++#include&lt;yade/core/Omega.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
+ 
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ #include&lt;yade/lib-opengl/GLUtils.hpp&gt;
+ 
++#ifndef MINIWM3
++	#include &lt;Wm3ApprPlaneFit3.h&gt;
++	#include &lt;Wm3Plane3.h&gt;
++#endif
++
+ YADE_PLUGIN(&quot;Ef1_IstSnowLayersContact_glDraw&quot;);
+ 
++/*
++/// all points must share the same plane!
++std::vector&lt;Vector3r&gt; find_boundary(std::vector&lt;Vector3r&gt; points)
++{
++	std::vector&lt;Vector3r&gt; res;
++	if(points.size()&gt;3)
++	{
++		Vector3r V(points[0].Cross(points[1]));
++		V.Normalize();
++		for(int I=0; I&lt;points.size()-1 ; I++)
++		for(int J=I+1; J&lt;points.size() ; J++)
++//		BOOST_FOREACH(Vector3r&amp; a,points)
++//		BOOST_FOREACH(Vector3r&amp; b,points) // line a-b
++		{
++			Vector3r&amp; a(points[I]);
++			Vector3r&amp; b(points[J]);
++			if(a != b)
++			{
++				Vector3r N(V.Cross(b-a));
++				N.Normalize();
++				int side(0);
++				bool ok(true);
++				BOOST_FOREACH(Vector3r&amp; P,points) // checking side of c
++				{
++					if(P !=a &amp;&amp; P != b)
++					{
++						Real point_plane_distance = N.Dot(P - a);
++						int sign = ((point_plane_distance &gt; 0) ? (1) : (-1));
++						if(side == 0)
++							side = sign;
++						else
++						{
++							if(side != sign)
++								ok = false;
++						}
++						if(!ok)
++							break;
++					}
++				}
++				if(ok)
++				{
++					res.push_back(a);
++					res.push_back(b);
++				}
++			}
++		}
++		// now sort it..
++
++	}
++	else
++		res=points;
++	return res;
++}
++
++
++
++Vector3r find_cross_point(BshSnowGrain* m,Vector3r in,Vector3r out, Quaternionr q2, Quaternionr q1, Vector3r pos1, Vector3r pos2,int depth = 4)
++{
++	Vector3r mid((in+out)*0.5);
++	if(depth == 0)
++		return mid;
++	if(m-&gt;is_point_inside_polyhedron( q2.Conjugate()*(q1 * mid + pos1-pos2)))
++	{
++		return find_cross_point(m,mid,out,q2,q1,pos1,pos2,depth-1);
++	}
++	else
++	{
++		return find_cross_point(m,in, mid,q2,q1,pos1,pos2,depth-1);
++	}
++}
++*/
++
+ void Ef1_IstSnowLayersContact_glDraw::go(
+ 		const shared_ptr&lt;InteractionGeometry&gt;&amp; ig,
+ 		const shared_ptr&lt;Interaction&gt;&amp; ip,
+@@ -18,17 +99,20 @@
+ 		const shared_ptr&lt;Body&gt;&amp; b2,
+ 		bool wireFrame)
+ {
++	if(!ip-&gt;isReal)
++		return;
++
+ 	IstSnowLayersContact* sc = static_cast&lt;IstSnowLayersContact*&gt;(ig.get());
+ 
+-	const Se3r&amp; se31=b1-&gt;physicalParameters-&gt;dispSe3,se32=b2-&gt;physicalParameters-&gt;dispSe3;
+-	const Vector3r&amp; pos1=se31.position,pos2=se32.position;
++	//const Se3r&amp; se31=b1-&gt;physicalParameters-&gt;dispSe3,se32=b2-&gt;physicalParameters-&gt;dispSe3;
++	//const Vector3r&amp; pos1=se31.position,pos2=se32.position;
+ 
+ 	if(wireFrame)
+ 	{
+ 		glPushMatrix();
+ 			glTranslatev(sc-&gt;contactPoint);
+ 			glBegin(GL_LINES);
+-				glColor3(0.0,0.0,1.0);
++				glColor3(0.0,1.0,1.0);
+ 				glVertex3(0.0,0.0,0.0);
+ 				glVertex3v(-1.0*(sc-&gt;normal*sc-&gt;radius1));
+ 				glVertex3(0.0,0.0,0.0);
+@@ -39,5 +123,335 @@
+ 	else
+ 	{
+ 	}
++
++	int id1 = ip-&gt;getId1();
++	int id2 = ip-&gt;getId2();
++	Real LEN(sc-&gt;radius1+sc-&gt;radius2);
++	BssSnowGrain* m1 = dynamic_cast&lt;BssSnowGrain*&gt;(b1-&gt;interactingGeometry.get());
++	BssSnowGrain* m2 = dynamic_cast&lt;BssSnowGrain*&gt;(b2-&gt;interactingGeometry.get());
++		//std::map&lt;int,std::list&lt;boost::tuple&lt;Real,int,int&gt; &gt; &gt;	depths; // body_id , &lt; depth, i, j (indexes of point on a slice) &gt;
++		//std::map&lt;int,Real&gt;	sphere_depth;
++		//BshSnowGrain	m_copy;
++	Vector3r    pos1(b1-&gt;physicalParameters-&gt;se3.position);
++	Vector3r    pos2(b2-&gt;physicalParameters-&gt;se3.position);
++	Quaternionr q1(b1-&gt;physicalParameters-&gt;se3.orientation);
++	Quaternionr q2(b2-&gt;physicalParameters-&gt;se3.orientation);
++
++//	Real dir_f=1.0; ////////////////// sometimes this must be -1.0. The normal should decide about it, becuase it always points from id1 to od2, but still there is a problem here and the lines are drawn in wrong direction
++////	//Real r1=sc-&gt;radius1;
++////	//Real r2=sc-&gt;radius2;
++////	//if( (pos2-pos1).Dot(sc-&gt;normal) &lt; 0 ) dir_f=-1.0;
++////	//if(!m1 &amp;&amp;  m2 &amp;&amp; (pos2-pos1).Dot(sc-&gt;normal) &lt; 0 ) dir_f=-1.0;
++////	//if( m1 &amp;&amp; !m2 &amp;&amp; (pos2-pos1).Dot(sc-&gt;normal) &lt; 0 ) dir_f=-1.0;
++////	if(m1 &amp;&amp; m1-&gt;depths[id2].size() &gt; 3)
++////	{
++////		int count=0;
++////		std::vector&lt;Vector3r&gt; posX;posX.resize(m1-&gt;depths[id2].size());
++////		BOOST_FOREACH(const depth_one&amp; t,m1-&gt;depths[id2])
++////		{
++////			Real d = t.current_depth;
++////			int i  = t.i;
++////			int j  = t.j;
++////			Vector3r pos(q1 * m1-&gt;m_copy.slices[i][j] + pos1);
++////			posX[count++]=(pos - (dir_f) * d * sc-&gt;normal );
++////			//if(count == 2)
++////			//	break;
++////		}
++////		if(((posX[0]-posX[posX.size()-1]).Cross(posX[1]-posX[posX.size()-1])).Dot(- (sc-&gt;normal)) &lt; 0.995)
++////			dir_f*=-1.0;
++////	}
++////	if(m2 &amp;&amp; m2-&gt;depths[id1].size() &gt; 3)
++////	{
++////		int count=0;
++////		std::vector&lt;Vector3r&gt; posX;posX.resize(m2-&gt;depths[id1].size());
++////		BOOST_FOREACH(const depth_one&amp; t,m2-&gt;depths[id1])
++////		{
++////			Real d = t.current_depth;
++////			int i  = t.i;
++////			int j  = t.j;
++////			Vector3r pos(q2 * m2-&gt;m_copy.slices[i][j] + pos2);
++////			posX[count++]=(pos - (dir_f) * d * sc-&gt;normal );
++////			//if(count == 2)
++////			//	break;
++////		}
++////		if(((posX[0]-posX[posX.size()-1]).Cross(posX[1]-posX[posX.size()-1])).Dot(- (sc-&gt;normal)) &lt; 0.995)
++////			dir_f*=-1.0;
++////	}
++	
++	glColor3(1.0,0.0,0.0);
++	if(m1)
++	{
++		//typedef boost::tuple&lt;Real,int,int&gt; tt;
++		BOOST_FOREACH(const depth_one&amp; t,m1-&gt;depths[id2])
++		{
++			Real d = t.current_depth;
++			int i  = t.i;
++			int j  = t.j;
++			Vector3r pos(q1 * m1-&gt;m_copy.slices[i][j] + pos1);
++				glTranslatev(pos);
++				glutSolidCube(LEN*0.01);
++				glTranslatev(-pos);
++			glDisable(GL_LIGHTING);
++			glLineWidth(3.0);
++			glBegin(GL_LINES);
++				glVertex3v(pos);
++				glVertex3v(pos - std::abs(d) * sc-&gt;normal );
++			glEnd();
++			glLineWidth(1.0);
++			glEnable(GL_LIGHTING);
++		}
++	}
++
++	glColor3(0.0,1.0,0.0);
++	if(m2)
++	{
++		//typedef boost::tuple&lt;Real,int,int&gt; tt;
++		BOOST_FOREACH(const depth_one&amp; t,m2-&gt;depths[id1])
++		{
++			Real d = t.current_depth;
++			int i  = t.i;
++			int j  = t.j;
++			Vector3r pos(q2 * m2-&gt;m_copy.slices[i][j] + pos2);
++				glTranslatev(pos);
++				glutSolidCube(LEN*0.01);
++				glTranslatev(-pos);
++			glDisable(GL_LIGHTING);
++			glLineWidth(3.0);
++			glBegin(GL_LINES);
++				glVertex3v(pos);
++				glVertex3v(pos + std::abs(d) * sc-&gt;normal );
++			glEnd();
++			glLineWidth(1.0);
++			glEnable(GL_LIGHTING);
++		}
++	}
++
++
++
++/*
++	if(!(id1 == (int)(Omega::instance().selectedBody) || id2 == (int)(Omega::instance().selectedBody)))
++		return;
++
++	assert(Omega::instance().getRootBody()-&gt;bodies-&gt;exists(id1));
++	assert(Omega::instance().getRootBody()-&gt;bodies-&gt;exists(id2));
++	BshSnowGrain* m1 = dynamic_cast&lt;BshSnowGrain*&gt;((*(Omega::instance().getRootBody()-&gt;bodies))[id1]-&gt;geometricalModel.get());
++	BshSnowGrain* m2 = dynamic_cast&lt;BshSnowGrain*&gt;((*(Omega::instance().getRootBody()-&gt;bodies))[id2]-&gt;geometricalModel.get());
++	if(!m1 || !m2)
++	{
++		std::cerr &lt;&lt; &quot;not BshSnowGrain\n&quot;;
++		return;
++	}
++	std::vector&lt;Vector3r&gt; inside;
++	std::vector&lt;Vector3r&gt; cross_section;
++	Vector3r    pos1((*(Omega::instance().getRootBody()-&gt;bodies))[id1]-&gt;physicalParameters-&gt;se3.position);
++	Vector3r    pos2((*(Omega::instance().getRootBody()-&gt;bodies))[id2]-&gt;physicalParameters-&gt;se3.position);
++	Quaternionr q1((*(Omega::instance().getRootBody()-&gt;bodies))[id1]-&gt;physicalParameters-&gt;se3.orientation);
++	Quaternionr q2((*(Omega::instance().getRootBody()-&gt;bodies))[id2]-&gt;physicalParameters-&gt;se3.orientation);
++
++	glColor3(1.0,0.0,0.0);
++	for(size_t i=0;i &lt; m1-&gt;slices.size();++i)
++	{
++		for(size_t j=0 ; j &lt; m1-&gt;slices[i].size() ; ++j)
++		{
++			Vector3r v(m1-&gt;slices[i][j]);
++			if(m2-&gt;is_point_inside_polyhedron( q2.Conjugate()*(q1 * v + pos1-pos2)))
++			{
++				Vector3r pos(q1 * v + pos1);
++				inside.push_back(pos);
++				glTranslatev(pos);
++				glutSolidCube(LEN*0.01);
++				glTranslatev(-pos);
++			}
++		}
++	}
++	glColor3(0.0,1.0,0.0);
++	for(size_t i=0;i &lt; m2-&gt;slices.size();++i)
++	{
++		for(size_t j=0 ; j &lt; m2-&gt;slices[i].size() ; ++j)
++		{
++			Vector3r v(m2-&gt;slices[i][j]);
++			if(m1-&gt;is_point_inside_polyhedron( q1.Conjugate()*(q2 * v + pos2-pos1)))
++			{
++				Vector3r pos(q2 * v + pos2);
++				inside.push_back(pos);
++				glTranslatev(pos);
++				glutSolidCube(LEN*0.01);
++				glTranslatev(-pos);
++			}
++		}
++	}
++*/
++////////////////////////////////////////
++/*
++	typedef std::pair&lt;Vector3r, std::set&lt;Vector3r&gt; &gt; t_edge;
++	const std::map&lt;Vector3r, std::set&lt;Vector3r&gt; &gt;&amp; edges1 = m1-&gt;get_edges_const_ref();
++	const std::map&lt;Vector3r, std::set&lt;Vector3r&gt; &gt;&amp; edges2 = m2-&gt;get_edges_const_ref();
++	glColor3(1.0,0.5,0.0);
++	BOOST_FOREACH(const t_edge&amp; e,edges1)
++	{
++			Vector3r v(e.first);
++			if(m2-&gt;is_point_inside_polyhedron( q2.Conjugate()*(q1 * v + pos1-pos2)))
++			{
++				BOOST_FOREACH(Vector3r v2,e.second)
++				{
++					if( ! (m2-&gt;is_point_inside_polyhedron( q2.Conjugate()*(q1 * v2 + pos1-pos2))))
++					{
++						Vector3r v_c(q1 * find_cross_point(m2,v,v2, q2,q1,pos1,pos2) + pos1);
++						cross_section.push_back(v_c);
++						glColor3(0.3,0.3,1.0);
++						glTranslatev(v_c);
++						glutSolidCube(LEN*0.008);
++						glTranslatev(-v_c);
++						glColor3(1.0,0.5,0.0);
++					}
++				}
++				Vector3r pos(q1 * v + pos1);
++			//	inside.push_back(pos);
++				glTranslatev(pos);
++				glutSolidSphere(LEN*0.008,6,6);
++				glTranslatev(-pos);
++			}
++	}
++	glColor3(0.5,1.0,0.0);
++	BOOST_FOREACH(const t_edge&amp; e,edges2)
++	{
++			Vector3r v(e.first);
++			if(m1-&gt;is_point_inside_polyhedron( q1.Conjugate()*(q2 * v + pos2-pos1)))
++			{
++				BOOST_FOREACH(Vector3r v2,e.second)
++				{
++					if( ! (m1-&gt;is_point_inside_polyhedron( q1.Conjugate()*(q2 * v2 + pos2-pos1))))
++					{
++						Vector3r v_c(q2 * find_cross_point(m1,v,v2, q1,q2,pos2,pos1) + pos2);
++						cross_section.push_back(v_c);
++						glColor3(0.3,0.3,1.0);
++						glTranslatev(v_c);
++						glutSolidCube(LEN*0.008);
++						glTranslatev(-v_c);
++						glColor3(0.5,1.0,0.0);
++					}
++				}
++				Vector3r pos(q2 * v + pos2);
++			//	inside.push_back(pos);
++				glTranslatev(pos);
++				glutSolidSphere(LEN*0.008,6,6);
++				glTranslatev(-pos);
++			}
++	}
++*/
++
++
++/*
++	if(!wireFrame)
++	{
++		// got a list of points.
++		Vector3r C(0,0,0);
++		Real count(0);
++		BOOST_FOREACH(Vector3r&amp; v,inside) C+=v,++count;
++		C /= count;
++		Vector3r N(sc-&gt;normal);
++		N.Normalize();
++		std::vector&lt;Vector3r&gt; ins_copy(inside);
++		// plane of contact is C,N
++		// project all points onto C,N
++		BOOST_FOREACH(Vector3r&amp; P,inside) P -= N.Dot(P - C) * N;
++		
++	//	glColor3(1.0,1.0,1.0);
++	//	glBegin(GL_LINES);
++	//	BOOST_FOREACH(Vector3r&amp; a,inside)
++	//	BOOST_FOREACH(Vector3r&amp; b,inside)
++	//	{
++	//		glVertex3v(a);
++	//		glVertex3v(b);
++	//	}
++	//	glEnd();
++
++
++
++
++
++
++		Plane3&lt;Real&gt; plane(OrthogonalPlaneFit3 (ins_copy.size(), &amp;ins_copy[0]));
++		N = plane.Normal;
++		C = Vector3r(0,0,0);
++		int i=0;
++		if( std::abs(N[1]) &gt; std::abs(N[0]) &amp;&amp; std::abs(N[1]) &gt; std::abs(N[2]) ) i=1;
++		if( std::abs(N[2]) &gt; std::abs(N[1]) &amp;&amp; std::abs(N[2]) &gt; std::abs(N[0]) ) i=2;
++		C[i] = plane.Constant/N[i];
++
++		// project all points onto C,N
++		BOOST_FOREACH(Vector3r&amp; P,ins_copy) P -= N.Dot(P - C) * N;
++
++	//	glColor3(1.0,1.0,0.0);
++	//	glBegin(GL_LINES);
++	//	BOOST_FOREACH(Vector3r&amp; a,ins_copy)
++	//	BOOST_FOREACH(Vector3r&amp; b,ins_copy)
++	//	{
++	//		glVertex3v(a);
++	//		glVertex3v(b);
++	//	}
++	//	glEnd();
++
++
++
++
++
++
++		Plane3&lt;Real&gt; plane2(OrthogonalPlaneFit3 (cross_section.size(), &amp;cross_section[0]));
++		N = plane2.Normal;
++		C = Vector3r(0,0,0);
++		i=0;
++		if( std::abs(N[1]) &gt; std::abs(N[0]) &amp;&amp; std::abs(N[1]) &gt; std::abs(N[2]) ) i=1;
++		if( std::abs(N[2]) &gt; std::abs(N[1]) &amp;&amp; std::abs(N[2]) &gt; std::abs(N[0]) ) i=2;
++		C[i] = plane2.Constant/N[i];
++
++		// project all points onto C,N
++		BOOST_FOREACH(Vector3r&amp; P,cross_section) P -= N.Dot(P - C) * N;
++
++	//	glColor3(1.0,1.0,0.0);
++	//	glBegin(GL_LINES);
++	//	BOOST_FOREACH(Vector3r&amp; a,cross_section)
++	//	BOOST_FOREACH(Vector3r&amp; b,cross_section)
++	//	{
++	//		glVertex3v(a);
++	//		glVertex3v(b);
++	//	}
++	//	glEnd();
++
++
++
++
++
++
++	//	std::vector&lt;Vector3r&gt; poly1(find_boundary(inside));
++	//	std::vector&lt;Vector3r&gt; poly2(find_boundary(ins_copy));
++		std::vector&lt;Vector3r&gt; poly3(find_boundary(cross_section));
++//
++//		glColor3(1.0,1.0,1.0);
++//		glBegin(GL_POLYGON);
++//		BOOST_FOREACH(Vector3r&amp; a,poly1)
++//			glVertex3v(a);
++//		glEnd();
++//
++//		glColor3(1.0,1.0,0.0);
++//		glBegin(GL_POLYGON);
++//		BOOST_FOREACH(Vector3r&amp; a,poly2)
++//			glVertex3v(a);
++//		glEnd();
++//
++		glColor3(0.3,0.3,1.0);
++		glBegin(GL_POLYGON);
++		BOOST_FOREACH(Vector3r&amp; a,poly3)
++			glVertex3v(a);
++		glEnd();
++		glColor3(0.8,0.8,1.0);
++		BOOST_FOREACH(Vector3r&amp; a,poly3)
++		{
++			glTranslatev(a);
++			glutSolidCube(LEN*0.014);
++			glTranslatev(-a);
++		}
++	}
++*/
+ }
+ 
+
+Modified: trunk/pkg/snow/SConscript
+===================================================================
+--- trunk/pkg/snow/SConscript	2009-02-28 21:39:45 UTC (rev 1701)
++++ trunk/pkg/snow/SConscript	2009-03-01 01:41:37 UTC (rev 1702)
+@@ -6,7 +6,8 @@
+ 
+ 	env.SharedLibrary('Ef1_IstSnowLayersContact_glDraw',
+ 		['RenderingEngine/Ef1_IstSnowLayersContact_glDraw.cpp'],
+-		LIBS=env['LIBS']+['SpheresContactGeometry','ElasticContactInteraction','yade-opengl','IstSnowLayersContact','$QGLVIEWER_LIB']),
++		LIBS=env['LIBS']+['SpheresContactGeometry','ElasticContactInteraction','yade-opengl','IstSnowLayersContact',
++		'BshSnowGrain','BssSnowGrain','$QGLVIEWER_LIB']),
+ 
+ 	env.SharedLibrary('IstSnowLayersContact',
+ 		['DataClass/IstSnowLayersContact.cpp'],
+@@ -15,19 +16,21 @@
+ 	env.SharedLibrary('Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact',
+ 	['Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.cpp'],
+ 		LIBS=env['LIBS']+['BshSnowGrain','yade-opengl','yade-base',
+-		'BssSnowGrain','InteractingBox','InteractingBox2InteractingSphere4SpheresContactGeometry']),
++		'BssSnowGrain','InteractingBox','IstSnowLayersContact',
++		'Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact','Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry']),
+ 	
+ 	env.SharedLibrary('Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact',
+ 	['Engine/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.cpp'],
+-		LIBS=env['LIBS']+['BshSnowGrain','yade-opengl','yade-base',
+-		'BssSnowGrain','InteractingSphere','InteractingSphere2InteractingSphere4SpheresContactGeometry']),
++		LIBS=env['LIBS']+['BshSnowGrain','yade-opengl','yade-base','IstSnowLayersContact',
++		'BssSnowGrain','InteractingSphere','Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry']),
+ 
+ 	env.SharedLibrary('Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry',
+ 	['Engine/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.cpp'],
+ 		LIBS=env['LIBS']+['BshSnowGrain','yade-opengl','yade-base',
+ 		'BssSnowGrain','InteractingBox','InteractingBox2InteractingSphere4SpheresContactGeometry']),
+ 	
+-	env.SharedLibrary('Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry',['Engine/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.cpp'],
++	env.SharedLibrary('Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry',
++	['Engine/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.cpp'],
+ 		LIBS=env['LIBS']+['BshSnowGrain','yade-opengl','yade-base',
+ 		'BssSnowGrain','InteractingSphere','InteractingSphere2InteractingSphere4SpheresContactGeometry']),
+ 
+@@ -35,14 +38,32 @@
+ 		LIBS=env['LIBS']+['BoundingVolumeMetaEngine','InteractingSphere','BssSnowGrain','AABB']),
+ 	
+ 	env.SharedLibrary('Ef1_BssSnowGrain_glDraw',['RenderingEngine/Ef1_BssSnowGrain_glDraw.cpp'],
+-		LIBS=env['LIBS']+['BshSnowGrain','yade-opengl','yade-base','BssSnowGrain','$QGLVIEWER_LIB']),
++		LIBS=env['LIBS']+['BshSnowGrain','yade-opengl','yade-base','BssSnowGrain','GLDrawInteractingSphere','$QGLVIEWER_LIB']),
+ 
+ 	env.SharedLibrary('Ef1_BshSnowGrain_glDraw',['RenderingEngine/Ef1_BshSnowGrain_glDraw.cpp'],
+ 		LIBS=env['LIBS']+['BshSnowGrain','yade-opengl','yade-base','$QGLVIEWER_LIB']),
+ 
+ 	env.SharedLibrary('BshSnowGrain',['DataClass/BshSnowGrain.cpp'],LIBS=['boost_serialization','yade-base']),
+-	env.SharedLibrary('BssSnowGrain',['DataClass/BssSnowGrain.cpp'],LIBS=['boost_serialization','yade-base','BshSnowGrain','InteractingSphere']),
++	env.SharedLibrary('BssSnowGrain',['DataClass/BssSnowGrain.cpp'],LIBS=['boost_serialization','yade-base','BshSnowGrain',
++		'InteractingSphere']),
+ 
++	env.SharedLibrary('ElawSnowLayersDeformation',
++		['Engine/ElawSnowLayersDeformation.cpp'],
++		LIBS=env['LIBS']+['SDECLinkPhysics',
++			'CohesiveFrictionalContactInteraction',
++			'SDECLinkGeometry',
++			'SpheresContactGeometry',
++			'CohesiveFrictionalBodyParameters',
++			'yade-serialization',
++			'yade-base',
++			'BssSnowGrain',
++			'BshSnowGrain',
++			'yade-multimethods',
++			'Force',
++			'Momentum',
++			'Sphere',
++			'RigidBodyParameters']),
++
+ 	env.SharedLibrary('SnowVoxelsLoader',
+ 		['PreProcessor/SnowVoxelsLoader.cpp',
+ 		'PreProcessor/Voxel/DataSurface.cpp',
+@@ -68,6 +89,7 @@
+ 			'InteractingBox',
+ 			'InteractingSphere2InteractingSphere4SpheresContactGeometry',
+ 			'InteractingBox2InteractingSphere4SpheresContactGeometry',
++			'ElawSnowLayersDeformation',
+ 			'CundallNonViscousDamping',
+ 			'CundallNonViscousDamping',
+ 			'MetaInteractingGeometry',
+@@ -127,6 +149,7 @@
+ 			'yade-multimethods',
+ 			'Box',
+ 			'Sphere',
++			'ElawSnowLayersDeformation',
+ 			'AABB',
+ 			'DistantPersistentSAPCollider',
+ 			'SAPCollider',
+
+
+-------------- next part --------------
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000789.html">[deprecated list] [Yade-dev] [svn] r1701 -	trunk/pkg/common/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000792.html">[deprecated list] [Yade-dev] [svn] r1702 - in	trunk/pkg:	common/RenderingEngine/GLDrawInteractingGeometry	dem/DataClass/InteractionPhysics	dem/Engine/EngineUnit	dem/Engine/StandAloneEngine snow	snow/DataClass snow/Engine	snow/PreProcessor snow/RenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#791">[ date ]</a>
+              <a href="thread.html#791">[ thread ]</a>
+              <a href="subject.html#791">[ subject ]</a>
+              <a href="author.html#791">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

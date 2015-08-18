@@ -1,0 +1,309 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Question%20about%20parameters%20in%0A%09SpheresContactGeometry&In-Reply-To=%3C499B26B2.4020102%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000702.html">
+   <LINK REL="Next"  HREF="000708.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Question%20about%20parameters%20in%0A%09SpheresContactGeometry&In-Reply-To=%3C499B26B2.4020102%40hmg.inpg.fr%3E"
+       TITLE="[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Tue Feb 17 22:05:54 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000702.html">[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry
+</A></li>
+        <LI>Next message: <A HREF="000708.html">[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#707">[ date ]</a>
+              <a href="thread.html#707">[ thread ]</a>
+              <a href="subject.html#707">[ subject ]</a>
+              <a href="author.html#707">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> You can always derive from the geometry class and add your own data
+</I>&gt;<i> members. But you still have access to inherited data members and
+</I>&gt;<i> methods, should you need those. maxUn can (should) be stored in
+</I>&gt;<i> InteractionPhysics, the same for cell volume, no?
+</I>&gt;<i>   
+</I>(A) - maxUn (and other extrema of the variables contained in IntGeom, 
+including initial orientations) in IntPhysics is ok with me. It will 
+prevent the addition of excess parameters in IntGeometry.
+
+
+&gt;<i> I have SpheresContactGeometry::splitToEpsTMax(Real epsTMax),
+</I>&gt;<i> which adjusts the original contact points such that |epsT|&lt;epsTMax and
+</I>&gt;<i> returns increment of eps_plastic. I believe that most constitutive laws
+</I>&gt;<i> use similar notions of plasticity, so to me it made sense to add this to
+</I>&gt;<i> SpheresContactGeometry.
+</I>&gt;<i>   
+</I>You can't define this in ContGeom. This is in contradiction with (A), 
+and also in contradiction with the fact the plastic part of a strain is 
+defined for a given constitutive law.
+
+
+&gt;&gt;<i> An exemple of this : in creep equations (creep, like plasticity, is
+</I>&gt;&gt;<i> changing the &quot;neutral&quot; position when it occures), the initial
+</I>&gt;&gt;<i> orientations (from wich total bending/twisting are defined) are
+</I>&gt;&gt;<i> updated to reflect creep. The way it is updated is valid only for the
+</I>&gt;&gt;<i> specific creep law considered here, another constitutive law would
+</I>&gt;&gt;<i> update the initial configuration differently.
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> The conclusion is you can't avoid the manipulation/storage of
+</I>&gt;&gt;<i> geometrical data in some constitutive laws/physicalParameters.
+</I>&gt;&gt;<i>     
+</I>&gt;<i> Constitutive law can change geometry (as with the plasticity), in some
+</I>&gt;<i> special cases. I know that I say something more than just &quot;compute
+</I>&gt;<i> stresses from strains&quot;. I would say that what is useful for multiple
+</I>&gt;<i> constitutive laws could be defined as SpheresContactGeometry method
+</I>&gt;<i> (plasticity), otherwise just that single constitutive law can manipulate
+</I>&gt;<i> that.
+</I>&gt;<i>   
+</I>Again, usefull for me is : normal, Un, dUt, rad1, rad2. I don't need 
+(want) anything more in SpheresContact description.
+It makes code harder to read and it wastes memory.
+
+&gt;<i>
+</I>&gt;<i> If you say incremental shear, you still need access to 2 linear
+</I>&gt;<i> velocities and 2 angular velocities, not just penetrationDepth and radii.
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>Well, dUt could be added in IntGeometry. But YOU don't need it...
+
+rad1/rad2 should also be removed, this duplication caused troubles at 
+least once when I was increasing the size of particles.
+I was multiplying each body-&gt;radius by a constant, but I forgot to 
+multiply each interaction-&gt;rad1/2 at the same time.
+Spheres where increasing in size but contacts were computed based on the 
+initial sizes. Consequence : no force were generated since the only 
+&quot;motion &quot; was the radius evolution and it was not seen at the contact level.
+This is a major drawback of the &quot;let us copy what we need from bodies to 
+interaction geometry&quot; approach.
+
+If the objective is only &quot;good design&quot;, I'm not sure it is worth it.
+
+Duplicating data is bad in itself. By trying to avoid accessing bodies 
+in constitutive laws, we are generating duplications and extra 
+members/local variables. The variable is somewhere, let us find it where 
+and when we need it. Forecasting what people do/will/could need in 
+constitutive laws is almost impossible.
+
+
+&gt;<i> I personally don't trust the incremental code, although I admit that it
+</I>&gt;<i> can be my personal weakness that I wasn't able to derive it and verify
+</I>&gt;<i> myself. Besides that, it supposes that the rotation is such small that
+</I>&gt;<i> displacements can be linearized (if I understand what it does) and I
+</I>&gt;<i> think that could make for some problems in highly dynamic simulations.
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>This incremental formulation needs a serious discussion.
+I'm not really convinced by the global scale comparison with FEM. FEM 
+nodes have rotational DOF's and radius?
+Looking at your code, I suspect you wrote a definition of Ut which is 
+not the classical one (so that the increment of your Ut is not my dUt). 
+It is not &quot;more precise&quot;, it is just &quot;something else&quot;.
+You are perhaps also mixing the &quot;incremental formulation&quot; (no assumption 
+on small rotations) with the approximated method to rotate current Ft in 
+Yade (which indeed needs this assumption).
+
+For rotating Ft. In short : in a rotation, the exact displacement of P  
+is dP=(M-Id).P. the operator &quot;(M-Id).&quot; can be replaced by &quot;R x ()&quot; when 
+the rotation is small.  With R aligned on the rotation axis and scaled 
+by the rotation angle, and &quot;x&quot; the vectorial cross product.
+
+I've been reading &quot;slipToDisplacementTMax&quot; code, but I have now more 
+questions than answers.
+I still can't understand what it is supposed to do. I guess this is 
+because we have very different situations in mind.
+
+- How can you update the &quot;initial&quot; position based on a real instead of a 
+3D vector?
+- Not related but still interesting : 
+if(displacementTMax&lt;=Mathr::ZERO_TOLERANCE), why not if(dMax&lt;=0)?
+
+Even the comment seems obscure to me :
+/*! Perform slip of the projected contact points so that their distance 
+becomes equal (or remains smaller) than the given one.
+ * The slipped distance is returned.
+ */
+
+Why do you project material points?!
+
+Quick check :
+
+A sphere is in contact with a plane. The plane and the center of the 
+sphere are fixed, the sphere can only rotate with an axis of rotation 
+parallel to the plane.
+IF the rotation of the sphere is pi/4, what is the tangential displacement?
+
+I'd say Ut here is _exactly_  (radius x pi/4). Do you agree (I 
+anticipate you don't, with this &quot;projection&quot; feature...)?
+In Yade, the incremental formulation gives exactly the same result. I 
+mean, if you take the algorithm and write it in a mathematical form, you 
+can proove that if the rotation pi/4 is discretised in N small steps, 
+the sum of dUt's is exactly radius x pi/4.
+
+
+&gt;<i> If you think it is realiable and useful, I would be all for extracting
+</I>&gt;<i> it to a stand-alone function that would get all the parameters it needs
+</I>&gt;<i> and return what it computes.
+</I>It is not just &quot;reliable&quot; : it is what most people knowing DEM will look 
+for in Yade, it is the very root of the DEM. Really.
+So, yes, it will need to be adapted to the new design.
+And if there is an error in the code, I need to spot it.
+&gt;<i>  Or shear strain could be added to
+</I>&gt;<i> SpheresContactGeometry (or a new class, if you like), but computed by
+</I>&gt;<i> InteractingSphere2InteractingSphere4SpheresContactGeometry. That would
+</I>&gt;<i> make more sense to me.
+</I>&gt;<i>   
+</I>Sorry to insist, but, what I'd like ideally is SpheresContactGeometry 
+with Un, dUt, normal (dUt is actually not there, perhaps it should, 
+rad1/rad2 are there - they should not).
+Anything else (rotation, etc.) should be in other classes inheriting 
+from SpheresContactGeometry, one for each contact law.
+
+I'd like to keep the basic and common Yade classes very simple, with 
+nothing more than the classical dem. Same for IntPhysics : kn, ks, 
+friction. Nothing more (this useless &quot;intitials&quot; kn/ks caused troubles 
+in the past, a bit like the duplicated radii).
+
+&gt;<i> Oh, I didn't add those (except facetContactFace, which I'd like to keep
+</I>&gt;<i> until SphresFacetGeometry is done). &quot;svn blame&quot; gives me &quot;richefeu&quot;. But
+</I>&gt;<i> I can remove that, no problem at all ;-)
+</I>&gt;<i>   
+</I>Hehe. You started the &quot;abusive storage&quot; and others filled it with their 
+stuff.
+You are only &quot;partly&quot; to blame then. ;-)
+
+&gt;<i> I put those extra things under condition 'hasShear', they are not
+</I>&gt;<i> assigned and should &quot;just&quot; take memory if you don't use them (29 bytes,
+</I>&gt;<i> if I calculate correctly: 5 quaternions, 2 Vector3, 3 Reals).
+</I>Ok, all this instead of 2 vectors and 1 real makes, what? 4 times more?
+It reminds me the question of Luc about the size of xml's... 70% of an 
+xml is for interactions...
+
++ It is harder to read.
+
+&gt;<i>  If that is
+</I>&gt;<i> not OK and if other peoples will not use it, I can move it to a separate
+</I>&gt;<i> class.
+</I>Yes please, move it in a new inheriting class.
+
+Currently, the rotation variables for CohesiveFrictional are in 
+CFInteractionPhysics.hpp, because it was simpler for Janek (see below). 
+They are very similar to yours. If there is a new geometry class to put 
+them, it is all good.
+
+Currently in the CFI.hpp :
+
+
+/Quaternionr    initialOrientation1,initialOrientation2,
+                orientationToContact1,orientationToContact2,
+                currentContactOrientation,initialContactOrientation,
+                twistCreep;
+Vector3r    initialPosition1,initialPosition2; /
+
+I think initial's should not move. They would store in IPhys. the 
+extrema of some IGeom. variables (still, I wonder if kinematic variables 
+of contact laws will always be extrema of standard geometric variables. 
+Wait and see...)
+
+&gt;<i> It is already stored there (iff hasShear): pos1, pos2, ori1, ori2. But I
+</I>&gt;<i> have yet to see non-spherical particles in yade (if someone is serious
+</I>&gt;<i> about that, he'd better fix global/local mismatch of inertia in Newton's
+</I>&gt;<i> law first)
+</I>&gt;<i>   
+</I>&quot;Yet to see&quot;?! Open your eyes then! :-P
+Janek has been developping non-spherical grains for a while. I did not 
+invent this position example, I got it from him.
+Your clumps are a great exemple too, even with some mismatches left.
+
+&gt;&gt;<i> So, fundamentally, with you first statement in mind : &quot;Constitutive
+</I>&gt;&gt;<i> law should operate just on interaction geometry and interaction
+</I>&gt;&gt;<i> physics. If it accesses rootBody-&gt;bodies, it is a design problem&quot;, all
+</I>&gt;&gt;<i> information from bodies must be duplicated in interactionGeometry,
+</I>&gt;&gt;<i> which is a serious design problem too...
+</I>&gt;&gt;<i>     
+</I>&gt;<i> I know it is a hassle, it could be that SpheresContactGeometry would
+</I>&gt;<i> contain shared_ptr&lt;Se3&gt; shared with Body::physicalParameters, but
+</I>&gt;<i> current serialization wouldn't handle that correctly (it would create 2
+</I>&gt;<i> copies of the same Se3 instead of the shared one). I still have the
+</I>&gt;<i> parallel stuff in mind and it is advantageous if the computation is as
+</I>&gt;<i> local as possible (i.e. no access to rootBody-&gt;bodies and such).
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>Yes, I was suspecting potential conflicts with parallelisation... so ok.
+
+Appart from that, yes, it is obvious that &quot;interactions&quot; should link to 
+the particles in interaction.
+In PFC, you can get the pointer to grains from the pointer to an 
+interaction, and you can get the pointer to contacts from the pointer to 
+a particle. This is very usefull to write a number of algorithms, and I 
+always wondered why we don't have this double-linked lists in Yade. 
+Parallelisation is one reason now.
+
+Bruno
+
+
+
+
+
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Grenoble INP
+Laboratoire 3SR - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000702.html">[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry
+</A></li>
+	<LI>Next message: <A HREF="000708.html">[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#707">[ date ]</a>
+              <a href="thread.html#707">[ thread ]</a>
+              <a href="subject.html#707">[ subject ]</a>
+              <a href="author.html#707">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

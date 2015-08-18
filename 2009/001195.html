@@ -1,0 +1,159 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1864 - trunk/pkg/dem
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1864%20-%20trunk/pkg/dem&In-Reply-To=%3C200907141541.n6EFft1v029405%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001194.html">
+   <LINK REL="Next"  HREF="001196.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1864 - trunk/pkg/dem</H1>
+    <B>gladky_anton at mail.berlios.de</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1864%20-%20trunk/pkg/dem&In-Reply-To=%3C200907141541.n6EFft1v029405%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1864 - trunk/pkg/dem">gladky_anton at mail.berlios.de
+       </A><BR>
+    <I>Tue Jul 14 17:41:55 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001194.html">[deprecated list] [Yade-dev] Re :  Material and body State
+</A></li>
+        <LI>Next message: <A HREF="001196.html">[deprecated list] [Yade-dev] r1864 - trunk/pkg/dem
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1195">[ date ]</a>
+              <a href="thread.html#1195">[ thread ]</a>
+              <a href="subject.html#1195">[ subject ]</a>
+              <a href="author.html#1195">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: gladky_anton
+Date: 2009-07-14 17:41:54 +0200 (Tue, 14 Jul 2009)
+New Revision: 1864
+
+Modified:
+   trunk/pkg/dem/RockPM.cpp
+   trunk/pkg/dem/RockPM.hpp
+Log:
+1. RockPM, first variant of &quot;destruction mechanism&quot;
+
+
+
+Modified: trunk/pkg/dem/RockPM.cpp
+===================================================================
+--- trunk/pkg/dem/RockPM.cpp	2009-07-13 21:39:27 UTC (rev 1863)
++++ trunk/pkg/dem/RockPM.cpp	2009-07-14 15:41:54 UTC (rev 1864)
+@@ -34,7 +34,20 @@
+ 	Dem3DofGeom* geom=static_cast&lt;Dem3DofGeom*&gt;(ig.get());
+ 	RpmPhys* phys=static_cast&lt;RpmPhys*&gt;(ip.get());
+ 
+-	Real displN=geom-&gt;displacementN();
++	Real displN=geom-&gt;displacementN();	
++	const shared_ptr&lt;Body&gt;&amp; body1=Body::byId(contact-&gt;getId1(),rootBody);
++	const shared_ptr&lt;Body&gt;&amp; body2=Body::byId(contact-&gt;getId2(),rootBody);
++	assert(body1);
++	assert(body2);
++	const shared_ptr&lt;RpmMat&gt;&amp; rbp1=YADE_PTR_CAST&lt;RpmMat&gt;(body1-&gt;physicalParameters);
++	const shared_ptr&lt;RpmMat&gt;&amp; rbp2=YADE_PTR_CAST&lt;RpmMat&gt;(body2-&gt;physicalParameters);
++
++	//check, whether one of bodies is damaged
++	if ((rbp1-&gt;isDamaged) || (rbp2-&gt;isDamaged)) {
++		phys-&gt;isCohesive = false;
++	}
++				
++				
+ 	if(displN&lt;=0){
+ 		/*Normal Interaction*/
+ 		phys-&gt;normalForce=phys-&gt;kn*displN*geom-&gt;normal;
+@@ -43,14 +56,24 @@
+ 		if(trialFs.SquaredLength()&gt;maxFsSq){ geom-&gt;slipToDisplacementTMax(sqrt(maxFsSq)); trialFs*=sqrt(maxFsSq/(trialFs.SquaredLength()));} 
+ 		applyForceAtContactPoint(phys-&gt;normalForce+trialFs,geom-&gt;contactPoint,contact-&gt;getId1(),geom-&gt;se31.position,contact-&gt;getId2(),geom-&gt;se32.position,rootBody);
+ 		/*Normal Interaction_____*/
++		
+ 		if ((phys-&gt;isCohesive)&amp;&amp;(displN&lt;(-phys-&gt;lengthMaxCompression))) {
+-			LOG_WARN(displN&lt;&lt;&quot;____&quot;&lt;&lt;phys-&gt;normalForce);
++			//LOG_WARN(displN&lt;&lt;&quot;__COMRESS!!!__&quot;);
++			phys-&gt;isCohesive = false;
++			rbp1-&gt;isDamaged=true;
++			rbp2-&gt;isDamaged=true;
+ 		}
+ 	} else {
+ 		if (phys-&gt;isCohesive) {
+ 			phys-&gt;normalForce=phys-&gt;kn*displN*geom-&gt;normal;
+-			//LOG_WARN(displN&lt;&lt;&quot;____&quot;&lt;&lt;phys-&gt;normalForce);
+-			applyForceAtContactPoint(phys-&gt;normalForce,geom-&gt;contactPoint,contact-&gt;getId1(),geom-&gt;se31.position,contact-&gt;getId2(),geom-&gt;se32.position,rootBody);
++			if (displN&gt;(phys-&gt;lengthMaxTension)) {
++				//LOG_WARN(displN&lt;&lt;&quot;__TENSION!!!__&quot;);
++				phys-&gt;isCohesive = false;
++				rbp1-&gt;isDamaged=true;
++				rbp2-&gt;isDamaged=true;
++			} else {
++				applyForceAtContactPoint(phys-&gt;normalForce,geom-&gt;contactPoint,contact-&gt;getId1(),geom-&gt;se31.position,contact-&gt;getId2(),geom-&gt;se32.position,rootBody);
++			}
+ 			return;
+ 		} else {
+ 			rootBody-&gt;interactions-&gt;requestErase(contact-&gt;getId1(),contact-&gt;getId2());
+
+Modified: trunk/pkg/dem/RockPM.hpp
+===================================================================
+--- trunk/pkg/dem/RockPM.hpp	2009-07-13 21:39:27 UTC (rev 1863)
++++ trunk/pkg/dem/RockPM.hpp	2009-07-14 15:41:54 UTC (rev 1864)
+@@ -47,11 +47,16 @@
+ class RpmMat: public BodyMacroParameters {
+ 	public:
+ 		int exampleNumber; //Number of &quot;stone&quot;
+-		bool initCohesive;
++		bool initCohesive, isDamaged;
+ 		Real stressCompressMax, stressTensionMax; //Parameters for damaging
+ 
+-		RpmMat(): exampleNumber(0.), initCohesive(false), stressCompressMax(0), stressTensionMax(0) {createIndex();};
+-		REGISTER_ATTRIBUTES(BodyMacroParameters, (exampleNumber) (initCohesive) (stressCompressMax) (stressTensionMax));
++		RpmMat(): exampleNumber(0.), initCohesive(false), isDamaged(false), stressCompressMax(0), stressTensionMax(0) {createIndex();};
++		REGISTER_ATTRIBUTES(BodyMacroParameters, 
++			(exampleNumber)
++			(initCohesive)
++			(isDamaged)
++			(stressCompressMax)
++			(stressTensionMax));
+ 		REGISTER_CLASS_AND_BASE(RpmMat,BodyMacroParameters);
+ };
+ REGISTER_SERIALIZABLE(RpmMat);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001194.html">[deprecated list] [Yade-dev] Re :  Material and body State
+</A></li>
+	<LI>Next message: <A HREF="001196.html">[deprecated list] [Yade-dev] r1864 - trunk/pkg/dem
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1195">[ date ]</a>
+              <a href="thread.html#1195">[ thread ]</a>
+              <a href="subject.html#1195">[ subject ]</a>
+              <a href="author.html#1195">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

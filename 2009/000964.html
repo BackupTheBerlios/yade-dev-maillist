@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] Relations between (m, tc, en,	es) and (kn, cn, ks, cs)
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Relations%20between%20%28m%2C%20tc%2C%20en%2C%0A%09es%29%20and%20%28kn%2C%20cn%2C%20ks%2C%20cs%29&In-Reply-To=%3C4A0304BC.1040507%40yandex.ru%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000963.html">
+   <LINK REL="Next"  HREF="000953.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] Relations between (m, tc, en,	es) and (kn, cn, ks, cs)</H1>
+    <B>Sergei D.</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Relations%20between%20%28m%2C%20tc%2C%20en%2C%0A%09es%29%20and%20%28kn%2C%20cn%2C%20ks%2C%20cs%29&In-Reply-To=%3C4A0304BC.1040507%40yandex.ru%3E"
+       TITLE="[deprecated list] [Yade-dev] Relations between (m, tc, en,	es) and (kn, cn, ks, cs)">sj2001 at yandex.ru
+       </A><BR>
+    <I>Thu May  7 17:56:44 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000963.html">[deprecated list] [Yade-dev] Relations between (m, tc, en,	es) and (kn, cn, ks, cs)
+</A></li>
+        <LI>Next message: <A HREF="000953.html">[deprecated list] [Yade-dev] [svn] r1768 -	trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#964">[ date ]</a>
+              <a href="thread.html#964">[ thread ]</a>
+              <a href="subject.html#964">[ subject ]</a>
+              <a href="author.html#964">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;&gt;<i> we have tc and en:
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> (*) tc = pi 2 m_eff / sqrt( 4 kn m_eff - cn^2 )   (note your delta in
+</I>&gt;&gt;<i> brackets)
+</I>&gt;&gt;<i> en = exp( -cn tc / 2 / meff )
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> where we have kn and cn:
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> kn = m_eff / tc^2 * ( pi^2 + ln^2(en) )
+</I>&gt;&gt;<i> cn = -2 * m_eff / tc * ln(en)
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> Then, for pair spheres with mass m1 we have
+</I>&gt;&gt;<i> m1_eff = m1/2, en1, tc1 =&gt; kn1 and cn1.
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> For pair spheres with mass m2 we have
+</I>&gt;&gt;<i> m2_eff = m2/2, en2, tc2 =&gt; kn2 and cn2.
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> For pair spheres with mass m1 and m2 we have
+</I>&gt;&gt;<i> 1) 1/m12_eff = 1/m1+1/m2, en12, tc12 =&gt; kn12, cn12,
+</I>&gt;&gt;<i> OR we have
+</I>&gt;&gt;<i> 2) 1/kn12 = 1/kn1 + 1/kn2 and 1/cn12 = 1/cn1 + 1/cn2.
+</I>&gt;&gt;<i>
+</I>&gt;&gt;&gt;<i> From (*) cn^2 can't be more  than cn_crit^2 = (4 kn m_eff)...
+</I>&gt;<i>
+</I>&gt;<i> OK, now I believe that I understand.
+</I>&gt;<i>
+</I>&gt;<i> Does _OR_ means that 1) is equivalent to 2)?
+</I>&gt;<i> Can you tell me more about the time step and the physical meaning of tc?
+</I>&gt;<i>
+</I>tc is the collision time.
+
+I'm don't dare to prove equivalence strictly...
+But in (1) we have the parameters {en12, tc12} for the pair spheres of
+specie 1 and 2.
+&gt;<i>From them we have derived kn12 and cn12 using linear spring model .
+</I>
+In (2) we have the parameters {en11, tc11} and {en22, tc22} for the pair
+spheres of specie 1 and for pair spheres of specie 2.
+Then, from them we have derived kn12 and cn12 using linear spring model.
+
+Thus, in the linear model framework, these two approaches seem to be
+equivalent...
+
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000963.html">[deprecated list] [Yade-dev] Relations between (m, tc, en,	es) and (kn, cn, ks, cs)
+</A></li>
+	<LI>Next message: <A HREF="000953.html">[deprecated list] [Yade-dev] [svn] r1768 -	trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#964">[ date ]</a>
+              <a href="thread.html#964">[ thread ]</a>
+              <a href="subject.html#964">[ subject ]</a>
+              <a href="author.html#964">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

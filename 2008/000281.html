@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] [Yade-commits] r1419
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20r1419&In-Reply-To=%3C200807111105.56419.dorofeenko%40icp.ac.ru%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000280.html">
+   <LINK REL="Next"  HREF="000282.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] [Yade-commits] r1419</H1>
+    <B>sega</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20r1419&In-Reply-To=%3C200807111105.56419.dorofeenko%40icp.ac.ru%3E"
+       TITLE="[yade-dev] [Yade-commits] r1419">dorofeenko at icp.ac.ru
+       </A><BR>
+    <I>Fri Jul 11 09:05:52 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000280.html">[yade-dev] [Yade-commits] r1419
+</A></li>
+        <LI>Next message: <A HREF="000282.html">[yade-dev] gcc 4.3 issue: cast from Engine* to FilterEngine* (???)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#281">[ date ]</a>
+              <a href="thread.html#281">[ thread ]</a>
+              <a href="subject.html#281">[ subject ]</a>
+              <a href="author.html#281">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Sorry for errors. I will fix them in the next svn...
+
+&gt;<i> 1. First and foremost, you HAVE TO document new classes you create, so
+</I>&gt;<i> that other people can use them (filtering engines look very useful,
+</I>&gt;<i> btw). (it was the same with facets, which are great, please bear this in
+</I>&gt;<i> mind)
+</I>I agree. The documentation should be created more accurately as YADE is _very_ badly documented (though it does not prevent it to use to me :), but strongly prevented to master...). In the future I will document more accurately (unfortunately, now I have no time for this purpose at all).
+
+&gt;<i> 
+</I>&gt;<i> 2. Does it seem right to put filtering engines into MetBody::engines as
+</I>&gt;<i> they are used only for scene rendering. 
+</I>and for data probing  may be...
+
+&gt;<i> Perhaps adding filter to 
+</I>&gt;<i> OpenGLRenderingEngine would make more sense? 
+</I>Perhaps... But I don't know what is OpenGLRenderingEngine and how it work.
+(and I haven't time to know it without documentation ). 
+
+&gt;<i> Clipping planes and such 
+</I>&gt;<i> could be moved to those pre-rendering engines. 
+</I>Yes, I think about it too.
+
+&gt;<i> In such way, those 
+</I>&gt;<i> engines would not be run if you don't need the rendering - like if you
+</I>&gt;<i> run without GL or if drawing is slower than simulation; they would be
+</I>&gt;<i> run only right before drawing. 
+</I>And now it is. Those engines would be run if they is activated from GUI.
+
+&gt;<i> 
+</I>&gt;<i> &gt; Added: trunk/core/FiltrEngine.cpp
+</I>&gt;<i> &gt;   
+</I>&gt;<i> 3. I moved it to common, which seems like more appropriate space
+</I>&gt;<i> (comment in the commit log). (FilterEngine? Filtr looks like a typo...)
+</I>Ok. I will fix it.
+Question: how it is possible to make a legend, for example, with velocity colour scale?
+
+&gt;<i> 
+</I>&gt;<i> 5. Would you mind running compilation before you commit? You were
+</I>&gt;<i> missing one logger 
+</I>Hm.. I haven't errors with it.... 
+
+&gt;<i> and had FiltrationalEngine.hpp instead of 
+</I>&gt;<i> FiltrEngine.hpp in the player and other errors.
+</I>Sorry.
+
+&gt;<i> 6. Can you please decrease vertical size of the player window and put
+</I>&gt;<i> filtration button elsewhere (decrease the message area, get rid of
+</I>&gt;<i> baseName boxes etc) or something? It doesn't fit on the screen with
+</I>&gt;<i> 1024x768!
+</I>I have not understood a problem. At me the sizes of a window change. 
+The sizes of its boxes also change...
+
+
+-- 
+Best regards, Sergei D.
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000280.html">[yade-dev] [Yade-commits] r1419
+</A></li>
+	<LI>Next message: <A HREF="000282.html">[yade-dev] gcc 4.3 issue: cast from Engine* to FilterEngine* (???)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#281">[ date ]</a>
+              <a href="thread.html#281">[ thread ]</a>
+              <a href="subject.html#281">[ subject ]</a>
+              <a href="author.html#281">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

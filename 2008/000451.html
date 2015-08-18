@@ -1,0 +1,242 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1546 - in trunk: extra gui/py	gui/qt3	pkg/common/RenderingEngine/GLDrawGeometricalModel
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1546%20-%20in%20trunk%3A%20extra%20gui/py%0A%09gui/qt3%09pkg/common/RenderingEngine/GLDrawGeometricalModel&In-Reply-To=%3C200810161026.m9GAQDCe021765%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000450.html">
+   <LINK REL="Next"  HREF="000452.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1546 - in trunk: extra gui/py	gui/qt3	pkg/common/RenderingEngine/GLDrawGeometricalModel</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1546%20-%20in%20trunk%3A%20extra%20gui/py%0A%09gui/qt3%09pkg/common/RenderingEngine/GLDrawGeometricalModel&In-Reply-To=%3C200810161026.m9GAQDCe021765%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1546 - in trunk: extra gui/py	gui/qt3	pkg/common/RenderingEngine/GLDrawGeometricalModel">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Oct 16 12:26:13 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000450.html">[deprecated list] [Yade-dev] Simulation with Python
+</A></li>
+        <LI>Next message: <A HREF="000452.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-22719/bin/yade-svn1548:	DirectShearCis, FEMBeam,	HydraulicTest, SDECImpactTest, STLImporterTest, SimpleShear, USCTGen
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#451">[ date ]</a>
+              <a href="thread.html#451">[ thread ]</a>
+              <a href="subject.html#451">[ subject ]</a>
+              <a href="author.html#451">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-10-16 12:26:12 +0200 (Thu, 16 Oct 2008)
+New Revision: 1546
+
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/gui/py/yadeControl.cpp
+   trunk/gui/qt3/YadeQtMainWindow.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawFacet.cpp
+Log:
+1. Add Body().mask in python
+2. Add PhysicalParameters().pos and .ori instead of ugly pp['se3'][:3] and pp['se3'][3:]
+3. Add dmgPlane plot in brefcom
+4. Do not delete renderer if we close the last view (loses all renderer settings)
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-10-14 09:48:01 UTC (rev 1545)
++++ trunk/extra/Brefcom.cpp	2008-10-16 10:26:12 UTC (rev 1546)
+@@ -139,6 +139,11 @@
+ 		BC=YADE_PTR_CAST&lt;BrefcomContact&gt;(I-&gt;interactionPhysics);
+ 		contGeom=YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(I-&gt;interactionGeometry);
+ 		assert(BC); assert(contGeom);
++		/* kept fully damaged contacts; note that normally the contact is deleted _after_ the BREFCOM_MATERIAL_MODEL,
++		 * i.e. if it is 1.0 here, omegaThreshold is &gt;= 1.0 for sure.
++		 * &amp;&amp;'ing that just to make sure anyway ...
++		 */
++		if(BC-&gt;omega&gt;=1.0 &amp;&amp; BC-&gt;omegaThreshold&gt;=1.0) continue;
+ 
+ 		// shorthands
+ 		Real&amp; epsN(BC-&gt;epsN); Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); const Real&amp; xiShear(BC-&gt;xiShear); const Real&amp; E(BC-&gt;E); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle); const Real&amp; G(BC-&gt;G); const Real&amp; crossSection(BC-&gt;crossSection); const Real&amp; tau(BC-&gt;tau); const Real&amp; expDmgRate(BC-&gt;expDmgRate); const Real&amp; omegaThreshold(BC-&gt;omegaThreshold); const Real&amp; transStrainCoeff(BC-&gt;transStrainCoeff); const Real&amp; epsTrans(BC-&gt;epsTrans); const Real&amp; epsCrackOnset(BC-&gt;epsCrackOnset);
+@@ -188,6 +193,7 @@
+ 
+ bool GLDrawBrefcomContact::contactLine=true;
+ bool GLDrawBrefcomContact::dmgLabel=true;
++bool GLDrawBrefcomContact::dmgPlane=false;
+ bool GLDrawBrefcomContact::epsNLabel=true;
+ bool GLDrawBrefcomContact::epsT=false;
+ bool GLDrawBrefcomContact::epsTAxes=false;
+@@ -206,9 +212,29 @@
+ 		min(1.,max(0.,BC-&gt;epsTrans/BC-&gt;epsCrackOnset)),
+ 		min(1.,max(0.,abs(BC-&gt;epsTrans)/BC-&gt;epsCrackOnset-1)));
+ 
+-	if(contactLine) GLUtils::GLDrawLine(b1-&gt;physicalParameters-&gt;dispSe3.position,b2-&gt;physicalParameters-&gt;dispSe3.position,lineColor);
++	if(contactLine) GLUtils::GLDrawLine(b1-&gt;physicalParameters-&gt;dispSe3.position,b2-&gt;physicalParameters-&gt;dispSe3.position,.5*lineColor);
+ 	if(dmgLabel){ GLUtils::GLDrawNum(BC-&gt;omega,0.5*(b1-&gt;physicalParameters-&gt;dispSe3.position+b2-&gt;physicalParameters-&gt;dispSe3.position),lineColor); }
+ 	else if(epsNLabel){ GLUtils::GLDrawNum(BC-&gt;epsN,0.5*(b1-&gt;physicalParameters-&gt;dispSe3.position+b2-&gt;physicalParameters-&gt;dispSe3.position),lineColor); }
++	if(BC-&gt;omega&gt;0 &amp;&amp; dmgPlane){
++		Real halfSize=sqrt(BC-&gt;omega)*.705*sqrt(BC-&gt;crossSection);
++		Vector3r midPt=.5*Vector3r(b1-&gt;physicalParameters-&gt;dispSe3.position+b2-&gt;physicalParameters-&gt;dispSe3.position);
++		glDisable(GL_CULL_FACE);
++		glPushMatrix();
++			glTranslatev(midPt);
++			Quaternionr q; q.Align(Vector3r::UNIT_Z,geom-&gt;normal);
++			Vector3r axis; Real angle; q.ToAxisAngle(axis,angle);
++			glRotatef(angle*Mathr::RAD_TO_DEG,axis[0],axis[1],axis[2]);
++			glBegin(GL_POLYGON);
++				glColor3v(lineColor); 
++				glVertex3d(halfSize,0.,0.);
++				glVertex3d(.5*halfSize,.866*halfSize,0.);
++				glVertex3d(-.5*halfSize,.866*halfSize,0.);
++				glVertex3d(-halfSize,0.,0.);
++				glVertex3d(-.5*halfSize,-.866*halfSize,0.);
++				glVertex3d(.5*halfSize,-.866*halfSize,0.);
++			glEnd();
++		glPopMatrix();
++	}
+ 
+ 	const Vector3r&amp; cp=static_pointer_cast&lt;SpheresContactGeometry&gt;(i-&gt;interactionGeometry)-&gt;contactPoint;
+ 	if(epsT){
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2008-10-14 09:48:01 UTC (rev 1545)
++++ trunk/extra/Brefcom.hpp	2008-10-16 10:26:12 UTC (rev 1546)
+@@ -233,12 +233,12 @@
+ class GLDrawBrefcomContact: public GLDrawInteractionPhysicsFunctor {
+ 	public: virtual void go(const shared_ptr&lt;InteractionPhysics&gt;&amp;,const shared_ptr&lt;Interaction&gt;&amp;,const shared_ptr&lt;Body&gt;&amp;,const shared_ptr&lt;Body&gt;&amp;,bool wireFrame);
+ 	virtual ~GLDrawBrefcomContact() {};
+-	virtual void registerAttributes(){ REGISTER_ATTRIBUTE(contactLine); REGISTER_ATTRIBUTE(dmgLabel); REGISTER_ATTRIBUTE(epsT); REGISTER_ATTRIBUTE(epsTAxes); REGISTER_ATTRIBUTE(normal); REGISTER_ATTRIBUTE(colorStrain); REGISTER_ATTRIBUTE(epsNLabel);}
++	virtual void registerAttributes(){ REGISTER_ATTRIBUTE(contactLine); REGISTER_ATTRIBUTE(dmgLabel); REGISTER_ATTRIBUTE(dmgPlane); REGISTER_ATTRIBUTE(epsT); REGISTER_ATTRIBUTE(epsTAxes); REGISTER_ATTRIBUTE(normal); REGISTER_ATTRIBUTE(colorStrain); REGISTER_ATTRIBUTE(epsNLabel);}
+ 	RENDERS(BrefcomContact);
+ 	REGISTER_CLASS_NAME(GLDrawBrefcomContact);
+ 	REGISTER_BASE_CLASS_NAME(GLDrawInteractionPhysicsFunctor);
+ 	DECLARE_LOGGER;
+-	static bool contactLine,dmgLabel,epsT,epsTAxes,normal,colorStrain,epsNLabel;
++	static bool contactLine,dmgLabel,dmgPlane,epsT,epsTAxes,normal,colorStrain,epsNLabel;
+ };
+ REGISTER_SERIALIZABLE(GLDrawBrefcomContact,false);
+ 
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-10-14 09:48:01 UTC (rev 1545)
++++ trunk/gui/py/yadeControl.cpp	2008-10-16 10:26:12 UTC (rev 1546)
+@@ -150,6 +150,10 @@
+ 			throw std::invalid_argument(&quot;Invalid  DOF specification `&quot;+s+&quot;', must be &#8712;{x,y,z,rx,ry,rz}.&quot;);
+ 		}
+ 	}
++	python::tuple pos_get(){const Vector3r&amp; p=proxee-&gt;se3.position; return python::make_tuple(p[0],p[1],p[2]);}
++	python::tuple ori_get(){Vector3r axis; Real angle; proxee-&gt;se3.orientation.ToAxisAngle(axis,angle); return python::make_tuple(axis[0],axis[1],axis[2],angle);}
++	void pos_set(python::list l){if(python::len(l)!=3) throw invalid_argument(&quot;Wrong number of vector3 elements &quot;+lexical_cast&lt;string&gt;(python::len(l))+&quot;, should be 3&quot;); proxee-&gt;se3.position=Vector3r(python::extract&lt;double&gt;(l[0])(),python::extract&lt;double&gt;(l[1])(),python::extract&lt;double&gt;(l[2])());}
++	void ori_set(python::list l){if(python::len(l)!=4) throw invalid_argument(&quot;Wrong number of quaternion elements &quot;+lexical_cast&lt;string&gt;(python::len(l))+&quot;, should be 4&quot;); proxee-&gt;se3.orientation=Quaternionr(Vector3r(python::extract&lt;double&gt;(l[0])(),python::extract&lt;double&gt;(l[1])(),python::extract&lt;double&gt;(l[2])()),python::extract&lt;double&gt;(l[3])());}
+ BASIC_PY_PROXY_TAIL;
+ 
+ BASIC_PY_PROXY(pyBoundingVolume,BoundingVolume);
+@@ -271,6 +275,8 @@
+ 	NONPOD_ATTRIBUTE_ACCESS(bound,pyBoundingVolume,boundingVolume);
+ 	NONPOD_ATTRIBUTE_ACCESS(phys,pyPhysicalParameters,physicalParameters);
+ 	unsigned id_get(){ensureAcc(); return proxee-&gt;getId();}
++	int mask_get(){ensureAcc(); return proxee-&gt;groupMask;}
++	void mask_set(int m){ensureAcc(); proxee-&gt;groupMask=m;}
+ 	bool isStandalone(){ensureAcc(); return proxee-&gt;isStandalone();} bool isClumpMember(){ensureAcc(); return proxee-&gt;isClumpMember();} bool isClump(){ensureAcc(); return proxee-&gt;isClump();}
+ BASIC_PY_PROXY_TAIL;
+ 
+@@ -585,7 +591,10 @@
+ 	BASIC_PY_PROXY_WRAPPER(pyGeometricalModel,&quot;GeometricalModel&quot;);
+ 	BASIC_PY_PROXY_WRAPPER(pyInteractingGeometry,&quot;InteractingGeometry&quot;);
+ 	BASIC_PY_PROXY_WRAPPER(pyPhysicalParameters,&quot;PhysicalParameters&quot;)	
+-		.add_property(&quot;blockedDOFs&quot;,&amp;pyPhysicalParameters::blockedDOFs_get,&amp;pyPhysicalParameters::blockedDOFs_set);
++		.add_property(&quot;blockedDOFs&quot;,&amp;pyPhysicalParameters::blockedDOFs_get,&amp;pyPhysicalParameters::blockedDOFs_set)
++		.add_property(&quot;pos&quot;,&amp;pyPhysicalParameters::pos_get,&amp;pyPhysicalParameters::pos_set)
++		.add_property(&quot;ori&quot;,&amp;pyPhysicalParameters::ori_get,&amp;pyPhysicalParameters::ori_set)
++		;
+ 	BASIC_PY_PROXY_WRAPPER(pyBoundingVolume,&quot;BoundingVolume&quot;);
+ 	BASIC_PY_PROXY_WRAPPER(pyInteractionGeometry,&quot;InteractionGeometry&quot;);
+ 	BASIC_PY_PROXY_WRAPPER(pyInteractionPhysics,&quot;InteractionPhysics&quot;);
+@@ -598,6 +607,7 @@
+ 		.add_property(&quot;bound&quot;,&amp;pyBody::bound_get,&amp;pyBody::bound_set)
+ 		.add_property(&quot;phys&quot;,&amp;pyBody::phys_get,&amp;pyBody::phys_set)
+ 		.add_property(&quot;id&quot;,&amp;pyBody::id_get)
++		.add_property(&quot;mask&quot;,&amp;pyBody::mask_get,&amp;pyBody::mask_set)
+ 		.add_property(&quot;isStandalone&quot;,&amp;pyBody::isStandalone)
+ 		.add_property(&quot;isClumpMember&quot;,&amp;pyBody::isClumpMember)
+ 		.add_property(&quot;isClump&quot;,&amp;pyBody::isClump);
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.cpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.cpp	2008-10-14 09:48:01 UTC (rev 1545)
++++ trunk/gui/qt3/YadeQtMainWindow.cpp	2008-10-16 10:26:12 UTC (rev 1546)
+@@ -93,7 +93,7 @@
+ 
+ void YadeQtMainWindow::redrawAll(bool force){
+ 	// controller has its own timer -- and will update instead of us periodically
+-	if(renderer &amp;&amp; (force /* || (controller  &amp;&amp; !controller-&gt;syncRunning ) */ || (!controller))){
++	if((renderer &amp;&amp; glViews.size()&gt;0) &amp;&amp; (force /* || (controller  &amp;&amp; !controller-&gt;syncRunning ) */ || (!controller))){
+ 		FOREACH(const shared_ptr&lt;GLViewer&gt;&amp; glv,glViews){ if(glv) glv-&gt;updateGL(); }
+ 	}
+ }
+@@ -205,7 +205,8 @@
+ 				if(noOtherViews){
+ 					LOG_DEBUG(&quot;Deleting primary view (no other views exist).&quot;);
+ 					glViews.clear();
+-					renderer=shared_ptr&lt;OpenGLRenderingEngine&gt;();
++					// why delete renderer if we close view? That obliterates all renderer settings.
++					// renderer=shared_ptr&lt;OpenGLRenderingEngine&gt;();
+ 				}else{LOG_INFO(&quot;Cannot close primary view, other views still exist.&quot;);}
+ 				return;
+ 			}
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawFacet.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawFacet.cpp	2008-10-14 09:48:01 UTC (rev 1545)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawFacet.cpp	2008-10-16 10:26:12 UTC (rev 1546)
+@@ -29,7 +29,7 @@
+     }
+     else
+     {
+-		//glDisable(GL_CULL_FACE);
++		glDisable(GL_CULL_FACE);
+ 		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); 
+ 		//glBegin(GL_TRIANGLES);
+ 		glEnable(GL_LIGHTING);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000450.html">[deprecated list] [Yade-dev] Simulation with Python
+</A></li>
+	<LI>Next message: <A HREF="000452.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-22719/bin/yade-svn1548:	DirectShearCis, FEMBeam,	HydraulicTest, SDECImpactTest, STLImporterTest, SimpleShear, USCTGen
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#451">[ date ]</a>
+              <a href="thread.html#451">[ thread ]</a>
+              <a href="subject.html#451">[ subject ]</a>
+              <a href="author.html#451">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] scons, and compiling HEAD
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20scons%2C%20and%20compiling%20HEAD&In-Reply-To=%3C492B864E.6050504%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000526.html">
+   <LINK REL="Next"  HREF="000522.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] scons, and compiling HEAD</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20scons%2C%20and%20compiling%20HEAD&In-Reply-To=%3C492B864E.6050504%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev] scons, and compiling HEAD">eudoxos at arcig.cz
+       </A><BR>
+    <I>Tue Nov 25 05:59:58 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000526.html">[deprecated list] [Yade-dev] scons, and compiling HEAD
+</A></li>
+        <LI>Next message: <A HREF="000522.html">[deprecated list] [Yade-dev] [svn] r1579 - in trunk: . gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#527">[ date ]</a>
+              <a href="thread.html#527">[ thread ]</a>
+              <a href="subject.html#527">[ subject ]</a>
+              <a href="author.html#527">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> a followup question. If in scons.profile I change:
+</I>&gt;<i>
+</I>&gt;<i>   variant = '-slow'
+</I>&gt;<i>   version = '0.12'
+</I>&gt;<i>
+</I>&gt;<i> to
+</I>&gt;<i>
+</I>&gt;<i>   variant = '-slow'
+</I>&gt;<i>   version = '0.12.1'
+</I>&gt;<i>
+</I>&gt;<i> is it enough to rename ../build-0.12-slow into ../build-0.12.1-slow to
+</I>&gt;<i> avoid full recompiling?
+</I>&gt;<i>   
+</I>No, since  -DSUFFIX=\&quot;-0.12-slow\&quot; is passed to every g++ call (check
+with pretty=0). Hence all objects will be recompiled, since their
+command-line has changed. There is hardly a way to avoid that, except
+for putting such stuff inside Omega and #define those macros only for a
+few translation units.
+
+Vaclav
+
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000526.html">[deprecated list] [Yade-dev] scons, and compiling HEAD
+</A></li>
+	<LI>Next message: <A HREF="000522.html">[deprecated list] [Yade-dev] [svn] r1579 - in trunk: . gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#527">[ date ]</a>
+              <a href="thread.html#527">[ thread ]</a>
+              <a href="subject.html#527">[ subject ]</a>
+              <a href="author.html#527">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

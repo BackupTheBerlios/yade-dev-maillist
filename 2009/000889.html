@@ -1,0 +1,347 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1730 - trunk/extra
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1730%20-%20trunk/extra&In-Reply-To=%3C200903252130.n2PLU7VO012952%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000888.html">
+   <LINK REL="Next"  HREF="000890.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1730 - trunk/extra</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1730%20-%20trunk/extra&In-Reply-To=%3C200903252130.n2PLU7VO012952%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1730 - trunk/extra">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Mar 25 22:30:07 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000888.html">[deprecated list] [Yade-dev] [svn] r1729 - trunk/core
+</A></li>
+        <LI>Next message: <A HREF="000890.html">[deprecated list] [Yade-dev] [svn] r1731 - trunk/extra/SpherePadder
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#889">[ date ]</a>
+              <a href="thread.html#889">[ thread ]</a>
+              <a href="subject.html#889">[ subject ]</a>
+              <a href="author.html#889">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-03-25 22:30:06 +0100 (Wed, 25 Mar 2009)
+New Revision: 1730
+
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+Log:
+1. Add rate-dependent damage to normal and viscoplasticity to shear components of Brefcom (not yet tested, just compiles); other cleanups there.
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-03-24 21:02:59 UTC (rev 1729)
++++ trunk/extra/Brefcom.cpp	2009-03-25 21:30:06 UTC (rev 1730)
+@@ -110,8 +110,10 @@
+ 		if(neverDamage) contPhys-&gt;neverDamage=true;
+ 		if(cohesiveThresholdIter&lt;0 || Omega::instance().getCurrentIteration()&lt;cohesiveThresholdIter) contPhys-&gt;isCohesive=true;
+ 		else contPhys-&gt;isCohesive=false;
+-		contPhys-&gt;tau=tau;
+-		contPhys-&gt;expDmgRate=expDmgRate;
++		contPhys-&gt;dmgTau=dmgTau;
++		contPhys-&gt;dmgRateExp=plRateExp;
++		contPhys-&gt;plTau=plTau;
++		contPhys-&gt;plRateExp=plRateExp;
+ 
+ 		interaction-&gt;interactionPhysics=contPhys;
+ 	}
+@@ -143,6 +145,40 @@
+ 
+ CREATE_LOGGER(ef2_Spheres_Brefcom_BrefcomLaw);
+ 
++Real BrefcomContact::solveBeta(const Real c, const Real N){
++	const int maxIter=20;
++	const Real maxError=1e-12;
++	Real f, ret=0.;
++	for(int i=0; i&lt;maxIter; i++){
++		Real aux=c*exp(N*ret)+exp(ret);
++		f=log(aux);
++		if(fabs(f)&lt;maxError) return ret;
++		Real df=(c*N*exp(N*ret)+exp(ret))/aux;
++		ret-=f/df;
++	}
++	LOG_FATAL(&quot;No convergence, c=&quot;&lt;&lt;c&lt;&lt;&quot;, ret=&quot;&lt;&lt;ret&lt;&lt;&quot;, f=&quot;&lt;&lt;f);
++	throw runtime_error(&quot;ef2_Spheres_Brefcom_BrefcomLaw::solveBeta failed to converge.&quot;);
++}
++
++Real BrefcomContact::computeDmgOverstress(Real epsN, Real dt){
++	if(kappaD&gt;=epsN*omega){ // unloading, no viscous stress
++		kappaD=epsN*omega;
++		return 0.0;
++	}
++	Real c=epsCrackOnset*(1-omega)*pow(dmgTau/dt,dmgRateExp)*pow(epsN*omega-kappaD,dmgRateExp-1.);
++	Real beta=solveBeta(c,dmgRateExp);
++	Real deltaDmgStrain=(epsN*omega-kappaD)*exp(beta);
++	kappaD+=deltaDmgStrain;
++	return (epsN*omega-kappaD)*E;
++}
++
++Real BrefcomContact::computeViscoplScalingFactor(Real sigmaTNorm, Real sigmaTYield,Real dt){
++	if(sigmaTNorm&lt;sigmaTYield) return 1.;
++	Real c=/* should this be sigmaT0?? */ sigmaTNorm*pow(plTau/(G*dt),plRateExp)*pow(sigmaTNorm-sigmaTYield,plRateExp-1.);
++	Real beta=solveBeta(c,plRateExp);
++	return 1.-exp(beta)*(1-sigmaTYield/sigmaTNorm);
++}
++
+ void ef2_Spheres_Brefcom_BrefcomLaw::go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody){
+ 	//timingDeltas-&gt;start();
+ 	SpheresContactGeometry* contGeom=static_cast&lt;SpheresContactGeometry*&gt;(_geom.get());
+@@ -155,7 +191,7 @@
+ 	if(BC-&gt;omega&gt;=1.0 &amp;&amp; BC-&gt;omegaThreshold&gt;=1.0) return;
+ 
+ 	// shorthands
+-	Real&amp; epsN(BC-&gt;epsN); Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); Real&amp; epsPlSum(BC-&gt;epsPlSum); const Real&amp; E(BC-&gt;E); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle); const Real&amp; G(BC-&gt;G); const Real&amp; crossSection(BC-&gt;crossSection); const Real&amp; tau(BC-&gt;tau); const Real&amp; expDmgRate(BC-&gt;expDmgRate); const Real&amp; omegaThreshold(BC-&gt;omegaThreshold); const Real&amp; epsCrackOnset(BC-&gt;epsCrackOnset); Real&amp; relResidualStrength(BC-&gt;relResidualStrength); const Real&amp; dt=Omega::instance().getTimeStep();  const Real&amp; epsFracture(BC-&gt;epsFracture); const bool&amp; neverDamage(BC-&gt;neverDamage);
++	Real&amp; epsN(BC-&gt;epsN); Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); Real&amp; epsPlSum(BC-&gt;epsPlSum); const Real&amp; E(BC-&gt;E); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle); const Real&amp; G(BC-&gt;G); const Real&amp; crossSection(BC-&gt;crossSection); const Real&amp; omegaThreshold(BC-&gt;omegaThreshold); const Real&amp; epsCrackOnset(BC-&gt;epsCrackOnset); Real&amp; relResidualStrength(BC-&gt;relResidualStrength); const Real&amp; dt=Omega::instance().getTimeStep();  const Real&amp; epsFracture(BC-&gt;epsFracture); const bool&amp; neverDamage(BC-&gt;neverDamage); const Real&amp; dmgTau(BC-&gt;dmgTau); const Real&amp; plTau(BC-&gt;plTau);
+ 	/* const Real&amp; transStrainCoeff(BC-&gt;transStrainCoeff); const Real&amp; epsTrans(BC-&gt;epsTrans); const Real&amp; xiShear(BC-&gt;xiShear); */
+ 	Real&amp; omega(BC-&gt;omega); Real&amp; sigmaN(BC-&gt;sigmaN);  Vector3r&amp; sigmaT(BC-&gt;sigmaT); Real&amp; Fn(BC-&gt;Fn); Vector3r&amp; Fs(BC-&gt;Fs); // for python access
+ 
+@@ -198,71 +234,11 @@
+ 
+ void BrefcomLaw::action(MetaBody* _rootBody){
+ 	rootBody=_rootBody;
+-	if(useFunctor){ // testing the functor
+-		if(!functor) functor=shared_ptr&lt;ef2_Spheres_Brefcom_BrefcomLaw&gt;(new ef2_Spheres_Brefcom_BrefcomLaw);
+-		functor-&gt;logStrain=logStrain;
+-		FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rootBody-&gt;interactions){
+-			if(!I-&gt;isReal) continue;
+-			functor-&gt;go(I-&gt;interactionGeometry, I-&gt;interactionPhysics, I.get(), rootBody);
+-		}
+-		return;
+-	}
+-	
++	if(!functor) functor=shared_ptr&lt;ef2_Spheres_Brefcom_BrefcomLaw&gt;(new ef2_Spheres_Brefcom_BrefcomLaw);
++	functor-&gt;logStrain=logStrain;
+ 	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rootBody-&gt;interactions){
+ 		if(!I-&gt;isReal) continue;
+-		BC=YADE_PTR_CAST&lt;BrefcomContact&gt;(I-&gt;interactionPhysics);
+-		contGeom=YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(I-&gt;interactionGeometry);
+-		assert(BC); assert(contGeom);
+-		/* kept fully damaged contacts; note that normally the contact is deleted _after_ the BREFCOM_MATERIAL_MODEL,
+-		 * i.e. if it is 1.0 here, omegaThreshold is &gt;= 1.0 for sure.
+-		 * &amp;&amp;'ing that just to make sure anyway ...
+-		 */
+-		if(BC-&gt;omega&gt;=1.0 &amp;&amp; BC-&gt;omegaThreshold&gt;=1.0) continue;
+-
+-		// shorthands
+-		Real&amp; epsN(BC-&gt;epsN); Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); Real&amp; epsPlSum(BC-&gt;epsPlSum); /* const Real&amp; xiShear(BC-&gt;xiShear);*/ const Real&amp; E(BC-&gt;E); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle); const Real&amp; G(BC-&gt;G); const Real&amp; crossSection(BC-&gt;crossSection); const Real&amp; tau(BC-&gt;tau); const Real&amp; expDmgRate(BC-&gt;expDmgRate); const Real&amp; omegaThreshold(BC-&gt;omegaThreshold); /* const Real&amp; transStrainCoeff(BC-&gt;transStrainCoeff); const Real&amp; epsTrans(BC-&gt;epsTrans); */ const Real&amp; epsCrackOnset(BC-&gt;epsCrackOnset); Real&amp; relResidualStrength(BC-&gt;relResidualStrength); const Real&amp; epsFracture(BC-&gt;epsFracture); const bool&amp; neverDamage(BC-&gt;neverDamage);
+-		// for python access
+-		Real&amp; omega(BC-&gt;omega); Real&amp; sigmaN(BC-&gt;sigmaN);  Vector3r&amp; sigmaT(BC-&gt;sigmaT); Real&amp; Fn(BC-&gt;Fn); Vector3r&amp; Fs(BC-&gt;Fs);
+-		// for rate-dependence
+-		const Real&amp; dt=Omega::instance().getTimeStep();
+-
+-		assert(contGeom-&gt;hasShear);
+-
+-		epsN=contGeom-&gt;epsN();
+-		epsT=contGeom-&gt;epsT();
+-
+-		contGeom-&gt;relocateContactPoints(); // allow very large mutual rotations
+-
+-		if(logStrain &amp;&amp; epsN&lt;0){
+-			Real epsN0=epsN;
+-			epsN=log(epsN0+1);
+-			epsT*=epsN/epsN0;
+-		}
+-
+-		#ifdef BREFCOM_MATERIAL_MODEL
+-			BREFCOM_MATERIAL_MODEL
+-		#else
+-			sigmaN=E*epsN;
+-			sigmaT=G*epsT;
+-		#endif
+-
+-		if(omega&gt;omegaThreshold){
+-			I-&gt;isReal=false;
+-			const shared_ptr&lt;Body&gt;&amp; body1=Body::byId(I-&gt;getId1(),_rootBody), body2=Body::byId(I-&gt;getId2(),_rootBody); assert(body1); assert(body2);
+-			const shared_ptr&lt;BrefcomPhysParams&gt;&amp; rbp1=YADE_PTR_CAST&lt;BrefcomPhysParams&gt;(body1-&gt;physicalParameters), rbp2=YADE_PTR_CAST&lt;BrefcomPhysParams&gt;(body2-&gt;physicalParameters);
+-			if(BC-&gt;isCohesive){rbp1-&gt;numBrokenCohesive+=1; rbp2-&gt;numBrokenCohesive+=1; rbp1-&gt;epsPlBroken+=epsPlSum; rbp2-&gt;epsPlBroken+=epsPlSum;}
+-			LOG_DEBUG(&quot;Contact #&quot;&lt;&lt;I-&gt;getId1()&lt;&lt;&quot;=#&quot;&lt;&lt;I-&gt;getId2()&lt;&lt;&quot; is damaged over thershold (&quot;&lt;&lt;omega&lt;&lt;&quot;&gt;&quot;&lt;&lt;omegaThreshold&lt;&lt;&quot;) and has been deleted (isReal=&quot;&lt;&lt;I-&gt;isReal&lt;&lt;&quot;)&quot;);
+-			continue;
+-		}
+-
+-		#define NNAN(a) assert(!isnan(a));
+-		#define NNANV(v) assert(!isnan(v[0])); assert(!isnan(v[1])); assert(!isnan(v[2]));
+-		// store Fn (and Fs?), for use with GlobalStiffnessCounter?
+-		NNAN(sigmaN); NNANV(sigmaT);
+-		NNAN(crossSection);
+-		Fn=sigmaN*crossSection; BC-&gt;normalForce=Fn*contGeom-&gt;normal;
+-		Fs=sigmaT*crossSection; BC-&gt;shearForce=Fs;
+-		applyForce(crossSection*(contGeom-&gt;normal*sigmaN + sigmaT),I-&gt;getId1(),I-&gt;getId2()); /* this is the force applied on the _first_ body; inverted applied to the second */
++		functor-&gt;go(I-&gt;interactionGeometry, I-&gt;interactionPhysics, I.get(), rootBody);
+ 	}
+ }
+ 
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2009-03-24 21:02:59 UTC (rev 1729)
++++ trunk/extra/Brefcom.hpp	2009-03-25 21:30:06 UTC (rev 1730)
+@@ -70,10 +70,14 @@
+ 			omegaThreshold,
+ 			//! weight coefficient for shear strain when computing the strain semi-norm kappaD
+ 			xiShear,
+-			//! characteristic time (if non-positive, the law without rate-dependence is used)
+-			tau,
++			//! characteristic time for damage (if non-positive, the law without rate-dependence is used)
++			dmgTau,
+ 			//! exponent in the rate-dependent damage evolution
+-			expDmgRate,
++			dmgRateExp,
++			//! characteristic time for viscoplasticity (if non-positive, no rate-dependence for shear)
++			plTau,
++			//! exponent in the rate-dependent viscoplasticity
++			plRateExp,
+ 			//! coefficient that takes transversal strain into accound when calculating kappaDReduced
+ 			transStrainCoeff;
+ 		/*! Up to now maximum normal strain (semi-norm), non-decreasing in time. */
+@@ -91,7 +95,14 @@
+ 		// FIXME: Fn and Fs are stored as Vector3r normalForce, shearForce in NormalShearInteraction 
+ 		Real omega, Fn, sigmaN, epsN, relResidualStrength; Vector3r epsT, sigmaT, Fs;
+ 
+-		BrefcomContact(): NormalShearInteraction(),E(0), G(0), tanFrictionAngle(0), undamagedCohesion(0), crossSection(0), xiShear(0), tau(0), expDmgRate(0), epsPlSum(0.) { createIndex(); epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; neverDamage=false; omega=0; Fn=0; Fs=Vector3r::ZERO; epsPlSum=0; }
++
++		static Real solveBeta(const Real c, const Real N);
++		Real computeDmgOverstress(Real epsN,Real dt);
++		Real computeViscoplScalingFactor(Real sigmaTNorm, Real sigmaTYield,Real dt);
++
++
++
++		BrefcomContact(): NormalShearInteraction(),E(0), G(0), tanFrictionAngle(0), undamagedCohesion(0), crossSection(0), xiShear(0), dmgTau(-1), dmgRateExp(0), plTau(-1), plRateExp(0), epsPlSum(0.) { createIndex(); epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; neverDamage=false; omega=0; Fn=0; Fs=Vector3r::ZERO; epsPlSum=0; }
+ 		//	BrefcomContact(Real _E, Real _G, Real _tanFrictionAngle, Real _undamagedCohesion, Real _equilibriumDist, Real _crossSection, Real _epsCrackOnset, Real _epsFracture, Real _expBending, Real _xiShear, Real _tau=0, Real _expDmgRate=1): InteractionPhysics(), E(_E), G(_G), tanFrictionAngle(_tanFrictionAngle), undamagedCohesion(_undamagedCohesion), equilibriumDist(_equilibriumDist), crossSection(_crossSection), epsCrackOnset(_epsCrackOnset), epsFracture(_epsFracture), expBending(_expBending), xiShear(_xiShear), tau(_tau), expDmgRate(_expDmgRate) { epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; neverDamage=false; omega=0; Fn=0; Fs=Vector3r::ZERO; /*TRVAR5(epsCrackOnset,epsFracture,Kn,crossSection,equilibriumDist); */ }
+ 		virtual ~BrefcomContact();
+ 
+@@ -105,8 +116,10 @@
+ 			(epsFracture)
+ 			(omegaThreshold)
+ 			(xiShear)
+-			(tau)
+-			(expDmgRate)
++			(dmgTau)
++			(dmgRateExp)
++			(plTau)
++			(plRateExp)
+ 			(transStrainCoeff)
+ 
+ 			(kappaD)
+@@ -153,14 +166,14 @@
+ REGISTER_SERIALIZABLE(BrefcomPhysParams);
+ 
+ class ef2_Spheres_Brefcom_BrefcomLaw: public ConstitutiveLaw{
++	public:
+ 	/*! Cohesion evolution law (it is 1-funcH here) */
+ 	Real funcH(const Real&amp; kappaD, const Real&amp; epsCrackOnset, const Real&amp; epsFracture, const bool&amp; neverDamage) const{ return 1-funcG(kappaD,epsCrackOnset,epsFracture,neverDamage); }
+ 	/*! Damage evolution law */
+-	inline Real funcG(const Real&amp; kappaD, const Real&amp; epsCrackOnset, const Real&amp; epsFracture, const bool&amp; neverDamage) const{
++	static Real funcG(const Real&amp; kappaD, const Real&amp; epsCrackOnset, const Real&amp; epsFracture, const bool&amp; neverDamage) {
+ 		if(kappaD&lt;epsCrackOnset || neverDamage) return 0;
+ 		return 1.-(epsCrackOnset/kappaD)*exp(-(kappaD-epsCrackOnset)/epsFracture);
+ 	}
+-	public:
+ 		bool logStrain;
+ 		ef2_Spheres_Brefcom_BrefcomLaw(): logStrain(false){ /*timingDeltas=shared_ptr&lt;TimingDeltas&gt;(new TimingDeltas);*/ }
+ 		void go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody);
+@@ -183,20 +196,16 @@
+ 		/*! Cohesion evolution law (it is 1-funcH here) */
+ 		Real funcH(const Real&amp; kappaD, const Real&amp; epsCrackOnset, const Real&amp; epsFracture, const bool&amp; neverDamage) const{ return 1-funcG(kappaD,epsCrackOnset,epsFracture,neverDamage); }
+ 		/*! Damage evolution law */
+-		inline Real funcG(const Real&amp; kappaD, const Real&amp; epsCrackOnset, const Real&amp; epsFracture, const bool&amp; neverDamage) const{
+-			if(kappaD&lt;epsCrackOnset || neverDamage) return 0;
+-			return 1.-(epsCrackOnset/kappaD)*exp(-(kappaD-epsCrackOnset)/epsFracture);
+-		}
++		Real funcG(const Real&amp; kappaD, const Real&amp; epsCrackOnset, const Real&amp; epsFracture, const bool&amp; neverDamage) const{ return ef2_Spheres_Brefcom_BrefcomLaw::funcG(kappaD,epsCrackOnset,epsFracture,neverDamage); }
+ 		
+ 	public:
+ 		bool logStrain;
+-		bool useFunctor;
+-		BrefcomLaw(): logStrain(false),useFunctor(false) { Shop::Bex::initCache(); };
++		BrefcomLaw(): logStrain(false) { Shop::Bex::initCache(); };
+ 		void action(MetaBody*);
+ 	protected: 
+ 	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
+ 	REGISTER_CLASS_AND_BASE(BrefcomLaw,InteractionSolver);
+-	REGISTER_ATTRIBUTES(InteractionSolver,(logStrain)(useFunctor));
++	REGISTER_ATTRIBUTES(InteractionSolver,(logStrain));
+ 	DECLARE_LOGGER;
+ };
+ REGISTER_SERIALIZABLE(BrefcomLaw);
+@@ -216,7 +225,7 @@
+ 		expBending is positive if the damage evolution function is concave after fracture onset;
+ 		reasonable value seems like 4.
+ 		*/
+-		Real sigmaT, expBending, xiShear, epsCrackOnset, relDuctility, G_over_E, tau, expDmgRate, omegaThreshold, transStrainCoeff;
++		Real sigmaT, expBending, xiShear, epsCrackOnset, relDuctility, G_over_E, tau, expDmgRate, omegaThreshold, transStrainCoeff, dmgTau, dmgRateExp, plTau, plRateExp;
+ 		//! Should new contacts be cohesive? They will before this iter#, they will not be afterwards. If 0, they will never be. If negative, they will always be created as cohesive.
+ 		long cohesiveThresholdIter;
+ 		//! Create contacts that don't receive any damage (BrefcomContact::neverDamage=true); defaults to false
+@@ -228,8 +237,8 @@
+ 			xiShear=0;
+ 			neverDamage=false;
+ 			cohesiveThresholdIter=-1;
+-			tau=-1; expDmgRate=0;
+-			omegaThreshold=0.98;
++			dmgTau=-1; dmgRateExp=0; plTau=-1; plRateExp=-1;
++			omegaThreshold=0.999;
+ 		}
+ 
+ 		virtual void go(const shared_ptr&lt;PhysicalParameters&gt;&amp; pp1, const shared_ptr&lt;PhysicalParameters&gt;&amp; pp2, const shared_ptr&lt;Interaction&gt;&amp; interaction);
+@@ -242,8 +251,10 @@
+ 			(neverDamage)
+ 			(epsCrackOnset)
+ 			(relDuctility)
+-			(tau)
+-			(expDmgRate)
++			(dmgTau)
++			(dmgRateExp)
++			(plTau)
++			(plRateExp)
+ 			(omegaThreshold)
+ 			(transStrainCoeff)
+ 		);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000888.html">[deprecated list] [Yade-dev] [svn] r1729 - trunk/core
+</A></li>
+	<LI>Next message: <A HREF="000890.html">[deprecated list] [Yade-dev] [svn] r1731 - trunk/extra/SpherePadder
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#889">[ date ]</a>
+              <a href="thread.html#889">[ thread ]</a>
+              <a href="subject.html#889">[ subject ]</a>
+              <a href="author.html#889">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

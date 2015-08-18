@@ -1,0 +1,242 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1753 - in trunk: . extra	extra/usct gui/py	pkg/common/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1753%20-%20in%20trunk%3A%20.%20extra%0A%09extra/usct%20gui/py%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200904100849.n3A8nciD006789%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000915.html">
+   <LINK REL="Next"  HREF="000921.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1753 - in trunk: . extra	extra/usct gui/py	pkg/common/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1753%20-%20in%20trunk%3A%20.%20extra%0A%09extra/usct%20gui/py%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200904100849.n3A8nciD006789%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1753 - in trunk: . extra	extra/usct gui/py	pkg/common/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Apr 10 10:49:38 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000915.html">[deprecated list] [Yade-dev] [svn] r1752 - in trunk: gui/py scripts	scripts/test
+</A></li>
+        <LI>Next message: <A HREF="000921.html">[deprecated list] [Yade-dev] [svn] r1754 - in trunk: extra	gui/py	pkg/common/DataClass/InteractingGeometry	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine	scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#917">[ date ]</a>
+              <a href="thread.html#917">[ thread ]</a>
+              <a href="subject.html#917">[ subject ]</a>
+              <a href="author.html#917">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-04-10 10:49:36 +0200 (Fri, 10 Apr 2009)
+New Revision: 1753
+
+Modified:
+   trunk/SConstruct
+   trunk/extra/Brefcom.cpp
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+   trunk/gui/py/yade-multi
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+Log:
+1. Fix race condition in brefcom (omp critical section)
+2. Remove -ffast-math from optimized build, since NaNs do not work properly (e.g. isnan(NaN)==false!)
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-04-09 10:15:52 UTC (rev 1752)
++++ trunk/SConstruct	2009-04-10 08:49:36 UTC (rev 1753)
+@@ -394,7 +394,7 @@
+ else: env.Append(CXXFLAGS='-O2')
+ if env['openmp']: env.Append(CXXFLAGS='-fopenmp',LIBS='gomp',CPPDEFINES='YADE_OPENMP')
+ if env['optimize']:
+-	env.Append(CXXFLAGS=Split('-O3 -ffast-math -march=%s'%env['march']),
++	env.Append(CXXFLAGS=Split('-O3 -march=%s'%env['march']),
+ 		CPPDEFINES=[('YADE_CAST','static_cast'),('YADE_PTR_CAST','static_pointer_cast'),'NDEBUG'])
+ 	# NDEBUG is used in /usr/include/assert.h: when defined, asserts() are no-ops
+ 
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-04-09 10:15:52 UTC (rev 1752)
++++ trunk/extra/Brefcom.cpp	2009-04-10 08:49:36 UTC (rev 1753)
+@@ -151,21 +151,21 @@
+ 		Real df=(c*N*exp(N*ret)+exp(ret))/aux;
+ 		ret-=f/df;
+ 	}
+-	LOG_FATAL(&quot;No convergence, c=&quot;&lt;&lt;c&lt;&lt;&quot;, ret=&quot;&lt;&lt;ret&lt;&lt;&quot;, f=&quot;&lt;&lt;f);
++	LOG_FATAL(&quot;No convergence after &quot;&lt;&lt;maxIter&lt;&lt;&quot; iters; c=&quot;&lt;&lt;c&lt;&lt;&quot;, N=&quot;&lt;&lt;N&lt;&lt;&quot;, ret=&quot;&lt;&lt;ret&lt;&lt;&quot;, f=&quot;&lt;&lt;f);
+ 	throw runtime_error(&quot;ef2_Spheres_Brefcom_BrefcomLaw::solveBeta failed to converge.&quot;);
+ }
+ 
+ Real BrefcomContact::computeDmgOverstress(Real dt){
+ 	if(dmgStrain&gt;=epsN*omega){ // unloading, no viscous stress
+ 		dmgStrain=epsN*omega;
+-		LOG_DEBUG(&quot;Elastic/unloading, no viscous overstress&quot;);
++		LOG_TRACE(&quot;Elastic/unloading, no viscous overstress&quot;);
+ 		return 0.;
+ 	}
+ 	Real c=epsCrackOnset*(1-omega)*pow(dmgTau/dt,dmgRateExp)*pow(epsN*omega-dmgStrain,dmgRateExp-1.);
+ 	Real beta=solveBeta(c,dmgRateExp);
+ 	Real deltaDmgStrain=(epsN*omega-dmgStrain)*exp(beta);
+ 	dmgStrain+=deltaDmgStrain;
+-	LOG_DEBUG(&quot;deltaDmgStrain=&quot;&lt;&lt;deltaDmgStrain&lt;&lt;&quot;, viscous overstress &quot;&lt;&lt;(epsN*omega-dmgStrain)*E);
++	LOG_TRACE(&quot;deltaDmgStrain=&quot;&lt;&lt;deltaDmgStrain&lt;&lt;&quot;, viscous overstress &quot;&lt;&lt;(epsN*omega-dmgStrain)*E);
+ 	/* &#963;N=Kn(&#949;N-&#949;d); dmgOverstress=&#963;N-(1-&#969;)*Kn*&#949;N=&#8230;=Kn(&#969;*&#949;N-&#949;d) */
+ 	return (epsN*omega-dmgStrain)*E;
+ }
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2009-04-09 10:15:52 UTC (rev 1752)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2009-04-10 08:49:36 UTC (rev 1753)
+@@ -49,7 +49,7 @@
+ 	assert(originalLength&gt;0 &amp;&amp; !isnan(originalLength));
+ 
+ 	assert(!isnan(strainRate) || !isnan(absSpeed));
+-	if(strainRate==0){ strainRate=absSpeed/originalLength; LOG_INFO(&quot;COmputed new strainRate &quot;&lt;&lt;strainRate); }
++	if(strainRate==0){ strainRate=absSpeed/originalLength; LOG_INFO(&quot;Computed new strainRate &quot;&lt;&lt;strainRate); }
+ 
+ 	initAccelTime_s=initAccelTime&gt;=0 ? initAccelTime : Omega::instance().getTimeStep()*(-initAccelTime);
+ 	LOG_INFO(&quot;Strain speed will be &quot;&lt;&lt;absSpeed&lt;&lt;&quot;, strain rate &quot;&lt;&lt;strainRate&lt;&lt;&quot;, will be reached after &quot;&lt;&lt;initAccelTime_s&lt;&lt;&quot;s (&quot;&lt;&lt;initAccelTime_s/Omega::instance().getTimeStep()&lt;&lt;&quot; steps).&quot;);
+
+Modified: trunk/gui/py/yade-multi
+===================================================================
+--- trunk/gui/py/yade-multi	2009-04-09 10:15:52 UTC (rev 1752)
++++ trunk/gui/py/yade-multi	2009-04-10 08:49:36 UTC (rev 1753)
+@@ -68,7 +68,7 @@
+ parser.add_option('--nice',dest='nice',type='int',help='Nice value of spawned jobs (default: 10)',default=10)
+ parser.add_option('--executable',dest='executable',help='Name of the program to run (default: %s)'%sys.argv[0][:-6],default=sys.argv[0][:-6],metavar='FILE') ## strip the '-multi' extension
+ parser.add_option('--gnuplot',dest='gnuplotOut',help='Gnuplot file where gnuplot from all jobs should be put together',default=None,metavar='FILE')
+-parser.add_option('--dry-run',dest='dryRun',help='Do not actually run (useful for getting gnuplot only, for instance)',default=False)
++parser.add_option('--dry-run',action='store_true',dest='dryRun',help='Do not actually run (useful for getting gnuplot only, for instance)',default=False)
+ opts,args=parser.parse_args()
+ logFormat,lineList,maxJobs,nice,executable,gnuplotOut,dryRun=opts.logFormat,opts.lineList,opts.maxJobs,opts.nice,opts.executable,opts.gnuplotOut,opts.dryRun
+ 
+@@ -155,8 +155,8 @@
+ 				break
+ 	preamble,plots='',[]
+ 	for job in jobs:
+-		if not job.plot:
+-			# warn here
++		if not 'plot' in job.__dict__:
++			print &quot;WARN: No plot found for job &quot;+job.id
+ 			continue
+ 		for l in file(job.plot):
+ 			if l.startswith('plot'):
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-04-09 10:15:52 UTC (rev 1752)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-04-10 08:49:36 UTC (rev 1753)
+@@ -179,7 +179,8 @@
+ 			the findX, findY, findZ take almost the totality of the time.
+ 			Parallelizing those is vastly beneficial (almost 3x speed increase, which can be quite sensible as the initial
+ 			findOverlappingBB is really slow <A HREF="http://yade.wikia.com/wiki/Colliders_performace">http://yade.wikia.com/wiki/Colliders_performace</A> and is done in 3
+-			orthogonal directions. Therefore, it is enabled by default.
++			orthogonal directions. Therefore, it is enabled by default. updateOverlappingBBSet must be protected by 
++			critical section, since it is called from all threads!
+ 			
+ 			Now sortX is right before findX etc, in the same openMP section. Beware that timingDeltas will give garbage
+ 			results if used in parallelized code.
+@@ -250,33 +251,35 @@
+ 
+ /* Note that this function is called only for bodies that actually overlap along some axis */
+ void PersistentSAPCollider::updateOverlapingBBSet(int id1,int id2){
+- 	// look if the pair (id1,id2) already exists in the overlappingBB collection
+-	const shared_ptr&lt;Interaction&gt;&amp; interaction=transientInteractions-&gt;find(body_id_t(id1),body_id_t(id2));
+-	bool found=(interaction!=0);//Bruno's Hack
+-	// if there is persistent interaction, we will not create transient one!
+-	
+-	// test if the AABBs of the spheres number &quot;id1&quot; and &quot;id2&quot; are overlapping
+-	int offset1=3*id1, offset2=3*id2;
+-	const shared_ptr&lt;Body&gt;&amp; b1(Body::byId(body_id_t(id1),rootBody)), b2(Body::byId(body_id_t(id2),rootBody));
+-	bool overlap =
+-		Collider::mayCollide(b1.get(),b2.get()) &amp;&amp;
+-		// AABB collisions: 
+-		!(
+-			maxima[offset1  ]&lt;minima[offset2  ] || maxima[offset2  ]&lt;minima[offset1  ] || 
+-			maxima[offset1+1]&lt;minima[offset2+1] || maxima[offset2+1]&lt;minima[offset1+1] || 
+-			maxima[offset1+2]&lt;minima[offset2+2] || maxima[offset2+2]&lt;minima[offset1+2]);
+-	// inserts the pair p=(id1,id2) if the two AABB overlaps and if p does not exists in the overlappingBB
+-	//if((id1==0 &amp;&amp; id2==1) || (id1==1 &amp;&amp; id2==0)) LOG_DEBUG(&quot;Processing #0 #1&quot;);
+-	//if(interaction&amp;&amp;!interaction-&gt;isReal){ LOG_DEBUG(&quot;Unreal interaction #&quot;&lt;&lt;id1&lt;&lt;&quot;=#&quot;&lt;&lt;id2&lt;&lt;&quot; (overlap=&quot;&lt;&lt;overlap&lt;&lt;&quot;, haveDistantTransient=&quot;&lt;&lt;haveDistantTransient&lt;&lt;&quot;)&quot;);}
+-	if(overlap &amp;&amp; !found){
+-		//LOG_DEBUG(&quot;Creating interaction #&quot;&lt;&lt;id1&lt;&lt;&quot;=#&quot;&lt;&lt;id2);
+-		transientInteractions-&gt;insert(body_id_t(id1),body_id_t(id2));
++	#pragma omp critical
++	{
++		// look if the pair (id1,id2) already exists in the overlappingBB collection
++		const shared_ptr&lt;Interaction&gt;&amp; interaction=transientInteractions-&gt;find(body_id_t(id1),body_id_t(id2));
++		bool found=(bool)interaction;
++		
++		// test if the AABBs of the spheres number &quot;id1&quot; and &quot;id2&quot; are overlapping
++		int offset1=3*id1, offset2=3*id2;
++		const shared_ptr&lt;Body&gt;&amp; b1(Body::byId(body_id_t(id1),rootBody)), b2(Body::byId(body_id_t(id2),rootBody));
++		bool overlap =
++			Collider::mayCollide(b1.get(),b2.get()) &amp;&amp;
++			// AABB collisions: 
++			!(
++				maxima[offset1  ]&lt;minima[offset2  ] || maxima[offset2  ]&lt;minima[offset1  ] || 
++				maxima[offset1+1]&lt;minima[offset2+1] || maxima[offset2+1]&lt;minima[offset1+1] || 
++				maxima[offset1+2]&lt;minima[offset2+2] || maxima[offset2+2]&lt;minima[offset1+2]);
++		// inserts the pair p=(id1,id2) if the two AABB overlaps and if p does not exists in the overlappingBB
++		//if((id1==0 &amp;&amp; id2==1) || (id1==1 &amp;&amp; id2==0)) LOG_DEBUG(&quot;Processing #0 #1&quot;);
++		//if(interaction&amp;&amp;!interaction-&gt;isReal){ LOG_DEBUG(&quot;Unreal interaction #&quot;&lt;&lt;id1&lt;&lt;&quot;=#&quot;&lt;&lt;id2&lt;&lt;&quot; (overlap=&quot;&lt;&lt;overlap&lt;&lt;&quot;, haveDistantTransient=&quot;&lt;&lt;haveDistantTransient&lt;&lt;&quot;)&quot;);}
++		if(overlap &amp;&amp; !found){
++			//LOG_DEBUG(&quot;Creating interaction #&quot;&lt;&lt;id1&lt;&lt;&quot;=#&quot;&lt;&lt;id2);
++			transientInteractions-&gt;insert(body_id_t(id1),body_id_t(id2));
++		}
++		// removes the pair p=(id1,id2) if the two AABB do not overlapp any more and if p already exists in the overlappingBB
++		else if(!overlap &amp;&amp; found &amp;&amp; (haveDistantTransient ? !interaction-&gt;isReal : true) ){
++			//LOG_DEBUG(&quot;Erasing interaction #&quot;&lt;&lt;id1&lt;&lt;&quot;=#&quot;&lt;&lt;id2&lt;&lt;&quot; (isReal=&quot;&lt;&lt;interaction-&gt;isReal&lt;&lt;&quot;)&quot;);
++			transientInteractions-&gt;erase(body_id_t(id1),body_id_t(id2));
++		}
+ 	}
+-	// removes the pair p=(id1,id2) if the two AABB do not overlapp any more and if p already exists in the overlappingBB
+-	else if(!overlap &amp;&amp; found &amp;&amp; (haveDistantTransient ? !interaction-&gt;isReal : true) ){
+-		//LOG_DEBUG(&quot;Erasing interaction #&quot;&lt;&lt;id1&lt;&lt;&quot;=#&quot;&lt;&lt;id2&lt;&lt;&quot; (isReal=&quot;&lt;&lt;interaction-&gt;isReal&lt;&lt;&quot;)&quot;);
+-		transientInteractions-&gt;erase(body_id_t(id1),body_id_t(id2));
+-	}
+ }
+ 
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000915.html">[deprecated list] [Yade-dev] [svn] r1752 - in trunk: gui/py scripts	scripts/test
+</A></li>
+	<LI>Next message: <A HREF="000921.html">[deprecated list] [Yade-dev] [svn] r1754 - in trunk: extra	gui/py	pkg/common/DataClass/InteractingGeometry	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine	scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#917">[ date ]</a>
+              <a href="thread.html#917">[ thread ]</a>
+              <a href="subject.html#917">[ subject ]</a>
+              <a href="author.html#917">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

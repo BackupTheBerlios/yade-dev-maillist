@@ -1,0 +1,1134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1594 - in trunk: core extra	extra/usct	lib/serialization pkg/common/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1594%20-%20in%20trunk%3A%20core%20extra%0A%09extra/usct%09lib/serialization%20pkg/common/Engine/DeusExMachina&In-Reply-To=%3C200812080917.mB89H438026686%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000543.html">
+   <LINK REL="Next"  HREF="000545.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1594 - in trunk: core extra	extra/usct	lib/serialization pkg/common/Engine/DeusExMachina</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1594%20-%20in%20trunk%3A%20core%20extra%0A%09extra/usct%09lib/serialization%20pkg/common/Engine/DeusExMachina&In-Reply-To=%3C200812080917.mB89H438026686%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1594 - in trunk: core extra	extra/usct	lib/serialization pkg/common/Engine/DeusExMachina">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Dec  8 10:17:04 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000543.html">[deprecated list] [Yade-dev] compiling with boost 1.3.3
+</A></li>
+        <LI>Next message: <A HREF="000545.html">[deprecated list] [Yade-dev] [svn] r1595 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#544">[ date ]</a>
+              <a href="thread.html#544">[ thread ]</a>
+              <a href="subject.html#544">[ subject ]</a>
+              <a href="author.html#544">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-12-08 10:17:00 +0100 (Mon, 08 Dec 2008)
+New Revision: 1594
+
+Modified:
+   trunk/core/Body.cpp
+   trunk/core/Body.hpp
+   trunk/core/BodyContainer.cpp
+   trunk/core/BodyContainer.hpp
+   trunk/core/BoundingVolume.cpp
+   trunk/core/BoundingVolume.hpp
+   trunk/core/DeusExMachina.cpp
+   trunk/core/DeusExMachina.hpp
+   trunk/core/DisplayParameters.hpp
+   trunk/core/Engine.hpp
+   trunk/core/EngineUnit.hpp
+   trunk/core/EngineUnit1D.hpp
+   trunk/core/EngineUnit2D.hpp
+   trunk/core/FileGenerator.cpp
+   trunk/core/FileGenerator.hpp
+   trunk/core/FrontEnd.hpp
+   trunk/core/GeometricalModel.cpp
+   trunk/core/GeometricalModel.hpp
+   trunk/core/InteractingGeometry.cpp
+   trunk/core/InteractingGeometry.hpp
+   trunk/core/Interaction.cpp
+   trunk/core/Interaction.hpp
+   trunk/core/InteractionContainer.cpp
+   trunk/core/InteractionContainer.hpp
+   trunk/core/InteractionGeometry.hpp
+   trunk/core/MetaBody.cpp
+   trunk/core/MetaBody.hpp
+   trunk/core/MetaEngine.cpp
+   trunk/core/MetaEngine.hpp
+   trunk/core/MetaEngine1D.hpp
+   trunk/core/MetaEngine2D.hpp
+   trunk/core/NullGUI.hpp
+   trunk/core/PhysicalAction.hpp
+   trunk/core/PhysicalActionContainer.cpp
+   trunk/core/PhysicalActionContainer.hpp
+   trunk/core/PhysicalParameters.hpp
+   trunk/core/Preferences.cpp
+   trunk/core/Preferences.hpp
+   trunk/core/RenderingEngine.hpp
+   trunk/core/TimeStepper.hpp
+   trunk/extra/Brefcom.hpp
+   trunk/extra/usct/UniaxialStrainControlledTest.hpp
+   trunk/lib/serialization/Serializable.hpp
+   trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.hpp
+Log:
+1. Modify REGISTER_ATTRIBUTES macro so that it work with or without base class given. Change all headers in core to use that. It should help us if we ever make the transition to boost::serialization.
+2. User REGISTER_CLASS_AND_BASE instead of REGISTER_CLASS_NAME and REGISTER_BASE_CLASS in core and at a few other places.
+
+
+
+Modified: trunk/core/Body.cpp
+===================================================================
+--- trunk/core/Body.cpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/Body.cpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -43,17 +43,3 @@
+ {
+ }
+ 
+-
+-void Body::registerAttributes()
+-{
+-	REGISTER_ATTRIBUTE(id);
+-	REGISTER_ATTRIBUTE(groupMask);
+-	REGISTER_ATTRIBUTE(isDynamic); // FIXME? : only used for interaction : no collision between 2 non dynamic objects
+-
+-	REGISTER_ATTRIBUTE(physicalParameters);
+-	REGISTER_ATTRIBUTE(geometricalModel);
+-	REGISTER_ATTRIBUTE(interactingGeometry);
+-	REGISTER_ATTRIBUTE(boundingVolume);
+-	REGISTER_ATTRIBUTE(clumpId);
+-}
+-
+
+Modified: trunk/core/Body.hpp
+===================================================================
+--- trunk/core/Body.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/Body.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -89,8 +89,17 @@
+ 
+ 		// Serialization
+ 	protected:
+-		void registerAttributes();
+-	REGISTER_CLASS_NAME(Body);
+-	REGISTER_BASE_CLASS_NAME(Serializable);
++		REGISTER_ATTRIBUTES(/*no base*/,
++			(id)
++			(groupMask)
++			(isDynamic) // FIXME? : only used for interaction : no collision between 2 non dynamic objects
++			(physicalParameters)
++			(geometricalModel)
++			(interactingGeometry)
++			(boundingVolume)
++			(clumpId)
++		);
++
++	REGISTER_CLASS_AND_BASE(Body,Serializable);
+ };
+ REGISTER_SERIALIZABLE(Body);
+
+Modified: trunk/core/BodyContainer.cpp
+===================================================================
+--- trunk/core/BodyContainer.cpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/BodyContainer.cpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -23,12 +23,6 @@
+ }
+ 
+ 
+-void BodyContainer::registerAttributes()
+-{
+-	REGISTER_ATTRIBUTE(body);
+-}
+-
+-
+ void BodyContainer::preProcessAttributes(bool deserializing)
+ {
+ 	if(deserializing)
+
+Modified: trunk/core/BodyContainer.hpp
+===================================================================
+--- trunk/core/BodyContainer.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/BodyContainer.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -99,14 +99,13 @@
+ 	protected :
+ 		void setId(shared_ptr&lt;Body&gt;&amp; , unsigned int);
+ 
+-	REGISTER_CLASS_NAME(BodyContainer);
+-	REGISTER_BASE_CLASS_NAME(Serializable);
++	REGISTER_CLASS_AND_BASE(BodyContainer,Serializable);
+ 
+ 	// local storage for uniform serialization of all possible container concrete implementations.
+ 	private :
+ 		vector&lt;shared_ptr&lt;Body&gt; &gt; body; 
+ 	public :
+-		virtual void registerAttributes();
++		REGISTER_ATTRIBUTES(/*no base*/,(body));
+ 	protected :
+ 		virtual void preProcessAttributes(bool deserializing);
+ 		virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/core/BoundingVolume.cpp
+===================================================================
+--- trunk/core/BoundingVolume.cpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/BoundingVolume.cpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -9,8 +9,4 @@
+ #include &quot;BoundingVolume.hpp&quot;
+ 
+ 
+-void BoundingVolume::registerAttributes()
+-{
+-	REGISTER_ATTRIBUTE(diffuseColor);
+-}
+ 
+
+Modified: trunk/core/BoundingVolume.hpp
+===================================================================
+--- trunk/core/BoundingVolume.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/BoundingVolume.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -26,9 +26,8 @@
+ 				,max;			/// Maximum of the bounding volume
+ 		BoundingVolume(): diffuseColor(Vector3r(1,1,1)), min(Vector3r(0,0,0)), max(Vector3r(0,0,0)) {}
+ 
+-		void registerAttributes();
+-	REGISTER_CLASS_NAME(BoundingVolume);
+-	REGISTER_BASE_CLASS_NAME(Serializable Indexable);
++	REGISTER_ATTRIBUTES(/*no base*/,(diffuseColor));
++	REGISTER_CLASS_AND_BASE(BoundingVolume,Serializable Indexable);
+ 	REGISTER_INDEX_COUNTER(BoundingVolume);
+ };
+ REGISTER_SERIALIZABLE(BoundingVolume);
+
+Modified: trunk/core/DeusExMachina.cpp
+===================================================================
+--- trunk/core/DeusExMachina.cpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/DeusExMachina.cpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -9,14 +9,8 @@
+ #include &quot;DeusExMachina.hpp&quot;
+ 
+ DeusExMachina::DeusExMachina() : Engine() {
+-	subscribedBodies.resize(0);
++	subscribedBodies.resize(0); // what is this good for?
+ }
+-
+-void DeusExMachina::registerAttributes() {
+-	Engine::registerAttributes();
+-	REGISTER_ATTRIBUTE(subscribedBodies);
+-}
+-
+ void DeusExMachina::action(MetaBody* b) {
+ 	this-&gt;applyCondition(b);
+ }
+
+Modified: trunk/core/DeusExMachina.hpp
+===================================================================
+--- trunk/core/DeusExMachina.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/DeusExMachina.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -31,9 +31,8 @@
+ 		virtual void applyCondition(MetaBody*) { throw; };
+ 	//	virtual bool isActivated();
+ 	protected :
+-		void registerAttributes();
+-	REGISTER_CLASS_NAME(DeusExMachina);
+-	REGISTER_BASE_CLASS_NAME(Engine);
++	REGISTER_ATTRIBUTES(Engine,(subscribedBodies));
++	REGISTER_CLASS_AND_BASE(DeusExMachina,Engine);
+ };
+ 
+ REGISTER_SERIALIZABLE(DeusExMachina);
+
+Modified: trunk/core/DisplayParameters.hpp
+===================================================================
+--- trunk/core/DisplayParameters.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/DisplayParameters.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -21,8 +21,7 @@
+ 		void setValue(std::string displayType, std::string value){assert(values.size()==displayTypes.size()); vector&lt;string&gt;::iterator I=std::find(displayTypes.begin(),displayTypes.end(),displayType); if(I==displayTypes.end()){displayTypes.push_back(displayType); values.push_back(value);} else {values[std::distance(displayTypes.begin(),I)]=value;};}
+ 	DisplayParameters(){}
+ 	virtual ~DisplayParameters(){}
+-	virtual void registerAttributes(){ REGISTER_ATTRIBUTE(displayTypes); REGISTER_ATTRIBUTE(values); }
+-	REGISTER_CLASS_NAME(DisplayParameters);
+-	REGISTER_BASE_CLASS_NAME(Serializable);
++	REGISTER_ATTRIBUTES(/*no base*/,(displayTypes)(values));
++	REGISTER_CLASS_AND_BASE(DisplayParameters,Serializable);
+ };
+ REGISTER_SERIALIZABLE(DisplayParameters);
+
+Modified: trunk/core/Engine.hpp
+===================================================================
+--- trunk/core/Engine.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/Engine.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -27,11 +27,9 @@
+ 		virtual void action(MetaBody*) { throw; };
+ 		/* returns all BodyExternalVariable's (Bex; formerly PhysicalActions) that this engine needs */
+ 		virtual list&lt;string&gt; getNeededBex(){return list&lt;string&gt;();}
+-		virtual void registerAttributes(){REGISTER_ATTRIBUTE(label);}
++	REGISTER_ATTRIBUTES(/*no base*/,(label));
++	REGISTER_CLASS_AND_BASE(Engine,Serializable);
+ 
+-	REGISTER_CLASS_NAME(Engine);
+-	REGISTER_BASE_CLASS_NAME(Serializable);
+-
+ };
+ 
+ REGISTER_SERIALIZABLE(Engine);
+
+Modified: trunk/core/EngineUnit.hpp
+===================================================================
+--- trunk/core/EngineUnit.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/EngineUnit.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -17,8 +17,7 @@
+ {
+ 	public: virtual vector&lt;std::string&gt; getFunctorTypes(){throw;}
+ 		virtual list&lt;string&gt; getNeededBex(){return list&lt;string&gt;();}
+-	REGISTER_CLASS_NAME(EngineUnit);
+-	REGISTER_BASE_CLASS_NAME(Serializable);
++	REGISTER_CLASS_AND_BASE(EngineUnit,Serializable);
+ };
+ 
+ REGISTER_SERIALIZABLE(EngineUnit);
+
+Modified: trunk/core/EngineUnit1D.hpp
+===================================================================
+--- trunk/core/EngineUnit1D.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/EngineUnit1D.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -26,8 +26,7 @@
+ 	public:
+ 		virtual std::string get1DFunctorType1(void){throw runtime_error(&quot;Class &quot;+this-&gt;getClassName()+&quot; did not use FUNCTOR1D to declare its argument type?&quot;); }
+ 		virtual vector&lt;string&gt; getFunctorTypes(void){vector&lt;string&gt; ret; ret.push_back(get1DFunctorType1()); return ret;};
+-	REGISTER_CLASS_NAME(EngineUnit1D);
+-	REGISTER_BASE_CLASS_NAME(EngineUnit FunctorWrapper);
++	REGISTER_CLASS_AND_BASE(EngineUnit1D,EngineUnit FunctorWrapper);
+ };
+ 
+ #endif // ENGINEUNIT1D_HPP
+
+Modified: trunk/core/EngineUnit2D.hpp
+===================================================================
+--- trunk/core/EngineUnit2D.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/EngineUnit2D.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -28,8 +28,7 @@
+ 		virtual std::string get2DFunctorType1(void){throw runtime_error(&quot;Class &quot;+this-&gt;getClassName()+&quot; did not use FUNCTOR2D to declare its argument types?&quot;);}
+ 		virtual std::string get2DFunctorType2(void){throw runtime_error(&quot;Class &quot;+this-&gt;getClassName()+&quot; did not use FUNCTOR2D to declare its argument types?&quot;);}
+ 		virtual vector&lt;string&gt; getFunctorTypes(){vector&lt;string&gt; ret; ret.push_back(get2DFunctorType1()); ret.push_back(get2DFunctorType2()); return ret;};
+-	REGISTER_CLASS_NAME(EngineUnit2D);
+-	REGISTER_BASE_CLASS_NAME(EngineUnit FunctorWrapper);
++	REGISTER_CLASS_AND_BASE(EngineUnit2D,EngineUnit FunctorWrapper);
+ };
+ 
+ #endif // ENGINEUNIT2D_HPP
+
+Modified: trunk/core/FileGenerator.cpp
+===================================================================
+--- trunk/core/FileGenerator.cpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/FileGenerator.cpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -36,19 +36,6 @@
+ }
+ 
+ 
+-void FileGenerator::postProcessAttributes(bool) 
+-{
+-
+-}
+-
+-
+-void FileGenerator::registerAttributes() 
+-{	
+-	REGISTER_ATTRIBUTE(outputFileName);
+-	REGISTER_ATTRIBUTE(serializationDynlib);
+-}
+-
+-
+ bool FileGenerator::generate() 
+ {
+ 	message=&quot;FileGenerator (base class) generates nothing.&quot;;
+
+Modified: trunk/core/FileGenerator.hpp
+===================================================================
+--- trunk/core/FileGenerator.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/FileGenerator.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -40,15 +40,13 @@
+ 		virtual void singleAction();
+ 
+ 	protected :
+-		//! Returns whether the generation was successful; message for user is in FileGenerator::message
+-		virtual bool generate();
++	//! Returns whether the generation was successful; message for user is in FileGenerator::message
++	virtual bool generate();
++	virtual void postProcessAttributes(){};
+ 
+-		virtual void postProcessAttributes(bool);
+-		virtual void registerAttributes();
+-
++	REGISTER_ATTRIBUTES(/*no base*/,(outputFileName)(serializationDynlib));
+ 	DECLARE_LOGGER;
+-	REGISTER_CLASS_NAME(FileGenerator);
+-	REGISTER_BASE_CLASS_NAME(Serializable);
++	REGISTER_CLASS_AND_BASE(FileGenerator,Serializable);
+ };
+ 
+ REGISTER_SERIALIZABLE(FileGenerator);
+
+Modified: trunk/core/FrontEnd.hpp
+===================================================================
+--- trunk/core/FrontEnd.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/FrontEnd.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -22,8 +22,7 @@
+ 
+ 		virtual int run(int , char * []) { return -1;};
+ 
+-	REGISTER_CLASS_NAME(FrontEnd);
+-	REGISTER_BASE_CLASS_NAME(Factorable);
++	REGISTER_CLASS_AND_BASE(FrontEnd,Factorable);
+ };
+ 
+ REGISTER_FACTORABLE(FrontEnd);
+
+Modified: trunk/core/GeometricalModel.cpp
+===================================================================
+--- trunk/core/GeometricalModel.cpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/GeometricalModel.cpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -10,11 +10,4 @@
+ 
+ #include &quot;GeometricalModel.hpp&quot;
+ 
+-void GeometricalModel::registerAttributes()
+-{
+-	REGISTER_ATTRIBUTE(diffuseColor);
+-	REGISTER_ATTRIBUTE(wire);
+-	REGISTER_ATTRIBUTE(visible);
+-	REGISTER_ATTRIBUTE(shadowCaster);
+-}
+ 
+
+Modified: trunk/core/GeometricalModel.hpp
+===================================================================
+--- trunk/core/GeometricalModel.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/GeometricalModel.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -28,11 +28,8 @@
+ 
+ 		GeometricalModel(): visible(true),wire(false),shadowCaster(false),diffuseColor(Vector3r(1,1,1)){}
+ 
+-	protected : 
+-		void registerAttributes();
+-
+-	REGISTER_CLASS_NAME(GeometricalModel);
+-	REGISTER_BASE_CLASS_NAME(Serializable Indexable);
++	REGISTER_ATTRIBUTES(/*no base*/,(visible)(wire)(shadowCaster)(diffuseColor));
++	REGISTER_CLASS_AND_BASE(GeometricalModel,Serializable Indexable);
+ 	REGISTER_INDEX_COUNTER(GeometricalModel);
+ };
+ 
+
+Modified: trunk/core/InteractingGeometry.cpp
+===================================================================
+--- trunk/core/InteractingGeometry.cpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/InteractingGeometry.cpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -10,7 +10,3 @@
+ 
+ #include &quot;InteractingGeometry.hpp&quot;
+ 
+-void InteractingGeometry::registerAttributes()
+-{
+-	REGISTER_ATTRIBUTE(diffuseColor);
+-}
+
+Modified: trunk/core/InteractingGeometry.hpp
+===================================================================
+--- trunk/core/InteractingGeometry.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/InteractingGeometry.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -30,11 +30,8 @@
+ 					// bool wire; even though GeometricalModel has bool wire ?
+ 	
+ /// Serialization
+-	protected :
+-		void registerAttributes();
+-	REGISTER_CLASS_NAME(InteractingGeometry);
+-	REGISTER_BASE_CLASS_NAME(Serializable Indexable);
+-	
++	REGISTER_ATTRIBUTES(/*no base*/,(diffuseColor));
++	REGISTER_CLASS_AND_BASE(InteractingGeometry,Serializable Indexable);
+ /// Indexable
+ 	REGISTER_INDEX_COUNTER(InteractingGeometry);
+ };
+
+Modified: trunk/core/Interaction.cpp
+===================================================================
+--- trunk/core/Interaction.cpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/Interaction.cpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -32,16 +32,6 @@
+ }
+ 
+ 
+-void Interaction::registerAttributes()
+-{
+-	REGISTER_ATTRIBUTE(id1);
+-	REGISTER_ATTRIBUTE(id2);
+-	REGISTER_ATTRIBUTE(isNew);
+-	REGISTER_ATTRIBUTE(isReal);
+-	REGISTER_ATTRIBUTE(interactionGeometry);
+-	REGISTER_ATTRIBUTE(interactionPhysics);
+-}
+-
+ void Interaction::swapOrder(){
+ 	if(interactionGeometry || interactionPhysics || !isNew){
+ 		throw std::logic_error(&quot;Bodies in interaction cannot be swapped if !isNew, have interactionGeometry or have interactionPhysics.&quot;);
+
+Modified: trunk/core/Interaction.hpp
+===================================================================
+--- trunk/core/Interaction.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/Interaction.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -46,10 +46,15 @@
+ 			bool maskAnyOK(int mask, MetaBody* rootBody=NULL){return (mask==0) || Body::byId(id1,rootBody)-&gt;maskOK(mask) || Body::byId(id2,rootBody)-&gt;maskOK(mask);}
+ 		#endif
+ 
+-	protected :
+-		void registerAttributes();
+-	REGISTER_CLASS_NAME(Interaction);
+-	REGISTER_BASE_CLASS_NAME(Serializable);
++	REGISTER_ATTRIBUTES(/*no base*/,
++		(id1)
++		(id2)
++		(isNew)
++		(isReal)
++		(interactionGeometry)
++		(interactionPhysics)
++	);
++	REGISTER_CLASS_AND_BASE(Interaction,Serializable);
+ };
+ 
+ REGISTER_SERIALIZABLE(Interaction);
+
+Modified: trunk/core/InteractionContainer.cpp
+===================================================================
+--- trunk/core/InteractionContainer.cpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/InteractionContainer.cpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -12,12 +12,7 @@
+ #include &quot;Interaction.hpp&quot;
+ 
+ 
+-void InteractionContainer::registerAttributes()
+-{
+-	REGISTER_ATTRIBUTE(interaction);
+-}
+ 
+-
+ void InteractionContainer::preProcessAttributes(bool deserializing)
+ {
+ 	if(deserializing)
+
+Modified: trunk/core/InteractionContainer.hpp
+===================================================================
+--- trunk/core/InteractionContainer.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/InteractionContainer.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -105,11 +105,10 @@
+ 		vector&lt;shared_ptr&lt;Interaction&gt; &gt; interaction;
+ 
+ 	protected :
+-		virtual void registerAttributes();
+ 		virtual void preProcessAttributes(bool deserializing);
+ 		virtual void postProcessAttributes(bool deserializing);
+-	REGISTER_CLASS_NAME(InteractionContainer);
+-	REGISTER_BASE_CLASS_NAME(Serializable);
++	REGISTER_ATTRIBUTES(/*no base*/,(interaction));
++	REGISTER_CLASS_AND_BASE(InteractionContainer,Serializable);
+ };
+ 
+ REGISTER_SERIALIZABLE(InteractionContainer);
+
+Modified: trunk/core/InteractionGeometry.hpp
+===================================================================
+--- trunk/core/InteractionGeometry.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/InteractionGeometry.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -17,7 +17,6 @@
+ {
+ 	REGISTER_CLASS_NAME(InteractionGeometry);
+ 	REGISTER_BASE_CLASS_NAME(Serializable Indexable);
+-	
+ 	REGISTER_INDEX_COUNTER(InteractionGeometry);
+ };
+ 
+
+Modified: trunk/core/MetaBody.cpp
+===================================================================
+--- trunk/core/MetaBody.cpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/MetaBody.cpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -68,25 +68,7 @@
+ }
+ 
+ 
+-void MetaBody::registerAttributes()
+-{
+-	Body::registerAttributes();
+-	REGISTER_ATTRIBUTE(tags);
+-	REGISTER_ATTRIBUTE(engines);
+-	REGISTER_ATTRIBUTE(initializers);
+-	REGISTER_ATTRIBUTE(bodies);
+-	REGISTER_ATTRIBUTE(transientInteractions);
+-	REGISTER_ATTRIBUTE(persistentInteractions);
+-	REGISTER_ATTRIBUTE(physicalActions); // FIXME - needed or not ? - Olivier : yes it is needed if there is no default initialization into constructor
+-	REGISTER_ATTRIBUTE(miscParams);
+-	REGISTER_ATTRIBUTE(dispParams);
+-	REGISTER_ATTRIBUTE(dt);
+-	REGISTER_ATTRIBUTE(currentIteration);
+-	REGISTER_ATTRIBUTE(simulationTime);
+-	REGISTER_ATTRIBUTE(stopAtIteration);
+-}
+ 
+-
+ void MetaBody::moveToNextTimeStep()
+ {
+ 	if(needsInitializers){
+
+Modified: trunk/core/MetaBody.hpp
+===================================================================
+--- trunk/core/MetaBody.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/MetaBody.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -50,9 +50,22 @@
+ /// Serialization
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+-		virtual void registerAttributes();
+-	REGISTER_CLASS_NAME(MetaBody);
+-	REGISTER_BASE_CLASS_NAME(Body);
++	REGISTER_ATTRIBUTES(Body,
++		(tags)
++		(engines)
++		(initializers)
++		(bodies)
++		(transientInteractions)
++		(persistentInteractions)
++		(physicalActions) // FIXME - needed or not ? - Olivier : yes it is needed if there is no default initialization into constructor
++		(miscParams)
++		(dispParams)
++		(dt)
++		(currentIteration)
++		(simulationTime)
++		(stopAtIteration)
++	);
++	REGISTER_CLASS_AND_BASE(MetaBody,Body);
+ };
+ 
+ REGISTER_SERIALIZABLE(MetaBody);
+
+Modified: trunk/core/MetaEngine.cpp
+===================================================================
+--- trunk/core/MetaEngine.cpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/MetaEngine.cpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -41,14 +41,7 @@
+ }
+ 
+ 
+-void MetaEngine::registerAttributes()
+-{
+-	Engine::registerAttributes();
+-	REGISTER_ATTRIBUTE(functorNames);
+-	REGISTER_ATTRIBUTE(functorArguments);
+-}
+ 
+-
+ vector&lt;vector&lt;string&gt; &gt;&amp; MetaEngine::getFunctorNames()
+ {
+ 	return functorNames;
+
+Modified: trunk/core/MetaEngine.hpp
+===================================================================
+--- trunk/core/MetaEngine.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/MetaEngine.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -46,11 +46,10 @@
+ 		virtual int getDimension() { throw; };
+ 		virtual string getBaseClassType(unsigned int ) { throw; };
+ 
+-	protected :
+-		virtual void registerAttributes();
++	protected:
+ 		virtual void postProcessAttributes(bool deserializing);
+-	REGISTER_CLASS_NAME(MetaEngine);
+-	REGISTER_BASE_CLASS_NAME(Engine);
++	REGISTER_ATTRIBUTES(Engine,(functorNames)(functorArguments));
++	REGISTER_CLASS_AND_BASE(MetaEngine,Engine);
+ };
+ 
+ REGISTER_SERIALIZABLE(MetaEngine);
+
+Modified: trunk/core/MetaEngine1D.hpp
+===================================================================
+--- trunk/core/MetaEngine1D.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/MetaEngine1D.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -80,10 +80,6 @@
+ 		}
+ 
+ 	protected :
+-		void registerAttributes()
+-		{
+-			MetaEngine::registerAttributes();
+-		}
+ 		void postProcessAttributes(bool deserializing)
+ 		{
+ 			MetaEngine::postProcessAttributes(deserializing);
+@@ -93,8 +89,8 @@
+ 					add1DEntry(functorNames[i][0],functorNames[i][1],static_pointer_cast&lt;EngineUnitType&gt;(findFunctorArguments(functorNames[i][1])));	
+ 			}
+ 		}
+-	REGISTER_CLASS_NAME(MetaEngine1D);
+-	REGISTER_BASE_CLASS_NAME(MetaEngine DynLibDispatcher);
++	REGISTER_ATTRIBUTES(MetaEngine,);
++	REGISTER_CLASS_AND_BASE(MetaEngine1D,MetaEngine DynLibDispatcher);
+ };
+ 
+ #endif // METADISPATCHINGENGINE1D_HPP
+
+Modified: trunk/core/MetaEngine2D.hpp
+===================================================================
+--- trunk/core/MetaEngine2D.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/MetaEngine2D.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -99,14 +99,9 @@
+ 					add2DEntry(functorNames[i][0],functorNames[i][1],functorNames[i][2],static_pointer_cast&lt;EngineUnitType&gt;(findFunctorArguments(functorNames[i][2])));
+ 			}
+ 		}
++	REGISTER_ATTRIBUTES(MetaEngine,);
++	REGISTER_CLASS_AND_BASE(MetaEngine2D,MetaEngine DynLibDispatcher);
+ 
+-		void registerAttributes()
+-		{
+-			MetaEngine::registerAttributes();
+-		}
+-	REGISTER_CLASS_NAME(MetaEngine2D);
+-	REGISTER_BASE_CLASS_NAME(MetaEngine DynLibDispatcher);
+-
+ };
+ 
+ //REGISTER_SERIALIZABLE(MetaEngine2D);
+
+Modified: trunk/core/NullGUI.hpp
+===================================================================
+--- trunk/core/NullGUI.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/NullGUI.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -36,8 +36,7 @@
+ 		virtual ~NullGUI ();
+ 		virtual int run(int argc, char *argv[]);
+ 	
+-	REGISTER_CLASS_NAME(NullGUI);
+-	REGISTER_BASE_CLASS_NAME(FrontEnd);
++	REGISTER_CLASS_AND_BASE(NullGUI,FrontEnd);
+ };
+ 
+ REGISTER_FACTORABLE(NullGUI);
+
+Modified: trunk/core/PhysicalAction.hpp
+===================================================================
+--- trunk/core/PhysicalAction.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/PhysicalAction.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -28,12 +28,8 @@
+ 		virtual void reset() 				{throw;};
+ 		virtual shared_ptr&lt;PhysicalAction&gt; clone()	{throw;};
+ 	
+-/// Serialization										///
+-	REGISTER_CLASS_NAME(PhysicalAction);
+-
+-/// Indexable											///
+ 	REGISTER_INDEX_COUNTER(PhysicalAction);
+-	REGISTER_BASE_CLASS_NAME(Serializable Indexable);
++	REGISTER_CLASS_AND_BASE(PhysicalAction,Serializable Indexable);
+ };
+ 
+ REGISTER_SERIALIZABLE(PhysicalAction);
+
+Modified: trunk/core/PhysicalActionContainer.cpp
+===================================================================
+--- trunk/core/PhysicalActionContainer.cpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/PhysicalActionContainer.cpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -23,9 +23,3 @@
+ 
+ }
+ 
+-
+-void PhysicalActionContainer::registerAttributes()
+-{
+-	REGISTER_ATTRIBUTE(action);
+-};
+-
+
+Modified: trunk/core/PhysicalActionContainer.hpp
+===================================================================
+--- trunk/core/PhysicalActionContainer.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/PhysicalActionContainer.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -104,11 +104,8 @@
+ 		virtual PhysicalActionContainer::iterator begin()			{throw;};
+ 		virtual PhysicalActionContainer::iterator end()			{throw;};
+ 
+-/// Serialization										///
+-	protected :
+-		virtual void registerAttributes();
+-	REGISTER_CLASS_NAME(PhysicalActionContainer);
+-	REGISTER_BASE_CLASS_NAME(Serializable);
++	REGISTER_ATTRIBUTES(/*no base*/,(action));
++	REGISTER_CLASS_AND_BASE(PhysicalActionContainer,Serializable);
+ 
+ 	// local storage for uniform serialization of all possible container concrete implementations.
+ 	private	:
+
+Modified: trunk/core/PhysicalParameters.hpp
+===================================================================
+--- trunk/core/PhysicalParameters.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/PhysicalParameters.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -24,14 +24,9 @@
+ 		static const unsigned DOF_XYZ=DOF_X|DOF_Y|DOF_Z; //! shorthand for all displacements blocked
+ 		static const unsigned DOF_RXRYRZ=DOF_RX|DOF_RY|DOF_RZ; //! shorthand for all rotations blocked
+ 		static unsigned axisDOF(int axis, bool rotationalDOF=false){return 1&lt;&lt;(axis+(rotationalDOF?3:0));} //! Return DOF_* constant for given axis&#8712;{0,1,2} and rotationalDOF&#8712;{false(default),true}; e.g. axisDOF(0,true)==DOF_RX
+-	protected :
+-		void registerAttributes(){
+-			REGISTER_ATTRIBUTE(se3);
+-			REGISTER_ATTRIBUTE(refSe3);
+-			REGISTER_ATTRIBUTE(blockedDOFs);
+-		}
+-	REGISTER_CLASS_NAME(PhysicalParameters);
+-	REGISTER_BASE_CLASS_NAME(Serializable Indexable);
++
++	REGISTER_ATTRIBUTES(/*no base*/,(se3)(refSe3)(blockedDOFs));
++	REGISTER_CLASS_AND_BASE(PhysicalParameters,Serializable Indexable);
+ 	REGISTER_INDEX_COUNTER(PhysicalParameters);
+ };
+ 
+
+Modified: trunk/core/Preferences.cpp
+===================================================================
+--- trunk/core/Preferences.cpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/Preferences.cpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -14,11 +14,3 @@
+ 	version = 1;
+ }
+ 
+-
+-void Preferences::registerAttributes()
+-{
+-	REGISTER_ATTRIBUTE(version);
+-	REGISTER_ATTRIBUTE(dynlibDirectories);
+-	REGISTER_ATTRIBUTE(defaultGUILibName);
+-}
+-
+
+Modified: trunk/core/Preferences.hpp
+===================================================================
+--- trunk/core/Preferences.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/Preferences.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -25,11 +25,8 @@
+ 		string		 defaultGUILibName;
+ 		Preferences ();
+ 
+-/// Serialization										///
+-	protected :
+-		void registerAttributes();
+-	REGISTER_CLASS_NAME(Preferences);
+-	REGISTER_BASE_CLASS_NAME(Serializable);
++	REGISTER_ATTRIBUTES(,(version)(dynlibDirectories)(defaultGUILibName));
++	REGISTER_CLASS_AND_BASE(Preferences,Serializable);
+ };
+ 
+ REGISTER_SERIALIZABLE(Preferences);
+
+Modified: trunk/core/RenderingEngine.hpp
+===================================================================
+--- trunk/core/RenderingEngine.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/RenderingEngine.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -22,8 +22,7 @@
+ 		virtual void renderWithNames(const shared_ptr&lt;MetaBody&gt;&amp; ) {throw;};
+ 		virtual void init() {throw;};
+ 
+-	REGISTER_CLASS_NAME(RenderingEngine);
+-	REGISTER_BASE_CLASS_NAME(Serializable);
++	REGISTER_CLASS_AND_BASE(RenderingEngine,Serializable);
+ };
+ 
+ REGISTER_SERIALIZABLE(RenderingEngine);
+
+Modified: trunk/core/TimeStepper.hpp
+===================================================================
+--- trunk/core/TimeStepper.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/core/TimeStepper.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -30,8 +30,7 @@
+ 
+ 	protected :
+ 		virtual void registerAttributes();
+-	REGISTER_CLASS_NAME(TimeStepper);
+-	REGISTER_BASE_CLASS_NAME(StandAloneEngine);
++	REGISTER_CLASS_AND_BASE(TimeStepper,StandAloneEngine);
+ };
+ 
+ REGISTER_SERIALIZABLE(TimeStepper);
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/extra/Brefcom.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -29,10 +29,12 @@
+ 		void compute(MetaBody* rb, bool useMax=false);
+ 		virtual void action(MetaBody* rb){compute(rb,useMaxForce);}
+ 		BrefcomGlobalCharacteristics(){};
+-	void registerAttributes(){ PeriodicEngine::registerAttributes(); REGISTER_ATTRIBUTE(unbalancedForce); REGISTER_ATTRIBUTE(useMaxForce);}
++	REGISTER_ATTRIBUTES(PeriodicEngine,
++		(unbalancedForce)
++		(useMaxForce)
++	);
+ 	DECLARE_LOGGER;
+-	REGISTER_CLASS_NAME(BrefcomGlobalCharacteristics);
+-	REGISTER_BASE_CLASS_NAME(PeriodicEngine);
++	REGISTER_CLASS_AND_BASE(BrefcomGlobalCharacteristics,PeriodicEngine);
+ };
+ REGISTER_SERIALIZABLE(BrefcomGlobalCharacteristics);
+ 
+@@ -90,41 +92,37 @@
+ 		//	BrefcomContact(Real _E, Real _G, Real _tanFrictionAngle, Real _undamagedCohesion, Real _equilibriumDist, Real _crossSection, Real _epsCrackOnset, Real _epsFracture, Real _expBending, Real _xiShear, Real _tau=0, Real _expDmgRate=1): InteractionPhysics(), E(_E), G(_G), tanFrictionAngle(_tanFrictionAngle), undamagedCohesion(_undamagedCohesion), equilibriumDist(_equilibriumDist), crossSection(_crossSection), epsCrackOnset(_epsCrackOnset), epsFracture(_epsFracture), expBending(_expBending), xiShear(_xiShear), tau(_tau), expDmgRate(_expDmgRate) { epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; neverDamage=false; omega=0; Fn=0; Fs=Vector3r::ZERO; /*TRVAR5(epsCrackOnset,epsFracture,Kn,crossSection,equilibriumDist); */ }
+ 		virtual ~BrefcomContact();
+ 
++		REGISTER_ATTRIBUTES(NormalShearInteraction,
++			(E)
++			(G)
++			(tanFrictionAngle)
++			(undamagedCohesion)
++			(crossSection)
++			(epsCrackOnset)
++			(epsFracture)
++			(omegaThreshold)
++			(xiShear)
++			(tau)
++			(expDmgRate)
++			(transStrainCoeff)
+ 
+-		virtual void registerAttributes(){
+-			NormalShearInteraction::registerAttributes();
+-			REGISTER_ATTRIBUTE(E);
+-			REGISTER_ATTRIBUTE(G);
+-			REGISTER_ATTRIBUTE(tanFrictionAngle);
+-			REGISTER_ATTRIBUTE(undamagedCohesion);
+-			REGISTER_ATTRIBUTE(crossSection);
+-			REGISTER_ATTRIBUTE(epsCrackOnset);
+-			REGISTER_ATTRIBUTE(epsFracture);
+-			REGISTER_ATTRIBUTE(omegaThreshold);
+-			REGISTER_ATTRIBUTE(xiShear);
+-			REGISTER_ATTRIBUTE(tau);
+-			REGISTER_ATTRIBUTE(expDmgRate);
+-			REGISTER_ATTRIBUTE(transStrainCoeff);
++			(kappaD)
++			(neverDamage)
++			(epsT)
++			(epsTrans)
+ 
+-			REGISTER_ATTRIBUTE(kappaD);
+-			REGISTER_ATTRIBUTE(neverDamage);
+-			REGISTER_ATTRIBUTE(epsT);
+-			REGISTER_ATTRIBUTE(epsTrans);
++			(isCohesive)
+ 
+-			REGISTER_ATTRIBUTE(isCohesive);
+-
+-			// auxiliary params, to make them accessible from python
+-			REGISTER_ATTRIBUTE(omega);
+-			REGISTER_ATTRIBUTE(Fn);
+-			REGISTER_ATTRIBUTE(Fs);
+-			REGISTER_ATTRIBUTE(epsN);
+-			REGISTER_ATTRIBUTE(sigmaN);
+-			REGISTER_ATTRIBUTE(sigmaT);
+-			REGISTER_ATTRIBUTE(relResidualStrength);
+-		};
+-
+-	REGISTER_CLASS_NAME(BrefcomContact);
+-	REGISTER_BASE_CLASS_NAME(NormalShearInteraction);
++			// auxiliary params to make them accessible from python
++			(omega)
++			(Fn)
++			(Fs)
++			(epsN)
++			(sigmaN)
++			(sigmaT)
++			(relResidualStrength)
++		);
++	REGISTER_CLASS_AND_BASE(BrefcomContact,NormalShearInteraction);
+ 	DECLARE_LOGGER;
+ };
+ REGISTER_SERIALIZABLE(BrefcomContact);
+@@ -141,9 +139,8 @@
+ 		//! average damage including already deleted contacts
+ 		Real normDmg;
+ 		BrefcomPhysParams(): epsVolumetric(0.), numBrokenCohesive(0), numContacts(0), normDmg(0.) {createIndex();};
+-		virtual void registerAttributes(){BodyMacroParameters::registerAttributes(); REGISTER_ATTRIBUTE(epsVolumetric); REGISTER_ATTRIBUTE(numBrokenCohesive); REGISTER_ATTRIBUTE(numContacts); REGISTER_ATTRIBUTE(normDmg); }
+-		REGISTER_CLASS_NAME(BrefcomPhysParams);
+-		REGISTER_BASE_CLASS_NAME(BodyMacroParameters);
++		REGISTER_ATTRIBUTES(BodyMacroParameters, (epsVolumetric) (numBrokenCohesive) (numContacts) (normDmg) );
++		REGISTER_CLASS_AND_BASE(BrefcomPhysParams,BodyMacroParameters);
+ };
+ REGISTER_SERIALIZABLE(BrefcomPhysParams);
+ 
+@@ -167,11 +164,8 @@
+ 		BrefcomLaw() { Shop::Bex::initCache(); };
+ 		void action(MetaBody*);
+ 	protected: 
+-		virtual void registerAttributes(){InteractionSolver::registerAttributes();};
+-		void postProcessAttributes(bool deserializing){}
+ 	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
+-	REGISTER_CLASS_NAME(BrefcomLaw);
+-	REGISTER_BASE_CLASS_NAME(InteractionSolver);
++	REGISTER_CLASS_AND_BASE(BrefcomLaw,InteractionSolver);
+ 	DECLARE_LOGGER;
+ };
+ REGISTER_SERIALIZABLE(BrefcomLaw);
+@@ -207,26 +201,23 @@
+ 		}
+ 
+ 		virtual void go(const shared_ptr&lt;PhysicalParameters&gt;&amp; pp1, const shared_ptr&lt;PhysicalParameters&gt;&amp; pp2, const shared_ptr&lt;Interaction&gt;&amp; interaction);
+-		virtual void registerAttributes(){
+-			InteractionPhysicsEngineUnit::registerAttributes();
+-			REGISTER_ATTRIBUTE(cohesiveThresholdIter);
++		REGISTER_ATTRIBUTES(InteractionPhysicsEngineUnit,
++			(cohesiveThresholdIter)
++			(G_over_E)
++			(expBending)
++			(xiShear)
++			(sigmaT)
++			(neverDamage)
++			(epsCrackOnset)
++			(relDuctility)
++			(tau)
++			(expDmgRate)
++			(omegaThreshold)
++			(transStrainCoeff)
++		);
+ 
+-			REGISTER_ATTRIBUTE(G_over_E);
+-			REGISTER_ATTRIBUTE(expBending);
+-			REGISTER_ATTRIBUTE(xiShear);
+-			REGISTER_ATTRIBUTE(sigmaT);
+-			REGISTER_ATTRIBUTE(neverDamage);
+-			REGISTER_ATTRIBUTE(epsCrackOnset);
+-			REGISTER_ATTRIBUTE(relDuctility);
+-			REGISTER_ATTRIBUTE(tau);
+-			REGISTER_ATTRIBUTE(expDmgRate);
+-			REGISTER_ATTRIBUTE(omegaThreshold);
+-			REGISTER_ATTRIBUTE(transStrainCoeff);
+-		}
+-
+ 		FUNCTOR2D(BrefcomPhysParams,BrefcomPhysParams);
+-		REGISTER_CLASS_NAME(BrefcomMakeContact);
+-		REGISTER_BASE_CLASS_NAME(InteractionPhysicsEngineUnit);
++		REGISTER_CLASS_AND_BASE(BrefcomMakeContact,InteractionPhysicsEngineUnit);
+ 		DECLARE_LOGGER;
+ };
+ REGISTER_SERIALIZABLE(BrefcomMakeContact);
+@@ -234,10 +225,9 @@
+ class GLDrawBrefcomContact: public GLDrawInteractionPhysicsFunctor {
+ 	public: virtual void go(const shared_ptr&lt;InteractionPhysics&gt;&amp;,const shared_ptr&lt;Interaction&gt;&amp;,const shared_ptr&lt;Body&gt;&amp;,const shared_ptr&lt;Body&gt;&amp;,bool wireFrame);
+ 	virtual ~GLDrawBrefcomContact() {};
+-	virtual void registerAttributes(){ REGISTER_ATTRIBUTE(contactLine); REGISTER_ATTRIBUTE(dmgLabel); REGISTER_ATTRIBUTE(dmgPlane); REGISTER_ATTRIBUTE(epsT); REGISTER_ATTRIBUTE(epsTAxes); REGISTER_ATTRIBUTE(normal); REGISTER_ATTRIBUTE(colorStrain); REGISTER_ATTRIBUTE(epsNLabel);}
++	REGISTER_ATTRIBUTES(/*no base*/,(contactLine)(dmgLabel)(dmgPlane)(epsT)(epsTAxes)(normal)(colorStrain)(epsNLabel));
+ 	RENDERS(BrefcomContact);
+-	REGISTER_CLASS_NAME(GLDrawBrefcomContact);
+-	REGISTER_BASE_CLASS_NAME(GLDrawInteractionPhysicsFunctor);
++	REGISTER_CLASS_AND_BASE(GLDrawBrefcomContact,GLDrawInteractionPhysicsFunctor);
+ 	DECLARE_LOGGER;
+ 	static bool contactLine,dmgLabel,dmgPlane,epsT,epsTAxes,normal,colorStrain,epsNLabel;
+ };
+@@ -249,9 +239,8 @@
+ 		Real maxOmega;
+ 		BrefcomDamageColorizer(){maxOmega=0;}
+ 		virtual void action(MetaBody*);
+-	virtual void registerAttributes(){ PeriodicEngine::registerAttributes(); REGISTER_ATTRIBUTE(maxOmega);}
+-	REGISTER_CLASS_NAME(BrefcomDamageColorizer);
+-	REGISTER_BASE_CLASS_NAME(PeriodicEngine);
++	REGISTER_ATTRIBUTES(PeriodicEngine,(maxOmega));
++	REGISTER_CLASS_AND_BASE(BrefcomDamageColorizer,PeriodicEngine);
+ };
+ REGISTER_SERIALIZABLE(BrefcomDamageColorizer);
+ 
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.hpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/extra/usct/UniaxialStrainControlledTest.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -133,7 +133,7 @@
+ 		virtual void applyCondition(MetaBody* rootBody);
+ 		UniaxialStrainer(){axis=2; asymmetry=0; currentStrainRate=0; originalLength=-1; limitStrain=0; notYetReversed=true; crossSectionArea=-1; needsInit=true; /* sensorsPusher=shared_ptr&lt;UniaxialStrainSensorPusher&gt;(); */ recordFile=&quot;/tmp/usct.data&quot;; strain=avgStress=/*avgTransStrain=*/0; blockRotations=false; blockDisplacements=false;  stopStrain=numeric_limits&lt;Real&gt;::quiet_NaN(); active=true; idleIterations=0; };
+ 		virtual ~UniaxialStrainer(){};
+-		REGISTER_ATTRIBUTES_WITH_BASE(DeusExMachina,
++		REGISTER_ATTRIBUTES(DeusExMachina,
+ 				(strainRate) 
+ 				(stopStrain) 
+ 				(active)
+
+Modified: trunk/lib/serialization/Serializable.hpp
+===================================================================
+--- trunk/lib/serialization/Serializable.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/lib/serialization/Serializable.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -43,13 +43,17 @@
+                 registerAttribute( #attribute, attribute );
+ 
+ 
++// placeholder function for registration with empty base
++namespace{
++	void registerAttributes(){}
++};
+ 
+ #define _REGISTER_ATTRIBUTES_BODY(x,y,z) registerAttribute(BOOST_PP_STRINGIZE(z),z);
+ #define REGISTER_ATTRIBUTES_MANY(attrs) BOOST_PP_SEQ_FOR_EACH(_REGISTER_ATTRIBUTES_BODY,~,attrs)
+ //! create member function that register attributes; must be parenthesized, without commas: (attr1) (attr2) (attr3) ...
+-#define REGISTER_ATTRIBUTES(attrs) protected: void registerAttributes(){ REGISTER_ATTRIBUTES_MANY(attrs) }
++//#define REGISTER_ATTRIBUTES(attrs) protected: void registerAttributes(){ REGISTER_ATTRIBUTES_MANY(attrs) }
+ //! Same as REGISTER_ATTRIBUTES, but with first argument of base class, of which registerAttributes will be called first
+-#define REGISTER_ATTRIBUTES_WITH_BASE(baseClass,attrs) protected: void registerAttributes(){ baseClass::registerAttributes(); REGISTER_ATTRIBUTES_MANY(attrs) }
++#define REGISTER_ATTRIBUTES(baseClass,attrs) protected: void registerAttributes(){ baseClass::registerAttributes(); REGISTER_ATTRIBUTES_MANY(attrs) }
+ 
+ 
+ // for both fundamental and non-fundamental cases
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.hpp	2008-12-03 10:04:10 UTC (rev 1593)
++++ trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.hpp	2008-12-08 09:17:00 UTC (rev 1594)
+@@ -37,7 +37,7 @@
+ 		virtual ~Se3Interpolator(){};
+ 		virtual void applyCondition(MetaBody* mb);
+ 	protected:
+-		REGISTER_ATTRIBUTES_WITH_BASE(DeusExMachina,
++		REGISTER_ATTRIBUTES(DeusExMachina,
+ 			(done)
+ 			(started)
+ 			(start)
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000543.html">[deprecated list] [Yade-dev] compiling with boost 1.3.3
+</A></li>
+	<LI>Next message: <A HREF="000545.html">[deprecated list] [Yade-dev] [svn] r1595 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#544">[ date ]</a>
+              <a href="thread.html#544">[ thread ]</a>
+              <a href="subject.html#544">[ subject ]</a>
+              <a href="author.html#544">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

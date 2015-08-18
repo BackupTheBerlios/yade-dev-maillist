@@ -1,0 +1,403 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1703 - in trunk: core	examples/collider-perf	extra/clump gui/py	lib/multimethods	pkg/common/Engine/MetaEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1703%20-%20in%20trunk%3A%20core%0A%09examples/collider-perf%09extra/clump%20gui/py%0A%09lib/multimethods%09pkg/common/Engine/MetaEngine%0A%09pkg/dem/Engine/DeusExMachina%09pkg/dem/PreProcessor&In-Reply-To=%3C200903011329.n21DTrCp021532%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000792.html">
+   <LINK REL="Next"  HREF="000796.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1703 - in trunk: core	examples/collider-perf	extra/clump gui/py	lib/multimethods	pkg/common/Engine/MetaEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1703%20-%20in%20trunk%3A%20core%0A%09examples/collider-perf%09extra/clump%20gui/py%0A%09lib/multimethods%09pkg/common/Engine/MetaEngine%0A%09pkg/dem/Engine/DeusExMachina%09pkg/dem/PreProcessor&In-Reply-To=%3C200903011329.n21DTrCp021532%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1703 - in trunk: core	examples/collider-perf	extra/clump gui/py	lib/multimethods	pkg/common/Engine/MetaEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Mar  1 14:29:53 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000792.html">[deprecated list] [Yade-dev] [svn] r1702 - in	trunk/pkg:	common/RenderingEngine/GLDrawInteractingGeometry	dem/DataClass/InteractionPhysics	dem/Engine/EngineUnit	dem/Engine/StandAloneEngine snow	snow/DataClass snow/Engine	snow/PreProcessor snow/RenderingEngine
+</A></li>
+        <LI>Next message: <A HREF="000796.html">[deprecated list] [Yade-dev] [svn] r1704 - in trunk: gui/py scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#794">[ date ]</a>
+              <a href="thread.html#794">[ thread ]</a>
+              <a href="subject.html#794">[ subject ]</a>
+              <a href="author.html#794">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-03-01 14:29:51 +0100 (Sun, 01 Mar 2009)
+New Revision: 1703
+
+Modified:
+   trunk/core/Interaction.cpp
+   trunk/core/Interaction.hpp
+   trunk/examples/collider-perf/perf.py
+   trunk/extra/clump/Shop.cpp
+   trunk/gui/py/utils.py
+   trunk/gui/py/yade-multi
+   trunk/lib/multimethods/DynLibDispatcher.hpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+Log:
+1. Fix collider-perf (TriaxialTest has hardcoded dt=0.001 !!!!), set timestep by hand at first
+2. Fix Shop:: loading spheres from file (regression from yesterday)
+3. Add functorCache to Interaction and to InteractionDispatchers. About 5% improvement, but not yet finished.
+4. Add DynLibDispatcher::getFunctor2D
+5. Add BexContainer::sync() to other places in triaxial (thrown otherwise)
+
+
+
+
+Modified: trunk/core/Interaction.cpp
+===================================================================
+--- trunk/core/Interaction.cpp	2009-03-01 01:41:37 UTC (rev 1702)
++++ trunk/core/Interaction.cpp	2009-03-01 13:29:51 UTC (rev 1703)
+@@ -29,6 +29,7 @@
+ 	isReal = false;
+ 	isNeighbor = true;//NOTE : TriangulationCollider needs that
+ 
++	functorCache.geomExists=true;
+ }
+ 
+ 
+
+Modified: trunk/core/Interaction.hpp
+===================================================================
+--- trunk/core/Interaction.hpp	2009-03-01 01:41:37 UTC (rev 1702)
++++ trunk/core/Interaction.hpp	2009-03-01 13:29:51 UTC (rev 1703)
+@@ -15,6 +15,8 @@
+ typedef int body_id_t;
+ 
+ class InteractionGeometryEngineUnit;
++class InteractionPhysicsEngineUnit;
++class ConstitutiveLaw;
+ 
+ class Interaction : public Serializable
+ {
+@@ -39,6 +41,18 @@
+ 		//! swaps order of bodies within the interaction
+ 		void swapOrder();
+ 
++		//! cache functors that are called for this interaction. Currently used by InteractionDispatchers.
++		struct {
++			// Whether geometry dispatcher exists at all; this is different from !geom, since that can mean we haven't populated the cache yet.
++			// Therefore, geomExists must be initialized to true first (done in Interaction ctor).
++			bool geomExists;
++			// shared_ptr's are initialized to NULLs automagically
++			shared_ptr&lt;InteractionGeometryEngineUnit&gt; geom;
++			shared_ptr&lt;InteractionPhysicsEngineUnit&gt; phys;
++			shared_ptr&lt;ConstitutiveLaw&gt; constLaw;
++		} functorCache;
++			
++
+ 		#if 0
+ 			//! Whether both bodies involved in interaction satisfies given mask; provide rootBody for faster lookup
+ 			bool maskBothOK(int mask, MetaBody* rootBody=NULL){return (mask==0) || (Body::byId(id1,rootBody)-&gt;maskOK(mask) &amp;&amp; Body::byId(id2,rootBody)-&gt;maskOK(mask));}
+
+Modified: trunk/examples/collider-perf/perf.py
+===================================================================
+--- trunk/examples/collider-perf/perf.py	2009-03-01 01:41:37 UTC (rev 1702)
++++ trunk/examples/collider-perf/perf.py	2009-03-01 13:29:51 UTC (rev 1703)
+@@ -17,6 +17,7 @@
+ O.timingEnabled=True
+ 
+ p=Preprocessor('TriaxialTest',{'importFilename':spheresFile}).load()
++O.dt=utils.PWaveTimeStep()
+ utils.replaceCollider(StandAloneEngine(collider))
+ 
+ O.step()
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2009-03-01 01:41:37 UTC (rev 1702)
++++ trunk/extra/clump/Shop.cpp	2009-03-01 13:29:51 UTC (rev 1703)
+@@ -485,7 +485,7 @@
+ 		int i=0;
+ 		FOREACH(const string&amp; s, toks){
+ 			if(i&lt;3) C[i]=lexical_cast&lt;Real&gt;(s);
+-			if(i==4) r=lexical_cast&lt;Real&gt;(s);
++			if(i==3) r=lexical_cast&lt;Real&gt;(s);
+ 			i++;
+ 		}
+ 		if(i==0) continue; // empty line, skipped (can be the last one)
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2009-03-01 01:41:37 UTC (rev 1702)
++++ trunk/gui/py/utils.py	2009-03-01 13:29:51 UTC (rev 1703)
+@@ -354,7 +354,6 @@
+ 		for i in range(len(names)):
+ 			if names[i]=='description': o.tags['description']=values[i]
+ 			else:
+-				print 'Parameter name:',names[i],names[i][0]
+ 				if names[i] not in kw.keys():
+ 					if (not unknownOk) and names[i][0]!='!': raise NameError(&quot;Parameter `%s' has no default value assigned&quot;%names[i])
+ 				else: kw.pop(names[i])
+
+Modified: trunk/gui/py/yade-multi
+===================================================================
+--- trunk/gui/py/yade-multi	2009-03-01 01:41:37 UTC (rev 1702)
++++ trunk/gui/py/yade-multi	2009-03-01 13:29:51 UTC (rev 1703)
+@@ -14,7 +14,7 @@
+ 	def saveInfo(self):
+ 		log=file(self.log,'a')
+ 		log.write(&quot;&quot;&quot;
+-=================== JOB&#160;SUMMARY ================
++=================== JOB SUMMARY ================
+ id      : %s
+ status  : %d (%s)
+ duration: %s
+
+Modified: trunk/lib/multimethods/DynLibDispatcher.hpp
+===================================================================
+--- trunk/lib/multimethods/DynLibDispatcher.hpp	2009-03-01 01:41:37 UTC (rev 1702)
++++ trunk/lib/multimethods/DynLibDispatcher.hpp	2009-03-01 13:29:51 UTC (rev 1703)
+@@ -442,7 +442,21 @@
+ 			#endif
+ 		  }
+ 		
+-	public  : bool locateMultivirtualFunctor2D(int&amp; index1, int&amp; index2, shared_ptr&lt;BaseClass1&gt;&amp; base1,shared_ptr&lt;BaseClass2&gt;&amp; base2)
++	public:
++		/* Return pointer to the functor for two base classes given. Swap is true if the dispatch objects
++		 * should be swapped before calling Executor::go.
++		 */
++		shared_ptr&lt;Executor&gt; getFunctor2D(shared_ptr&lt;BaseClass1&gt;&amp; base1, shared_ptr&lt;BaseClass2&gt;&amp; base2, bool&amp; swap){
++			int ix1, ix2;
++			if(!locateMultivirtualFunctor2D(ix1,ix2,base1,base2)){
++				return shared_ptr&lt;Executor&gt;();
++			}
++			swap=(bool)(callBacksInfo[ix1][ix2]);
++			return callBacks[ix1][ix2];
++		}
++	
++	
++		bool locateMultivirtualFunctor2D(int&amp; index1, int&amp; index2, shared_ptr&lt;BaseClass1&gt;&amp; base1,shared_ptr&lt;BaseClass2&gt;&amp; base2)
+ 		  {
+ 			index1 = base1-&gt;getClassIndex();
+ 			index2 = base2-&gt;getClassIndex();
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp	2009-03-01 01:41:37 UTC (rev 1702)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp	2009-03-01 13:29:51 UTC (rev 1703)
+@@ -8,6 +8,8 @@
+ 	constLawDispatcher=shared_ptr&lt;ConstitutiveLawDispatcher&gt;(new ConstitutiveLawDispatcher);
+ }
+ 
++#define DISPATCH_CACHE
++
+ void InteractionDispatchers::action(MetaBody* rootBody){
+ 	#ifdef YADE_OPENMP
+ 		const long size=rootBody-&gt;interactions-&gt;size();
+@@ -17,16 +19,60 @@
+ 	#else
+ 		FOREACH(shared_ptr&lt;Interaction&gt; I, *rootBody-&gt;interactions){
+ 	#endif
++		#ifdef DISPATCH_CACHE
++			shared_ptr&lt;Body&gt;&amp; b1=(*rootBody-&gt;bodies)[I-&gt;getId1()];
++			shared_ptr&lt;Body&gt;&amp; b2=(*rootBody-&gt;bodies)[I-&gt;getId2()];
++			// we know there is no geometry functor already, take the short path
++			if(!I-&gt;functorCache.geomExists) { I-&gt;isReal=false; continue; }
++			// no interaction geometry for either of bodies; no interaction possible
++			if(!b1-&gt;interactingGeometry || !b2-&gt;interactingGeometry) { I-&gt;isReal=false; continue; }
++
+ 			// InteractionGeometryMetaEngine
++			if(!I-&gt;functorCache.geom || !I-&gt;functorCache.phys){
++				bool swap=false;
++				I-&gt;functorCache.geom=geomDispatcher-&gt;getFunctor2D(b1-&gt;interactingGeometry,b2-&gt;interactingGeometry,swap);
++				// returns NULL ptr if no functor exists; remember that and shortcut
++				if(!I-&gt;functorCache.geom) { I-&gt;functorCache.geomExists=false; continue; }
++				// arguments for the geom functor are in the reverse order (dispatcher would normally call goReverse).
++				// we don't remember the fact that is reverse, so we swap bodies within the interaction
++				// and can call go in all cases
++				if(swap) { I-&gt;swapOrder(); b1=(*rootBody-&gt;bodies)[I-&gt;getId1()]; b2=(*rootBody-&gt;bodies)[I-&gt;getId2()]; }
++			}
++			assert(I-&gt;functorCache.geom);
++			I-&gt;isReal=I-&gt;functorCache.geom-&gt;go(b1-&gt;interactingGeometry,b2-&gt;interactingGeometry,b1-&gt;physicalParameters-&gt;se3, b2-&gt;physicalParameters-&gt;se3,I);
++			if(!I-&gt;isReal) continue;
++
++			// InteractionPhysicsMetaEngine
++			if(!I-&gt;functorCache.phys){
++				bool swap=false; I-&gt;functorCache.phys=physDispatcher-&gt;getFunctor2D(b1-&gt;physicalParameters,b2-&gt;physicalParameters,swap);
++				assert(!swap); // InteractionPhysicsEngineUnits are symmetric
++			}
++			assert(I-&gt;functorCache.phys);
++			I-&gt;functorCache.phys-&gt;go(b1-&gt;physicalParameters,b2-&gt;physicalParameters,I);
++
++			// ConstitutiveLawDispatcher
++			// populating constLaw cache must be done after geom and physics dispatchers have been called, since otherwise the interaction
++			// would not have interactionGeometry and interactionPhysics yet.
++			if(!I-&gt;functorCache.constLaw){
++				bool swap=false; I-&gt;functorCache.constLaw=constLawDispatcher-&gt;getFunctor2D(I-&gt;interactionGeometry,I-&gt;interactionPhysics,swap);
++				assert(!swap); // reverse call would make no sense, as the arguments are of different types
++			}
++		  	assert(I-&gt;functorCache.constLaw);
++			I-&gt;functorCache.constLaw-&gt;go(I-&gt;interactionGeometry,I-&gt;interactionPhysics,I.get(),rootBody);
++
++		#else
+ 			const shared_ptr&lt;Body&gt;&amp; b1=Body::byId(I-&gt;getId1(),rootBody);
+ 			const shared_ptr&lt;Body&gt;&amp; b2=Body::byId(I-&gt;getId2(),rootBody);
++			// InteractionGeometryMetaEngine
+ 			I-&gt;isReal =
+ 				b1-&gt;interactingGeometry &amp;&amp; b2-&gt;interactingGeometry &amp;&amp; // some bodies do not have interactingGeometry
+ 				geomDispatcher-&gt;operator()(b1-&gt;interactingGeometry, b2-&gt;interactingGeometry, b1-&gt;physicalParameters-&gt;se3, b2-&gt;physicalParameters-&gt;se3,I);
+ 			if(!I-&gt;isReal) continue;
+ 			// InteractionPhysicsMetaEngine
+-			physDispatcher-&gt;operator()(b1-&gt;physicalParameters, b2-&gt;physicalParameters,I);
++			// geom may have swapped bodies, get bodies again
++			physDispatcher-&gt;operator()(Body::byId(I-&gt;getId1(),rootBody)-&gt;physicalParameters, Body::byId(I-&gt;getId2(),rootBody)-&gt;physicalParameters,I);
+ 			// ConstitutiveLawDispatcher
+ 			constLawDispatcher-&gt;operator()(I-&gt;interactionGeometry,I-&gt;interactionPhysics,I.get(),rootBody);
++		#endif
+ 		}
+ }
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2009-03-01 01:41:37 UTC (rev 1702)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2009-03-01 13:29:51 UTC (rev 1703)
+@@ -400,6 +400,9 @@
+  */
+ Real TriaxialStressController::ComputeUnbalancedForce(MetaBody * ncb, bool maxUnbalanced)
+ {
++	#ifdef BEX_CONTAINER
++		ncb-&gt;bex.sync();
++	#endif
+ 	//compute the mean contact force
+ 	Real MeanForce = 0.f;
+ 	long nForce = 0;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2009-03-01 01:41:37 UTC (rev 1702)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2009-03-01 13:29:51 UTC (rev 1703)
+@@ -104,7 +104,7 @@
+ 		void updateStiffness(MetaBody* ncb);
+ 		void computeStressStrain(MetaBody* ncb); //Compute stresses on walls as &quot;Vector3r stress[6]&quot;, compute meanStress, strain[3] and mean strain
+ 		//! Compute the mean/max unbalanced force in the assembly (normalized by mean contact force)
+-    		Real ComputeUnbalancedForce(MetaBody * ncb, bool maxUnbalanced=false);
++    	Real ComputeUnbalancedForce(MetaBody * ncb, bool maxUnbalanced=false);
+ 
+ 		DECLARE_LOGGER;
+ 		
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-03-01 01:41:37 UTC (rev 1702)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-03-01 13:29:51 UTC (rev 1703)
+@@ -266,26 +266,32 @@
+ 	/* if _mean_radius is not given (i.e. &lt;=0), then calculate it from box size;
+ 	 * OTOH, if it is specified, scale the box preserving its ratio and lowerCorner so that the radius can be as requested
+ 	 */
+-	Vector3r dimensions=upperCorner-lowerCorner; Real volume=dimensions.X()*dimensions.Y()*dimensions.Z();
+ 	Real porosity=.75;
+-	Real really_radiusMean;
++	
++	vector&lt;BasicSphere&gt; sphere_list;
+ 
+-	if(radiusMean&lt;=0) really_radiusMean=pow(volume*(1-porosity)/(Mathr::PI*(4/3.)*numberOfGrains),1/3.);
++	if(importFilename==&quot;&quot;){
++		Vector3r dimensions=upperCorner-lowerCorner; Real volume=dimensions.X()*dimensions.Y()*dimensions.Z();
++		Real really_radiusMean;
++		if(radiusMean&lt;=0) really_radiusMean=pow(volume*(1-porosity)/(Mathr::PI*(4/3.)*numberOfGrains),1/3.);
++		else {
++			bool fixedDims[3];
++			fixedDims[0]=fixedBoxDims.find('x')!=string::npos; fixedDims[1]=fixedBoxDims.find('y')!=string::npos; fixedDims[2]=fixedBoxDims.find('z')!=string::npos;
++			int nScaled=(3-(int)fixedDims[0]+(int)fixedDims[1]+(int)fixedDims[2]);
++			if(nScaled==0) throw std::invalid_argument(&quot;At most 2 (not 3) axes can have fixed dimensions in fixedBoxDims if scaling for given radiusMean.&quot;);
++			Real boxScaleFactor=radiusMean*pow((4/3.)*Mathr::PI*numberOfGrains/(volume*(1-porosity)),1./nScaled);
++			LOG_INFO(&quot;Mean radius value of &quot;&lt;&lt;radiusMean&lt;&lt;&quot; requested, scaling &quot;&lt;&lt;nScaled&lt;&lt;&quot; dimensions by &quot;&lt;&lt;boxScaleFactor);
++			dimensions[0]*=fixedDims[0]?1.:boxScaleFactor; dimensions[1]*=fixedDims[1]?1.:boxScaleFactor; dimensions[2]*=fixedDims[2]?1.:boxScaleFactor;
++			upperCorner=lowerCorner+dimensions;
++			really_radiusMean=radiusMean;
++		}
++		message+=GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, radiusStdDev, really_radiusMean, porosity);
++	}
+ 	else {
+-		bool fixedDims[3];
+-		fixedDims[0]=fixedBoxDims.find('x')!=string::npos; fixedDims[1]=fixedBoxDims.find('y')!=string::npos; fixedDims[2]=fixedBoxDims.find('z')!=string::npos;
+-		int nScaled=(3-(int)fixedDims[0]+(int)fixedDims[1]+(int)fixedDims[2]);
+-		if(nScaled==0) throw std::invalid_argument(&quot;At most 2 (not 3) axes can have fixed dimensions in fixedBoxDims if scaling for given radiusMean.&quot;);
+-		Real boxScaleFactor=radiusMean*pow((4/3.)*Mathr::PI*numberOfGrains/(volume*(1-porosity)),1./nScaled);
+-		LOG_INFO(&quot;Mean radius value of &quot;&lt;&lt;radiusMean&lt;&lt;&quot; requested, scaling &quot;&lt;&lt;nScaled&lt;&lt;&quot; dimensions by &quot;&lt;&lt;boxScaleFactor);
+-		dimensions[0]*=fixedDims[0]?1.:boxScaleFactor; dimensions[1]*=fixedDims[1]?1.:boxScaleFactor; dimensions[2]*=fixedDims[2]?1.:boxScaleFactor;
+-		upperCorner=lowerCorner+dimensions;
+-		really_radiusMean=radiusMean;
++		if(radiusMean&gt;0) LOG_WARN(&quot;radiusMean ignored, since importFilename specified.&quot;);
++		sphere_list=Shop::loadSpheresFromFile(importFilename,lowerCorner,upperCorner);
+ 	}
+-
+ 	
+-	
+-	
+ 	if(boxWalls)
+ 	{
+ 	// bottom box
+@@ -388,11 +394,7 @@
+ 			}
+ 			 
+ 	}
+-	
+-	
+-	vector&lt;BasicSphere&gt; sphere_list;
+-	if(importFilename!=&quot;&quot;) sphere_list=Shop::loadSpheresFromFile(importFilename,lowerCorner,upperCorner);
+-	else message+=GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, radiusStdDev, really_radiusMean, porosity);
++
+ 	vector&lt;BasicSphere&gt;::iterator it = sphere_list.begin();
+ 	vector&lt;BasicSphere&gt;::iterator it_end = sphere_list.end();
+ 	FOREACH(const BasicSphere&amp; it, sphere_list){
+@@ -401,10 +403,8 @@
+ 		rootBody-&gt;bodies-&gt;insert(body);
+ 	}	
+ 
+-	
+-	
++
+ 	return true;
+-
+ }
+ 
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000792.html">[deprecated list] [Yade-dev] [svn] r1702 - in	trunk/pkg:	common/RenderingEngine/GLDrawInteractingGeometry	dem/DataClass/InteractionPhysics	dem/Engine/EngineUnit	dem/Engine/StandAloneEngine snow	snow/DataClass snow/Engine	snow/PreProcessor snow/RenderingEngine
+</A></li>
+	<LI>Next message: <A HREF="000796.html">[deprecated list] [Yade-dev] [svn] r1704 - in trunk: gui/py scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#794">[ date ]</a>
+              <a href="thread.html#794">[ thread ]</a>
+              <a href="subject.html#794">[ subject ]</a>
+              <a href="author.html#794">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,101 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] random-access container for	interactions
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20random-access%20container%20for%0A%09interactions&In-Reply-To=%3C48E22E94.2000302%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000416.html">
+   <LINK REL="Next"  HREF="000420.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] random-access container for	interactions</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20random-access%20container%20for%0A%09interactions&In-Reply-To=%3C48E22E94.2000302%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev] random-access container for	interactions">eudoxos at arcig.cz
+       </A><BR>
+    <I>Tue Sep 30 15:50:12 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000416.html">[deprecated list] [Yade-dev] random-access container for	interactions
+</A></li>
+        <LI>Next message: <A HREF="000420.html">[deprecated list] [Yade-dev] random-access container for	interactions
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#418">[ date ]</a>
+              <a href="thread.html#418">[ thread ]</a>
+              <a href="subject.html#418">[ subject ]</a>
+              <a href="author.html#418">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Hi, cool!!! I just wanted to hack InteractionVecSet so that interactions
+could be accessed randomly with interger index and you've done it before
+I did... :-)
+
+
+
+&gt;<i> 1. How to set interaction container from python gui?
+</I>&gt;<i>   
+</I>No easy way... The default container is constructed in
+MetaBody::MetaBody() initializers. You could add some method to pyOmega
+to switch container to InteractionVecMap.
+&gt;<i> 2. How to incorporate random access to Interaction*MetaEngines?
+</I>&gt;<i>   
+</I>See the loop over all interactions in
+InteractionPhysicsMetaEngine::action? It would have to be changed there.
+For openMP, you need integer indexing (with constant time access, of
+course), so you would loop like this
+
+# pragma omp parallel for
+for(long i=0; i&lt;transientInteractions.size() /* or something like that
+*/; i++){
+   shared_ptr&lt;Interaction&gt;=transientInteractions.getNth(i);
+   ...
+}
+
+If you can benchmark that openmp loop with OMP_NUM_THREADS==1 is as fast
+as non-openmp for, then it could be there by default.
+&gt;<i> and PhysicalActionVectorVector::find break a parallel computations because it resize
+</I>&gt;<i> physicalActions container.
+</I>&gt;<i>   
+</I>? It should resize only when number of bodies changes.
+
+Vaclav
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000416.html">[deprecated list] [Yade-dev] random-access container for	interactions
+</A></li>
+	<LI>Next message: <A HREF="000420.html">[deprecated list] [Yade-dev] random-access container for	interactions
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#418">[ date ]</a>
+              <a href="thread.html#418">[ thread ]</a>
+              <a href="subject.html#418">[ subject ]</a>
+              <a href="author.html#418">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

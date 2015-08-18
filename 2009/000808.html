@@ -1,0 +1,1189 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1709 - in trunk: core	core/containers extra	gui/py lib/base pkg/common	pkg/common/Engine/StandAloneEngine	pkg/dem pkg/dem/PreProcessor	pkg/lattice/PreProcessor	pkg/realtime-rigidbody/PreProcessor	pkg/snow	pkg/snow/PreProcessor scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1709%20-%20in%20trunk%3A%20core%0A%09core/containers%20extra%09gui/py%20lib/base%20pkg/common%0A%09pkg/common/Engine/StandAloneEngine%09pkg/dem%20pkg/dem/PreProcessor%0A%09pkg/lattice/PreProcessor%09pkg/realtime-rigidbody/PreProcessor%0A%09pkg/snow%09pkg/snow/PreProcessor%20scripts&In-Reply-To=%3C200903030907.n2397vVj002667%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000807.html">
+   <LINK REL="Next"  HREF="000809.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1709 - in trunk: core	core/containers extra	gui/py lib/base pkg/common	pkg/common/Engine/StandAloneEngine	pkg/dem pkg/dem/PreProcessor	pkg/lattice/PreProcessor	pkg/realtime-rigidbody/PreProcessor	pkg/snow	pkg/snow/PreProcessor scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1709%20-%20in%20trunk%3A%20core%0A%09core/containers%20extra%09gui/py%20lib/base%20pkg/common%0A%09pkg/common/Engine/StandAloneEngine%09pkg/dem%20pkg/dem/PreProcessor%0A%09pkg/lattice/PreProcessor%09pkg/realtime-rigidbody/PreProcessor%0A%09pkg/snow%09pkg/snow/PreProcessor%20scripts&In-Reply-To=%3C200903030907.n2397vVj002667%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1709 - in trunk: core	core/containers extra	gui/py lib/base pkg/common	pkg/common/Engine/StandAloneEngine	pkg/dem pkg/dem/PreProcessor	pkg/lattice/PreProcessor	pkg/realtime-rigidbody/PreProcessor	pkg/snow	pkg/snow/PreProcessor scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Mar  3 10:07:57 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000807.html">[deprecated list] [Yade-dev] [svn] r1708 -	trunk/pkg/common/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000809.html">[deprecated list] [Yade-dev] [svn] r1710 - in trunk: .	pkg/realtime-rigidbody
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#808">[ date ]</a>
+              <a href="thread.html#808">[ thread ]</a>
+              <a href="subject.html#808">[ subject ]</a>
+              <a href="author.html#808">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-03-03 10:07:53 +0100 (Tue, 03 Mar 2009)
+New Revision: 1709
+
+Removed:
+   trunk/pkg/common/Engine/StandAloneEngine/SAPCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/SAPCollider.hpp
+Modified:
+   trunk/core/containers/InteractionHashMap.hpp
+   trunk/core/yade.cpp
+   trunk/extra/SConscript
+   trunk/gui/py/log.cpp
+   trunk/lib/base/Logging.hpp
+   trunk/pkg/common/SConscript
+   trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/DirectShearCis.cpp
+   trunk/pkg/dem/PreProcessor/Funnel.cpp
+   trunk/pkg/dem/PreProcessor/HydraulicTest.cpp
+   trunk/pkg/dem/PreProcessor/MembraneTest.cpp
+   trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+   trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp
+   trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp
+   trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp
+   trunk/pkg/dem/PreProcessor/SimpleShear.cpp
+   trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+   trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+   trunk/pkg/dem/SConscript
+   trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+   trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp
+   trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+   trunk/pkg/snow/PreProcessor/SnowCreepTest.cpp
+   trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp
+   trunk/pkg/snow/SConscript
+   trunk/scripts/pch.py
+Log:
+1. Remove SAPCollider completely
+2. Make yade log4cxx 0.10 compatibile
+3. Other minor fixes
+
+
+Modified: trunk/core/containers/InteractionHashMap.hpp
+===================================================================
+--- trunk/core/containers/InteractionHashMap.hpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/core/containers/InteractionHashMap.hpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -12,7 +12,6 @@
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;ext/hash_map&gt;
+ #include&lt;vector&gt;
+-#include&quot;InteractionHashMap.hpp&quot;
+ 
+ using namespace std;
+ using namespace __gnu_cxx;
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/core/yade.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -185,6 +185,11 @@
+ 	optind=0; opterr=0;
+ 
+ 	#ifdef LOG4CXX
++		#ifdef LOG4CXX_TRACE
++			log4cxx::LevelPtr debugLevel=log4cxx::Level::getDebug(), infoLevel=log4cxx::Level::getInfo(), warnLevel=log4cxx::Level::getWarn();
++		#else
++			log4cxx::LevelPtr debugLevel=log4cxx::Level::DEBUG, infoLevel=log4cxx::Level::INFO, warnLevel=log4cxx::Level::WARN;
++		#endif
+ 		// read logging configuration from file and watch it (creates a separate thread)
+ 		std::string logConf=configPath+&quot;/logging.conf&quot;;
+ 		if(filesystem::exists(logConf)){
+@@ -192,7 +197,7 @@
+ 			LOG_INFO(&quot;Loading &quot;&lt;&lt;logConf);
+ 		} else { // otherwise use simple console-directed logging
+ 			log4cxx::BasicConfigurator::configure();
+-			logger-&gt;setLevel(log4cxx::Level::WARN);
++			logger-&gt;setLevel(warnLevel);
+ 			LOG_INFO(&quot;Logger uses basic (console) configuration since `&quot;&lt;&lt;logConf&lt;&lt;&quot;' was not found. INFO and DEBUG messages will be omitted.&quot;);
+ 			LOG_INFO(&quot;Look at the file doc/logging.conf.sample in the source distribution as an example on how to customize logging.&quot;);
+ 		}
+@@ -205,11 +210,11 @@
+ 	filesystem::path yadeConfigFile  = filesystem::path(Omega::instance().yadeConfigPath + &quot;/preferences.xml&quot;, filesystem::native);
+ 
+ 	#ifdef LOG4CXX
+-		if(verbose==1) logger-&gt;setLevel(log4cxx::Level::INFO);
+-		else if (verbose&gt;=2) logger-&gt;setLevel(log4cxx::Level::DEBUG);
++		if(verbose==1) logger-&gt;setLevel(infoLevel);
++		else if (verbose&gt;=2) logger-&gt;setLevel(debugLevel);
+ 		if(getenv(&quot;YADE_DEBUG&quot;)){
+ 			LOG_INFO(&quot;YADE_DEBUG environment variable is defined, setting logging level to DEBUG.&quot;);
+-			logger-&gt;setLevel(log4cxx::Level::DEBUG);
++			logger-&gt;setLevel(debugLevel);
+ 		}
+ 	#endif
+ 
+
+Modified: trunk/extra/SConscript
+===================================================================
+--- trunk/extra/SConscript	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/extra/SConscript	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -78,7 +78,6 @@
+ 			'AABB',
+ 			'PersistentSAPCollider',
+ 			'ParticleParameters',
+-			'SAPCollider',
+ 			'MetaInteractingGeometry',
+ 			'MetaInteractingGeometry2AABB',
+ 			'GlobalStiffness',
+
+Modified: trunk/gui/py/log.cpp
+===================================================================
+--- trunk/gui/py/log.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/gui/py/log.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -14,12 +14,21 @@
+ 	if(!log4cxx::LogManager::exists(fullName)) throw std::invalid_argument(&quot;No logger named `&quot;+fullName+&quot;'&quot;);
+ 	log4cxx::LevelPtr l;
+ 	switch(level){
+-		case ll_TRACE: l=log4cxx::Level::DEBUG; break;
+-		case ll_DEBUG: l=log4cxx::Level::DEBUG; break;
+-		case ll_INFO: l=log4cxx::Level::INFO; break;
+-		case ll_WARN: l=log4cxx::Level::WARN; break;
+-		case ll_ERROR: l=log4cxx::Level::ERROR; break;
+-		case ll_FATAL: l=log4cxx::Level::FATAL; break;
++		#ifdef LOG4CXX_TRACE
++			case ll_TRACE: l=log4cxx::Level::getTrace(); break;
++			case ll_DEBUG: l=log4cxx::Level::getDebug(); break;
++			case ll_INFO:  l=log4cxx::Level::getInfo(); break;
++			case ll_WARN:  l=log4cxx::Level::getWarn(); break;
++			case ll_ERROR: l=log4cxx::Level::getError(); break;
++			case ll_FATAL: l=log4cxx::Level::getFatal(); break;
++		#else
++			case ll_TRACE: l=log4cxx::Level::DEBUG; break;
++			case ll_DEBUG: l=log4cxx::Level::DEBUG; break;
++			case ll_INFO:  l=log4cxx::Level::INFO; break;
++			case ll_WARN:  l=log4cxx::Level::WARN; break;
++			case ll_ERROR: l=log4cxx::Level::ERROR; break;
++			case ll_FATAL: l=log4cxx::Level::FATAL; break;
++		#endif
+ 		default: throw std::invalid_argument(&quot;Unrecognized logging level &quot;+lexical_cast&lt;std::string&gt;(level));
+ 	}
+ 	log4cxx::LogManager::getLogger(&quot;yade.&quot;+loggerName)-&gt;setLevel(l);
+
+Modified: trunk/lib/base/Logging.hpp
+===================================================================
+--- trunk/lib/base/Logging.hpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/lib/base/Logging.hpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -33,12 +33,16 @@
+ 
+ #	define _LOG_HEAD __FILE__&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; &quot;&lt;&lt;__FUNCTION__&lt;&lt;&quot;: &quot;
+ 	// logger is local for every class, but if it is missing, we will use the parent's class logger automagically.
+-// TRACE doesn't really exist ATM, will output through DEBUG
++// TRACE doesn't really exist in log4cxx 0.9.7 (does in 0.10), otput through DEBUG then
+ #ifdef NDEBUG
+ #	define LOG_TRACE(msg){}
+ #	define LOG_DEBUG(msg){}
+ #else
+-#	define LOG_TRACE(msg) {LOG4CXX_DEBUG(logger, _LOG_HEAD&lt;&lt;msg);}
++#	ifdef LOG4CXX_TRACE
++#		define LOG_TRACE(msg) {LOG4CXX_TRACE(logger, _LOG_HEAD&lt;&lt;msg);}
++#	else
++#		define LOG_TRACE(msg) {LOG4CXX_DEBUG(logger, _LOG_HEAD&lt;&lt;msg);}
++#	endif
+ #	define LOG_DEBUG(msg) {LOG4CXX_DEBUG(logger, _LOG_HEAD&lt;&lt;msg);}
+ #endif
+ #	define LOG_INFO(msg)  {LOG4CXX_INFO(logger,  _LOG_HEAD&lt;&lt;msg);}
+
+Deleted: trunk/pkg/common/Engine/StandAloneEngine/SAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/SAPCollider.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/common/Engine/StandAloneEngine/SAPCollider.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -1,296 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include &quot;SAPCollider.hpp&quot;
+-#include&lt;yade/core/Body.hpp&gt;
+-#include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/core/BodyContainer.hpp&gt;
+-
+-SAPCollider::SAPCollider () : Collider()
+-{
+-	this-&gt;maxObject = 150000;
+-	nbObjects=0;
+-
+-	xBounds.resize(2*maxObject);
+-	yBounds.resize(2*maxObject);
+-	zBounds.resize(2*maxObject);
+-
+-	minimums = new Real[3*maxObject];
+-	maximums = new Real[3*maxObject];
+-
+-	nbPotentialInteractions = 0;
+-
+-	overlappingBB.clear();
+-	overlappingBB.resize(maxObject);
+-
+-	for(unsigned int i=0;i&lt;2*maxObject;i++)
+-	{
+-		xBounds[i] = new AABBBound();
+-		yBounds[i] = new AABBBound();
+-		zBounds[i] = new AABBBound();
+-	}
+-}
+-
+-
+-SAPCollider::~SAPCollider ()
+-{
+-	for(unsigned int i=0;i&lt;2*maxObject;i++)
+-	{
+-		delete xBounds[i];
+-		delete yBounds[i];
+-		delete zBounds[i];
+-	}
+-
+-	delete[] minimums;
+-	delete[] maximums;
+-}
+-
+-
+-void SAPCollider::action(MetaBody* ncb)
+-{
+-	shared_ptr&lt;BodyContainer&gt; bodies = ncb-&gt;bodies;
+-
+-	unsigned int i;
+-
+-	// Updates the minimums and maximums arrays according to the new center and radius of the spheres
+-	int offset;
+-	Vector3r min,max;
+-
+-	//for(i=0; i &lt; bodies-&gt;size(); i++)
+-	shared_ptr&lt;Body&gt; b;
+-	i=0;
+-
+-	// FIXME: this will crash if body has no bounding volume
+-	BodyContainer::iterator bi    = bodies-&gt;begin();
+-	BodyContainer::iterator biEnd = bodies-&gt;end();
+-	for(; bi!=biEnd ; ++bi,i++ )
+-	{
+-		b = *bi;
+-		
+-		offset = 3*i;
+-		min = b-&gt;boundingVolume-&gt;min;
+-		max = b-&gt;boundingVolume-&gt;max;
+-		minimums[offset+0] = min[0];
+-		minimums[offset+1] = min[1];
+-		minimums[offset+2] = min[2];
+-		maximums[offset+0] = max[0];
+-		maximums[offset+1] = max[1];
+-		maximums[offset+2] = max[2];
+-	}
+-
+-	updateIds(bodies-&gt;size());
+-	nbObjects = bodies-&gt;size();
+-
+-	// permutation sort of the AABBBounds along the 3 axis performed in a independant manner
+-	sortBounds(xBounds, nbObjects);
+-	sortBounds(yBounds, nbObjects);
+-	sortBounds(zBounds, nbObjects);
+-
+-	// just copy the structure containing overlapping AABB into a more easy to use linked list of pair of overlapping AABB
+-	std::set&lt;unsigned int&gt;::iterator it;
+-	std::set&lt;unsigned int&gt;::iterator itEnd;
+-
+-	/*std::list&lt;Interaction*&gt;::iterator ci = transientInteractions.begin();
+-	std::list&lt;Interaction*&gt;::iterator ciEnd = transientInteractions.end();
+-	for(;ci!=ciEnd;++ci)
+-	{
+-		delete (*ci)-&gt;interactionGeometry;
+-		delete (*ci);
+-	}*/
+-
+-// FIXME : correct that
+-	ncb-&gt;transientInteractions-&gt;clear();
+-
+-	nbPotentialInteractions = 0;
+-	for(i=0;i&lt;nbObjects;i++)
+-	{
+-		it = overlappingBB[i].begin();
+-		itEnd = overlappingBB[i].end();
+-		for(;it!=itEnd;++it)
+-		{
+-		/* FIXME - clump stuff doesn't work, and SAPCollider itself is crazy and gotta be replaced with a working one.
+-		 *
+-			// FIXME - this assumes that bodies are numbered from zero with one number increments, BAD!!!
+-//			if (!(bodies-&gt;find(i)-&gt;isDynamic==false &amp;&amp; bodies-&gt;find(*it)-&gt;isDynamic==false))
+-//			FIXME: this is broken for clumps!!!
+-//			!!!!!!!!!!!!!!!!!!!!!!!!!! BROKEN !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+-				if( (*bodies)[i]-&gt;isDynamic &amp;&amp; (*bodies)[*it]-&gt;isDynamic &amp;&amp; // old stuff: both bodies must be dynamic
+-					( (*bodies)[i]-&gt;clumpId==Body::ID_NONE || (*bodies)[*it]-&gt;clumpId==Body::ID_NONE || ( (*bodies)[i]-&gt;clumpId != (*bodies)[*it]-&gt;clumpId )) // either (at least) one of them is not within a clump or they are not part of the same clump
+-					)
+-			// pre-clump code: if (!((*bodies)[i]-&gt;isDynamic==false &amp;&amp; (*bodies)[*it]-&gt;isDynamic==false))
+-		*/
+-			
+-			if (!((*bodies)[i]-&gt;isDynamic==false &amp;&amp; (*bodies)[*it]-&gt;isDynamic==false))
+-			{
+-				nbPotentialInteractions++;
+-				shared_ptr&lt;Interaction&gt; inter(new Interaction(body_id_t(i),body_id_t(*it)));
+-				ncb-&gt;transientInteractions-&gt;insert(inter);
+-			}
+-		}
+-	}
+-}
+-
+-
+-void SAPCollider::updateIds(unsigned int nbElements)
+-{
+-
+-	// the first time broadInteractionTest is called nbObject=0
+-	if (nbElements!=nbObjects)
+-	{
+-		int begin,end;
+-
+-		end = nbElements;
+-		begin = 0;
+-
+-		if (nbElements&gt;nbObjects)
+-			begin = nbObjects;
+-
+-		// initialization if the xBounds, yBounds, zBounds
+-		for(int i=begin;i&lt;end;i++)
+-		{
+-			xBounds[2*i]-&gt;id	= i;
+-			xBounds[2*i]-&gt;lower	= 1;
+-
+-			xBounds[2*i+1]-&gt;id	= i;
+-			xBounds[2*i+1]-&gt;lower	= 0;
+-
+-			yBounds[2*i]-&gt;id	= i;
+-			yBounds[2*i]-&gt;lower	= 1;
+-
+-			yBounds[2*i+1]-&gt;id	= i;
+-			yBounds[2*i+1]-&gt;lower	= 0;
+-
+-			zBounds[2*i]-&gt;id	= i;
+-			zBounds[2*i]-&gt;lower	= 1;
+-
+-			zBounds[2*i+1]-&gt;id	= i;
+-			zBounds[2*i+1]-&gt;lower	= 0;
+-		}
+-
+-		// initialization if the field &quot;value&quot; of the xBounds, yBounds, zBounds arrays
+-		updateBounds(nbElements);
+-
+-		// modified quick sort of the xBounds, yBounds, zBounds arrays
+-		// The first time these arrays are not sorted so it is faster to use such a sort instead
+-		// of the permutation we are going to use next
+-		std::sort(xBounds.begin(),xBounds.begin()+2*nbElements,AABBBoundComparator());
+-		std::sort(yBounds.begin(),yBounds.begin()+2*nbElements,AABBBoundComparator());
+-		std::sort(zBounds.begin(),zBounds.begin()+2*nbElements,AABBBoundComparator());
+-
+-		// initialize the overlappingBB collection
+-		for(unsigned int j=0;j&lt;nbElements;j++)
+-			overlappingBB[j].clear(); //attention memoire
+-
+-		findOverlappingBB(xBounds, nbElements);
+-		findOverlappingBB(yBounds, nbElements);
+-		findOverlappingBB(zBounds, nbElements);
+-
+-	}
+-	else
+-		updateBounds(nbElements);
+-}
+-
+-
+-void SAPCollider::sortBounds(std::vector&lt;AABBBound*&gt;&amp; bounds, int nbElements)
+-{
+-	int i,j;
+-	AABBBound * tmp;
+-
+-	for (i=1; i&lt;2*nbElements; i++)
+-	{
+-		tmp = bounds[i];
+-		j = i;
+-		while (j&gt;0 &amp;&amp; tmp-&gt;value&lt;bounds[j-1]-&gt;value)
+-		{
+-			bounds[j] = bounds[j-1];
+-			updateOverlapingBBSet(tmp-&gt;id,bounds[j-1]-&gt;id);
+-			j--;
+-		}
+-		bounds[j] = tmp;
+-	}
+-}
+-
+-
+-void SAPCollider::updateOverlapingBBSet(int id1,int id2)
+-{
+-
+-	if (id1&gt;id2) // beacause (i,j)==(j,i)
+-	{
+-		int tmp=id2;
+-		id2 = id1;
+-		id1=tmp;
+-	}
+-
+-	// look if the paiur (id1,id2) already exists in the overleppingBB collection
+-	std::set&lt; unsigned int&gt;::iterator it = overlappingBB[id1].find(id2);
+-
+-	// test if the AABBs of the spheres number &quot;id1&quot; and &quot;id2&quot; are overlapping
+-	Real * min1 = minimums + 3*id1;
+-	Real * max1 = maximums + 3*id1;
+-	Real * min2 = minimums + 3*id2;
+-	Real * max2 = maximums + 3*id2;
+-
+-	bool overlapp = !(max1[0]&lt;min2[0] || max2[0]&lt;min1[0] || max1[1]&lt;min2[1] || max2[1]&lt;min1[1] || max1[2]&lt;min2[2] || max2[2]&lt;min1[2]);
+-
+-	// inserts the pair p=(id1,id2) if the two AABB overlapps and if p does not exists in the overlappingBB
+-	if (overlapp &amp;&amp; it == overlappingBB[id1].end())
+-		overlappingBB[id1].insert(id2);
+-	// removes the pair p=(id1,id2) if the two AABB do not overlapp any more and if p already exists in the overlappingBB
+-	else if (!overlapp &amp;&amp; it != overlappingBB[id1].end())
+-		overlappingBB[id1].erase(it);
+-
+-}
+-
+-
+-void SAPCollider::updateBounds(int nbElements)
+-{
+-
+-	for(int i=0; i &lt; 2*nbElements; i++)
+-	{
+-		if (xBounds[i]-&gt;lower)
+-			xBounds[i]-&gt;value = minimums[3*xBounds[i]-&gt;id+0];
+-		else
+-			xBounds[i]-&gt;value = maximums[3*xBounds[i]-&gt;id+0];
+-
+-		if (yBounds[i]-&gt;lower)
+-			yBounds[i]-&gt;value = minimums[3*yBounds[i]-&gt;id+1];
+-		else
+-			yBounds[i]-&gt;value = maximums[3*yBounds[i]-&gt;id+1];
+-
+-		if (zBounds[i]-&gt;lower)
+-			zBounds[i]-&gt;value = minimums[3*zBounds[i]-&gt;id+2];
+-		else
+-			zBounds[i]-&gt;value = maximums[3*zBounds[i]-&gt;id+2];
+-	}
+-}
+-
+-
+-
+-
+-void SAPCollider::findOverlappingBB(std::vector&lt;AABBBound*&gt;&amp; bounds, int nbElements)
+-{
+-
+-	int i,j;
+-
+-	i = j = 0;
+-	while (i&lt;2*nbElements)
+-	{
+-		while (i&lt;2*nbElements &amp;&amp; !bounds[i]-&gt;lower)
+-			i++;
+-		j=i+1;
+-		while (j&lt;2*nbElements &amp;&amp; bounds[j]-&gt;id!=bounds[i]-&gt;id)
+-		{
+-			if (bounds[j]-&gt;lower)
+-				updateOverlapingBBSet(bounds[i]-&gt;id,bounds[j]-&gt;id);
+-			j++;
+-		}
+-		i++;
+-	}
+-}
+-
+-YADE_PLUGIN();
+
+Deleted: trunk/pkg/common/Engine/StandAloneEngine/SAPCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/SAPCollider.hpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/common/Engine/StandAloneEngine/SAPCollider.hpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -1,94 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#pragma once
+-
+-#include &lt;list&gt;
+-#include &lt;set&gt;
+-#include &lt;vector&gt;
+-#include &lt;algorithm&gt;
+-#include&lt;yade/core/Collider.hpp&gt;
+-
+-class SAPCollider : public Collider
+-{
+-	private :
+-		// represent an extrmity of an Axis ALigned bounding box
+-		struct AABBBound
+-		{
+-			AABBBound() {};
+-			char	lower;		// is it the lower or upper bound of the AABB
+-			int	id;		// AABB of the &quot;id&quot; shpere
+-			Real	value;		// value of the bound
+-		};
+-
+-		// strucuture that compare 2 AABBBounds =&gt; used in the sort algorithm
+-		struct AABBBoundComparator
+-		{
+-			bool operator() (AABBBound* b1, AABBBound* b2)
+-			{
+-				return b1-&gt;value&lt;b2-&gt;value;
+-			}
+-		};
+-
+-	protected :
+-		// number of potential transientInteractions = number of colliding AABB
+-		int nbPotentialInteractions;
+-		// maximum number of object that that collider can handle
+-		unsigned int maxObject;
+-		// number of AABB
+-		unsigned int nbObjects;
+-		// AABB extremity of the sphere number &quot;id&quot; projected onto the X axis
+-		std::vector&lt;AABBBound*&gt; xBounds;
+-		// AABB extremity of the sphere number &quot;id&quot; projected onto the Y axis
+-		std::vector&lt;AABBBound*&gt; yBounds;
+-		// AABB extremity of the sphere number &quot;id&quot; projected onto the Z axis
+-		std::vector&lt;AABBBound*&gt; zBounds;
+-		// collection of AABB that are in interaction
+-		std::vector&lt; std::set&lt;unsigned int&gt; &gt; overlappingBB;
+-		// upper right corner of the AABB of the objects =&gt;  for spheres = center[i]-radius
+-		Real * maximums;
+-		// lower left corner of the AABB of the objects =&gt;  for spheres = center[i]+radius
+-		Real * minimums;
+-		
+-		void findOverlappingBB(std::vector&lt;AABBBound*&gt;&amp; bounds, int nbElements);
+-
+-	public :
+-		SAPCollider ();
+-		~SAPCollider ();
+-
+-		// return a list &quot;transientInteractions&quot; of pairs of Body which Bounding volume are in potential interaction
+-		void action(MetaBody *);
+-
+-
+-		// Used the first time broadInteractionTest is called, to initialize and sort the xBounds, yBounds,
+-		// and zBounds arrays and to initialize the overlappingBB collection
+-		void updateIds(unsigned int nbElements);
+-
+-		// Permutation sort the xBounds, yBounds, zBounds arrays according to the &quot;value&quot; field
+-		// Calls updateOverlapingBBSet every time a permutation between 2 AABB i and j occurs
+-		void sortBounds(std::vector&lt;AABBBound*&gt;&amp; bounds, int nbElements);
+-
+-		// Tests if the AABBi and AABBj really overlap.
+-		// If yes, adds the pair (id1,id2) to the collection of overlapping AABBs
+-		// If no, removes the (id1,id2) to the collection of overlapping AABBs if necessary
+-		void updateOverlapingBBSet(int id1,int id2);
+-
+-		// update the &quot;value&quot; field of the xBounds, yBounds, zBounds arrays
+-		void updateBounds(int nbElements);
+-
+-		// Used the first time broadInteractionTest is called
+-		// It is necessary to initialise the overlapping AABB collection because this collection is only
+-		// incrementally udated each time step
+-
+-	REGISTER_CLASS_NAME(SAPCollider);
+-	REGISTER_BASE_CLASS_NAME(Collider);
+-};
+-
+-REGISTER_SERIALIZABLE(SAPCollider);
+-
+-
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/common/SConscript	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -143,7 +143,6 @@
+ 	env.SharedLibrary('SpatialQuickSortCollider',['Engine/StandAloneEngine/SpatialQuickSortCollider.cpp']),
+ 	env.SharedLibrary('PersistentSAPCollider',['Engine/StandAloneEngine/PersistentSAPCollider.cpp']),
+ 	env.SharedLibrary('DistantPersistentSAPCollider',['Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp']),
+-	env.SharedLibrary('SAPCollider',['Engine/StandAloneEngine/SAPCollider.cpp']),
+ 	env.SharedLibrary('PhysicalActionContainerInitializer',['Engine/StandAloneEngine/PhysicalActionContainerInitializer.cpp']),
+ 	env.SharedLibrary('PhysicalActionContainerReseter',['Engine/StandAloneEngine/PhysicalActionContainerReseter.cpp']),
+ 	env.SharedLibrary('GLDrawAABB',['RenderingEngine/GLDrawBoundingVolume/GLDrawAABB.cpp'],
+
+Modified: trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -31,7 +31,6 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/DistantPersistentSAPCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/DirectShearCis.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/DirectShearCis.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/dem/PreProcessor/DirectShearCis.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -31,7 +31,6 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/Funnel.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/Funnel.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/dem/PreProcessor/Funnel.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -18,7 +18,6 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/HydraulicTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/HydraulicTest.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/dem/PreProcessor/HydraulicTest.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -24,7 +24,6 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/DistantPersistentSAPCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/MembraneTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/MembraneTest.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/dem/PreProcessor/MembraneTest.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -26,7 +26,6 @@
+ 
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -31,7 +31,6 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -24,7 +24,6 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -28,7 +28,6 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -21,7 +21,6 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -22,7 +22,6 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/SimpleShear.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SimpleShear.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/dem/PreProcessor/SimpleShear.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -31,7 +31,6 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -20,7 +20,6 @@
+ #include&lt;yade/pkg-common/Box.hpp&gt;
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -27,7 +27,6 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -35,7 +35,6 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+@@ -125,7 +124,7 @@
+ 	
+ 	dampingForce = 0.2;
+ 	dampingMomentum = 0.2;
+-	defaultDt = 0.001;
++	defaultDt = -1;
+ 	
+ 	timeStepUpdateInterval = 50;
+ 	timeStepOutputInterval = 50;
+@@ -251,7 +250,6 @@
+ 	}
+ 	
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+-	createActors(rootBody);
+ 	positionRootBody(rootBody);
+ 
+ 	//rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
+@@ -403,6 +401,8 @@
+ 		rootBody-&gt;bodies-&gt;insert(body);
+ 	}	
+ 
++	if(defaultDt&lt;0) defaultDt=Shop::PWaveTimeStep();
++	createActors(rootBody);
+ 
+ 	return true;
+ }
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -39,7 +39,6 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/dem/SConscript	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -420,7 +420,6 @@
+ 			'AABB',
+ 			'PersistentSAPCollider',
+ 			'ParticleParameters',
+-			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+ 			'yade-multimethods']),
+ 
+@@ -453,7 +452,6 @@
+ 			'Sphere',
+ 			'AABB',
+ 			'PersistentSAPCollider',
+-			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB']),
+ 
+ 	env.SharedLibrary('DirectShearCis',
+@@ -490,7 +488,6 @@
+ 			'AABB',
+ 			'PersistentSAPCollider',
+ 			'ParticleParameters',
+-			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+ 			'yade-multimethods']),
+ 
+@@ -529,7 +526,6 @@
+ 			'AABB',
+ 			'PersistentSAPCollider',
+ 			'ParticleParameters',
+-			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+ 			'yade-multimethods']),
+ 
+@@ -563,7 +559,6 @@
+ 			'AABB',
+ 			'PersistentSAPCollider',
+ 			'ParticleParameters',
+-			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+ 			'yade-multimethods']),
+ 
+@@ -594,7 +589,6 @@
+ 			'AABB',
+ 			'PersistentSAPCollider',
+ 			'ParticleParameters',
+-			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+ 			'yade-multimethods']),
+ 
+@@ -626,7 +620,6 @@
+ 			'AABB',
+ 			'PersistentSAPCollider',
+ 			'ParticleParameters',
+-			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+ 			'yade-multimethods']),
+ 
+@@ -655,7 +648,6 @@
+ 			'AABB',
+ 			'PersistentSAPCollider',
+ 			'ParticleParameters',
+-			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+ 			'Tetrahedron',
+ 			'yade-serialization',
+@@ -692,7 +684,6 @@
+                         'AABB',
+                         'PersistentSAPCollider',
+                         'ParticleParameters',
+-                        'SAPCollider',
+                         'MetaInteractingGeometry2AABB',
+                         'yade-serialization',
+                         'yade-base',
+@@ -729,7 +720,6 @@
+ 			'Sphere',
+ 			'AABB',
+ 			'PersistentSAPCollider',
+-			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+ 			'GlobalStiffness',
+ 			'GlobalStiffnessCounter',
+@@ -773,7 +763,6 @@
+ 			'Sphere',
+ 			'AABB',
+ 			'DistantPersistentSAPCollider',
+-			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+ 			'GlobalStiffness',
+ 			'GlobalStiffnessCounter',
+@@ -816,7 +805,6 @@
+ 			'AABB',
+ 			'PersistentSAPCollider',
+ 			'ParticleParameters',
+-			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+ 			'yade-multimethods',
+ 			'TranslationEngine']),
+@@ -887,7 +875,6 @@
+         Sphere
+         AABB
+         PersistentSAPCollider
+-        SAPCollider
+         MetaInteractingGeometry2AABB
+ 	GlobalStiffness
+ 	GlobalStiffnessCounter
+@@ -1006,7 +993,6 @@
+ 			'Sphere',
+ 			'AABB',
+ 			'DistantPersistentSAPCollider',
+-			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+ 			'GlobalStiffness',
+ 			'GlobalStiffnessCounter',
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -8,19 +8,19 @@
+ 
+ #include &quot;LatticeExample.hpp&quot;
+ 
+-#include &quot;LatticeSetParameters.hpp&quot;
+-#include &quot;LatticeBeamParameters.hpp&quot;
+-#include &quot;LatticeBeamAngularSpring.hpp&quot;
+-#include &quot;NonLocalDependency.hpp&quot;
+-#include &quot;LatticeNodeParameters.hpp&quot;
+-#include &quot;LineSegment.hpp&quot;
+-#include &quot;LatticeLaw.hpp&quot;
+-#include &quot;StrainRecorder.hpp&quot;
+-#include &quot;NodeRecorder.hpp&quot;
+-#include &quot;BeamRecorder.hpp&quot;
+-#include &quot;MovingSupport.hpp&quot;
+-#include &quot;MeasurePoisson.hpp&quot;
+-#include &quot;NonLocalInitializer.hpp&quot;
++#include&lt;yade/pkg-lattice/LatticeSetParameters.hpp&gt;
++#include&lt;yade/pkg-lattice/LatticeBeamParameters.hpp&gt;
++#include&lt;yade/pkg-lattice/LatticeBeamAngularSpring.hpp&gt;
++#include&lt;yade/pkg-lattice/NonLocalDependency.hpp&gt;
++#include&lt;yade/pkg-lattice/LatticeNodeParameters.hpp&gt;
++#include&lt;yade/pkg-lattice/LineSegment.hpp&gt;
++#include&lt;yade/pkg-lattice/LatticeLaw.hpp&gt;
++#include&lt;yade/pkg-lattice/StrainRecorder.hpp&gt;
++#include&lt;yade/pkg-lattice/NodeRecorder.hpp&gt;
++#include&lt;yade/pkg-lattice/BeamRecorder.hpp&gt;
++#include&lt;yade/pkg-lattice/MovingSupport.hpp&gt;
++#include&lt;yade/pkg-lattice/MeasurePoisson.hpp&gt;
++#include&lt;yade/pkg-lattice/NonLocalInitializer.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ 
+ #include &quot;LatticeInteractingGeometry.hpp&quot;
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -8,7 +8,7 @@
+ 
+ #include &quot;BoxStack.hpp&quot;
+ 
+-#include &quot;FrictionLessElasticContactLaw.hpp&quot;
++#include&lt;yade/pkg-realtime-rigidbody/FrictionLessElasticContactLaw.hpp&gt;
+ 
+ 
+ #include&lt;yade/pkg-common/Box.hpp&gt;
+@@ -16,7 +16,7 @@
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
+-#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+ #include&lt;yade/pkg-common/TranslationEngine.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+@@ -289,7 +289,7 @@
+ 	rootBody-&gt;engines.clear();
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new SAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new FrictionLessElasticContactLaw));
+ 	rootBody-&gt;engines.push_back(gravityCondition);
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -14,7 +14,7 @@
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
+-#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+ #include&lt;yade/pkg-common/RotationEngine.hpp&gt;
+ 
+@@ -309,7 +309,7 @@
+ 	rootBody-&gt;engines.clear();
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new SAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new FrictionLessElasticContactLaw));
+ 	rootBody-&gt;engines.push_back(gravityCondition);
+
+Modified: trunk/pkg/snow/PreProcessor/SnowCreepTest.cpp
+===================================================================
+--- trunk/pkg/snow/PreProcessor/SnowCreepTest.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/snow/PreProcessor/SnowCreepTest.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -31,7 +31,6 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/DistantPersistentSAPCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+
+Modified: trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp
+===================================================================
+--- trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -24,7 +24,6 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/SAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/DistantPersistentSAPCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+
+Modified: trunk/pkg/snow/SConscript
+===================================================================
+--- trunk/pkg/snow/SConscript	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/pkg/snow/SConscript	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -107,7 +107,6 @@
+ 			'Sphere',
+ 			'AABB',
+ 			'DistantPersistentSAPCollider',
+-			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+ 			'GlobalStiffness',
+ 			'GlobalStiffnessCounter',
+@@ -152,7 +151,6 @@
+ 			'ElawSnowLayersDeformation',
+ 			'AABB',
+ 			'DistantPersistentSAPCollider',
+-			'SAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+ 			'GlobalStiffness',
+ 			'GlobalStiffnessCounter',
+
+Modified: trunk/scripts/pch.py
+===================================================================
+--- trunk/scripts/pch.py	2009-03-03 08:47:27 UTC (rev 1708)
++++ trunk/scripts/pch.py	2009-03-03 09:07:53 UTC (rev 1709)
+@@ -24,7 +24,7 @@
+ from os.path import sep
+ import shutil
+ 
+-inclusionGuards={'GLEngineEditor.hpp': 'GL_ENGINE_EDITOR_HPP', 'InteractionPhysicsEngineUnit.hpp': 'INTERACTIONPHYSICS_ENGINEUNIT_HPP', 'SpheresContactGeometry.hpp': 'SPHERESCONTACTGEOMETRY_HPP', 'GLWindowsManager.hpp': 'GLWINDOWSMANAGER_HPP', 'QtSimulationPlayer.hpp': 'QTSIMULATIONPLAYER_HPP', 'NewtonsMomentumLaw.hpp': 'NEWTONSMOMENTUMLAW_HPP', 'PhysicalParameters.hpp': 'PHYSICALPARAMETERS_HPP', 'ParticleParameters.hpp': 'PARTICLEPARAMETERS_HPP', 'HangingCloth.hpp': 'HANGINGCLOTH_HPP', 'GLDrawInteractionGeometryFunctor.hpp': 'GLDRAW_INTERACTION_GEOMETRY_FUNCTOR_HPP', 'GeometricalModel.hpp': 'GEOMETRICALMODEL_HPP', 'SDECImpactTest.hpp': 'SDECIMPORT_HPP', 'Funnel.hpp': 'FUNNEL_HPP', 'PhysicalActionContainerIteratorPointer.hpp': 'PHYSICALACTIONCONTAINERITERATORPOINTER_HPP', 'ClosestFeatures.hpp': 'CLOSESTSFEATURES_HPP', 'CapillaryStressRecorder.hpp': 'CAPILLARY_STRESS_RECORDER_HPP', 'InteractionGeometryEngineUnit.hpp': 'INTERACTIONGEOMETRYFUNCTOR_HPP', 'Functor.hpp': 'FUNCTOR!
+ _INC_', 'BINFormatManager.hpp': 'BINFORMATMANAGER_HPP', 'SDECMovingWall.hpp': 'SDEC_MOVING_WALL_HPP', 'Collider.hpp': 'BROADINTERACTOR_HPP', 'InteractingBox.hpp': 'INTERACTION_BOX_HPP', 'BodyContainerIterator.hpp': 'BODYCONTAINERITERATOR_HPP', 'InteractionGeometry.hpp': 'INTERACTIONGEOMETRY_HPP', 'LineSegment.hpp': 'LINE_SEGMENT_HPP', 'GLDrawShadowVolumeFunctor.hpp': 'GLDRAWSHADOWVOLUMEFUNCTOR_HPP', 'ClassFactory.hpp': 'CLASSFACTORY_HPP', 'GLDrawLatticeBeamState.hpp': 'GLDRAW_LATTICE_BEAM_STATE_HPP', 'TypeManip.hpp': 'TYPEMANIP_INC_', 'OpenGLRenderingEngine.hpp': 'OPENGLRENDERINGENGINE_HPP', 'Sphere.hpp': 'SPHERE_HPP', 'TranslationEngine.hpp': 'TRANSLATOR_HPP', 'Tetrahedron.hpp': 'TETRAHEDRON_HPP', 'GLDrawSimpleElasticInteraction.hpp': 'GLDRAW_SIMPLE_ELASTIC_INTERACTION_HPP', 'AveragePositionRecorder.hpp': 'AVERAGE_POSISTION_RECORDER_HPP', 'EmptyType.hpp': 'EMPTYTYPE_INC_', 'BoxStack.hpp': 'BOXSTACK_HPP', 'QtSphericalDEM.hpp': 'QTSPHERICALDEM_HPP', 'CohesiveFrictionalContac!
+ tLaw.hpp': 'COHESIVE_FRICTIONAL_CONTACT_LAW_HPP', 'QtMetaDispa!
+ tchingEn
+gineProperties.hpp': 'QTMETADISPATCHINGENGINEPROPERTIES_HPP', 'CapillaryRecorder.hpp': 'CAPILLARY_RECORDER_HPP', 'GLDrawBoxShadowVolume.hpp': 'GLDRAWBOXSHADOWVOLUME_HPP', 'FundamentalHandler.tpp': '__FUNDAMENTALHANDLER_H__', 'ElasticBodySimpleRelationship.hpp': 'ELASTICBODYSIMPLERELATIONSHIP_HPP', 'GeometricalModelEngineUnit.hpp': 'GEOMETRICAL_MODEL_ENGINE_UNIT_HPP', 'MovingSupport.hpp': 'NO_SHEAR_PLANE', 'QtGUIGenerator.hpp': 'QTGUIGENERATOR_HPP', 'LatticeLaw.hpp': 'LATTICELAW_HPP', 'Archive.hpp': 'ARCHIVECONTENT_HPP', 'InteractionGeometryMetaEngine.hpp': 'INTERACTION_GEOMETRY_METAENGINE_HPP', 'GLSimulationPlayerViewer.hpp': 'SIMULATIONVIEWER_HPP', 'DataRecorder.hpp': 'DATARECORDER_HPP', 'SphericalDEMSimulator.hpp': 'SPHERICALDEMSIMULATOR_HPP', 'Preferences.hpp': 'PREFERENCES_HPP', 'PersistentAloneSAPCollider.hpp': 'PERSISTENTSAPCOLLIDER_HPP', 'GLDrawInteractingMyTetrahedron.hpp': 'GLDRAWINTERACTINGMYTETRAHEDRON_HPP', 'MacroMicroElasticRelationshipsWater.hpp': 'SDECLINEARCO!
+ NTACTMODEL_HPP', 'ElasticCohesiveLaw.hpp': 'ELASTICCOHESIVELAW_HPP', 'MyTetrahedronLaw.hpp': 'MYTETRAHEDRONLAW_HPP', 'IOManagerExceptions.hpp': 'IOMANAGEREXCEPTIONS_HPP', 'Engine.hpp': 'ENGINE_HPP', 'QtFileGenerator.hpp': 'QTFILEGENERATOR_HPP', 'PositionOrientationRecorder.hpp': 'POSITIONORIENTATIONRECORDER_HPP', 'StandAloneSimulator.hpp': 'STANDALONESIMULATOR_HPP', 'SimulationFlow.hpp': 'SIMULATION_FLOW_HPP', 'TriaxialStateRecorder.hpp': 'TRIAXIAL_STATE_RECORDER_HPP', 'Indexable.hpp': 'INDEXABLE_HPP', 'FEMTetrahedronData.hpp': 'LATTICEBEAMPARAMETERS_HPP', 'FunctorWrapper.hpp': 'DYNLIB_LAUNCHER_HPP', 'MetaDispatchingEngine.hpp': 'METADISPATCHINGENGINE_HPP', 'ThreadWorker.hpp': 'THREAD_WORKER_HPP', 'CundallNonViscousMomentumDamping.hpp': 'ACTION_MOMENTUM_DAMPING_HPP', 'GLDrawBox.hpp': 'GLDRAWBOX_HPP', 'SimpleElasticInteraction.hpp': 'SIMPLEELASTICINTERACTION_HPP', 'QtGUIPreferences.hpp': 'QTGUIPREFERENCES_HPP', 'InteractionContainerIteratorPointer.hpp': 'INTERACTIONCONTAINER!
+ ITERATORPOINTER_HPP', 'BodyRedirectionVectorIterator.hpp': 'BO!
+ DYREDIRE
+CTIONVECTORITERATOR_HPP', 'MultiTypeHandler.tpp': '__MULTITYPEHANDLER_H__', 'FEMLaw.hpp': 'FEMLAW_HPP', 'MetaInteractingGeometry.hpp': 'METAINTERACTINGGEOMETRY_HPP', 'InteractingGeometry.hpp': 'INTERACTING_GEOMETRY_HPP', 'GLDrawBoundingSphere.hpp': 'GLDRAWBOUNDINGSPHERE_HPP', 'PhysicalActionApplierUnit.hpp': 'PHYSICALACTIONAPPLIERUNIT_HPP', 'TetraTestGen.hpp': 'TETRATESTGEN_HPP', 'GLDrawStateFunctor.hpp': 'GLDRAW_STATE_FUNCTOR_HPP', 'TriaxialTest.hpp': 'SDECIMPORT_HPP', 'GLViewer.hpp': 'GLVIEWER_HPP', 'yadeWm3Extra.hpp': 'YADE_GEOM_UTILS_HPP', 'InteractionHashMapIterator.hpp': 'INTERACTIONHASHMAPITERATOR_HPP', 'InteractionPhysics.hpp': 'INTERACTIONPHYSICS_HPP', 'CohesiveTriaxialTest.hpp': 'COHESIVE_TRIAXIAL_TEST_HPP', 'VelocityRecorder.hpp': 'VELOCITY_RECORDER_HPP', 'TetrahedronsTest.hpp': 'TETRAHEDRONSTEST_HPP', 'SerializableTypes.hpp': '__SERIALIZABLETYPES_HPP__', 'GLDrawRigidBodyState.hpp': 'GLDRAWRIGIDBODYSTATE_HPP', 'SerializationExceptions.hpp': 'SERIALIZATIONEXCEPTION!
+ S_HPP', 'GLDrawInteractingSphere.hpp': '__GLDRAWINTERACTIONSPHERE_HPP__', 'RotatingBox.hpp': 'ROTATINGBOX_HPP', 'GLDrawMetaInteractingGeometry.hpp': 'GLDRAWCOLLISIONGEOMETRYSET_HPP', 'NullGUI.hpp': 'NULLGUI_HPP', 'TypeTraits.hpp': 'TYPETRAITS_INC_', 'BodyRedirectionVector.hpp': 'BODYREDIRECTIONVECTOR_HPP', 'InteractingGeometryEngineUnit.hpp': 'INTERACTING_GEOMETRY_ENGINE_UNIT_HPP', 'FileDialog.hpp': 'FILEDIALOG_HPP', 'SDECSpheresPlane.hpp': 'SDEC_SPHERES_PLANE_HPP', 'Clump.hpp': 'CLUMP_HPP', 'PythonRecorder.hpp': 'PYTHON_RECORDER_HPP', 'FEMSetTextLoader.hpp': 'FEM_SET_TEXT_LOADER_HPP', 'DisplacementEngine.hpp': 'DISPLACEMENTENGINE_HPP', 'CapillaryCohesiveLaw.hpp': 'CAPILLARY_COHESIVE_LAW_HPP', 'SerializableSingleton.hpp': 'SERIALIZABLESINGLETON_HPP', 'WallStressRecorder.hpp': 'WALL_STRESS_RECORDER_HPP', 'CohesiveFrictionalContactInteraction.hpp': 'COHESIVE_FRICTIONAL_CONTACT_PARAMETERS_HPP', 'GlobalStiffnessCounter.hpp': 'GLOBALSTIFFNESSCOUNTER_HPP', 'GLDrawInteractingGeome!
+ tryFunctor.hpp': 'GLDRAWINTERACTIONGEOMETRYFUNCTOR_HPP', 'Simu!
+ lationCo
+ntrollerUpdater.hpp': 'SIMULATIONCONTROLLERUPDATER_HPP', 'SimulationController.hpp': 'SIMULATIONCONTROLLER_HPP', 'SAPCollider.hpp': 'SAPCOLLIDER_HPP', 'SphericalDEM.hpp': 'SPHERICALDEM_HPP', 'Quadrilateral.hpp': 'QUADRILATERAL_HPP', 'yadeExceptions.hpp': 'YADE_EXCEPTIONS_HPP', 'GLDrawParticleState.hpp': 'GLDRAWPARTICLESTATE_HPP', 'TriaxialStressController.hpp': 'TRIAXIAL_STRESS_CONTROLLER_HPP', 'SDECLinkPhysics.hpp': 'SDECLINKPHYSICS_HPP', 'DistantPersistentSAPCollider.hpp': '__DISTANTPERSISTENTSAPCOLLIDER_HPP__', 'InteractingSphere.hpp': 'INTERACTIONSPHERE_HPP', 'SpringPhysics.hpp': 'SPRINGPHYSICS_HPP', 'Contact.hpp': 'CONTACT_HPP', 'PhysicalActionDamper.hpp': 'PHYSICALACTIONDAMPER_HPP', 'KnownFundamentalsHandler.tpp': 'KNOWNFUNDAMENTALSHANDLER_HPP', 'GLDrawGeometricalModelFunctor.hpp': 'GLDRAWGEOMETRICALMODELFUNCTOR_HPP', 'CapillaryPressureEngine.hpp': 'CAPILLARY_PRESSURE_ENGINE_HPP', 'NullType.hpp': 'NULLTYPE_INC_', 'PhysicalAction.hpp': 'PHYSICALACTION_HPP', 'Tetra.hpp':!
+  'TETRA_HPP', 'GLDrawInteractionPhysicsFunctor.hpp': 'GLDRAW_INTERACTION_PHYSICS_FUNCTOR_HPP', 'PersistentSAPCollider.hpp': '__PERSISTENTSAPCOLLIDER_HPP__', 'GeometricalModelMetaEngine.hpp': 'GEOMETRICAL_MODEL_DISPATCHER_HPP', 'RenderingEngine.hpp': 'RENDERINGENGINE_HPP', 'Factorable.hpp': 'FACTORABLE_HPP', 'IOFormatManager.tpp': 'IOMANAGER_TPP', 'OpenGLWrapper.hpp': 'OPENGLWRAPPER_HPP', 'ElasticBodyParameters.hpp': 'ELASTICBODYPARAMETERS_HPP', 'GLDrawLatticeSetGeometry.hpp': 'GLDRAW_LATTICE_SET_GEOMETRY_HPP', 'InteractionContainerIterator.hpp': 'INTERACTIONCONTAINERITERATOR_HPP', 'QtGUI.hpp': 'QTGUI_HPP', 'MetaEngine.hpp': 'METAENGINE_HPP', 'InteractionOfMyTetrahedron.hpp': 'INTERACTIONOFMYTETRAHEDRON_HPP', 'AABB.hpp': 'AABB_HPP', 'BoundingVolume.hpp': 'BOUNDINGVOLUME_HPP', 'InteractionVecSetIterator.hpp': 'INTERACTIONVECSETITERATOR_HPP', 'PhysicalActionVectorVectorIterator.hpp': 'PHYSICALACTIONVECTORVECTORITERATOR_HPP', 'MacroMicroElasticRelationships.hpp': 'SDECLINEARCON!
+ TACTMODEL_HPP', 'GLDrawQuadrilateral.hpp': 'GLDRAW_QUADRILATER!
+ AL_HPP',
+ 'DynLibManager.hpp': 'DYNLIBMANAGER_HPP', 'BodyAssocVector.hpp': 'BODYASSOCVEC_HPP', 'Typelist.hpp': 'TYPELIST_INC_', 'PointerHandler.tpp': '__POINTERHANDLER_H__', 'GLDrawLatticeInteractingGeometry.hpp': 'GLDRAW_LATTICE_INTERACTING_GEOMETRY_HPP', 'Box.hpp': 'BOX_HPP', 'ResultantForceEngine.hpp': 'RESULTANT_FORCE_ENGINE_HPP', 'XMLFormatManager.hpp': 'XMLFORMATMANAGER_HPP', 'GLDrawSDECLinkGeometry.hpp': 'GLDRAW_SPHERES_LINK_CONTACT_GEOMETRY_HPP', 'InteractionVecSet.hpp': 'INTERACTIONVECSET_HPP', 'FrontEnd.hpp': 'FRONTEND_HPP', 'ArchiveTypes.hpp': '__ARCHIVESTYPES_HPP__', 'Logging.hpp': 'LOGGING_HPP', 'MetaBody.hpp': 'METABODY_HPP', 'BodyContainerIteratorPointer.hpp': 'BODYCONTAINERITERATORPOINTER_HPP', 'ContactStressRecorder.hpp': 'CONTACT_STRESS_RECORDER_HPP', 'IOFormatManager.hpp': 'IOFORMATMANAGER_HPP', 'FrictionLessElasticContactLaw.hpp': 'FRICTIONLESSELASTICCONTACTLAW_HPP', 'ForceEngine.hpp': 'FORCE_ENGINE_HPP', 'GLDrawSphereShadowVolume.hpp': 'GLDRAWSPHERESHADOWVOLUME_H!
+ PP', 'BodyMacroParameters.hpp': 'BODYMACROPARAMETERS_HPP', 'GLWindow.hpp': 'GLWINDOW_HPP', 'PhysicalActionContainer.hpp': 'PHYSICALACTIONCONTAINER_HPP', 'RigidBodyParameters.hpp': 'RIGIDBODYPARAMETERS_HPP', 'GeometricalModelForceColorizer.hpp': 'GEOMETRICAL_MODEL_FORCE_COLORIZER_HPP', 'BodyAssocVectorIterator.hpp': 'BODYASSOCVECTORITERATOR', 'SpringGeometry.hpp': 'SPRINGGEOMETRY_HPP', 'ElasticContactLaw.hpp': 'ELASTIC_CONTACT_LAW_HPP', 'SDECLinkGeometry.hpp': 'SDECLINKGEOMETRY_HPP', 'GLDrawSphere.hpp': 'GLDRAWSPHERE_HPP', 'PhysicalActionApplier.hpp': 'PHYSICALACTIONAPPLIER_HPP', 'PhysicalActionContainerIterator.hpp': 'PHYSICALACTIONCONTAINERITERATOR_HPP', 'CohesiveFrictionalBodyParameters.hpp': 'COHESIVEFRICTIONALBODYPARAMETERS_HPP', 'GLDrawInteractingBox.hpp': 'GLDRAWINTERACTIONBOX_HPP', 'InteractionSolver.hpp': 'INTERACTIONSOLVER_HPP', 'GlobalStiffnessTimeStepper.hpp': 'STIFFNESS_MATRIX_TIME_STEPPER_HPP', 'InteractionContainer.hpp': 'INTERACTIONCONTAINER_HPP', 'Body.hpp':!
+  'BODY_HPP', 'GLDrawClosestFeatures.hpp': 'GLDRAW_CLOSEST_FEAT!
+ URES_HPP
+', 'FpsTracker.hpp': 'FPSTRACKER_HPP', 'ElasticContactInteraction.hpp': 'ELASTIC_CONTACT_PARAMETERS_HPP', 'ThreePointBending.hpp': 'LINKEDSPHERES_HPP', 'NonLocalInitializer.hpp': 'NONLOCALINITIALIZER_HPP', 'ContainerHandler.tpp': '__CONTAINERHANDLER_H__', 'GLDrawAABB.hpp': 'GLDRAWAABB_HPP', 'XMLSaxParser.hpp': 'XMLSAXPARSER_HPP', 'TimeStepper.hpp': 'TIMESTEPPER_HPP', 'MassSpringLaw.hpp': 'MASSSPRINGLAW_HPP', 'EngineUnit.hpp': 'ENGINEUNIT_HPP', 'ModifiedTriaxialTest.hpp': 'SDECIMPORT_HPP', 'QtEngineEditor.hpp': 'QTENGINEEDITOR_HPP', 'BoundingVolumeEngineUnit.hpp': 'BOUNDINGVOLUMEFACTORY_HPP', 'GlobalStiffness.hpp': 'GLOBALSTIFFNESSMATRIX_HPP', 'MultiMethodsExceptions.hpp': 'MULTIMETHODSEXCEPTIONS_HPP', 'Momentum.hpp': 'MOMENTUM_HPP', 'PhysicalActionVectorVector.hpp': 'PHYSICALACTIONVECTORVECTOR_HPP', 'QtCodeGenerator.hpp': 'QTCODEGENERATOR_HPP', 'GLTextLabel.hpp': 'GLTEXTLABEL_HPP', 'YadeQtMainWindow.hpp': 'YADEQTMAINWINDOW_HPP', 'NonLocalDependency.hpp': 'NONLOCALDEPENDENCY_!
+ HPP', 'Force.hpp': 'ACTIONFORCE_HPP', 'ParticleSetParameters.hpp': 'PARTICLESETPARAMETERS_HPP', 'TriaxialCompressionEngine.hpp': 'TRIAXIALCOMPRESSIONENGINE_HPP', 'CundallNonViscousForceDamping.hpp': 'ACTION_FORCE_DAMPING_HPP', 'DynLibDispatcher.hpp': 'DYNLIB_DISPATCHER_HPP', 'FileGenerator.hpp': 'FILEGENERATOR_HPP', 'Omega.hpp': 'OMEGA_HPP', 'SimpleElasticRelationships.hpp': 'SIMPLECONTACTMODEL_HPP', 'RotationEngine.hpp': 'ROTATIONENGINE_HPP', 'InteractingMyTetrahedron.hpp': 'INTERACTING_MY_TETRAHEDRON_HPP', 'GLDrawLineSegment.hpp': 'GLDRAW_LINE_SEGMENT_HPP', 'cmdGui.hpp': 'CMDGUI_HPP', 'LatticeBeamAngularSpring.hpp': 'LATTICEBEAMANGULARSPRING_HPP', 'ForceRecorder.hpp': 'FORCE_RECORDER_HPP', 'QtPreferencesEditor.hpp': 'QTPREFERENCESEDITOR_HPP', 'GLDrawSpheresContactGeometry.hpp': 'GLDRAW_SPHERES_CONTACT_GEOMETRY_HPP', 'LatticeInteractingGeometry.hpp': 'LATTICE_INTERACTINGGEOMETRY_HPP', 'StandAloneEngine.hpp': 'STANDALONEENGINE_HPP', 'GLDrawBoundingVolumeFunctor.hpp': 'GLDRA!
+ WBOUNDINGVOLUMEFUNCTOR_HPP', 'NewtonsForceLaw.hpp': 'NEWTONSFO!
+ RCELAW_H
+PP', 'BoundingSphere.hpp': 'BOUNDINGSPHERE_HPP', 'MeasurePoisson.hpp': 'POISSON_RECORDER_HPP', 'DeusExMachina.hpp': 'KINEMATICENGINE_HPP', 'CapillaryParameters.hpp': 'CAPILLARY_PARAMETERS_HPP', 'AssocVector.hpp': 'ASSOCVECTOR_INC_', 'PhysicalActionDamperUnit.hpp': 'PHYSICALACTIONDAMPERUNIT_HPP', 'Interaction.hpp': 'INTERACTION_HPP', 'CohesiveFrictionalRelationships.hpp': 'COHESIVEFRICTIONALCONTACTMODEL_HPP', 'BoundingVolumeMetaEngine.hpp': 'BOUNDINGVOLUMEUPDATOR_HPP', 'InteractionHashMap.hpp': 'INTERACTIONHASHMAP_HPP', 'SDECLinkedSpheres.hpp': 'LINKEDSPHERES_HPP', 'BodyContainer.hpp': 'BODYCONTAINER_HPP', 'ElasticCriterionTimeStepper.hpp': 'ELASTIC_CRITERION_TIME_STEPPER_HPP'}
++inclusionGuards={'GLEngineEditor.hpp': 'GL_ENGINE_EDITOR_HPP', 'InteractionPhysicsEngineUnit.hpp': 'INTERACTIONPHYSICS_ENGINEUNIT_HPP', 'SpheresContactGeometry.hpp': 'SPHERESCONTACTGEOMETRY_HPP', 'GLWindowsManager.hpp': 'GLWINDOWSMANAGER_HPP', 'QtSimulationPlayer.hpp': 'QTSIMULATIONPLAYER_HPP', 'NewtonsMomentumLaw.hpp': 'NEWTONSMOMENTUMLAW_HPP', 'PhysicalParameters.hpp': 'PHYSICALPARAMETERS_HPP', 'ParticleParameters.hpp': 'PARTICLEPARAMETERS_HPP', 'HangingCloth.hpp': 'HANGINGCLOTH_HPP', 'GLDrawInteractionGeometryFunctor.hpp': 'GLDRAW_INTERACTION_GEOMETRY_FUNCTOR_HPP', 'GeometricalModel.hpp': 'GEOMETRICALMODEL_HPP', 'SDECImpactTest.hpp': 'SDECIMPORT_HPP', 'Funnel.hpp': 'FUNNEL_HPP', 'PhysicalActionContainerIteratorPointer.hpp': 'PHYSICALACTIONCONTAINERITERATORPOINTER_HPP', 'ClosestFeatures.hpp': 'CLOSESTSFEATURES_HPP', 'CapillaryStressRecorder.hpp': 'CAPILLARY_STRESS_RECORDER_HPP', 'InteractionGeometryEngineUnit.hpp': 'INTERACTIONGEOMETRYFUNCTOR_HPP', 'Functor.hpp': 'FUNCTOR!
+ _INC_', 'BINFormatManager.hpp': 'BINFORMATMANAGER_HPP', 'SDECMovingWall.hpp': 'SDEC_MOVING_WALL_HPP', 'Collider.hpp': 'BROADINTERACTOR_HPP', 'InteractingBox.hpp': 'INTERACTION_BOX_HPP', 'BodyContainerIterator.hpp': 'BODYCONTAINERITERATOR_HPP', 'InteractionGeometry.hpp': 'INTERACTIONGEOMETRY_HPP', 'LineSegment.hpp': 'LINE_SEGMENT_HPP', 'GLDrawShadowVolumeFunctor.hpp': 'GLDRAWSHADOWVOLUMEFUNCTOR_HPP', 'ClassFactory.hpp': 'CLASSFACTORY_HPP', 'GLDrawLatticeBeamState.hpp': 'GLDRAW_LATTICE_BEAM_STATE_HPP', 'TypeManip.hpp': 'TYPEMANIP_INC_', 'OpenGLRenderingEngine.hpp': 'OPENGLRENDERINGENGINE_HPP', 'Sphere.hpp': 'SPHERE_HPP', 'TranslationEngine.hpp': 'TRANSLATOR_HPP', 'Tetrahedron.hpp': 'TETRAHEDRON_HPP', 'GLDrawSimpleElasticInteraction.hpp': 'GLDRAW_SIMPLE_ELASTIC_INTERACTION_HPP', 'AveragePositionRecorder.hpp': 'AVERAGE_POSISTION_RECORDER_HPP', 'EmptyType.hpp': 'EMPTYTYPE_INC_', 'BoxStack.hpp': 'BOXSTACK_HPP', 'QtSphericalDEM.hpp': 'QTSPHERICALDEM_HPP', 'CohesiveFrictionalContac!
+ tLaw.hpp': 'COHESIVE_FRICTIONAL_CONTACT_LAW_HPP', 'QtMetaDispa!
+ tchingEn
+gineProperties.hpp': 'QTMETADISPATCHINGENGINEPROPERTIES_HPP', 'CapillaryRecorder.hpp': 'CAPILLARY_RECORDER_HPP', 'GLDrawBoxShadowVolume.hpp': 'GLDRAWBOXSHADOWVOLUME_HPP', 'FundamentalHandler.tpp': '__FUNDAMENTALHANDLER_H__', 'ElasticBodySimpleRelationship.hpp': 'ELASTICBODYSIMPLERELATIONSHIP_HPP', 'GeometricalModelEngineUnit.hpp': 'GEOMETRICAL_MODEL_ENGINE_UNIT_HPP', 'MovingSupport.hpp': 'NO_SHEAR_PLANE', 'QtGUIGenerator.hpp': 'QTGUIGENERATOR_HPP', 'LatticeLaw.hpp': 'LATTICELAW_HPP', 'Archive.hpp': 'ARCHIVECONTENT_HPP', 'InteractionGeometryMetaEngine.hpp': 'INTERACTION_GEOMETRY_METAENGINE_HPP', 'GLSimulationPlayerViewer.hpp': 'SIMULATIONVIEWER_HPP', 'DataRecorder.hpp': 'DATARECORDER_HPP', 'SphericalDEMSimulator.hpp': 'SPHERICALDEMSIMULATOR_HPP', 'Preferences.hpp': 'PREFERENCES_HPP', 'PersistentAloneSAPCollider.hpp': 'PERSISTENTSAPCOLLIDER_HPP', 'GLDrawInteractingMyTetrahedron.hpp': 'GLDRAWINTERACTINGMYTETRAHEDRON_HPP', 'MacroMicroElasticRelationshipsWater.hpp': 'SDECLINEARCO!
+ NTACTMODEL_HPP', 'ElasticCohesiveLaw.hpp': 'ELASTICCOHESIVELAW_HPP', 'MyTetrahedronLaw.hpp': 'MYTETRAHEDRONLAW_HPP', 'IOManagerExceptions.hpp': 'IOMANAGEREXCEPTIONS_HPP', 'Engine.hpp': 'ENGINE_HPP', 'QtFileGenerator.hpp': 'QTFILEGENERATOR_HPP', 'PositionOrientationRecorder.hpp': 'POSITIONORIENTATIONRECORDER_HPP', 'StandAloneSimulator.hpp': 'STANDALONESIMULATOR_HPP', 'SimulationFlow.hpp': 'SIMULATION_FLOW_HPP', 'TriaxialStateRecorder.hpp': 'TRIAXIAL_STATE_RECORDER_HPP', 'Indexable.hpp': 'INDEXABLE_HPP', 'FEMTetrahedronData.hpp': 'LATTICEBEAMPARAMETERS_HPP', 'FunctorWrapper.hpp': 'DYNLIB_LAUNCHER_HPP', 'MetaDispatchingEngine.hpp': 'METADISPATCHINGENGINE_HPP', 'ThreadWorker.hpp': 'THREAD_WORKER_HPP', 'CundallNonViscousMomentumDamping.hpp': 'ACTION_MOMENTUM_DAMPING_HPP', 'GLDrawBox.hpp': 'GLDRAWBOX_HPP', 'SimpleElasticInteraction.hpp': 'SIMPLEELASTICINTERACTION_HPP', 'QtGUIPreferences.hpp': 'QTGUIPREFERENCES_HPP', 'InteractionContainerIteratorPointer.hpp': 'INTERACTIONCONTAINER!
+ ITERATORPOINTER_HPP', 'BodyRedirectionVectorIterator.hpp': 'BO!
+ DYREDIRE
+CTIONVECTORITERATOR_HPP', 'MultiTypeHandler.tpp': '__MULTITYPEHANDLER_H__', 'FEMLaw.hpp': 'FEMLAW_HPP', 'MetaInteractingGeometry.hpp': 'METAINTERACTINGGEOMETRY_HPP', 'InteractingGeometry.hpp': 'INTERACTING_GEOMETRY_HPP', 'GLDrawBoundingSphere.hpp': 'GLDRAWBOUNDINGSPHERE_HPP', 'PhysicalActionApplierUnit.hpp': 'PHYSICALACTIONAPPLIERUNIT_HPP', 'TetraTestGen.hpp': 'TETRATESTGEN_HPP', 'GLDrawStateFunctor.hpp': 'GLDRAW_STATE_FUNCTOR_HPP', 'TriaxialTest.hpp': 'SDECIMPORT_HPP', 'GLViewer.hpp': 'GLVIEWER_HPP', 'yadeWm3Extra.hpp': 'YADE_GEOM_UTILS_HPP', 'InteractionHashMapIterator.hpp': 'INTERACTIONHASHMAPITERATOR_HPP', 'InteractionPhysics.hpp': 'INTERACTIONPHYSICS_HPP', 'CohesiveTriaxialTest.hpp': 'COHESIVE_TRIAXIAL_TEST_HPP', 'VelocityRecorder.hpp': 'VELOCITY_RECORDER_HPP', 'TetrahedronsTest.hpp': 'TETRAHEDRONSTEST_HPP', 'SerializableTypes.hpp': '__SERIALIZABLETYPES_HPP__', 'GLDrawRigidBodyState.hpp': 'GLDRAWRIGIDBODYSTATE_HPP', 'SerializationExceptions.hpp': 'SERIALIZATIONEXCEPTION!
+ S_HPP', 'GLDrawInteractingSphere.hpp': '__GLDRAWINTERACTIONSPHERE_HPP__', 'RotatingBox.hpp': 'ROTATINGBOX_HPP', 'GLDrawMetaInteractingGeometry.hpp': 'GLDRAWCOLLISIONGEOMETRYSET_HPP', 'NullGUI.hpp': 'NULLGUI_HPP', 'TypeTraits.hpp': 'TYPETRAITS_INC_', 'BodyRedirectionVector.hpp': 'BODYREDIRECTIONVECTOR_HPP', 'InteractingGeometryEngineUnit.hpp': 'INTERACTING_GEOMETRY_ENGINE_UNIT_HPP', 'FileDialog.hpp': 'FILEDIALOG_HPP', 'SDECSpheresPlane.hpp': 'SDEC_SPHERES_PLANE_HPP', 'Clump.hpp': 'CLUMP_HPP', 'PythonRecorder.hpp': 'PYTHON_RECORDER_HPP', 'FEMSetTextLoader.hpp': 'FEM_SET_TEXT_LOADER_HPP', 'DisplacementEngine.hpp': 'DISPLACEMENTENGINE_HPP', 'CapillaryCohesiveLaw.hpp': 'CAPILLARY_COHESIVE_LAW_HPP', 'SerializableSingleton.hpp': 'SERIALIZABLESINGLETON_HPP', 'WallStressRecorder.hpp': 'WALL_STRESS_RECORDER_HPP', 'CohesiveFrictionalContactInteraction.hpp': 'COHESIVE_FRICTIONAL_CONTACT_PARAMETERS_HPP', 'GlobalStiffnessCounter.hpp': 'GLOBALSTIFFNESSCOUNTER_HPP', 'GLDrawInteractingGeome!
+ tryFunctor.hpp': 'GLDRAWINTERACTIONGEOMETRYFUNCTOR_HPP', 'Simu!
+ lationCo
+ntrollerUpdater.hpp': 'SIMULATIONCONTROLLERUPDATER_HPP', 'SimulationController.hpp': 'SIMULATIONCONTROLLER_HPP', 'SphericalDEM.hpp': 'SPHERICALDEM_HPP', 'Quadrilateral.hpp': 'QUADRILATERAL_HPP', 'yadeExceptions.hpp': 'YADE_EXCEPTIONS_HPP', 'GLDrawParticleState.hpp': 'GLDRAWPARTICLESTATE_HPP', 'TriaxialStressController.hpp': 'TRIAXIAL_STRESS_CONTROLLER_HPP', 'SDECLinkPhysics.hpp': 'SDECLINKPHYSICS_HPP', 'DistantPersistentSAPCollider.hpp': '__DISTANTPERSISTENTSAPCOLLIDER_HPP__', 'InteractingSphere.hpp': 'INTERACTIONSPHERE_HPP', 'SpringPhysics.hpp': 'SPRINGPHYSICS_HPP', 'Contact.hpp': 'CONTACT_HPP', 'PhysicalActionDamper.hpp': 'PHYSICALACTIONDAMPER_HPP', 'KnownFundamentalsHandler.tpp': 'KNOWNFUNDAMENTALSHANDLER_HPP', 'GLDrawGeometricalModelFunctor.hpp': 'GLDRAWGEOMETRICALMODELFUNCTOR_HPP', 'CapillaryPressureEngine.hpp': 'CAPILLARY_PRESSURE_ENGINE_HPP', 'NullType.hpp': 'NULLTYPE_INC_', 'PhysicalAction.hpp': 'PHYSICALACTION_HPP', 'Tetra.hpp': 'TETRA_HPP', 'GLDrawInteractionPhysic!
+ sFunctor.hpp': 'GLDRAW_INTERACTION_PHYSICS_FUNCTOR_HPP', 'PersistentSAPCollider.hpp': '__PERSISTENTSAPCOLLIDER_HPP__', 'GeometricalModelMetaEngine.hpp': 'GEOMETRICAL_MODEL_DISPATCHER_HPP', 'RenderingEngine.hpp': 'RENDERINGENGINE_HPP', 'Factorable.hpp': 'FACTORABLE_HPP', 'IOFormatManager.tpp': 'IOMANAGER_TPP', 'OpenGLWrapper.hpp': 'OPENGLWRAPPER_HPP', 'ElasticBodyParameters.hpp': 'ELASTICBODYPARAMETERS_HPP', 'GLDrawLatticeSetGeometry.hpp': 'GLDRAW_LATTICE_SET_GEOMETRY_HPP', 'InteractionContainerIterator.hpp': 'INTERACTIONCONTAINERITERATOR_HPP', 'QtGUI.hpp': 'QTGUI_HPP', 'MetaEngine.hpp': 'METAENGINE_HPP', 'InteractionOfMyTetrahedron.hpp': 'INTERACTIONOFMYTETRAHEDRON_HPP', 'AABB.hpp': 'AABB_HPP', 'BoundingVolume.hpp': 'BOUNDINGVOLUME_HPP', 'InteractionVecSetIterator.hpp': 'INTERACTIONVECSETITERATOR_HPP', 'PhysicalActionVectorVectorIterator.hpp': 'PHYSICALACTIONVECTORVECTORITERATOR_HPP', 'MacroMicroElasticRelationships.hpp': 'SDECLINEARCONTACTMODEL_HPP', 'GLDrawQuadrilateral.h!
+ pp': 'GLDRAW_QUADRILATERAL_HPP', 'DynLibManager.hpp': 'DYNLIBM!
+ ANAGER_H
+PP', 'BodyAssocVector.hpp': 'BODYASSOCVEC_HPP', 'Typelist.hpp': 'TYPELIST_INC_', 'PointerHandler.tpp': '__POINTERHANDLER_H__', 'GLDrawLatticeInteractingGeometry.hpp': 'GLDRAW_LATTICE_INTERACTING_GEOMETRY_HPP', 'Box.hpp': 'BOX_HPP', 'ResultantForceEngine.hpp': 'RESULTANT_FORCE_ENGINE_HPP', 'XMLFormatManager.hpp': 'XMLFORMATMANAGER_HPP', 'GLDrawSDECLinkGeometry.hpp': 'GLDRAW_SPHERES_LINK_CONTACT_GEOMETRY_HPP', 'InteractionVecSet.hpp': 'INTERACTIONVECSET_HPP', 'FrontEnd.hpp': 'FRONTEND_HPP', 'ArchiveTypes.hpp': '__ARCHIVESTYPES_HPP__', 'Logging.hpp': 'LOGGING_HPP', 'MetaBody.hpp': 'METABODY_HPP', 'BodyContainerIteratorPointer.hpp': 'BODYCONTAINERITERATORPOINTER_HPP', 'ContactStressRecorder.hpp': 'CONTACT_STRESS_RECORDER_HPP', 'IOFormatManager.hpp': 'IOFORMATMANAGER_HPP', 'FrictionLessElasticContactLaw.hpp': 'FRICTIONLESSELASTICCONTACTLAW_HPP', 'ForceEngine.hpp': 'FORCE_ENGINE_HPP', 'GLDrawSphereShadowVolume.hpp': 'GLDRAWSPHERESHADOWVOLUME_HPP', 'BodyMacroParameters.hpp': 'BODYM!
+ ACROPARAMETERS_HPP', 'GLWindow.hpp': 'GLWINDOW_HPP', 'PhysicalActionContainer.hpp': 'PHYSICALACTIONCONTAINER_HPP', 'RigidBodyParameters.hpp': 'RIGIDBODYPARAMETERS_HPP', 'GeometricalModelForceColorizer.hpp': 'GEOMETRICAL_MODEL_FORCE_COLORIZER_HPP', 'BodyAssocVectorIterator.hpp': 'BODYASSOCVECTORITERATOR', 'SpringGeometry.hpp': 'SPRINGGEOMETRY_HPP', 'ElasticContactLaw.hpp': 'ELASTIC_CONTACT_LAW_HPP', 'SDECLinkGeometry.hpp': 'SDECLINKGEOMETRY_HPP', 'GLDrawSphere.hpp': 'GLDRAWSPHERE_HPP', 'PhysicalActionApplier.hpp': 'PHYSICALACTIONAPPLIER_HPP', 'PhysicalActionContainerIterator.hpp': 'PHYSICALACTIONCONTAINERITERATOR_HPP', 'CohesiveFrictionalBodyParameters.hpp': 'COHESIVEFRICTIONALBODYPARAMETERS_HPP', 'GLDrawInteractingBox.hpp': 'GLDRAWINTERACTIONBOX_HPP', 'InteractionSolver.hpp': 'INTERACTIONSOLVER_HPP', 'GlobalStiffnessTimeStepper.hpp': 'STIFFNESS_MATRIX_TIME_STEPPER_HPP', 'InteractionContainer.hpp': 'INTERACTIONCONTAINER_HPP', 'Body.hpp': 'BODY_HPP', 'GLDrawClosestFeatures.hp!
+ p': 'GLDRAW_CLOSEST_FEATURES_HPP', 'FpsTracker.hpp': 'FPSTRACK!
+ ER_HPP',
+ 'ElasticContactInteraction.hpp': 'ELASTIC_CONTACT_PARAMETERS_HPP', 'ThreePointBending.hpp': 'LINKEDSPHERES_HPP', 'NonLocalInitializer.hpp': 'NONLOCALINITIALIZER_HPP', 'ContainerHandler.tpp': '__CONTAINERHANDLER_H__', 'GLDrawAABB.hpp': 'GLDRAWAABB_HPP', 'XMLSaxParser.hpp': 'XMLSAXPARSER_HPP', 'TimeStepper.hpp': 'TIMESTEPPER_HPP', 'MassSpringLaw.hpp': 'MASSSPRINGLAW_HPP', 'EngineUnit.hpp': 'ENGINEUNIT_HPP', 'ModifiedTriaxialTest.hpp': 'SDECIMPORT_HPP', 'QtEngineEditor.hpp': 'QTENGINEEDITOR_HPP', 'BoundingVolumeEngineUnit.hpp': 'BOUNDINGVOLUMEFACTORY_HPP', 'GlobalStiffness.hpp': 'GLOBALSTIFFNESSMATRIX_HPP', 'MultiMethodsExceptions.hpp': 'MULTIMETHODSEXCEPTIONS_HPP', 'Momentum.hpp': 'MOMENTUM_HPP', 'PhysicalActionVectorVector.hpp': 'PHYSICALACTIONVECTORVECTOR_HPP', 'QtCodeGenerator.hpp': 'QTCODEGENERATOR_HPP', 'GLTextLabel.hpp': 'GLTEXTLABEL_HPP', 'YadeQtMainWindow.hpp': 'YADEQTMAINWINDOW_HPP', 'NonLocalDependency.hpp': 'NONLOCALDEPENDENCY_HPP', 'Force.hpp': 'ACTIONFORCE_HPP', !
+ 'ParticleSetParameters.hpp': 'PARTICLESETPARAMETERS_HPP', 'TriaxialCompressionEngine.hpp': 'TRIAXIALCOMPRESSIONENGINE_HPP', 'CundallNonViscousForceDamping.hpp': 'ACTION_FORCE_DAMPING_HPP', 'DynLibDispatcher.hpp': 'DYNLIB_DISPATCHER_HPP', 'FileGenerator.hpp': 'FILEGENERATOR_HPP', 'Omega.hpp': 'OMEGA_HPP', 'SimpleElasticRelationships.hpp': 'SIMPLECONTACTMODEL_HPP', 'RotationEngine.hpp': 'ROTATIONENGINE_HPP', 'InteractingMyTetrahedron.hpp': 'INTERACTING_MY_TETRAHEDRON_HPP', 'GLDrawLineSegment.hpp': 'GLDRAW_LINE_SEGMENT_HPP', 'cmdGui.hpp': 'CMDGUI_HPP', 'LatticeBeamAngularSpring.hpp': 'LATTICEBEAMANGULARSPRING_HPP', 'ForceRecorder.hpp': 'FORCE_RECORDER_HPP', 'QtPreferencesEditor.hpp': 'QTPREFERENCESEDITOR_HPP', 'GLDrawSpheresContactGeometry.hpp': 'GLDRAW_SPHERES_CONTACT_GEOMETRY_HPP', 'LatticeInteractingGeometry.hpp': 'LATTICE_INTERACTINGGEOMETRY_HPP', 'StandAloneEngine.hpp': 'STANDALONEENGINE_HPP', 'GLDrawBoundingVolumeFunctor.hpp': 'GLDRAWBOUNDINGVOLUMEFUNCTOR_HPP', 'NewtonsF!
+ orceLaw.hpp': 'NEWTONSFORCELAW_HPP', 'BoundingSphere.hpp': 'BO!
+ UNDINGSP
+HERE_HPP', 'MeasurePoisson.hpp': 'POISSON_RECORDER_HPP', 'DeusExMachina.hpp': 'KINEMATICENGINE_HPP', 'CapillaryParameters.hpp': 'CAPILLARY_PARAMETERS_HPP', 'AssocVector.hpp': 'ASSOCVECTOR_INC_', 'PhysicalActionDamperUnit.hpp': 'PHYSICALACTIONDAMPERUNIT_HPP', 'Interaction.hpp': 'INTERACTION_HPP', 'CohesiveFrictionalRelationships.hpp': 'COHESIVEFRICTIONALCONTACTMODEL_HPP', 'BoundingVolumeMetaEngine.hpp': 'BOUNDINGVOLUMEUPDATOR_HPP', 'InteractionHashMap.hpp': 'INTERACTIONHASHMAP_HPP', 'SDECLinkedSpheres.hpp': 'LINKEDSPHERES_HPP', 'BodyContainer.hpp': 'BODYCONTAINER_HPP', 'ElasticCriterionTimeStepper.hpp': 'ELASTIC_CRITERION_TIME_STEPPER_HPP'}
+ 
+ # must modify these by hand
+ skipEndifs={'Omega.hpp':1,'yadeWm3Extra.hpp':2,'Logging.hpp':1,'DynLibManager.hpp':1,'TypeManip.hpp':1,'PythonRecorder.hpp':1}
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000807.html">[deprecated list] [Yade-dev] [svn] r1708 -	trunk/pkg/common/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000809.html">[deprecated list] [Yade-dev] [svn] r1710 - in trunk: .	pkg/realtime-rigidbody
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#808">[ date ]</a>
+              <a href="thread.html#808">[ thread ]</a>
+              <a href="subject.html#808">[ subject ]</a>
+              <a href="author.html#808">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

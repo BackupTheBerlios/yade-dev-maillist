@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1746 - trunk
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1746%20-%20trunk&In-Reply-To=%3C200904061026.n36AQpcV020086%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000906.html">
+   <LINK REL="Next"  HREF="000908.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1746 - trunk</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1746%20-%20trunk&In-Reply-To=%3C200904061026.n36AQpcV020086%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1746 - trunk">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Apr  6 12:26:51 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000906.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-22813/bin/yade-svn1745:	TriaxialTestWater, USCTGen
+</A></li>
+        <LI>Next message: <A HREF="000908.html">[deprecated list] [Yade-dev] [svn] r1747 - in	trunk/extra/SpherePadder: .	SpherePackingTriangulation
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#907">[ date ]</a>
+              <a href="thread.html#907">[ thread ]</a>
+              <a href="subject.html#907">[ subject ]</a>
+              <a href="author.html#907">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-04-06 12:26:50 +0200 (Mon, 06 Apr 2009)
+New Revision: 1746
+
+Modified:
+   trunk/SConstruct
+Log:
+1. Fix weird python problem if LIBS is not defined by distuils (?)
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-04-03 15:39:03 UTC (rev 1745)
++++ trunk/SConstruct	2009-04-06 10:26:50 UTC (rev 1746)
+@@ -43,6 +43,8 @@
+ ##########################################################################################
+ #print sconsVersion
+ if sconsVersion&lt;9806.0 and not os.environ.has_key('NO_SCONS_GET_RECENT'):
++	# sconsVersion&lt;10200.0 
++	# tgzParams=(&quot;<A HREF="http://dfn.dl.sourceforge.net/sourceforge/scons/scons-local-1.2.0.d20090223.tar.gz">http://dfn.dl.sourceforge.net/sourceforge/scons/scons-local-1.2.0.d20090223.tar.gz</A>&quot;,&quot;/scons-local-1.2.0.d20090223&quot;)
+ 	tgzParams=(&quot;<A HREF="http://heanet.dl.sourceforge.net/sourceforge/scons/scons-local-1.0.0.tar.gz">http://heanet.dl.sourceforge.net/sourceforge/scons/scons-local-1.0.0.tar.gz</A>&quot;,&quot;/scons-local-1.0.0&quot;)
+ 	newPrefix=&quot;./scons-local&quot;;
+ 	newUrl,newDir=tgzParams[0],newPrefix+&quot;/&quot;+tgzParams[1]
+@@ -251,7 +253,7 @@
+ 		try:
+ 			#FIXME: once caught, exception disappears along with the actual message of what happened...
+ 			import distutils.sysconfig as ds
+-			context.env.Append(CPPPATH=ds.get_python_inc(),LIBS=ds.get_config_var('LIBS').split())
++			context.env.Append(CPPPATH=ds.get_python_inc(),LIBS=ds.get_config_var('LIBS').split() if ds.get_config_var('LIBS') else None)
+ 			context.env.Append(LINKFLAGS=ds.get_config_var('LINKFORSHARED').split()+ds.get_config_var('BLDLIBRARY').split())
+ 			ret=context.TryLink('#include&lt;Python.h&gt;\nint main(int argc, char **argv){Py_Initialize(); Py_Finalize();}\n','.cpp')
+ 			if not ret: raise RuntimeError
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000906.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-22813/bin/yade-svn1745:	TriaxialTestWater, USCTGen
+</A></li>
+	<LI>Next message: <A HREF="000908.html">[deprecated list] [Yade-dev] [svn] r1747 - in	trunk/extra/SpherePadder: .	SpherePackingTriangulation
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#907">[ date ]</a>
+              <a href="thread.html#907">[ thread ]</a>
+              <a href="subject.html#907">[ subject ]</a>
+              <a href="author.html#907">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

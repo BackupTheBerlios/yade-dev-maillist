@@ -1,0 +1,407 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1758 - in trunk: extra/usct	gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1758%20-%20in%20trunk%3A%20extra/usct%0A%09gui/py&In-Reply-To=%3C200904231320.n3NDKolC023177%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000930.html">
+   <LINK REL="Next"  HREF="000932.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1758 - in trunk: extra/usct	gui/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1758%20-%20in%20trunk%3A%20extra/usct%0A%09gui/py&In-Reply-To=%3C200904231320.n3NDKolC023177%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1758 - in trunk: extra/usct	gui/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Apr 23 15:20:50 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000930.html">[deprecated list] [Yade-dev] r1757 - in trunk: extra pkg/common/DataClass/InteractingGeometry pkg/dem pkg/dem/DataClass/InteractionGeometry pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine scripts/test
+</A></li>
+        <LI>Next message: <A HREF="000932.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-15290/bin/yade-svn1759:	TriaxialTestWater, USCTGen
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#931">[ date ]</a>
+              <a href="thread.html#931">[ thread ]</a>
+              <a href="subject.html#931">[ subject ]</a>
+              <a href="author.html#931">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-04-23 15:20:50 +0200 (Thu, 23 Apr 2009)
+New Revision: 1758
+
+Modified:
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+   trunk/extra/usct/UniaxialStrainControlledTest.hpp
+   trunk/gui/py/utils.py
+   trunk/gui/py/yade-multi
+Log:
+1. Remove cruft from UniaxialStrainer, add the ability to set initial velocities to suppress inertia at the simulation beginning
+2. Jobs in yade-multi can be automatically named after variables suffixed with !
+3. yade-multi now shows and updates automatically some statistic on localhost:9080 using http
+
+
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2009-04-22 06:57:45 UTC (rev 1757)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2009-04-23 13:20:50 UTC (rev 1758)
+@@ -20,7 +20,7 @@
+ 	assert(posIds.size()&gt;0);
+ 	assert(negIds.size()&gt;0);
+ 	posCoords.clear(); negCoords.clear();
+-	FOREACH(body_id_t id,posIds){ const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id); posCoords.push_back(b-&gt;physicalParameters-&gt;se3.position[axis]);
++	FOREACH(body_id_t id,posIds){ const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id,rootBody); posCoords.push_back(b-&gt;physicalParameters-&gt;se3.position[axis]);
+ 		if(blockDisplacements &amp;&amp; blockRotations) b-&gt;isDynamic=false;
+ 		else{
+ 			shared_ptr&lt;PhysicalParameters&gt; &amp;pp=b-&gt;physicalParameters;
+@@ -28,7 +28,7 @@
+ 			if(blockRotations) pp-&gt;blockedDOFs|=PhysicalParameters::DOF_RXRYRZ;
+ 		}
+ 	}
+-	FOREACH(body_id_t id,negIds){ const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id); negCoords.push_back(b-&gt;physicalParameters-&gt;se3.position[axis]);
++	FOREACH(body_id_t id,negIds){ const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id,rootBody); negCoords.push_back(b-&gt;physicalParameters-&gt;se3.position[axis]);
+ 		if(blockDisplacements &amp;&amp; blockRotations) b-&gt;isDynamic=false;
+ 		else{
+ 			shared_ptr&lt;PhysicalParameters&gt; &amp;pp=b-&gt;physicalParameters;
+@@ -49,11 +49,43 @@
+ 	assert(originalLength&gt;0 &amp;&amp; !isnan(originalLength));
+ 
+ 	assert(!isnan(strainRate) || !isnan(absSpeed));
+-	if(strainRate==0){ strainRate=absSpeed/originalLength; LOG_INFO(&quot;Computed new strainRate &quot;&lt;&lt;strainRate); }
++	if(!isnan(std::numeric_limits&lt;Real&gt;::quiet_NaN())){ LOG_FATAL(&quot;NaN's are not properly supported (compiled, with -ffast-math?), which is required.&quot;); throw; }
+ 
+-	initAccelTime_s=initAccelTime&gt;=0 ? initAccelTime : Omega::instance().getTimeStep()*(-initAccelTime);
+-	LOG_INFO(&quot;Strain speed will be &quot;&lt;&lt;absSpeed&lt;&lt;&quot;, strain rate &quot;&lt;&lt;strainRate&lt;&lt;&quot;, will be reached after &quot;&lt;&lt;initAccelTime_s&lt;&lt;&quot;s (&quot;&lt;&lt;initAccelTime_s/Omega::instance().getTimeStep()&lt;&lt;&quot; steps).&quot;);
++	if(isnan(strainRate)){ strainRate=absSpeed/originalLength; LOG_INFO(&quot;Computed new strainRate &quot;&lt;&lt;strainRate); }
++	else {absSpeed=strainRate*originalLength;}
+ 
++	if(!setSpeeds){
++		initAccelTime_s=initAccelTime&gt;=0 ? initAccelTime : Omega::instance().getTimeStep()*(-initAccelTime);
++		LOG_INFO(&quot;Strain speed will be &quot;&lt;&lt;absSpeed&lt;&lt;&quot;, strain rate &quot;&lt;&lt;strainRate&lt;&lt;&quot;, will be reached after &quot;&lt;&lt;initAccelTime_s&lt;&lt;&quot;s (&quot;&lt;&lt;initAccelTime_s/Omega::instance().getTimeStep()&lt;&lt;&quot; steps).&quot;);
++	} else {
++		/* set speed such that it is linear on the strained axis; transversal speed is not set, which can perhaps create some problems.
++			Note: all bodies in the simulation will have their speed set, since there is no way to tell which ones are part of the specimen
++			and which are not.
++
++			Speeds will be linearly interpolated beween axis positions p0,p1 and velocities v0,v1.
++		*/
++		initAccelTime_s=0;
++		LOG_INFO(&quot;Strain speed will be &quot;&lt;&lt;absSpeed&lt;&lt;&quot;, strain rate &quot;&lt;&lt;strainRate&lt;&lt;&quot;; velocities will be set directly at the beginning.&quot;);
++		Real p0=axisCoord(negIds[0]), p1=axisCoord(posIds[0]); // limit positions
++		Real v0,v1; // speeds at p0, p1
++		switch(asymmetry){
++			case -1: v0=-absSpeed; v1=0; break;
++			case  0: v0=-absSpeed/2; v1=absSpeed/2; break;
++			case  1: v0=0; v1=absSpeed; break;
++			default: LOG_FATAL(&quot;Unknown asymmetry value &quot;&lt;&lt;asymmetry&lt;&lt;&quot; (should be -1,0,1)&quot;); throw;
++		}
++		assert(p1&gt;p0);
++		FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
++			// skip bodies on the boundary, since those will have their positions updated directly
++			if(std::find(posIds.begin(),posIds.end(),b-&gt;id)!=posIds.end() || std::find(negIds.begin(),negIds.end(),b-&gt;id)!=negIds.end()) { continue; }
++			Real p=axisCoord(b-&gt;id);
++			Real pNormalized=(p-p0)/(p1-p0);
++			YADE_CAST&lt;ParticleParameters*&gt;(b-&gt;physicalParameters.get())-&gt;velocity[axis]=pNormalized*(v1-v0)+v0;
++		}
++	}
++	stressUpdateInterval=max(1,(int)(2e-5/(abs(strainRate)*Omega::instance().getTimeStep())));
++	LOG_INFO(&quot;Stress will be updated every &quot;&lt;&lt;stressUpdateInterval&lt;&lt;&quot; steps.&quot;);
++
+ 	/* if we have default (&lt;0) crossSectionArea, try to get it from root's AABB;
+ 	 * this will not work if there are foreign bodies in the simulation,
+ 	 * in which case you must give the value yourself as engine attribute.
+@@ -75,13 +107,10 @@
+ 		}
+ 	}
+ 	assert(crossSectionArea&gt;0);
+-	prepareRecStream();
+-#if 0
+-	setupTransStrainSensors();
+-#endif
+ }
+ 
+-void UniaxialStrainer::applyCondition(MetaBody* rootBody){
++void UniaxialStrainer::applyCondition(MetaBody* _rootBody){
++	rootBody=_rootBody;
+ 	if(needsInit) init();
+ 	// postconditions for initParams
+ 	assert(posIds.size()==posCoords.size() &amp;&amp; negIds.size()==negCoords.size() &amp;&amp; originalLength&gt;0 &amp;&amp; crossSectionArea&gt;0);
+@@ -117,19 +146,18 @@
+ 
+ 	Real axialLength=axisCoord(posIds[0])-axisCoord(negIds[0]);
+ 	strain=axialLength/originalLength-1;
+-	if(Omega::instance().getCurrentIteration()%400==0) TRVAR5(dAX,axialLength,originalLength,currentStrainRate,strain);
+ 
+ 	// reverse if we're over the limit strain
+ 	if(notYetReversed &amp;&amp; limitStrain!=0 &amp;&amp; ((currentStrainRate&gt;0 &amp;&amp; strain&gt;limitStrain) || (currentStrainRate&lt;0 &amp;&amp; strain&lt;limitStrain))) { currentStrainRate*=-1; notYetReversed=false; LOG_INFO(&quot;Reversed strain rate to &quot;&lt;&lt;currentStrainRate); }
+ 
+-	if(Omega::instance().getCurrentIteration()%10==0) {
+-		computeAxialForce(rootBody);
++	// update forces and stresses
++	if(Omega::instance().getCurrentIteration()%stressUpdateInterval==0) {
++		computeAxialForce();
+ 		avgStress=(sumPosForces+sumNegForces)/(2*crossSectionArea); // average nominal stress
+-		if(!recordFile.empty() &amp;&amp; recStream.good()) recStream&lt;&lt;Omega::instance().getCurrentIteration()&lt;&lt;&quot; &quot;&lt;&lt;strain&lt;&lt;&quot; &quot;&lt;&lt;avgStress&lt;&lt;endl; // &lt;&lt;&quot; &quot;&lt;&lt;avgTransStrain&lt;&lt;endl;
+ 	}
+ }
+ 
+-void UniaxialStrainer::computeAxialForce(MetaBody* rootBody){
++void UniaxialStrainer::computeAxialForce(){
+ 	sumPosForces=sumNegForces=0;
+ 	rootBody-&gt;bex.sync();
+ 	FOREACH(body_id_t id, negIds) sumNegForces+=rootBody-&gt;bex.getForce(id)[axis];
+@@ -220,7 +248,6 @@
+ #include&lt;yade/pkg-common/LeapFrogPositionIntegrator.hpp&gt;
+ #include&lt;yade/pkg-common/LeapFrogOrientationIntegrator.hpp&gt;
+ #include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+-#include&lt;yade/pkg-dem/PositionOrientationRecorder.hpp&gt;
+ #include&lt;yade/pkg-dem/GlobalStiffnessTimeStepper.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.hpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.hpp	2009-04-22 06:57:45 UTC (rev 1757)
++++ trunk/extra/usct/UniaxialStrainControlledTest.hpp	2009-04-23 13:20:50 UTC (rev 1758)
+@@ -46,13 +46,12 @@
+  */
+ class UniaxialStrainer: public DeusExMachina {
+ 	private:
++		MetaBody* rootBody;
+ 		bool idInVector(body_id_t id, const vector&lt;body_id_t&gt;&amp; V){for(size_t i=0; i&lt;V.size(); i++){ if(V[i]==id) return true; }	return false; }  // unused now
+-		void computeAxialForce(MetaBody* rootBody);
++		void computeAxialForce();
+ 
+-		ofstream recStream;
+-		string recordFile;
+ 		bool needsInit;
+-		Real&amp; axisCoord(body_id_t id){ return Body::byId(id)-&gt;physicalParameters-&gt;se3.position[axis]; };
++		Real&amp; axisCoord(body_id_t id){ return Body::byId(id,rootBody)-&gt;physicalParameters-&gt;se3.position[axis]; };
+ 		void init();
+ 	public:
+ 		virtual bool isActivated(){return active;}
+@@ -71,6 +70,7 @@
+ 		Real sumPosForces,sumNegForces;
+ 		//! crossSection perpendicular to he strained axis, computed from AABB of MetaBody
+ 		Real crossSectionArea;		//! Apply strain along x (0), y (1) or z(2) axis
++		//! The axis which is strained (0,1,2 for x,y,z)
+ 		int axis;
+ 		//! If 0, straining is symmetric for negIds and posIds; for 1 (or -1), only posIds are strained and negIds don't move (or vice versa)
+ 		int asymmetry;
+@@ -84,6 +84,10 @@
+ 		long idleIterations;
+ 		//! Time for strain reaching the requested value (linear interpolation). If negative, the time is dt*(-initAccelTime), where dt is  the timestep at the first iteration.
+ 		Real initAccelTime, initAccelTime_s /* value always in s, computed from initAccelTime */;
++		//! should we set speeds at the beginning directly, instead of increasing strain rate progressively?
++		bool setSpeeds;
++		//! how often to update forces (initialized automatically)
++		int stressUpdateInterval;
+ 
+ 		/** bodies on which straining will be applied (on the positive and negative side of axis) */
+ 		vector&lt;body_id_t&gt; posIds, negIds;
+@@ -110,7 +114,7 @@
+ 		Real strain, avgStress;
+ 
+ 		virtual void applyCondition(MetaBody* rootBody);
+-		UniaxialStrainer(){axis=2; asymmetry=0; currentStrainRate=0; originalLength=-1; limitStrain=0; notYetReversed=true; crossSectionArea=-1; needsInit=true; /* sensorsPusher=shared_ptr&lt;UniaxialStrainSensorPusher&gt;(); */ recordFile=&quot;&quot;; strain=avgStress=/*avgTransStrain=*/0; blockRotations=false; blockDisplacements=false;  strainRate=0; absSpeed=stopStrain=numeric_limits&lt;Real&gt;::quiet_NaN(); active=true; idleIterations=0; initAccelTime=-200;};
++		UniaxialStrainer(){axis=2; asymmetry=0; currentStrainRate=0; originalLength=-1; limitStrain=0; notYetReversed=true; crossSectionArea=-1; needsInit=true; strain=avgStress=0; blockRotations=false; blockDisplacements=false; setSpeeds=false; strainRate=absSpeed=stopStrain=numeric_limits&lt;Real&gt;::quiet_NaN(); active=true; idleIterations=0; initAccelTime=-200;};
+ 		virtual ~UniaxialStrainer(){};
+ 		REGISTER_ATTRIBUTES(DeusExMachina,
+ 				(strainRate) 
+@@ -128,14 +132,12 @@
+ 				(limitStrain) 
+ 				(notYetReversed) 
+ 				(crossSectionArea) 
+-				(recordFile) 
+ 				(strain) 
+ 				(avgStress) 
+ 				(blockDisplacements) 
+ 				(blockRotations) 
++				(setSpeeds)
+ 		);
+-		void prepareRecStream(void){ if(!recordFile.empty()) recStream.open(recordFile.c_str()); }
+-		void postProcessAttributes(bool deserializing){ if(deserializing) prepareRecStream(); } 	
+ 	REGISTER_CLASS_AND_BASE(UniaxialStrainer,DeusExMachina);
+ 	DECLARE_LOGGER;
+ };
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2009-04-22 06:57:45 UTC (rev 1757)
++++ trunk/gui/py/utils.py	2009-04-23 13:20:50 UTC (rev 1758)
+@@ -347,21 +347,30 @@
+ 		o.tags['line']='l!'
+ 	else:
+ 		if not tableFileLine: tableFileLine=os.environ['PARAM_TABLE']
+-		tableFile,tableLine=tableFileLine.split(':')
++		env=tableFileLine.split(':')
++		tableDesc=None
++		tableFile,tableLine=env[0],env[1]
++		if len(env)&gt;2: tableDesc=env[3]
+ 		o.tags['line']='l'+tableLine
+ 		ll=[l.split('#')[0] for l in ['']+open(tableFile).readlines()]; names=ll[1].split(); values=ll[int(tableLine)].split()
+ 		assert(len(names)==len(values))
++		if 'description' in names: O.tags['description']=values[names.index('description')]
++		else:
++			bangCols=[i for i,h in enumerate(names) if h[-1]=='!']
++			if len(bangCols)==0: bangCols=range(len(headings))
++			for i in range(len(names)):
++				if names[i][-1]=='!': names[i]=names[i][:-1] # strip trailing !
++			O.tags['description']=','.join( names[col]+'='+('%g'%values[col] if isinstance(values[col],float) else str(values[col])) for col in bangCols)
+ 		for i in range(len(names)):
+-			if names[i]=='description': o.tags['description']=values[i]
+-			else:
+-				if names[i] not in kw.keys():
+-					if (not unknownOk) and names[i][0]!='!': raise NameError(&quot;Parameter `%s' has no default value assigned&quot;%names[i])
+-				else: kw.pop(names[i])
+-				if names[i][0]!='!':
+-					exec('__builtin__.%s=%s'%(names[i],values[i])); tagsParams+=['%s=%s'%(names[i],values[i])]; dictParams[names[i]]=values[i]
++			if names[i]=='description': continue
++			if names[i] not in kw.keys():
++				if (not unknownOk) and names[i][0]!='!': raise NameError(&quot;Parameter `%s' has no default value assigned&quot;%names[i])
++			else: kw.pop(names[i])
++			if names[i][0]!='!':
++				exec('%s=%s'%(names[i],values[i])) in __builtins__; tagsParams+=['%s=%s'%(names[i],values[i])]; dictParams[names[i]]=values[i]
+ 	defaults=[]
+ 	for k in kw.keys():
+-		exec(&quot;__builtin__.%s=%s&quot;%(k,repr(kw[k])))
++		exec(&quot;%s=%s&quot;%(k,repr(kw[k]))) in __builtins__
+ 		defaults+=[&quot;%s=%s&quot;%(k,kw[k])]; dictDefaults[k]=kw[k]
+ 	o.tags['defaultParams']=&quot;,&quot;.join(defaults)
+ 	o.tags['params']=&quot;,&quot;.join(tagsParams)
+
+Modified: trunk/gui/py/yade-multi
+===================================================================
+--- trunk/gui/py/yade-multi	2009-04-22 06:57:45 UTC (rev 1757)
++++ trunk/gui/py/yade-multi	2009-04-23 13:20:50 UTC (rev 1758)
+@@ -23,9 +23,48 @@
+ finished: %s
+ &quot;&quot;&quot;%(self.id,self.exitStatus,'OK' if self.exitStatus==0 else 'FAILED',self.duration,self.command,time.asctime(time.localtime(self.started)),time.asctime(time.localtime(self.finished))));
+ 		log.close()
++	def t2hhmmss(self,dt): return '%02d:%02d:%02d'%(dt//3600,(dt%3600)//60,(dt%60))
++	def htmlStats(self):
++		ret='&lt;tr&gt;'
++		ret+='&lt;td&gt;%s&lt;/td&gt;'%self.id
++		if self.status=='PENDING': ret+='&lt;td bgcolor=&quot;grey&quot;&gt;(pending)&lt;/td&gt;'
++		elif self.status=='RUNNING': ret+='&lt;td bgcolor=&quot;yellow&quot;&gt;%s&lt;/td&gt;'%self.t2hhmmss(time.time()-self.started)
++		elif self.status=='DONE': ret+='&lt;td bgcolor=&quot;%s&quot;&gt;%s&lt;/td&gt;'%('green' if self.exitStatus==0 else 'red',self.duration)
++		ret+='&lt;td&gt;%s&lt;/td&gt;'%self.command
++		ret+='&lt;td&gt;%d&lt;/td&gt;'%self.nSlots
++		ret+='&lt;/tr&gt;'
++		return ret
+ 
++def globalHtmlStats():
++	ret='&lt;h3&gt;Jobs&lt;/h3&gt;'
++	nFailed=len([j for j in jobs if j.status=='DONE' and j.exitStatus!=0])
++	ret+='&lt;p&gt;&lt;b&gt;%d&lt;/b&gt; total, &lt;b&gt;%d&lt;/b&gt; &lt;span style=&quot;background-color:yellow&quot;&gt;running&lt;/span&gt;, &lt;b&gt;%d&lt;/b&gt; &lt;span style=&quot;background-color:green&quot;&gt;done&lt;/span&gt;%s&lt;/p&gt;'%(len(jobs),len([j for j in jobs if j.status=='RUNNING']), len([j for j in jobs if j.status=='DONE']),' (&lt;b&gt;%d &lt;span style=&quot;background-color:red&quot;&gt;&lt;b&gt;failed&lt;/b&gt;&lt;/span&gt;)'%nFailed if nFailed&gt;0 else '')
++	return ret
+ 
++from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
++import socket
++class HttpStatsServer(BaseHTTPRequestHandler):
++	def do_GET(self):
++		self.send_response(200)
++		self.send_header('Content-type','text/html')
++		self.send_header('refresh','5')
++		self.end_headers()
++		self.wfile.write('&lt;HTML&gt;&lt;TITLE&gt;Yade-multi overview&lt;/TITLE&gt;&lt;BODY&gt;')
++		self.wfile.write(globalHtmlStats())
++		self.wfile.write('&lt;TABLE border=1&gt;&lt;tr&gt;&lt;th&gt;id&lt;/th&gt;&lt;th&gt;status&lt;/th&gt;&lt;th&gt;command&lt;/th&gt;&lt;th&gt;slots&lt;/th&gt;&lt;/tr&gt;')
++		for j in jobs:
++			self.wfile.write(j.htmlStats())
++		self.wfile.write('&lt;/TABLE&gt;&lt;/BODY&gt;&lt;/HTML&gt;')
++		return
++	def log_request(self,req): pass
++def runHttpStatsServer():
++	try:
++		server=HTTPServer(('',9080),HttpStatsServer)
++		import thread; thread.start_new_thread(server.serve_forever,())
++	except socket.error:
++		print &quot;WARN: Port 9080 occupied, not starting HTTP stats server&quot;
+ 
++
+ def runJob(job):
+ 	job.status='RUNNING'
+ 	job.started=time.time();
+@@ -33,7 +72,7 @@
+ 	job.exitStatus=os.system(job.command)
+ 	job.finished=time.time()
+ 	dt=job.finished-job.started;
+-	job.duration='%02d:%02d:%02d'%(dt//3600,(dt%3600)//60,(dt%60))
++	job.duration=job.t2hhmmss(dt)
+ 	strStatus='done   ' if job.exitStatus==0 else 'FAILED '
+ 	job.status='DONE'
+ 	print &quot;#%d (%s%s) %s (exit status %d), duration %s, log %s&quot;%(job.num,job.id,'' if job.nSlots==1 else '/%d'%job.nSlots,strStatus,job.exitStatus,job.duration,job.log)
+@@ -117,8 +156,20 @@
+ 	print &quot;Will use lines &quot;,', '.join([str(i)+' (%s)'%idStrings[i] for i in useLines])+'.'
+ 	#print idStrings
+ except ValueError:
+-	idColumn=None
+-	idStrings=None
++	# try to get idStrings from columns with trailing !
++	bangCols=[i for i,h in enumerate(headings) if h[-1]=='!']
++	if len(bangCols)==0:
++		print 'WARN: no headings with trailing !, will use all of them for description'
++		bangCols=range(len(headings))
++	for i in range(len(headings)):
++		if headings[i][-1]=='!': headings[i]=headings[i][:-1]
++	idStrings={}
++	for i in useLines:
++		newIdBase=','.join( headings[col]+'='+('%g'%values[i][col] if isinstance(values[i][col],float) else str(values[i][col])) for col in bangCols)
++		newId=newIdBase; j=1
++		while newId in idStrings.values():
++			newId=newIdBase+'_%d_'%j; j+=1
++		idStrings[i]=newId
+ 	print &quot;Will use lines &quot;,', '.join([str(i) for i in useLines])+'.'
+ 
+ 
+@@ -140,6 +191,8 @@
+ for job in jobs:
+ 	print '   #%d (%s%s):'%(job.num,job.id,'' if job.nSlots==1 else '/%d'%job.nSlots),job.command
+ 
++runHttpStatsServer()
++
+ # OK, go now
+ if not dryRun: runJobs(jobs,maxJobs)
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000930.html">[deprecated list] [Yade-dev] r1757 - in trunk: extra pkg/common/DataClass/InteractingGeometry pkg/dem pkg/dem/DataClass/InteractionGeometry pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine scripts/test
+</A></li>
+	<LI>Next message: <A HREF="000932.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-15290/bin/yade-svn1759:	TriaxialTestWater, USCTGen
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#931">[ date ]</a>
+              <a href="thread.html#931">[ thread ]</a>
+              <a href="subject.html#931">[ subject ]</a>
+              <a href="author.html#931">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

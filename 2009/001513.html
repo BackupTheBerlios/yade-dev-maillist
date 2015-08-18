@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkStrategy=monolithic	option (dispatching bug)
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5BBug%20415265%5D%20Re%3A%20Script%20works%20only%0A%09with%09linkStrategy%3Dmonolithic%09option%20%28dispatching%20bug%29&In-Reply-To=%3C20090821111856.24372.74991.malone%40gandwana.canonical.com%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001512.html">
+   <LINK REL="Next"  HREF="001517.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkStrategy=monolithic	option (dispatching bug)</H1>
+    <B>Janek Kozicki</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5BBug%20415265%5D%20Re%3A%20Script%20works%20only%0A%09with%09linkStrategy%3Dmonolithic%09option%20%28dispatching%20bug%29&In-Reply-To=%3C20090821111856.24372.74991.malone%40gandwana.canonical.com%3E"
+       TITLE="[deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkStrategy=monolithic	option (dispatching bug)">janek_listy at wp.pl
+       </A><BR>
+    <I>Fri Aug 21 13:18:56 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001512.html">[deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkStrategy=monolithic	option (dispatching bug)
+</A></li>
+        <LI>Next message: <A HREF="001517.html">[deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkStrategy=monolithic	option (dispatching bug)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1513">[ date ]</a>
+              <a href="thread.html#1513">[ thread ]</a>
+              <a href="subject.html#1513">[ subject ]</a>
+              <a href="author.html#1513">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>hm, I am unable to run this script pr.py:
+
+Running script pr.py
+/usr/lib/python2.5/site-packages/pytz/__init__.py:32: UserWarning: Module dateutil was already imported from /usr/lib/pymodules/python2.5/dateutil/__init__.py, but /usr/lib/pymodules/python2.5 is being added to sys.path
+  from pkg_resources import resource_stream
+Traceback (most recent call last):
+  File &quot;/home/janek/tmp/ZZ/BIN/lib/yade-ZZ-test-fast/gui/PythonUI_rc.py&quot;, line 128, in &lt;module&gt;
+    execfile(runtime.script)
+  File &quot;pr.py&quot;, line 56, in &lt;module&gt;
+    ids_spheres=O.bodies.append(pack.regularHexa(pack.inCylinder((0,0,-boxHeight/2*boxCoef),(0,0,-boxHeight/2*boxCoef+h),a),radius=radiusGrain,gap=distBetweenGrains,color=(0.282,0.875,1),exampleNumber=1,initCohesive=True,**kw))
+  File &quot;/home/janek/tmp/ZZ/BIN/lib/yade-ZZ-test-fast/py/yade/pack.py&quot;, line 172, in regularHexa
+    for i,j,k in itertools.product(ii,jj,kk):
+AttributeError: 'module' object has no attribute 'product'
+
+-- 
+Script works only with linkStrategy=monolithic option (dispatching bug)
+<A HREF="https://bugs.launchpad.net/bugs/415265">https://bugs.launchpad.net/bugs/415265</A>
+You received this bug notification because you are a member of Yade
+developers, which is subscribed to Yade.
+
+Status in Yet Another Dynamic Engine: Confirmed
+
+Bug description:
+When I start the simulation with the attached script, I get:
+
+gdb 6.8-debian
+Copyright (C) 2008 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later &lt;<A HREF="http://gnu.org/licenses/gpl.html">http://gnu.org/licenses/gpl.html</A>&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type &quot;show copying&quot;
+and &quot;show warranty&quot; for details.
+This GDB was configured as &quot;x86_64-linux-gnu&quot;.
+/home/gladk/.yade-current/gdb_crash_batch-pid13289:1: Error in sourced command file:
+ptrace: No such process.
+(gdb)
+
+But when I do the same on installation with linkstrategy=monolithic compilation option it works normally.
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001512.html">[deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkStrategy=monolithic	option (dispatching bug)
+</A></li>
+	<LI>Next message: <A HREF="001517.html">[deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkStrategy=monolithic	option (dispatching bug)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1513">[ date ]</a>
+              <a href="thread.html#1513">[ thread ]</a>
+              <a href="subject.html#1513">[ subject ]</a>
+              <a href="author.html#1513">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

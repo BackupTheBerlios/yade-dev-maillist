@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1791 - in trunk: core gui/qt3	pkg/dem
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1791%20-%20in%20trunk%3A%20core%20gui/qt3%0A%09pkg/dem&In-Reply-To=%3C200906052112.n55LCGcK031979%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001013.html">
+   <LINK REL="Next"  HREF="001015.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1791 - in trunk: core gui/qt3	pkg/dem</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1791%20-%20in%20trunk%3A%20core%20gui/qt3%0A%09pkg/dem&In-Reply-To=%3C200906052112.n55LCGcK031979%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1791 - in trunk: core gui/qt3	pkg/dem">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Jun  5 23:12:16 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001013.html">[deprecated list] [Yade-dev] [svn] r1790 - in trunk: . core extra	extra/tetra lib	lib/opengl pkg/common	pkg/common/DataClass/BoundingVolume	pkg/common/DataClass/GeometricalModel	pkg/common/DataClass/Widgets	pkg/dem	pkg/dem/DataClass/InteractionGeometry pkg/lattice pkg/snow
+</A></li>
+        <LI>Next message: <A HREF="001015.html">[deprecated list] [Yade-dev] [svn] r1792 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1014">[ date ]</a>
+              <a href="thread.html#1014">[ thread ]</a>
+              <a href="subject.html#1014">[ subject ]</a>
+              <a href="author.html#1014">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-06-05 23:12:15 +0200 (Fri, 05 Jun 2009)
+New Revision: 1791
+
+Modified:
+   trunk/core/yade.cpp
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/pkg/dem/SConscript
+Log:
+1. Fix missing libs for linkage
+2. Fix a few typos
+
+
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2009-06-04 15:50:18 UTC (rev 1790)
++++ trunk/core/yade.cpp	2009-06-05 21:12:15 UTC (rev 1791)
+@@ -154,7 +154,7 @@
+ 		&quot;   YADE_OPENMP   (supports openMP; set OMP_NUM_THREADS env. var to control parallelism.)\n&quot;
+ 	#endif
+ 	#ifdef LOG4CXX
+-		&quot;   LOG4CXX       (configurable logging framework enabled; ~/.yade-&quot; SUFFIX &quot;/logging.conf)\n&quot;
++		&quot;   LOG4CXX       (configurable logging framework enabled; ~/.yade&quot; SUFFIX &quot;/logging.conf)\n&quot;
+ 	#endif
+ 	#ifdef YADE_OPENGL
+ 		&quot;   YADE_OPENGL   (3d rendering)\n&quot;
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2009-06-04 15:50:18 UTC (rev 1790)
++++ trunk/gui/qt3/GLViewer.cpp	2009-06-05 21:12:15 UTC (rev 1791)
+@@ -164,7 +164,7 @@
+ 	const Se3r se3(renderer-&gt;clipPlaneSe3[planeNo]);
+ 	manipulatedFrame()-&gt;setPositionAndOrientation(qglviewer::Vec(se3.position[0],se3.position[1],se3.position[2]),qglviewer::Quaternion(se3.orientation[0],se3.orientation[1],se3.orientation[2],se3.orientation[3]));
+ 	string grp=strBoundGroup();
+-	displayMessage(&quot;Manipulating clip plane #&quot;+lexical_cast&lt;string&gt;(planeNo+1)+(grp.empty()?grp:&quot;(bound planes:&quot;+grp+&quot;)&quot;));
++	displayMessage(&quot;Manipulating clip plane #&quot;+lexical_cast&lt;string&gt;(planeNo+1)+(grp.empty()?grp:&quot; (bound planes:&quot;+grp+&quot;)&quot;));
+ }
+ 
+ void GLViewer::useDisplayParameters(size_t n){
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2009-06-04 15:50:18 UTC (rev 1790)
++++ trunk/pkg/dem/SConscript	2009-06-05 21:12:15 UTC (rev 1791)
+@@ -40,7 +40,7 @@
+ 
+ 	env.SharedLibrary('UniaxialStrainer',['Engine/StandAloneEngine/UniaxialStrainer.cpp'],LIBS=env['LIBS']+['ParticleParameters','AABB']),
+ 
+-	env.SharedLibrary('ConcretePM',['ConcretePM.cpp'],CXXFLAGS=env['CXXFLAGS']+cpmInclude,LIBS=env['LIBS']+['Shop','DemXDofGeom']),
++	env.SharedLibrary('ConcretePM',['ConcretePM.cpp'],CXXFLAGS=env['CXXFLAGS']+cpmInclude,LIBS=env['LIBS']+['Shop','DemXDofGeom','$QGLVIEWER_LIB' if 'YADE_OPENGL' in env['CPPDEFINES'] else '']),
+ 
+ 	env.SharedLibrary('Clump',['DataClass/Clump.cpp'],LIBS=env['LIBS']+['Shop']),
+ 
+@@ -119,6 +119,7 @@
+ 			'BodyMacroParameters',
+ 			'RigidBodyParameters',
+ 			'ParticleParameters',
++			'DemXDofGeom',
+ 			'InteractionPhysicsMetaEngine']),
+ 
+ 	env.SharedLibrary('InteractingBox2InteractingSphere4SpheresContactGeometry',
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001013.html">[deprecated list] [Yade-dev] [svn] r1790 - in trunk: . core extra	extra/tetra lib	lib/opengl pkg/common	pkg/common/DataClass/BoundingVolume	pkg/common/DataClass/GeometricalModel	pkg/common/DataClass/Widgets	pkg/dem	pkg/dem/DataClass/InteractionGeometry pkg/lattice pkg/snow
+</A></li>
+	<LI>Next message: <A HREF="001015.html">[deprecated list] [Yade-dev] [svn] r1792 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1014">[ date ]</a>
+              <a href="thread.html#1014">[ thread ]</a>
+              <a href="subject.html#1014">[ subject ]</a>
+              <a href="author.html#1014">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

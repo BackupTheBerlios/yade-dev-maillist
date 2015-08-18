@@ -1,0 +1,605 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1929 - in trunk: extra	gui/qt3	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1929%20-%20in%20trunk%3A%20extra%0A%09gui/qt3%09pkg/common/Engine/MetaEngine%0A%09pkg/common/Engine/StandAloneEngine%09pkg/common/RenderingEngine/OpenGLRenderingEngine%0A%09scripts/test&In-Reply-To=%3C200908071027.n77ARoxT009883%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001347.html">
+   <LINK REL="Next"  HREF="001349.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1929 - in trunk: extra	gui/qt3	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1929%20-%20in%20trunk%3A%20extra%0A%09gui/qt3%09pkg/common/Engine/MetaEngine%0A%09pkg/common/Engine/StandAloneEngine%09pkg/common/RenderingEngine/OpenGLRenderingEngine%0A%09scripts/test&In-Reply-To=%3C200908071027.n77ARoxT009883%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1929 - in trunk: extra	gui/qt3	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Aug  7 12:27:50 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001347.html">[deprecated list] [Yade-dev] [svn] r1928 - in trunk: core	extra	pkg/common/Engine/StandAloneEngine py/yadeWrapper scripts/test
+</A></li>
+        <LI>Next message: <A HREF="001349.html">[deprecated list] [Yade-dev] [svn] r1929 - in trunk: extra	gui/qt3	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1348">[ date ]</a>
+              <a href="thread.html#1348">[ thread ]</a>
+              <a href="subject.html#1348">[ subject ]</a>
+              <a href="author.html#1348">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-08-07 12:27:49 +0200 (Fri, 07 Aug 2009)
+New Revision: 1929
+
+Modified:
+   trunk/extra/PeriodicInsertionSortCollider.cpp
+   trunk/extra/PeriodicInsertionSortCollider.hpp
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/GLViewer.hpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+   trunk/scripts/test/periodic-simple.py
+Log:
+1. Beta version of periodic boundary conditions (try scripts/test/periodic-simple.py
+
+
+Modified: trunk/extra/PeriodicInsertionSortCollider.cpp
+===================================================================
+--- trunk/extra/PeriodicInsertionSortCollider.cpp	2009-08-06 22:05:28 UTC (rev 1928)
++++ trunk/extra/PeriodicInsertionSortCollider.cpp	2009-08-07 10:27:49 UTC (rev 1929)
+@@ -18,34 +18,33 @@
+ YADE_PLUGIN((PeriodicInsertionSortCollider))
+ CREATE_LOGGER(PeriodicInsertionSortCollider);
+ 
+-Real PeriodicInsertionSortCollider::cellWrap(const Real x, const Real x0, const Real x1, long&amp; period){
++Real PeriodicInsertionSortCollider::cellWrap(const Real x, const Real x0, const Real x1, int&amp; period){
+ 	Real xNorm=(x-x0)/(x1-x0);
+-	period=(long)floor(xNorm); // FIXME: some people say this is very slow
++	period=(int)floor(xNorm); // FIXME: some people say this is very slow
+ 	return x0+(xNorm-period)*(x1-x0);
+ }
+ 
++Real PeriodicInsertionSortCollider::cellWrapRel(const Real x, const Real x0, const Real x1){
++	Real xNorm=(x-x0)/(x1-x0);
++	return (xNorm-floor(xNorm))*(x1-x0);
++}
+ 
++
+ // return true if bodies bb overlap in all 3 dimensions
+ bool PeriodicInsertionSortCollider::spatialOverlap(body_id_t id1, body_id_t id2,MetaBody* rb, Vector3&lt;int&gt;&amp; periods) const {
+-	assert(id1!=id2) // programming error, or weird bodies (too large?)
++	assert(id1!=id2); // programming error, or weird bodies (too large?)
+ 	for(int axis=0; axis&lt;3; axis++){
+ 		Real dim=rb-&gt;cellMax[axis]-rb-&gt;cellMin[axis];
+-		// wrap all 4 numbers to the period starting and the most minimal number
+-		#if 0
+-			Real mn=min(minima[3*id1+axis],minima[3*id2+axis])-0.001*dim; // avoid rounding issues
+-			Real mx=max(maxima[3*id1+axis],maxima[3*id2+axis]);
+-			TRVAR2(mn,mx);
+-		#endif
+ 		// too big bodies in interaction
+ 		assert(maxima[3*id1+axis]-minima[3*id1+axis]&lt;.99*dim); assert(maxima[3*id2+axis]-minima[3*id2+axis]&lt;.99*dim);
+ 		// different way: find body of which when taken as period start will make the gap smaller
+-		long p;
+-		Real mn1w=cellWrap(minima[3*id1+axis],0,dim,p), mn2w=cellWrap(minima[3*id2+axis],0,dim,p);
+-		Real wMn=(abs(mn2w-mn1w)&lt;dim/2 ? mn1w : mn2w) -/*avoid rounding issues*/1e-4*dim; /* selected wrap base */
++		Real m1=minima[3*id1+axis],m2=minima[3*id2+axis];
++		Real wMn=(cellWrapRel(m1,m2,m2+dim)&lt;cellWrapRel(m2,m1,m1+dim)) ? m2 : m1;
+ 		//TRVAR3(id1,id2,axis);
+ 		//TRVAR4(minima[3*id1+axis],maxima[3*id1+axis],minima[3*id2+axis],maxima[3*id2+axis]);
+-		//TRVAR3(mn1w,mn2w,wMn);
+-		long pmn1,pmx1,pmn2,pmx2;
++		//TRVAR2(cellWrapRel(m1,m2,m2+dim),cellWrapRel(m2,m1,m1+dim));
++		//TRVAR3(m1,m2,wMn);
++		int pmn1,pmx1,pmn2,pmx2;
+ 		Real mn1=cellWrap(minima[3*id1+axis],wMn,wMn+dim,pmn1), mx1=cellWrap(maxima[3*id1+axis],wMn,wMn+dim,pmx1);
+ 		Real mn2=cellWrap(minima[3*id2+axis],wMn,wMn+dim,pmn2), mx2=cellWrap(maxima[3*id2+axis],wMn,wMn+dim,pmx2);
+ 		//TRVAR4(mn1,mx1,mn2,mx2);
+@@ -93,16 +92,17 @@
+ 			long i_1=v.norm(i-1), loIdx_1=v.norm(loIdx-1);
+ 			// fast test, if the first pair is inverted
+ 			if(v[i].coord&lt;v[i_1].coord-(i_1==loIdx_1 ? v.cellDim : 0) ){
+-				// v.dump(cerr);
++				//v.dump(cerr);
++				if(i==loIdx &amp;&amp; v[i].coord&lt;v.cellMin){ v[i].period-=1; v[i].coord+=v.cellDim; loIdx=v.norm(loIdx+1); }
+ 				hadInversion=true; Bound vi=v[i]; int j; const bool viBB=vi.flags.hasBB;
+ 				for(j=i_1; vi.coord&lt;v[j].coord-(j==v.norm(loIdx-1) ? v.cellDim : 0); j=v.norm(j-1)) {
+ 					//{ Bound vj1=v[v.norm(j+1)]; v[v.norm(j+1)]=vi;
+ 					//v[v.norm(j+1)]=vj1; }
+-					long j1=v.norm(j+1); // j2=v.norm(j+2);
+-					//LOG_TRACE(&quot;Inversion of i=&quot;&lt;&lt;i&lt;&lt;&quot;(#&quot;&lt;&lt;vi.id&lt;&lt;&quot; @ &quot;&lt;&lt;vi.coord&lt;&lt;&quot;) j=&quot;&lt;&lt;j&lt;&lt;&quot;(#&quot;&lt;&lt;v[j].id&lt;&lt;&quot; @ &quot;&lt;&lt;v[j].coord&lt;&lt;&quot;); j1=&quot;&lt;&lt;j1&lt;&lt;&quot;, j2=&quot;&lt;&lt;j2); v.dump(cerr);
++					long j1=v.norm(j+1);
++					//LOG_TRACE(&quot;Inversion of i=&quot;&lt;&lt;i&lt;&lt;&quot;(#&quot;&lt;&lt;vi.id&lt;&lt;&quot; @ &quot;&lt;&lt;vi.coord&lt;&lt;&quot;) j=&quot;&lt;&lt;j&lt;&lt;&quot;(#&quot;&lt;&lt;v[j].id&lt;&lt;&quot; @ &quot;&lt;&lt;v[j].coord&lt;&lt;&quot;); j1=&quot;&lt;&lt;j1); v.dump(cerr);
+ 					v[j1]=v[j];
+ 					//if(v[j1].coord&gt;v.cellMax &amp;&amp; j2==loIdx){ v[j1].period+=1; v[j1].coord-=v.cellDim; loIdx=v.norm(loIdx-1); }
+-					if(j1==loIdx) { assert(v[j1].coord&gt;v.cellMax); v[j1].period+=1; v[j1].coord-=v.cellDim; loIdx=v.norm(loIdx-1); }
++					if(j1==loIdx) { assert(v[j1].coord&gt;=v.cellMax); v[j1].period+=1; v[j1].coord-=v.cellDim; loIdx=v.norm(loIdx-1); }
+ 					else if (vi.coord&lt;v.cellMin &amp;&amp; j==loIdx){ vi.period-=1; vi.coord+=v.cellDim; loIdx=v.norm(loIdx+1); }
+ 					if(doCollide &amp;&amp; viBB &amp;&amp; v[j].flags.hasBB) handleBoundInversion(vi.id,v[j].id,interactions,rb);
+ 					//v.dump(cerr);
+@@ -163,6 +163,13 @@
+ 			XX[i].coord=((XX[i].flags.hasBB=(bool)bvXX) ? (XX[i].flags.isMin ? bvXX-&gt;min[0] : bvXX-&gt;max[0]) : (Body::byId(idXX,rb)-&gt;physicalParameters-&gt;se3.position[0])) - XX.cellDim*XX[i].period;
+ 			YY[i].coord=((YY[i].flags.hasBB=(bool)bvYY) ? (YY[i].flags.isMin ? bvYY-&gt;min[1] : bvYY-&gt;max[1]) : (Body::byId(idYY,rb)-&gt;physicalParameters-&gt;se3.position[1])) - YY.cellDim*YY[i].period;
+ 			ZZ[i].coord=((ZZ[i].flags.hasBB=(bool)bvZZ) ? (ZZ[i].flags.isMin ? bvZZ-&gt;min[2] : bvZZ-&gt;max[2]) : (Body::byId(idZZ,rb)-&gt;physicalParameters-&gt;se3.position[2])) - ZZ.cellDim*ZZ[i].period;
++			// PERI: at the initial step, fix periods of bodies
++			// doInitSort is also called when bodies are just added; changing the period should not have influence here, though.
++			if(doInitSort){
++				if(XX[i].coord&lt;XX.cellMin || XX[i].coord&gt;=XX.cellMax) XX[i].coord=cellWrap(XX[i].coord,XX.cellMin,XX.cellMax,XX[i].period);
++				if(YY[i].coord&lt;XX.cellMin || YY[i].coord&gt;=YY.cellMax) YY[i].coord=cellWrap(YY[i].coord,YY.cellMin,YY.cellMax,YY[i].period);
++				if(ZZ[i].coord&lt;ZZ.cellMin || ZZ[i].coord&gt;=ZZ.cellMax) ZZ[i].coord=cellWrap(ZZ[i].coord,ZZ.cellMin,ZZ.cellMax,ZZ[i].period);
++			}
+ 			// and for each body, copy its minima and maxima arrays as well
+ 			if(XX[i].flags.isMin){
+ 				BOOST_STATIC_ASSERT(sizeof(Vector3r)==3*sizeof(Real));
+@@ -171,15 +178,15 @@
+ 				}  
+ 				else{ const Vector3r&amp; pos=Body::byId(idXX,rb)-&gt;physicalParameters-&gt;se3.position; memcpy(&amp;minima[3*idXX],pos,3*sizeof(Real)); memcpy(&amp;maxima[3*idXX],pos,3*sizeof(Real)); }
+ 				// PERI: add periods, but such that both minimum and maximum is within the cell!
+-				Vector3r period(XX[i].period*XX.cellDim,YY[i].period*YY.cellDim,ZZ[i].period*ZZ.cellDim);
+-				*(Vector3r*)(&amp;minima[3*idXX])+=period; *(Vector3r*)(&amp;maxima[3*idXX])+=period; //ugh
++				//Vector3r period(XX[i].period*XX.cellDim,YY[i].period*YY.cellDim,ZZ[i].period*ZZ.cellDim);
++				//*(Vector3r*)(&amp;minima[3*idXX])+=period; *(Vector3r*)(&amp;maxima[3*idXX])+=period; //ugh
+ 			}
+ 		}
+ 
+ 	// process interactions that the constitutive law asked to be erased
+ 		interactions-&gt;erasePending(*this,rb);
+-	LOG_DEBUG(&quot;Step &quot;&lt;&lt;Omega::instance().getCurrentIteration());
+-	ZZ.dump(cerr);
++	//LOG_TRACE(&quot;Step &quot;&lt;&lt;Omega::instance().getCurrentIteration());
++	//ZZ.dump(cerr);
+ 	// XX.dump(cerr); YY.dump(cerr); ZZ.dump(cerr);
+ 
+ 	// sort
+@@ -188,13 +195,10 @@
+ 			insertionSort(XX,interactions,rb); insertionSort(YY,interactions,rb); insertionSort(ZZ,interactions,rb);
+ 		}
+ 		else {
+-			if(doInitSort){
+-				// the initial sort is in independent in 3 dimensions, may be run in parallel
+-				// it seems that there is no time gain running this in parallel, though
+-				 std::sort(XX.vec.begin(),XX.vec.end()); std::sort(YY.vec.begin(),YY.vec.end()); std::sort(ZZ.vec.begin(),ZZ.vec.end());
+-			} else { // sortThenCollide
+-				insertionSort(XX,interactions,rb,false); insertionSort(YY,interactions,rb,false); insertionSort(ZZ,interactions,rb,false);
+-			}
++			// the initial sort is in independent in 3 dimensions, may be run in parallel
++			// it seems that there is no time gain running this in parallel, though
++			 std::sort(XX.vec.begin(),XX.vec.end()); std::sort(YY.vec.begin(),YY.vec.end()); std::sort(ZZ.vec.begin(),ZZ.vec.end());
++
+ 			// traverse the container along requested axis
+ 			assert(sortAxis==0 || sortAxis==1 || sortAxis==2);
+ 			VecBounds&amp; V=(sortAxis==0?XX:(sortAxis==1?YY:ZZ));
+@@ -219,7 +223,7 @@
+ 				*/
+ 				// TRVAR3(i,iid,V[i].coord);
+ 				// go up until we meet the upper bound
+-				for(size_t j=i+1; V[j].id!=iid &amp;&amp; /* handle case 2. of swapped min/max */ j&lt;2*(size_t)nBodies; j++){
++				for(size_t j=i+1; /* handle case 2. of swapped min/max */ j&lt;2*(size_t)nBodies &amp;&amp; V[j].id!=iid; j++){
+ 					const body_id_t&amp; jid=V[j].id;
+ 					/// Not sure why this doesn't work. If this condition is commented out, we have exact same interactions as from SpatialQuickSort. Otherwise some interactions are missing!
+ 					// skip bodies with smaller (arbitrary, could be greater as well) id, since they will detect us when their turn comes
+
+Modified: trunk/extra/PeriodicInsertionSortCollider.hpp
+===================================================================
+--- trunk/extra/PeriodicInsertionSortCollider.hpp	2009-08-06 22:05:28 UTC (rev 1928)
++++ trunk/extra/PeriodicInsertionSortCollider.hpp	2009-08-07 10:27:49 UTC (rev 1929)
+@@ -43,8 +43,10 @@
+ 	void insertionSort(VecBounds&amp; v,InteractionContainer*,MetaBody*,bool doCollide=true);
+ 	void handleBoundInversion(body_id_t,body_id_t,InteractionContainer*,MetaBody*);
+ 	bool spatialOverlap(body_id_t,body_id_t, MetaBody*, Vector3&lt;int&gt;&amp;) const;
+-	static Real cellWrap(Real,Real,Real,long&amp;);
++	static Real cellWrap(const Real, const Real, const Real, int&amp;);
++	static Real cellWrapRel(const Real, const Real, const Real);
+ 
++
+ 	public:
+ 	//! axis for the initial sort
+ 	int sortAxis;
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2009-08-06 22:05:28 UTC (rev 1928)
++++ trunk/gui/qt3/GLViewer.cpp	2009-08-07 10:27:49 UTC (rev 1929)
+@@ -323,6 +323,18 @@
+ 	else if(e-&gt;key()!=Qt::Key_Escape &amp;&amp; e-&gt;key()!=Qt::Key_Space) QGLViewer::keyPressEvent(e);
+ 	updateGL();
+ }
++/* Center the scene such that periodic cell is contained in the view */
++void GLViewer::centerPeriodic(){
++	MetaBody* rb=Omega::instance().getRootBody().get();
++	assert(rb-&gt;isPeriodic);
++	Vector3r center=.5*(rb-&gt;cellMin+rb-&gt;cellMax);
++	Vector3r halfSize=.5*(rb-&gt;cellMax-rb-&gt;cellMin);
++	float radius=std::max(halfSize[0],std::max(halfSize[1],halfSize[2]));
++	LOG_DEBUG(&quot;Periodic scene center=&quot;&lt;&lt;center&lt;&lt;&quot;, halfSize=&quot;&lt;&lt;halfSize&lt;&lt;&quot;, radius=&quot;&lt;&lt;radius);
++	setSceneCenter(qglviewer::Vec(center[0],center[1],center[2]));
++	setSceneRadius(radius*1.5);
++	showEntireScene();
++}
+ 
+ /* Calculate medians for x, y and z coordinates of all bodies;
+  *then set scene center to median position and scene radius to 2*inter-quartile distance.
+@@ -332,6 +344,7 @@
+  * &quot;central&quot; (where most bodies is) part very small or even invisible.
+  */
+ void GLViewer::centerMedianQuartile(){
++	if(Omega::instance().getRootBody()-&gt;isPeriodic){ centerPeriodic(); return; }
+ 	long nBodies=Omega::instance().getRootBody()-&gt;bodies-&gt;size();
+ 	if(nBodies&lt;4) {
+ 		LOG_INFO(&quot;Less than 4 bodies, median makes no sense; calling centerScene() instead.&quot;);
+@@ -357,6 +370,7 @@
+ void GLViewer::centerScene(){
+ 	MetaBody* rb=Omega::instance().getRootBody().get();
+ 	if (!rb) return;
++	if(rb-&gt;isPeriodic){ centerPeriodic(); return; }
+ 
+ 	if(rb-&gt;bodies-&gt;size()&lt;renderer-&gt;selectBodyLimit){LOG_INFO(&quot;Less than &quot;+lexical_cast&lt;string&gt;(renderer-&gt;selectBodyLimit)+&quot; bodies, moving possible. Select with shift, press 'm' to move.&quot;);}
+ 	else{LOG_INFO(&quot;More than &quot;+lexical_cast&lt;string&gt;(renderer-&gt;selectBodyLimit)+&quot; (OpenGLRenderingEngine::selectBodyLimit) bodies. Moving not possible.&quot;);}
+
+Modified: trunk/gui/qt3/GLViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.hpp	2009-08-06 22:05:28 UTC (rev 1928)
++++ trunk/gui/qt3/GLViewer.hpp	2009-08-07 10:27:49 UTC (rev 1929)
+@@ -66,6 +66,7 @@
+ 		virtual void draw();
+ 		virtual void drawWithNames();
+ 		void centerScene();
++		void centerPeriodic();
+ 		void mouseMovesCamera();
+ 		void mouseMovesManipulatedFrame(qglviewer::Constraint* c=NULL);
+ 		void resetManipulation();
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp	2009-08-06 22:05:28 UTC (rev 1928)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp	2009-08-07 10:27:49 UTC (rev 1929)
+@@ -34,6 +34,7 @@
+ 		LOG_WARN(&quot;Interactions pending erase found (erased), no collider being used?&quot;);
+ 		alreadyWarnedNoCollider=true;
+ 	}
++	Vector3r cellSize; if(rootBody-&gt;isPeriodic) cellSize=rootBody-&gt;cellMax-rootBody-&gt;cellMin;
+ 	#ifdef YADE_OPENMP
+ 		const long size=rootBody-&gt;interactions-&gt;size();
+ 		#pragma omp parallel for schedule(guided)
+@@ -72,7 +73,12 @@
+ 
+ 			assert(I-&gt;functorCache.geom);
+ 			bool wasReal=I-&gt;isReal();
+-			bool geomCreated=I-&gt;functorCache.geom-&gt;go(b1-&gt;interactingGeometry,b2-&gt;interactingGeometry,b1-&gt;physicalParameters-&gt;se3, b2-&gt;physicalParameters-&gt;se3,I);
++			bool geomCreated;
++			if(!rootBody-&gt;isPeriodic) geomCreated=I-&gt;functorCache.geom-&gt;go(b1-&gt;interactingGeometry,b2-&gt;interactingGeometry,b1-&gt;physicalParameters-&gt;se3, b2-&gt;physicalParameters-&gt;se3,I);
++			else{ // handle periodicity
++				Se3r se32=b2-&gt;physicalParameters-&gt;se3; se32.position+=Vector3r(I-&gt;cellDist[0]*cellSize[0],I-&gt;cellDist[1]*cellSize[1],I-&gt;cellDist[2]*cellSize[2]);
++				geomCreated=I-&gt;functorCache.geom-&gt;go(b1-&gt;interactingGeometry,b2-&gt;interactingGeometry,b1-&gt;physicalParameters-&gt;se3,se32,I);
++			}
+ 			if(!geomCreated){
+ 				if(wasReal) rootBody-&gt;interactions-&gt;requestErase(I-&gt;getId1(),I-&gt;getId2()); // fully created interaction without geometry is reset and perhaps erased in the next step
+ 				continue; // in any case don't care about this one anymore
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp	2009-08-06 22:05:28 UTC (rev 1928)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp	2009-08-07 10:27:49 UTC (rev 1929)
+@@ -51,6 +51,7 @@
+ 	}
+ 
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++	Vector3r cellSize; if(ncb-&gt;isPeriodic) cellSize=ncb-&gt;cellMax-ncb-&gt;cellMin;
+ 	#ifdef YADE_OPENMP
+ 		const long size=ncb-&gt;transientInteractions-&gt;size();
+ 		#pragma omp parallel for
+@@ -63,10 +64,16 @@
+ 			const shared_ptr&lt;Body&gt;&amp; b2=(*bodies)[I-&gt;getId2()];
+ 			bool wasReal=I-&gt;isReal();
+ 			if (!b1-&gt;interactingGeometry || !b2-&gt;interactingGeometry) { assert(!wasReal); continue; } // some bodies do not have interactingGeometry
+-			bool geomCreated=operator()(b1-&gt;interactingGeometry, b2-&gt;interactingGeometry, b1-&gt;physicalParameters-&gt;se3, b2-&gt;physicalParameters-&gt;se3, I);
++			bool geomCreated;
++			if(!ncb-&gt;isPeriodic){
++				geomCreated=operator()(b1-&gt;interactingGeometry, b2-&gt;interactingGeometry, b1-&gt;physicalParameters-&gt;se3, b2-&gt;physicalParameters-&gt;se3, I);
++			} else{
++				Se3r se32=b2-&gt;physicalParameters-&gt;se3; se32.position+=Vector3r(I-&gt;cellDist[0]*cellSize[0],I-&gt;cellDist[1]*cellSize[1],I-&gt;cellDist[2]*cellSize[2]); // add periodicity to the position of the 2nd body
++				geomCreated=operator()(b1-&gt;interactingGeometry, b2-&gt;interactingGeometry, b1-&gt;physicalParameters-&gt;se3, se32, I);
++			}
+ 			// reset &amp;&amp; erase interaction that existed but now has no geometry anymore
+ 			if(wasReal &amp;&amp; !geomCreated){ ncb-&gt;interactions-&gt;requestErase(I-&gt;getId1(),I-&gt;getId2()); }
+ 	}
+ }
+ 
+-YADE_PLUGIN((InteractionGeometryMetaEngine));
+\ No newline at end of file
++YADE_PLUGIN((InteractionGeometryMetaEngine));
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-08-06 22:05:28 UTC (rev 1928)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-08-07 10:27:49 UTC (rev 1929)
+@@ -230,7 +230,7 @@
+ 				*/
+ 				// TRVAR3(i,iid,V[i].coord);
+ 				// go up until we meet the upper bound
+-				for(size_t j=i+1; V[j].id!=iid &amp;&amp; /* handle case 2. of swapped min/max */ j&lt;2*nBodies; j++){
++				for(size_t j=i+1; /* handle case 2. of swapped min/max */ j&lt;2*nBodies &amp;&amp; V[j].id!=iid; j++){
+ 					const body_id_t&amp; jid=V[j].id;
+ 					/// Not sure why this doesn't work. If this condition is commented out, we have exact same interactions as from SpatialQuickSort. Otherwise some interactions are missing!
+ 					// skip bodies with smaller (arbitrary, could be greater as well) id, since they will detect us when their turn comes
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2009-08-06 22:05:28 UTC (rev 1928)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2009-08-07 10:27:49 UTC (rev 1929)
+@@ -109,16 +109,28 @@
+ 	numBodiesWhenRefSe3LastSet=rootBody-&gt;bodies-&gt;size();
+ 	numIterWhenRefSe3LastSet=Omega::instance().getCurrentIteration();
+ }
++/* mostly copied from PeriodicInsertionSortCollider
++ 	FIXME: common implementation somewhere */
+ 
++Real OpenGLRenderingEngine::wrapCell(const Real x, const Real x0, const Real x1){
++	Real xNorm=(x-x0)/(x1-x0);
++	return x0+(xNorm-floor(xNorm))*(x1-x0);
++}
++Vector3r OpenGLRenderingEngine::wrapCellPt(const Vector3r&amp; pt, MetaBody* rb){
++	if(!rb-&gt;isPeriodic) return pt;
++	return Vector3r(wrapCell(pt[0],rb-&gt;cellMin[0],rb-&gt;cellMax[0]),wrapCell(pt[1],rb-&gt;cellMin[1],rb-&gt;cellMax[1]),wrapCell(pt[2],rb-&gt;cellMin[2],rb-&gt;cellMax[2]));
++}
++
+ void OpenGLRenderingEngine::setBodiesDispSe3(const shared_ptr&lt;MetaBody&gt;&amp; rootBody){
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
+ 		if(!b-&gt;physicalParameters) continue;
+ 		const Se3r&amp; se3=b-&gt;physicalParameters-&gt;se3; const Se3r&amp; refSe3=b-&gt;physicalParameters-&gt;refSe3; Se3r&amp; dispSe3=b-&gt;physicalParameters-&gt;dispSe3;
+-		b-&gt;physicalParameters-&gt;isDisplayed=!pointClipped(se3.position);
++		Vector3r posCell=wrapCellPt(se3.position,rootBody.get());
++		b-&gt;physicalParameters-&gt;isDisplayed=!pointClipped(posCell);
+ 		// if no scaling, return quickly
+-		if(!(scaleDisplacements||scaleRotations)){ b-&gt;physicalParameters-&gt;dispSe3=b-&gt;physicalParameters-&gt;se3; continue; }
++		if(!(scaleDisplacements||scaleRotations||rootBody-&gt;isPeriodic)){ b-&gt;physicalParameters-&gt;dispSe3=b-&gt;physicalParameters-&gt;se3; continue; }
+ 		// apply scaling
+-		dispSe3.position=(scaleDisplacements ? diagMult(displacementScale,se3.position-refSe3.position)+refSe3.position : se3.position );
++		dispSe3.position=(scaleDisplacements ? diagMult(displacementScale,se3.position-refSe3.position)+wrapCellPt(refSe3.position,rootBody.get()) : posCell );
+ 		if(scaleRotations){
+ 			Quaternionr relRot=refSe3.orientation.Conjugate()*se3.orientation;
+ 			Vector3r axis; Real angle; relRot.ToAxisAngle(axis,angle);
+@@ -127,7 +139,19 @@
+ 		} else {dispSe3.orientation=se3.orientation;}
+ 	}
+ }
++// draw periodic cell, if active
++void OpenGLRenderingEngine::drawPeriodicCell(MetaBody* rootBody){
++	if(!rootBody-&gt;isPeriodic) return;
++	glPushMatrix();
++		glColor3v(Vector3r(1,1,0));
++		Vector3r cent=.5*(rootBody-&gt;cellMin+rootBody-&gt;cellMax); Vector3r size=rootBody-&gt;cellMax-rootBody-&gt;cellMin;
++		glTranslate(cent[0],cent[1],cent[2]); glScale(size[0],size[1],size[2]);
++		glutWireCube(1);
++	glPopMatrix();
++}
+ 
++
++
+ void OpenGLRenderingEngine::render(const shared_ptr&lt;MetaBody&gt;&amp; rootBody, body_id_t selection	/*FIXME: not sure. maybe a list of selections, or maybe bodies themselves should remember if they are selected? */) {
+ 
+ 	assert(glutInitDone);
+@@ -167,6 +191,8 @@
+ 	// set displayed Se3 of body (scaling) and isDisplayed (clipping)
+ 	setBodiesDispSe3(rootBody);
+ 
++	drawPeriodicCell(rootBody.get());
++
+ 	if (Show_DOF || Show_ID) renderDOF_ID(rootBody);
+ 	if (Body_geometrical_model){
+ 		if (Cast_shadows){	
+@@ -401,49 +427,78 @@
+ 	if(rootBody-&gt;geometricalModel) geometricalModelDispatcher(rootBody-&gt;geometricalModel,rootBody-&gt;physicalParameters,Body_wire);
+ }
+ 
+-void OpenGLRenderingEngine::renderGeometricalModel(const shared_ptr&lt;MetaBody&gt;&amp; rootBody){	
++void OpenGLRenderingEngine::renderGeometricalModel(const shared_ptr&lt;MetaBody&gt;&amp; rootBody){
+ 	const GLfloat ambientColorSelected[4]={10.0,0.0,0.0,1.0};	
+ 	const GLfloat ambientColorUnselected[4]={0.5,0.5,0.5,1.0};
+-	if((rootBody-&gt;geometricalModel || Draw_inside) &amp;&amp; Draw_inside) {
+-		FOREACH(const shared_ptr&lt;Body&gt; b, *rootBody-&gt;bodies){
+-			if(b-&gt;geometricalModel &amp;&amp; ((b-&gt;getGroupMask() &amp; Draw_mask) || b-&gt;getGroupMask()==0)){
+-				if(b-&gt;physicalParameters &amp;&amp; !b-&gt;physicalParameters-&gt;isDisplayed) continue;
+-				const Se3r&amp; se3=b-&gt;physicalParameters-&gt;dispSe3;
+-				glPushMatrix();
+-				Real angle; Vector3r axis;	se3.orientation.ToAxisAngle(axis,angle);	
+-				glTranslatef(se3.position[0],se3.position[1],se3.position[2]);
+-				glRotatef(angle*Mathr::RAD_TO_DEG,axis[0],axis[1],axis[2]);
+-				if(current_selection==b-&gt;getId() || b-&gt;geometricalModel-&gt;highlight){
+-					glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambientColorSelected);
+-					glColorMaterial(GL_FRONT_AND_BACK,GL_EMISSION);
+-					const Vector3r&amp; h(current_selection==b-&gt;getId() ? highlightEmission0 : highlightEmission1);
+-					glColor4(h[0],h[1],h[2],.2);
+-					glColorMaterial(GL_FRONT_AND_BACK,GL_DIFFUSE);
++	if(rootBody-&gt;geometricalModel) geometricalModelDispatcher(rootBody-&gt;geometricalModel,rootBody-&gt;physicalParameters,Body_wire);
++	if(!Draw_inside) return;
++	FOREACH(const shared_ptr&lt;Body&gt; b, *rootBody-&gt;bodies){
++		if(!b-&gt;geometricalModel || (!((b-&gt;getGroupMask() &amp; Draw_mask) || b-&gt;getGroupMask()==0))) continue;
++		if(b-&gt;physicalParameters &amp;&amp; !b-&gt;physicalParameters-&gt;isDisplayed) continue;
++		const Se3r&amp; se3=b-&gt;physicalParameters-&gt;dispSe3;
++		glPushMatrix();
++		Real angle; Vector3r axis;	se3.orientation.ToAxisAngle(axis,angle);	
++		glTranslatef(se3.position[0],se3.position[1],se3.position[2]);
++		glRotatef(angle*Mathr::RAD_TO_DEG,axis[0],axis[1],axis[2]);
++		if(current_selection==b-&gt;getId() || b-&gt;geometricalModel-&gt;highlight){
++			glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambientColorSelected);
++			glColorMaterial(GL_FRONT_AND_BACK,GL_EMISSION);
++			const Vector3r&amp; h(current_selection==b-&gt;getId() ? highlightEmission0 : highlightEmission1);
++			glColor4(h[0],h[1],h[2],.2);
++			glColorMaterial(GL_FRONT_AND_BACK,GL_DIFFUSE);
+ 
+-					geometricalModelDispatcher(b-&gt;geometricalModel,b-&gt;physicalParameters,Body_wire);
++			geometricalModelDispatcher(b-&gt;geometricalModel,b-&gt;physicalParameters,Body_wire);
+ 
+-					glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambientColorUnselected);
+-					glColorMaterial(GL_FRONT_AND_BACK,GL_EMISSION);
+-					glColor3v(Vector3r::ZERO);
+-					glColorMaterial(GL_FRONT_AND_BACK,GL_DIFFUSE);
+-				} else {
+-					geometricalModelDispatcher(b-&gt;geometricalModel,b-&gt;physicalParameters,Body_wire);
++			glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambientColorUnselected);
++			glColorMaterial(GL_FRONT_AND_BACK,GL_EMISSION);
++			glColor3v(Vector3r::ZERO);
++			glColorMaterial(GL_FRONT_AND_BACK,GL_DIFFUSE);
++		} else {
++			geometricalModelDispatcher(b-&gt;geometricalModel,b-&gt;physicalParameters,Body_wire);
++		}
++		glPopMatrix();
++		if(current_selection==b-&gt;getId() || b-&gt;geometricalModel-&gt;highlight){
++			if(!b-&gt;boundingVolume || Body_wire || b-&gt;geometricalModel-&gt;wire) GLUtils::GLDrawInt(b-&gt;getId(),se3.position);
++			else {
++				// move the label towards the camera by the bounding box so that it is not hidden inside the body
++				const Vector3r&amp; mn=b-&gt;boundingVolume-&gt;min; const Vector3r&amp; mx=b-&gt;boundingVolume-&gt;max; const Vector3r&amp; p=se3.position;
++				Vector3r ext(viewDirection[0]&gt;0?p[0]-mn[0]:p[0]-mx[0],viewDirection[1]&gt;0?p[1]-mn[1]:p[1]-mx[1],viewDirection[2]&gt;0?p[2]-mn[2]:p[2]-mx[2]); // signed extents towards the camera
++				Vector3r dr=-1.01*(viewDirection.Dot(ext)*viewDirection);
++				GLUtils::GLDrawInt(b-&gt;getId(),se3.position+dr,Vector3r::ONE);
++			}
++		}
++		// if the body goes over the cell margin, draw it in all other positions with wire
++		if(b-&gt;boundingVolume &amp;&amp; rootBody-&gt;isPeriodic){
++			const Vector3r&amp; cellMin(rootBody-&gt;cellMin); const Vector3r&amp; cellMax(rootBody-&gt;cellMax); Vector3r cellSize=cellMax-cellMin;
++			Vector3&lt;int&gt; bodyPer,minPer,maxPer;
++			for(int i=0; i&lt;3; i++){
++				bodyPer[i]=(int)floor((b-&gt;physicalParameters-&gt;se3.position[i]-cellMin[i])/cellSize[i]);
++				minPer[i]=(int)floor((b-&gt;boundingVolume-&gt;min[i]-cellMin[i])/cellSize[i]);
++				maxPer[i]=(int)floor((b-&gt;boundingVolume-&gt;max[i]-cellMin[i])/cellSize[i]);
++				//assert(bodyPer[i]&lt;=maxPer[i]); assert(bodyPer[i]&gt;=minPer[i]);
++			}
++			/* m is bitmask from 3 couples (0&#8230;64=2^6) */
++			for(int m=0; m&lt;64; m++){
++				// any mask containing 00 couple is invalid
++				if((!(m&amp;1) &amp;&amp; (!(m&amp;2))) || (!(m&amp;4) &amp;&amp; (!(m&amp;8))) || (!(m&amp;16) &amp;&amp; (!(m&amp;32)))) continue;
++				Vector3r pt(se3.position);
++				bool isInside=false;
++				for(int j=0; j&lt;3; j++){
++					if(m&amp;(1&lt;&lt;(2*j))) {
++						if(m&amp;(1&lt;&lt;(2*j+1))) { if(bodyPer[j]&gt;=maxPer[j]) {isInside=true; break; } pt[j]-=cellSize[j]; }
++						else { if(bodyPer[j]&lt;=minPer[j]){ isInside=true; break; } pt[j]+=cellSize[j]; }
++					}
+ 				}
++				if(isInside) continue;
++				if(pt==se3.position) continue; // shouldn't happen, but it happens :-(
++				glPushMatrix();
++					glTranslatev(pt);
++					glRotatef(angle*Mathr::RAD_TO_DEG,axis[0],axis[1],axis[2]);
++					geometricalModelDispatcher(b-&gt;geometricalModel,b-&gt;physicalParameters,/*Body_wire*/ true);
+ 				glPopMatrix();
+-				if(current_selection==b-&gt;getId() || b-&gt;geometricalModel-&gt;highlight){
+-					if(!b-&gt;boundingVolume || Body_wire || b-&gt;geometricalModel-&gt;wire) GLUtils::GLDrawInt(b-&gt;getId(),se3.position);
+-					else {
+-						// move the label towards the camera by the bounding box so that it is not hidden inside the body
+-						const Vector3r&amp; mn=b-&gt;boundingVolume-&gt;min; const Vector3r&amp; mx=b-&gt;boundingVolume-&gt;max; const Vector3r&amp; p=se3.position;
+-						Vector3r ext(viewDirection[0]&gt;0?p[0]-mn[0]:p[0]-mx[0],viewDirection[1]&gt;0?p[1]-mn[1]:p[1]-mx[1],viewDirection[2]&gt;0?p[2]-mn[2]:p[2]-mx[2]); // signed extents towards the camera
+-						Vector3r dr=-1.01*(viewDirection.Dot(ext)*viewDirection);
+-						GLUtils::GLDrawInt(b-&gt;getId(),se3.position+dr,Vector3r::ONE);
+-					}
+-				}
+ 			}
+ 		}
+ 	}
+-	if(rootBody-&gt;geometricalModel) geometricalModelDispatcher(rootBody-&gt;geometricalModel,rootBody-&gt;physicalParameters,Body_wire);
+ }
+ 
+ 
+@@ -509,10 +564,10 @@
+ 		const Se3r&amp; se3=b-&gt;physicalParameters-&gt;dispSe3;
+ 		if(b-&gt;interactingGeometry &amp;&amp; ((b-&gt;getGroupMask()&amp;Draw_mask) || b-&gt;getGroupMask()==0)){
+ 			glPushMatrix();
+-			Real angle;	Vector3r axis;	se3.orientation.ToAxisAngle(axis,angle);	
+-			glTranslatef(se3.position[0],se3.position[1],se3.position[2]);
+-			glRotatef(angle*Mathr::RAD_TO_DEG,axis[0],axis[1],axis[2]);
+-			interactingGeometryDispatcher(b-&gt;interactingGeometry,b-&gt;physicalParameters,Body_wire);
++				Real angle;	Vector3r axis;	se3.orientation.ToAxisAngle(axis,angle);	
++				glTranslatef(se3.position[0],se3.position[1],se3.position[2]);
++				glRotatef(angle*Mathr::RAD_TO_DEG,axis[0],axis[1],axis[2]);
++				interactingGeometryDispatcher(b-&gt;interactingGeometry,b-&gt;physicalParameters,Body_wire);
+ 			glPopMatrix();
+ 		}
+ 	}
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2009-08-06 22:05:28 UTC (rev 1928)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2009-08-07 10:27:49 UTC (rev 1929)
+@@ -39,6 +39,13 @@
+ 		Real normSaw(Real t, Real period){ Real xi=(t-period*((int)(t/period)))/period; /* normalized value, (0-1&#9002; */ return (xi&lt;.5?2*xi:2-2*xi); }
+ 		Real normSquare(Real t, Real period){ Real xi=(t-period*((int)(t/period)))/period; /* normalized value, (0-1&#9002; */ return (xi&lt;.5?0:1); }
+ 
++		//! wrap number to interval x0&#8230;x1
++		Real wrapCell(const Real x, const Real x0, const Real x1);
++		//! wrap point to inside MetaBody's cell (identity if !MetaBody::isPeriodic)
++		Vector3r wrapCellPt(const Vector3r&amp; pt, MetaBody* rb);
++		void drawPeriodicCell(MetaBody*);
++
++
+ 	private :
+ 		DynLibDispatcher&lt; InteractionGeometry , GLDrawInteractionGeometryFunctor, void , TYPELIST_5(const shared_ptr&lt;InteractionGeometry&gt;&amp;, const shared_ptr&lt;Interaction&gt;&amp; , const shared_ptr&lt;Body&gt;&amp;, const shared_ptr&lt;Body&gt;&amp;, bool) &gt; interactionGeometryDispatcher;
+ 		DynLibDispatcher&lt; InteractionPhysics  , GLDrawInteractionPhysicsFunctor,  void , TYPELIST_5(const shared_ptr&lt;InteractionPhysics&gt;&amp; , const shared_ptr&lt;Interaction&gt;&amp;, const shared_ptr&lt;Body&gt;&amp;, const shared_ptr&lt;Body&gt;&amp;, bool) &gt; interactionPhysicsDispatcher;
+
+Modified: trunk/scripts/test/periodic-simple.py
+===================================================================
+--- trunk/scripts/test/periodic-simple.py	2009-08-06 22:05:28 UTC (rev 1928)
++++ trunk/scripts/test/periodic-simple.py	2009-08-07 10:27:49 UTC (rev 1929)
+@@ -10,15 +10,15 @@
+ 		[Law2_Dem3Dof_Elastic_Elastic()],
+ 	),
+ 	GravityEngine(gravity=[0,0,-10]),
+-	NewtonsDampedLaw(damping=.1)
++	TranslationEngine(translationAxis=(1,0,0),velocity=10,subscribedBodies=[0]),
++	NewtonsDampedLaw(damping=.4)
+ ]
+-O.bodies.append(utils.sphere([0,0,2],1,dynamic=False,density=1000))
+-O.bodies.append(utils.sphere([0,0,3],1,density=1000))
++O.bodies.append(utils.sphere([-4,0,11],2,dynamic=False,density=1000))
++O.bodies.append(utils.sphere([0,-1,5.5],2,density=1000))
++O.bodies.append(utils.sphere([0,2,5.5],2,density=2000))
+ O.periodicCell=((-5,-5,0),(5,5,10))
+-O.dt=utils.PWaveTimeStep()
++O.dt=.1*utils.PWaveTimeStep()
+ O.saveTmp()
+ from yade import qt
+ qt.Controller()
+ qt.View()
+-O.run(17)
+-
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001347.html">[deprecated list] [Yade-dev] [svn] r1928 - in trunk: core	extra	pkg/common/Engine/StandAloneEngine py/yadeWrapper scripts/test
+</A></li>
+	<LI>Next message: <A HREF="001349.html">[deprecated list] [Yade-dev] [svn] r1929 - in trunk: extra	gui/qt3	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/OpenGLRenderingEngine	scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1348">[ date ]</a>
+              <a href="thread.html#1348">[ thread ]</a>
+              <a href="subject.html#1348">[ subject ]</a>
+              <a href="author.html#1348">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

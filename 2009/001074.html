@@ -1,0 +1,1002 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1820 - in trunk/pkg/lattice:	Engine/EngineUnit	Engine/StandAloneEngine PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1820%20-%20in%20trunk/pkg/lattice%3A%0A%09Engine/EngineUnit%09Engine/StandAloneEngine%20PreProcessor&In-Reply-To=%3C200906262239.n5QMdIm6013435%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001073.html">
+   <LINK REL="Next"  HREF="001075.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1820 - in trunk/pkg/lattice:	Engine/EngineUnit	Engine/StandAloneEngine PreProcessor</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1820%20-%20in%20trunk/pkg/lattice%3A%0A%09Engine/EngineUnit%09Engine/StandAloneEngine%20PreProcessor&In-Reply-To=%3C200906262239.n5QMdIm6013435%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1820 - in trunk/pkg/lattice:	Engine/EngineUnit	Engine/StandAloneEngine PreProcessor">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Sat Jun 27 00:39:18 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001073.html">[deprecated list] [Yade-dev] [svn] r1819 - in trunk:	core	pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+        <LI>Next message: <A HREF="001075.html">[deprecated list] [Yade-dev] [robot] startup failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1074">[ date ]</a>
+              <a href="thread.html#1074">[ thread ]</a>
+              <a href="subject.html#1074">[ subject ]</a>
+              <a href="author.html#1074">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2009-06-27 00:39:15 +0200 (Sat, 27 Jun 2009)
+New Revision: 1820
+
+Modified:
+   trunk/pkg/lattice/Engine/EngineUnit/LatticeSet2LatticeBeams.cpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.cpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.hpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.cpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.hpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.cpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.hpp
+   trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+   trunk/pkg/lattice/PreProcessor/LatticeExample.hpp
+Log:
+- Lattice uses DOFs now
+- old implementation is still accessible by setting a flag backward_compatible, so that hundreds of my old FileGenerator files will still work
+- some improvements to recording strains and forces
+
+
+
+Modified: trunk/pkg/lattice/Engine/EngineUnit/LatticeSet2LatticeBeams.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/EngineUnit/LatticeSet2LatticeBeams.cpp	2009-06-26 22:32:40 UTC (rev 1819)
++++ trunk/pkg/lattice/Engine/EngineUnit/LatticeSet2LatticeBeams.cpp	2009-06-26 22:39:15 UTC (rev 1820)
+@@ -43,7 +43,15 @@
+ 			      if(beam-&gt;longitudalStiffness == 60.0 ) line-&gt;diffuseColor = Vector3r(0.0,0.0,0.0); // AGGREGATE
+ 			      if(beam-&gt;longitudalStiffness == 160.0) line-&gt;diffuseColor = Vector3r(1.0,1.0,0.35); // STEEL
+ 
+-			      if(beam-&gt;longitudalStiffness == 10.0 ) line-&gt;diffuseColor = Vector3r(0.0,1.0,0.0); // NON-DESTROY
++			      if(beam-&gt;longitudalStiffness == 500.0 ) line-&gt;diffuseColor = Vector3r(0.0,1.0,0.0); // NON-DESTROY
++			      
++			      
++//			      if(beam-&gt;longitudalStiffness == 0.69999999999999996 ) line-&gt;diffuseColor = Vector3r(0.06,0.06,0.06); // BOND  
++//			      if(beam-&gt;longitudalStiffness == 1.0 ) line-&gt;diffuseColor = Vector3r(0.46,0.46,0.46); // CEMENT   
++//			      if(beam-&gt;longitudalStiffness == 3.0 ) line-&gt;diffuseColor = Vector3r(0.0,0.0,0.0); // AGGREGATE
++//			      if(beam-&gt;longitudalStiffness == 8.0) line-&gt;diffuseColor = Vector3r(1.0,1.0,0.35); // STEEL
++//
++//			      if(beam-&gt;longitudalStiffness == 10.0 ) line-&gt;diffuseColor = Vector3r(0.0,1.0,0.0); // NON-DESTROY
+ 		}
+ 	}
+ }
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.cpp	2009-06-26 22:32:40 UTC (rev 1819)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.cpp	2009-06-26 22:39:15 UTC (rev 1820)
+@@ -18,6 +18,8 @@
+ 
+ LatticeLaw::LatticeLaw() : InteractionSolver()
+ {
++//	respect_non_destroy = 500.0;
++	backward_compatible = true;
+ }
+ 
+ 
+@@ -300,8 +302,16 @@
+ 			if( deleteBeam(lattice , beam, body) ) // calculates strain
+ 			{
+ //				std::cerr &lt;&lt; &quot;one beam deleted\n&quot;;
++			
++	if(respect_non_destroy == beam-&gt;longitudalStiffness)
++	{
++		std::cerr &lt;&lt; &quot;Tried to delete a non-destroy beam, skipping.\n&quot;;
++	}
++	else
++	{
+ 				futureDeletes.push_back(body-&gt;getId());
+ 				continue;
++	}
+ 			}
+ 		}
+ 		
+@@ -422,32 +432,118 @@
+ 					continue; 
+ 				}
+ 			}
+-			Vector3r displacementTotal      = 
+-				  node-&gt;displacementIncremental / node-&gt;countIncremental 
+-				+ node-&gt;displacementAlignmental / node-&gt;countStiffness;
++			Vector3r straight_line_movement		= node-&gt;displacementIncremental / node-&gt;countIncremental;
++			Vector3r elastic_deformation_movement	= node-&gt;displacementAlignmental / node-&gt;countStiffness;
+ 
++/////////// No damping
++			Vector3r displacementTotal		= straight_line_movement + elastic_deformation_movement;
++				//  node-&gt;displacementIncremental / node-&gt;countIncremental 
++				//+ node-&gt;displacementAlignmental / node-&gt;countStiffness;
++/////////// No damping END
++
++///////////// ZZ
++//			Real DAMPING=0.3;
++//			{
++//				Vector3r sign =  elastic_deformation_movement - node-&gt;previousDisplacement;
++//				for(int i=0; i&lt;3; i++)
++//					if(sign[i]&lt;0)
++//						elastic_deformation_movement[i] *= (1.0-DAMPING);
++//			}
++//			Vector3r displacementTotal	= straight_line_movement + elastic_deformation_movement;
++//			node-&gt;previousDisplacement	= elastic_deformation_movement;
++///////////// ZZ END
++//
++///////////// ZZ2
++//			Vector3r displacementTotal	= straight_line_movement + elastic_deformation_movement;
++//			Real DAMPING=0.3;
++//			{
++//				for(int i=0; i&lt;3; i++)
++//					if(displacementTotal[i] * node-&gt;previousDisplacement[i] &lt; 0)
++//						displacementTotal[i] *= (1.0-DAMPING);
++//			}
++//
++//			node-&gt;previousDisplacement	= displacementTotal;
++///////////// ZZ2 END
++//
++///////////// ZZ3
++//			Real DAMPING=0.3;
++//			{
++//				for(int i=0; i&lt;3; i++)
++//					if(elastic_deformation_movement[i] * node-&gt;previousDisplacement[i] &lt; 0)
++//						elastic_deformation_movement[i] *= (1.0-DAMPING);
++//			}
++//			Vector3r displacementTotal	= straight_line_movement + elastic_deformation_movement;
++//			node-&gt;previousDisplacement	= elastic_deformation_movement;
++///////////// ZZ3 END
++
++			// FIXME - ponder changing names:
++			// 
++			// uniform straight line movement:
++			//  displacementIncremental	(numerator) 
++			//  countIncremental		(denominator)
++			//
++			// elastic deformation:
++			//  displacementAlignmental	(numerator)
++			//  countStiffness		(denominator)
++
+ 			node-&gt;countIncremental		= 0;
+ 			node-&gt;countStiffness            = 0;
+ 			node-&gt;displacementIncremental 	= Vector3r(0.0,0.0,0.0);
+ 			node-&gt;displacementAlignmental   = Vector3r(0.0,0.0,0.0);
+ 
+-			if(body-&gt;isDynamic)
++
+ 			{
+-				node-&gt;se3.position      += displacementTotal;
+-										// DAMPING: *(1.0 - damping_with_energy_loss_0_to_1);
+-			//	node-&gt;se3.orientation	+= ;
++				static bool first1(true);
++				if(first1)
++				{
++					first1=false;
++					std::cerr &lt;&lt; &quot;====== backward_compatible is:&quot; &lt;&lt; (int)(backward_compatible) &lt;&lt; &quot;\n&quot;;
++				}
+ 			}
+-			// FIXME FIXME FIXME FIXME FIXME FIXME FIXME
++
++			if(backward_compatible)
++			{
++						if(body-&gt;isDynamic)
++						{
++							node-&gt;se3.position      += displacementTotal;
++													// DAMPING: *(1.0 - damping_with_energy_loss_0_to_1);
++						//	node-&gt;se3.orientation	+= ;
++						}
++						// FIXME FIXME FIXME FIXME FIXME FIXME FIXME [2]
++						else
++						{
++							if(!roughEdges)// FIXME - else move only in x and z directions
++							{
++								node-&gt;se3.position[0]   += displacementTotal[0];
++								node-&gt;se3.position[2]   += displacementTotal[2];
++								//std::cerr &lt;&lt; &quot;zz!\n&quot;;
++							}
++						}
++						if(ensure2D)
++							node-&gt;se3.position[2] = 0; // ensure 2D
++			}
+ 			else
+ 			{
+-				if(!roughEdges)// FIXME - else move only in x and z directions
++				static bool first(true);
++				if(first)
+ 				{
+-					node-&gt;se3.position[0]   += displacementTotal[0];
+-					node-&gt;se3.position[2]   += displacementTotal[2];
++					first=false;
++					std::cerr &lt;&lt; &quot;Using DOFs !\n&quot;;
+ 				}
++				
++				{// FIXED (was FIXME [2]) here is good.
++					if(node-&gt;blockedDOFs == PhysicalParameters::DOF_NONE)
++					{
++						node-&gt;se3.position      += displacementTotal;
++					}
++					else
++					{
++						if((node-&gt;blockedDOFs &amp; PhysicalParameters::DOF_X) == 0) node-&gt;se3.position[0] += displacementTotal[0];
++						if((node-&gt;blockedDOFs &amp; PhysicalParameters::DOF_Y) == 0) node-&gt;se3.position[1] += displacementTotal[1];
++						if((node-&gt;blockedDOFs &amp; PhysicalParameters::DOF_Z) == 0) node-&gt;se3.position[2] += displacementTotal[2];
++					}
++				}
+ 			}
+-			if(ensure2D)
+-				node-&gt;se3.position[2] = 0; // ensure 2D
+ 		}
+ 	}
+ 	
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.hpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.hpp	2009-06-26 22:32:40 UTC (rev 1819)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.hpp	2009-06-26 22:39:15 UTC (rev 1820)
+@@ -25,7 +25,9 @@
+                 bool deleteBeam(MetaBody* lattice , LatticeBeamParameters* beam, Body*);
+                 void calcBeamPositionOrientationNewLength(Body* body, BodyContainer* bodies);
+ 	public :
+-		bool roughEdges,ensure2D,calcTorsion,tension_compression_different_stiffness; // FIXME, FIXME, FIXME 
++		bool roughEdges,ensure2D,calcTorsion,tension_compression_different_stiffness;// FIXME, FIXME, FIXME 
++		bool backward_compatible;
++		Real respect_non_destroy;
+ 		LatticeLaw();
+ 		virtual ~LatticeLaw();
+ 		void action(MetaBody*);
+@@ -34,7 +36,9 @@
+ 			REGISTER_ATTRIBUTE(roughEdges);
+ 			REGISTER_ATTRIBUTE(ensure2D);
+ 			REGISTER_ATTRIBUTE(calcTorsion);
++			REGISTER_ATTRIBUTE(backward_compatible);
+ 			REGISTER_ATTRIBUTE(tension_compression_different_stiffness);
++			REGISTER_ATTRIBUTE(respect_non_destroy);
+ 			// must go to derived class
+ 			//REGISTER_ATTRIBUTE(nonlocal);
+ 		};
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.cpp	2009-06-26 22:32:40 UTC (rev 1819)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.cpp	2009-06-26 22:39:15 UTC (rev 1820)
+@@ -23,6 +23,7 @@
+ 	// FIXME ...
+         nodeGroupMask           = 1;
+         beamGroupMask           = 2;
++	only_this_stiffness	= -1;
+ }
+ 
+ 
+@@ -78,6 +79,7 @@
+ 	//REGISTER_ATTRIBUTE(regions);
+ 	REGISTER_ATTRIBUTE(regions_min);
+ 	REGISTER_ATTRIBUTE(regions_max);
++	REGISTER_ATTRIBUTE(only_this_stiffness);
+ 
+ //	REGISTER_ATTRIBUTE(first);
+ //	REGISTER_ATTRIBUTE(subscribedBodies);
+@@ -131,7 +133,40 @@
+ 						&amp;&amp; ((*bi)-&gt;getGroupMask() &amp; nodeGroupMask)
+ 					  )
+ 					{
+-						subscribedBodies[region].push_back((*bi)-&gt;getId());
++						if(only_this_stiffness &gt; 0)
++						{
++							bool ok;ok=true;
++							// check this node's beams, quite time consuming
++							BodyContainer::iterator bi2    = ncb-&gt;bodies-&gt;begin();
++							BodyContainer::iterator bi2End = ncb-&gt;bodies-&gt;end();
++							for(  ; bi2!=bi2End ; ++bi2 )
++							{
++								if( (*bi2)-&gt;getGroupMask() &amp; beamGroupMask )
++								{
++									LatticeBeamParameters* beam = dynamic_cast&lt;LatticeBeamParameters*&gt;((*bi2)-&gt;physicalParameters.get());
++									if(beam)
++									{
++										if(beam-&gt;id1 == (*bi)-&gt;getId() || beam-&gt;id2 == (*bi)-&gt;getId())
++											if(beam-&gt;longitudalStiffness != only_this_stiffness)
++											{
++												ok=false;
++												break;
++											}
++									}
++									else
++									{
++										std::cerr &lt;&lt; &quot;ERROR: that's not a beam!\n&quot;;
++										exit(1);
++									}
++								}
++							}
++							if(ok)
++								subscribedBodies[region].push_back((*bi)-&gt;getId());
++						}
++						else
++						{
++							subscribedBodies[region].push_back((*bi)-&gt;getId());
++						}
+ 					}
+ 				}
+ 			}
+@@ -153,7 +188,19 @@
+ 				sum+=(*(ncb-&gt;bodies))[*i]-&gt;physicalParameters-&gt;se3.position;
+ 				++count;
+ 				
+-				(*(ncb-&gt;bodies))[*i]-&gt;geometricalModel-&gt;diffuseColor = Vector3r(0.0,1.0,((float)region)/1.5); // FIXME [1]
++				//(*(ncb-&gt;bodies))[*i]-&gt;geometricalModel-&gt;diffuseColor = Vector3r(((float)((region+3)%5))/5.0,1.0,((float)region)/5.0); // FIXME [1]
++				Vector3r col;
++				switch(region%6)
++				{       //                    0 0 0
++					case 0 : col=Vector3r(0,0,1);break;
++					case 1 : col=Vector3r(0,1,0);break;
++					case 2 : col=Vector3r(0,1,1);break;
++					case 3 : col=Vector3r(1,0,0);break;
++					case 4 : col=Vector3r(1,0,1);break;
++					case 5 : col=Vector3r(1,1,0);break;
++					//                    1 1 1        
++				}
++				(*(ncb-&gt;bodies))[*i]-&gt;geometricalModel-&gt;diffuseColor = col; // FIXME [1]
+ 			}
+ 		}
+ 
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.hpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.hpp	2009-06-26 22:32:40 UTC (rev 1819)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.hpp	2009-06-26 22:39:15 UTC (rev 1820)
+@@ -31,6 +31,7 @@
+ 		std::list&lt;std::pair&lt;Vector3r,Vector3r&gt; &gt; regions; // a list of min/max pairs describing each region.
+ 		std::vector&lt;Vector3r&gt; regions_min;
+ 		std::vector&lt;Vector3r&gt; regions_max;
++		Real	only_this_stiffness;
+ 
+ 		NodeRecorder ();
+ 
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.cpp	2009-06-26 22:32:40 UTC (rev 1819)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.cpp	2009-06-26 22:39:15 UTC (rev 1820)
+@@ -18,6 +18,7 @@
+ {
+ 	outputFile = &quot;&quot;;
+ 	interval = 50;
++	only_stress = false;
+ 	subscribedBodies.clear();
+ }
+ 
+@@ -43,6 +44,7 @@
+ 	REGISTER_ATTRIBUTE(interval);
+ 	REGISTER_ATTRIBUTE(subscribedBodies);
+ 	REGISTER_ATTRIBUTE(initialLength);
++	REGISTER_ATTRIBUTE(only_stress);
+ }
+ 
+ 
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.hpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.hpp	2009-06-26 22:32:40 UTC (rev 1819)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.hpp	2009-06-26 22:39:15 UTC (rev 1820)
+@@ -24,6 +24,7 @@
+ 		unsigned int	 interval;
+ 		std::vector&lt;unsigned int&gt; subscribedBodies;
+ 		Real 		 initialLength;
++		bool		 only_stress;
+ 
+ 		StrainRecorder ();
+ 
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2009-06-26 22:32:40 UTC (rev 1819)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2009-06-26 22:39:15 UTC (rev 1820)
+@@ -84,39 +84,48 @@
+         bendingStiffness_noUnit   = 0.6;        // k_b
+         torsionalStiffness_noUnit = 0.6;        // k_t
+         
+-        ensure2D 		 = false;
++        ignore_DOFs__better_is_OFF = true;
++	ensure2D 		 = false;
+         roughEdges 		 = false;
+ 	calculate_Torsion_3D	 = false;
+ 	quads			 = false;
+         
++	region_single_node_ABCDEF = false;
++
+         region_A_min             = Vector3r(-0.006, 0.096,-1);
+         region_A_max             = Vector3r( 0.16 , 0.16 , 1);
+ 	direction_A 		 = Vector3r(0,1,0);
++	blocked_xyz_A		 = Vector3r(0,1,1);
+ 	displacement_A_meters	 = 0.0001;
+ 	
+ 	region_B_min 		 = Vector3r(-0.006,-0.006,-1);
+ 	region_B_max 		 = Vector3r( 0.16 , 0.004, 1);
+ 	direction_B 		 = Vector3r(0,-1,0);
++	blocked_xyz_B		 = Vector3r(0,1,1);
+ 	displacement_B_meters	 = 0.0001;
+ 
+ 	region_C_min 		 = Vector3r(-0.006, 0.096,-1);
+ 	region_C_max 		 = Vector3r( 0.16 , 0.16 ,-1);
+ 	direction_C 		 = Vector3r(0,1,0);
++	blocked_xyz_C		 = Vector3r(0,1,1);
+ 	displacement_C_meters	 = 0.0001;
+ 	
+ 	region_D_min 		 = Vector3r(-0.006,-0.006,-1);
+ 	region_D_max 		 = Vector3r( 0.16 , 0.004,-1);
+         direction_D              = Vector3r(0,-1,0);
++	blocked_xyz_D		 = Vector3r(0,1,1);
+         displacement_D_meters    = 0.0001;
+         
+ 	region_E_min 		 = Vector3r(0,0,-1);
+ 	region_E_max 		 = Vector3r(0,0,-1);
+         direction_E              = Vector3r(0,1,0);
++	blocked_xyz_E		 = Vector3r(0,1,1);
+         displacement_E_meters    = 0.0;
+         
+ 	region_F_min 		 = Vector3r(0,0,-1);
+ 	region_F_max 		 = Vector3r(0,0,-1);
+         direction_F              = Vector3r(0,1,0);
++	blocked_xyz_F		 = Vector3r(0,1,1);
+         displacement_F_meters    = 0.0;
+         
+         strainRecorder_xz_plane  = -1;
+@@ -167,6 +176,7 @@
+ 	CT			 = 1;
+ 
+         useAggregates            = false;
++	no_Agg_outside		 = true;
+         aggregatePercent         = 40;
+         aggregateMeanDiameter    = cellsizeUnit_in_meters*1;
+         aggregateSigmaDiameter   = cellsizeUnit_in_meters*2;
+@@ -193,7 +203,7 @@
+ 	fibre_count		 = 0;
+ 	beams_per_fibre		 = 10;
+ 	fibre_allows		 = 0.5;
+-	fibre_irregularity_noUnit= 5;
++	//fibre_irregularity_noUnit= 5;
+ 	fibre_balancing_iterations= 300;
+         // MaterialParameters of fibre bond
+         fibre_bond_longStiffness_noUnit= 0.7;         // k_l fibre bond
+@@ -201,7 +211,8 @@
+         fibre_bond_torsStiffness_noUnit= 0.28;        // k_t fibre bond
+         fibre_bond_critCompressStrain  = 100.0;       // E.c fibre bond
+         fibre_bond_critTensileStrain   = 50.0;        // E.l fibre bond
+-		
++	
++	record_only_matrix = false;
+ 	nodeRec_A_min=Vector3r(0,0,0);
+ 	nodeRec_A_max=Vector3r(0,0,0);
+ 	nodeRec_B_min=Vector3r(0,0,0);
+@@ -276,6 +287,7 @@
+         REGISTER_ATTRIBUTE(bendingStiffness_noUnit);    // k_b [-]      - default 0.6
+         REGISTER_ATTRIBUTE(torsionalStiffness_noUnit);  // k_t [-]      - default 0.6
+         
++	REGISTER_ATTRIBUTE(ignore_DOFs__better_is_OFF);
+         REGISTER_ATTRIBUTE(ensure2D);
+         REGISTER_ATTRIBUTE(roughEdges);
+         REGISTER_ATTRIBUTE(calculate_Torsion_3D);
+@@ -288,34 +300,42 @@
+         REGISTER_ATTRIBUTE(useNonLocalModel);
+         REGISTER_ATTRIBUTE(nonLocalL_in_cellsizeUnit);  // l
+         
++	REGISTER_ATTRIBUTE(region_single_node_ABCDEF);
++
+ 	REGISTER_ATTRIBUTE(region_A_min);
+ 	REGISTER_ATTRIBUTE(region_A_max);
+ 	REGISTER_ATTRIBUTE(direction_A);
++	REGISTER_ATTRIBUTE(blocked_xyz_A);
+ 	REGISTER_ATTRIBUTE(displacement_A_meters);
+ 	
+ 	REGISTER_ATTRIBUTE(region_B_min);
+ 	REGISTER_ATTRIBUTE(region_B_max);
+ 	REGISTER_ATTRIBUTE(direction_B);
++	REGISTER_ATTRIBUTE(blocked_xyz_B);
+ 	REGISTER_ATTRIBUTE(displacement_B_meters);
+ 	
+ 	REGISTER_ATTRIBUTE(region_C_min);
+ 	REGISTER_ATTRIBUTE(region_C_max);
+ 	REGISTER_ATTRIBUTE(direction_C);
++	REGISTER_ATTRIBUTE(blocked_xyz_C);
+ 	REGISTER_ATTRIBUTE(displacement_C_meters);
+ 	
+ 	REGISTER_ATTRIBUTE(region_D_min);
+         REGISTER_ATTRIBUTE(region_D_max);
+         REGISTER_ATTRIBUTE(direction_D);
++	REGISTER_ATTRIBUTE(blocked_xyz_D);
+         REGISTER_ATTRIBUTE(displacement_D_meters);
+         
+ 	REGISTER_ATTRIBUTE(region_E_min);
+         REGISTER_ATTRIBUTE(region_E_max);
+         REGISTER_ATTRIBUTE(direction_E);
++	REGISTER_ATTRIBUTE(blocked_xyz_E);
+         REGISTER_ATTRIBUTE(displacement_E_meters);
+         
+ 	REGISTER_ATTRIBUTE(region_F_min);
+         REGISTER_ATTRIBUTE(region_F_max);
+         REGISTER_ATTRIBUTE(direction_F);
++	REGISTER_ATTRIBUTE(blocked_xyz_F);
+         REGISTER_ATTRIBUTE(displacement_F_meters);
+         
+ 	REGISTER_ATTRIBUTE(outputFile);
+@@ -329,6 +349,7 @@
+ 
+ 
+ 	REGISTER_ATTRIBUTE(nodeRecorderFile);
++	REGISTER_ATTRIBUTE(record_only_matrix);
+ 	REGISTER_ATTRIBUTE(nodeRec_A_min);
+ 	REGISTER_ATTRIBUTE(nodeRec_A_max);
+ 	REGISTER_ATTRIBUTE(nodeRec_B_min);
+@@ -409,6 +430,7 @@
+         REGISTER_ATTRIBUTE(CT_B_max);
+ 
+         REGISTER_ATTRIBUTE(useAggregates);
++	REGISTER_ATTRIBUTE(no_Agg_outside);
+         REGISTER_ATTRIBUTE(aggregatePercent);
+         REGISTER_ATTRIBUTE(aggregateMeanDiameter);
+         REGISTER_ATTRIBUTE(aggregateSigmaDiameter);
+@@ -435,7 +457,7 @@
+ 	REGISTER_ATTRIBUTE(fibre_count);
+ 	REGISTER_ATTRIBUTE(beams_per_fibre);
+ 	REGISTER_ATTRIBUTE(fibre_allows);
+-	REGISTER_ATTRIBUTE(fibre_irregularity_noUnit);
++	//REGISTER_ATTRIBUTE(fibre_irregularity_noUnit);
+ 	REGISTER_ATTRIBUTE(fibre_balancing_iterations);
+         // MaterialParameters of fibre bond
+         REGISTER_ATTRIBUTE(fibre_bond_longStiffness_noUnit);  // k_l fibre bond
+@@ -799,12 +821,12 @@
+ 		}
+ 	};
+         
+-        imposeTranslation(rootBody,region_A_min,region_A_max,direction_A,displacement_A_meters);
+-        imposeTranslation(rootBody,region_B_min,region_B_max,direction_B,displacement_B_meters);
+-        imposeTranslation(rootBody,region_C_min,region_C_max,direction_C,displacement_C_meters);
+-        imposeTranslation(rootBody,region_D_min,region_D_max,direction_D,displacement_D_meters);
+-        imposeTranslation(rootBody,region_E_min,region_E_max,direction_E,displacement_E_meters);
+-        imposeTranslation(rootBody,region_F_min,region_F_max,direction_F,displacement_F_meters);
++        imposeTranslation(rootBody,region_A_min,region_A_max,direction_A,displacement_A_meters,blocked_xyz_A);
++        imposeTranslation(rootBody,region_B_min,region_B_max,direction_B,displacement_B_meters,blocked_xyz_B);
++        imposeTranslation(rootBody,region_C_min,region_C_max,direction_C,displacement_C_meters,blocked_xyz_C);
++        imposeTranslation(rootBody,region_D_min,region_D_max,direction_D,displacement_D_meters,blocked_xyz_D);
++        imposeTranslation(rootBody,region_E_min,region_E_max,direction_E,displacement_E_meters,blocked_xyz_E);
++        imposeTranslation(rootBody,region_F_min,region_F_max,direction_F,displacement_F_meters,blocked_xyz_F);
+ 
+ 	beam_total=bc.size();
+         if(useAggregates) addAggregates(rootBody);
+@@ -1158,6 +1180,10 @@
+         nodeRecorder   = shared_ptr&lt;NodeRecorder&gt;(new NodeRecorder);
+         nodeRecorder-&gt;outputFile                = nodeRecorderFile;
+         nodeRecorder-&gt;interval                  = 10;
++	if(record_only_matrix)
++		nodeRecorder-&gt;only_this_stiffness	= longitudalStiffness_noUnit;
++	else
++		nodeRecorder-&gt;only_this_stiffness	= -1;
+ 	if(nodeRec_A_min != nodeRec_A_max) nodeRecorder-&gt;regions.push_back(std::make_pair(nodeRec_A_min,nodeRec_A_max));
+ 	if(nodeRec_B_min != nodeRec_B_max) nodeRecorder-&gt;regions.push_back(std::make_pair(nodeRec_B_min,nodeRec_B_max));
+ 	if(nodeRec_C_min != nodeRec_C_max) nodeRecorder-&gt;regions.push_back(std::make_pair(nodeRec_C_min,nodeRec_C_max));
+@@ -1181,10 +1207,15 @@
+ 	if(movSupp_D_dir != -1) movingSupport-&gt;sections.push_back(std::make_pair(movSupp_D_pos,std::make_pair(movSupp_D_dir,movSupp_D_range)));
+  	
+ 	shared_ptr&lt;LatticeLaw&gt; latticeLaw(new LatticeLaw);
++
+         latticeLaw-&gt;ensure2D   = ensure2D;
+         latticeLaw-&gt;roughEdges = roughEdges;
++	latticeLaw-&gt;backward_compatible = ignore_DOFs__better_is_OFF;
++
++
+         latticeLaw-&gt;calcTorsion= calculate_Torsion_3D;
+-	latticeLaw-&gt;tension_compression_different_stiffness = true;	
++	latticeLaw-&gt;tension_compression_different_stiffness = true;
++	latticeLaw-&gt;respect_non_destroy = nonDestroy_stiffness;
+         
+         rootBody-&gt;engines.clear();
+         rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+@@ -1192,7 +1223,6 @@
+         rootBody-&gt;engines.push_back(geometricalModelDispatcher);
+         rootBody-&gt;engines.push_back(strainRecorder);
+         rootBody-&gt;engines.push_back(measurePoisson);
+-	// FIXME - Serialization of nodeRecorder, beamRecorder and movingSupport is not wirking....
+         rootBody-&gt;engines.push_back(nodeRecorder);
+         rootBody-&gt;engines.push_back(beamRecorder);
+ 	rootBody-&gt;engines.push_back(movingSupport);
+@@ -1242,7 +1272,7 @@
+ }
+ 	
+  
+-void LatticeExample::imposeTranslation(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max, Vector3r direction, Real displacement)
++void LatticeExample::imposeTranslation(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max, Vector3r direction, Real displacement,Vector3r blocked_xyz)
+ {
+ 	shared_ptr&lt;DisplacementEngine&gt; translationCondition = shared_ptr&lt;DisplacementEngine&gt;(new DisplacementEngine);
+  	translationCondition-&gt;displacement  = displacement;
+@@ -1261,28 +1291,103 @@
+         
+         BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
+ 	BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
+-	for(  ; bi!=biEnd ; ++bi )
++
++	if(region_single_node_ABCDEF)
+ 	{
+-		shared_ptr&lt;Body&gt; b = *bi;
+-	
+-		if( b-&gt;getGroupMask() &amp; nodeGroupMask )
++		Vector3r MIN(min);
++		Vector3r MAX(max);
++		Vector3r center = (MIN+MAX)*0.5;
++		int best=-1;
++		Real dist = (MIN-MAX).Length();
++		Real prev_dist = dist;
++		for(int run=0 ; run &lt; 3 ; ++run )
+ 		{
+-			Vector3r pos = b-&gt;physicalParameters-&gt;se3.position;
+-			if(        pos[0] &gt; min[0] 
+-				&amp;&amp; pos[1] &gt; min[1] 
+-				&amp;&amp; pos[2] &gt; min[2] 
+-				&amp;&amp; pos[0] &lt; max[0] 
+-				&amp;&amp; pos[1] &lt; max[1] 
+-				&amp;&amp; pos[2] &lt; max[2] 
+-				&amp;&amp; (b-&gt;getGroupMask() &amp; nodeGroupMask)
+-				)
++			center = (MIN+MAX)*0.5;
++			dist = (MIN-MAX).Length();
++			prev_dist = dist;
++			bi    = rootBody-&gt;bodies-&gt;begin();
++			biEnd = rootBody-&gt;bodies-&gt;end();
++			for(  ; bi!=biEnd ; ++bi )
+ 			{
+-				b-&gt;isDynamic = false;
+-				b-&gt;geometricalModel-&gt;diffuseColor = Vector3r(2.0,2.0,0.0);
+-				translationCondition-&gt;subscribedBodies.push_back(b-&gt;getId());
++				shared_ptr&lt;Body&gt; b = *bi;
++			
++				if( b-&gt;getGroupMask() &amp; nodeGroupMask )
++				{
++					Vector3r pos = b-&gt;physicalParameters-&gt;se3.position;
++					if(        pos[0] &gt;= min[0] 
++						&amp;&amp; pos[1] &gt;= min[1] 
++						&amp;&amp; pos[2] &gt;= min[2] 
++						&amp;&amp; pos[0] &lt;= max[0] 
++						&amp;&amp; pos[1] &lt;= max[1] 
++						&amp;&amp; pos[2] &lt;= max[2] 
++						&amp;&amp; (b-&gt;getGroupMask() &amp; nodeGroupMask)
++						)
++					{
++					//	b-&gt;isDynamic = false;
++						b-&gt;geometricalModel-&gt;diffuseColor = Vector3r(2.0,2.0,0.0);
++					//	translationCondition-&gt;subscribedBodies.push_back(b-&gt;getId());
++
++						dist = (pos-center).Length();
++						if(dist &lt; prev_dist)
++						{
++							best = b-&gt;getId();
++							prev_dist = dist;
++						}
++						if(run == 0)
++						{
++							MIN=pos;
++							MAX=pos;
++							run = 1;
++						}
++						if(run == 1)
++						{
++							MIN=componentMinVector(MIN,pos);
++							MAX=componentMaxVector(MAX,pos);
++						}
++					}
++				}
+ 			}
+ 		}
+-        }
++		if(best != -1)
++		{
++			std::cerr &lt;&lt; &quot;INFO: single node in region, best ID is: &quot; &lt;&lt; best &lt;&lt; &quot;, dist: &quot; &lt;&lt; prev_dist 
++				&lt;&lt; &quot;, at coords: &quot; &lt;&lt; (*(rootBody-&gt;bodies))[best]-&gt;physicalParameters-&gt;se3.position &lt;&lt; &quot;\n&quot;;
++			translationCondition-&gt;subscribedBodies.push_back(best);
++			(*(rootBody-&gt;bodies))[best]-&gt;geometricalModel-&gt;diffuseColor = Vector3r(0.0,0.0,3.0);
++			(*(rootBody-&gt;bodies))[best]-&gt;isDynamic = false;
++			(*(rootBody-&gt;bodies))[best]-&gt;physicalParameters-&gt;setDOFfromVector3r(blocked_xyz);
++		}
++		else
++		{
++			std::cerr &lt;&lt; &quot;WARNING: cannot find a single node in this region!\n&quot;;
++		}
++	}
++	else
++	{
++		for(  ; bi!=biEnd ; ++bi )
++		{
++			shared_ptr&lt;Body&gt; b = *bi;
++		
++			if( b-&gt;getGroupMask() &amp; nodeGroupMask )
++			{
++				Vector3r pos = b-&gt;physicalParameters-&gt;se3.position;
++				if(        pos[0] &gt;= min[0] 
++					&amp;&amp; pos[1] &gt;= min[1] 
++					&amp;&amp; pos[2] &gt;= min[2] 
++					&amp;&amp; pos[0] &lt;= max[0] 
++					&amp;&amp; pos[1] &lt;= max[1] 
++					&amp;&amp; pos[2] &lt;= max[2] 
++					&amp;&amp; (b-&gt;getGroupMask() &amp; nodeGroupMask)
++					)
++				{
++					b-&gt;isDynamic = false;
++					b-&gt;geometricalModel-&gt;diffuseColor = Vector3r(2.0,2.0,0.0);
++					translationCondition-&gt;subscribedBodies.push_back(b-&gt;getId());
++					b-&gt;physicalParameters-&gt;setDOFfromVector3r(blocked_xyz);
++				}
++			}
++		}
++	}
+ }
+ 
+ bool LatticeExample::isDeleted(Vector3r pos, Vector3r min, Vector3r max)
+@@ -1297,6 +1402,60 @@
+ 	      );
+ }
+ 
++Real sectionArea(Vector3r min,Vector3r max,Vector3r box)
++{
++	Vector3r mi = componentMaxVector(Vector3r(0,0,0),min);
++	Vector3r Ma = componentMinVector(box            ,max);
++	if(mi[0]&lt;Ma[0] &amp;&amp; mi[1]&lt;Ma[1])
++		return (Ma[0]-mi[0])*(Ma[1]-mi[1]);
++	else
++		return 0;
++}
++
++Real sectionVolu(Vector3r min,Vector3r max,Vector3r box)
++{
++	Vector3r mi = componentMaxVector(Vector3r(0,0,0),min);
++	Vector3r Ma = componentMinVector(box            ,max);
++	if(mi[0]&lt;Ma[0] &amp;&amp; mi[1]&lt;Ma[1] &amp;&amp; mi[2]&lt;Ma[2])
++		return (Ma[0]-mi[0])*(Ma[1]-mi[1])*(Ma[2]-mi[2]);
++	else
++		return 0;
++}
++
++Real LatticeExample::deletedArea()
++{
++	return
++		  sectionArea(regionDelete_A_min,regionDelete_A_max,speciemen_size_in_meters)
++        	+ sectionArea(regionDelete_B_min,regionDelete_B_max,speciemen_size_in_meters)
++        	+ sectionArea(regionDelete_C_min,regionDelete_C_max,speciemen_size_in_meters)
++        	+ sectionArea(regionDelete_D_min,regionDelete_D_max,speciemen_size_in_meters)
++        	+ sectionArea(regionDelete_E_min,regionDelete_E_max,speciemen_size_in_meters)
++        	+ sectionArea(regionDelete_F_min,regionDelete_F_max,speciemen_size_in_meters)
++
++		+ sectionArea(regionDelete_1_min,regionDelete_1_max,speciemen_size_in_meters)
++        	+ sectionArea(regionDelete_2_min,regionDelete_2_max,speciemen_size_in_meters)
++        	+ sectionArea(regionDelete_3_min,regionDelete_3_max,speciemen_size_in_meters)
++        	+ sectionArea(regionDelete_4_min,regionDelete_4_max,speciemen_size_in_meters)
++        	+ sectionArea(regionDelete_5_min,regionDelete_5_max,speciemen_size_in_meters);
++};
++
++Real LatticeExample::deletedVolume()
++{
++	return
++		  sectionVolu(regionDelete_A_min,regionDelete_A_max,speciemen_size_in_meters)
++        	+ sectionVolu(regionDelete_B_min,regionDelete_B_max,speciemen_size_in_meters)
++        	+ sectionVolu(regionDelete_C_min,regionDelete_C_max,speciemen_size_in_meters)
++        	+ sectionVolu(regionDelete_D_min,regionDelete_D_max,speciemen_size_in_meters)
++        	+ sectionVolu(regionDelete_E_min,regionDelete_E_max,speciemen_size_in_meters)
++        	+ sectionVolu(regionDelete_F_min,regionDelete_F_max,speciemen_size_in_meters)
++
++		+ sectionVolu(regionDelete_1_min,regionDelete_1_max,speciemen_size_in_meters)
++        	+ sectionVolu(regionDelete_2_min,regionDelete_2_max,speciemen_size_in_meters)
++        	+ sectionVolu(regionDelete_3_min,regionDelete_3_max,speciemen_size_in_meters)
++        	+ sectionVolu(regionDelete_4_min,regionDelete_4_max,speciemen_size_in_meters)
++        	+ sectionVolu(regionDelete_5_min,regionDelete_5_max,speciemen_size_in_meters);
++};
++
+ bool LatticeExample::notDeleted(Vector3r pos)
+ {
+ //	return true;
+@@ -1422,6 +1581,7 @@
+ 
+ bool LatticeExample::overlaps(Circle&amp; cc,std::vector&lt;Circle&gt;&amp; c)
+ {
++	// check with circles
+         std::vector&lt;Circle&gt;::iterator end=c.end();
+         for(std::vector&lt;Circle&gt;::iterator i=c.begin();i!=end;++i)
+         {
+@@ -1431,6 +1591,7 @@
+                         return true;
+         }
+ 
++	// check with fibres
+ 	if(fibre_count &gt; 0)
+ 	{
+ 		for(int i = 0 ; i &lt; fibre_count ; ++i)
+@@ -1452,6 +1613,21 @@
+ 		}
+ 	}
+ 
++	// check if it's outside the concrete
++	if(no_Agg_outside)
++	{
++		Real AGGREGATES_X=speciemen_size_in_meters[0];
++	        Real AGGREGATES_Y=speciemen_size_in_meters[1];
++	        Real AGGREGATES_Z=speciemen_size_in_meters[2];
++		for(Real A=std::max(0.0,cc.x-cc.d*0.5) ; A&lt;=std::min(AGGREGATES_X,cc.x+cc.d*0.5) ; A+=cellsizeUnit_in_meters*0.2)
++		for(Real B=std::max(0.0,cc.y-cc.d*0.5) ; B&lt;=std::min(AGGREGATES_Y,cc.y+cc.d*0.5) ; B+=cellsizeUnit_in_meters*0.2)
++		for(Real C=std::max(0.0,cc.z-cc.d*0.5) ; C&lt;=std::min(AGGREGATES_Z,cc.z+cc.d*0.5) ; C+=cellsizeUnit_in_meters*0.2)
++			if(! notDeleted(Vector3r(A,B,C)) )
++			{
++				if( std::pow(cc.x - A,2.0) + std::pow(cc.y - B,2.0) + std::pow(cc.z - C,2.0) &lt; cc.d*cc.d*0.25 )
++					return true;
++			}
++	}
+ 
+         return false;
+ };
+@@ -1542,15 +1718,37 @@
+                                 break;
+                         }
+ 		if(AGGREGATES_Z == 0)
+-			setProgress((aggsAreas(c)/(AGGREGATES_X*AGGREGATES_Y))/(aggregatePercent/100.0));
++			setProgress((aggsAreas(c)/(AGGREGATES_X*AGGREGATES_Y - ((no_Agg_outside)?(deletedArea()):(0.0)) ))/(aggregatePercent/100.0));
+ 		else
+-			setProgress((aggsVolumes(c)/(AGGREGATES_X*AGGREGATES_Y*AGGREGATES_Z))/(aggregatePercent/100.0));
++			setProgress((aggsVolumes(c)/(AGGREGATES_X*AGGREGATES_Y*AGGREGATES_Z - ((no_Agg_outside)?(deletedVolume()):(0.0)) ))/(aggregatePercent/100.0));
+         }
+         //while(aggregatePercent/100.0 &gt; aggsAreas(c)/(AGGREGATES_X*AGGREGATES_Y) );
+         while( progress() &lt; 1.0 );
+ 
+         std::cerr &lt;&lt; &quot;done. &quot; &lt;&lt; c.size() &lt;&lt; &quot; area: &quot; &lt;&lt; aggsAreas(c)/(AGGREGATES_X*AGGREGATES_Y) &lt;&lt; &quot; vol: &quot; &lt;&lt; aggsVolumes(c)/(AGGREGATES_X*AGGREGATES_Y*AGGREGATES_Z) &lt;&lt; &quot;\n&quot;;
+ 
++/*
++	if(no_Agg_outside)
++	{
++		for(Real A=0 ; A&lt;=AGGREGATES_X ; A+=cellsizeUnit_in_meters*0.3)
++		for(Real B=0 ; B&lt;=AGGREGATES_Y ; B+=cellsizeUnit_in_meters*0.3)
++		for(Real C=0 ; C&lt;=AGGREGATES_Z ; C+=cellsizeUnit_in_meters*0.3)
++			if(! notDeleted(Vector3r(A,B,C)) )
++			{ // remove a circle if it has inside Vector3r(A,B,C)
++				std::vector&lt;int&gt; c_flag;c_flag.clear();c_flag.resize(c.size(),1);
++				for(int i=0;i&lt;c.size();++i)
++					if( std::pow(c[i].x - A,2.0) + std::pow(c[i].y - B,2.0) + std::pow(c[i].z - C,2.0) &lt; c[i].d*c[i].d*0.25 )
++						c_flag[i]=0;
++
++				std::vector&lt;Circle&gt; c_good;c_good.clear();
++				for(int i=0;i&lt;c.size();++i)
++					if(c_flag[i]==1)
++						c_good.push_back(c[i]);
++				c=c_good;
++			}
++	}
++*/
++
+         { // set different properties for beams that lie in an aggregate
+           // parametrize from above - takes three arguments: 
+           // - MaterialParameters of aggregate, 
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.hpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.hpp	2009-06-26 22:32:40 UTC (rev 1819)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.hpp	2009-06-26 22:39:15 UTC (rev 1820)
+@@ -48,13 +48,16 @@
+                                 ,useNonLocalModel
+                                 ,useBendTensileSoftening
+                                 ,useStiffnessSoftening
++				,ignore_DOFs__better_is_OFF
+                                 ,ensure2D
+                                 ,roughEdges
+ 				,calculate_Torsion_3D
+-				,quads;
++				,quads
++				,region_single_node_ABCDEF;
+         
+         // aggregates
+                 bool             useAggregates;
++		bool		 no_Agg_outside;
+                 Real             aggregatePercent
+                                 ,aggregateMeanDiameter
+                                 ,aggregateSigmaDiameter
+@@ -81,7 +84,7 @@
+ 				,fibre_count
+ 				,beams_per_fibre
+ 				,fibre_allows
+-				,fibre_irregularity_noUnit
++				//,fibre_irregularity_noUnit
+ 				,fibre_balancing_iterations
+                         // MaterialParameters of fibre bond
+                                 ,fibre_bond_longStiffness_noUnit      // k_l fibre bond
+@@ -117,26 +120,32 @@
+ 		Vector3r 	 region_A_min
+ 			 	,region_A_max
+ 			 	,direction_A
++				,blocked_xyz_A
+ 				 
+ 			 	,region_B_min
+ 			 	,region_B_max
+ 			 	,direction_B
++				,blocked_xyz_B
+ 				 
+ 			 	,region_C_min
+ 			 	,region_C_max
+ 			 	,direction_C
++				,blocked_xyz_C
+ 				 
+ 			 	,region_D_min
+ 			 	,region_D_max
+ 			 	,direction_D
++				,blocked_xyz_D
+ 				 
+ 			 	,region_E_min
+ 			 	,region_E_max
+ 			 	,direction_E
++				,blocked_xyz_E
+ 				 
+ 			 	,region_F_min
+ 			 	,region_F_max
+-			 	,direction_F;
++			 	,direction_F
++				,blocked_xyz_F;
+ 				 
+ 						
+ 		Real		 displacement_A_meters
+@@ -198,6 +207,7 @@
+ 				,nodeRec_E_max
+ 				,nodeRec_F_min
+ 				,nodeRec_F_max;
++		bool		 record_only_matrix;
+ 	// beam recorder
+ 		
+ 		Vector3r	 beamRec_A_pos
+@@ -273,12 +283,14 @@
+                 void createBeam(shared_ptr&lt;Body&gt;&amp; body, int i, int j);
+                 Real calcBeamPositionOrientationLength(shared_ptr&lt;Body&gt;&amp; body);
+                 bool notDeleted(Vector3r pos);
++                Real deletedArea();
++                Real deletedVolume();
+ 		bool isDeleted(Vector3r pos, Vector3r min, Vector3r max);
+                 void calcBeamAngles(Body* body, BodyContainer* bodies,InteractionContainer* ints);
+                 void calcAxisAngle(LatticeBeamParameters* beam, BodyContainer* bodies, int otherId,InteractionContainer* ints, int thisId);
+                 bool checkMinimumAngle(BodyRedirectionVector&amp;,shared_ptr&lt;Body&gt;&amp;);
+                 bool checkAngle( Vector3r , Vector3r&amp; );
+-                void imposeTranslation(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max, Vector3r direction, Real velocity);
++                void imposeTranslation(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max, Vector3r direction, Real velocity,Vector3r blocked_xyz);
+                 void regionDelete(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max);
+                 void nonDestroy(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max);
+                 void modifyCT(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001073.html">[deprecated list] [Yade-dev] [svn] r1819 - in trunk:	core	pkg/common/RenderingEngine/OpenGLRenderingEngine
+</A></li>
+	<LI>Next message: <A HREF="001075.html">[deprecated list] [Yade-dev] [robot] startup failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1074">[ date ]</a>
+              <a href="thread.html#1074">[ thread ]</a>
+              <a href="subject.html#1074">[ subject ]</a>
+              <a href="author.html#1074">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

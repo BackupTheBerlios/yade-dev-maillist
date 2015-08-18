@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] Note on optimized compilation / optimized coding / profiling results
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Note%20on%20optimized%20compilation%20/%20optimized%20coding%20/%0A%20profiling%20results&In-Reply-To=%3C47BFC308.5010409%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000055.html">
+   <LINK REL="Next"  HREF="000100.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] Note on optimized compilation / optimized coding / profiling results</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Note%20on%20optimized%20compilation%20/%20optimized%20coding%20/%0A%20profiling%20results&In-Reply-To=%3C47BFC308.5010409%40arcig.cz%3E"
+       TITLE="[yade-dev] Note on optimized compilation / optimized coding / profiling results">eudoxos at arcig.cz
+       </A><BR>
+    <I>Sat Feb 23 07:54:00 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000055.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+        <LI>Next message: <A HREF="000100.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#59">[ date ]</a>
+              <a href="thread.html#59">[ thread ]</a>
+              <a href="subject.html#59">[ subject ]</a>
+              <a href="author.html#59">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;&gt;<i> Janek, is multi_index random-access in O(1)? That is important if we try
+</I>&gt;&gt;<i> to use openMP, which can parallelize some loops by itself.
+</I>&gt;&gt;<i>     
+</I>&gt;<i>
+</I>&gt;<i> yes, of course. Every action has constant time. No matter if you have
+</I>&gt;<i> only 100 or 10^10 elements, the time to access 50th element consumes
+</I>&gt;<i> the same constant amount of time. You could have a look at my
+</I>&gt;<i> concerns about this in that boost mailing list thread (which I linked
+</I>&gt;<i> from Development_schedule on wiki)
+</I>&gt;<i>   
+</I>OK. That is scaling issue. But can it access elements by a number
+(without any particular order) directly, just by dereferencing, without
+any big computations? For openMP, parallel loops must loop over numbers,
+so instead of interactionContainer iterator, it must be rewritten in
+something like this:
+ 
+ #pragma parallel for
+ for(int i=0; i&lt;interactions.size(); i++){
+    const Interaction&amp; i(interactions[i]);
+  ...
+ }
+
+You get the idea, right? If getting &quot;interactions[i]&quot; is just a bit
+slower than pointer arithmetics in old-style array or std::vector, it
+will be much slower in total, I think.
+
+Read this, very nice: <A HREF="http://bisqwit.iki.fi/story/howto/openmp/">http://bisqwit.iki.fi/story/howto/openmp/</A>
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000055.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+	<LI>Next message: <A HREF="000100.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#59">[ date ]</a>
+              <a href="thread.html#59">[ thread ]</a>
+              <a href="subject.html#59">[ subject ]</a>
+              <a href="author.html#59">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

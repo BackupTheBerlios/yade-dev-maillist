@@ -1,0 +1,488 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1824 - in trunk: gui/py	scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1824%20-%20in%20trunk%3A%20gui/py%0A%09scripts/test&In-Reply-To=%3C200906292106.n5TL6NJg028092%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001081.html">
+   <LINK REL="Next"  HREF="001083.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1824 - in trunk: gui/py	scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1824%20-%20in%20trunk%3A%20gui/py%0A%09scripts/test&In-Reply-To=%3C200906292106.n5TL6NJg028092%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1824 - in trunk: gui/py	scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Jun 29 23:06:23 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001081.html">[deprecated list] [Yade-dev] [svn] r1823 -	trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="001083.html">[deprecated list] [Yade-dev] [svn] r1825 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1082">[ date ]</a>
+              <a href="thread.html#1082">[ thread ]</a>
+              <a href="subject.html#1082">[ subject ]</a>
+              <a href="author.html#1082">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-06-29 23:06:22 +0200 (Mon, 29 Jun 2009)
+New Revision: 1824
+
+Added:
+   trunk/scripts/test/gts-horse.py
+   trunk/scripts/test/gts-operators.py
+Removed:
+   trunk/scripts/test/gts.py
+Modified:
+   trunk/gui/py/_packPredicates.cpp
+   trunk/gui/py/_utils.cpp
+   trunk/gui/py/pack.py
+Log:
+1. Make virtual methods on pack.Predicate work in python (inGtsSurface, for instance). Add scripts/test/gts-operators.py to show that.
+2. Move scripts/test/gts.py to gts-horse.py
+3. Add a few functions to pack for constructing triangulated revolution surfaces from meridians.
+
+
+Modified: trunk/gui/py/_packPredicates.cpp
+===================================================================
+--- trunk/gui/py/_packPredicates.cpp	2009-06-29 14:44:29 UTC (rev 1823)
++++ trunk/gui/py/_packPredicates.cpp	2009-06-29 21:06:22 UTC (rev 1824)
+@@ -4,6 +4,7 @@
+ #include&lt;yade/lib-base/Logging.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++// #include&lt;yade/gui-py/_utils.hpp&gt; // will be: yade/lib-py/_utils.hpp&gt; at some point
+ #include&lt;Wm3Vector3.h&gt;
+ 
+ using namespace boost;
+@@ -26,63 +27,88 @@
+ 
+ // aux functions
+ python::tuple vec2tuple(const Vector3r&amp; v){return boost::python::make_tuple(v[0],v[1],v[2]);}
++python::tuple vec2tuple(const Vector2r&amp; v){return boost::python::make_tuple(v[0],v[1]);}
+ Vector3r tuple2vec(const python::tuple&amp; t){return Vector3r(python::extract&lt;double&gt;(t[0])(),python::extract&lt;double&gt;(t[1])(),python::extract&lt;double&gt;(t[2])());}
++Vector2r tuple2vec2d(const python::tuple&amp; t){return Vector2r(python::extract&lt;double&gt;(t[0])(),python::extract&lt;double&gt;(t[1])());}
+ void ttuple2vvec(const python::tuple&amp; t, Vector3r&amp; v1, Vector3r&amp; v2){ v1=tuple2vec(python::extract&lt;python::tuple&gt;(t[0])()); v2=tuple2vec(python::extract&lt;python::tuple&gt;(t[1])()); }
+ python::tuple vvec2ttuple(const Vector3r&amp;v1, const Vector3r&amp;v2){ return python::make_tuple(vec2tuple(v1),vec2tuple(v2)); }
+ 
+-class Predicate{
++struct Predicate{
+ 	public:
+-		virtual bool operator() (python::tuple pt,Real pad=0.) const {throw logic_error(&quot;Calling virtual operator() of an abstract class Predicate.&quot;);}
+-		virtual python::tuple aabb() const {throw logic_error(&quot;Calling virtual aabb() of an abstract class Predicate.&quot;);}
++		virtual bool operator() (python::tuple pt,Real pad=0.) const = 0;
++		virtual python::tuple aabb() const = 0;
+ };
+ // make the pad parameter optional
+ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(PredicateCall_overloads,operator(),1,2);
+ 
++/* Since we want to make Predicate::operator() and Predicate::aabb() callable from c++ on python::object
++with the right virtual method resolution, we have to wrap the class in the following way. See 
++<A HREF="http://www.boost.org/doc/libs/1_38_0/libs/python/doc/tutorial/doc/html/python/exposing.html">http://www.boost.org/doc/libs/1_38_0/libs/python/doc/tutorial/doc/html/python/exposing.html</A> for documentation
++on exposing virtual methods.
++
++This makes it possible to derive a python class from Predicate, override its aabb() method, for instance,
++and use it in PredicateUnion, which will call the python implementation of aabb() as it should. This
++approach is used in the inGtsSurface class defined in pack.py.
++
++See scripts/test/gts-operators.py for an example.
++
++NOTE: you still have to call base class ctor in your class' ctor derived in python, e.g.
++super(inGtsSurface,self).__init__() so that virtual methods work as expected.
++*/
++struct PredicateWrap: Predicate, python::wrapper&lt;Predicate&gt;{
++	bool operator()(python::tuple pt, Real pad=0.) const { return this-&gt;get_override(&quot;__call__&quot;)(pt,pad);}
++	python::tuple aabb() const { return this-&gt;get_override(&quot;aabb&quot;)(); }
++};
++// make the pad parameter optional
++BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(PredicateWrapCall_overloads,operator(),1,2);
++
+ /*********************************************************************************
+ ****************** Boolean operations on predicates ******************************
+ *********************************************************************************/
+ 
++const Predicate&amp; obj2pred(python::object obj){ return python::extract&lt;const Predicate&amp;&gt;(obj)();}
++
+ class PredicateBoolean: public Predicate{
+ 	protected:
+-		const shared_ptr&lt;Predicate&gt; A,B;
++		const python::object A,B;
+ 	public:
+-		PredicateBoolean(const shared_ptr&lt;Predicate&gt; _A, const shared_ptr&lt;Predicate&gt; _B): A(_A), B(_B){}
+-		const shared_ptr&lt;Predicate&gt; getA(){ return A;}
+-		const shared_ptr&lt;Predicate&gt; getB(){ return B;}
++		PredicateBoolean(const python::object _A, const python::object _B): A(_A), B(_B){}
++		const python::object getA(){ return A;}
++		const python::object getB(){ return B;}
+ };
+ 
+ // <A HREF="http://www.linuxtopia.org/online_books/programming_books/python_programming/python_ch16s03.html">http://www.linuxtopia.org/online_books/programming_books/python_programming/python_ch16s03.html</A>
+ class PredicateUnion: public PredicateBoolean{
+ 	public:
+-		PredicateUnion(const shared_ptr&lt;Predicate&gt; _A, const shared_ptr&lt;Predicate&gt; _B): PredicateBoolean(_A,_B){}
+-		virtual bool operator()(python::tuple pt,Real pad) const {return (*A)(pt,pad)||(*B)(pt,pad);}
+-		virtual python::tuple aabb() const { Vector3r minA,maxA,minB,maxB; ttuple2vvec(A-&gt;aabb(),minA,maxA); ttuple2vvec(B-&gt;aabb(),minB,maxB); return vvec2ttuple(componentMinVector(minA,minB),componentMaxVector(maxA,maxB));}
++		PredicateUnion(const python::object _A, const python::object _B): PredicateBoolean(_A,_B){}
++		virtual bool operator()(python::tuple pt,Real pad) const {return obj2pred(A)(pt,pad)||obj2pred(B)(pt,pad);}
++		virtual python::tuple aabb() const { Vector3r minA,maxA,minB,maxB; ttuple2vvec(obj2pred(A).aabb(),minA,maxA); ttuple2vvec(obj2pred(B).aabb(),minB,maxB); return vvec2ttuple(componentMinVector(minA,minB),componentMaxVector(maxA,maxB));}
+ };
+-PredicateUnion makeUnion(const shared_ptr&lt;Predicate&gt;&amp; A, const shared_ptr&lt;Predicate&gt;&amp; B){ return PredicateUnion(A,B);}
++PredicateUnion makeUnion(const python::object&amp; A, const python::object&amp; B){ return PredicateUnion(A,B);}
+ 
+ class PredicateIntersection: public PredicateBoolean{
+ 	public:
+-		PredicateIntersection(const shared_ptr&lt;Predicate&gt; _A, const shared_ptr&lt;Predicate&gt; _B): PredicateBoolean(_A,_B){}
+-		virtual bool operator()(python::tuple pt,Real pad) const {return (*A)(pt,pad) &amp;&amp; (*B)(pt,pad);}
+-		virtual python::tuple aabb() const { Vector3r minA,maxA,minB,maxB; ttuple2vvec(A-&gt;aabb(),minA,maxA); ttuple2vvec(B-&gt;aabb(),minB,maxB); return vvec2ttuple(componentMaxVector(minA,minB),componentMinVector(maxA,maxB));}
++		PredicateIntersection(const python::object _A, const python::object _B): PredicateBoolean(_A,_B){}
++		virtual bool operator()(python::tuple pt,Real pad) const {return obj2pred(A)(pt,pad) &amp;&amp; obj2pred(B)(pt,pad);}
++		virtual python::tuple aabb() const { Vector3r minA,maxA,minB,maxB; ttuple2vvec(obj2pred(A).aabb(),minA,maxA); ttuple2vvec(obj2pred(B).aabb(),minB,maxB); return vvec2ttuple(componentMaxVector(minA,minB),componentMinVector(maxA,maxB));}
+ };
+-PredicateIntersection makeIntersection(const shared_ptr&lt;Predicate&gt;&amp; A, const shared_ptr&lt;Predicate&gt;&amp; B){ return PredicateIntersection(A,B);}
++PredicateIntersection makeIntersection(const python::object&amp; A, const python::object&amp; B){ return PredicateIntersection(A,B);}
+ 
+ class PredicateDifference: public PredicateBoolean{
+ 	public:
+-		PredicateDifference(const shared_ptr&lt;Predicate&gt; _A, const shared_ptr&lt;Predicate&gt; _B): PredicateBoolean(_A,_B){}
+-		virtual bool operator()(python::tuple pt,Real pad) const {return (*A)(pt,pad) &amp;&amp; !(*B)(pt,-pad);}
+-		virtual python::tuple aabb() const { return A-&gt;aabb(); }
++		PredicateDifference(const python::object _A, const python::object _B): PredicateBoolean(_A,_B){}
++		virtual bool operator()(python::tuple pt,Real pad) const {return obj2pred(A)(pt,pad) &amp;&amp; !obj2pred(B)(pt,-pad);}
++		virtual python::tuple aabb() const { return obj2pred(A).aabb(); }
+ };
+-PredicateDifference makeDifference(const shared_ptr&lt;Predicate&gt;&amp; A, const shared_ptr&lt;Predicate&gt;&amp; B){ return PredicateDifference(A,B);}
++PredicateDifference makeDifference(const python::object&amp; A, const python::object&amp; B){ return PredicateDifference(A,B);}
+ 
+ class PredicateSymmetricDifference: public PredicateBoolean{
+ 	public:
+-		PredicateSymmetricDifference(const shared_ptr&lt;Predicate&gt; _A, const shared_ptr&lt;Predicate&gt; _B): PredicateBoolean(_A,_B){}
+-		virtual bool operator()(python::tuple pt,Real pad) const {bool inA=(*A)(pt,pad), inB=(*B)(pt,pad); return (inA &amp;&amp; !inB) || (!inA &amp;&amp; inB);}
+-		virtual python::tuple aabb() const { Vector3r minA,maxA,minB,maxB; ttuple2vvec(A-&gt;aabb(),minA,maxA); ttuple2vvec(B-&gt;aabb(),minB,maxB); return vvec2ttuple(componentMinVector(minA,minB),componentMaxVector(maxA,maxB));}
++		PredicateSymmetricDifference(const python::object _A, const python::object _B): PredicateBoolean(_A,_B){}
++		virtual bool operator()(python::tuple pt,Real pad) const {bool inA=obj2pred(A)(pt,pad), inB=obj2pred(B)(pt,pad); return (inA &amp;&amp; !inB) || (!inA &amp;&amp; inB);}
++		virtual python::tuple aabb() const { Vector3r minA,maxA,minB,maxB; ttuple2vvec(obj2pred(A).aabb(),minA,maxA); ttuple2vvec(obj2pred(B).aabb(),minB,maxB); return vvec2ttuple(componentMinVector(minA,minB),componentMaxVector(maxA,maxB));}
+ };
+-PredicateSymmetricDifference makeSymmetricDifference(const shared_ptr&lt;Predicate&gt;&amp; A, const shared_ptr&lt;Predicate&gt;&amp; B){ return PredicateSymmetricDifference(A,B);}
++PredicateSymmetricDifference makeSymmetricDifference(const python::object&amp; A, const python::object&amp; B){ return PredicateSymmetricDifference(A,B);}
+ 
+ /*********************************************************************************
+ ****************************** Primitive predicates ******************************
+@@ -237,7 +263,7 @@
+ 		// between both notch planes, closer to the edge than pad (distInPlane&lt;pad)
+ 		return false;
+ 	}
+-	// aabb here doesn't make any sense since we are negated. Return just the center point.
++	// This predicate is not bounded, return infinities
+ 	python::tuple aabb() const {
+ 		Real inf=std::numeric_limits&lt;Real&gt;::infinity();
+ 		return vvec2ttuple(Vector3r(-inf,-inf,-inf),Vector3r(inf,inf,inf)); }
+@@ -245,22 +271,24 @@
+ 
+ 
+ BOOST_PYTHON_MODULE(_packPredicates){
+-	python::class_&lt;Predicate, shared_ptr&lt;Predicate&gt; &gt;(&quot;Predicate&quot;)
+-		.def(&quot;__call__&quot;,&amp;Predicate::operator(),PredicateCall_overloads(python::args(&quot;point&quot;,&quot;padding&quot;),&quot;Tell whether given point lies within this sphere, still having 'pad' space to the solid boundary&quot;))
+-		.def(&quot;aabb&quot;,&amp;Predicate::aabb,&quot;Return minimum and maximum values for AABB&quot;)
++	// base predicate class
++	python::class_&lt;PredicateWrap,/* necessary, as methods are pure virtual*/ boost::noncopyable&gt;(&quot;Predicate&quot;)
++		.def(&quot;__call__&quot;,python::pure_virtual(&amp;Predicate::operator()))
++		.def(&quot;aabb&quot;,python::pure_virtual(&amp;Predicate::aabb))
+ 		.def(&quot;__or__&quot;,makeUnion).def(&quot;__and__&quot;,makeIntersection).def(&quot;__sub__&quot;,makeDifference).def(&quot;__xor__&quot;,makeSymmetricDifference);
+-	python::class_&lt;PredicateBoolean,python::bases&lt;Predicate&gt; &gt;(&quot;PredicateBoolean&quot;,&quot;Boolean operation on 2 predicates (abstract class)&quot;,python::no_init)
++	// boolean operations
++	python::class_&lt;PredicateBoolean,python::bases&lt;Predicate&gt;,boost::noncopyable&gt;(&quot;PredicateBoolean&quot;,&quot;Boolean operation on 2 predicates (abstract class)&quot;,python::no_init)
+ 		.add_property(&quot;A&quot;,&amp;PredicateBoolean::getA).add_property(&quot;B&quot;,&amp;PredicateBoolean::getB);
+-	python::class_&lt;PredicateUnion,python::bases&lt;PredicateBoolean&gt; &gt;(&quot;PredicateUnion&quot;,&quot;Union of 2 predicates&quot;,python::init&lt;shared_ptr&lt;Predicate&gt;,shared_ptr&lt;Predicate&gt; &gt;());
+-	python::class_&lt;PredicateIntersection,python::bases&lt;PredicateBoolean&gt; &gt;(&quot;PredicateIntersection&quot;,&quot;Intersection of 2 predicates&quot;,python::init&lt;shared_ptr&lt;Predicate&gt;,shared_ptr&lt;Predicate&gt; &gt;());
+-	python::class_&lt;PredicateDifference,python::bases&lt;PredicateBoolean&gt; &gt;(&quot;PredicateDifference&quot;,&quot;Difference of 2 predicates&quot;,python::init&lt;shared_ptr&lt;Predicate&gt;,shared_ptr&lt;Predicate&gt; &gt;());
+-	python::class_&lt;PredicateSymmetricDifference,python::bases&lt;PredicateBoolean&gt; &gt;(&quot;PredicateSymmetricDifference&quot;,&quot;SymmetricDifference of 2 predicates&quot;,python::init&lt;shared_ptr&lt;Predicate&gt;,shared_ptr&lt;Predicate&gt; &gt;());
++	python::class_&lt;PredicateUnion,python::bases&lt;PredicateBoolean&gt; &gt;(&quot;PredicateUnion&quot;,&quot;Union of 2 predicates&quot;,python::init&lt;python::object,python::object&gt;());
++	python::class_&lt;PredicateIntersection,python::bases&lt;PredicateBoolean&gt; &gt;(&quot;PredicateIntersection&quot;,&quot;Intersection of 2 predicates&quot;,python::init&lt;python::object,python::object &gt;());
++	python::class_&lt;PredicateDifference,python::bases&lt;PredicateBoolean&gt; &gt;(&quot;PredicateDifference&quot;,&quot;Difference of 2 predicates&quot;,python::init&lt;python::object,python::object &gt;());
++	python::class_&lt;PredicateSymmetricDifference,python::bases&lt;PredicateBoolean&gt; &gt;(&quot;PredicateSymmetricDifference&quot;,&quot;SymmetricDifference of 2 predicates&quot;,python::init&lt;python::object,python::object &gt;());
++	// primitive predicates
+ 	python::class_&lt;inSphere,python::bases&lt;Predicate&gt; &gt;(&quot;inSphere&quot;,&quot;Sphere predicate.&quot;,python::init&lt;python::tuple,Real&gt;(python::args(&quot;center&quot;,&quot;radius&quot;),&quot;Ctor taking center (as a 3-tuple) and radius&quot;));
+ 	python::class_&lt;inAlignedBox,python::bases&lt;Predicate&gt; &gt;(&quot;inAlignedBox&quot;,&quot;Axis-aligned box predicate&quot;,python::init&lt;python::tuple,python::tuple&gt;(python::args(&quot;minAABB&quot;,&quot;maxAABB&quot;),&quot;Ctor taking minumum and maximum points of the box (as 3-tuples).&quot;));
+ 	python::class_&lt;inCylinder,python::bases&lt;Predicate&gt; &gt;(&quot;inCylinder&quot;,&quot;Cylinder predicate&quot;,python::init&lt;python::tuple,python::tuple,Real&gt;(python::args(&quot;centerBottom&quot;,&quot;centerTop&quot;,&quot;radius&quot;),&quot;Ctor taking centers of the lateral walls (as 3-tuples) and radius.&quot;));
+ 	python::class_&lt;inHyperboloid,python::bases&lt;Predicate&gt; &gt;(&quot;inHyperboloid&quot;,&quot;Hyperboloid predicate&quot;,python::init&lt;python::tuple,python::tuple,Real,Real&gt;(python::args(&quot;centerBottom&quot;,&quot;centerTop&quot;,&quot;radius&quot;,&quot;skirt&quot;),&quot;Ctor taking centers of the lateral walls (as 3-tuples), radius at bases and skirt (middle radius).&quot;));
+ 	python::class_&lt;inEllipsoid,python::bases&lt;Predicate&gt; &gt;(&quot;inEllipsoid&quot;,&quot;Ellipsoid predicate&quot;,python::init&lt;python::tuple,python::tuple&gt;(python::args(&quot;centerPoint&quot;,&quot;abc&quot;),&quot;Ctor taking center of the ellipsoid (3-tuple) and its 3 radii (3-tuple).&quot;));
+ 	python::class_&lt;notInNotch,python::bases&lt;Predicate&gt; &gt;(&quot;notInNotch&quot;,&quot;Outside of infinite, rectangle-shaped notch predicate&quot;,python::init&lt;python::tuple,python::tuple,python::tuple,Real&gt;(python::args(&quot;centerPoint&quot;,&quot;edge&quot;,&quot;normal&quot;,&quot;aperture&quot;),&quot;Ctor taking point in the symmetry plane, vector pointing along the edge, plane normal and aperture size.\nThe side inside the notch is edge&#215;normal.\nNormal is made perpendicular to the edge.\nAll vectors are normalized at construction time.&quot;)); 
+-
+ }
+ 
+
+Modified: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2009-06-29 14:44:29 UTC (rev 1823)
++++ trunk/gui/py/_utils.cpp	2009-06-29 21:06:22 UTC (rev 1824)
+@@ -13,8 +13,10 @@
+ 
+ #include&lt;numpy/ndarrayobject.h&gt;
+ 
++// #include&quot;_utils.hpp&quot;
+ 
+ 
++
+ using namespace boost::python;
+ 
+ #ifdef LOG4CXX
+
+Modified: trunk/gui/py/pack.py
+===================================================================
+--- trunk/gui/py/pack.py	2009-06-29 14:44:29 UTC (rev 1823)
++++ trunk/gui/py/pack.py	2009-06-29 21:06:22 UTC (rev 1824)
+@@ -24,7 +24,9 @@
+ 	Note: padding is not supported, warning is given and zero used instead.
+ 	&quot;&quot;&quot;
+ 	def __init__(self,surf):
+-		import gts
++		# call base class ctor; necessary for virtual methods to work as expected.
++		# see comments in _packPredicates.cpp for struct PredicateWrap.
++		super(inGtsSurface,self).__init__()
+ 		if not surf.is_closed(): raise RuntimeError(&quot;Surface for inGtsSurface predicate must be closed.&quot;)
+ 		self.surf=surf
+ 		inf=float('inf')
+@@ -33,6 +35,7 @@
+ 			c=v.coords()
+ 			mn,mx=[min(mn[i],c[i]) for i in 0,1,2],[max(mx[i],c[i]) for i in 0,1,2]
+ 		self.mn,self.mx=tuple(mn),tuple(mx)
++		import gts
+ 	def aabb(self): return self.mn,self.mx
+ 	def __call__(self,_pt,pad=0.):
+ 		p=gts.Point(*_pt)
+@@ -43,8 +46,52 @@
+ 	&quot;&quot;&quot;Construct facets from given GTS surface. **kw is passed to utils.facet.&quot;&quot;&quot;
+ 	return [utils.facet([v.coords() for v in face.vertices()],**kw) for face in surf]
+ 
++def sweptPolylines2gtsSurface(pts,threshold=0,capStart=False,capEnd=False):
++	&quot;&quot;&quot;Create swept suface (as GTS triangulation) given same-length sequences of points (as 3-tuples).
++	If threshold is given (&gt;0), gts.Surface().cleanup(threshold) will be called before returning.
++	This removes vrtices closer than threshold. Can be used to create closed swept surface (revolved), as
++	we don't check for coincident vertices otherwise.
++	&quot;&quot;&quot;
++	if not len(set([len(pts1) for pts1 in pts]))==1: raise RuntimeError(&quot;Polylines must be all of the same length!&quot;)
++	vtxs=[[gts.Vertex(x,y,z) for x,y,z in pts1] for pts1 in pts]
++	sectEdges=[[gts.Edge(vtx[i],vtx[i+1]) for i in xrange(0,len(vtx)-1)] for vtx in vtxs]
++	interSectEdges=[[] for i in range(0,len(vtxs)-1)]
++	for i in range(0,len(vtxs)-1):
++		for j in range(0,len(vtxs[i])):
++			interSectEdges[i].append(gts.Edge(vtxs[i][j],vtxs[i+1][j]))
++			if j&lt;len(vtxs[i])-1: interSectEdges[i].append(gts.Edge(vtxs[i][j],vtxs[i+1][j+1]))
++	surf=gts.Surface()
++	for i in range(0,len(vtxs)-1):
++		for j in range(0,len(vtxs[i])-1):
++			surf.add(gts.Face(interSectEdges[i][2*j+1],sectEdges[i+1][j],interSectEdges[i][2*j]))
++			surf.add(gts.Face(sectEdges[i][j],interSectEdges[i][2*j+2],interSectEdges[i][2*j+1]))
++	def doCap(vtx,edg,start):
++		ret=[]
++		eFan=[edg[0]]+[gts.Edge(vtx[i],vtx[0]) for i in range(2,len(vtx))]
++		for i in range(1,len(edg)):
++			ret+=[gts.Face(eFan[i-1],eFan[i],edg[i]) if start else gts.Face(eFan[i-1],edg[i],eFan[i])]
++		return ret
++	caps=[]
++	if capStart: caps+=doCap(vtxs[0],sectEdges[0],start=True)
++	if capEnd: caps+=doCap(vtxs[-1],sectEdges[-1],start=False)
++	for cap in caps: surf.add(cap)
++	if threshold&gt;0: surf.cleanup(threshold)
++	return surf
+ 
++import euclid
+ 
++def revolutionSurfaceMeridians(sects,angles,origin=euclid.Vector3(0,0,0),orientation=euclid.Quaternion()):
++	&quot;&quot;&quot;Revolution surface given sequences of 2d points and sequence of corresponding angles,
++	returning sequences of 3d points representing meridian sections of the revolution surface.
++	The 2d sections are turned around z-axis, but they can be transformed
++	using the origin and orientation arguments to give arbitrary spiral orientation.&quot;&quot;&quot;
++	import math
++	def toGlobal(x,y,z):
++		return tuple(origin+orientation*(euclid.Vector3(x,y,z)))
++	return [[toGlobal(x2d*math.cos(angles[i]),x2d*math.sin(angles[i]),y2d) for x2d,y2d in sects[i]] for i in range(0,len(sects))]
++
++
++
+ def regularOrtho(predicate,radius,gap,**kw):
+ 	&quot;&quot;&quot;Return set of spheres in regular orthogonal grid, clipped inside solid given by predicate.
+ 	Created spheres will have given radius and will be separated by gap space.&quot;&quot;&quot;
+
+Copied: trunk/scripts/test/gts-horse.py (from rev 1822, trunk/scripts/test/gts.py)
+===================================================================
+--- trunk/scripts/test/gts.py	2009-06-29 08:55:00 UTC (rev 1822)
++++ trunk/scripts/test/gts-horse.py	2009-06-29 21:06:22 UTC (rev 1824)
+@@ -0,0 +1,43 @@
++# encoding: utf-8
++# &#169; 2009 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++&quot;&quot;&quot;Script showing how to use GTS to import arbitrary triangulated surface,
++which can further be either filled with packing (if used as predicate) or converted
++to facets representing the surface.&quot;&quot;&quot;
++
++from yade import pack
++import gts
++
++try:
++	#surf=gts.read(open('horse.gts')); surf.coarsen(1000); surf.write(open('horse.coarse.gts','w'))
++	surf=gts.read(open('horse.coarse.gts'))
++except IOError:
++	print &quot;&quot;&quot;horse.gts not found, you need to download input data:
++
++	wget <A HREF="http://gts.sourceforge.net/samples/horse.gts.gz">http://gts.sourceforge.net/samples/horse.gts.gz</A>
++	gunzip horse.gts.gz
++	&quot;&quot;&quot;
++	quit()
++print dir(surf)
++if surf.is_closed():
++	pred=pack.inGtsSurface(surf)
++	aabb=pred.aabb()
++	dim0=aabb[1][0]-aabb[0][0]; radius=dim0/30. # get some characteristic dimension, use it for radius
++	O.bodies.append(pack.regularHexa(pred,radius=radius,gap=radius/4.,density=2000))
++	surf.translate(0,0,-(aabb[1][2]-aabb[0][2])) # move surface down so that facets are underneath the falling spheres
++O.bodies.append(pack.gtsSurface2Facets(surf,wire=True))
++
++O.engines=[
++	BexResetter(),
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingFacet2AABB(),MetaInteractingGeometry2AABB()]),
++	InsertionSortCollider(),
++	InteractionDispatchers(
++		[ef2_Sphere_Sphere_Dem3DofGeom(),ef2_Facet_Sphere_Dem3DofGeom()],
++		[SimpleElasticRelationships()],
++		[Law2_Dem3Dof_Elastic_Elastic()],
++	),
++	GravityEngine(gravity=[0,0,-1e4]),
++	NewtonsDampedLaw(damping=.1)
++]
++
++O.dt=1.5*utils.PWaveTimeStep()
++O.saveTmp()
+
+
+Property changes on: trunk/scripts/test/gts-horse.py
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Added: trunk/scripts/test/gts-operators.py
+===================================================================
+--- trunk/scripts/test/gts-operators.py	2009-06-29 14:44:29 UTC (rev 1823)
++++ trunk/scripts/test/gts-operators.py	2009-06-29 21:06:22 UTC (rev 1824)
+@@ -0,0 +1,32 @@
++&quot;&quot;&quot; This file shows 2 ways to fill union of triangulated surfaces:
++You can either use union of 2 inGtsSurface predicates or
++create union of surfaces using GTS calls first and use a single
++isGtsSurface as predicate with the united surface.
++
++Surprisingly, the first variant seems faster.
++
++Note that GTS only moves references to surfaces around, therefore e.g. translating
++surface that is part of the union will move also the part of the united surface.
++Therefore, we use the copy() method for deep copy here.
++&quot;&quot;&quot;
++from yade import pack,qt
++import gts
++
++s1=gts.read(open('horse.coarse.gts'))
++s2=gts.Surface(); s2.copy(s1); s2.translate(0.04,0,0)
++O.bodies.append(pack.gtsSurface2Facets(s1,color=(0,1,0))+pack.gtsSurface2Facets(s2,color=(1,0,0)))
++
++s12=gts.Surface(); s12.copy(s1.union(s2)); s12.translate(0,0,.1)
++radius=0.005
++O.bodies.append(pack.gtsSurface2Facets(s12,color=(0,0,1)))
++
++qt.View()
++from time import time
++t0=time()
++O.bodies.append(pack.regularHexa(pack.inGtsSurface(s1) | pack.inGtsSurface(s2),radius,gap=0,color=(0,1,0)))
++t1=time()
++print 'Using predicate union: %gs'%(t1-t0)
++O.bodies.append(pack.regularHexa(pack.inGtsSurface(s12),radius,gap=0.,color=(1,0,0)))
++t2=time()
++print 'Using surface union: %gs'%(t2-t1)
++
+
+Deleted: trunk/scripts/test/gts.py
+===================================================================
+--- trunk/scripts/test/gts.py	2009-06-29 14:44:29 UTC (rev 1823)
++++ trunk/scripts/test/gts.py	2009-06-29 21:06:22 UTC (rev 1824)
+@@ -1,43 +0,0 @@
+-# encoding: utf-8
+-# &#169; 2009 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+-&quot;&quot;&quot;Script showing how to use GTS to import arbitrary triangulated surface,
+-which can further be either filled with packing (if used as predicate) or converted
+-to facets representing the surface.&quot;&quot;&quot;
+-
+-from yade import pack
+-import gts
+-
+-try:
+-	#surf=gts.read(open('horse.gts')); surf.coarsen(1000); surf.write(open('horse.coarse.gts','w'))
+-	surf=gts.read(open('horse.coarse.gts'))
+-except IOError:
+-	print &quot;&quot;&quot;horse.gts not found, you need to download input data:
+-
+-	wget <A HREF="http://gts.sourceforge.net/samples/horse.gts.gz">http://gts.sourceforge.net/samples/horse.gts.gz</A>
+-	gunzip horse.gts.gz
+-	&quot;&quot;&quot;
+-	quit()
+-
+-if surf.is_closed():
+-	pred=pack.inGtsSurface(surf)
+-	aabb=pred.aabb()
+-	dim0=aabb[1][0]-aabb[0][0]; radius=dim0/30. # get some characteristic dimension, use it for radius
+-	O.bodies.append(pack.regularHexa(pred,radius=radius,gap=radius/4.,density=2000))
+-	surf.translate(0,0,-(aabb[1][2]-aabb[0][2])) # move surface down so that facets underneath
+-O.bodies.append(pack.gtsSurface2Facets(surf,wire=True))
+-
+-O.engines=[
+-	BexResetter(),
+-	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingFacet2AABB(),MetaInteractingGeometry2AABB()]),
+-	InsertionSortCollider(),
+-	InteractionDispatchers(
+-		[ef2_Sphere_Sphere_Dem3DofGeom(),ef2_Facet_Sphere_Dem3DofGeom()],
+-		[SimpleElasticRelationships()],
+-		[Law2_Dem3Dof_Elastic_Elastic()],
+-	),
+-	GravityEngine(gravity=[0,0,-1e4]),
+-	NewtonsDampedLaw(damping=.1)
+-]
+-
+-O.dt=1.5*utils.PWaveTimeStep()
+-O.saveTmp()
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001081.html">[deprecated list] [Yade-dev] [svn] r1823 -	trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="001083.html">[deprecated list] [Yade-dev] [svn] r1825 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1082">[ date ]</a>
+              <a href="thread.html#1082">[ thread ]</a>
+              <a href="subject.html#1082">[ subject ]</a>
+              <a href="author.html#1082">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

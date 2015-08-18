@@ -1,0 +1,1706 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1851 - in trunk: core gui/qt3	pkg/common	pkg/common/Engine	pkg/common/Engine/DeusExMachina	pkg/common/Engine/FilterEngine	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine	pkg/lattice/Engine/StandAloneEngine	py/yadeWrapper scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1851%20-%20in%20trunk%3A%20core%20gui/qt3%0A%09pkg/common%09pkg/common/Engine%0A%09pkg/common/Engine/DeusExMachina%09pkg/common/Engine/FilterEngine%0A%09pkg/common/Engine/MetaEngine%09pkg/common/Engine/StandAloneEngine%09pkg/dem/Engine/DeusExMachina%0A%09pkg/dem/Engine/StandAloneEngine%09pkg/lattice/Engine/StandAloneEngine%0A%09py/yadeWrapper%20scripts/test&In-Reply-To=%3C200907100949.n6A9nE73009408%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001159.html">
+   <LINK REL="Next"  HREF="001162.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1851 - in trunk: core gui/qt3	pkg/common	pkg/common/Engine	pkg/common/Engine/DeusExMachina	pkg/common/Engine/FilterEngine	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine	pkg/lattice/Engine/StandAloneEngine	py/yadeWrapper scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1851%20-%20in%20trunk%3A%20core%20gui/qt3%0A%09pkg/common%09pkg/common/Engine%0A%09pkg/common/Engine/DeusExMachina%09pkg/common/Engine/FilterEngine%0A%09pkg/common/Engine/MetaEngine%09pkg/common/Engine/StandAloneEngine%09pkg/dem/Engine/DeusExMachina%0A%09pkg/dem/Engine/StandAloneEngine%09pkg/lattice/Engine/StandAloneEngine%0A%09py/yadeWrapper%20scripts/test&In-Reply-To=%3C200907100949.n6A9nE73009408%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1851 - in trunk: core gui/qt3	pkg/common	pkg/common/Engine	pkg/common/Engine/DeusExMachina	pkg/common/Engine/FilterEngine	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine	pkg/lattice/Engine/StandAloneEngine	py/yadeWrapper scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Jul 10 11:49:14 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001159.html">[deprecated list] [Yade-dev] [svn] r1850 - trunk/pkg/dem
+</A></li>
+        <LI>Next message: <A HREF="001162.html">[deprecated list] [Yade-dev] [svn] r1852 - trunk/scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1161">[ date ]</a>
+              <a href="thread.html#1161">[ thread ]</a>
+              <a href="subject.html#1161">[ subject ]</a>
+              <a href="author.html#1161">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-10 11:49:09 +0200 (Fri, 10 Jul 2009)
+New Revision: 1851
+
+Added:
+   trunk/scripts/test/collider-stride-triax.py
+   trunk/scripts/test/collider-stride.py
+Modified:
+   trunk/core/Engine.hpp
+   trunk/core/InteractingGeometry.hpp
+   trunk/core/MetaBody.cpp
+   trunk/core/TimeStepper.cpp
+   trunk/core/TimeStepper.hpp
+   trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+   trunk/pkg/common/Engine/DeusExMachina/DisplacementEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/DisplacementEngine.hpp
+   trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.hpp
+   trunk/pkg/common/Engine/DeusExMachina/StaticAttractionEngine.hpp
+   trunk/pkg/common/Engine/FilterEngine/ColorizedLayerFilter.cpp
+   trunk/pkg/common/Engine/FilterEngine/ColorizedLayerFilter.hpp
+   trunk/pkg/common/Engine/FilterEngine/ColorizedTimeFilter.cpp
+   trunk/pkg/common/Engine/FilterEngine/ColorizedTimeFilter.hpp
+   trunk/pkg/common/Engine/FilterEngine/ColorizedVelocityFilter.cpp
+   trunk/pkg/common/Engine/FilterEngine/ColorizedVelocityFilter.hpp
+   trunk/pkg/common/Engine/FilterEngine/FilterEngine.cpp
+   trunk/pkg/common/Engine/FilterEngine/FilterEngine.hpp
+   trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp
+   trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp
+   trunk/pkg/common/Engine/ParallelEngine.cpp
+   trunk/pkg/common/Engine/ParallelEngine.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/ResetPositionEngine.hpp
+   trunk/pkg/common/SConscript
+   trunk/pkg/dem/Engine/DeusExMachina/CapillaryRecorder.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/CapillaryRecorder.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/AveragePositionRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/AveragePositionRecorder.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ForceSnapshot.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ForceSnapshot.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GeometricalModelForceColorizer.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GeometricalModelForceColorizer.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/HistoryRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/HistoryRecorder.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/PositionRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/PositionRecorder.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/PositionSnapshot.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/PositionSnapshot.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/RigidBodyRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/RigidBodyRecorder.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticSpheresInteractionRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticSpheresInteractionRecorder.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/VelocityRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/VelocityRecorder.hpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.cpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.hpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/MeasurePoisson.cpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/MeasurePoisson.hpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.cpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.hpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.cpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.hpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.cpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.hpp
+   trunk/py/yadeWrapper/yadeWrapper.cpp
+Log:
+1. Change prototype of Engine::isActivated() to Engine::isActivate(MetaBody*)
+2. Add maxVelocitySq to NewtonsDampedLaw for analysis purposes
+3. Add BoundingVolumeMetaEngine::sweepTime and ::sweepDist to sweep bounding volume by given predicted motion over time or by given absolute distance.
+4. Add strided run support to InsertionSortCollider (using sweeping)
+5. Add scripts/test/collider-stride-triax.py to play with the strategies of sweeping based on strides
+6. Add O.interactions.countReal() 
+
+
+
+Modified: trunk/core/Engine.hpp
+===================================================================
+--- trunk/core/Engine.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/core/Engine.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -25,7 +25,7 @@
+ 		Engine() {};
+ 		virtual ~Engine() {};
+ 	
+-		virtual bool isActivated() { return true; };
++		virtual bool isActivated(MetaBody*) { return true; };
+ 		virtual void action(MetaBody*) { throw; };
+ 		/* returns all BodyExternalVariable's (Bex; formerly PhysicalActions) that this engine needs */
+ 		virtual list&lt;string&gt; getNeededBex(){return list&lt;string&gt;();}
+
+Modified: trunk/core/InteractingGeometry.hpp
+===================================================================
+--- trunk/core/InteractingGeometry.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/core/InteractingGeometry.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -11,22 +11,27 @@
+ #include&lt;yade/lib-serialization/Serializable.hpp&gt;
+ #include&lt;yade/lib-multimethods/Indexable.hpp&gt;
+ 
+-class BoundingVolume;
+-
+ // the geometry through which the body will interact:
+ // - planet emitting gravity has just radius of influence
+ // - magnet has also just volume of influence
+ // - for tetrahedrons we can use sphere tree or sweptshpere volume
+ //
+-// in general we can use it to initialize interaction, and sometimes to terminate it
+-// (depending in which container it is stored).
++// in general we can use it to initialize interaction
+ 
++#define BV_FUNCTOR_CACHE
++
++class BoundingVolumeEngineUnit;
++
+ class InteractingGeometry : public Serializable, public Indexable
+ {
+ 	public :
+ 		InteractingGeometry(){diffuseColor=Vector3r(1,1,1);}
+ 		Vector3r diffuseColor;	// FIXME - why here? and then - why no
+ 					// bool wire; even though GeometricalModel has bool wire ?
++
++		#ifdef BV_FUNCTOR_CACHE
++			shared_ptr&lt;BoundingVolumeEngineUnit&gt; boundFunctor;
++		#endif
+ 	
+ /// Serialization
+ 	REGISTER_ATTRIBUTES(/*no base*/,(diffuseColor));
+@@ -34,7 +39,6 @@
+ /// Indexable
+ 	REGISTER_INDEX_COUNTER(InteractingGeometry);
+ };
+-
+ REGISTER_SERIALIZABLE(InteractingGeometry);
+ 
+ 
+
+Modified: trunk/core/MetaBody.cpp
+===================================================================
+--- trunk/core/MetaBody.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/core/MetaBody.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -78,14 +78,14 @@
+ void MetaBody::moveToNextTimeStep()
+ {
+ 	if(needsInitializers){
+-		FOREACH(shared_ptr&lt;Engine&gt; e, initializers){ if(e-&gt;isActivated()) e-&gt;action(this); }
++		FOREACH(shared_ptr&lt;Engine&gt; e, initializers){ if(e-&gt;isActivated(this)) e-&gt;action(this); }
+ 		bex.resize(bodies-&gt;size());
+ 		needsInitializers=false;
+ 	}
+ 	//bex.reset(); // uncomment if PhysicalActionContainerReseter is removed
+ 	TimingInfo::delta last=TimingInfo::getNow();
+ 	FOREACH(const shared_ptr&lt;Engine&gt;&amp; e, engines){
+-		if(e-&gt;isActivated()){
++		if(e-&gt;isActivated(this)){
+ 			e-&gt;action(this);
+ 			if(TimingInfo::enabled) {TimingInfo::delta now=TimingInfo::getNow(); e-&gt;timingInfo.nsec+=now-last; e-&gt;timingInfo.nExec+=1; last=now;}
+ 		}
+
+Modified: trunk/core/TimeStepper.cpp
+===================================================================
+--- trunk/core/TimeStepper.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/core/TimeStepper.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -8,8 +8,9 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;TimeStepper.hpp&quot;
+-#include &quot;StandAloneEngine.hpp&quot;
++#include&lt;yade/core/TimeStepper.hpp&gt;
++#include&lt;yade/core/StandAloneEngine.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
+ 
+ TimeStepper::TimeStepper() : StandAloneEngine()
+ {	
+@@ -18,9 +19,9 @@
+ }
+ 
+ 
+-bool TimeStepper::isActivated()
++bool TimeStepper::isActivated(MetaBody* mb)
+ {
+-	return (active &amp;&amp; (Omega::instance().getCurrentIteration() % timeStepUpdateInterval == 0));
++	return (active &amp;&amp; (mb-&gt;currentIteration % timeStepUpdateInterval == 0));
+ }
+ 
+ 
+
+Modified: trunk/core/TimeStepper.hpp
+===================================================================
+--- trunk/core/TimeStepper.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/core/TimeStepper.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -23,7 +23,7 @@
+ 
+ 		TimeStepper();
+ 		virtual void computeTimeStep(MetaBody* ) { throw; };
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 		virtual void action(MetaBody* b) { computeTimeStep(b);} ;
+ 		void setActive(bool a, int nb=-1);
+ 
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -230,6 +230,7 @@
+ 
+ bool GLSimulationPlayerViewer::loadNextRecordedData(){
+ 	if(xyzNamesIter==xyzNames.end()) return false;
++	MetaBody* rootBody=Omega::instance().getRootBody().get();
+ 	if(!useSQLite){
+ 		fileName=*(xyzNamesIter++);
+ 		iostreams::filtering_istream f; if(boost::algorithm::ends_with(fileName,&quot;.bz2&quot;)) f.push(iostreams::bzip2_decompressor()); f.push(iostreams::file_source(fileName));
+@@ -243,7 +244,7 @@
+ 		simPlayer-&gt;pushMessage(lexical_cast&lt;string&gt;(frameNumber)+&quot;/&quot;+lexical_cast&lt;string&gt;(xyzNames.size())+&quot; &quot;+fileName+(doRgb?&quot; (+rgb)&quot;:&quot;&quot;));
+ 		if(!f.good()){LOG_FATAL(&quot;Snapshot file &quot;&lt;&lt;fileName&lt;&lt;&quot; could not be opened for reading (fatal, ending sequence)?!&quot;); return false;}
+ 		LOG_TRACE(fileName);
+-		size_t nBodies=Omega::instance().getRootBody()-&gt;bodies-&gt;size();
++		size_t nBodies=rootBody-&gt;bodies-&gt;size();
+ 		for(unsigned long id=0; !f.eof() &amp;&amp; !f.fail() &amp;&amp; id&lt;nBodies; id++){
+ 			shared_ptr&lt;Body&gt; b=Body::byId(id);
+ 			if(!b){ LOG_ERROR(&quot;Body #&quot;&lt;&lt;id&lt;&lt;&quot; doesn't exist (skipped)!&quot;); continue; }
+@@ -286,11 +287,11 @@
+ 			if(col_rgb_b&gt;=0) b-&gt;geometricalModel-&gt;diffuseColor[2]=reader.getdouble(col_rgb_b);
+ 		}
+ 		Omega::instance().setCurrentIteration(con-&gt;executeint(&quot;select iter from 'records' where bodyTable='&quot;+tableName+&quot;';&quot;));
+-		Omega::instance().getRootBody()-&gt;simulationTime=con-&gt;executedouble(&quot;select virtTime from 'records' where bodyTable='&quot;+tableName+&quot;';&quot;);
++		rootBody-&gt;simulationTime=con-&gt;executedouble(&quot;select virtTime from 'records' where bodyTable='&quot;+tableName+&quot;';&quot;);
+ 		realTime=con-&gt;executedouble(&quot;select realTime from 'records' where bodyTable='&quot;+tableName+&quot;';&quot;);
+ 		wallClock=con-&gt;executedouble(&quot;select wallClock from 'records' where bodyTable='&quot;+tableName+&quot;';&quot;);
+ 	}
+-	FOREACH(const shared_ptr&lt;FilterEngine&gt;&amp; e, filters) { if(e-&gt;isActivated()) e-&gt;action(Omega::instance().getRootBody().get()); }
++	FOREACH(const shared_ptr&lt;FilterEngine&gt;&amp; e, filters) { if(e-&gt;isActivated(rootBody)) e-&gt;action(rootBody); }
+ 	return true;
+ }
+ 
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/DisplacementEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/DisplacementEngine.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/DeusExMachina/DisplacementEngine.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -38,7 +38,7 @@
+ 	REGISTER_ATTRIBUTE(active);
+ }
+ 
+-bool DisplacementEngine::isActivated()
++bool DisplacementEngine::isActivated(MetaBody*)
+ {
+    return active;
+ }
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/DisplacementEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/DisplacementEngine.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/DeusExMachina/DisplacementEngine.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -20,7 +20,7 @@
+ 		void applyCondition(MetaBody *);
+ 		bool active;
+ 		DisplacementEngine():active(true){};
+-		bool isActivated();
++		bool isActivated(MetaBody*);
+ 
+ 	protected :
+ 		virtual void postProcessAttributes(bool);
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -32,7 +32,7 @@
+ 		Real goalVirt, goalReal; long goalIter;
+ 		long startVirt, startReal; long startIter;
+ 		string goalHook;
+-		virtual bool isActivated(){return !done;}
++		virtual bool isActivated(MetaBody*){return !done;}
+ 		Se3Interpolator(): done(false), started(false), rotRelative(false), goalVirt(0), goalReal(0), goalIter(0) {};
+ 		virtual ~Se3Interpolator(){};
+ 		virtual void applyCondition(MetaBody* mb);
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/StaticAttractionEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/StaticAttractionEngine.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/DeusExMachina/StaticAttractionEngine.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -18,7 +18,7 @@
+ 		void applyCondition(MetaBody *);
+ 		bool active;
+ 		StaticAttractionEngine() : active(true) {};
+-		virtual bool isActivated() { return active; };
++		virtual bool isActivated(MetaBody*) { return active; };
+ 
+ 	protected :
+ 		virtual Real getMaxDisplacement(MetaBody*) {throw &quot;do not use StaticAttractionEngine directly, use derived classes instead.&quot;;};
+
+Modified: trunk/pkg/common/Engine/FilterEngine/ColorizedLayerFilter.cpp
+===================================================================
+--- trunk/pkg/common/Engine/FilterEngine/ColorizedLayerFilter.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/FilterEngine/ColorizedLayerFilter.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -23,9 +23,9 @@
+ {
+ }
+ 
+-bool ColorizedLayerFilter::isActivated()
++bool ColorizedLayerFilter::isActivated(MetaBody* rootBody)
+ {
+-	return FilterEngine::isActivated() 
++	return FilterEngine::isActivated(rootBody) 
+ 		&amp;&amp; ((Omega::instance().getCurrentIteration() % interval == 0));
+ }
+ 
+
+Modified: trunk/pkg/common/Engine/FilterEngine/ColorizedLayerFilter.hpp
+===================================================================
+--- trunk/pkg/common/Engine/FilterEngine/ColorizedLayerFilter.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/FilterEngine/ColorizedLayerFilter.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -23,7 +23,7 @@
+ 		ColorizedLayerFilter();
+ 		virtual ~ColorizedLayerFilter();
+ 	
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 		virtual void applyCondition(MetaBody*);
+ 	
+ 		virtual void registerAttributes();
+
+Modified: trunk/pkg/common/Engine/FilterEngine/ColorizedTimeFilter.cpp
+===================================================================
+--- trunk/pkg/common/Engine/FilterEngine/ColorizedTimeFilter.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/FilterEngine/ColorizedTimeFilter.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -35,9 +35,9 @@
+ {
+ }
+ 
+-bool ColorizedTimeFilter::isActivated()
++bool ColorizedTimeFilter::isActivated(MetaBody* rootBody)
+ {
+-	return FilterEngine::isActivated();
++	return FilterEngine::isActivated(rootBody);
+ }
+ 
+ void ColorizedTimeFilter::registerAttributes()
+
+Modified: trunk/pkg/common/Engine/FilterEngine/ColorizedTimeFilter.hpp
+===================================================================
+--- trunk/pkg/common/Engine/FilterEngine/ColorizedTimeFilter.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/FilterEngine/ColorizedTimeFilter.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -46,7 +46,7 @@
+ 		ColorizedTimeFilter();
+ 		virtual ~ColorizedTimeFilter();
+ 	
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 		virtual void applyCondition(MetaBody*);
+ 	
+ 		virtual void registerAttributes();
+
+Modified: trunk/pkg/common/Engine/FilterEngine/ColorizedVelocityFilter.cpp
+===================================================================
+--- trunk/pkg/common/Engine/FilterEngine/ColorizedVelocityFilter.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/FilterEngine/ColorizedVelocityFilter.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -35,9 +35,9 @@
+ {
+ }
+ 
+-bool ColorizedVelocityFilter::isActivated()
++bool ColorizedVelocityFilter::isActivated(MetaBody* rootBody)
+ {
+-	return FilterEngine::isActivated();
++	return FilterEngine::isActivated(rootBody);
+ }
+ 
+ void ColorizedVelocityFilter::registerAttributes()
+
+Modified: trunk/pkg/common/Engine/FilterEngine/ColorizedVelocityFilter.hpp
+===================================================================
+--- trunk/pkg/common/Engine/FilterEngine/ColorizedVelocityFilter.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/FilterEngine/ColorizedVelocityFilter.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -42,7 +42,7 @@
+ 		ColorizedVelocityFilter();
+ 		virtual ~ColorizedVelocityFilter();
+ 	
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 		virtual void applyCondition(MetaBody*);
+ 	
+ 		virtual void registerAttributes();
+
+Modified: trunk/pkg/common/Engine/FilterEngine/FilterEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/FilterEngine/FilterEngine.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/FilterEngine/FilterEngine.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -14,7 +14,7 @@
+ {
+ }
+ 
+-bool FilterEngine::isActivated() 
++bool FilterEngine::isActivated(MetaBody*) 
+ {
+ 	return FilterEngine::isFiltrationActivated &amp;&amp; isFilterActivated; 
+ }
+
+Modified: trunk/pkg/common/Engine/FilterEngine/FilterEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/FilterEngine/FilterEngine.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/FilterEngine/FilterEngine.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -17,7 +17,7 @@
+ 		/// Activation of the filter
+ 		bool isFilterActivated;
+ 
+-		bool isActivated();
++		bool isActivated(MetaBody*);
+ 
+ 		FilterEngine();
+ 	
+
+Modified: trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -12,7 +12,10 @@
+ 
+ 
+ #include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+ 
++CREATE_LOGGER(BoundingVolumeMetaEngine);
+ 
+ void BoundingVolumeMetaEngine::action(MetaBody* ncb)
+ {
+@@ -20,11 +23,43 @@
+ 	const long numBodies=(long)bodies-&gt;size();
+ 	//#pragma omp parallel for
+ 	for(int id=0; id&lt;numBodies; id++){
+-		if(bodies-&gt;exists(id)) // don't delete this check  - Janek
+-		{
+-			const shared_ptr&lt;Body&gt;&amp; b=(*bodies)[id];
+-			if(b-&gt;interactingGeometry &amp;&amp; b-&gt;boundingVolume) operator()(b-&gt;interactingGeometry,b-&gt;boundingVolume,b-&gt;physicalParameters-&gt;se3,b.get());
++		if(!bodies-&gt;exists(id)) continue; // don't delete this check  - Janek
++		const shared_ptr&lt;Body&gt;&amp; b=(*bodies)[id];
++		shared_ptr&lt;InteractingGeometry&gt;&amp; ig=b-&gt;interactingGeometry;
++		if(!ig || !b-&gt;boundingVolume) continue;
++
++		#ifdef BV_FUNCTOR_CACHE
++			if(!ig-&gt;boundFunctor){ bool swap=false; ig-&gt;boundFunctor=this-&gt;getFunctor2D(ig,b-&gt;boundingVolume,swap); /* no sense, different types: */ assert(!swap); if(!ig-&gt;boundFunctor) continue; }
++			// LOG_DEBUG(&quot;ig-&gt;boundFunctor.get()==&quot;&lt;&lt;ig-&gt;boundFunctor.get()&lt;&lt;&quot; for &quot;&lt;&lt;b-&gt;interactingGeometry-&gt;getClassName()&lt;&lt;&quot;, #&quot;&lt;&lt;id);
++			//if(!ig-&gt;boundFunctor) throw runtime_error(&quot;boundFunctor not found for #&quot;+lexical_cast&lt;string&gt;(id)); assert(ig-&gt;boundFunctor);
++			ig-&gt;boundFunctor-&gt;go(ig,b-&gt;boundingVolume,b-&gt;physicalParameters-&gt;se3,b.get());
++		#else
++			operator()(ig,b-&gt;boundingVolume,b-&gt;physicalParameters-&gt;se3,b.get());
++		#endif
++		if(sweepTime&gt;0){
++			/* compute se3 the body would have after given time (linear interpolation), and use the maximum bounding volume then.
++			It is a pessimisation that allows us to not update the aabb during some period of time. */
++			Vector3r min0=b-&gt;boundingVolume-&gt;min, max0=b-&gt;boundingVolume-&gt;max;
++			const Se3r&amp; se3=b-&gt;physicalParameters-&gt;se3;
++			const RigidBodyParameters* rbp=YADE_CAST&lt;RigidBodyParameters*&gt;(b-&gt;physicalParameters.get());
++			/* For position change, &#916;r=v&#916;t+&#189;a&#916;t&#178;; similar for orientation. */
++			Se3r sweptSe3; sweptSe3.position=se3.position+(rbp-&gt;velocity+.5*rbp-&gt;acceleration*sweepTime)*sweepTime;
++			Vector3r axis=rbp-&gt;angularVelocity+.5*rbp-&gt;angularAcceleration*sweepTime; Real angle=axis.Normalize(); Quaternionr q(axis,angle*sweepTime); sweptSe3.orientation=q*se3.orientation;
++			#ifdef BV_FUNCTOR_CACHE
++				ig-&gt;boundFunctor-&gt;go(ig,b-&gt;boundingVolume,sweptSe3,b.get());
++			#else
++				operator()(ig,b-&gt;boundingVolume,sweptSe3,b.get());
++			#endif
++			AABB* aabb=YADE_CAST&lt;AABB*&gt;(b-&gt;boundingVolume.get()); // to update halfSize and center as well
++			aabb-&gt;min=componentMinVector(min0,aabb-&gt;min); aabb-&gt;max=componentMaxVector(max0,aabb-&gt;max);
++			aabb-&gt;center=.5*(aabb-&gt;min+aabb-&gt;max); aabb-&gt;halfSize=.5*(aabb-&gt;max-aabb-&gt;min);
+ 		}
++		if(sweepDist!=0){
++			AABB* aabb=YADE_CAST&lt;AABB*&gt;(b-&gt;boundingVolume.get());
++			if(sweepDist&lt;0) aabb-&gt;halfSize=-sweepDist*aabb-&gt;halfSize; // relative scaling by abs(sweepDist)
++			else aabb-&gt;halfSize+=Vector3r(sweepDist,sweepDist,sweepDist); // absolute distance increment
++			aabb-&gt;min=aabb-&gt;center-aabb-&gt;halfSize; aabb-&gt;max=aabb-&gt;center+aabb-&gt;halfSize;
++		}
+ 	}
+ 	operator()(ncb-&gt;interactingGeometry,ncb-&gt;boundingVolume,ncb-&gt;physicalParameters-&gt;se3,ncb);
+ }
+
+Modified: trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -32,11 +32,21 @@
+ 					&gt;
+ {
+ 	public :
++		// selectively turn off this engine (from within the collider, for instance)
++		bool activated;
++		//! if &lt; 0, will set bounding volumes that the bodies (most likely) will not go over within given time interval; otherwise, do not sweep
++		Real sweepTime;
++		//! bounding box will be enlarged by this amount in all 3 dimensions;
++		/// if negative, it is relative size (e.g. -2 will make the bounding box 2 &#215; bigger)
++		/// if positive, it is absolute distance; its will be added in all 6 directions (i.e. dimensions will be enlarged by 2 &#215; this value)
++		Real sweepDist;
++		BoundingVolumeMetaEngine(): activated(true), sweepTime(-1), sweepDist(0) {}
+ 		virtual void action(MetaBody*);
+-
++		virtual bool isActivated(MetaBody*){ return activated; }
++	DECLARE_LOGGER;
+ 	REGISTER_CLASS_NAME(BoundingVolumeMetaEngine);
+ 	REGISTER_BASE_CLASS_NAME(MetaEngine2D);
+-	REGISTER_ATTRIBUTES(MetaEngine,/* no attributes here */);
++	REGISTER_ATTRIBUTES(MetaEngine,(activated)(sweepTime)(sweepDist));
+ };
+ 
+ REGISTER_SERIALIZABLE(BoundingVolumeMetaEngine);
+
+Modified: trunk/pkg/common/Engine/ParallelEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/ParallelEngine.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/ParallelEngine.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -22,7 +22,7 @@
+ 		// run every slave group sequentially
+ 		FOREACH(const shared_ptr&lt;Engine&gt;&amp; e, slaves[i]) {
+ 			//cerr&lt;&lt;&quot;[&quot;&lt;&lt;omp_get_thread_num()&lt;&lt;&quot;:&quot;&lt;&lt;e-&gt;getClassName()&lt;&lt;&quot;]&quot;;
+-			if(e-&gt;isActivated()) e-&gt;action(rootBody);
++			if(e-&gt;isActivated(rootBody)) e-&gt;action(rootBody);
+ 		}
+ 	}
+ }
+
+Modified: trunk/pkg/common/Engine/ParallelEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/ParallelEngine.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/ParallelEngine.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -7,7 +7,7 @@
+ 		ParallelEngine(){};
+ 		virtual ~ParallelEngine(){};
+ 		virtual void action(MetaBody*);
+-		virtual bool isActivated(){return true;}
++		virtual bool isActivated(MetaBody*){return true;}
+ 		virtual list&lt;string&gt; getNeededBex();		
+ 	protected:
+ 		void registerAttributes(){Engine::registerAttributes(); REGISTER_ATTRIBUTE(slaves); }
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -4,6 +4,7 @@
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/core/InteractionContainer.hpp&gt;
++#include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+ 
+ #include&lt;algorithm&gt;
+ #include&lt;vector&gt;
+@@ -59,13 +60,27 @@
+ 	}
+ }
+ 
++#ifdef COLLIDE_STRIDED
++	bool InsertionSortCollider::isActivated(MetaBody* rb){
++		// activated if number of bodies changes (hence need to refresh collision information)
++		// or the time of scheduled run already came, or we were never scheduled yet
++		if(stride&lt;=1) return true;
++		bool ret=XX.size()!=2*rb-&gt;bodies-&gt;size() || scheduledRun&lt;0 || rb-&gt;simulationTime&gt;=scheduledRun;
++		// we wouldn't run in this step; just delete pending interactions
++		// this could be done in ::action, but it would make the call counters not reflect the stride
++		if(!ret) rb-&gt;interactions-&gt;erasePending(*this);
++		return ret;
++	}
++#endif
++
+ void InsertionSortCollider::action(MetaBody* rb){
+-	//timingDeltas-&gt;start();
++	// timingDeltas-&gt;start();
+ 
+ 	size_t nBodies=rb-&gt;bodies-&gt;size();
+ 	InteractionContainer* interactions=rb-&gt;interactions.get();
++	
++	// bite: conditions that make it necessary to run collider even if not scheduled are in isActivated
+ 
+-
+ 	// pre-conditions
+ 		// adjust storage size
+ 		bool doInitSort=false;
+@@ -88,9 +103,32 @@
+ 		}
+ 		if(minima.size()!=3*nBodies){ minima.resize(3*nBodies); maxima.resize(3*nBodies); }
+ 		assert(XX.size()==2*rb-&gt;bodies-&gt;size());
++		#ifdef COLLIDE_STRIDED
++			// get the BoundingVolumeMetaEngine and turn it off; we will call it ourselves
++			if(!boundDispatcher){
++				FOREACH(shared_ptr&lt;Engine&gt;&amp; e, rb-&gt;engines){ boundDispatcher=dynamic_pointer_cast&lt;BoundingVolumeMetaEngine&gt;(e); if(boundDispatcher) break; }
++				if(!boundDispatcher){ LOG_FATAL(&quot;Unable to locate BoundingVolumeMetaEngine within engines, aborting.&quot;); throw runtime_error(&quot;Explanation above&quot;); }
++				boundDispatcher-&gt;activated=false; // deactive the engine, we will call it ourselves from now (just when needed)
++			}
++		#endif
++	// timingDeltas-&gt;checkpoint(&quot;init&quot;);
+ 
+-	//timingDeltas-&gt;checkpoint(&quot;setup&quot;);
++		#ifdef COLLIDE_STRIDED
++			// FIXME: should be able to adapt stride based on the potential_interaction_count_increase/stride_speedup tradeoff
++			// this depends on the packing density, for instance, maximum velocities/accels etc.
++			if(stride&gt;1 &amp;&amp; sweepTimeFactor&lt;1 &amp;&amp; sweepVelocity&lt;=0){ LOG_WARN(&quot;Stride is &quot;&lt;&lt;stride&lt;&lt;&quot;, but no sweeping effective!! Setting stride back to 1.&quot;); stride=1; }
++			if(stride&gt;1){
++				//schedule next run
++				scheduledRun=rb-&gt;simulationTime+rb-&gt;dt*(stride-.5); // -.5 to avoid rounding issues
++				if(sweepTimeFactor&gt;=1) boundDispatcher-&gt;sweepTime=rb-&gt;dt*stride*sweepTimeFactor;
++				if(sweepVelocity&gt;0) boundDispatcher-&gt;sweepDist=rb-&gt;dt*stride*sweepVelocity;
++			} else { scheduledRun=-1; boundDispatcher-&gt;sweepTime=-1; boundDispatcher-&gt;sweepDist=0; }
++			boundDispatcher-&gt;action(rb);
++		#endif
++	// timingDeltas-&gt;checkpoint(&quot;bound&quot;);
+ 
++
++
+ 	// copy bounds along given axis into our arrays
+ 		for(size_t i=0; i&lt;2*nBodies; i++){
+ 			const body_id_t&amp; idXX=XX[i].id; const body_id_t&amp; idYY=YY[i].id; const body_id_t&amp; idZZ=ZZ[i].id;
+@@ -107,7 +145,7 @@
+ 			}
+ 		}
+ 
+-	//timingDeltas-&gt;checkpoint(&quot;copy&quot;);
++	// timingDeltas-&gt;checkpoint(&quot;copy&quot;);
+ 
+ 	// process interactions that the constitutive law asked to be erased
+ 	interactions-&gt;erasePending(*this);
+@@ -167,5 +205,5 @@
+ 				}
+ 			}
+ 		}
+-	//timingDeltas-&gt;checkpoint(&quot;sort&amp;collide&quot;);
++	// timingDeltas-&gt;checkpoint(&quot;sort&amp;collide&quot;);
+ }
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -11,11 +11,12 @@
+ 	calls checkOverlap which then handles either overlap (by creating interaction if necessary) or its absence (by deleting
+ 	interaction if it is only potential).
+ 
+-	Bodies without bounding volume are ahndle gracefully and never collide.
++	Bodies without bounding volume are handled gracefully and never collide.
++*/
+ 
++#define COLLIDE_STRIDED
++class BoundingVolumeMetaEngine;
+ 
+-*/
+-
+ class InsertionSortCollider: public Collider{
+ 	//! struct for storing bounds of bodies
+ 	struct Bound{
+@@ -29,6 +30,20 @@
+ 		bool operator&lt;(const Bound&amp; b) const {return coord&lt;b.coord;}
+ 		bool operator&gt;(const Bound&amp; b) const {return coord&gt;b.coord;}
+ 	};
++	#ifdef COLLIDE_STRIDED
++		// keep this dispatcher and call it ourselves as needed
++		shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundDispatcher;
++		// interval at which we will run; if &lt;=1, we run always (as usual). 0 by default.
++		int stride;
++		// virtual time when we have to run the next time
++		Real scheduledRun;
++		//! If &gt;1 and using stride, sweep time will be multiplied by this number; it should be &gt;=1. to accomodate non-linearities in the system.
++		/// If deactivated (-1 by default), current-velocity-based sweeping will not be enabled.
++		Real sweepTimeFactor;
++		//! If &gt;0 and using stride, all bodies will be swept as if having this velocity.
++		/// It should be the maximum (predicted or measured) velocity increased by some safety margin, otherwise bodies may get out of their AABB. Deactivated (-1) by default.
++		Real sweepVelocity;
++	#endif
+ 	//! storage for bounds
+ 	std::vector&lt;Bound&gt; XX,YY,ZZ;
+ 	//! storage for bb maxima and minima
+@@ -51,11 +66,22 @@
+ 	bool sortThenCollide;
+ 	//! Predicate called from loop within InteractionContainer::erasePending
+ 	bool shouldBeErased(body_id_t id1, body_id_t id2) const { return !spatialOverlap(id1,id2); }
++	#ifdef COLLIDE_STRIDED
++		virtual bool isActivated(MetaBody*);
++	#endif
+ 
+-	InsertionSortCollider(): sortAxis(0), sortThenCollide(false){ /* timingDeltas=shared_ptr&lt;TimingDeltas&gt;(new TimingDeltas);*/ }
++	InsertionSortCollider():
++	#ifdef COLLIDE_STRIDED
++		stride(0), scheduledRun(-1), sweepTimeFactor(-1), sweepVelocity(-1),
++	#endif
++		 sortAxis(0), sortThenCollide(false){ /* timingDeltas=shared_ptr&lt;TimingDeltas&gt;(new TimingDeltas); */ }
+ 	virtual void action(MetaBody*);
+ 	REGISTER_CLASS_AND_BASE(InsertionSortCollider,Collider);
+-	REGISTER_ATTRIBUTES(Collider,(sortAxis)(sortThenCollide));
++	REGISTER_ATTRIBUTES(Collider,(sortAxis)(sortThenCollide)
++		#ifdef COLLIDE_STRIDED
++			(stride)(scheduledRun)(sweepTimeFactor)(sweepVelocity)
++		#endif
++	);
+ 	DECLARE_LOGGER;
+ };
+ REGISTER_SERIALIZABLE(InsertionSortCollider);
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/StandAloneEngine/PeriodicEngines.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -19,7 +19,7 @@
+ 		Real virtPeriod, virtLast, realPeriod, realLast; long iterPeriod,iterLast,nDo,nDone;
+ 		bool initRun;
+ 		PeriodicEngine(): virtPeriod(0),virtLast(0),realPeriod(0),realLast(0),iterPeriod(0),iterLast(0),nDo(-1),nDone(0),initRun(false) { realLast=getClock(); }
+-		virtual bool isActivated(){
++		virtual bool isActivated(MetaBody*){
+ 			Real virtNow=Omega::instance().getSimulationTime();
+ 			Real realNow=getClock();
+ 			long iterNow=Omega::instance().getCurrentIteration();
+@@ -75,7 +75,7 @@
+ 	Real realLim, virtLim; long iterLim;
+ 	Real stretchFactor;
+ 	bool mayStretch;
+-	virtual bool isActivated(){
++	virtual bool isActivated(MetaBody* rootBody){
+ 		assert(stretchFactor&gt;0);
+ 		if(iterLim==0 &amp;&amp; iterPeriod!=0){iterLim=iterPeriod;} else if(iterLim!=0 &amp;&amp; iterPeriod==0){iterPeriod=iterLim;}
+ 		if(realLim==0 &amp;&amp; realPeriod!=0){realLim=realPeriod;} else if(realLim!=0 &amp;&amp; realPeriod==0){realPeriod=realLim;}
+@@ -85,7 +85,7 @@
+ 		mayStretch=((virtPeriod&lt;0 || (stretchFactor&gt;1 ? stretchFactor*virtPeriod&lt;=virtLim : stretchFactor*virtPeriod&gt;=virtLim))
+ 		&amp;&amp; (realPeriod&lt;0 || (stretchFactor&gt;1 ? stretchFactor*realPeriod&lt;=realLim : stretchFactor*realPeriod&gt;=realLim))
+ 		&amp;&amp; (iterPeriod&lt;0 || (stretchFactor&gt;1 ? stretchFactor*iterPeriod&lt;=iterLim : stretchFactor*iterPeriod&gt;=iterLim)));
+-		return PeriodicEngine::isActivated();
++		return PeriodicEngine::isActivated(rootBody);
+ 	}
+ 	protected:
+ 		void registerAttributes(){ PeriodicEngine::registerAttributes();
+@@ -135,7 +135,7 @@
+ 	public :
+ 		RangePeriodicEngine(): virtTimeLim(-1,0,0),realTimeLim(-1,0,0),iterLim(-1,0,0), lastRealTime(0.),lastVirtTime(0.),lastIter(0),mayDouble(false),mayHalve(false),perhapsInconsistent(true){};
+ 		virtual void action(MetaBody* b) { throw; }
+-		virtual bool isActivated(){
++		virtual bool isActivated(MetaBody* rootBody){
+ 			if(perhapsInconsistent){ ensureConsistency(virtTimeLim); ensureConsistency(realTimeLim); ensureConsistency(iterLim); perhapsInconsistent=false; }
+ 
+ 			mayDouble=((virtTimeLim[0]&lt;0 || 2*virtTimeLim[1]&lt;=virtTimeLim[2]) &amp;&amp; (realTimeLim[0]&lt;0 || 2*realTimeLim[1]&lt;=realTimeLim[2]) &amp;&amp; (iterLim[0]&lt;0 || 2*iterLim[1]&lt;=iterLim[2]));
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/ResetPositionEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/ResetPositionEngine.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/Engine/StandAloneEngine/ResetPositionEngine.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -19,7 +19,7 @@
+ class ResetPositionEngine : public PeriodicEngine {
+ 	public:
+ 		void action(MetaBody*);
+-		bool isActivated() {if (first) return true; else return PeriodicEngine::isActivated();}
++		bool isActivated(MetaBody* rootBody) {if (first) return true; else return PeriodicEngine::isActivated(rootBody);}
+ 		ResetPositionEngine();
+ 
+ 		Real Y_min;
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/common/SConscript	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -97,7 +97,7 @@
+ 		LIBS=env['LIBS']+['FilterEngine','ColorScale']),
+ 	env.SharedLibrary('ColorizedTimeFilter',['Engine/FilterEngine/ColorizedTimeFilter.cpp'],
+ 		LIBS=env['LIBS']+['FilterEngine','ColorScale']),
+-	env.SharedLibrary('BoundingVolumeMetaEngine',['Engine/MetaEngine/BoundingVolumeMetaEngine.cpp']),
++	env.SharedLibrary('BoundingVolumeMetaEngine',['Engine/MetaEngine/BoundingVolumeMetaEngine.cpp'],LIBS=env['LIBS']+['RigidBodyParameters','AABB']),
+ 	env.SharedLibrary('GeometricalModelMetaEngine',['Engine/MetaEngine/GeometricalModelMetaEngine.cpp']),
+ 	env.SharedLibrary('InteractingGeometryMetaEngine',['Engine/MetaEngine/InteractingGeometryMetaEngine.cpp']),
+ 	env.SharedLibrary('PhysicalParametersMetaEngine',['Engine/MetaEngine/PhysicalParametersMetaEngine.cpp']),
+@@ -143,7 +143,7 @@
+ 	env.SharedLibrary('SpheresFactory',['Engine/StandAloneEngine/SpheresFactory.cpp'],
+ 		LIBS=env['LIBS']+['AABB','InteractingSphere','Facet','Sphere','BodyMacroParameters','InteractionGeometryMetaEngine']),
+ 	env.SharedLibrary('SpatialQuickSortCollider',['Engine/StandAloneEngine/SpatialQuickSortCollider.cpp']),
+-	env.SharedLibrary('InsertionSortCollider',['Engine/StandAloneEngine/InsertionSortCollider.cpp']),
++	env.SharedLibrary('InsertionSortCollider',['Engine/StandAloneEngine/InsertionSortCollider.cpp'],LIBS=env['LIBS']+['BoundingVolumeMetaEngine']),
+ 	env.SharedLibrary('PersistentSAPCollider',['Engine/StandAloneEngine/PersistentSAPCollider.cpp']),
+ 	env.SharedLibrary('DistantPersistentSAPCollider',['Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp']),
+ 	env.SharedLibrary('PhysicalActionContainerReseter',['Engine/StandAloneEngine/PhysicalActionContainerReseter.cpp']),
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/CapillaryRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/CapillaryRecorder.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/DeusExMachina/CapillaryRecorder.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -42,9 +42,9 @@
+ }
+ 
+ 
+-bool CapillaryRecorder::isActivated()
++bool CapillaryRecorder::isActivated(MetaBody* rootBody)
+ {
+-	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile));
++	return ((rootBody-&gt;currentIteration % interval == 0) &amp;&amp; (ofile));
+ }
+ 
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/CapillaryRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/CapillaryRecorder.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/DeusExMachina/CapillaryRecorder.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -31,7 +31,7 @@
+ 
+ 		virtual void registerAttributes();
+ 		virtual void action(MetaBody*);
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -76,9 +76,9 @@
+ }
+ 
+ 
+-bool CapillaryStressRecorder::isActivated()
++bool CapillaryStressRecorder::isActivated(MetaBody* rootBody)
+ {
+-	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile));
++	return ((rootBody-&gt;currentIteration % interval == 0) &amp;&amp; (ofile));
+ }
+ 
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -41,7 +41,7 @@
+ 
+ 		virtual void registerAttributes();
+ 		virtual void action(MetaBody*);
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 		DECLARE_LOGGER;
+ 
+ 	protected :
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -78,7 +78,7 @@
+ }
+ 
+ 
+-bool ContactStressRecorder::isActivated()
++bool ContactStressRecorder::isActivated(MetaBody*)
+ {
+ 	return ( ( Omega::instance().getCurrentIteration() % interval == 0 ) &amp;&amp; ( ofile ) );
+ }
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/DeusExMachina/ContactStressRecorder.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -46,7 +46,7 @@
+ 
+ 		virtual void registerAttributes();
+ 		virtual void action(MetaBody*);
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -14,18 +14,6 @@
+ 
+ YADE_PLUGIN(&quot;NewtonsDampedLaw&quot;);
+ 
+-void NewtonsDampedLaw::registerAttributes()
+-{
+-	DeusExMachina::registerAttributes(); // register (among other) Engine::label
+-	REGISTER_ATTRIBUTE(damping);
+-}
+-
+-
+-NewtonsDampedLaw::NewtonsDampedLaw()
+-{
+-	damping = 0.2;
+-}
+-
+ void NewtonsDampedLaw::cundallDamp(const Real&amp; dt, const Vector3r&amp; f, const Vector3r&amp; velocity, Vector3r&amp; acceleration, const Vector3r&amp; m, const Vector3r&amp; angularVelocity, Vector3r&amp; angularAcceleration){
+ 	for(int i=0; i&lt;3; i++){
+ 		angularAcceleration[i]*= 1 - damping*Mathr::Sign ( m[i]*(angularVelocity[i] + (Real) 0.5 *dt*angularAcceleration[i]) );
+@@ -70,6 +58,7 @@
+ 			// clumpRBP-&gt;{acceleration,angularAcceleration} are reset byt Clump::moveMembers, it is ok to just increment here
+ 			clumpRBP-&gt;acceleration+=diffClumpAccel;
+ 			clumpRBP-&gt;angularAcceleration+=diffClumpAngularAccel;
++			maxVelocitySq=max(maxVelocitySq,rb-&gt;velocity.SquaredLength());
+ 			continue;
+ 		}
+ 
+@@ -77,6 +66,8 @@
+ 		// damping: applied to non-clumps only, as clumps members were already damped above
+ 		if(!b-&gt;isClump()) cundallDamp(dt,f,rb-&gt;velocity,rb-&gt;acceleration,m,rb-&gt;angularVelocity,rb-&gt;angularAcceleration);
+ 
++		maxVelocitySq=max(maxVelocitySq,rb-&gt;velocity.SquaredLength());
++
+ 		// blocking DOFs
+ 		if(rb-&gt;blockedDOFs==0){ /* same as: rb-&gt;blockedDOFs==PhysicalParameters::DOF_NONE */
+ 			rb-&gt;angularVelocity=rb-&gt;angularVelocity+dt*rb-&gt;angularAcceleration;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -33,22 +33,17 @@
+  */
+ 
+ 
+-class NewtonsDampedLaw : public DeusExMachina
+-{
++class NewtonsDampedLaw : public DeusExMachina{
+ 	inline void cundallDamp(const Real&amp; dt, const Vector3r&amp; f, const Vector3r&amp; velocity, Vector3r&amp; acceleration, const Vector3r&amp; m, const Vector3r&amp; angularVelocity, Vector3r&amp; angularAcceleration);
+-	public :
++	public:
+ 		///damping coefficient for Cundall's non viscous damping
+ 		Real damping;
+-	public :
+-		virtual	void applyCondition(MetaBody *);		
+-		NewtonsDampedLaw();
+-	
+-	protected :
+-		virtual void registerAttributes();
+-
+-	REGISTER_CLASS_NAME(NewtonsDampedLaw);
+-	REGISTER_BASE_CLASS_NAME(DeusExMachina);
++		/// store square of max. velocity, for informative purposes
++		Real maxVelocitySq;
++		virtual void applyCondition(MetaBody *);		
++		NewtonsDampedLaw(): damping(0.2), maxVelocitySq(0){}
++	REGISTER_ATTRIBUTES(DeusExMachina,(damping)(maxVelocitySq));
++	REGISTER_CLASS_AND_BASE(NewtonsDampedLaw,DeusExMachina);
+ };
+-
+ REGISTER_SERIALIZABLE(NewtonsDampedLaw);
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -64,7 +64,7 @@
+ }
+ 
+ 
+-bool TriaxialStateRecorder::isActivated()
++bool TriaxialStateRecorder::isActivated(MetaBody*)
+ {
+ 	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile));
+ }
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -49,7 +49,7 @@
+ 
+ 		virtual void registerAttributes();
+ 		virtual void action(MetaBody*);
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 		DECLARE_LOGGER;
+ 
+ 	protected :
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -63,7 +63,7 @@
+ }
+ 
+ 
+-bool WallStressRecorder::isActivated()
++bool WallStressRecorder::isActivated(MetaBody*)
+ {
+ 	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile));
+ }
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/DeusExMachina/WallStressRecorder.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -35,7 +35,7 @@
+ 
+ 		virtual void registerAttributes();
+ 		virtual void action(MetaBody*);
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/AveragePositionRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/AveragePositionRecorder.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/AveragePositionRecorder.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -43,7 +43,7 @@
+ }
+ 
+ 
+-bool AveragePositionRecorder::isActivated()
++bool AveragePositionRecorder::isActivated(MetaBody*)
+ {
+ 	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile));
+ }
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/AveragePositionRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/AveragePositionRecorder.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/AveragePositionRecorder.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -19,7 +19,7 @@
+ 		AveragePositionRecorder ();
+ 		
+ 		virtual void action(MetaBody*);
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 	
+ 		virtual void registerAttributes();
+ 
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -59,7 +59,7 @@
+ }
+ 
+ 
+-bool ForceRecorder::isActivated()
++bool ForceRecorder::isActivated(MetaBody*)
+ {
+ 	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile));
+ }
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ForceRecorder.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -32,7 +32,7 @@
+ 
+ 		virtual void registerAttributes();
+ 		virtual void action(MetaBody*);
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ForceSnapshot.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ForceSnapshot.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ForceSnapshot.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -48,7 +48,7 @@
+ 	REGISTER_ATTRIBUTE(i);
+ }
+ 
+-bool ForceSnapshot::isActivated()
++bool ForceSnapshot::isActivated(MetaBody*)
+ {
+ 	vector&lt;int&gt;::const_iterator ii = list_id.begin();
+ 	vector&lt;int&gt;::const_iterator iiEnd = list_id.end();
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ForceSnapshot.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ForceSnapshot.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ForceSnapshot.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -33,7 +33,7 @@
+ 		ForceSnapshot ();
+ 		~ForceSnapshot ();
+ 		virtual void action(MetaBody*);
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GeometricalModelForceColorizer.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GeometricalModelForceColorizer.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GeometricalModelForceColorizer.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -20,7 +20,7 @@
+ }
+ 
+ 
+-bool GeometricalModelForceColorizer::isActivated()
++bool GeometricalModelForceColorizer::isActivated(MetaBody*)
+ {
+ 	return true;
+ //	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile));
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GeometricalModelForceColorizer.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GeometricalModelForceColorizer.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GeometricalModelForceColorizer.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -16,7 +16,7 @@
+ 		GeometricalModelForceColorizer ();
+ 
+ 		virtual void action(MetaBody*);
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 	
+ 	REGISTER_CLASS_NAME(GeometricalModelForceColorizer);
+ 	REGISTER_BASE_CLASS_NAME(StandAloneEngine);
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -120,7 +120,7 @@
+ 
+ }
+ 
+-bool GlobalStiffnessTimeStepper::isActivated()
++bool GlobalStiffnessTimeStepper::isActivated(MetaBody*)
+ {
+ 	return (active &amp;&amp; ((!computedOnce) || (Omega::instance().getCurrentIteration() % timeStepUpdateInterval == 0) || (Omega::instance().getCurrentIteration() &lt; (long int) 2) ));
+ }
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/GlobalStiffnessTimeStepper.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -48,7 +48,7 @@
+ 		virtual ~GlobalStiffnessTimeStepper();
+ 	
+ 		virtual void computeTimeStep(MetaBody*);
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 		DECLARE_LOGGER;
+ 
+ 
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/HistoryRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/HistoryRecorder.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/HistoryRecorder.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -49,7 +49,7 @@
+ 	REGISTER_ATTRIBUTE(stateId);
+ }
+ 
+-bool HistoryRecorder::isActivated()
++bool HistoryRecorder::isActivated(MetaBody*)
+ {
+ 	return ((Omega::instance().getCurrentIteration() % interval == 0));
+ }
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/HistoryRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/HistoryRecorder.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/HistoryRecorder.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -23,7 +23,7 @@
+ 	HistoryRecorder ();
+ 	~HistoryRecorder ();
+ 	virtual void action(MetaBody*);
+-	virtual bool isActivated();
++	virtual bool isActivated(MetaBody*);
+ 
+ protected :
+ 
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -45,7 +45,7 @@
+ 	REGISTER_ATTRIBUTE(stateId);
+ }
+ 
+-bool MGPRecorder::isActivated()
++bool MGPRecorder::isActivated(MetaBody*)
+ {
+    return ((Omega::instance().getCurrentIteration() % interval == 0));
+ }
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -30,7 +30,7 @@
+     ~MGPRecorder ();
+ 
+     virtual void action(MetaBody*);
+-    bool isActivated();
++    bool isActivated(MetaBody*);
+ 
+ protected :
+     virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/PositionRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/PositionRecorder.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/PositionRecorder.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -46,7 +46,7 @@
+ 	REGISTER_ATTRIBUTE(endId);
+ }
+ 
+-bool PositionRecorder::isActivated()
++bool PositionRecorder::isActivated(MetaBody*)
+ {
+ 	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile));
+ }
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/PositionRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/PositionRecorder.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/PositionRecorder.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -25,7 +25,7 @@
+ 		PositionRecorder ();
+ 		~PositionRecorder ();
+ 		virtual void action(MetaBody*);
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/PositionSnapshot.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/PositionSnapshot.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/PositionSnapshot.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -44,7 +44,7 @@
+ 	REGISTER_ATTRIBUTE(i);
+ }
+ 
+-bool PositionSnapshot::isActivated()
++bool PositionSnapshot::isActivated(MetaBody*)
+ {
+ 	vector&lt;int&gt;::const_iterator ii = list_id.begin();
+ 	vector&lt;int&gt;::const_iterator iiEnd = list_id.end();
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/PositionSnapshot.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/PositionSnapshot.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/PositionSnapshot.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -31,7 +31,7 @@
+ 		PositionSnapshot ();
+ 		~PositionSnapshot ();
+ 		virtual void action(MetaBody*);
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/RigidBodyRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/RigidBodyRecorder.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/RigidBodyRecorder.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -39,7 +39,7 @@
+ 	REGISTER_ATTRIBUTE(interval);
+ }
+ 
+-bool RigidBodyRecorder::isActivated()
++bool RigidBodyRecorder::isActivated(MetaBody*)
+ {
+    return ((Omega::instance().getCurrentIteration() % interval == 0));
+ }
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/RigidBodyRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/RigidBodyRecorder.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/RigidBodyRecorder.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -27,7 +27,7 @@
+     ~RigidBodyRecorder ();
+ 
+     virtual void action(MetaBody*);
+-      bool isActivated();
++      bool isActivated(MetaBody*);
+ 
+ protected :
+     virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticSpheresInteractionRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticSpheresInteractionRecorder.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticSpheresInteractionRecorder.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -39,7 +39,7 @@
+ 	REGISTER_ATTRIBUTE(interval);
+ }
+ 
+-bool SimpleViscoelasticSpheresInteractionRecorder::isActivated()
++bool SimpleViscoelasticSpheresInteractionRecorder::isActivated(MetaBody*)
+ {
+    return ((Omega::instance().getCurrentIteration() % interval == 0));
+ }
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticSpheresInteractionRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticSpheresInteractionRecorder.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticSpheresInteractionRecorder.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -31,7 +31,7 @@
+     ~SimpleViscoelasticSpheresInteractionRecorder();
+ 
+     virtual void action(MetaBody*);
+-    bool isActivated();
++    bool isActivated(MetaBody*);
+ 
+ protected :
+     virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -25,7 +25,7 @@
+ 		Real&amp; axisCoord(body_id_t id){ return Body::byId(id,rootBody)-&gt;physicalParameters-&gt;se3.position[axis]; };
+ 		void init();
+ 	public:
+-		virtual bool isActivated(){return active;}
++		virtual bool isActivated(MetaBody*){return active;}
+ 		//! strain rate, starting at 0, linearly raising to strainRate
+ 		Real strainRate,currentStrainRate;
+ 		//! alternatively, absolute speed of boundary motion can be specified; this is effective only at the beginning and if strainRate is not set; changing absSpeed directly during simulation wil have no effect.
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/VelocityRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/VelocityRecorder.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/VelocityRecorder.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -39,7 +39,7 @@
+ }
+ 
+ 
+-bool VelocityRecorder::isActivated()
++bool VelocityRecorder::isActivated(MetaBody*)
+ {
+ 	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile));
+ }
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/VelocityRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/VelocityRecorder.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/dem/Engine/StandAloneEngine/VelocityRecorder.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -25,7 +25,7 @@
+ 		VelocityRecorder ();
+ 		virtual void registerAttributes();
+ 		virtual void action(MetaBody*);
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 	
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -104,7 +104,7 @@
+ }
+ 
+ 
+-bool BeamRecorder::isActivated()
++bool BeamRecorder::isActivated(MetaBody*)
+ {
+ 	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile));
+ }
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.hpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/BeamRecorder.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -38,7 +38,7 @@
+ 
+ 		virtual void registerAttributes();
+ 		virtual void action(MetaBody*);
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 
+ 	protected :
+ 		virtual void preProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/MeasurePoisson.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/MeasurePoisson.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/MeasurePoisson.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -52,7 +52,7 @@
+ }
+ 
+ 
+-bool MeasurePoisson::isActivated()
++bool MeasurePoisson::isActivated(MetaBody*)
+ {
+ 	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile));
+ }
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/MeasurePoisson.hpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/MeasurePoisson.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/MeasurePoisson.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -31,7 +31,7 @@
+ 
+ 		virtual void registerAttributes();
+ 		virtual void action(MetaBody*);
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -79,7 +79,7 @@
+ }
+ 
+ 
+-bool MovingSupport::isActivated()
++bool MovingSupport::isActivated(MetaBody*)
+ {
+ 	return true;
+ }
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.hpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/MovingSupport.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -39,7 +39,7 @@
+ 
+ 		virtual void registerAttributes();
+ 		virtual void action(MetaBody*);
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 
+ 	protected :
+ 		virtual void preProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -86,7 +86,7 @@
+ }
+ 
+ 
+-bool NodeRecorder::isActivated()
++bool NodeRecorder::isActivated(MetaBody*)
+ {
+ 	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile));
+ }
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.hpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/NodeRecorder.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -37,7 +37,7 @@
+ 
+ 		virtual void registerAttributes();
+ 		virtual void action(MetaBody*);
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 
+ 	protected :
+ 		virtual void preProcessAttributes(bool deserializing);
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -48,7 +48,7 @@
+ }
+ 
+ 
+-bool StrainRecorder::isActivated()
++bool StrainRecorder::isActivated(MetaBody*)
+ {
+ 	return ((Omega::instance().getCurrentIteration() % interval == 0) &amp;&amp; (ofile));
+ }
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.hpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.hpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.hpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -30,7 +30,7 @@
+ 
+ 		virtual void registerAttributes();
+ 		virtual void action(MetaBody*);
+-		virtual bool isActivated();
++		virtual bool isActivated(MetaBody*);
+ 
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing);
+
+Modified: trunk/py/yadeWrapper/yadeWrapper.cpp
+===================================================================
+--- trunk/py/yadeWrapper/yadeWrapper.cpp	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/py/yadeWrapper/yadeWrapper.cpp	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -165,7 +165,11 @@
+ 	void ori_set(python::list l){if(python::len(l)!=4) throw invalid_argument(&quot;Wrong number of quaternion elements &quot;+lexical_cast&lt;string&gt;(python::len(l))+&quot;, should be 4&quot;); proxee-&gt;se3.orientation=Quaternionr(Vector3r(python::extract&lt;double&gt;(l[0])(),python::extract&lt;double&gt;(l[1])(),python::extract&lt;double&gt;(l[2])()),python::extract&lt;double&gt;(l[3])());}
+ BASIC_PY_PROXY_TAIL;
+ 
+-BASIC_PY_PROXY(pyBoundingVolume,BoundingVolume);
++BASIC_PY_PROXY_HEAD(pyBoundingVolume,BoundingVolume)
++	Vector3r min_get(){return proxee-&gt;min;}
++	Vector3r max_get(){return proxee-&gt;max;}
++BASIC_PY_PROXY_TAIL;
++
+ BASIC_PY_PROXY(pyInteractingGeometry,InteractingGeometry);
+ 
+ struct pyTimingDeltas{
+@@ -417,6 +421,7 @@
+ 		void clear(){proxee-&gt;clear();}
+ 		python::list withBody(long id){ python::list ret; FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *proxee){ if(I-&gt;isReal() &amp;&amp; (I-&gt;getId1()==id || I-&gt;getId2()==id)) ret.append(pyInteraction(I));} return ret;}
+ 		python::list withBodyAll(long id){ python::list ret; FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *proxee){ if(I-&gt;getId1()==id || I-&gt;getId2()==id) ret.append(pyInteraction(I));} return ret; }
++		long countReal(){ long ret=0; FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *proxee){ if(I-&gt;isReal()) ret++; } return ret; }
+ };
+ 
+ Vector3r tuple2vec(const python::tuple&amp; t){return Vector3r(python::extract&lt;double&gt;(t[0])(),python::extract&lt;double&gt;(t[1])(),python::extract&lt;double&gt;(t[2])());}
+@@ -754,6 +759,7 @@
+ 		.def(&quot;__iter__&quot;,&amp;pyInteractionContainer::pyIter)
+ 		.def(&quot;__getitem__&quot;,&amp;pyInteractionContainer::pyGetitem)
+ 		.def(&quot;__len__&quot;,&amp;pyInteractionContainer::len)
++		.def(&quot;countReal&quot;,&amp;pyInteractionContainer::countReal)
+ 		.def(&quot;nth&quot;,&amp;pyInteractionContainer::pyNth)
+ 		.def(&quot;withBody&quot;,&amp;pyInteractionContainer::withBody)
+ 		.def(&quot;withBodyAll&quot;,&amp;pyInteractionContainer::withBodyAll)
+@@ -813,7 +819,9 @@
+ 		.add_property(&quot;displ&quot;,&amp;pyPhysicalParameters::displ_get)
+ 		.add_property(&quot;rot&quot;,&amp;pyPhysicalParameters::rot_get)
+ 		;
+-	BASIC_PY_PROXY_WRAPPER(pyBoundingVolume,&quot;BoundingVolume&quot;);
++	BASIC_PY_PROXY_WRAPPER(pyBoundingVolume,&quot;BoundingVolume&quot;)	
++		.add_property(&quot;min&quot;,&amp;pyBoundingVolume::min_get)
++		.add_property(&quot;max&quot;,&amp;pyBoundingVolume::max_get);
+ 	BASIC_PY_PROXY_WRAPPER(pyInteractionGeometry,&quot;InteractionGeometry&quot;);
+ 	BASIC_PY_PROXY_WRAPPER(pyInteractionPhysics,&quot;InteractionPhysics&quot;);
+ 
+
+Added: trunk/scripts/test/collider-stride-triax.py
+===================================================================
+--- trunk/scripts/test/collider-stride-triax.py	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/scripts/test/collider-stride-triax.py	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -0,0 +1,45 @@
++&quot;&quot;&quot; Playground for tuning collider strides depending on maximum velocity. &quot;&quot;&quot;
++
++from yade import timing,log
++import os.path
++loadFrom='/tmp/triax.xml'
++if not os.path.exists(loadFrom):
++	TriaxialTest(numberOfGrains=8000,fast=fast,noFiles=True).generate(loadFrom)
++O.load(loadFrom)
++log.setLevel('TriaxialCompressionEngine',log.WARN) # shut up
++
++collider=utils.typedEngine('InsertionSortCollider')
++newton=utils.typedEngine('NewtonsDampedLaw')
++
++# use striding; say &quot;if 0:&quot; to disable striding and compare to regular runs
++if 1:
++	collider['stride']=4
++	collider['sweepVelocity']=16
++	# try to update maximum velocity dynamically:
++	if 1:
++		O.engines=O.engines+[PeriodicPythonRunner(command='adjustMaxVelocity()',iterPeriod=50)]
++
++def adjustMaxVelocity():
++	newMax=sqrt(newton['maxVelocitySq']); newton['maxVelocitySq']=0
++	collider['sweepVelocity']=newMax
++	# try to adjust stride here; the 4 and 16 are original (reference) values for stride and sweepVelocity
++	# if this were inverse-proportional (without sqrt), stride is getting too high
++	collider['stride']=4*int(sqrt(16/newMax))
++	print 'step %d; new max velocity %g, stride %d'%(O.iter,newMax,collider['stride'])
++
++
++O.step() # filter out initialization
++O.timingEnabled=True
++totalTime=0
++# run a few times 500 steps, show timings to see what is the trend
++# notably, the percentage of collider time should decrease as the max velocity decreases as well
++for i in range(0,5):
++	O.run(500,True)
++	timing.stats()
++	totalTime+=sum([e.execTime for e in O.engines])
++	print 'Number of interactions: %d (real ratio: %g)'%(len(O.interactions),float(O.interactions.countReal())/len(O.interactions))
++	print '======================================================='
++	timing.reset()
++
++print 'Total time: %g s'%(totalTime/1e9)
++quit()
+
+Added: trunk/scripts/test/collider-stride.py
+===================================================================
+--- trunk/scripts/test/collider-stride.py	2009-07-09 15:24:23 UTC (rev 1850)
++++ trunk/scripts/test/collider-stride.py	2009-07-10 09:49:09 UTC (rev 1851)
+@@ -0,0 +1,36 @@
++
++O.bodies.append([
++	utils.facet([[1,0,0],[-1,2,0],[-1,-2,0]]),
++	utils.sphere([0,0,2],.5,color=(0,1,0),density=2e3,velocity=[0,0,-1])
++])
++O.dt=utils.PWaveTimeStep()
++
++O.engines=[
++	BexResetter(),
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingFacet2AABB(),MetaInteractingGeometry2AABB()]),
++	InsertionSortCollider(label='isc'),
++	InteractionDispatchers(
++		[ef2_Facet_Sphere_Dem3DofGeom(),ef2_Sphere_Sphere_Dem3DofGeom()],
++		[SimpleElasticRelationships()],
++		[Law2_Dem3Dof_Elastic_Elastic()],
++	),
++	GravityEngine(gravity=[0,0,-100]),
++	NewtonsDampedLaw(damping=0)
++]
++
++from yade import timing,qt,log
++try:
++	renderer=qt.Renderer()
++	renderer['Body_bounding_volume']=True
++except ImportError: pass
++
++O.timingEnabled=True
++isc['stride']=3
++isc['sweepDistSafetyFactor']=.1
++isc['sweepTimeSafetyFactor']=.1
++#log.setLevel('InsertionSortCollider',log.DEBUG)
++#log.setLevel('BoundingVolumeMetaEngine',log.DEBUG)
++O.saveTmp()
++#O.run(10000,True)
++#timing.stats()
++O.step()
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001159.html">[deprecated list] [Yade-dev] [svn] r1850 - trunk/pkg/dem
+</A></li>
+	<LI>Next message: <A HREF="001162.html">[deprecated list] [Yade-dev] [svn] r1852 - trunk/scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1161">[ date ]</a>
+              <a href="thread.html#1161">[ thread ]</a>
+              <a href="subject.html#1161">[ subject ]</a>
+              <a href="author.html#1161">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

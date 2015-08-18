@@ -1,0 +1,475 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1538 - in trunk: core extra	extra/clump gui/py	pkg/common/Engine/MetaEngine	pkg/dem/Engine/StandAloneEngine scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1538%20-%20in%20trunk%3A%20core%20extra%0A%09extra/clump%20gui/py%09pkg/common/Engine/MetaEngine%0A%09pkg/dem/Engine/StandAloneEngine%20scripts&In-Reply-To=%3C200810070702.m9772oG1016531%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000434.html">
+   <LINK REL="Next"  HREF="000436.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1538 - in trunk: core extra	extra/clump gui/py	pkg/common/Engine/MetaEngine	pkg/dem/Engine/StandAloneEngine scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1538%20-%20in%20trunk%3A%20core%20extra%0A%09extra/clump%20gui/py%09pkg/common/Engine/MetaEngine%0A%09pkg/dem/Engine/StandAloneEngine%20scripts&In-Reply-To=%3C200810070702.m9772oG1016531%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1538 - in trunk: core extra	extra/clump gui/py	pkg/common/Engine/MetaEngine	pkg/dem/Engine/StandAloneEngine scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Oct  7 09:02:50 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000434.html">[deprecated list] [Yade-dev] calling EngineUnit::go to create	persistent	interaction?
+</A></li>
+        <LI>Next message: <A HREF="000436.html">[deprecated list] [Yade-dev] [svn] r1539 - in trunk: core	gui/py	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/StandAloneEngine	scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#433">[ date ]</a>
+              <a href="thread.html#433">[ thread ]</a>
+              <a href="subject.html#433">[ subject ]</a>
+              <a href="author.html#433">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-10-07 09:02:48 +0200 (Tue, 07 Oct 2008)
+New Revision: 1538
+
+Added:
+   trunk/scripts/chain-distant-interactions.py
+Modified:
+   trunk/core/Interaction.cpp
+   trunk/extra/Brefcom.cpp
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/clump/Shop.hpp
+   trunk/gui/py/_utils.cpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp
+Log:
+1. Add InteractionGeometryMetaEngine::explicitAction and InteractionPhysicsMetaEngine::explicitAction for creating contacts manually using the dispatcher
+2. add utils.createInteraction(id1,id2) that requests explicit transient interaction creation
+3. Add sample ElasticContactLaw2 (in ElasticContactLaw.cpp) that uses new SpheresContactGeometry code and can be used for &quot;persistent&quot; (transient but not deleted by the collider) contacts.
+4. Add Shop::applyForceAtContactPoint (applies contact force at contact point to both bodies (reversed for body2) and moments acting on their cenroids as well)
+5. All the previous new functionality is demonstrated in scripts/chain-distant-interactions.py.
+
+
+
+Modified: trunk/core/Interaction.cpp
+===================================================================
+--- trunk/core/Interaction.cpp	2008-10-07 06:19:24 UTC (rev 1537)
++++ trunk/core/Interaction.cpp	2008-10-07 07:02:48 UTC (rev 1538)
+@@ -27,7 +27,6 @@
+ {	
+ 	isNew = true;
+ 	isReal = false;
+-	isNeighbor = true;
+ 	isNeighbor = true;//NOTE : TriangulationCollider needs that
+ 
+ }
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-10-07 06:19:24 UTC (rev 1537)
++++ trunk/extra/Brefcom.cpp	2008-10-07 07:02:48 UTC (rev 1538)
+@@ -128,7 +128,7 @@
+ 	Shop::Bex::force(id1,rootBody)+=force;
+ 	Shop::Bex::force(id2,rootBody)-=force;
+ 	Shop::Bex::momentum(id1,rootBody)+=(contGeom-&gt;contactPoint-contGeom-&gt;pos1).Cross(force);
+-	Shop::Bex::momentum(id1,rootBody)-=(contGeom-&gt;contactPoint-contGeom-&gt;pos2).Cross(force);
++	Shop::Bex::momentum(id2,rootBody)-=(contGeom-&gt;contactPoint-contGeom-&gt;pos2).Cross(force);
+ }
+ 
+ void BrefcomLaw::action(MetaBody* _rootBody){
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2008-10-07 06:19:24 UTC (rev 1537)
++++ trunk/extra/clump/Shop.cpp	2008-10-07 07:02:48 UTC (rev 1538)
+@@ -97,13 +97,22 @@
+ 	}
+ }
+ 
+-#define __BEX_ACCESS(retType,shopBexMember,bexClass,bexIdx,bexAttribute) retType&amp; Shop::Bex::shopBexMember(body_id_t id,MetaBody* mb){ assert(bexIdx&gt;=0); return static_pointer_cast&lt;bexClass&gt;((mb?mb:Omega::instance().getRootBody().get())-&gt;physicalActions-&gt;find(id,bexIdx))-&gt;bexAttribute; }
++#define __BEX_ACCESS(retType,shopBexMember,bexClass,bexIdx,bexAttribute) retType&amp; Shop::Bex::shopBexMember(body_id_t id,MetaBody* mb){ assert(bexIdx&gt;=0); shared_ptr&lt;PhysicalActionContainer&gt; pac=(mb?mb:Omega::instance().getRootBody().get())-&gt;physicalActions; /*if((long)pac-&gt;size()&lt;=id) throw invalid_argument(&quot;No &quot; #shopBexMember &quot; for #&quot;+lexical_cast&lt;string&gt;(id)+&quot; (max=&quot;+lexical_cast&lt;string&gt;(((long)pac-&gt;size()-1))+&quot;)&quot;);*/ return static_pointer_cast&lt;bexClass&gt;(pac-&gt;find(id,bexIdx))-&gt;bexAttribute; }
+ __BEX_ACCESS(Vector3r,force,Force,forceIdx,force);
+ __BEX_ACCESS(Vector3r,momentum,Momentum,momentumIdx,momentum);
+ __BEX_ACCESS(Vector3r,globalStiffness,GlobalStiffness,globalStiffnessIdx,stiffness);
+ __BEX_ACCESS(Vector3r,globalRStiffness,GlobalStiffness,globalStiffnessIdx,Rstiffness);
+ #undef __BEX_ACCESS
+ 
++/* Apply force on contact point to 2 bodies; the force is oriented as it applies on the first body and is reversed on the second.
++ *
++ * Shop::Bex::initCache must have been called at some point. */
++void Shop::applyForceAtContactPoint(const Vector3r&amp; force, const Vector3r&amp; contPt, body_id_t id1, const Vector3r&amp; pos1, body_id_t id2, const Vector3r&amp; pos2, MetaBody* rootBody){
++	Shop::Bex::force(id1,rootBody)+=force;
++	Shop::Bex::force(id2,rootBody)-=force;
++	Shop::Bex::momentum(id1,rootBody)+=(contPt-pos1).Cross(force);
++	Shop::Bex::momentum(id2,rootBody)-=(contPt-pos2).Cross(force);
++}
+ 
+ 
+ Real Shop::unbalancedForce(bool useMaxForce, MetaBody* _rb){
+@@ -496,6 +505,26 @@
+ 	return dt;
+ }
+ 
++
++shared_ptr&lt;Interaction&gt; Shop::createExplicitInteraction(body_id_t id1, body_id_t id2){
++	InteractionGeometryMetaEngine* geomMeta=NULL;
++	InteractionPhysicsMetaEngine* physMeta=NULL;
++	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
++	if(rb-&gt;transientInteractions-&gt;find(body_id_t(id1),body_id_t(id2))!=0) throw runtime_error(string(&quot;transientInteraction already exists between #&quot;)+lexical_cast&lt;string&gt;(id1)+&quot; and &quot;+lexical_cast&lt;string&gt;(id2));
++	FOREACH(const shared_ptr&lt;Engine&gt;&amp; e, rb-&gt;engines){
++		if(!geomMeta) { geomMeta=dynamic_cast&lt;InteractionGeometryMetaEngine*&gt;(e.get()); if(geomMeta) continue; }
++		if(!physMeta) { physMeta=dynamic_cast&lt;InteractionPhysicsMetaEngine*&gt;(e.get()); if(physMeta) continue; }
++		if(geomMeta&amp;&amp;physMeta){break;}
++	}
++	if(!geomMeta) throw runtime_error(&quot;No InteractionGeometryMetaEngine in engines.&quot;);
++	if(!physMeta) throw runtime_error(&quot;No InteractionPhysicsMetaEngine in engines.&quot;);
++	shared_ptr&lt;Body&gt; b1=Body::byId(id1,rb), b2=Body::byId(id2,rb);
++	shared_ptr&lt;Interaction&gt; i=geomMeta-&gt;explicitAction(b1,b2);
++	physMeta-&gt;explicitAction(b1-&gt;physicalParameters,b2-&gt;physicalParameters,i);
++	rb-&gt;transientInteractions-&gt;insert(i);
++	return i;
++}
++
+ Shop::sphereGeomStruct Shop::smallSdecXyzData[]={
+ 	{0.027814,0.028311,0.053055,0.006921},
+ 	{0.040115,0.039488,0.051634,0.009072},
+
+Modified: trunk/extra/clump/Shop.hpp
+===================================================================
+--- trunk/extra/clump/Shop.hpp	2008-10-07 06:19:24 UTC (rev 1537)
++++ trunk/extra/clump/Shop.hpp	2008-10-07 07:02:48 UTC (rev 1538)
+@@ -102,4 +102,10 @@
+ 
+ 		//! Get unbalanced force of the whole simulation
+ 		static Real unbalancedForce(bool useMaxForce=false, MetaBody* _rb=NULL);
++
++		//! create transientInteraction between 2 bodies, using existing MetaEngine in Omega
++		static shared_ptr&lt;Interaction&gt; createExplicitInteraction(body_id_t id1, body_id_t id2);
++
++		//! apply force on contact point on both bodies (reversed on body 2)
++		static void applyForceAtContactPoint(const Vector3r&amp; force, const Vector3r&amp; contPt, body_id_t id1, const Vector3r&amp; pos1, body_id_t id2, const Vector3r&amp; pos2, MetaBody* rb);
+ };
+
+Modified: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2008-10-07 06:19:24 UTC (rev 1537)
++++ trunk/gui/py/_utils.cpp	2008-10-07 07:02:48 UTC (rev 1538)
+@@ -4,7 +4,7 @@
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+-#include&lt;yade/extra/Brefcom.hpp&gt;
++#include&lt;yade/pkg-common/NormalShearInteractions.hpp&gt;
+ #include&lt;cmath&gt;
+ using namespace boost::python;
+ 
+@@ -73,8 +73,8 @@
+ 	Real E=0;
+ 	FOREACH(const shared_ptr&lt;Interaction&gt;&amp;i, *rb-&gt;transientInteractions){
+ 		if(!i-&gt;interactionPhysics) continue;
+-		shared_ptr&lt;BrefcomContact&gt; bc=dynamic_pointer_cast&lt;BrefcomContact&gt;(i-&gt;interactionPhysics); if(!bc) continue;
+-		shared_ptr&lt;SpheresContactGeometry&gt; geom=dynamic_pointer_cast&lt;SpheresContactGeometry&gt;(i-&gt;interactionGeometry); if(!bc){LOG_ERROR(&quot;Brefcom contact doesn't have SpheresContactGeomety associated?!&quot;); continue;}
++		shared_ptr&lt;NormalShearInteraction&gt; bc=dynamic_pointer_cast&lt;NormalShearInteraction&gt;(i-&gt;interactionPhysics); if(!bc) continue;
++		shared_ptr&lt;SpheresContactGeometry&gt; geom=dynamic_pointer_cast&lt;SpheresContactGeometry&gt;(i-&gt;interactionGeometry); if(!bc){LOG_ERROR(&quot;NormalShearInteraction contact doesn't have SpheresContactGeomety associated?!&quot;); continue;}
+ 		const shared_ptr&lt;Body&gt;&amp; b1=Body::byId(i-&gt;getId1(),rb), b2=Body::byId(i-&gt;getId2(),rb);
+ 		bool isIn1=isInBB(b1-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax), isIn2=isInBB(b2-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax);
+ 		if(!isIn1 &amp;&amp; !isIn2) continue;
+@@ -89,9 +89,7 @@
+ 			//cerr&lt;&lt;&quot;Interaction crosses AABB boundary, weight is &quot;&lt;&lt;weight&lt;&lt;endl;
+ 			//LOG_DEBUG(&quot;Interaction crosses AABB boundary, weight is &quot;&lt;&lt;weight);
+ 		} else {assert(isIn1 &amp;&amp; isIn2); /* cerr&lt;&lt;&quot;Interaction inside, weight is &quot;&lt;&lt;weight&lt;&lt;endl;*/ /*LOG_DEBUG(&quot;Interaction inside, weight is &quot;&lt;&lt;weight);*/}
+-		E+=geom-&gt;d0*weight*(.5*bc-&gt;E*bc-&gt;crossSection*pow(geom-&gt;epsN(),2)+.5*bc-&gt;G*bc-&gt;crossSection*pow(geom-&gt;epsT().Length(),2));
+-		//TRVAR5(bc-&gt;crossSection,bc-&gt;E,bc-&gt;G,bc-&gt;epsN,bc-&gt;epsT.Length());;
+-		//cerr&lt;&lt;bc-&gt;crossSection&lt;&lt;&quot;,&quot;&lt;&lt;bc-&gt;E&lt;&lt;&quot;,&quot;&lt;&lt;bc-&gt;G&lt;&lt;&quot;,&quot;&lt;&lt;bc-&gt;epsN&lt;&lt;&quot;,&quot;&lt;&lt;bc-&gt;epsT.Length()&lt;&lt;endl;
++		E+=geom-&gt;d0*weight*(.5*bc-&gt;kn*pow(geom-&gt;epsN(),2)+.5*bc-&gt;ks*pow(geom-&gt;epsT().Length(),2));
+ 	}
+ 	return E;
+ }
+@@ -158,7 +156,52 @@
+ {
+ 	return vec2tuple(Shop::inscribedCircleCenter(Vector3r(python::extract&lt;double&gt;(v0[0]),python::extract&lt;double&gt;(v0[1]),python::extract&lt;double&gt;(v0[2])), Vector3r(python::extract&lt;double&gt;(v1[0]),python::extract&lt;double&gt;(v1[1]),python::extract&lt;double&gt;(v1[2])), Vector3r(python::extract&lt;double&gt;(v2[0]),python::extract&lt;double&gt;(v2[1]),python::extract&lt;double&gt;(v2[2]))));
+ }
++/* Sum moments acting on bodies within mask.
++ *
++ * @param mask is Body::groupMask that must match for a body to be taken in account.
++ * @param axis is the direction of axis with respect to which the moment is calculated.
++ * @param axisPt is a point on the axis.
++ *
++ * The computation is trivial: moment from force is is by definition r&#215;F, where r
++ * is position relative to axisPt; moment from moment is m; such moment per body is
++ * projected onto axis.
++ */
++Real sumBexMoments(int mask, python::tuple _axis, python::tuple _axisPt){
++	Shop::Bex::initCache();
++	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
++	Real ret;
++	Vector3r axis=tuple2vec(_axis), axisPt=tuple2vec(_axisPt);
++	FOREACH(const shared_ptr&lt;Body&gt; b, *rb-&gt;bodies){
++		if(!b-&gt;maskOk(mask)) continue;
++		const Vector3r&amp; m=Shop::Bex::momentum(b-&gt;getId(),rb.get());
++		const Vector3r&amp; f=Shop::Bex::force(b-&gt;getId(),rb.get());
++		Vector3r r=b-&gt;physicalParameters-&gt;se3.position-axisPt;
++		ret+=axis.Dot(m+r.Cross(f));
++	}
++	return ret;
++}
++/* Sum forces actiong on bodies within mask.
++ *
++ * @param mask groupMask of matching bodies
++ * @param direction direction in which forces are summed
++ *
++ */
++Real sumBexForces(int mask, python::tuple _direction){
++	Shop::Bex::initCache();
++	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
++	Real ret;
++	Vector3r direction=tuple2vec(_direction);
++	FOREACH(const shared_ptr&lt;Body&gt; b, *rb-&gt;bodies){
++		if(!b-&gt;maskOk(mask)) continue;
++		const Vector3r&amp; f=Shop::Bex::force(b-&gt;getId(),rb.get());
++		ret+=direction.Dot(f);
++	}
++	return ret;
++}
+ 
++// for now, don't return anything, since we would have to include the whole yadeControl.cpp because of pyInteraction
++void Shop__createExplicitInteraction(body_id_t id1, body_id_t id2){ (void) Shop::createExplicitInteraction(id1,id2);}
++
+ BOOST_PYTHON_FUNCTION_OVERLOADS(unbalancedForce_overloads,Shop::unbalancedForce,0,1);
+ 
+ BOOST_PYTHON_MODULE(_utils){
+@@ -172,6 +215,9 @@
+ 	def(&quot;elasticEnergy&quot;,elasticEnergyInAABB);
+ 	def(&quot;inscribedCircleCenter&quot;,inscribedCircleCenter);
+ 	def(&quot;unbalancedForce&quot;,&amp;Shop::unbalancedForce,unbalancedForce_overloads(args(&quot;useMaxForce&quot;)));
++	def(&quot;sumBexForces&quot;,sumBexForces);
++	def(&quot;sumBexMoments&quot;,sumBexMoments);
++	def(&quot;createInteraction&quot;,Shop__createExplicitInteraction);
+ }
+ 
+ 
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp	2008-10-07 06:19:24 UTC (rev 1537)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp	2008-10-07 07:02:48 UTC (rev 1538)
+@@ -12,7 +12,22 @@
+ 
+ 
+ #include&lt;yade/core/MetaBody.hpp&gt;
++	
++/* Single dispatch for given pair of bodies, returning new interaction.
++ *
++ * The caller is responsible for inserting the interaction into some interaction container.
++ *
++ * The EngineUnit must not fail (return false).
++ */
+ 
++shared_ptr&lt;Interaction&gt; InteractionGeometryMetaEngine::explicitAction(const shared_ptr&lt;Body&gt;&amp; b1, const shared_ptr&lt;Body&gt; b2){
++	assert(b1-&gt;interactingGeometry &amp;&amp; b2-&gt;interactingGeometry);
++	shared_ptr&lt;Interaction&gt; i(new Interaction(b1-&gt;getId(),b2-&gt;getId()));
++	i-&gt;isReal=true;
++	bool op=operator()(b1-&gt;interactingGeometry,b2-&gt;interactingGeometry,b1-&gt;physicalParameters-&gt;se3,b2-&gt;physicalParameters-&gt;se3,i);
++	if(!op) throw runtime_error(&quot;InteractionGeometryMetaEngine::explicitAction could not dispatch for given types (&quot;+b1-&gt;interactingGeometry-&gt;getClassName()+&quot;,&quot;+b2-&gt;interactingGeometry-&gt;getClassName()+&quot;) or the dispatchee returned false.&quot;);
++	return i;
++}
+ 
+ void InteractionGeometryMetaEngine::action(MetaBody* ncb)
+ {
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp	2008-10-07 06:19:24 UTC (rev 1537)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp	2008-10-07 07:02:48 UTC (rev 1538)
+@@ -37,6 +37,7 @@
+ {
+ 	public :
+ 		virtual void action(MetaBody*);
++		shared_ptr&lt;Interaction&gt; explicitAction(const shared_ptr&lt;Body&gt;&amp; b1, const shared_ptr&lt;Body&gt; b2);
+ 
+ 	REGISTER_CLASS_NAME(InteractionGeometryMetaEngine);
+ 	REGISTER_BASE_CLASS_NAME(MetaEngine2D);
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp	2008-10-07 06:19:24 UTC (rev 1537)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp	2008-10-07 07:02:48 UTC (rev 1538)
+@@ -10,6 +10,15 @@
+ 
+ 
+ #include&lt;yade/core/MetaBody.hpp&gt;
++/* Single dispatch for given bodies pp's and interaction.
++ * 
++ * The interaction must be real (needed?).
++ */
++void InteractionPhysicsMetaEngine::explicitAction(shared_ptr&lt;PhysicalParameters&gt;&amp; pp1, shared_ptr&lt;PhysicalParameters&gt;&amp; pp2, shared_ptr&lt;Interaction&gt;&amp; i){
++	// should we throw instead of asserting?
++	assert(i-&gt;isReal);
++	operator()(pp1,pp2,i);
++}
+ 
+ 
+ void InteractionPhysicsMetaEngine::action(MetaBody* ncb)
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.hpp	2008-10-07 06:19:24 UTC (rev 1537)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.hpp	2008-10-07 07:02:48 UTC (rev 1538)
+@@ -30,6 +30,7 @@
+ {		
+ 	public :
+ 		virtual void action(MetaBody*);
++		void explicitAction(shared_ptr&lt;PhysicalParameters&gt;&amp; pp1, shared_ptr&lt;PhysicalParameters&gt;&amp; pp2, shared_ptr&lt;Interaction&gt;&amp; i);
+ 
+ 	REGISTER_CLASS_NAME(InteractionPhysicsMetaEngine);
+ 	REGISTER_BASE_CLASS_NAME(MetaEngine2D);
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2008-10-07 06:19:24 UTC (rev 1537)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2008-10-07 07:02:48 UTC (rev 1538)
+@@ -17,7 +17,34 @@
+ #include&lt;yade/pkg-common/Momentum.hpp&gt;
+ #include&lt;yade/core/PhysicalAction.hpp&gt;
+ 
++#include&lt;yade/extra/Shop.hpp&gt;
+ 
++ElasticContactLaw2::ElasticContactLaw2(){
++	Shop::Bex::initCache();
++	isCohesive=true;
++}
++
++ElasticContactLaw2::~ElasticContactLaw2(){}
++
++void ElasticContactLaw2::action(MetaBody* rb){
++	FOREACH(shared_ptr&lt;Interaction&gt; i, *rb-&gt;transientInteractions){
++		if(!i-&gt;isReal) continue;
++		shared_ptr&lt;SpheresContactGeometry&gt; contGeom=YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(i-&gt;interactionGeometry);
++		shared_ptr&lt;ElasticContactInteraction&gt; contPhys=YADE_PTR_CAST&lt;ElasticContactInteraction&gt;(i-&gt;interactionPhysics);
++		assert(contGeom); assert(contPhys);
++		if(!contGeom-&gt;hasShear) throw runtime_error(&quot;SpheresContactGeometry::hasShear must be true for ElasticContactLaw2&quot;);
++		Real Fn=contPhys-&gt;kn*contGeom-&gt;displacementN(); // scalar normal force; displacementN()&gt;=0 &#8801; elongation of the contact
++		if(!isCohesive &amp;&amp; contGeom-&gt;displacementN()&gt;0){ cerr&lt;&lt;&quot;deleting&quot;&lt;&lt;endl; /* delete the interaction */ i-&gt;isReal=false; continue;}
++		contPhys-&gt;normalForce=Fn*contGeom-&gt;normal;
++		contGeom-&gt;slipToDisplacementTMax(max(0.,(-Fn*contPhys-&gt;tangensOfFrictionAngle)/contPhys-&gt;ks)); // limit shear displacement -- Coulomb criterion
++		contPhys-&gt;shearForce=contPhys-&gt;ks*contGeom-&gt;displacementT();
++		Vector3r force=contPhys-&gt;shearForce+contPhys-&gt;normalForce;
++		Shop::applyForceAtContactPoint(force,contGeom-&gt;contactPoint,i-&gt;getId1(),contGeom-&gt;pos1,i-&gt;getId2(),contGeom-&gt;pos2,rb);
++	}
++}
++
++
++
+ ElasticContactLaw::ElasticContactLaw() : InteractionSolver() , actionForce(new Force) , actionMomentum(new Momentum)
+ {
+ 	sdecGroupMask=1;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp	2008-10-07 06:19:24 UTC (rev 1537)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp	2008-10-07 07:02:48 UTC (rev 1538)
+@@ -17,6 +17,23 @@
+ 
+ class PhysicalAction;
+ 
++class ElasticContactLaw2: public InteractionSolver{
++	public:
++	//! this should really be property of the interaction, but for simplicity keep it here now...
++	bool isCohesive;
++	ElasticContactLaw2();
++	virtual ~ElasticContactLaw2();
++	void action(MetaBody*);
++	void registerAttributes(){
++		InteractionSolver::registerAttributes();
++		REGISTER_ATTRIBUTE(isCohesive);
++	}
++	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
++	REGISTER_CLASS_NAME(ElasticContactLaw2);
++	REGISTER_BASE_CLASS_NAME(InteractionSolver);
++};
++REGISTER_SERIALIZABLE(ElasticContactLaw2,false);
++
+ class ElasticContactLaw : public InteractionSolver
+ {
+ /// Attributes
+
+Added: trunk/scripts/chain-distant-interactions.py
+===================================================================
+--- trunk/scripts/chain-distant-interactions.py	2008-10-07 06:19:24 UTC (rev 1537)
++++ trunk/scripts/chain-distant-interactions.py	2008-10-07 07:02:48 UTC (rev 1538)
+@@ -0,0 +1,28 @@
++#!/usr/local/bin/yade-trunk -x
++# -*- encoding=utf-8 -*-
++
++o=Omega()
++o.initializers=[
++	StandAloneEngine('PhysicalActionContainerInitializer'),
++	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
++	]
++o.engines=[
++	StandAloneEngine('PhysicalActionContainerReseter'),
++	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('MetaInteractingGeometry2AABB')
++	]),
++	StandAloneEngine('PersistentSAPCollider',{'haveDistantTransient':True}),
++	MetaEngine('InteractionGeometryMetaEngine',[EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry',{'hasShear':True}),]),
++	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
++	StandAloneEngine('ElasticContactLaw2',{'isCohesive':True}),
++	DeusExMachina('GravityEngine',{'gravity':[0,0,-1e5]}),
++	DeusExMachina('NewtonsDampedLaw',{'damping':0.2})
++]
++from yade import utils
++for n in range(20):
++	o.bodies.append(utils.sphere([0,n,0],.5,dynamic=(n&gt;0),color=[1-(n/20.),n/20.,0],young=30e9,poisson=.3,density=2400))
++	# looks for metaengine found in Omega() and uses those
++	if n&gt;0: utils.createInteraction(n-1,n)
++
++
++o.dt=.04*utils.PWaveTimeStep()
++o.save('/tmp/a.xml.bz2')
+
+
+Property changes on: trunk/scripts/chain-distant-interactions.py
+___________________________________________________________________
+Name: svn:executable
+   + *
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000434.html">[deprecated list] [Yade-dev] calling EngineUnit::go to create	persistent	interaction?
+</A></li>
+	<LI>Next message: <A HREF="000436.html">[deprecated list] [Yade-dev] [svn] r1539 - in trunk: core	gui/py	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/StandAloneEngine	scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#433">[ date ]</a>
+              <a href="thread.html#433">[ thread ]</a>
+              <a href="subject.html#433">[ subject ]</a>
+              <a href="author.html#433">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

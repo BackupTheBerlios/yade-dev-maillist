@@ -1,0 +1,2892 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1778 - in trunk: . core extra	gui gui/py gui/qt3	lib/factory pkg/dem	pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1778%20-%20in%20trunk%3A%20.%20core%20extra%0A%09gui%20gui/py%20gui/qt3%09lib/factory%20pkg/dem%0A%09pkg/dem/Engine/StandAloneEngine%09pkg/dem/PreProcessor&In-Reply-To=%3C200905241822.n4OIMXeo021944%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000976.html">
+   <LINK REL="Next"  HREF="000979.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1778 - in trunk: . core extra	gui gui/py gui/qt3	lib/factory pkg/dem	pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1778%20-%20in%20trunk%3A%20.%20core%20extra%0A%09gui%20gui/py%20gui/qt3%09lib/factory%20pkg/dem%0A%09pkg/dem/Engine/StandAloneEngine%09pkg/dem/PreProcessor&In-Reply-To=%3C200905241822.n4OIMXeo021944%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1778 - in trunk: . core extra	gui gui/py gui/qt3	lib/factory pkg/dem	pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun May 24 20:22:33 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000976.html">[deprecated list] [Yade-dev] [svn] r1777 - in trunk: extra	extra/usct gui/py
+</A></li>
+        <LI>Next message: <A HREF="000979.html">[deprecated list] [Yade-dev] [svn] r1779 -	trunk/pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#977">[ date ]</a>
+              <a href="thread.html#977">[ thread ]</a>
+              <a href="subject.html#977">[ subject ]</a>
+              <a href="author.html#977">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-05-24 20:22:30 +0200 (Sun, 24 May 2009)
+New Revision: 1778
+
+Added:
+   trunk/extra/Shop.cpp
+   trunk/extra/Shop.hpp
+   trunk/pkg/dem/ConcretePM.cpp
+   trunk/pkg/dem/ConcretePM.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.hpp
+   trunk/pkg/dem/PreProcessor/SimpleScene.cpp
+   trunk/pkg/dem/PreProcessor/SimpleScene.hpp
+Removed:
+   trunk/core/yadeExceptions.cpp
+   trunk/core/yadeExceptions.hpp
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/extra/BrefcomTestGen.cpp
+   trunk/extra/BrefcomTestGen.hpp
+   trunk/extra/SimpleScene.cpp
+   trunk/extra/SimpleScene.hpp
+   trunk/extra/clump/
+   trunk/extra/usct/
+Modified:
+   trunk/SConstruct
+   trunk/core/InteractionContainer.cpp
+   trunk/core/Omega.cpp
+   trunk/core/Omega.hpp
+   trunk/core/Preferences.cpp
+   trunk/core/Preferences.hpp
+   trunk/core/SConscript
+   trunk/core/yade.cpp
+   trunk/extra/SConscript
+   trunk/gui/SConscript
+   trunk/gui/py/PythonUI_rc.py
+   trunk/gui/py/_eudoxos.cpp
+   trunk/gui/qt3/SimulationController.cpp
+   trunk/lib/factory/ClassFactory.cpp
+   trunk/lib/factory/ClassFactory.hpp
+   trunk/lib/factory/DynLibManager.cpp
+   trunk/lib/factory/DynLibManager.hpp
+   trunk/pkg/dem/PreProcessor/HydraulicTest.cpp
+   trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+   trunk/pkg/dem/SConscript
+Log:
+1. Add logic to scons to delete files that will not be installed in this run but are on-disk. This should make it unnecessary to remove files by hand. In the same way, disable implicit target cache which was making problems if files shuffle around.
+2. Remove Brefcom* files, move to pkg/dem/ConcretePM.?pp. (not sure what other place, since it contains Engines, DataClasses etc in one file that I would refuse to break.).
+3. Add detailed comments on ConcretePM to the ConcretePM.hpp
+4. Remove extra/usct, moveUniaxialStrainer and put to pkg/dem; move SimpleScene from extra to pkg/dem
+5. Remove core/yadeExceptions.*
+6. Remove Preferences::dynLibDirectores and Preferences::version. Omega now recursively searches the lib directory for plugins and loads them. preferences.xml has only defaultGUILibName now. Finally. Remove baseDirs and other cruft from DynLibManager.
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/SConstruct	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -346,7 +346,7 @@
+ SCons.Defaults.DefaultEnvironment(tools = [])
+ env.Decider('MD5-timestamp')
+ env.SetOption('max_drift',5) # cache md5sums of files older than 5 seconds
+-SetOption('implicit_cache',1) # cache #include files etc.
++SetOption('implicit_cache',0) # cache #include files etc.
+ env.SourceCode(&quot;.&quot;,None) # skip dotted directories
+ SetOption('num_jobs',env['jobs'])
+ 
+@@ -561,4 +561,14 @@
+ # read top-level SConscript file. It is used only so that build_dir is set. This file reads all SConscripts from in yadeModules
+ env.SConscript(dirs=['.'],build_dir=buildDir,duplicate=0)
+ 
++#################################################################################
++## remove plugins that are in the target dir but will not be installed now
++toInstall=[str(node) for node in env.FindInstalledFiles()]
++for root,dirs,files in os.walk(env.subst('$PREFIX/lib/yade${SUFFIX}')):
++	for f in files:
++		ff=os.path.join(root,f)
++		if ff not in toInstall and not ff.endswith('.pyo'):
++			print &quot;Deleting extra plugin&quot;, ff
++			os.remove(ff)
++
+ #Progress('.', interval=100, file=sys.stderr)
+
+Modified: trunk/core/InteractionContainer.cpp
+===================================================================
+--- trunk/core/InteractionContainer.cpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/core/InteractionContainer.cpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -23,7 +23,7 @@
+ 	}
+ 	else
+ 	{
+-		interaction.clear();
++		interaction.clear(); interaction.reserve(this-&gt;size());
+ 		InteractionContainer::iterator i    = this-&gt;begin();
+ 		InteractionContainer::iterator iEnd = this-&gt;end();
+ 		for( ; i!=iEnd ; ++i )
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/core/Omega.cpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -9,11 +9,9 @@
+ *************************************************************************/
+ 
+ #include&quot;Omega.hpp&quot;
+-#include&quot;yadeExceptions.hpp&quot;
+ #include&quot;MetaBody.hpp&quot;
+ #include&quot;TimeStepper.hpp&quot;
+ #include&quot;ThreadRunner.hpp&quot;
+-#include&quot;Preferences.hpp&quot;
+ #include&lt;Wm3Vector3.h&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+@@ -23,6 +21,7 @@
+ #include&lt;cstdlib&gt;
+ #include&lt;boost/filesystem/operations.hpp&gt;
+ #include&lt;boost/filesystem/convenience.hpp&gt;
++#include&lt;boost/filesystem/exception.hpp&gt;
+ #include&lt;boost/algorithm/string.hpp&gt;
+ #include&lt;boost/thread/mutex.hpp&gt;
+ #include&lt;boost/version.hpp&gt;
+@@ -164,36 +163,33 @@
+ 	return (dynlibs[className].baseClasses.find(baseClassName)!=dynlibs[className].baseClasses.end());
+ }
+ 
+-void Omega::scanPlugins(){
+-	FOREACH(string dld,preferences-&gt;dynlibDirectories) ClassFactory::instance().addBaseDirectory(dld);
+-	vector&lt;string&gt; dynlibsList;
+-	FOREACH(string si, preferences-&gt;dynlibDirectories){
+-		filesystem::path directory(si);
+-		if(!filesystem::exists(directory)){LOG_ERROR(&quot;Nonexistent plugin directory: &quot;&lt;&lt;directory.native_directory_string()&lt;&lt;&quot;.&quot;);continue; }
+-		filesystem::directory_iterator di(directory),diEnd;
+-		FOREACH(filesystem::path pth,std::make_pair(di,diEnd)){
+-			// node is not a directory and is either regular file or non-dangling symlink; and extension is not &quot;.a&quot;; AND moreover transforming it to library name and back to filename is identity; otherwise the file wouldn't be loaded by the DynLibManager anyway
+-			if (!filesystem::is_directory(*di) &amp;&amp; filesystem::exists(*di) &amp;&amp; filesystem::extension(*di)!=&quot;.a&quot; &amp;&amp;
+-				ClassFactory::instance().libNameToSystemName(ClassFactory::instance().systemNameToLibName(filesystem::basename(pth)))==(pth.leaf())){
+-				filesystem::path name(filesystem::basename(pth));
+-				if(name.leaf().length()&lt;1) continue; // filter out 0-length filenames
+-				string plugin=name.leaf();
+-				if(!ClassFactory::instance().load(ClassFactory::instance().systemNameToLibName(plugin))){
+-					string err=ClassFactory::instance().lastError();
+-					if(err.find(&quot;: undefined symbol: &quot;)!=std::string::npos){
+-						size_t pos=err.rfind(&quot;:&quot;);	assert(pos!=std::string::npos);
+-						std::string sym(err,pos+2); //2 removes &quot;: &quot; from the beginning
+-						int status=0; char* demangled_sym=abi::__cxa_demangle(sym.c_str(),0,0,&amp;status);
+-						LOG_FATAL(plugin&lt;&lt;&quot;: undefined symbol `&quot;&lt;&lt;demangled_sym&lt;&lt;&quot;'&quot;); LOG_FATAL(plugin&lt;&lt;&quot;: &quot;&lt;&lt;err); LOG_FATAL(&quot;Bailing out.&quot;);
+-					}
+-					else {
+-						LOG_FATAL(plugin&lt;&lt;&quot;: &quot;&lt;&lt;err&lt;&lt;&quot; .&quot;); /* leave space to not to confuse c++filt */ LOG_FATAL(&quot;Bailing out.&quot;);
+-					}
+-					abort();
++void Omega::scanPlugins(string baseDir){
++	try{
++		filesystem::recursive_directory_iterator Iend;
++		for(filesystem::recursive_directory_iterator I(baseDir); I!=Iend; ++I){ 
++			filesystem::path pth=I-&gt;path();
++			if(filesystem::is_directory(pth) || ClassFactory::instance().libNameToSystemName(ClassFactory::instance().systemNameToLibName(filesystem::basename(pth)))!=(pth.leaf())){ LOG_DEBUG(&quot;File not considered a plugin: &quot;&lt;&lt;pth.leaf()&lt;&lt;&quot;.&quot;); continue; }
++			LOG_DEBUG(&quot;Trying &quot;&lt;&lt;pth.leaf());
++			filesystem::path name(filesystem::basename(pth));
++			if(name.leaf().length()&lt;1) continue; // filter out 0-length filenames
++			string plugin=name.leaf();
++			if(!ClassFactory::instance().load(ClassFactory::instance().systemNameToLibName(plugin))){
++				string err=ClassFactory::instance().lastError();
++				if(err.find(&quot;: undefined symbol: &quot;)!=std::string::npos){
++					size_t pos=err.rfind(&quot;:&quot;);	assert(pos!=std::string::npos);
++					std::string sym(err,pos+2); //2 removes &quot;: &quot; from the beginning
++					int status=0; char* demangled_sym=abi::__cxa_demangle(sym.c_str(),0,0,&amp;status);
++					LOG_FATAL(plugin&lt;&lt;&quot;: undefined symbol `&quot;&lt;&lt;demangled_sym&lt;&lt;&quot;'&quot;); LOG_FATAL(plugin&lt;&lt;&quot;: &quot;&lt;&lt;err); LOG_FATAL(&quot;Bailing out.&quot;);
+ 				}
++				else {
++					LOG_FATAL(plugin&lt;&lt;&quot;: &quot;&lt;&lt;err&lt;&lt;&quot; .&quot;); /* leave space to not to confuse c++filt */ LOG_FATAL(&quot;Bailing out.&quot;);
++				}
++				abort();
+ 			}
+-			else LOG_DEBUG(&quot;File not considered a plugin: &quot;&lt;&lt;pth.leaf()&lt;&lt;&quot;.&quot;);
+ 		}
++	} catch(filesystem::basic_filesystem_error&lt;filesystem::path&gt;&amp; e) {
++		LOG_FATAL(&quot;Error from recursive plugin directory scan (unreadable directory?): &quot;&lt;&lt;e.what());
++		throw;
+ 	}
+ 	list&lt;string&gt;&amp; plugins(ClassFactory::instance().pluginClasses);
+ 	plugins.sort(); plugins.unique();
+@@ -205,6 +201,7 @@
+ 	resetRootBody();
+ 	IOFormatManager::loadFromStream(&quot;XMLFormatManager&quot;,stream,&quot;rootBody&quot;,rootBody);
+ }
++
+ void Omega::saveSimulationToStream(std::ostream&amp; stream){
+ 	LOG_DEBUG(&quot;Saving simulation to stream.&quot;);
+ 	IOFormatManager::saveToStream(&quot;XMLFormatManager&quot;,stream,&quot;rootBody&quot;,rootBody);
+@@ -212,8 +209,8 @@
+ 
+ void Omega::loadSimulation(){
+ 
+-	if(Omega::instance().getSimulationFileName().size()==0) throw yadeBadFile(&quot;Simulation filename to load has zero length&quot;);
+-	if(!filesystem::exists(simulationFileName) &amp;&amp; !algorithm::starts_with(simulationFileName,&quot;:memory&quot;)) throw yadeBadFile((std::string(&quot;Simulation file to load doesn't exist&quot;)+simulationFileName).c_str());
++	if(Omega::instance().getSimulationFileName().size()==0) throw runtime_error(&quot;Empty simulation filename to load.&quot;);
++	if(!filesystem::exists(simulationFileName) &amp;&amp; !algorithm::starts_with(simulationFileName,&quot;:memory&quot;)) throw runtime_error(&quot;Simulation file to load doesn't exist: &quot;+simulationFileName);
+ 	
+ 	LOG_INFO(&quot;Loading file &quot; + simulationFileName);
+ 
+@@ -229,16 +226,16 @@
+ 			RenderMutexLock lock; IOFormatManager::loadFromFile(&quot;BINFormatManager&quot;,simulationFileName,&quot;rootBody&quot;,rootBody);
+ 		}
+ 		else if(algorithm::starts_with(simulationFileName,&quot;:memory:&quot;)){
+-			if(memSavedSimulations.count(simulationFileName)==0) throw yadeBadFile((&quot;Cannot load nonexistent memory-saved simulation &quot;+simulationFileName).c_str());
++			if(memSavedSimulations.count(simulationFileName)==0) throw runtime_error(&quot;Cannot load nonexistent memory-saved simulation &quot;+simulationFileName);
+ 			istringstream iss(memSavedSimulations[simulationFileName]);
+ 			joinSimulationLoop();
+ 			resetRootBody();
+ 			RenderMutexLock lock; IOFormatManager::loadFromStream(&quot;XMLFormatManager&quot;,iss,&quot;rootBody&quot;,rootBody);
+ 		}
+-		else throw (yadeBadFile(&quot;Extension of file not recognized.&quot;));
++		else throw runtime_error(&quot;Extension of file to load not recognized &quot;+simulationFileName);
+ 	}
+ 
+-	if( rootBody-&gt;getClassName() != &quot;MetaBody&quot;) throw yadeBadFile(&quot;Wrong file format (rootBody is not a MetaBody!) ??&quot;);
++	if( rootBody-&gt;getClassName() != &quot;MetaBody&quot;) throw runtime_error(&quot;Wrong file format (rootBody is not a MetaBody!?) in &quot;+simulationFileName);
+ 
+ 	timeInit();
+ 
+@@ -249,7 +246,7 @@
+ 
+ void Omega::saveSimulation(const string name)
+ {
+-	if(name.size()==0) throw yadeBadFile(&quot;Filename with zero length.&quot;);
++	if(name.size()==0) throw runtime_error(&quot;Name of file to save has zero length.&quot;);
+ 	LOG_INFO(&quot;Saving file &quot; &lt;&lt; name);
+ 
+ 	if(algorithm::ends_with(name,&quot;.xml&quot;) || algorithm::ends_with(name,&quot;.xml.bz2&quot;)){
+@@ -267,7 +264,7 @@
+ 		memSavedSimulations[name]=oss.str();
+ 	}
+ 	else {
+-		throw(yadeBadFile((&quot;Filename extension not recognized in `&quot;+name+&quot;'&quot;).c_str()));
++		throw runtime_error(&quot;Filename extension not recognized in `&quot;+name+&quot;'&quot;);
+ 	}
+ }
+ 
+
+Modified: trunk/core/Omega.hpp
+===================================================================
+--- trunk/core/Omega.hpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/core/Omega.hpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -121,7 +121,7 @@
+ 		bool		isRunning();
+ 
+ 		const		map&lt;string,DynlibDescriptor&gt;&amp; getDynlibsDescriptor();
+-		void		scanPlugins();
++		void		scanPlugins(string baseDir);
+ 		bool		isInheritingFrom(const string&amp; className, const string&amp; baseClassName );
+ 
+ 		void		setTimeStep(const Real);
+
+Modified: trunk/core/Preferences.cpp
+===================================================================
+--- trunk/core/Preferences.cpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/core/Preferences.cpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -8,9 +8,5 @@
+ 
+ #include &quot;Preferences.hpp&quot;
+ 
++Preferences::Preferences (){}
+ 
+-Preferences::Preferences ()
+-{
+-	version = 1;
+-}
+-
+
+Modified: trunk/core/Preferences.hpp
+===================================================================
+--- trunk/core/Preferences.hpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/core/Preferences.hpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -15,19 +15,13 @@
+ 
+ using namespace std;
+ 
+-class Preferences : public Serializable
+-{
++class Preferences : public Serializable{
+ 	public :
+-		int version;	
+-		vector&lt;string&gt;	 dynlibDirectories;
+-
+ 		string		 defaultGUILibName;
+ 		Preferences ();
+-
+-	REGISTER_ATTRIBUTES(,(version)(dynlibDirectories)(defaultGUILibName));
++	REGISTER_ATTRIBUTES(/* no base class*/,(defaultGUILibName));
+ 	REGISTER_CLASS_AND_BASE(Preferences,Serializable);
+ };
+-
+ REGISTER_SERIALIZABLE(Preferences);
+ 
+ 
+
+Modified: trunk/core/SConscript
+===================================================================
+--- trunk/core/SConscript	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/core/SConscript	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -25,7 +25,6 @@
+ 			'ThreadWorker.cpp',
+ 			'TimeStepper.cpp',
+ 			'yade.cpp',
+-			'yadeExceptions.cpp',
+ 			'containers/BodyRedirectionVector.cpp',
+ 			'containers/BodyAssocVector.cpp',
+ 			'containers/InteractionHashMap.cpp',
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/core/yade.cpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -99,19 +99,11 @@
+ 
+ void firstRunSetup(shared_ptr&lt;Preferences&gt;&amp; pref)
+ {
+-	const char* libDirs[]={&quot;extra&quot;,&quot;gui&quot;,&quot;lib&quot;,&quot;pkg-common&quot;,&quot;pkg-dem&quot;,&quot;pkg-fem&quot;,&quot;pkg-snow&quot;,&quot;pkg-lattice&quot;,&quot;pkg-mass-spring&quot;,&quot;pkg-realtime-rigidbody&quot;,NULL /* sentinel */};
+ 	string cfgFile=Omega::instance().yadeConfigPath+&quot;/preferences.xml&quot;;
+-	LOG_INFO(&quot;Creating default configuration file: &quot;&lt;&lt;cfgFile&lt;&lt;&quot;. Please tune by hand if needed.&quot;);
+-	string expLibDir;
+-	for(int i=0; libDirs[i]!=NULL; i++) {
+-		expLibDir=string(PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/&quot;) + libDirs[i];
+-		if(!filesystem::exists(expLibDir)) continue; // skip modules that were not built/installed
+-		LOG_INFO(&quot;Adding plugin directory &quot;&lt;&lt;expLibDir&lt;&lt;&quot;.&quot;);
+-		pref-&gt;dynlibDirectories.push_back(expLibDir);
+-	}
++	LOG_INFO(&quot;Creating default configuration file: &quot;&lt;&lt;cfgFile&lt;&lt;&quot;. Tune by hand if needed.&quot;);
+ 	LOG_INFO(&quot;Setting GUI: QtGUI.&quot;);
+ 	pref-&gt;defaultGUILibName=&quot;QtGUI&quot;;
+-	IOFormatManager::saveToFile(&quot;XMLFormatManager&quot;,Omega::instance().yadeConfigPath+&quot;/preferences.xml&quot;,&quot;preferences&quot;,pref);
++	IOFormatManager::saveToFile(&quot;XMLFormatManager&quot;,cfgFile,&quot;preferences&quot;,pref);
+ }
+ 
+ string findRecoveryCandidate(filesystem::path dir, string start){
+@@ -257,7 +249,7 @@
+ 	
+ 	LOG_INFO(&quot;Loading &quot;&lt;&lt;yadeConfigFile.string()); IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,yadeConfigFile.string(),&quot;preferences&quot;,Omega::instance().preferences);
+ 
+-	LOG_INFO(&quot;Loading plugins&quot;); Omega::instance().scanPlugins();
++	LOG_INFO(&quot;Loading plugins&quot;); Omega::instance().scanPlugins(string(PREFIX &quot;/lib/yade&quot; SUFFIX));
+ 	Omega::instance().init();
+ 
+ 	Omega::instance().setSimulationFileName(simulationFileName); //init() resets to &quot;&quot;;
+
+Deleted: trunk/core/yadeExceptions.cpp
+===================================================================
+--- trunk/core/yadeExceptions.cpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/core/yadeExceptions.cpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -1,12 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include &quot;yadeExceptions.hpp&quot;
+-
+-const char* yadeExceptions::BadFile	= &quot;Please specify correct filename using your frontend. Following filename is not correct: &quot;;
+-
+
+Deleted: trunk/core/yadeExceptions.hpp
+===================================================================
+--- trunk/core/yadeExceptions.hpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/core/yadeExceptions.hpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -1,31 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#pragma once
+-
+-#include &lt;string&gt;
+-#include &lt;stdexcept&gt;
+-
+-using namespace std;
+-
+-struct yadeError : public std::runtime_error
+-{
+-	explicit yadeError(const char* msg) : std::runtime_error(msg) {};
+-};
+-
+-struct yadeBadFile : public yadeError
+-{
+-	explicit yadeBadFile(const char* msg) : yadeError(msg) {};
+-};
+-
+-struct yadeExceptions
+-{
+-	static const char* BadFile;
+-};
+-
+-
+
+Deleted: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/extra/Brefcom.cpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -1,362 +0,0 @@
+-// 2007,2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt; 
+-#include&quot;Brefcom.hpp&quot;
+-#include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+-#include&lt;yade/pkg-common/Sphere.hpp&gt;
+-#include&lt;yade/lib-QGLViewer/qglviewer.h&gt;
+-#include&lt;yade/lib-opengl/GLUtils.hpp&gt;
+-#include&lt;yade/pkg-dem/DemXDofGeom.hpp&gt;
+-
+-YADE_PLUGIN(&quot;Ip2_CpmMat_CpmMat_CpmPhys&quot;,&quot;CpmPhys&quot;,&quot;GLDrawCpmPhys&quot;,&quot;CpmPhysDamageColorizer&quot;, &quot;CpmMat&quot;, &quot;CpmGlobalCharacteristics&quot;, &quot;Law2_Dem3DofGeom_CpmPhys_Cpm&quot;);
+-
+-CREATE_LOGGER(CpmGlobalCharacteristics);
+-
+-void CpmGlobalCharacteristics::compute(MetaBody* rb, bool useMaxForce){
+-	rb-&gt;bex.sync();
+-
+-	// 1. reset volumetric strain (cummulative in the next loop)
+-	// 2. get maximum force on a body and sum of all forces (for averaging)
+-	Real sumF=0,maxF=0,currF;
+-	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rb-&gt;bodies){
+-	CpmMat* bpp(YADE_CAST&lt;CpmMat*&gt;(b-&gt;physicalParameters.get()));
+-		bpp-&gt;epsVolumetric=0;
+-		bpp-&gt;numContacts=0;
+-		currF=rb-&gt;bex.getForce(b-&gt;id).Length(); maxF=max(currF,maxF); sumF+=currF;
+-	}
+-	Real meanF=sumF/rb-&gt;bodies-&gt;size(); 
+-
+-	// commulate normal strains from contacts
+-	// get max force on contacts
+-	Real maxContactF=0;
+-	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rb-&gt;interactions){
+-		if(!I-&gt;isReal) continue;
+-		shared_ptr&lt;CpmPhys&gt; BC=YADE_PTR_CAST&lt;CpmPhys&gt;(I-&gt;interactionPhysics); assert(BC);
+-		maxContactF=max(maxContactF,max(BC-&gt;Fn,BC-&gt;Fs.Length()));
+-		CpmMat* bpp1(YADE_CAST&lt;CpmMat*&gt;(Body::byId(I-&gt;getId1())-&gt;physicalParameters.get()));
+-		CpmMat* bpp2(YADE_CAST&lt;CpmMat*&gt;(Body::byId(I-&gt;getId2())-&gt;physicalParameters.get()));
+-		bpp1-&gt;epsVolumetric+=BC-&gt;epsN; bpp1-&gt;numContacts+=1;
+-		bpp2-&gt;epsVolumetric+=BC-&gt;epsN; bpp2-&gt;numContacts+=1;
+-	}
+-	unbalancedForce=(useMaxForce?maxF:meanF)/maxContactF;
+-
+-	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rb-&gt;interactions){
+-		if(!I-&gt;isReal) continue;
+-		shared_ptr&lt;CpmPhys&gt; BC=YADE_PTR_CAST&lt;CpmPhys&gt;(I-&gt;interactionPhysics); assert(BC);
+-		CpmMat* bpp1(YADE_CAST&lt;CpmMat*&gt;(Body::byId(I-&gt;getId1())-&gt;physicalParameters.get()));
+-		CpmMat* bpp2(YADE_CAST&lt;CpmMat*&gt;(Body::byId(I-&gt;getId2())-&gt;physicalParameters.get()));
+-		Real epsVolAvg=.5*((3./bpp1-&gt;numContacts)*bpp1-&gt;epsVolumetric+(3./bpp2-&gt;numContacts)*bpp2-&gt;epsVolumetric);
+-		BC-&gt;epsTrans=(epsVolAvg-BC-&gt;epsN)/2.;
+-		//TRVAR5(I-&gt;getId1(),I-&gt;getId2(),BC-&gt;epsTrans,(3./bpp1-&gt;numContacts)*bpp1-&gt;epsVolumetric,(3./bpp2-&gt;numContacts)*bpp2-&gt;epsVolumetric);
+-		//TRVAR4(bpp1-&gt;numContacts,bpp1-&gt;epsVolumetric,bpp2-&gt;numContacts,bpp2-&gt;epsVolumetric);
+-	}
+-	#if 0
+-		FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rb-&gt;bodies){
+-			CpmMat* bpp(YADE_PTR_CAST&lt;CpmMat&gt;(b-&gt;physicalParameters.get()));
+-			bpp-&gt;epsVolumeric*=3/bpp-&gt;numContacts;
+-		}
+-	#endif
+-
+-
+-}
+-
+-
+-/********************** Ip2_CpmMat_CpmMat_CpmPhys ****************************/
+-CREATE_LOGGER(Ip2_CpmMat_CpmMat_CpmPhys);
+-
+-
+-void Ip2_CpmMat_CpmMat_CpmPhys::go(const shared_ptr&lt;PhysicalParameters&gt;&amp; pp1, const shared_ptr&lt;PhysicalParameters&gt;&amp; pp2, const shared_ptr&lt;Interaction&gt;&amp; interaction){
+-	Dem3DofGeom* contGeom=YADE_CAST&lt;Dem3DofGeom*&gt;(interaction-&gt;interactionGeometry.get());
+-
+-	assert(contGeom); // for now, don't handle anything other than SpheresContactGeometry and Dem3DofGeom
+-
+-	if(!interaction-&gt;isNew &amp;&amp; interaction-&gt;interactionPhysics){ /* relax */ } 
+-	else {
+-		interaction-&gt;isNew=false; // just in case
+-
+-		const shared_ptr&lt;BodyMacroParameters&gt;&amp; elast1=static_pointer_cast&lt;BodyMacroParameters&gt;(pp1);
+-		const shared_ptr&lt;BodyMacroParameters&gt;&amp; elast2=static_pointer_cast&lt;BodyMacroParameters&gt;(pp2);
+-
+-		Real E12=2*elast1-&gt;young*elast2-&gt;young/(elast1-&gt;young+elast2-&gt;young); // harmonic Young's modulus average
+-		//Real nu12=2*elast1-&gt;poisson*elast2-&gt;poisson/(elast1-&gt;poisson+elast2-&gt;poisson); // dtto for Poisson ratio 
+-		Real minRad=(contGeom-&gt;refR1&lt;=0?contGeom-&gt;refR2:(contGeom-&gt;refR2&lt;=0?contGeom-&gt;refR1:min(contGeom-&gt;refR1,contGeom-&gt;refR2)));
+-		Real S12=Mathr::PI*pow(minRad,2); // &quot;surface&quot; of interaction
+-		//Real E=(E12 /* was here for Kn:  *S12/d0  */)*((1+alpha)/(beta*(1+nu12)+gamma*(1-alpha*nu12)));
+-		//Real E=E12; // apply alpha, beta, gamma: garbage values of E !?
+-
+-		if(!neverDamage) { assert(!isnan(sigmaT)); }
+-
+-		shared_ptr&lt;CpmPhys&gt; contPhys(new CpmPhys());
+-
+-		contPhys-&gt;E=E12;
+-		contPhys-&gt;G=E12*G_over_E;
+-		contPhys-&gt;tanFrictionAngle=tan(.5*(elast1-&gt;frictionAngle+elast2-&gt;frictionAngle));
+-		contPhys-&gt;undamagedCohesion=sigmaT;
+-		contPhys-&gt;crossSection=S12;
+-		contPhys-&gt;epsCrackOnset=epsCrackOnset;
+-		contPhys-&gt;epsFracture=relDuctility*epsCrackOnset;
+-		contPhys-&gt;omegaThreshold=omegaThreshold;
+-		// inherited from NormalShearInteracion, used in the timestepper
+-		contPhys-&gt;kn=contPhys-&gt;E*contPhys-&gt;crossSection;
+-		contPhys-&gt;ks=contPhys-&gt;G*contPhys-&gt;crossSection;
+-
+-		if(neverDamage) contPhys-&gt;neverDamage=true;
+-		if(cohesiveThresholdIter&lt;0 || Omega::instance().getCurrentIteration()&lt;cohesiveThresholdIter) contPhys-&gt;isCohesive=true;
+-		else contPhys-&gt;isCohesive=false;
+-		contPhys-&gt;dmgTau=dmgTau;
+-		contPhys-&gt;dmgRateExp=dmgRateExp;
+-		contPhys-&gt;plTau=plTau;
+-		contPhys-&gt;plRateExp=plRateExp;
+-		contPhys-&gt;isoPrestress=isoPrestress;
+-
+-		interaction-&gt;interactionPhysics=contPhys;
+-	}
+-}
+-
+-
+-
+-
+-/********************** CpmPhys ****************************/
+-CREATE_LOGGER(CpmPhys);
+-
+-// !! at least one virtual function in the .cpp file
+-CpmPhys::~CpmPhys(){};
+-
+-CREATE_LOGGER(Law2_Dem3DofGeom_CpmPhys_Cpm);
+-
+-long CpmPhys::cummBetaIter=0, CpmPhys::cummBetaCount=0;
+-
+-Real CpmPhys::solveBeta(const Real c, const Real N){
+-	#ifdef YADE_DEBUG
+-		cummBetaCount++;
+-	#endif
+-	const int maxIter=20;
+-	const Real maxError=1e-12;
+-	Real f, ret=0.;
+-	for(int i=0; i&lt;maxIter; i++){
+-		#ifdef YADE_DEBUG
+-			cummBetaIter++;
+-		#endif
+-		Real aux=c*exp(N*ret)+exp(ret);
+-		f=log(aux);
+-		if(fabs(f)&lt;maxError) return ret;
+-		Real df=(c*N*exp(N*ret)+exp(ret))/aux;
+-		ret-=f/df;
+-	}
+-	LOG_FATAL(&quot;No convergence after &quot;&lt;&lt;maxIter&lt;&lt;&quot; iters; c=&quot;&lt;&lt;c&lt;&lt;&quot;, N=&quot;&lt;&lt;N&lt;&lt;&quot;, ret=&quot;&lt;&lt;ret&lt;&lt;&quot;, f=&quot;&lt;&lt;f);
+-	throw runtime_error(&quot;Law2_Dem3DofGeom_CpmPhys_Cpm::solveBeta failed to converge.&quot;);
+-}
+-
+-Real CpmPhys::computeDmgOverstress(Real dt){
+-	if(dmgStrain&gt;=epsN*omega){ // unloading, no viscous stress
+-		dmgStrain=epsN*omega;
+-		LOG_TRACE(&quot;Elastic/unloading, no viscous overstress&quot;);
+-		return 0.;
+-	}
+-	Real c=epsCrackOnset*(1-omega)*pow(dmgTau/dt,dmgRateExp)*pow(epsN*omega-dmgStrain,dmgRateExp-1.);
+-	Real beta=solveBeta(c,dmgRateExp);
+-	Real deltaDmgStrain=(epsN*omega-dmgStrain)*exp(beta);
+-	dmgStrain+=deltaDmgStrain;
+-	LOG_TRACE(&quot;deltaDmgStrain=&quot;&lt;&lt;deltaDmgStrain&lt;&lt;&quot;, viscous overstress &quot;&lt;&lt;(epsN*omega-dmgStrain)*E);
+-	/* &#963;N=Kn(&#949;N-&#949;d); dmgOverstress=&#963;N-(1-&#969;)*Kn*&#949;N=&#8230;=Kn(&#969;*&#949;N-&#949;d) */
+-	return (epsN*omega-dmgStrain)*E;
+-}
+-
+-Real CpmPhys::computeViscoplScalingFactor(Real sigmaTNorm, Real sigmaTYield,Real dt){
+-	if(sigmaTNorm&lt;sigmaTYield) return 1.;
+-	Real c=undamagedCohesion*pow(plTau/(G*dt),plRateExp)*pow(sigmaTNorm-sigmaTYield,plRateExp-1.);
+-	Real beta=solveBeta(c,plRateExp);
+-	//LOG_DEBUG(&quot;scaling factor &quot;&lt;&lt;1.-exp(beta)*(1-sigmaTYield/sigmaTNorm));
+-	return 1.-exp(beta)*(1-sigmaTYield/sigmaTNorm);
+-}
+-
+-Real Law2_Dem3DofGeom_CpmPhys_Cpm::minStrain_moveBody2=1.; /* deactivated if &gt; 0 */
+-Real Law2_Dem3DofGeom_CpmPhys_Cpm::yieldLogSpeed=1.;
+-Real Law2_Dem3DofGeom_CpmPhys_Cpm::yieldEllipseShift=0.;
+-
+-void Law2_Dem3DofGeom_CpmPhys_Cpm::go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody){
+-	//timingDeltas-&gt;start();
+-	Dem3DofGeom* contGeom=static_cast&lt;Dem3DofGeom*&gt;(_geom.get());
+-	CpmPhys* BC=static_cast&lt;CpmPhys*&gt;(_phys.get());
+-
+-	/* kept fully damaged contacts; note that normally the contact is deleted _after_ the CPM_MATERIAL_MODEL,
+-	 * i.e. if it is 1.0 here, omegaThreshold is &gt;= 1.0 for sure.
+-	 * &amp;&amp;'ing that just to make sure anyway ...
+-	 */
+-	// if(BC-&gt;omega&gt;=1.0 &amp;&amp; BC-&gt;omegaThreshold&gt;=1.0) return;
+-
+-	// shorthands
+-	Real&amp; epsN(BC-&gt;epsN); Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); Real&amp; epsPlSum(BC-&gt;epsPlSum); const Real&amp; E(BC-&gt;E); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle); const Real&amp; G(BC-&gt;G); const Real&amp; crossSection(BC-&gt;crossSection); const Real&amp; omegaThreshold(BC-&gt;omegaThreshold); const Real&amp; epsCrackOnset(BC-&gt;epsCrackOnset); Real&amp; relResidualStrength(BC-&gt;relResidualStrength); const Real&amp; dt=Omega::instance().getTimeStep();  const Real&amp; epsFracture(BC-&gt;epsFracture); const bool&amp; neverDamage(BC-&gt;neverDamage); const Real&amp; dmgTau(BC-&gt;dmgTau); const Real&amp; plTau(BC-&gt;plTau); const bool&amp; isCohesive(BC-&gt;isCohesive);
+-	/* const Real&amp; transStrainCoeff(BC-&gt;transStrainCoeff); const Real&amp; epsTrans(BC-&gt;epsTrans); const Real&amp; xiShear(BC-&gt;xiShear); */
+-	Real&amp; omega(BC-&gt;omega); Real&amp; sigmaN(BC-&gt;sigmaN);  Vector3r&amp; sigmaT(BC-&gt;sigmaT); Real&amp; Fn(BC-&gt;Fn); Vector3r&amp; Fs(BC-&gt;Fs); // for python access
+-	const Real&amp; yieldLogSpeed(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldLogSpeed); const int&amp; yieldSurfType(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldSurfType);
+-	const Real&amp; yieldEllipseShift(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldEllipseShift); 
+-
+-	#define YADE_VERIFY(condition) if(!(condition)){LOG_FATAL(&quot;Verification `&quot;&lt;&lt;#condition&lt;&lt;&quot;' failed!&quot;); throw;}
+-	
+-	#define NNAN(a) YADE_VERIFY(!isnan(a));
+-	#define NNANV(v) YADE_VERIFY(!isnan(v[0])); assert(!isnan(v[1])); assert(!isnan(v[2]));
+-
+-	//timingDeltas-&gt;checkpoint(&quot;setup&quot;);
+-	// if(contGeom-&gt;refR1&lt;0) contGeom-&gt;refLength=contGeom-&gt;refR2; // make facet-sphere contact always at equilibrium when touching exactly (and not the initial distance)
+-	epsN=contGeom-&gt;strainN(); epsT=contGeom-&gt;strainT();
+-	#ifdef YADE_DEBUG
+-		if(isnan(epsN)){
+-			LOG_FATAL(&quot;refLength=&quot;&lt;&lt;contGeom-&gt;refLength&lt;&lt;&quot;; pos1=&quot;&lt;&lt;contGeom-&gt;se31.position&lt;&lt;&quot;; pos2=&quot;&lt;&lt;contGeom-&gt;se32.position&lt;&lt;&quot;; displacementN=&quot;&lt;&lt;contGeom-&gt;displacementN());
+-			throw runtime_error(&quot;!! epsN==NaN !!&quot;);
+-		}
+-		NNAN(epsN); NNANV(epsT);
+-	#endif
+-	// already in SpheresContactGeometry:
+-	// contGeom-&gt;relocateContactPoints(); // allow very large mutual rotations
+-	if(logStrain &amp;&amp; epsN&lt;0){
+-		Real epsN0=epsN;
+-		epsN=log(epsN0+1); epsT*=epsN/epsN0;
+-	}
+-	NNAN(epsN); NNANV(epsT);
+-	//timingDeltas-&gt;checkpoint(&quot;geom&quot;);
+-
+-	epsN+=BC-&gt;isoPrestress/E;
+-	//TRVAR1(epsN);
+-	#ifdef CPM_MATERIAL_MODEL
+-		CPM_MATERIAL_MODEL
+-	#else
+-		sigmaN=E*epsN;
+-		sigmaT=G*epsT;
+-	#endif
+-	sigmaN-=BC-&gt;isoPrestress;
+-	if(contGeom-&gt;refR1&lt;0 &amp;&amp; Law2_Dem3DofGeom_CpmPhys_Cpm::minStrain_moveBody2&lt;=0 &amp;&amp; epsN&lt;Law2_Dem3DofGeom_CpmPhys_Cpm::minStrain_moveBody2){
+-		/* move Body2 (the sphere) so that minStrain is satisfied */
+-		rootBody-&gt;bex.addMove(I-&gt;getId2(),contGeom-&gt;normal*(Law2_Dem3DofGeom_CpmPhys_Cpm::minStrain_moveBody2-epsN)*contGeom-&gt;refLength);
+-		LOG_TRACE(&quot;Moving by &quot;&lt;&lt;contGeom-&gt;normal*(Law2_Dem3DofGeom_CpmPhys_Cpm::minStrain_moveBody2-epsN)*contGeom-&gt;refLength);
+-	}
+-	NNAN(kappaD); NNAN(epsCrackOnset); NNAN(epsFracture); NNAN(omega);
+-	NNAN(sigmaN); NNANV(sigmaT); NNAN(crossSection);
+-	//timingDeltas-&gt;checkpoint(&quot;material&quot;);
+-
+-	//const int watch1=6300, watch2=6299;
+-	//#define SHOW(a) if((I-&gt;getId1()==watch1 &amp;&amp; I-&gt;getId2()==watch2) || (I-&gt;getId2()==watch1 &amp;&amp; I-&gt;getId1()==watch2)) cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; &quot;&lt;&lt;a&lt;&lt;endl;
+-	//SHOW(&quot;epsN&quot;&lt;&lt;epsN);
+-	if(epsN&gt;0. &amp;&amp; ((isCohesive &amp;&amp; omega&gt;omegaThreshold) || !isCohesive)){
+-		rootBody-&gt;interactions-&gt;requestErase(I-&gt;getId1(),I-&gt;getId2());
+-		if(isCohesive){
+-			const shared_ptr&lt;Body&gt;&amp; body1=Body::byId(I-&gt;getId1(),rootBody), body2=Body::byId(I-&gt;getId2(),rootBody); assert(body1); assert(body2);
+-			const shared_ptr&lt;CpmMat&gt;&amp; rbp1=YADE_PTR_CAST&lt;CpmMat&gt;(body1-&gt;physicalParameters), rbp2=YADE_PTR_CAST&lt;CpmMat&gt;(body2-&gt;physicalParameters);
+-			if(BC-&gt;isCohesive){rbp1-&gt;numBrokenCohesive+=1; rbp2-&gt;numBrokenCohesive+=1; rbp1-&gt;epsPlBroken+=epsPlSum; rbp2-&gt;epsPlBroken+=epsPlSum;}
+-			LOG_DEBUG(&quot;Contact #&quot;&lt;&lt;I-&gt;getId1()&lt;&lt;&quot;=#&quot;&lt;&lt;I-&gt;getId2()&lt;&lt;&quot; is damaged over thershold (&quot;&lt;&lt;omega&lt;&lt;&quot;&gt;&quot;&lt;&lt;omegaThreshold&lt;&lt;&quot;) and will be deleted.&quot;);
+-		}
+-		return;
+-	}
+-
+-	Fn=sigmaN*crossSection; BC-&gt;normalForce=Fn*contGeom-&gt;normal;
+-	Fs=sigmaT*crossSection; BC-&gt;shearForce=Fs;
+-
+-	applyForceAtContactPoint(BC-&gt;normalForce+BC-&gt;shearForce, contGeom-&gt;contactPoint, I-&gt;getId1(), contGeom-&gt;se31.position, I-&gt;getId2(), contGeom-&gt;se32.position, rootBody);
+-	//timingDeltas-&gt;checkpoint(&quot;rest&quot;);
+-}
+-
+-
+-/********************** GLDrawCpmPhys ****************************/
+-
+-#include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+-
+-CREATE_LOGGER(GLDrawCpmPhys);
+-
+-bool GLDrawCpmPhys::contactLine=true;
+-bool GLDrawCpmPhys::dmgLabel=true;
+-bool GLDrawCpmPhys::dmgPlane=false;
+-bool GLDrawCpmPhys::epsNLabel=true;
+-bool GLDrawCpmPhys::epsT=false;
+-bool GLDrawCpmPhys::epsTAxes=false;
+-bool GLDrawCpmPhys::normal=false;
+-bool GLDrawCpmPhys::colorStrain=false;
+-
+-
+-void GLDrawCpmPhys::go(const shared_ptr&lt;InteractionPhysics&gt;&amp; ip, const shared_ptr&lt;Interaction&gt;&amp; i, const shared_ptr&lt;Body&gt;&amp; b1, const shared_ptr&lt;Body&gt;&amp; b2, bool wireFrame){
+-	const shared_ptr&lt;CpmPhys&gt;&amp; BC=static_pointer_cast&lt;CpmPhys&gt;(ip);
+-	const shared_ptr&lt;Dem3DofGeom&gt;&amp; geom=YADE_PTR_CAST&lt;Dem3DofGeom&gt;(i-&gt;interactionGeometry);
+-
+-	//Vector3r lineColor(BC-&gt;omega,1-BC-&gt;omega,0.0); /* damaged links red, undamaged green */
+-	Vector3r lineColor=Shop::scalarOnColorScale(1.-BC-&gt;relResidualStrength);
+-
+-	if(colorStrain) lineColor=Vector3r(
+-		min((Real)1.,max((Real)0.,-BC-&gt;epsTrans/BC-&gt;epsCrackOnset)),
+-		min((Real)1.,max((Real)0.,BC-&gt;epsTrans/BC-&gt;epsCrackOnset)),
+-		min((Real)1.,max((Real)0.,abs(BC-&gt;epsTrans)/BC-&gt;epsCrackOnset-1)));
+-
+-	if(contactLine) GLUtils::GLDrawLine(b1-&gt;physicalParameters-&gt;dispSe3.position,b2-&gt;physicalParameters-&gt;dispSe3.position,lineColor);
+-	if(dmgLabel){ GLUtils::GLDrawNum(BC-&gt;omega,0.5*(b1-&gt;physicalParameters-&gt;dispSe3.position+b2-&gt;physicalParameters-&gt;dispSe3.position),lineColor); }
+-	else if(epsNLabel){ GLUtils::GLDrawNum(BC-&gt;epsN,0.5*(b1-&gt;physicalParameters-&gt;dispSe3.position+b2-&gt;physicalParameters-&gt;dispSe3.position),lineColor); }
+-	if(BC-&gt;omega&gt;0 &amp;&amp; dmgPlane){
+-		Real halfSize=sqrt(1-BC-&gt;relResidualStrength)*.5*.705*sqrt(BC-&gt;crossSection);
+-		Vector3r midPt=.5*Vector3r(b1-&gt;physicalParameters-&gt;dispSe3.position+b2-&gt;physicalParameters-&gt;dispSe3.position);
+-		glDisable(GL_CULL_FACE);
+-		glPushMatrix();
+-			glTranslatev(midPt);
+-			Quaternionr q; q.Align(Vector3r::UNIT_Z,geom-&gt;normal);
+-			Vector3r axis; Real angle; q.ToAxisAngle(axis,angle);
+-			glRotatef(angle*Mathr::RAD_TO_DEG,axis[0],axis[1],axis[2]);
+-			glBegin(GL_POLYGON);
+-				glColor3v(lineColor); 
+-				glVertex3d(halfSize,0.,0.);
+-				glVertex3d(.5*halfSize,.866*halfSize,0.);
+-				glVertex3d(-.5*halfSize,.866*halfSize,0.);
+-				glVertex3d(-halfSize,0.,0.);
+-				glVertex3d(-.5*halfSize,-.866*halfSize,0.);
+-				glVertex3d(.5*halfSize,-.866*halfSize,0.);
+-			glEnd();
+-		glPopMatrix();
+-	}
+-
+-	const Vector3r&amp; cp=static_pointer_cast&lt;Dem3DofGeom&gt;(i-&gt;interactionGeometry)-&gt;contactPoint;
+-	if(epsT){
+-		Real maxShear=(BC-&gt;undamagedCohesion-BC-&gt;sigmaN*BC-&gt;tanFrictionAngle)/BC-&gt;G;
+-		Real relShear=BC-&gt;epsT.Length()/maxShear;
+-		Real scale=.5*geom-&gt;refLength;
+-		Vector3r dirShear=BC-&gt;epsT; dirShear.Normalize();
+-		if(epsTAxes){
+-			GLUtils::GLDrawLine(cp-Vector3r(scale,0,0),cp+Vector3r(scale,0,0));
+-			GLUtils::GLDrawLine(cp-Vector3r(0,scale,0),cp+Vector3r(0,scale,0));
+-			GLUtils::GLDrawLine(cp-Vector3r(0,0,scale),cp+Vector3r(0,0,scale));
+-		}
+-		GLUtils::GLDrawArrow(cp,cp+dirShear*relShear*scale,Vector3r(1.,0.,0.));
+-		GLUtils::GLDrawLine(cp+dirShear*relShear*scale,cp+dirShear*scale,Vector3r(.3,.3,.3));
+-
+-		/* normal strain */ GLUtils::GLDrawArrow(cp,cp+geom-&gt;normal*(BC-&gt;epsN/maxShear),Vector3r(0.,1.,0.));
+-	}
+-	//if(normal) GLUtils::GLDrawArrow(cp,cp+geom-&gt;normal*.5*BC-&gt;equilibriumDist,Vector3r(0.,1.,0.));
+-}
+-
+-struct BodyStats{ short nCohLinks; Real dmgSum; Real epsPlSum; BodyStats(): nCohLinks(0), dmgSum(0), epsPlSum(0.){} };
+-
+-/********************** CpmPhysDamageColorizer ****************************/
+-void CpmPhysDamageColorizer::action(MetaBody* rootBody){
+-	//vector&lt;pair&lt;short,Real&gt; &gt; bodyDamage; /* number of cohesive interactions per body; cummulative damage of interactions */
+-	//vector&lt;pair&lt;short,
+-	vector&lt;BodyStats&gt; bodyStats; bodyStats.resize(rootBody-&gt;bodies-&gt;size());
+-	assert(bodyStats[0].nCohLinks==0); // should be initialized by dfault ctor
+-	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rootBody-&gt;interactions){
+-		shared_ptr&lt;CpmPhys&gt; BC=dynamic_pointer_cast&lt;CpmPhys&gt;(I-&gt;interactionPhysics);
+-		if(!BC || !BC-&gt;isCohesive) continue;
+-		const body_id_t id1=I-&gt;getId1(), id2=I-&gt;getId2();
+-		bodyStats[id1].nCohLinks++; bodyStats[id1].dmgSum+=(1-BC-&gt;relResidualStrength); bodyStats[id1].epsPlSum+=BC-&gt;epsPlSum;
+-		bodyStats[id2].nCohLinks++; bodyStats[id2].dmgSum+=(1-BC-&gt;relResidualStrength); bodyStats[id2].epsPlSum+=BC-&gt;epsPlSum;
+-		//bodyDamage[id1].first++; bodyDamage[id2].first++;
+-		//bodyDamage[id1].second+=(1-BC-&gt;relResidualStrength); bodyDamage[id2].second+=(1-BC-&gt;relResidualStrength);
+-		maxOmega=max(maxOmega,BC-&gt;omega);
+-	}
+-	FOREACH(shared_ptr&lt;Body&gt; B, *rootBody-&gt;bodies){
+-		body_id_t id=B-&gt;getId();
+-		// add damaged contacts that have already been deleted
+-		CpmMat* bpp=dynamic_cast&lt;CpmMat*&gt;(B-&gt;physicalParameters.get());
+-		if(!bpp) continue;
+-		short cohLinksWhenever=bodyStats[id].nCohLinks+bpp-&gt;numBrokenCohesive;
+-		if(cohLinksWhenever&gt;0){
+-			bpp-&gt;normDmg=(bodyStats[id].dmgSum+bpp-&gt;numBrokenCohesive)/cohLinksWhenever;
+-			bpp-&gt;normEpsPl=(bodyStats[id].epsPlSum+bpp-&gt;epsPlBroken)/cohLinksWhenever;
+-		}
+-		else { bpp-&gt;normDmg=0; bpp-&gt;normEpsPl=0;}
+-		B-&gt;geometricalModel-&gt;diffuseColor=Vector3r(bpp-&gt;normDmg,1-bpp-&gt;normDmg,B-&gt;isDynamic?0:1);
+-	}
+-}
+-
+-
+
+Deleted: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/extra/Brefcom.hpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -1,272 +0,0 @@
+-// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt; 
+-#pragma once
+-#include&lt;yade/extra/Shop.hpp&gt;
+-
+-#include&lt;yade/core/InteractionSolver.hpp&gt;
+-#include&lt;yade/core/FileGenerator.hpp&gt;
+-#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+-#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+-#include&lt;yade/pkg-common/InteractionPhysicsEngineUnit.hpp&gt;
+-#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+-#include&lt;yade/pkg-common/GLDrawFunctors.hpp&gt;
+-#include&lt;yade/pkg-common/PeriodicEngines.hpp&gt;
+-#include&lt;yade/pkg-common/NormalShearInteractions.hpp&gt;
+-#include&lt;yade/pkg-common/ConstitutiveLaw.hpp&gt;
+-
+-
+-/* Engine encompassing several computations looping over all bodies/interactions
+- *
+- * * Compute and store unbalanced force over the whole simulation.
+- * * Compute and store volumetric strain for every body.
+- *
+- * May be extended in the future to compute global stiffness etc as well.
+- */
+-class CpmGlobalCharacteristics: public PeriodicEngine{
+-	public:
+-		bool useMaxForce; // use maximum unbalanced force instead of mean unbalanced force
+-		Real unbalancedForce;
+-		void compute(MetaBody* rb, bool useMax=false);
+-		virtual void action(MetaBody* rb){compute(rb,useMaxForce);}
+-		CpmGlobalCharacteristics(){};
+-	REGISTER_ATTRIBUTES(PeriodicEngine,
+-		(unbalancedForce)
+-		(useMaxForce)
+-	);
+-	DECLARE_LOGGER;
+-	REGISTER_CLASS_AND_BASE(CpmGlobalCharacteristics,PeriodicEngine);
+-};
+-REGISTER_SERIALIZABLE(CpmGlobalCharacteristics);
+-
+-/*! @brief representation of a single interaction of the CPM type: storage for relevant parameters.
+- *
+- * Evolution of the contact is governed by Law2_Dem3DofGeom_CpmPhys_Cpm:
+- * that includes damage effects and chages of parameters inside CpmPhys.
+- *
+- */
+-class CpmPhys: public NormalShearInteraction {
+-	private:
+-	public:
+-		/*! Fundamental parameters (constants) */
+-		Real
+-			//! normal modulus (stiffness / crossSection)
+-			E,
+-			//! shear modulus
+-			G,
+-			//! tangens of internal friction angle
+-			tanFrictionAngle, 
+-			//! virgin material cohesion
+-			undamagedCohesion,
+-			//! equivalent cross-section associated with this contact
+-			crossSection,
+-			//! strain at which the material starts to behave non-linearly
+-			epsCrackOnset,
+-			//! strain where the damage-evolution law tangent from the top (epsCrackOnset) touches the axis;
+-			/// since the softening law is exponential, this doesn't mean that the contact is fully damaged at this point,
+-			/// that happens only asymptotically 
+-			epsFracture,
+-			//! damage after which the contact disappears (&lt;1), since omega reaches 1 only for strain &#8594;+&#8734;
+-			omegaThreshold,
+-			//! weight coefficient for shear strain when computing the strain semi-norm kappaD
+-			xiShear,
+-			//! characteristic time for damage (if non-positive, the law without rate-dependence is used)
+-			dmgTau,
+-			//! exponent in the rate-dependent damage evolution
+-			dmgRateExp,
+-			//! damage strain (at previous or current step)
+-			dmgStrain,
+-			//! damage viscous overstress (at previous step or at current step)
+-			dmgOverstress,
+-			//! characteristic time for viscoplasticity (if non-positive, no rate-dependence for shear)
+-			plTau,
+-			//! exponent in the rate-dependent viscoplasticity
+-			plRateExp,
+-			//! &quot;prestress&quot; of this link (used to simulate isotropic stress)
+-			isoPrestress;
+-		/*! Up to now maximum normal strain (semi-norm), non-decreasing in time. */
+-		Real kappaD;
+-		/*! Transversal strain (perpendicular to the contact axis) */
+-		Real epsTrans;
+-		/*! if not cohesive, interaction is deleted when distance is greater than zero. */
+-		bool isCohesive;
+-		/*! the damage evlution function will always return virgin state */
+-		bool neverDamage;
+-		/*! cummulative plastic strain measure (scalar) on this contact */
+-		Real epsPlSum;
+-		//! debugging, to see convergence rate
+-		static long cummBetaIter, cummBetaCount;
+-
+-		/*! auxiliary variable for visualization, recalculated in Law2_Dem3DofGeom_CpmPhys_Cpm at every iteration */
+-		// FIXME: Fn and Fs are stored as Vector3r normalForce, shearForce in NormalShearInteraction 
+-		Real omega, Fn, sigmaN, epsN, relResidualStrength; Vector3r epsT, sigmaT, Fs;
+-
+-
+-		static Real solveBeta(const Real c, const Real N);
+-		Real computeDmgOverstress(Real dt);
+-		Real computeViscoplScalingFactor(Real sigmaTNorm, Real sigmaTYield,Real dt);
+-
+-
+-
+-		CpmPhys(): NormalShearInteraction(),E(0), G(0), tanFrictionAngle(0), undamagedCohesion(0), crossSection(0), xiShear(0), dmgTau(-1), dmgRateExp(0), dmgStrain(0), plTau(-1), plRateExp(0), isoPrestress(0.), kappaD(0.), epsTrans(0.), epsPlSum(0.) { createIndex(); epsT=Vector3r::ZERO; isCohesive=false; neverDamage=false; omega=0; Fn=0; Fs=Vector3r::ZERO; epsPlSum=0; dmgOverstress=0; }
+-		virtual ~CpmPhys();
+-
+-		REGISTER_ATTRIBUTES(NormalShearInteraction,
+-			(E)
+-			(G)
+-			(tanFrictionAngle)
+-			(undamagedCohesion)
+-			(crossSection)
+-			(epsCrackOnset)
+-			(epsFracture)
+-			(omegaThreshold)
+-			(xiShear)
+-			(dmgTau)
+-			(dmgRateExp)
+-			(dmgStrain)
+-			(dmgOverstress)
+-			(plTau)
+-			(plRateExp)
+-			(isoPrestress)
+-
+-			(cummBetaIter)
+-			(cummBetaCount)
+-
+-			(kappaD)
+-			(neverDamage)
+-			(epsT)
+-			(epsTrans)
+-			(epsPlSum)
+-
+-			(isCohesive)
+-
+-			// auxiliary params to make them accessible from python
+-			(omega)
+-			(Fn)
+-			(Fs)
+-			(epsN)
+-			(sigmaN)
+-			(sigmaT)
+-			(relResidualStrength)
+-		);
+-	REGISTER_CLASS_AND_BASE(CpmPhys,NormalShearInteraction);
+-	DECLARE_LOGGER;
+-};
+-REGISTER_SERIALIZABLE(CpmPhys);
+-
+-/* This class holds information associated with each body */
+-class CpmMat: public BodyMacroParameters {
+-	public:
+-		//! volumetric strain around this body
+-		Real epsVolumetric;
+-		//! number of (cohesive) contacts that damaged completely
+-		int numBrokenCohesive;
+-		//! number of contacts with this body
+-		int numContacts;
+-		//! average damage including already deleted contacts (it is really not damage, but 1-relResidualStrength now)
+-		Real normDmg;
+-		//! plastic strain on contacts already deleted
+-		Real epsPlBroken;
+-		//! sum of plastic strains normalized by number of contacts
+-		Real normEpsPl;
+-		CpmMat(): epsVolumetric(0.), numBrokenCohesive(0), numContacts(0), normDmg(0.), epsPlBroken(0.), normEpsPl(0.) {createIndex();};
+-		REGISTER_ATTRIBUTES(BodyMacroParameters, (epsVolumetric) (numBrokenCohesive) (numContacts) (normDmg) (epsPlBroken) (normEpsPl));
+-		REGISTER_CLASS_AND_BASE(CpmMat,BodyMacroParameters);
+-};
+-REGISTER_SERIALIZABLE(CpmMat);
+-
+-class Law2_Dem3DofGeom_CpmPhys_Cpm: public ConstitutiveLaw{
+-	public:
+-	/*! Damage evolution law */
+-	static Real funcG(const Real&amp; kappaD, const Real&amp; epsCrackOnset, const Real&amp; epsFracture, const bool&amp; neverDamage) {
+-		if(kappaD&lt;epsCrackOnset || neverDamage) return 0;
+-		return 1.-(epsCrackOnset/kappaD)*exp(-(kappaD-epsCrackOnset)/epsFracture);
+-	}
+-		bool logStrain;
+-		//! yield function: 0: mohr-coulomb (original); 1: parabolic; 2: logarithmic, 3: log+lin_tension, 4: elliptic, 5: elliptic+log
+-		int yieldSurfType;
+-		//! scaling in the logarithmic yield surface (should be &lt;1 for realistic results; &gt;=0 for meaningful results)
+-		static Real yieldLogSpeed;
+-		static Real yieldEllipseShift;
+-		//! HACK: limit strain on some contacts by moving body #2 in the contact; only if refR1&lt;0 (facet); deactivated if &gt; 0
+-		static Real minStrain_moveBody2;
+-		Law2_Dem3DofGeom_CpmPhys_Cpm(): logStrain(false), yieldSurfType(0) { /*timingDeltas=shared_ptr&lt;TimingDeltas&gt;(new TimingDeltas);*/ }
+-		void go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody);
+-	FUNCTOR2D(Dem3DofGeom,CpmPhys);
+-	REGISTER_CLASS_AND_BASE(Law2_Dem3DofGeom_CpmPhys_Cpm,ConstitutiveLaw);
+-	REGISTER_ATTRIBUTES(ConstitutiveLaw,(logStrain)(yieldSurfType)(yieldLogSpeed)(yieldEllipseShift)(minStrain_moveBody2));
+-	DECLARE_LOGGER;
+-};
+-REGISTER_SERIALIZABLE(Law2_Dem3DofGeom_CpmPhys_Cpm);
+-
+-/*! @brief Convert macroscopic properties to CpmPhys with corresponding parameters.
+- *
+- * */
+-class Ip2_CpmMat_CpmMat_CpmPhys: public InteractionPhysicsEngineUnit{
+-	private:
+-	public:
+-		/* nonelastic material parameters */
+-		/* alternatively (and more cleanly), we would have subclass of ElasticBodyParameters,
+-		 * which would define just those in addition to the elastic ones.
+-		 * This might be done later, for now hardcode that here. */
+-		/* uniaxial tension resistance, bending parameter of the damage evolution law, whear weighting constant for epsT in the strain seminorm (kappa) calculation. Default to NaN so that user gets loudly notified it was not set.
+-		
+-		*/
+-		Real sigmaT, epsCrackOnset, relDuctility, G_over_E, tau, expDmgRate, omegaThreshold, dmgTau, dmgRateExp, plTau, plRateExp, isoPrestress;
+-		//! Should new contacts be cohesive? They will before this iter#, they will not be afterwards. If 0, they will never be. If negative, they will always be created as cohesive.
+-		long cohesiveThresholdIter;
+-		//! Create contacts that don't receive any damage (CpmPhys::neverDamage=true); defaults to false
+-		bool neverDamage;
+-
+-		Ip2_CpmMat_CpmMat_CpmPhys(){
+-			// init to signaling_NaN to force crash if not initialized (better than unknowingly using garbage values)
+-			sigmaT=epsCrackOnset=relDuctility=G_over_E=std::numeric_limits&lt;Real&gt;::signaling_NaN();
+-			neverDamage=false;
+-			cohesiveThresholdIter=-1;
+-			dmgTau=-1; dmgRateExp=0; plTau=-1; plRateExp=-1;
+-			omegaThreshold=0.999;
+-			isoPrestress=0;
+-		}
+-
+-		virtual void go(const shared_ptr&lt;PhysicalParameters&gt;&amp; pp1, const shared_ptr&lt;PhysicalParameters&gt;&amp; pp2, const shared_ptr&lt;Interaction&gt;&amp; interaction);
+-		REGISTER_ATTRIBUTES(InteractionPhysicsEngineUnit,
+-			(cohesiveThresholdIter)
+-			(G_over_E)
+-			(sigmaT)
+-			(neverDamage)
+-			(epsCrackOnset)
+-			(relDuctility)
+-			(dmgTau)
+-			(dmgRateExp)
+-			(plTau)
+-			(plRateExp)
+-			(omegaThreshold)
+-			(isoPrestress)
+-		);
+-
+-		FUNCTOR2D(CpmMat,CpmMat);
+-		REGISTER_CLASS_AND_BASE(Ip2_CpmMat_CpmMat_CpmPhys,InteractionPhysicsEngineUnit);
+-		DECLARE_LOGGER;
+-};
+-REGISTER_SERIALIZABLE(Ip2_CpmMat_CpmMat_CpmPhys);
+-
+-class GLDrawCpmPhys: public GLDrawInteractionPhysicsFunctor {
+-	public: virtual void go(const shared_ptr&lt;InteractionPhysics&gt;&amp;,const shared_ptr&lt;Interaction&gt;&amp;,const shared_ptr&lt;Body&gt;&amp;,const shared_ptr&lt;Body&gt;&amp;,bool wireFrame);
+-	virtual ~GLDrawCpmPhys() {};
+-	REGISTER_ATTRIBUTES(/*no base*/,(contactLine)(dmgLabel)(dmgPlane)(epsT)(epsTAxes)(normal)(colorStrain)(epsNLabel));
+-	RENDERS(CpmPhys);
+-	REGISTER_CLASS_AND_BASE(GLDrawCpmPhys,GLDrawInteractionPhysicsFunctor);
+-	DECLARE_LOGGER;
+-	static bool contactLine,dmgLabel,dmgPlane,epsT,epsTAxes,normal,colorStrain,epsNLabel;
+-};
+-REGISTER_SERIALIZABLE(GLDrawCpmPhys);
+-
+-class CpmPhysDamageColorizer: public PeriodicEngine {
+-	public:
+-		//! maximum damage over all contacts
+-		Real maxOmega;
+-		CpmPhysDamageColorizer(){maxOmega=0; /* run at the very beginning */ initRun=true;}
+-		virtual void action(MetaBody*);
+-	REGISTER_ATTRIBUTES(PeriodicEngine,(maxOmega));
+-	REGISTER_CLASS_AND_BASE(CpmPhysDamageColorizer,PeriodicEngine);
+-};
+-REGISTER_SERIALIZABLE(CpmPhysDamageColorizer);
+-
+
+Deleted: trunk/extra/BrefcomTestGen.cpp
+===================================================================
+--- trunk/extra/BrefcomTestGen.cpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/extra/BrefcomTestGen.cpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -1,130 +0,0 @@
+-// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt; 
+-#include&quot;BrefcomTestGen.hpp&quot;
+-#include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+-
+-YADE_PLUGIN(&quot;BrefcomTestGen&quot;);
+-
+-
+-
+-
+-#include&lt;yade/pkg-common/PhysicalActionContainerReseter.hpp&gt;
+-#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
+-#include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+-#include&lt;yade/pkg-common/AABB.hpp&gt;
+-#include&lt;yade/pkg-common/InteractingSphere2AABB.hpp&gt;
+-#include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
+-#include&lt;yade/pkg-common/MetaInteractingGeometry2AABB.hpp&gt;
+-#include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+-#include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+-#include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+-#include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
+-#include&lt;yade/pkg-common/NewtonsForceLaw.hpp&gt;
+-#include&lt;yade/pkg-common/NewtonsMomentumLaw.hpp&gt;
+-#include&lt;yade/pkg-common/LeapFrogPositionIntegrator.hpp&gt;
+-#include&lt;yade/pkg-common/LeapFrogOrientationIntegrator.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+-#include&lt;yade/pkg-common/ConstitutiveLawDispatcher.hpp&gt;
+-#include&lt;yade/pkg-dem/PositionOrientationRecorder.hpp&gt;
+-#include&lt;yade/pkg-dem/GlobalStiffnessTimeStepper.hpp&gt;
+-#include&lt;yade/pkg-dem/Dem3DofGeom_SphereSphere.hpp&gt;
+-#include&lt;yade/extra/UniaxialStrainControlledTest.hpp&gt;
+-
+-
+-CREATE_LOGGER(BrefcomTestGen);
+-
+-void BrefcomTestGen::createEngines(){
+-	rootBody-&gt;initializers.clear();
+-
+-	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;add(new InteractingSphere2AABB);
+-	boundingVolumeDispatcher-&gt;add(new MetaInteractingGeometry2AABB);
+-	rootBody-&gt;initializers.push_back(boundingVolumeDispatcher);
+-
+-	rootBody-&gt;engines.clear();
+-
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+-	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+-
+-	shared_ptr&lt;PersistentSAPCollider&gt; collider(new PersistentSAPCollider);
+-	collider-&gt;haveDistantTransient=true;
+-	rootBody-&gt;engines.push_back(collider);
+-
+-	shared_ptr&lt;InteractionGeometryMetaEngine&gt; igeomDispatcher(new InteractionGeometryMetaEngine);
+-	shared_ptr&lt;ef2_Sphere_Sphere_Dem3DofGeom&gt; ef2ssd3d(new ef2_Sphere_Sphere_Dem3DofGeom);
+-	igeomDispatcher-&gt;add(ef2ssd3d);
+-	rootBody-&gt;engines.push_back(igeomDispatcher);
+-
+-	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; iphysDispatcher(new InteractionPhysicsMetaEngine);
+-		shared_ptr&lt;Ip2_CpmMat_CpmMat_CpmPhys&gt; bmc(new Ip2_CpmMat_CpmMat_CpmPhys);
+-		bmc-&gt;cohesiveThresholdIter=-1; bmc-&gt;G_over_E=1; bmc-&gt;sigmaT=3e9; bmc-&gt;neverDamage=true; bmc-&gt;epsCrackOnset=1e-4; bmc-&gt;relDuctility=5;
+-		//bmc-&gt;calibratedEpsFracture=.5; /* arbitrary, but large enough */
+-		iphysDispatcher-&gt;add(bmc);
+-	rootBody-&gt;engines.push_back(iphysDispatcher);
+-
+-	shared_ptr&lt;ConstitutiveLawDispatcher&gt; clDisp(new ConstitutiveLawDispatcher);
+-		clDisp-&gt;add(shared_ptr&lt;ConstitutiveLaw&gt;(new Law2_Dem3DofGeom_CpmPhys_Cpm));
+-	rootBody-&gt;engines.push_back(clDisp);
+-
+-	shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-	applyActionDispatcher-&gt;add(new NewtonsForceLaw);
+-	applyActionDispatcher-&gt;add(new NewtonsMomentumLaw);
+-	rootBody-&gt;engines.push_back(applyActionDispatcher);
+-	
+-	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+-	positionIntegrator-&gt;add(new LeapFrogPositionIntegrator);
+-	rootBody-&gt;engines.push_back(positionIntegrator);
+-
+-	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+-	orientationIntegrator-&gt;add(new LeapFrogOrientationIntegrator);
+-	rootBody-&gt;engines.push_back(orientationIntegrator);
+-
+-	shared_ptr&lt;CpmPhysDamageColorizer&gt; dmg(new CpmPhysDamageColorizer);
+-	rootBody-&gt;engines.push_back(dmg);
+-
+-#if 0
+-	shared_ptr&lt;BrefcomStiffnessCounter&gt; bsc(new BrefcomStiffnessCounter);
+-	bsc-&gt;interval=100;
+-	rootBody-&gt;engines.push_back(bsc);
+-
+-	shared_ptr&lt;GlobalStiffnessTimeStepper&gt; gsts(new GlobalStiffnessTimeStepper);
+-	gsts-&gt;sdecGroupMask=1023;
+-	gsts-&gt;timeStepUpdateInterval=100;
+-	gsts-&gt;defaultDt=1e-4;
+-	rootBody-&gt;engines.push_back(gsts);
+-#endif
+-}
+-
+-bool BrefcomTestGen::generate(){
+-	message=&quot;&quot;;
+-	rootBody=Shop::rootBody();
+-
+-	createEngines();
+-
+-	shared_ptr&lt;UniaxialStrainer&gt; strainer(new UniaxialStrainer);
+-	strainer-&gt;strainRate=strainRate;
+-	strainer-&gt;axis=2; // z-oriented straining
+-	strainer-&gt;limitStrain=-4;
+-	rootBody-&gt;engines.push_back(strainer);
+-	
+-	// control normal/shear ratio
+-	//Real zCoord=.1; Real yCoord=sqrt(1-zCoord*zCoord); // distance is always 2, with contact at origin
+-	Real zCoord=.9, yCoord=0;
+-	shared_ptr&lt;Body&gt;
+-		s1=Shop::sphere(Vector3r(0,-yCoord,-zCoord),.5),
+-		s2=Shop::sphere(Vector3r(0,yCoord,zCoord),.5),
+-		sMid=Shop::sphere(Vector3r(0,0,0.01),.5);
+-	body_id_t id1=rootBody-&gt;bodies-&gt;insert(s1), id2=rootBody-&gt;bodies-&gt;insert(s2); //, id3=rootBody-&gt;bodies-&gt;insert(sMid);
+-	
+-	//  engines should take care of the rest of interaction; this is what collider would do normally
+-	/*
+-	rootBody-&gt;transientInteractions-&gt;insert(id1,id2);
+-	rootBody-&gt;transientInteractions-&gt;find(id1,id2)-&gt;isReal=1;
+-	rootBody-&gt;transientInteractions-&gt;find(id1,id2)-&gt;isNew=1;
+-	*/
+-
+-	strainer-&gt;negIds.push_back(id1); strainer-&gt;negCoords.push_back(-zCoord);
+-	strainer-&gt;posIds.push_back(id2); strainer-&gt;posCoords.push_back(zCoord);
+-
+-	return true;
+-}
+
+Deleted: trunk/extra/BrefcomTestGen.hpp
+===================================================================
+--- trunk/extra/BrefcomTestGen.hpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/extra/BrefcomTestGen.hpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -1,22 +0,0 @@
+-#pragma once
+-#include&lt;yade/extra/Shop.hpp&gt;
+-#include&lt;yade/core/FileGenerator.hpp&gt;
+-#include&lt;yade/extra/Brefcom.hpp&gt;
+-
+-class BrefcomTestGen: public FileGenerator {
+-	private:
+-		void createEngines();
+-	public:
+-		Real strainRate;
+-		BrefcomTestGen(){strainRate=1e-2;};
+-		bool generate();
+-	protected :
+-		void registerAttributes(){
+-			FileGenerator::registerAttributes();
+-			REGISTER_ATTRIBUTE(strainRate);
+-		}
+-	REGISTER_CLASS_NAME(BrefcomTestGen);
+-	REGISTER_BASE_CLASS_NAME(FileGenerator);
+-	DECLARE_LOGGER;
+-};
+-REGISTER_SERIALIZABLE(BrefcomTestGen);
+
+Modified: trunk/extra/SConscript
+===================================================================
+--- trunk/extra/SConscript	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/extra/SConscript	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -1,13 +1,7 @@
++# vim: set filetype=python :
+ Import('*')
+ 
+ import os.path, os
+-brefcomMaterialModel='../brefcom-mm.hh'
+-if os.path.exists('../'+brefcomMaterialModel):
+-	print &quot;Will include local file &quot;+brefcomMaterialModel
+-	brefcomInclude=['-include',brefcomMaterialModel]
+-	Depends('Brefcom.cpp','../../brefcom-mm.hh')
+-else:
+-	brefcomInclude=['']
+ 
+ env.Install('$PREFIX/lib/yade$SUFFIX/extra',[
+ 	env.SharedLibrary('SphericalDEMSimulator',
+@@ -37,16 +31,8 @@
+ 	
+ 	env.SharedLibrary('TetraTestGen',['tetra/TetraTestGen.cpp'],LIBS=env['LIBS']+['Shop','Tetra']),
+ 
+-	env.SharedLibrary('UniaxialStrainControlledTest',['usct/UniaxialStrainControlledTest.cpp'],LIBS=env['LIBS']+['Shop','ConstitutiveLawDispatcher','GlobalStiffnessTimeStepper','Brefcom','PositionOrientationRecorder']),
+-
+-	env.SharedLibrary('Brefcom',['Brefcom.cpp'],CXXFLAGS=env['CXXFLAGS']+brefcomInclude,LIBS=env['LIBS']+['Shop','InteractingSphere2InteractingSphere4SpheresContactGeometry','DemXDofGeom']),
+-
+-	env.SharedLibrary('BrefcomTestGen',['BrefcomTestGen.cpp'],LIBS=env['LIBS']+['Shop','UniaxialStrainControlledTest','PositionOrientationRecorder','Brefcom','ConstitutiveLawDispatcher','Dem3DofGeom_SphereSphere']),
+-
+-	env.SharedLibrary('SimpleScene',['SimpleScene.cpp'],LIBS=env['LIBS']+['Shop','SimpleElasticRelationships']),
+-
+ 	env.SharedLibrary('Shop',
+-		['clump/Shop.cpp'],
++		['Shop.cpp'],
+ 		LIBS=env['LIBS']+[
+ 			'ElasticContactLaw',
+ 			'ElasticCohesiveLaw',
+@@ -74,7 +60,7 @@
+ 			'ParticleParameters',
+ 			'MetaInteractingGeometry',
+ 			'MetaInteractingGeometry2AABB',
+-			'InteractingSphere2AABB',\
++			'InteractingSphere2AABB',
+ 			'InteractingBox2AABB',
+ 			'NewtonsMomentumLaw',
+ 			'NewtonsForceLaw',
+
+Copied: trunk/extra/Shop.cpp (from rev 1771, trunk/extra/clump/Shop.cpp)
+
+
+Property changes on: trunk/extra/Shop.cpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/extra/Shop.hpp (from rev 1767, trunk/extra/clump/Shop.hpp)
+
+
+Property changes on: trunk/extra/Shop.hpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Deleted: trunk/extra/SimpleScene.cpp
+===================================================================
+--- trunk/extra/SimpleScene.cpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/extra/SimpleScene.cpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -1,157 +0,0 @@
+-#include&quot;SimpleScene.hpp&quot;
+-#include&lt;yade/extra/Shop.hpp&gt;
+-#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+-#include&lt;yade/pkg-common/InteractingSphere2AABB.hpp&gt;
+-#include&lt;yade/pkg-common/InteractingBox2AABB.hpp&gt;
+-#include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
+-#include&lt;yade/pkg-common/MetaInteractingGeometry2AABB.hpp&gt;
+-#include&lt;yade/pkg-common/PhysicalActionContainerReseter.hpp&gt;
+-#include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
+-#include&lt;yade/pkg-common/AABB.hpp&gt;
+-#include&lt;yade/pkg-common/Box.hpp&gt;
+-#include&lt;yade/pkg-common/Sphere.hpp&gt;
+-#include&lt;yade/pkg-common/InteractingBox.hpp&gt;
+-#include&lt;yade/pkg-common/NewtonsForceLaw.hpp&gt;
+-#include&lt;yade/pkg-common/NewtonsMomentumLaw.hpp&gt;
+-#include&lt;yade/pkg-common/LeapFrogPositionIntegrator.hpp&gt;
+-#include&lt;yade/pkg-common/LeapFrogOrientationIntegrator.hpp&gt;
+-#include&lt;yade/pkg-dem/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp&gt;
+-#include&lt;yade/pkg-dem/InteractingBox2InteractingSphere4SpheresContactGeometry.hpp&gt;
+-#include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
+-#include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+-#include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+-#include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+-#include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+-#include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+-#include&lt;yade/pkg-common/CundallNonViscousDamping.hpp&gt;
+-#include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+-#include&lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
+-#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+-#include&lt;yade/pkg-dem/SimpleElasticRelationships.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+-
+-
+-
+-YADE_PLUGIN(&quot;SimpleScene&quot;);
+-
+-bool SimpleScene::generate(){
+-	message=&quot;&quot;;
+-	//@
+-	rootBody=Shop::rootBody();
+-	//@
+-	/* initializers */
+-		rootBody-&gt;initializers.clear();
+-		//@
+-		shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-			boundingVolumeDispatcher-&gt;add(new InteractingSphere2AABB);
+-			boundingVolumeDispatcher-&gt;add(new InteractingBox2AABB);
+-			boundingVolumeDispatcher-&gt;add(new MetaInteractingGeometry2AABB);
+-			rootBody-&gt;initializers.push_back(boundingVolumeDispatcher);
+-	//@
+-	/* engines */
+-		rootBody-&gt;engines.clear();
+-		//@
+-		rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+-		//@
+-		// use boundingVolumeDispatcher that we defined above
+-		rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+-		//@
+-		shared_ptr&lt;PersistentSAPCollider&gt; collider(new PersistentSAPCollider);
+-			rootBody-&gt;engines.push_back(collider);
+-		//@
+-		shared_ptr&lt;InteractionGeometryMetaEngine&gt; igeomDispatcher(new InteractionGeometryMetaEngine);
+-			igeomDispatcher-&gt;add(new InteractingSphere2InteractingSphere4SpheresContactGeometry);
+-			igeomDispatcher-&gt;add(new InteractingBox2InteractingSphere4SpheresContactGeometry);
+-			rootBody-&gt;engines.push_back(igeomDispatcher);
+-		//@
+-		shared_ptr&lt;InteractionPhysicsMetaEngine&gt; iphysDispatcher(new InteractionPhysicsMetaEngine);
+-			iphysDispatcher-&gt;add(new SimpleElasticRelationships);
+-			rootBody-&gt;engines.push_back(iphysDispatcher);
+-		//@
+-		shared_ptr&lt;ElasticContactLaw&gt; ecl(new ElasticContactLaw);
+-			rootBody-&gt;engines.push_back(ecl);
+-		//@
+-		shared_ptr&lt;GravityEngine&gt; ge(new GravityEngine);
+-			ge-&gt;gravity=Vector3r(0,0,-9.81);
+-			rootBody-&gt;engines.push_back(ge);
+-		//@
+-		shared_ptr&lt;PhysicalActionDamper&gt; dampingDispatcher(new PhysicalActionDamper);
+-			shared_ptr&lt;CundallNonViscousForceDamping&gt; forceDamper(new CundallNonViscousForceDamping);
+-			forceDamper-&gt;damping=0.2;
+-			dampingDispatcher-&gt;add(forceDamper);
+-			shared_ptr&lt;CundallNonViscousMomentumDamping&gt; momentumDamper(new CundallNonViscousMomentumDamping);
+-			momentumDamper-&gt;damping=0.2;
+-			dampingDispatcher-&gt;add(momentumDamper);
+-			rootBody-&gt;engines.push_back(dampingDispatcher);
+-		//@
+-		shared_ptr&lt;PhysicalActionApplier&gt; applyActionDispatcher(new PhysicalActionApplier);
+-			applyActionDispatcher-&gt;add(new NewtonsForceLaw);
+-			applyActionDispatcher-&gt;add(new NewtonsMomentumLaw);
+-			rootBody-&gt;engines.push_back(applyActionDispatcher);
+-		//@
+-		shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+-			positionIntegrator-&gt;add(new LeapFrogPositionIntegrator);
+-			rootBody-&gt;engines.push_back(positionIntegrator);
+-		//@
+-		shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+-			orientationIntegrator-&gt;add(new LeapFrogOrientationIntegrator);
+-			rootBody-&gt;engines.push_back(orientationIntegrator);
+-	//@
+-	// set default values for Shop	
+-	Shop::setDefault(&quot;body_sdecGroupMask&quot;,1);
+-	Shop::setDefault(&quot;phys_density&quot;,2400.); Shop::setDefault(&quot;phys_young&quot;,30e9); Shop::setDefault(&quot;phys_poisson&quot;,.3);
+-	Shop::setDefault(&quot;aabb_randomColor&quot;,false);Shop::setDefault(&quot;shape_randomColor&quot;,false); Shop::setDefault(&quot;mold_randomColor&quot;,false);
+-	Shop::setDefault(&quot;aabb_color&quot;,Vector3r(0,1,0)); Shop::setDefault(&quot;shape_color&quot;,Vector3r(1,0,0)); Shop::setDefault(&quot;mold_color&quot;,Vector3r(1,0,0));
+-
+-	//@
+-	shared_ptr&lt;Body&gt; box=Shop::box(Vector3r(0,0,0),Vector3r(.5,.5,.5));
+-	box-&gt;isDynamic=false;
+-	rootBody-&gt;bodies-&gt;insert(box);
+-	
+-	//@
+-	if(false){
+-		Vector3r extents(.5,.5,.5);
+-		shared_ptr&lt;Body&gt; b=shared_ptr&lt;Body&gt;(new Body(body_id_t(0),0));
+-		b-&gt;isDynamic=true;
+-		
+-		// phys
+-		shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+-		physics-&gt;mass=8*extents[0]*extents[1]*extents[2]*2400;
+-		physics-&gt;inertia=Vector3r(physics-&gt;mass*(4*extents[1]*extents[1]+4*extents[2]*extents[2])/12.,physics-&gt;mass*(4*extents[0]*extents[0]+4*extents[2]*extents[2])/12.,physics-&gt;mass*(4*extents[0]*extents[0]+4*extents[1]*extents[1])/12.);
+-		physics-&gt;se3=Se3r(Vector3r(0,0,0),Quaternionr::IDENTITY);
+-		physics-&gt;young=30e9;
+-		physics-&gt;poisson=.3;
+-		b-&gt;physicalParameters=physics;
+-
+-		// aabb
+-		shared_ptr&lt;AABB&gt; aabb(new AABB);
+-		aabb-&gt;diffuseColor=Vector3r(0,1,0);
+-		b-&gt;boundingVolume=aabb;
+-
+-		//shape
+-		shared_ptr&lt;Box&gt; shape(new Box);
+-		shape-&gt;extents=extents;
+-		shape-&gt;diffuseColor=Vector3r(1,0,0);
+-		b-&gt;geometricalModel=shape;
+-
+-		// mold
+-		shared_ptr&lt;InteractingBox&gt; mold(new InteractingBox);
+-		mold-&gt;extents=extents;
+-		mold-&gt;diffuseColor=Vector3r(1,0,0);
+-		b-&gt;interactingGeometry=mold;
+-
+-		rootBody-&gt;bodies-&gt;insert(b);
+-	}
+-
+-	//@
+-	Shop::setDefault(&quot;shape_color&quot;,Vector3r(0,1,0)); Shop::setDefault(&quot;mold_color&quot;,Vector3r(0,1,0));
+-	shared_ptr&lt;Body&gt; sphere(Shop::sphere(Vector3r(0,0,2),1));
+-	rootBody-&gt;bodies-&gt;insert(sphere);
+-	
+-	//@
+-	rootBody-&gt;dt=.2*Shop::PWaveTimeStep(rootBody);
+-
+-	//@
+-	return true;
+-}
+
+Deleted: trunk/extra/SimpleScene.hpp
+===================================================================
+--- trunk/extra/SimpleScene.hpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/extra/SimpleScene.hpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -1,18 +0,0 @@
+-#pragma once
+-#include&lt;yade/core/FileGenerator.hpp&gt;
+-#include&lt;yade/extra/Shop.hpp&gt;
+-
+-
+-class SimpleScene: public FileGenerator {
+-	public:
+-		SimpleScene(){};
+-		~SimpleScene (){};
+-		virtual bool generate();
+-	protected :
+-		void registerAttributes(){ FileGenerator::registerAttributes(); }
+-	REGISTER_CLASS_NAME(SimpleScene);
+-	REGISTER_BASE_CLASS_NAME(FileGenerator);
+-	DECLARE_LOGGER;
+-};
+-REGISTER_SERIALIZABLE(SimpleScene);
+-
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/gui/SConscript	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -74,8 +74,8 @@
+ 			],
+ 			),
+ 		env.SharedLibrary('_utils',['py/_utils.cpp'],SHLIBPREFIX='',
+-			LIBS=env['LIBS']+['Shop','Brefcom']),
+-		env.SharedLibrary('_eudoxos',['py/_eudoxos.cpp'],SHLIBPREFIX='',CXXFLAGS=env['CXXFLAGS']+([] if not os.path.exists('../../brefcom-mm.hh') else ['-include','../brefcom-mm.hh']),LIBS=env['LIBS']+['Shop','Brefcom']),
++			LIBS=env['LIBS']+['Shop','ConcretePM']),
++		env.SharedLibrary('_eudoxos',['py/_eudoxos.cpp'],SHLIBPREFIX='',CXXFLAGS=env['CXXFLAGS']+([] if not os.path.exists('../../brefcom-mm.hh') else ['-include','../brefcom-mm.hh']),LIBS=env['LIBS']+['Shop','ConcretePM']),
+ 		env.SharedLibrary('log',['py/log.cpp'],SHLIBPREFIX=''),
+ 		env.File('__init__.py','py'),
+ 		env.File('utils.py','py'),
+
+Modified: trunk/gui/py/PythonUI_rc.py
+===================================================================
+--- trunk/gui/py/PythonUI_rc.py	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/gui/py/PythonUI_rc.py	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -34,20 +34,22 @@
+ 	for p in listChildClassesRecursive(root):
+ 		class argStorage:
+ 			def __init__(self,_root,_class): self._root,self._class=_root,_class
+-			def wrap(self,*args): return yade.wrapper.__dict__[self._root](self._class,*args)
+-		if root=='MetaEngine': _dd[p]=argStorage(root2,p).wrap
++			def __call__(self,*args): return yade.wrapper.__dict__[self._root](self._class,*args)
++		if root=='MetaEngine': _dd[p]=argStorage(root2,p)
+ 		else:                  _dd[p]=lambda __r_=root2,__p_=p,**kw : yade.wrapper.__dict__[__r_](__p_,kw) # eval(root2)(p,kw)
+ ### end wrappers
+ 
+ #### HANDLE RENAMED CLASSES ####
++# if old class name is used, the new object is constructed and a warning is issued about old name being used
+ renamed={
++	# renamed 23.5.2009, may be removed in a few months
+ 	'BrefcomMakeContact':'Ip2_CpmMat_CpmMat_CpmPhys',
+ 	'BrefcomContact':'CpmPhys',
+ 	'BrefcomPhysParams':'CpmMat',
+ 	'ef2_Spheres_Brefcom_BrefcomLaw':'Law2_Dem3DofGeom_CpmPhys_Cpm',
+ 	'GLDrawBrefcomContact':'GLDrawCpmPhys',
+ 	'BrefcomDamageColorizer':'CpmPhysDamageColorizer',
+-	'BrefcomGlobalCharacteristics':'CpmGlobalCharacteristics'
++	'BrefcomGlobalCharacteristics':'CpmGlobalCharacteristics',
+ }
+ 
+ for oldName in renamed:
+
+Modified: trunk/gui/py/_eudoxos.cpp
+===================================================================
+--- trunk/gui/py/_eudoxos.cpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/gui/py/_eudoxos.cpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -1,4 +1,4 @@
+-#include&lt;yade/extra/Brefcom.hpp&gt;
++#include&lt;yade/pkg-dem/ConcretePM.hpp&gt;
+ #include&lt;boost/python.hpp&gt;
+ #include&lt;yade/extra/boost_python_len.hpp&gt;
+ using namespace boost::python;
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/gui/qt3/SimulationController.cpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -21,7 +21,6 @@
+ #include &lt;boost/filesystem/convenience.hpp&gt;
+ #include &lt;boost/date_time/posix_time/posix_time.hpp&gt;
+ #include &lt;unistd.h&gt;
+-#include&lt;yade/core/yadeExceptions.hpp&gt;
+ #include &lt;Wm3Math.h&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ #include&lt;boost/foreach.hpp&gt;
+@@ -242,7 +241,7 @@
+ 			pbResetSimulation-&gt;setDisabled(true);
+ 			pbOneSimulationStep-&gt;setDisabled(true);
+ 		}
+-		catch(yadeError&amp; e)
++		catch(std::runtime_error&amp; e)
+ 		{
+ 			Omega::instance().resetRootBody();
+ 			Omega::instance().setSimulationFileName(&quot;&quot;);
+
+Modified: trunk/lib/factory/ClassFactory.cpp
+===================================================================
+--- trunk/lib/factory/ClassFactory.cpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/lib/factory/ClassFactory.cpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -14,11 +14,6 @@
+ 
+ class Factorable;
+ 
+-void ClassFactory::addBaseDirectory(const string&amp; dir)
+-{
+-	dlm.addBaseDirectory(dir);
+-}
+-
+ bool ClassFactory::registerFactorable( std::string name 			   , CreateFactorableFnPtr create,
+ 					 CreateSharedFactorableFnPtr createShared, CreatePureCustomFnPtr createPureCustom)
+ {
+@@ -49,7 +44,7 @@
+ 	FactorableCreatorsMap::const_iterator i = map.find( name );
+ 	if( i == map.end() )
+ 	{
+-		dlm.loadFromDirectoryList(name);
++		dlm.load(name);
+ 		if (dlm.isLoaded(name))
+ 		{
+ 			if( map.find( name ) == map.end() )
+@@ -76,7 +71,7 @@
+ 	if( i == map.end() )
+ 	{
+ 		//cerr &lt;&lt; &quot;------------ going to load something&quot; &lt;&lt; endl;
+-		dlm.loadFromDirectoryList(name);
++		dlm.load(name);
+ 		if (dlm.isLoaded(name))
+ 		{
+ 			if( map.find( name ) == map.end() )
+@@ -105,7 +100,7 @@
+ 
+ bool ClassFactory::load(const string&amp; name)
+ {
+-        return dlm.loadFromDirectoryList(name);
++        return dlm.load(name);
+ }
+ 
+ string ClassFactory::lastError()
+
+Modified: trunk/lib/factory/ClassFactory.hpp
+===================================================================
+--- trunk/lib/factory/ClassFactory.hpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/lib/factory/ClassFactory.hpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -137,8 +137,6 @@
+ 		*/
+ 		bool isFactorable(const type_info&amp; tp,bool&amp; fundamental);
+ 
+-		void addBaseDirectory(const string&amp; dir);
+-
+ 		bool load(const string&amp; name);
+ 		std::string lastError();
+ 
+
+Modified: trunk/lib/factory/DynLibManager.cpp
+===================================================================
+--- trunk/lib/factory/DynLibManager.cpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/lib/factory/DynLibManager.cpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -26,41 +26,16 @@
+ 
+ DynLibManager::DynLibManager ()
+ {
+-	baseDirs.clear();
+ 	autoUnload = true;
+ }
+ 
+ 
+ DynLibManager::~DynLibManager ()
+ {
+-	if (autoUnload)
+-		unloadAll();
++	if(autoUnload) unloadAll();
+ }
+ 
+ 
+-void DynLibManager::addBaseDirectory(const string&amp; dir)
+-{
+-	string tmpDir;
+-	if ( dir[dir.size()-1]=='/' || dir[dir.size()-1]=='\\' )
+-		tmpDir = dir.substr(0,dir.size()-1);
+-	else
+-		tmpDir = dir;
+-
+-	baseDirs.push_back(tmpDir);
+-}
+-
+-
+-bool DynLibManager::loadFromDirectoryList (const string&amp; libName )
+-{
+-	if (libName.empty()) return false;
+-	string libFileName = libNameToSystemName(libName);
+-	string baseDir = findLibDir(libName);
+-	string fullLibName;
+-	if (baseDir.length()==0) return load(libFileName,libName);
+-	else return load(baseDir+&quot;/&quot;+libFileName,libName);
+-}
+-
+-
+ bool DynLibManager::load (const string&amp; fullLibName, const string&amp; libName )
+ {
+ 	if (libName.empty() || fullLibName.empty()){
+@@ -159,8 +134,6 @@
+ 	
+ 		if (lastError != ERROR_SUCCESS)
+ 		{
+-//			cerr &lt;&lt; errMsg &lt;&lt; endl;
+-//			Omega::printErrorLog(errMsg);
+ 			lastError_ = errMsg;
+ 			return true;
+ 		}
+@@ -170,8 +143,6 @@
+  		char * error = dlerror();
+ 		if (error != NULL)  
+ 		{
+-			//cerr &lt;&lt; error &lt;&lt; endl;
+-			//Omega::printErrorLog(error);
+ 			lastError_ = error;
+ 		}
+ 		return (error!=NULL);
+@@ -195,8 +166,8 @@
+ {
+ 	string libName;
+ 	if(name.length()&lt;=3){ // this arbitrary value may disappear once the logic below is dumped...
+-		LOG_WARN(&quot;Filename `&quot;&lt;&lt;name&lt;&lt;&quot;' too short, returning empty string (cross thumbs).&quot;);
+-		return &quot;&quot;;
++		// LOG_WARN(&quot;Filename `&quot;&lt;&lt;name&lt;&lt;&quot;' too short, returning empty string (cross thumbs).&quot;);
++		return &quot;[Garbage plugin file `&quot;+name+&quot;']&quot;;
+ 	}
+ 
+ 	#ifdef WIN32
+@@ -208,26 +179,3 @@
+ 	return libName;
+ }
+ 
+-
+-string DynLibManager::findLibDir(const string&amp; name)
+-{
+-	string libFileName = libNameToSystemName(name);
+-
+-	string baseDir;
+-	baseDir.clear();
+-
+-	vector&lt;string&gt;::iterator bdi    = baseDirs.begin();
+-	vector&lt;string&gt;::iterator bdiEnd = baseDirs.end();
+-	for( ; bdi != bdiEnd ; ++bdi)
+-	{
+-		filesystem::path name = filesystem::path((*bdi)+&quot;/&quot;+libFileName);
+-		if ( filesystem::exists( name ) )
+-		{
+-			baseDir = (*bdi);
+-			break;
+-		}
+-	}
+-
+-	return baseDir;
+-}
+-
+
+Modified: trunk/lib/factory/DynLibManager.hpp
+===================================================================
+--- trunk/lib/factory/DynLibManager.hpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/lib/factory/DynLibManager.hpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -36,8 +36,6 @@
+ 		#else	
+ 		std::map&lt;const std::string, void *&gt; handles;
+ 		#endif
+-
+-		vector&lt;string&gt; baseDirs;
+ 		bool autoUnload;
+ 
+ 	public :
+@@ -45,9 +43,10 @@
+ 		~DynLibManager ();
+ 		void addBaseDirectory(const std::string&amp; dir);
+ 
+-		bool load (const std::string&amp; libName, const std::string&amp; libName2);
+-		bool loadFromDirectoryList (const std::string&amp; fullLibName);
++		bool load(const std::string&amp; libName, const std::string&amp; libName2);
++		bool load(const std::string&amp; pluginName){return load(libNameToSystemName(pluginName),pluginName);}
+ 
++
+ 		bool unload (const string libName);
+ 		bool isLoaded (const string libName);
+ 		bool unloadAll ();
+@@ -55,7 +54,6 @@
+ 
+ 		string libNameToSystemName(const string&amp; name);
+ 		string systemNameToLibName(const string&amp; name);
+-		string findLibDir(const string&amp; name);
+ 		string lastError();
+ 		DECLARE_LOGGER;
+ 
+
+Copied: trunk/pkg/dem/ConcretePM.cpp (from rev 1777, trunk/extra/Brefcom.cpp)
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/pkg/dem/ConcretePM.cpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -0,0 +1,364 @@
++// 2007,2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt; 
++#include&quot;ConcretePM.hpp&quot;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-common/Sphere.hpp&gt;
++#include&lt;yade/lib-QGLViewer/qglviewer.h&gt;
++#include&lt;yade/lib-opengl/GLUtils.hpp&gt;
++#include&lt;yade/pkg-dem/DemXDofGeom.hpp&gt;
++#include&lt;yade/extra/Shop.hpp&gt;
++
++YADE_PLUGIN(&quot;CpmMat&quot;,&quot;Ip2_CpmMat_CpmMat_CpmPhys&quot;,&quot;CpmPhys&quot;,&quot;Law2_Dem3DofGeom_CpmPhys_Cpm&quot;,&quot;CpmGlobalCharacteristics&quot;,&quot;GLDrawCpmPhys&quot;,&quot;CpmPhysDamageColorizer&quot;);
++
++
++/********************** Ip2_CpmMat_CpmMat_CpmPhys ****************************/
++
++CREATE_LOGGER(Ip2_CpmMat_CpmMat_CpmPhys);
++
++void Ip2_CpmMat_CpmMat_CpmPhys::go(const shared_ptr&lt;PhysicalParameters&gt;&amp; pp1, const shared_ptr&lt;PhysicalParameters&gt;&amp; pp2, const shared_ptr&lt;Interaction&gt;&amp; interaction){
++	Dem3DofGeom* contGeom=YADE_CAST&lt;Dem3DofGeom*&gt;(interaction-&gt;interactionGeometry.get());
++
++	assert(contGeom); // for now, don't handle anything other than SpheresContactGeometry and Dem3DofGeom
++
++	if(!interaction-&gt;isNew &amp;&amp; interaction-&gt;interactionPhysics){ /* relax */ } 
++	else {
++		interaction-&gt;isNew=false; // just in case
++
++		const shared_ptr&lt;BodyMacroParameters&gt;&amp; elast1=static_pointer_cast&lt;BodyMacroParameters&gt;(pp1);
++		const shared_ptr&lt;BodyMacroParameters&gt;&amp; elast2=static_pointer_cast&lt;BodyMacroParameters&gt;(pp2);
++
++		Real E12=2*elast1-&gt;young*elast2-&gt;young/(elast1-&gt;young+elast2-&gt;young); // harmonic Young's modulus average
++		//Real nu12=2*elast1-&gt;poisson*elast2-&gt;poisson/(elast1-&gt;poisson+elast2-&gt;poisson); // dtto for Poisson ratio 
++		Real minRad=(contGeom-&gt;refR1&lt;=0?contGeom-&gt;refR2:(contGeom-&gt;refR2&lt;=0?contGeom-&gt;refR1:min(contGeom-&gt;refR1,contGeom-&gt;refR2)));
++		Real S12=Mathr::PI*pow(minRad,2); // &quot;surface&quot; of interaction
++		//Real E=(E12 /* was here for Kn:  *S12/d0  */)*((1+alpha)/(beta*(1+nu12)+gamma*(1-alpha*nu12)));
++		//Real E=E12; // apply alpha, beta, gamma: garbage values of E !?
++
++		if(!neverDamage) { assert(!isnan(sigmaT)); }
++
++		shared_ptr&lt;CpmPhys&gt; contPhys(new CpmPhys());
++
++		contPhys-&gt;E=E12;
++		contPhys-&gt;G=E12*G_over_E;
++		contPhys-&gt;tanFrictionAngle=tan(.5*(elast1-&gt;frictionAngle+elast2-&gt;frictionAngle));
++		contPhys-&gt;undamagedCohesion=sigmaT;
++		contPhys-&gt;crossSection=S12;
++		contPhys-&gt;epsCrackOnset=epsCrackOnset;
++		contPhys-&gt;epsFracture=relDuctility*epsCrackOnset;
++		contPhys-&gt;omegaThreshold=omegaThreshold;
++		// inherited from NormalShearInteracion, used in the timestepper
++		contPhys-&gt;kn=contPhys-&gt;E*contPhys-&gt;crossSection;
++		contPhys-&gt;ks=contPhys-&gt;G*contPhys-&gt;crossSection;
++
++		if(neverDamage) contPhys-&gt;neverDamage=true;
++		if(cohesiveThresholdIter&lt;0 || Omega::instance().getCurrentIteration()&lt;cohesiveThresholdIter) contPhys-&gt;isCohesive=true;
++		else contPhys-&gt;isCohesive=false;
++		contPhys-&gt;dmgTau=dmgTau;
++		contPhys-&gt;dmgRateExp=dmgRateExp;
++		contPhys-&gt;plTau=plTau;
++		contPhys-&gt;plRateExp=plRateExp;
++		contPhys-&gt;isoPrestress=isoPrestress;
++
++		interaction-&gt;interactionPhysics=contPhys;
++	}
++}
++
++
++
++
++/********************** CpmPhys ****************************/
++CREATE_LOGGER(CpmPhys);
++
++// !! at least one virtual function in the .cpp file
++CpmPhys::~CpmPhys(){};
++
++CREATE_LOGGER(Law2_Dem3DofGeom_CpmPhys_Cpm);
++
++long CpmPhys::cummBetaIter=0, CpmPhys::cummBetaCount=0;
++
++Real CpmPhys::solveBeta(const Real c, const Real N){
++	#ifdef YADE_DEBUG
++		cummBetaCount++;
++	#endif
++	const int maxIter=20;
++	const Real maxError=1e-12;
++	Real f, ret=0.;
++	for(int i=0; i&lt;maxIter; i++){
++		#ifdef YADE_DEBUG
++			cummBetaIter++;
++		#endif
++		Real aux=c*exp(N*ret)+exp(ret);
++		f=log(aux);
++		if(fabs(f)&lt;maxError) return ret;
++		Real df=(c*N*exp(N*ret)+exp(ret))/aux;
++		ret-=f/df;
++	}
++	LOG_FATAL(&quot;No convergence after &quot;&lt;&lt;maxIter&lt;&lt;&quot; iters; c=&quot;&lt;&lt;c&lt;&lt;&quot;, N=&quot;&lt;&lt;N&lt;&lt;&quot;, ret=&quot;&lt;&lt;ret&lt;&lt;&quot;, f=&quot;&lt;&lt;f);
++	throw runtime_error(&quot;Law2_Dem3DofGeom_CpmPhys_Cpm::solveBeta failed to converge.&quot;);
++}
++
++Real CpmPhys::computeDmgOverstress(Real dt){
++	if(dmgStrain&gt;=epsN*omega){ // unloading, no viscous stress
++		dmgStrain=epsN*omega;
++		LOG_TRACE(&quot;Elastic/unloading, no viscous overstress&quot;);
++		return 0.;
++	}
++	Real c=epsCrackOnset*(1-omega)*pow(dmgTau/dt,dmgRateExp)*pow(epsN*omega-dmgStrain,dmgRateExp-1.);
++	Real beta=solveBeta(c,dmgRateExp);
++	Real deltaDmgStrain=(epsN*omega-dmgStrain)*exp(beta);
++	dmgStrain+=deltaDmgStrain;
++	LOG_TRACE(&quot;deltaDmgStrain=&quot;&lt;&lt;deltaDmgStrain&lt;&lt;&quot;, viscous overstress &quot;&lt;&lt;(epsN*omega-dmgStrain)*E);
++	/* &#963;N=Kn(&#949;N-&#949;d); dmgOverstress=&#963;N-(1-&#969;)*Kn*&#949;N=&#8230;=Kn(&#969;*&#949;N-&#949;d) */
++	return (epsN*omega-dmgStrain)*E;
++}
++
++Real CpmPhys::computeViscoplScalingFactor(Real sigmaTNorm, Real sigmaTYield,Real dt){
++	if(sigmaTNorm&lt;sigmaTYield) return 1.;
++	Real c=undamagedCohesion*pow(plTau/(G*dt),plRateExp)*pow(sigmaTNorm-sigmaTYield,plRateExp-1.);
++	Real beta=solveBeta(c,plRateExp);
++	//LOG_DEBUG(&quot;scaling factor &quot;&lt;&lt;1.-exp(beta)*(1-sigmaTYield/sigmaTNorm));
++	return 1.-exp(beta)*(1-sigmaTYield/sigmaTNorm);
++}
++
++
++
++/********************** Law2_Dem3DofGeom_CpmPhys_Cpm ****************************/
++
++Real Law2_Dem3DofGeom_CpmPhys_Cpm::minStrain_moveBody2=1.; /* deactivated if &gt; 0 */
++Real Law2_Dem3DofGeom_CpmPhys_Cpm::yieldLogSpeed=1.;
++Real Law2_Dem3DofGeom_CpmPhys_Cpm::yieldEllipseShift=0.;
++
++void Law2_Dem3DofGeom_CpmPhys_Cpm::go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody){
++	//timingDeltas-&gt;start();
++	Dem3DofGeom* contGeom=static_cast&lt;Dem3DofGeom*&gt;(_geom.get());
++	CpmPhys* BC=static_cast&lt;CpmPhys*&gt;(_phys.get());
++
++	/* kept fully damaged contacts; note that normally the contact is deleted _after_ the CPM_MATERIAL_MODEL,
++	 * i.e. if it is 1.0 here, omegaThreshold is &gt;= 1.0 for sure.
++	 * &amp;&amp;'ing that just to make sure anyway ...
++	 */
++	// if(BC-&gt;omega&gt;=1.0 &amp;&amp; BC-&gt;omegaThreshold&gt;=1.0) return;
++
++	// shorthands
++	Real&amp; epsN(BC-&gt;epsN); Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); Real&amp; epsPlSum(BC-&gt;epsPlSum); const Real&amp; E(BC-&gt;E); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle); const Real&amp; G(BC-&gt;G); const Real&amp; crossSection(BC-&gt;crossSection); const Real&amp; omegaThreshold(BC-&gt;omegaThreshold); const Real&amp; epsCrackOnset(BC-&gt;epsCrackOnset); Real&amp; relResidualStrength(BC-&gt;relResidualStrength); const Real&amp; dt=Omega::instance().getTimeStep();  const Real&amp; epsFracture(BC-&gt;epsFracture); const bool&amp; neverDamage(BC-&gt;neverDamage); const Real&amp; dmgTau(BC-&gt;dmgTau); const Real&amp; plTau(BC-&gt;plTau); const bool&amp; isCohesive(BC-&gt;isCohesive);
++	/* const Real&amp; transStrainCoeff(BC-&gt;transStrainCoeff); const Real&amp; epsTrans(BC-&gt;epsTrans); const Real&amp; xiShear(BC-&gt;xiShear); */
++	Real&amp; omega(BC-&gt;omega); Real&amp; sigmaN(BC-&gt;sigmaN);  Vector3r&amp; sigmaT(BC-&gt;sigmaT); Real&amp; Fn(BC-&gt;Fn); Vector3r&amp; Fs(BC-&gt;Fs); // for python access
++	const Real&amp; yieldLogSpeed(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldLogSpeed); const int&amp; yieldSurfType(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldSurfType);
++	const Real&amp; yieldEllipseShift(Law2_Dem3DofGeom_CpmPhys_Cpm::yieldEllipseShift); 
++
++	#define YADE_VERIFY(condition) if(!(condition)){LOG_FATAL(&quot;Verification `&quot;&lt;&lt;#condition&lt;&lt;&quot;' failed!&quot;); throw;}
++	
++	#define NNAN(a) YADE_VERIFY(!isnan(a));
++	#define NNANV(v) YADE_VERIFY(!isnan(v[0])); assert(!isnan(v[1])); assert(!isnan(v[2]));
++
++	//timingDeltas-&gt;checkpoint(&quot;setup&quot;);
++	// if(contGeom-&gt;refR1&lt;0) contGeom-&gt;refLength=contGeom-&gt;refR2; // make facet-sphere contact always at equilibrium when touching exactly (and not the initial distance)
++	epsN=contGeom-&gt;strainN(); epsT=contGeom-&gt;strainT();
++	#ifdef YADE_DEBUG
++		if(isnan(epsN)){
++			LOG_FATAL(&quot;refLength=&quot;&lt;&lt;contGeom-&gt;refLength&lt;&lt;&quot;; pos1=&quot;&lt;&lt;contGeom-&gt;se31.position&lt;&lt;&quot;; pos2=&quot;&lt;&lt;contGeom-&gt;se32.position&lt;&lt;&quot;; displacementN=&quot;&lt;&lt;contGeom-&gt;displacementN());
++			throw runtime_error(&quot;!! epsN==NaN !!&quot;);
++		}
++		NNAN(epsN); NNANV(epsT);
++	#endif
++	// already in SpheresContactGeometry:
++	// contGeom-&gt;relocateContactPoints(); // allow very large mutual rotations
++	if(logStrain &amp;&amp; epsN&lt;0){
++		Real epsN0=epsN;
++		epsN=log(epsN0+1); epsT*=epsN/epsN0;
++	}
++	NNAN(epsN); NNANV(epsT);
++	//timingDeltas-&gt;checkpoint(&quot;geom&quot;);
++
++	epsN+=BC-&gt;isoPrestress/E;
++	//TRVAR1(epsN);
++	#ifdef CPM_MATERIAL_MODEL
++		CPM_MATERIAL_MODEL
++	#else
++		sigmaN=E*epsN;
++		sigmaT=G*epsT;
++	#endif
++	sigmaN-=BC-&gt;isoPrestress;
++	if(contGeom-&gt;refR1&lt;0 &amp;&amp; Law2_Dem3DofGeom_CpmPhys_Cpm::minStrain_moveBody2&lt;=0 &amp;&amp; epsN&lt;Law2_Dem3DofGeom_CpmPhys_Cpm::minStrain_moveBody2){
++		/* move Body2 (the sphere) so that minStrain is satisfied */
++		rootBody-&gt;bex.addMove(I-&gt;getId2(),contGeom-&gt;normal*(Law2_Dem3DofGeom_CpmPhys_Cpm::minStrain_moveBody2-epsN)*contGeom-&gt;refLength);
++		LOG_TRACE(&quot;Moving by &quot;&lt;&lt;contGeom-&gt;normal*(Law2_Dem3DofGeom_CpmPhys_Cpm::minStrain_moveBody2-epsN)*contGeom-&gt;refLength);
++	}
++	NNAN(kappaD); NNAN(epsCrackOnset); NNAN(epsFracture); NNAN(omega);
++	NNAN(sigmaN); NNANV(sigmaT); NNAN(crossSection);
++	//timingDeltas-&gt;checkpoint(&quot;material&quot;);
++
++	//const int watch1=6300, watch2=6299;
++	//#define SHOW(a) if((I-&gt;getId1()==watch1 &amp;&amp; I-&gt;getId2()==watch2) || (I-&gt;getId2()==watch1 &amp;&amp; I-&gt;getId1()==watch2)) cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; &quot;&lt;&lt;a&lt;&lt;endl;
++	//SHOW(&quot;epsN&quot;&lt;&lt;epsN);
++	if(epsN&gt;0. &amp;&amp; ((isCohesive &amp;&amp; omega&gt;omegaThreshold) || !isCohesive)){
++		rootBody-&gt;interactions-&gt;requestErase(I-&gt;getId1(),I-&gt;getId2());
++		if(isCohesive){
++			const shared_ptr&lt;Body&gt;&amp; body1=Body::byId(I-&gt;getId1(),rootBody), body2=Body::byId(I-&gt;getId2(),rootBody); assert(body1); assert(body2);
++			const shared_ptr&lt;CpmMat&gt;&amp; rbp1=YADE_PTR_CAST&lt;CpmMat&gt;(body1-&gt;physicalParameters), rbp2=YADE_PTR_CAST&lt;CpmMat&gt;(body2-&gt;physicalParameters);
++			if(BC-&gt;isCohesive){rbp1-&gt;numBrokenCohesive+=1; rbp2-&gt;numBrokenCohesive+=1; rbp1-&gt;epsPlBroken+=epsPlSum; rbp2-&gt;epsPlBroken+=epsPlSum;}
++			LOG_DEBUG(&quot;Contact #&quot;&lt;&lt;I-&gt;getId1()&lt;&lt;&quot;=#&quot;&lt;&lt;I-&gt;getId2()&lt;&lt;&quot; is damaged over thershold (&quot;&lt;&lt;omega&lt;&lt;&quot;&gt;&quot;&lt;&lt;omegaThreshold&lt;&lt;&quot;) and will be deleted.&quot;);
++		}
++		return;
++	}
++
++	Fn=sigmaN*crossSection; BC-&gt;normalForce=Fn*contGeom-&gt;normal;
++	Fs=sigmaT*crossSection; BC-&gt;shearForce=Fs;
++
++	applyForceAtContactPoint(BC-&gt;normalForce+BC-&gt;shearForce, contGeom-&gt;contactPoint, I-&gt;getId1(), contGeom-&gt;se31.position, I-&gt;getId2(), contGeom-&gt;se32.position, rootBody);
++	//timingDeltas-&gt;checkpoint(&quot;rest&quot;);
++}
++
++
++/********************** GLDrawCpmPhys ****************************/
++
++#include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
++
++CREATE_LOGGER(GLDrawCpmPhys);
++
++bool GLDrawCpmPhys::contactLine=true;
++bool GLDrawCpmPhys::dmgLabel=true;
++bool GLDrawCpmPhys::dmgPlane=false;
++bool GLDrawCpmPhys::epsNLabel=true;
++bool GLDrawCpmPhys::epsT=false;
++bool GLDrawCpmPhys::epsTAxes=false;
++bool GLDrawCpmPhys::normal=false;
++bool GLDrawCpmPhys::colorStrain=false;
++
++
++void GLDrawCpmPhys::go(const shared_ptr&lt;InteractionPhysics&gt;&amp; ip, const shared_ptr&lt;Interaction&gt;&amp; i, const shared_ptr&lt;Body&gt;&amp; b1, const shared_ptr&lt;Body&gt;&amp; b2, bool wireFrame){
++	const shared_ptr&lt;CpmPhys&gt;&amp; BC=static_pointer_cast&lt;CpmPhys&gt;(ip);
++	const shared_ptr&lt;Dem3DofGeom&gt;&amp; geom=YADE_PTR_CAST&lt;Dem3DofGeom&gt;(i-&gt;interactionGeometry);
++
++	//Vector3r lineColor(BC-&gt;omega,1-BC-&gt;omega,0.0); /* damaged links red, undamaged green */
++	Vector3r lineColor=Shop::scalarOnColorScale(1.-BC-&gt;relResidualStrength);
++
++	if(colorStrain) lineColor=Vector3r(
++		min((Real)1.,max((Real)0.,-BC-&gt;epsTrans/BC-&gt;epsCrackOnset)),
++		min((Real)1.,max((Real)0.,BC-&gt;epsTrans/BC-&gt;epsCrackOnset)),
++		min((Real)1.,max((Real)0.,abs(BC-&gt;epsTrans)/BC-&gt;epsCrackOnset-1)));
++
++	if(contactLine) GLUtils::GLDrawLine(b1-&gt;physicalParameters-&gt;dispSe3.position,b2-&gt;physicalParameters-&gt;dispSe3.position,lineColor);
++	if(dmgLabel){ GLUtils::GLDrawNum(BC-&gt;omega,0.5*(b1-&gt;physicalParameters-&gt;dispSe3.position+b2-&gt;physicalParameters-&gt;dispSe3.position),lineColor); }
++	else if(epsNLabel){ GLUtils::GLDrawNum(BC-&gt;epsN,0.5*(b1-&gt;physicalParameters-&gt;dispSe3.position+b2-&gt;physicalParameters-&gt;dispSe3.position),lineColor); }
++	if(BC-&gt;omega&gt;0 &amp;&amp; dmgPlane){
++		Real halfSize=sqrt(1-BC-&gt;relResidualStrength)*.5*.705*sqrt(BC-&gt;crossSection);
++		Vector3r midPt=.5*Vector3r(b1-&gt;physicalParameters-&gt;dispSe3.position+b2-&gt;physicalParameters-&gt;dispSe3.position);
++		glDisable(GL_CULL_FACE);
++		glPushMatrix();
++			glTranslatev(midPt);
++			Quaternionr q; q.Align(Vector3r::UNIT_Z,geom-&gt;normal);
++			Vector3r axis; Real angle; q.ToAxisAngle(axis,angle);
++			glRotatef(angle*Mathr::RAD_TO_DEG,axis[0],axis[1],axis[2]);
++			glBegin(GL_POLYGON);
++				glColor3v(lineColor); 
++				glVertex3d(halfSize,0.,0.);
++				glVertex3d(.5*halfSize,.866*halfSize,0.);
++				glVertex3d(-.5*halfSize,.866*halfSize,0.);
++				glVertex3d(-halfSize,0.,0.);
++				glVertex3d(-.5*halfSize,-.866*halfSize,0.);
++				glVertex3d(.5*halfSize,-.866*halfSize,0.);
++			glEnd();
++		glPopMatrix();
++	}
++
++	const Vector3r&amp; cp=static_pointer_cast&lt;Dem3DofGeom&gt;(i-&gt;interactionGeometry)-&gt;contactPoint;
++	if(epsT){
++		Real maxShear=(BC-&gt;undamagedCohesion-BC-&gt;sigmaN*BC-&gt;tanFrictionAngle)/BC-&gt;G;
++		Real relShear=BC-&gt;epsT.Length()/maxShear;
++		Real scale=.5*geom-&gt;refLength;
++		Vector3r dirShear=BC-&gt;epsT; dirShear.Normalize();
++		if(epsTAxes){
++			GLUtils::GLDrawLine(cp-Vector3r(scale,0,0),cp+Vector3r(scale,0,0));
++			GLUtils::GLDrawLine(cp-Vector3r(0,scale,0),cp+Vector3r(0,scale,0));
++			GLUtils::GLDrawLine(cp-Vector3r(0,0,scale),cp+Vector3r(0,0,scale));
++		}
++		GLUtils::GLDrawArrow(cp,cp+dirShear*relShear*scale,Vector3r(1.,0.,0.));
++		GLUtils::GLDrawLine(cp+dirShear*relShear*scale,cp+dirShear*scale,Vector3r(.3,.3,.3));
++
++		/* normal strain */ GLUtils::GLDrawArrow(cp,cp+geom-&gt;normal*(BC-&gt;epsN/maxShear),Vector3r(0.,1.,0.));
++	}
++	//if(normal) GLUtils::GLDrawArrow(cp,cp+geom-&gt;normal*.5*BC-&gt;equilibriumDist,Vector3r(0.,1.,0.));
++}
++
++
++/********************** CpmGlobalCharacteristics ****************************/
++
++CREATE_LOGGER(CpmGlobalCharacteristics);
++void CpmGlobalCharacteristics::compute(MetaBody* rb, bool useMaxForce){
++	rb-&gt;bex.sync();
++
++	// 1. reset volumetric strain (cummulative in the next loop)
++	// 2. get maximum force on a body and sum of all forces (for averaging)
++	Real sumF=0,maxF=0,currF;
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rb-&gt;bodies){
++	CpmMat* bpp(YADE_CAST&lt;CpmMat*&gt;(b-&gt;physicalParameters.get()));
++		bpp-&gt;epsVolumetric=0;
++		bpp-&gt;numContacts=0;
++		currF=rb-&gt;bex.getForce(b-&gt;id).Length(); maxF=max(currF,maxF); sumF+=currF;
++	}
++	Real meanF=sumF/rb-&gt;bodies-&gt;size(); 
++
++	// commulate normal strains from contacts
++	// get max force on contacts
++	Real maxContactF=0;
++	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rb-&gt;interactions){
++		if(!I-&gt;isReal) continue;
++		shared_ptr&lt;CpmPhys&gt; BC=YADE_PTR_CAST&lt;CpmPhys&gt;(I-&gt;interactionPhysics); assert(BC);
++		maxContactF=max(maxContactF,max(BC-&gt;Fn,BC-&gt;Fs.Length()));
++		CpmMat* bpp1(YADE_CAST&lt;CpmMat*&gt;(Body::byId(I-&gt;getId1())-&gt;physicalParameters.get()));
++		CpmMat* bpp2(YADE_CAST&lt;CpmMat*&gt;(Body::byId(I-&gt;getId2())-&gt;physicalParameters.get()));
++		bpp1-&gt;epsVolumetric+=BC-&gt;epsN; bpp1-&gt;numContacts+=1;
++		bpp2-&gt;epsVolumetric+=BC-&gt;epsN; bpp2-&gt;numContacts+=1;
++	}
++	unbalancedForce=(useMaxForce?maxF:meanF)/maxContactF;
++
++	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rb-&gt;interactions){
++		if(!I-&gt;isReal) continue;
++		shared_ptr&lt;CpmPhys&gt; BC=YADE_PTR_CAST&lt;CpmPhys&gt;(I-&gt;interactionPhysics); assert(BC);
++		CpmMat* bpp1(YADE_CAST&lt;CpmMat*&gt;(Body::byId(I-&gt;getId1())-&gt;physicalParameters.get()));
++		CpmMat* bpp2(YADE_CAST&lt;CpmMat*&gt;(Body::byId(I-&gt;getId2())-&gt;physicalParameters.get()));
++		Real epsVolAvg=.5*((3./bpp1-&gt;numContacts)*bpp1-&gt;epsVolumetric+(3./bpp2-&gt;numContacts)*bpp2-&gt;epsVolumetric);
++		BC-&gt;epsTrans=(epsVolAvg-BC-&gt;epsN)/2.;
++		//TRVAR5(I-&gt;getId1(),I-&gt;getId2(),BC-&gt;epsTrans,(3./bpp1-&gt;numContacts)*bpp1-&gt;epsVolumetric,(3./bpp2-&gt;numContacts)*bpp2-&gt;epsVolumetric);
++		//TRVAR4(bpp1-&gt;numContacts,bpp1-&gt;epsVolumetric,bpp2-&gt;numContacts,bpp2-&gt;epsVolumetric);
++	}
++	#if 0
++		FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rb-&gt;bodies){
++			CpmMat* bpp(YADE_PTR_CAST&lt;CpmMat&gt;(b-&gt;physicalParameters.get()));
++			bpp-&gt;epsVolumeric*=3/bpp-&gt;numContacts;
++		}
++	#endif
++}
++
++
++/********************** CpmPhysDamageColorizer ****************************/
++void CpmPhysDamageColorizer::action(MetaBody* rootBody){
++	//vector&lt;pair&lt;short,Real&gt; &gt; bodyDamage; /* number of cohesive interactions per body; cummulative damage of interactions */
++	//vector&lt;pair&lt;short,
++	vector&lt;BodyStats&gt; bodyStats; bodyStats.resize(rootBody-&gt;bodies-&gt;size());
++	assert(bodyStats[0].nCohLinks==0); // should be initialized by dfault ctor
++	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rootBody-&gt;interactions){
++		shared_ptr&lt;CpmPhys&gt; BC=dynamic_pointer_cast&lt;CpmPhys&gt;(I-&gt;interactionPhysics);
++		if(!BC || !BC-&gt;isCohesive) continue;
++		const body_id_t id1=I-&gt;getId1(), id2=I-&gt;getId2();
++		bodyStats[id1].nCohLinks++; bodyStats[id1].dmgSum+=(1-BC-&gt;relResidualStrength); bodyStats[id1].epsPlSum+=BC-&gt;epsPlSum;
++		bodyStats[id2].nCohLinks++; bodyStats[id2].dmgSum+=(1-BC-&gt;relResidualStrength); bodyStats[id2].epsPlSum+=BC-&gt;epsPlSum;
++		//bodyDamage[id1].first++; bodyDamage[id2].first++;
++		//bodyDamage[id1].second+=(1-BC-&gt;relResidualStrength); bodyDamage[id2].second+=(1-BC-&gt;relResidualStrength);
++		maxOmega=max(maxOmega,BC-&gt;omega);
++	}
++	FOREACH(shared_ptr&lt;Body&gt; B, *rootBody-&gt;bodies){
++		body_id_t id=B-&gt;getId();
++		// add damaged contacts that have already been deleted
++		CpmMat* bpp=dynamic_cast&lt;CpmMat*&gt;(B-&gt;physicalParameters.get());
++		if(!bpp) continue;
++		short cohLinksWhenever=bodyStats[id].nCohLinks+bpp-&gt;numBrokenCohesive;
++		if(cohLinksWhenever&gt;0){
++			bpp-&gt;normDmg=(bodyStats[id].dmgSum+bpp-&gt;numBrokenCohesive)/cohLinksWhenever;
++			bpp-&gt;normEpsPl=(bodyStats[id].epsPlSum+bpp-&gt;epsPlBroken)/cohLinksWhenever;
++		}
++		else { bpp-&gt;normDmg=0; bpp-&gt;normEpsPl=0;}
++		B-&gt;geometricalModel-&gt;diffuseColor=Vector3r(bpp-&gt;normDmg,1-bpp-&gt;normDmg,B-&gt;isDynamic?0:1);
++	}
++}
+
+
+Property changes on: trunk/pkg/dem/ConcretePM.cpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/pkg/dem/ConcretePM.hpp (from rev 1777, trunk/extra/Brefcom.hpp)
+===================================================================
+--- trunk/extra/Brefcom.hpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/pkg/dem/ConcretePM.hpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -0,0 +1,318 @@
++// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt; 
++
++/*
++
++=== HIGH LEVEL OVERVIEW OF CPM ===
++
++Concrete Particle Model (ConcretePM, Cpm) is a set of classes for modelling
++mechanical behavior of concrete. Several classes are needed for Cpm.
++
++1. CpmMat (Cpm material) deriving from BodyMacroParameters, which additionally has
++   some information about damage on the body, cummulative plastic strain etc.
++
++2.	Ip2_CpmMat_CpmMat_CpmPhys is 2-ary functor for creating CpmPhys from CpmMat's of
++	2 bodies that collide. Some parameters of the CpmPhys created are computed from
++	CpmMat's, others are passed as parameters of the functor.
++
++3. CpmPhys (Cpm (interaction)Physics) holds various parameters as well as internal
++   variables of the contact that can change as result of plasticity, damage, viscosity.
++
++4. Law2_Dem3Dof_CpmPhys_Cpm is constitutive law that takes geometry of the interaction
++	(Dem3Dof, which can be either Dem3Dof_SphereSphere or Dem3Dof_FacetSphere) and
++	CpmPhys, computing forces on both bodies and updating contact variables.
++
++	The model itself is defined in the macro CPM_MATERIAL_MODEL, but due to 
++	commercial reasons, those about 30 lines of code cannot be disclosed now and the macro
++	is defined in an external file. The model will be, however, described in enough detail
++	in my thesis (once it is written), along
++	with calibration procedures; it features damage, plasticity and viscosity
++	and is quite tunable (rigidity, poisson's	ratio, compressive/tensile strength
++	ratio, fracture energy, behavior under confinement, rate-dependence).
++
++There are other classes, which are not strictly necessary:
++
++ * CpmGlobalCharacteristics computes a few information about individual bodies based on
++   interactions they are involved in. It is probably quite useless now since volumetricStrain
++	is not used in the constitutive law anymore.
++
++ * GLDrawCpmPhys draws interaction physics (color for damage and a few other); rarely used, though.
++
++ * CpmPhysDamageColorizer changes bodies' colors depending on average damage of their interactions
++   and number of interactions that were already fully broken and have disappeared. This engine
++	contains its own loop (2 loops, more precisely) over all bodies and is run periodically
++	to update colors.
++
++*/
++
++#pragma once
++
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-common/InteractionPhysicsEngineUnit.hpp&gt;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-common/GLDrawFunctors.hpp&gt;
++#include&lt;yade/pkg-common/PeriodicEngines.hpp&gt;
++#include&lt;yade/pkg-common/NormalShearInteractions.hpp&gt;
++#include&lt;yade/pkg-common/ConstitutiveLaw.hpp&gt;
++
++/* This class holds information associated with each body */
++class CpmMat: public BodyMacroParameters {
++	public:
++		//! volumetric strain around this body
++		Real epsVolumetric;
++		//! number of (cohesive) contacts that damaged completely
++		int numBrokenCohesive;
++		//! number of contacts with this body
++		int numContacts;
++		//! average damage including already deleted contacts (it is really not damage, but 1-relResidualStrength now)
++		Real normDmg;
++		//! plastic strain on contacts already deleted
++		Real epsPlBroken;
++		//! sum of plastic strains normalized by number of contacts
++		Real normEpsPl;
++		CpmMat(): epsVolumetric(0.), numBrokenCohesive(0), numContacts(0), normDmg(0.), epsPlBroken(0.), normEpsPl(0.) {createIndex();};
++		REGISTER_ATTRIBUTES(BodyMacroParameters, (epsVolumetric) (numBrokenCohesive) (numContacts) (normDmg) (epsPlBroken) (normEpsPl));
++		REGISTER_CLASS_AND_BASE(CpmMat,BodyMacroParameters);
++};
++REGISTER_SERIALIZABLE(CpmMat);
++
++
++/*! @brief representation of a single interaction of the CPM type: storage for relevant parameters.
++ *
++ * Evolution of the contact is governed by Law2_Dem3DofGeom_CpmPhys_Cpm:
++ * that includes damage effects and chages of parameters inside CpmPhys.
++ *
++ */
++class CpmPhys: public NormalShearInteraction {
++	private:
++	public:
++		/*! Fundamental parameters (constants) */
++		Real
++			//! normal modulus (stiffness / crossSection)
++			E,
++			//! shear modulus
++			G,
++			//! tangens of internal friction angle
++			tanFrictionAngle, 
++			//! virgin material cohesion
++			undamagedCohesion,
++			//! equivalent cross-section associated with this contact
++			crossSection,
++			//! strain at which the material starts to behave non-linearly
++			epsCrackOnset,
++			//! strain where the damage-evolution law tangent from the top (epsCrackOnset) touches the axis;
++			/// since the softening law is exponential, this doesn't mean that the contact is fully damaged at this point,
++			/// that happens only asymptotically 
++			epsFracture,
++			//! damage after which the contact disappears (&lt;1), since omega reaches 1 only for strain &#8594;+&#8734;
++			omegaThreshold,
++			//! weight coefficient for shear strain when computing the strain semi-norm kappaD
++			xiShear,
++			//! characteristic time for damage (if non-positive, the law without rate-dependence is used)
++			dmgTau,
++			//! exponent in the rate-dependent damage evolution
++			dmgRateExp,
++			//! damage strain (at previous or current step)
++			dmgStrain,
++			//! damage viscous overstress (at previous step or at current step)
++			dmgOverstress,
++			//! characteristic time for viscoplasticity (if non-positive, no rate-dependence for shear)
++			plTau,
++			//! exponent in the rate-dependent viscoplasticity
++			plRateExp,
++			//! &quot;prestress&quot; of this link (used to simulate isotropic stress)
++			isoPrestress;
++		/*! Up to now maximum normal strain (semi-norm), non-decreasing in time. */
++		Real kappaD;
++		/*! Transversal strain (perpendicular to the contact axis) */
++		Real epsTrans;
++		/*! if not cohesive, interaction is deleted when distance is greater than zero. */
++		bool isCohesive;
++		/*! the damage evlution function will always return virgin state */
++		bool neverDamage;
++		/*! cummulative plastic strain measure (scalar) on this contact */
++		Real epsPlSum;
++		//! debugging, to see convergence rate
++		static long cummBetaIter, cummBetaCount;
++
++		/*! auxiliary variable for visualization, recalculated in Law2_Dem3DofGeom_CpmPhys_Cpm at every iteration */
++		// Fn and Fs are also stored as Vector3r normalForce, shearForce in NormalShearInteraction 
++		Real omega, Fn, sigmaN, epsN, relResidualStrength; Vector3r epsT, sigmaT, Fs;
++
++
++		static Real solveBeta(const Real c, const Real N);
++		Real computeDmgOverstress(Real dt);
++		Real computeViscoplScalingFactor(Real sigmaTNorm, Real sigmaTYield,Real dt);
++
++
++
++		CpmPhys(): NormalShearInteraction(),E(0), G(0), tanFrictionAngle(0), undamagedCohesion(0), crossSection(0), xiShear(0), dmgTau(-1), dmgRateExp(0), dmgStrain(0), plTau(-1), plRateExp(0), isoPrestress(0.), kappaD(0.), epsTrans(0.), epsPlSum(0.) { createIndex(); epsT=Vector3r::ZERO; isCohesive=false; neverDamage=false; omega=0; Fn=0; Fs=Vector3r::ZERO; epsPlSum=0; dmgOverstress=0; }
++		virtual ~CpmPhys();
++
++		REGISTER_ATTRIBUTES(NormalShearInteraction,
++			(E)
++			(G)
++			(tanFrictionAngle)
++			(undamagedCohesion)
++			(crossSection)
++			(epsCrackOnset)
++			(epsFracture)
++			(omegaThreshold)
++			(xiShear)
++			(dmgTau)
++			(dmgRateExp)
++			(dmgStrain)
++			(dmgOverstress)
++			(plTau)
++			(plRateExp)
++			(isoPrestress)
++
++			(cummBetaIter)
++			(cummBetaCount)
++
++			(kappaD)
++			(neverDamage)
++			(epsT)
++			(epsTrans)
++			(epsPlSum)
++
++			(isCohesive)
++
++			// auxiliary params to make them accessible from python
++			(omega)
++			(Fn)
++			(Fs)
++			(epsN)
++			(sigmaN)
++			(sigmaT)
++			(relResidualStrength)
++		);
++	REGISTER_CLASS_AND_BASE(CpmPhys,NormalShearInteraction);
++	DECLARE_LOGGER;
++};
++REGISTER_SERIALIZABLE(CpmPhys);
++
++
++/*! @brief Convert macroscopic properties to CpmPhys with corresponding parameters.
++ *
++ * */
++class Ip2_CpmMat_CpmMat_CpmPhys: public InteractionPhysicsEngineUnit{
++	private:
++	public:
++		/* nonelastic material parameters */
++		/* alternatively (and more cleanly), we would have subclass of ElasticBodyParameters,
++		 * which would define just those in addition to the elastic ones.
++		 * This might be done later, for now hardcode that here. */
++		/* uniaxial tension resistance, bending parameter of the damage evolution law, whear weighting constant for epsT in the strain seminorm (kappa) calculation. Default to NaN so that user gets loudly notified it was not set.
++		
++		*/
++		Real sigmaT, epsCrackOnset, relDuctility, G_over_E, tau, expDmgRate, omegaThreshold, dmgTau, dmgRateExp, plTau, plRateExp, isoPrestress;
++		//! Should new contacts be cohesive? They will before this iter#, they will not be afterwards. If 0, they will never be. If negative, they will always be created as cohesive.
++		long cohesiveThresholdIter;
++		//! Create contacts that don't receive any damage (CpmPhys::neverDamage=true); defaults to false
++		bool neverDamage;
++
++		Ip2_CpmMat_CpmMat_CpmPhys(){
++			// init to signaling_NaN to force crash if not initialized (better than unknowingly using garbage values)
++			sigmaT=epsCrackOnset=relDuctility=G_over_E=std::numeric_limits&lt;Real&gt;::signaling_NaN();
++			neverDamage=false;
++			cohesiveThresholdIter=-1;
++			dmgTau=-1; dmgRateExp=0; plTau=-1; plRateExp=-1;
++			omegaThreshold=0.999;
++			isoPrestress=0;
++		}
++
++		virtual void go(const shared_ptr&lt;PhysicalParameters&gt;&amp; pp1, const shared_ptr&lt;PhysicalParameters&gt;&amp; pp2, const shared_ptr&lt;Interaction&gt;&amp; interaction);
++		REGISTER_ATTRIBUTES(InteractionPhysicsEngineUnit,
++			(cohesiveThresholdIter)
++			(G_over_E)
++			(sigmaT)
++			(neverDamage)
++			(epsCrackOnset)
++			(relDuctility)
++			(dmgTau)
++			(dmgRateExp)
++			(plTau)
++			(plRateExp)
++			(omegaThreshold)
++			(isoPrestress)
++		);
++
++		FUNCTOR2D(CpmMat,CpmMat);
++		REGISTER_CLASS_AND_BASE(Ip2_CpmMat_CpmMat_CpmPhys,InteractionPhysicsEngineUnit);
++		DECLARE_LOGGER;
++};
++REGISTER_SERIALIZABLE(Ip2_CpmMat_CpmMat_CpmPhys);
++
++
++
++class Law2_Dem3DofGeom_CpmPhys_Cpm: public ConstitutiveLaw{
++	public:
++	/*! Damage evolution law */
++	static Real funcG(const Real&amp; kappaD, const Real&amp; epsCrackOnset, const Real&amp; epsFracture, const bool&amp; neverDamage) {
++		if(kappaD&lt;epsCrackOnset || neverDamage) return 0;
++		return 1.-(epsCrackOnset/kappaD)*exp(-(kappaD-epsCrackOnset)/epsFracture);
++	}
++		bool logStrain;
++		//! yield function: 0: mohr-coulomb (original); 1: parabolic; 2: logarithmic, 3: log+lin_tension, 4: elliptic, 5: elliptic+log
++		int yieldSurfType;
++		//! scaling in the logarithmic yield surface (should be &lt;1 for realistic results; &gt;=0 for meaningful results)
++		static Real yieldLogSpeed;
++		static Real yieldEllipseShift;
++		//! HACK: limit strain on some contacts by moving body #2 in the contact; only if refR1&lt;0 (facet); deactivated if &gt; 0
++		static Real minStrain_moveBody2;
++		Law2_Dem3DofGeom_CpmPhys_Cpm(): logStrain(false), yieldSurfType(0) { /*timingDeltas=shared_ptr&lt;TimingDeltas&gt;(new TimingDeltas);*/ }
++		void go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody);
++	FUNCTOR2D(Dem3DofGeom,CpmPhys);
++	REGISTER_CLASS_AND_BASE(Law2_Dem3DofGeom_CpmPhys_Cpm,ConstitutiveLaw);
++	REGISTER_ATTRIBUTES(ConstitutiveLaw,(logStrain)(yieldSurfType)(yieldLogSpeed)(yieldEllipseShift)(minStrain_moveBody2));
++	DECLARE_LOGGER;
++};
++REGISTER_SERIALIZABLE(Law2_Dem3DofGeom_CpmPhys_Cpm);
++
++/* Engine encompassing several computations looping over all bodies/interactions
++ *
++ * * Compute and store unbalanced force over the whole simulation.
++ * * Compute and store volumetric strain for every body.
++ *
++ * May be extended in the future to compute global stiffness etc as well.
++ */
++class CpmGlobalCharacteristics: public PeriodicEngine{
++	public:
++		bool useMaxForce; // use maximum unbalanced force instead of mean unbalanced force
++		Real unbalancedForce;
++		void compute(MetaBody* rb, bool useMax=false);
++		virtual void action(MetaBody* rb){compute(rb,useMaxForce);}
++		CpmGlobalCharacteristics(){};
++	REGISTER_ATTRIBUTES(PeriodicEngine,
++		(unbalancedForce)
++		(useMaxForce)
++	);
++	DECLARE_LOGGER;
++	REGISTER_CLASS_AND_BASE(CpmGlobalCharacteristics,PeriodicEngine);
++};
++REGISTER_SERIALIZABLE(CpmGlobalCharacteristics);
++
++class GLDrawCpmPhys: public GLDrawInteractionPhysicsFunctor {
++	public: virtual void go(const shared_ptr&lt;InteractionPhysics&gt;&amp;,const shared_ptr&lt;Interaction&gt;&amp;,const shared_ptr&lt;Body&gt;&amp;,const shared_ptr&lt;Body&gt;&amp;,bool wireFrame);
++	virtual ~GLDrawCpmPhys() {};
++	REGISTER_ATTRIBUTES(/*no base*/,(contactLine)(dmgLabel)(dmgPlane)(epsT)(epsTAxes)(normal)(colorStrain)(epsNLabel));
++	RENDERS(CpmPhys);
++	REGISTER_CLASS_AND_BASE(GLDrawCpmPhys,GLDrawInteractionPhysicsFunctor);
++	DECLARE_LOGGER;
++	static bool contactLine,dmgLabel,dmgPlane,epsT,epsTAxes,normal,colorStrain,epsNLabel;
++};
++REGISTER_SERIALIZABLE(GLDrawCpmPhys);
++
++class CpmPhysDamageColorizer: public PeriodicEngine {
++	struct BodyStats{ short nCohLinks; Real dmgSum; Real epsPlSum; BodyStats(): nCohLinks(0), dmgSum(0), epsPlSum(0.){} };
++	public:
++		//! maximum damage over all contacts
++		Real maxOmega;
++		CpmPhysDamageColorizer(){maxOmega=0; /* run at the very beginning */ initRun=true;}
++		virtual void action(MetaBody*);
++	REGISTER_ATTRIBUTES(PeriodicEngine,(maxOmega));
++	REGISTER_CLASS_AND_BASE(CpmPhysDamageColorizer,PeriodicEngine);
++};
++REGISTER_SERIALIZABLE(CpmPhysDamageColorizer);
++
+
+
+Property changes on: trunk/pkg/dem/ConcretePM.hpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.cpp (from rev 1777, trunk/extra/usct/UniaxialStrainControlledTest.cpp)
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.cpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -0,0 +1,164 @@
++// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt; 
++#include&quot;UniaxialStrainer.hpp&quot;
++#include&lt;boost/foreach.hpp&gt;
++
++#include&lt;yade/core/InteractionContainer.hpp&gt;
++#include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
++
++YADE_PLUGIN(&quot;UniaxialStrainer&quot;);
++
++/************************ UniaxialStrainer **********************/
++CREATE_LOGGER(UniaxialStrainer);
++
++void UniaxialStrainer::init(){
++	needsInit=false;
++
++	assert(posIds.size()&gt;0);
++	assert(negIds.size()&gt;0);
++	posCoords.clear(); negCoords.clear();
++	FOREACH(body_id_t id,posIds){ const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id,rootBody); posCoords.push_back(b-&gt;physicalParameters-&gt;se3.position[axis]);
++		if(blockDisplacements &amp;&amp; blockRotations) b-&gt;isDynamic=false;
++		else{
++			shared_ptr&lt;PhysicalParameters&gt; &amp;pp=b-&gt;physicalParameters;
++			if(!blockDisplacements)pp-&gt;blockedDOFs=PhysicalParameters::axisDOF(axis); else pp-&gt;blockedDOFs=PhysicalParameters::DOF_XYZ;
++			if(blockRotations) pp-&gt;blockedDOFs|=PhysicalParameters::DOF_RXRYRZ;
++		}
++	}
++	FOREACH(body_id_t id,negIds){ const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id,rootBody); negCoords.push_back(b-&gt;physicalParameters-&gt;se3.position[axis]);
++		if(blockDisplacements &amp;&amp; blockRotations) b-&gt;isDynamic=false;
++		else{
++			shared_ptr&lt;PhysicalParameters&gt; &amp;pp=b-&gt;physicalParameters;
++			if(!blockDisplacements)pp-&gt;blockedDOFs=PhysicalParameters::axisDOF(axis); else pp-&gt;blockedDOFs=PhysicalParameters::DOF_XYZ;
++			if(blockRotations) pp-&gt;blockedDOFs|=PhysicalParameters::DOF_RXRYRZ;
++		}
++	}
++
++	assert(posIds.size()==posCoords.size() &amp;&amp; negIds.size()==negCoords.size());
++
++	originalLength=axisCoord(posIds[0])-axisCoord(negIds[0]);
++	LOG_DEBUG(&quot;Reference particles: positive #&quot;&lt;&lt;posIds[0]&lt;&lt;&quot; at &quot;&lt;&lt;axisCoord(posIds[0])&lt;&lt;&quot;; negative #&quot;&lt;&lt;negIds[0]&lt;&lt;&quot; at &quot;&lt;&lt;axisCoord(negIds[0]));
++	LOG_INFO(&quot;Setting initial length to &quot;&lt;&lt;originalLength&lt;&lt;&quot; (between #&quot;&lt;&lt;negIds[0]&lt;&lt;&quot; and #&quot;&lt;&lt;posIds[0]&lt;&lt;&quot;)&quot;);
++	if(originalLength&lt;=0) LOG_FATAL(&quot;Initial length is negative or zero (swapped reference particles?)! &quot;&lt;&lt;originalLength);
++	/* this happens is nan propagates from e.g. brefcom consitutive law in case 2 bodies have _exactly_ the same position
++	 * (the the normal strain is 0./0.=nan). That is an user's error, however and should not happen. */
++	if(isnan(originalLength)) LOG_FATAL(&quot;Initial length is NaN!&quot;);
++	assert(originalLength&gt;0 &amp;&amp; !isnan(originalLength));
++
++	assert(!isnan(strainRate) || !isnan(absSpeed));
++	if(!isnan(std::numeric_limits&lt;Real&gt;::quiet_NaN())){ LOG_FATAL(&quot;NaN's are not properly supported (compiled, with -ffast-math?), which is required.&quot;); throw; }
++
++	if(isnan(strainRate)){ strainRate=absSpeed/originalLength; LOG_INFO(&quot;Computed new strainRate &quot;&lt;&lt;strainRate); }
++	else {absSpeed=strainRate*originalLength;}
++
++	if(!setSpeeds){
++		initAccelTime_s=initAccelTime&gt;=0 ? initAccelTime : Omega::instance().getTimeStep()*(-initAccelTime);
++		LOG_INFO(&quot;Strain speed will be &quot;&lt;&lt;absSpeed&lt;&lt;&quot;, strain rate &quot;&lt;&lt;strainRate&lt;&lt;&quot;, will be reached after &quot;&lt;&lt;initAccelTime_s&lt;&lt;&quot;s (&quot;&lt;&lt;initAccelTime_s/Omega::instance().getTimeStep()&lt;&lt;&quot; steps).&quot;);
++	} else {
++		/* set speed such that it is linear on the strained axis; transversal speed is not set, which can perhaps create some problems.
++			Note: all bodies in the simulation will have their speed set, since there is no way to tell which ones are part of the specimen
++			and which are not.
++
++			Speeds will be linearly interpolated beween axis positions p0,p1 and velocities v0,v1.
++		*/
++		initAccelTime_s=0;
++		LOG_INFO(&quot;Strain speed will be &quot;&lt;&lt;absSpeed&lt;&lt;&quot;, strain rate &quot;&lt;&lt;strainRate&lt;&lt;&quot;; velocities will be set directly at the beginning.&quot;);
++		Real p0=axisCoord(negIds[0]), p1=axisCoord(posIds[0]); // limit positions
++		Real v0,v1; // speeds at p0, p1
++		switch(asymmetry){
++			case -1: v0=-absSpeed; v1=0; break;
++			case  0: v0=-absSpeed/2; v1=absSpeed/2; break;
++			case  1: v0=0; v1=absSpeed; break;
++			default: LOG_FATAL(&quot;Unknown asymmetry value &quot;&lt;&lt;asymmetry&lt;&lt;&quot; (should be -1,0,1)&quot;); throw;
++		}
++		assert(p1&gt;p0);
++		// set speeds for particles on the boundary
++		FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
++			// skip bodies on the boundary, since those will have their positions updated directly
++			if(std::find(posIds.begin(),posIds.end(),b-&gt;id)!=posIds.end() || std::find(negIds.begin(),negIds.end(),b-&gt;id)!=negIds.end()) { continue; }
++			Real p=axisCoord(b-&gt;id);
++			Real pNormalized=(p-p0)/(p1-p0);
++			YADE_CAST&lt;ParticleParameters*&gt;(b-&gt;physicalParameters.get())-&gt;velocity[axis]=pNormalized*(v1-v0)+v0;
++		}
++	}
++	stressUpdateInterval=max(1,(int)(2e-5/(abs(strainRate)*Omega::instance().getTimeStep())));
++	LOG_INFO(&quot;Stress will be updated every &quot;&lt;&lt;stressUpdateInterval&lt;&lt;&quot; steps.&quot;);
++
++	/* if we have default (&lt;0) crossSectionArea, try to get it from root's AABB;
++	 * this will not work if there are foreign bodies in the simulation,
++	 * in which case you must give the value yourself as engine attribute.
++	 *
++	 * A TODO option is to get crossSectionArea as average area of bounding boxes' of ABBBs
++	 * of posIds and negIds perpendicular to axis. That might be better, except for cases where
++	 * reference particles on either end do not coincide with the specimen cross-section.
++	 *
++	 * */
++	if(crossSectionArea&lt;=0){
++		shared_ptr&lt;AABB&gt; rbAABB;
++		if (Omega::instance().getRootBody()-&gt;boundingVolume &amp;&amp; (rbAABB=dynamic_pointer_cast&lt;AABB&gt;(Omega::instance().getRootBody()-&gt;boundingVolume))){
++			int axis2=(axis+1)%3, axis3=(axis+2)%3; // perpendicular axes indices
++			crossSectionArea=4*rbAABB-&gt;halfSize[axis2]*rbAABB-&gt;halfSize[axis3];
++			LOG_INFO(&quot;Setting crossSectionArea=&quot;&lt;&lt;crossSectionArea&lt;&lt;&quot;, using axes #&quot;&lt;&lt;axis2&lt;&lt;&quot; and #&quot;&lt;&lt;axis3&lt;&lt;&quot;.&quot;);
++		} else {
++			crossSectionArea=1.;
++			LOG_WARN(&quot;No Axis Aligned Bounding Box for rootBody, using garbage value (&quot;&lt;&lt;crossSectionArea&lt;&lt;&quot;) for crossSectionArea!&quot;);
++		}
++	}
++	assert(crossSectionArea&gt;0);
++}
++
++void UniaxialStrainer::action(MetaBody* _rootBody){
++	rootBody=_rootBody;
++	if(needsInit) init();
++	// postconditions for initParams
++	assert(posIds.size()==posCoords.size() &amp;&amp; negIds.size()==negCoords.size() &amp;&amp; originalLength&gt;0 &amp;&amp; crossSectionArea&gt;0);
++	//nothing to do
++	if(posIds.size()==0 || negIds.size()==0) return;
++	// linearly increase strain to the desired value
++	if(abs(currentStrainRate)&lt;abs(strainRate)){
++		Real t=Omega::instance().getSimulationTime();
++		if(initAccelTime_s!=0) currentStrainRate=(t/initAccelTime_s)*strainRate;
++		else currentStrainRate=strainRate;
++	} else currentStrainRate=strainRate;
++	// how much do we move (in total, symmetry handled below)
++	Real dAX=currentStrainRate*originalLength*Omega::instance().getTimeStep();
++	if(!isnan(stopStrain)){
++		Real axialLength=axisCoord(posIds[0])-axisCoord(negIds[0]);
++		Real newStrain=(axialLength+dAX)/originalLength-1;
++		if((newStrain*stopStrain&gt;0) &amp;&amp; abs(newStrain)&gt;=stopStrain){ // same sign of newStrain and stopStrain &amp;&amp; over the limit from below in abs values
++			dAX=originalLength*(stopStrain+1)-axialLength;
++			LOG_INFO(&quot;Reached stopStrain &quot;&lt;&lt;stopStrain&lt;&lt;&quot;, deactivating self and stopping in &quot;&lt;&lt;idleIterations+1&lt;&lt;&quot; iterations.&quot;);
++			this-&gt;active=false;
++			rootBody-&gt;stopAtIteration=Omega::instance().getCurrentIteration()+1+idleIterations;
++		}
++	}
++	if(asymmetry==0) dAX*=.5; // apply half on both sides if straining symetrically
++	for(size_t i=0; i&lt;negIds.size(); i++){
++		if(asymmetry==0 || asymmetry==-1 /* for +1, don't move*/) negCoords[i]-=dAX;
++		axisCoord(negIds[i])=negCoords[i]; // update current position
++	}
++	for(size_t i=0; i&lt;posIds.size(); i++){
++		if(asymmetry==0 || asymmetry==1 /* for -1, don't move */) posCoords[i]+=dAX;
++		axisCoord(posIds[i])=posCoords[i];
++	}
++
++	Real axialLength=axisCoord(posIds[0])-axisCoord(negIds[0]);
++	strain=axialLength/originalLength-1;
++
++	// reverse if we're over the limit strain
++	if(notYetReversed &amp;&amp; limitStrain!=0 &amp;&amp; ((currentStrainRate&gt;0 &amp;&amp; strain&gt;limitStrain) || (currentStrainRate&lt;0 &amp;&amp; strain&lt;limitStrain))) { currentStrainRate*=-1; notYetReversed=false; LOG_INFO(&quot;Reversed strain rate to &quot;&lt;&lt;currentStrainRate); }
++
++	// update forces and stresses
++	if(Omega::instance().getCurrentIteration()%stressUpdateInterval==0) {
++		computeAxialForce();
++		avgStress=(sumPosForces+sumNegForces)/(2*crossSectionArea); // average nominal stress
++	}
++}
++
++void UniaxialStrainer::computeAxialForce(){
++	sumPosForces=sumNegForces=0;
++	rootBody-&gt;bex.sync();
++	FOREACH(body_id_t id, negIds) sumNegForces+=rootBody-&gt;bex.getForce(id)[axis];
++	FOREACH(body_id_t id, posIds) sumPosForces-=rootBody-&gt;bex.getForce(id)[axis];
++}
++
+
+
+Property changes on: trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.cpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.hpp (from rev 1767, trunk/extra/usct/UniaxialStrainControlledTest.hpp)
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.hpp	2009-05-05 06:53:11 UTC (rev 1767)
++++ trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.hpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -0,0 +1,100 @@
++// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt; 
++#pragma once
++#include&lt;fstream&gt;
++#include&lt;limits&gt;
++#include&lt;yade/extra/Shop.hpp&gt;
++#include&lt;yade/core/FileGenerator.hpp&gt;
++#include&lt;yade/core/StandAloneEngine.hpp&gt;
++
++#ifndef FOREACH
++#define FOREACH BOOST_FOREACH
++#endif
++
++/*! Axial displacing two groups of bodies in the opposite direction with given strain rate.
++ *
++ * Takes two groups of body IDs (in posIds and negIds) and displaces them at each timestep in the direction given by axis&#8712;{0,1,2} (for axes x,y,z respectively). These bodies automatically have Body::isDynamic==false.
++ *
++ * This engine should be run once forces on particles have been computed.
++ */
++class UniaxialStrainer: public StandAloneEngine {
++	private:
++		MetaBody* rootBody;
++		bool needsInit;
++
++		void computeAxialForce();
++		Real&amp; axisCoord(body_id_t id){ return Body::byId(id,rootBody)-&gt;physicalParameters-&gt;se3.position[axis]; };
++		void init();
++	public:
++		virtual bool isActivated(){return active;}
++		//! strain rate, starting at 0, linearly raising to strainRate
++		Real strainRate,currentStrainRate;
++		//! alternatively, absolute speed of boundary motion can be specified; this is effective only at the beginning and if strainRate is not set; changing absSpeed directly during simulation wil have no effect.
++		Real absSpeed;
++		//! strain at which we will pause simulation; inactive (nan) by default; must be reached from below (in absolute value)
++		Real stopStrain;
++		//! distance of reference bodies in the direction of axis before straining started
++		Real originalLength;
++		//! invert the sense of straining (sharply, without transition) one this value of strain is reached. Not effective if 0.
++		Real limitStrain;
++		//! Flag whether the sense of straining has already been reversed
++		bool notYetReversed;
++		Real sumPosForces,sumNegForces;
++		//! crossSection perpendicular to he strained axis, computed from AABB of MetaBody
++		Real crossSectionArea;		//! Apply strain along x (0), y (1) or z(2) axis
++		//! The axis which is strained (0,1,2 for x,y,z)
++		int axis;
++		//! If 0, straining is symmetric for negIds and posIds; for 1 (or -1), only posIds are strained and negIds don't move (or vice versa)
++		int asymmetry;
++		//! Whether displacement of boundary bodies perpendicular to the strained axis are blocked of are free
++		bool blockDisplacements;
++		//! Whether rotations of boundary bodies are blocked.
++		bool blockRotations;
++		//! Are we activated?
++		bool active;
++		//! Number of iterations that will pass without straining activity after stopStrain has been reached (default: 0)
++		long idleIterations;
++		//! Time for strain reaching the requested value (linear interpolation). If negative, the time is dt*(-initAccelTime), where dt is  the timestep at the first iteration.
++		Real initAccelTime, initAccelTime_s /* value always in s, computed from initAccelTime */;
++		//! should we set speeds at the beginning directly, instead of increasing strain rate progressively?
++		bool setSpeeds;
++		//! how often to update forces (initialized automatically)
++		int stressUpdateInterval;
++
++		/** bodies on which straining will be applied (on the positive and negative side of axis) */
++		vector&lt;body_id_t&gt; posIds, negIds;
++		/** coordinates of pos/neg bodies in the direction of axis */
++		vector&lt;Real&gt; posCoords,negCoords;
++		//! Auxiliary vars (serializable, for recording)
++		Real strain, avgStress;
++
++		virtual void action(MetaBody*);
++		UniaxialStrainer(){axis=2; asymmetry=0; currentStrainRate=0; originalLength=-1; limitStrain=0; notYetReversed=true; crossSectionArea=-1; needsInit=true; strain=avgStress=0; blockRotations=false; blockDisplacements=false; setSpeeds=false; strainRate=absSpeed=stopStrain=numeric_limits&lt;Real&gt;::quiet_NaN(); active=true; idleIterations=0; initAccelTime=-200;};
++		virtual ~UniaxialStrainer(){};
++		REGISTER_ATTRIBUTES(StandAloneEngine,
++				(strainRate) 
++				(absSpeed)
++				(initAccelTime)
++				(stopStrain) 
++				(active)
++				(idleIterations)
++				(currentStrainRate) 
++				(axis) 
++				(asymmetry) 
++				(posIds) 
++				(negIds) 
++				(originalLength) 
++				(limitStrain) 
++				(notYetReversed) 
++				(crossSectionArea) 
++				(strain) 
++				(avgStress) 
++				(blockDisplacements) 
++				(blockRotations) 
++				(setSpeeds)
++		);
++	REGISTER_CLASS_AND_BASE(UniaxialStrainer,StandAloneEngine);
++	DECLARE_LOGGER;
++};
++REGISTER_SERIALIZABLE(UniaxialStrainer);
++
++
+
+
+Property changes on: trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.hpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Modified: trunk/pkg/dem/PreProcessor/HydraulicTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/HydraulicTest.cpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/pkg/dem/PreProcessor/HydraulicTest.cpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -19,7 +19,6 @@
+ #include&lt;yade/pkg-dem/ElasticCriterionTimeStepper.hpp&gt;
+ #include&lt;yade/pkg-dem/PositionOrientationRecorder.hpp&gt;
+ 
+-#include&lt;yade/core/yadeExceptions.hpp&gt;
+ #include&lt;yade/pkg-common/Box.hpp&gt;
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+@@ -118,7 +117,7 @@
+ 		{
+ 			message=&quot;Error: cannot load the file that should contain spheres&quot;; return false;
+ 		}
+-		catch ( yadeError&amp; e )
++		catch ( std::runtime_error&amp; e )
+ 		{
+ 			message=&quot;Error: cannot load the file that should contain spheres&quot;; return false;
+ 		}
+
+Copied: trunk/pkg/dem/PreProcessor/SimpleScene.cpp (from rev 1767, trunk/extra/SimpleScene.cpp)
+
+
+Property changes on: trunk/pkg/dem/PreProcessor/SimpleScene.cpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/pkg/dem/PreProcessor/SimpleScene.hpp (from rev 1767, trunk/extra/SimpleScene.hpp)
+
+
+Property changes on: trunk/pkg/dem/PreProcessor/SimpleScene.hpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Modified: trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -22,7 +22,6 @@
+ #include&lt;yade/pkg-dem/ElasticCriterionTimeStepper.hpp&gt;
+ 
+ 
+-#include&lt;yade/core/yadeExceptions.hpp&gt;
+ #include&lt;yade/pkg-common/Box.hpp&gt;
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2009-05-24 10:53:29 UTC (rev 1777)
++++ trunk/pkg/dem/SConscript	2009-05-24 18:22:30 UTC (rev 1778)
+@@ -25,6 +25,15 @@
+ 				'CGAL'])
+ 		])
+ 
++cpmModel='../brefcom-mm.hh'
++if os.path.exists('../../'+cpmModel):
++	print &quot;Will include local file &quot;+cpmModel
++	cpmInclude=['-include',cpmModel]
++	Depends('ConcretePM.cpp','../../../brefcom-mm.hh')
++else:
++	cpmInclude=['']
++
++
+ env.Install('$PREFIX/lib/yade$SUFFIX/pkg-dem',[
+ 	
+ 	env.SharedLibrary('DemXDofGeom',['DataClass/InteractionGeometry/DemXDofGeom.cpp']),
+@@ -33,12 +42,20 @@
+ 
+ 	env.SharedLibrary('FacetTopologyAnalyzer',['Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp'],LIBS=env['LIBS']+['InteractingFacet']),
+ 
++	env.SharedLibrary('UniaxialStrainer',['Engine/StandAloneEngine/UniaxialStrainer.cpp'],LIBS=env['LIBS']+['ParticleParameters','AABB']),
++
++	env.SharedLibrary('ConcretePM',['ConcretePM.cpp'],CXXFLAGS=env['CXXFLAGS']+cpmInclude,LIBS=env['LIBS']+['Shop','DemXDofGeom']),
++
+ 	env.SharedLibrary('Clump',['DataClass/Clump.cpp'],LIBS=env['LIBS']+['Shop']),
+ 
+ 	env.SharedLibrary('SQLiteRecorder',
+ 		['Engine/StandAloneEngine/SQLiteRecorder.cpp'],
+ 		LIBS=env['LIBS']+['sqlite3x']),
+ 
++	env.SharedLibrary('SimpleScene',['PreProcessor/SimpleScene.cpp'],LIBS=env['LIBS']+['Shop','SimpleElasticRelationships']),
++
++	env.SharedLibrary('UniaxialStrainerGen',['PreProcessor/UniaxialStrainerGen.cpp'],LIBS=env['LIBS']+['Shop','ConstitutiveLawDispatcher','ConcretePM','Dem3DofGeom_SphereSphere','NewtonsDampedLaw','UniaxialStrainer']),
++
+ 	env.SharedLibrary('InteractingMyTetrahedron',
+ 		['DataClass/InteractingGeometry/InteractingMyTetrahedron.cpp']),
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000976.html">[deprecated list] [Yade-dev] [svn] r1777 - in trunk: extra	extra/usct gui/py
+</A></li>
+	<LI>Next message: <A HREF="000979.html">[deprecated list] [Yade-dev] [svn] r1779 -	trunk/pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#977">[ date ]</a>
+              <a href="thread.html#977">[ thread ]</a>
+              <a href="subject.html#977">[ subject ]</a>
+              <a href="author.html#977">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

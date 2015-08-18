@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1831 - in trunk: lib/py	scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1831%20-%20in%20trunk%3A%20lib/py%0A%09scripts/test&In-Reply-To=%3C200907021149.n62BnABa024413%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001091.html">
+   <LINK REL="Next"  HREF="001094.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1831 - in trunk: lib/py	scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1831%20-%20in%20trunk%3A%20lib/py%0A%09scripts/test&In-Reply-To=%3C200907021149.n62BnABa024413%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1831 - in trunk: lib/py	scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Jul  2 13:49:10 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001091.html">[deprecated list] [Yade-dev] forgotten _packSpheres.cpp
+</A></li>
+        <LI>Next message: <A HREF="001094.html">[deprecated list] [Yade-dev] [svn] r1832 - trunk/scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1092">[ date ]</a>
+              <a href="thread.html#1092">[ thread ]</a>
+              <a href="subject.html#1092">[ subject ]</a>
+              <a href="author.html#1092">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-02 13:49:10 +0200 (Thu, 02 Jul 2009)
+New Revision: 1831
+
+Added:
+   trunk/scripts/test/gts-triax-pack.py
+Modified:
+   trunk/lib/py/pack.py
+Log:
+1. Add scripts/test/gts-traix-pack.py to demonstrate triaxial packing generator.
+
+
+Modified: trunk/lib/py/pack.py
+===================================================================
+--- trunk/lib/py/pack.py	2009-07-02 10:09:56 UTC (rev 1830)
++++ trunk/lib/py/pack.py	2009-07-02 11:49:10 UTC (rev 1831)
+@@ -177,7 +177,7 @@
+ 	O.switchWorld() magic is used to have clean simulation for TriaxialTest without deleting the original simulation.
+ 	This function therefore should never run in parallel with some code accessing your simulation.
+ 	&quot;&quot;&quot;
+-	import sqlite3, os.path, cPickle, time
++	import sqlite3, os.path, cPickle, time, sys
+ 	from yade import log
+ 	from math import pi
+ 	if not dim: dim=predicate.dim()
+@@ -198,6 +198,7 @@
+ 			sp.scale(scale)
+ 			return filterSpherePack(predicate,sp,**kw)
+ 		print &quot;No suitable packing in database found, running triaxial&quot;
++		sys.stdout.flush()
+ 	V=(4/3)*pi*radius**3; N=assumedFinalDensity*fullDim[0]*fullDim[1]*fullDim[2]/V;
+ 	##
+ 	O.switchWorld()
+
+Added: trunk/scripts/test/gts-triax-pack.py
+===================================================================
+--- trunk/scripts/test/gts-triax-pack.py	2009-07-02 10:09:56 UTC (rev 1830)
++++ trunk/scripts/test/gts-triax-pack.py	2009-07-02 11:49:10 UTC (rev 1831)
+@@ -0,0 +1,43 @@
++from numpy import arange
++from yade import pack
++import pylab
++# define the section shape as polygon in 2d; repeat first point at the end to close the polygon
++poly=((2e-3,1e-2),(1e-2,5e-3),(1.5e-2,-5e-3),(2e-3,-1e-2),(2e-3,1e-2))
++# show us the meridian shape
++pylab.plot(*zip(*poly)); pylab.xlim(xmin=0); pylab.grid(); pylab.title('Meridian of the revolution surface\n(close to continue)'); pylab.gca().set_aspect(aspect='equal',adjustable='box'); pylab.show()
++# angles at which we want this polygon to appear
++thetas=arange(0,pi/2,pi/24)
++# create 3d points from the 2d ones, turning the 2d meridian around the +y axis
++# for each angle, put the poly a little bit higher (+2e-3*theta);
++# this is just to demonstrate that you can do whatever here as long as the resulting
++# meridian has the same number of points
++#
++# There is origin (translation) and orientation arguments, allowing to transform all the 3d points once computed.
++#
++# without these transformation, it would look a little simpler:
++# 	pts=pack.revolutionSurfaceMeridians([[(pt[0],pt[1]+2e-3*theta) for pt in poly] for theta in thetas],thetas
++#
++import euclid
++pts=pack.revolutionSurfaceMeridians([[(pt[0],pt[1]+2e-3*theta) for pt in poly] for theta in thetas],thetas,origin=euclid.Vector3(0,0,.1),orientation=euclid.Quaternion().new_rotate_axis(pi/4,euclid.Vector3(1,1,0)))
++# connect meridians to make surfaces
++# caps will close it at the beginning and the end
++# threshold will merge points closer than 1e-4; this is important: we want it to be closed for filling
++surf=pack.sweptPolylines2gtsSurface(pts,capStart=True,capEnd=True,threshold=1e-4)
++# add the surface as facets to the simulation, to make it visible
++O.bodies.append(pack.gtsSurface2Facets(surf,color=(1,0,1)))
++# now fill the inGtsSurface predicate constructed form the same surface with sphere packing generated by TriaxialTest
++# with given radius and standard deviation (see documentation of pack.triaxialPack)
++#
++# The memoizeDb will save resulting packing into given file and next time, if you run with the same
++# parameters (or parameters that can be scaled to the same one),
++# it will load the packing instead of running the triaxial compaction again.
++# Try running for the second time to see the speed difference!
++O.bodies.append(pack.triaxialPack(pack.inGtsSurface(surf),radius=5e-4,radiusStDev=1e-4,memoizeDb='/tmp/gts-triax-packings.sqlite'))
++# We could also fill the horse with triaxial packing, but have nice approximation, the triaxial would run terribly long,
++# since horse discard most volume of its bounding box
++# Here, we would use a very crude one, however
++if 0:
++	import gts
++	horse=gts.read(open('horse.coarse.gts'))
++	horse.scale(.1)
++	O.bodies.append(pack.triaxialPack(pack.inGtsSurface(horse),radius=5e-4))
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001091.html">[deprecated list] [Yade-dev] forgotten _packSpheres.cpp
+</A></li>
+	<LI>Next message: <A HREF="001094.html">[deprecated list] [Yade-dev] [svn] r1832 - trunk/scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1092">[ date ]</a>
+              <a href="thread.html#1092">[ thread ]</a>
+              <a href="subject.html#1092">[ subject ]</a>
+              <a href="author.html#1092">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

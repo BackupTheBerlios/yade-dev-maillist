@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] QGL cutting plane
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20QGL%20cutting%20plane&In-Reply-To=%3C47F3C0F2.5000505%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000143.html">
+   <LINK REL="Next"  HREF="000145.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] QGL cutting plane</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20QGL%20cutting%20plane&In-Reply-To=%3C47F3C0F2.5000505%40arcig.cz%3E"
+       TITLE="[yade-dev] QGL cutting plane">eudoxos at arcig.cz
+       </A><BR>
+    <I>Wed Apr  2 19:22:58 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000143.html">[yade-dev] QGL cutting plane
+</A></li>
+        <LI>Next message: <A HREF="000145.html">[yade-dev] QGL cutting plane
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#144">[ date ]</a>
+              <a href="thread.html#144">[ thread ]</a>
+              <a href="subject.html#144">[ subject ]</a>
+              <a href="author.html#144">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> Hello
+</I>&gt;<i>
+</I>&gt;<i> I found a fast, dirty, and lazy way of implementing a cutting plane in 
+</I>&gt;<i> the QGL view.
+</I>&gt;<i>
+</I>&gt;<i> Line 215 of camera.cpp :
+</I>&gt;<i>
+</I>&gt;<i>  const float cuttingDistance = 0.5;// 0 = see the full view, 1=see 
+</I>&gt;<i> nothing, 0.5=cut half of the volume
+</I>&gt;<i>   float z = distanceToSceneCenter() - 
+</I>&gt;<i> zClippingCoefficient()*sceneRadius()*(1.f-2*cuttingDistance);
+</I>&gt;<i>
+</I>&gt;<i> Now, as I would need days to create new widgets alone, could somebody 
+</I>&gt;<i> link this &quot;cuttingDistance&quot; float to a nice button in the QtGUI?
+</I>&gt;<i>   
+</I>If would be far easier to bind a hotkey in the view itself to that, just
+like 'a' toggles axes and 'g' toggles grid. Like 'c' to toggle on/off
+and +- or something like that to cut further or closer.
+
+A more proper solution would be to render only bodies of which
+se3.position is on a given side of the cutting plane (easy (?), modify
+the GL dispatcher) and not render those that are not. That would have
+the benefit of not seeing interior of spheres that are cut by the plane.
+
+Vaclav
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000143.html">[yade-dev] QGL cutting plane
+</A></li>
+	<LI>Next message: <A HREF="000145.html">[yade-dev] QGL cutting plane
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#144">[ date ]</a>
+              <a href="thread.html#144">[ thread ]</a>
+              <a href="subject.html#144">[ subject ]</a>
+              <a href="author.html#144">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

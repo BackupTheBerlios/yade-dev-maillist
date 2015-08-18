@@ -1,0 +1,226 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1622 - in trunk:	pkg/common	pkg/common/Engine/DeusExMachina scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1622%20-%20in%20trunk%3A%0A%09pkg/common%09pkg/common/Engine/DeusExMachina%20scripts&In-Reply-To=%3C200901121817.n0CIH81w012326%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000588.html">
+   <LINK REL="Next"  HREF="000592.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1622 - in trunk:	pkg/common	pkg/common/Engine/DeusExMachina scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1622%20-%20in%20trunk%3A%0A%09pkg/common%09pkg/common/Engine/DeusExMachina%20scripts&In-Reply-To=%3C200901121817.n0CIH81w012326%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1622 - in trunk:	pkg/common	pkg/common/Engine/DeusExMachina scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Jan 12 19:17:08 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000588.html">[deprecated list] [Yade-dev] [svn] r1621 - trunk/gui/py
+</A></li>
+        <LI>Next message: <A HREF="000592.html">[deprecated list] [Yade-dev] IMPORTANT: to receive SVN commits!
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#589">[ date ]</a>
+              <a href="thread.html#589">[ thread ]</a>
+              <a href="subject.html#589">[ subject ]</a>
+              <a href="author.html#589">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-01-12 19:17:06 +0100 (Mon, 12 Jan 2009)
+New Revision: 1622
+
+Added:
+   trunk/scripts/test-spiral.py
+Modified:
+   trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/RotationEngine.hpp
+   trunk/pkg/common/SConscript
+Log:
+1. SpiralEngine that does both rotation and translation along the same axis
+2. InterpolatingSpiralEngine for variable rotation+translation speed (replaces InterpolationgRotationEngine)
+3. scripts/test-spiral.py for rudimentary functionality testing.
+
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp	2009-01-10 10:42:40 UTC (rev 1621)
++++ trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp	2009-01-12 18:17:06 UTC (rev 1622)
+@@ -13,16 +13,39 @@
+ #include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++#include&lt;yade/extra/Shop.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/LinearInterpolate.hpp&gt;
+ 
+-YADE_PLUGIN(&quot;RotationEngine&quot;,&quot;InterpolatingRotationEngine&quot;);
++YADE_PLUGIN(&quot;RotationEngine&quot;,&quot;SpiralEngine&quot;,&quot;InterpolatingSpiralEngine&quot;);
+ 
+-void InterpolatingRotationEngine::applyCondition(MetaBody* rb){
+-	angularVelocity=linearInterpolate&lt;Real&gt;(rb-&gt;simulationTime,times,velocities,pos);
+-	RotationEngine::applyCondition(rb);
++
++void InterpolatingSpiralEngine::applyCondition(MetaBody* rb){
++	Real virtTime=period&gt;0 ? Shop::periodicWrap(rb-&gt;simulationTime,0,period) : rb-&gt;simulationTime;
++	angularVelocity=linearInterpolate&lt;Real&gt;(virtTime,times,angularVelocities,pos);
++	linearVelocity=angularVelocity*slope;
++	SpiralEngine::applyCondition(rb);
+ }
+ 
++void SpiralEngine::applyCondition(MetaBody* rb){
++	Real dt=Omega::instance().getTimeStep();
++	axis.Normalize();
++	Quaternionr q;
++	q.FromAxisAngle(axis,angularVelocity*dt);
++	FOREACH(body_id_t id,subscribedBodies){
++		assert(id&lt;bodies-&gt;size());
++		Body* b=Body::byId(id,rb).get();
++		ParticleParameters* rbp=YADE_CAST&lt;RigidBodyParameters*&gt;(b-&gt;physicalParameters.get());
++		assert(rbp);
++		// translation
++		rbp-&gt;se3.position+=dt*linearVelocity*axis;
++		// rotation
++		rbp-&gt;se3.position=q*(rbp-&gt;se3.position-axisPt)+axisPt;
++		rbp-&gt;se3.orientation=q*rbp-&gt;se3.orientation;
++		rbp-&gt;se3.orientation.Normalize(); // to make sure
++	}
++}
++
+ RotationEngine::RotationEngine()
+ {
+ 	rotateAroundZero = false;
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/RotationEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/RotationEngine.hpp	2009-01-10 10:42:40 UTC (rev 1621)
++++ trunk/pkg/common/Engine/DeusExMachina/RotationEngine.hpp	2009-01-12 18:17:06 UTC (rev 1622)
+@@ -29,21 +29,49 @@
+ };
+ REGISTER_SERIALIZABLE(RotationEngine);
+ 
+-/*! Engine applying rotation, finding current angular velocity by interpolating in times and velocities */
+-class InterpolatingRotationEngine: public RotationEngine{
++/* Engine applying both rotation and translation, along the same axis, whence the name SpiralEngine
++ */
++class SpiralEngine:public DeusExMachina{
+ 	public:
++		SpiralEngine():angularVelocity(0.),linearVelocity(0.),axis(Vector3r::UNIT_X),axisPt(0,0,0){}
++		Real angularVelocity;
++		Real linearVelocity;
++		//! axis of translation and rotation (direction); will be normalized by the engine
++		Vector3r axis;
++		//! a point on the axis, to position it in space properly
++		Vector3r axisPt;
++	virtual void applyCondition(MetaBody*);
++	REGISTER_CLASS_AND_BASE(SpiralEngine,DeusExMachina);
++	REGISTER_ATTRIBUTES(DeusExMachina,(angularVelocity)(linearVelocity)(axis)(axisPt));
++};
++REGISTER_SERIALIZABLE(SpiralEngine);
++
++/*! Engine applying spiral motion, finding current angular velocity by linearly interpolating in
++ * times and velocities and translation by using slope parameter.
++ *
++ * The interpolation assumes the margin value before the first time point and last value
++ * after the last time point. If period is specified, time will wrap around, but no interpolation
++ * between last and first values is done!
++ * */
++class InterpolatingSpiralEngine: public SpiralEngine{
++	public:
+ 		//! list of times at which velocities are given; must be increasing
+ 		vector&lt;Real&gt; times;
+-		//! list of angular velocities
+-		vector&lt;Real&gt; velocities;
++		//! list of angular velocities; manadatorily of same length as times
++		vector&lt;Real&gt; angularVelocities;
++		//! period after which we will wrap time to zero (no wrapping if period&lt;=0)
++		Real period;
++		//! axial translation per radian turn (can be negative)
++		Real slope;
+ 		//! holder of interpolation state, should not be touched by the user.
+ 		size_t pos;
+-		InterpolatingRotationEngine(){pos=0;}
+-		void registerAttributes(){ RotationEngine::registerAttributes(); REGISTER_ATTRIBUTE(times); REGISTER_ATTRIBUTE(velocities); REGISTER_ATTRIBUTE(pos); }
+-		void applyCondition(MetaBody* rb);
+-	REGISTER_CLASS_NAME(InterpolatingRotationEngine);
+-	REGISTER_BASE_CLASS_NAME(RotationEngine);
++		InterpolatingSpiralEngine(): period(-1), slope(0), pos(0){}
++		virtual void applyCondition(MetaBody* rb);
++	REGISTER_CLASS_AND_BASE(InterpolatingSpiralEngine,SpiralEngine);
++	REGISTER_ATTRIBUTES(SpiralEngine,(times)(angularVelocities)(period)(slope)(pos));
+ };
+-REGISTER_SERIALIZABLE(InterpolatingRotationEngine);
++REGISTER_SERIALIZABLE(InterpolatingSpiralEngine);
+ 
+ 
++
++
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2009-01-10 10:42:40 UTC (rev 1621)
++++ trunk/pkg/common/SConscript	2009-01-12 18:17:06 UTC (rev 1622)
+@@ -58,7 +58,7 @@
+ 	env.SharedLibrary('JumpChangeSe3',['Engine/DeusExMachina/JumpChangeSe3.cpp'], LIBS=env['LIBS']+['RigidBodyParameters']),
+ 	env.SharedLibrary('Se3Interpolator',['Engine/DeusExMachina/Se3Interpolator.cpp'], LIBS=env['LIBS']+['RigidBodyParameters']),
+ 	env.SharedLibrary('RotationEngine',['Engine/DeusExMachina/RotationEngine.cpp'],
+-		LIBS=env['LIBS']+['ParticleParameters','RigidBodyParameters']),
++		LIBS=env['LIBS']+['ParticleParameters','RigidBodyParameters','Shop']),
+ 	env.SharedLibrary('TranslationEngine',['Engine/DeusExMachina/TranslationEngine.cpp'],
+ 		LIBS=env['LIBS']+['ParticleParameters']),
+ 	env.SharedLibrary('CinemDNCEngine',['Engine/DeusExMachina/CinemDNCEngine.cpp'],
+
+Added: trunk/scripts/test-spiral.py
+===================================================================
+--- trunk/scripts/test-spiral.py	2009-01-10 10:42:40 UTC (rev 1621)
++++ trunk/scripts/test-spiral.py	2009-01-12 18:17:06 UTC (rev 1622)
+@@ -0,0 +1,9 @@
++# script for testing InterpolatingSpiralEngine: sphere going in a sphere-like motion around bar
++O.bodies.append([utils.box([0,0,0],[.005,.005,1],dynamic=False),utils.sphere([0,.1,-1],.04,dynamic=False)])
++O.engines=[
++	DeusExMachina('InterpolatingSpiralEngine',{'subscribedBodies':[1],'times':[10,20,30,40,50,60,70,80,90,100],'angularVelocities':[1,2,3,4,5,3,1,-1,-3,0],'axis':[0,0,1],'axisPt':[0,0,0],'period':-1,'slope':.003,'label':'spiral'}),
++]
++O.dt=5e-4
++O.saveTmp('initial')
++from yade import qt
++qt.Controller()
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000588.html">[deprecated list] [Yade-dev] [svn] r1621 - trunk/gui/py
+</A></li>
+	<LI>Next message: <A HREF="000592.html">[deprecated list] [Yade-dev] IMPORTANT: to receive SVN commits!
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#589">[ date ]</a>
+              <a href="thread.html#589">[ thread ]</a>
+              <a href="subject.html#589">[ subject ]</a>
+              <a href="author.html#589">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

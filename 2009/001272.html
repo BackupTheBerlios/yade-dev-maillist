@@ -1,0 +1,152 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1893 - in trunk: lib	pkg/dem/Engine/DeusExMachina	pkg/fem/DataClass/PhysicalParameters	pkg/fem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1893%20-%20in%20trunk%3A%20lib%0A%09pkg/dem/Engine/DeusExMachina%09pkg/fem/DataClass/PhysicalParameters%0A%09pkg/fem/PreProcessor&In-Reply-To=%3C200907280643.n6S6hMNm015938%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001271.html">
+   <LINK REL="Next"  HREF="001273.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1893 - in trunk: lib	pkg/dem/Engine/DeusExMachina	pkg/fem/DataClass/PhysicalParameters	pkg/fem/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1893%20-%20in%20trunk%3A%20lib%0A%09pkg/dem/Engine/DeusExMachina%09pkg/fem/DataClass/PhysicalParameters%0A%09pkg/fem/PreProcessor&In-Reply-To=%3C200907280643.n6S6hMNm015938%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1893 - in trunk: lib	pkg/dem/Engine/DeusExMachina	pkg/fem/DataClass/PhysicalParameters	pkg/fem/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jul 28 08:43:22 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001271.html">[deprecated list] [Yade-dev] [svn] r1892 - in trunk: . core lib	lib/import	lib/multimethods pkg/dem/PreProcessor	pkg/dem/meta	pkg/fem/DataClass/PhysicalParameters	pkg/snow/PreProcessor	pkg/snow/PreProcessor/Voxel py
+</A></li>
+        <LI>Next message: <A HREF="001273.html">[deprecated list] [Yade-dev] [svn] r1894 - trunk/pkg/dem/meta
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1272">[ date ]</a>
+              <a href="thread.html#1272">[ thread ]</a>
+              <a href="subject.html#1272">[ subject ]</a>
+              <a href="author.html#1272">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-28 08:43:19 +0200 (Tue, 28 Jul 2009)
+New Revision: 1893
+
+Modified:
+   trunk/lib/SConscript
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+   trunk/pkg/fem/DataClass/PhysicalParameters/FEMTetrahedronData.hpp
+   trunk/pkg/fem/PreProcessor/FEMBeam.cpp
+Log:
+1. Fix monolithic compilation even with fem. All modules can now be compiled that way.
+
+
+Modified: trunk/lib/SConscript
+===================================================================
+--- trunk/lib/SConscript	2009-07-28 06:23:39 UTC (rev 1892)
++++ trunk/lib/SConscript	2009-07-28 06:43:19 UTC (rev 1893)
+@@ -50,15 +50,15 @@
+ 		CPPPATH=env['CPPPATH']+['${TARGET.dir}'],
+ 	)
+ if 'YADE_OPENGL' in env['CPPDEFINES']:
+-	yadeStaticOrSharedLib('yade-opengl',['opengl/FpsTracker.cpp','opengl/GLTextLabel.cpp','opengl/GLWindow.cpp','opengl/GLWindowsManager.cpp','opengl/GLUtils.cpp'],LIBS=env['LIBS']+['glut','$QGLVIEWER_LIB']),
++	yadeStaticOrSharedLib('yade-opengl',env.Combine('yade-opengl.cpp',['opengl/FpsTracker.cpp','opengl/GLTextLabel.cpp','opengl/GLWindow.cpp','opengl/GLWindowsManager.cpp','opengl/GLUtils.cpp']),LIBS=env['LIBS']+['glut','$QGLVIEWER_LIB']),
+ 
+-yadeStaticOrSharedLib('yade-support',[
++yadeStaticOrSharedLib('yade-support',env.Combine('yade-support.cpp',[
+ 	'base/yadeWm3Extra.cpp',
+ 	'computational-geometry/Distances2D.cpp','computational-geometry/Distances3D.cpp','computational-geometry/Intersections2D.cpp','computational-geometry/Intersections3D.cpp','computational-geometry/MarchingCube.cpp',
+ 	'factory/ClassFactory.cpp','factory/DynLibManager.cpp','factory/FactoryExceptions.cpp',
+ 	'multimethods/Indexable.cpp','multimethods/MultiMethodsExceptions.cpp',
+ 	'serialization-xml/XMLFormatManager.cpp','serialization-xml/XMLSaxParser.cpp','serialization/Archive.cpp',
+-	'serialization/IOFormatManager.cpp','serialization/IOManagerExceptions.cpp','serialization/FormatChecker.cpp','serialization/Serializable.cpp','serialization/SerializableSingleton.cpp','serialization/SerializationExceptions.cpp'])
++	'serialization/IOFormatManager.cpp','serialization/IOManagerExceptions.cpp','serialization/FormatChecker.cpp','serialization/Serializable.cpp','serialization/SerializableSingleton.cpp','serialization/SerializationExceptions.cpp']))
+ 
+ #######################
+ ###### 3rd party libs
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2009-07-28 06:23:39 UTC (rev 1892)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2009-07-28 06:43:19 UTC (rev 1893)
+@@ -12,7 +12,6 @@
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ 
+-#define TR {if (Omega::instance().getCurrentIteration()%100==0) TRACE; }
+ class MetaBody;
+ class PhysicalParameters;
+ 
+
+Modified: trunk/pkg/fem/DataClass/PhysicalParameters/FEMTetrahedronData.hpp
+===================================================================
+--- trunk/pkg/fem/DataClass/PhysicalParameters/FEMTetrahedronData.hpp	2009-07-28 06:23:39 UTC (rev 1892)
++++ trunk/pkg/fem/DataClass/PhysicalParameters/FEMTetrahedronData.hpp	2009-07-28 06:43:19 UTC (rev 1893)
+@@ -11,7 +11,7 @@
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+ 
+-#include &lt;boost/numeric/ublas/matrix.hpp&gt;
++#include&lt;boost/numeric/ublas/matrix.hpp&gt;
+ 
+ #include &lt;vector&gt;
+ 
+
+Modified: trunk/pkg/fem/PreProcessor/FEMBeam.cpp
+===================================================================
+--- trunk/pkg/fem/PreProcessor/FEMBeam.cpp	2009-07-28 06:23:39 UTC (rev 1892)
++++ trunk/pkg/fem/PreProcessor/FEMBeam.cpp	2009-07-28 06:43:19 UTC (rev 1893)
+@@ -7,7 +7,7 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;FEMBeam.hpp&quot;
++#include&quot;FEMBeam.hpp&quot;
+ 
+ #include&lt;yade/pkg-fem/FEMSetParameters.hpp&gt;
+ #include&lt;yade/pkg-fem/FEMTetrahedronData.hpp&gt;
+@@ -238,4 +238,4 @@
+ }
+ 
+  
+-YADE_PLUGIN(&quot;FEMBeam&quot;);
+\ No newline at end of file
++YADE_PLUGIN(&quot;FEMBeam&quot;);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001271.html">[deprecated list] [Yade-dev] [svn] r1892 - in trunk: . core lib	lib/import	lib/multimethods pkg/dem/PreProcessor	pkg/dem/meta	pkg/fem/DataClass/PhysicalParameters	pkg/snow/PreProcessor	pkg/snow/PreProcessor/Voxel py
+</A></li>
+	<LI>Next message: <A HREF="001273.html">[deprecated list] [Yade-dev] [svn] r1894 - trunk/pkg/dem/meta
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1272">[ date ]</a>
+              <a href="thread.html#1272">[ thread ]</a>
+              <a href="subject.html#1272">[ subject ]</a>
+              <a href="author.html#1272">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

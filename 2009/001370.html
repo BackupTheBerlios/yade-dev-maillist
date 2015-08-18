@@ -1,0 +1,664 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1938 - in trunk:	extra	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/DataClass	pkg/dem/Engine/DeusExMachina	pkg/dem/PreProcessor py	py/yadeWrapper scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1938%20-%20in%20trunk%3A%0A%09extra%09pkg/common/Engine/MetaEngine%09pkg/common/Engine/StandAloneEngine%0A%09pkg/dem/DataClass%09pkg/dem/Engine/DeusExMachina%0A%09pkg/dem/PreProcessor%20py%09py/yadeWrapper%20scripts/test&In-Reply-To=%3C200908120927.n7C9Rg8D027091%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001369.html">
+   <LINK REL="Next"  HREF="001372.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1938 - in trunk:	extra	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/DataClass	pkg/dem/Engine/DeusExMachina	pkg/dem/PreProcessor py	py/yadeWrapper scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1938%20-%20in%20trunk%3A%0A%09extra%09pkg/common/Engine/MetaEngine%09pkg/common/Engine/StandAloneEngine%0A%09pkg/dem/DataClass%09pkg/dem/Engine/DeusExMachina%0A%09pkg/dem/PreProcessor%20py%09py/yadeWrapper%20scripts/test&In-Reply-To=%3C200908120927.n7C9Rg8D027091%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1938 - in trunk:	extra	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/DataClass	pkg/dem/Engine/DeusExMachina	pkg/dem/PreProcessor py	py/yadeWrapper scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Aug 12 11:27:42 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001369.html">[deprecated list] [Yade-dev] maxDataLen in plot.py
+</A></li>
+        <LI>Next message: <A HREF="001372.html">[deprecated list] [Yade-dev] Python script. different behavior
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1370">[ date ]</a>
+              <a href="thread.html#1370">[ thread ]</a>
+              <a href="subject.html#1370">[ subject ]</a>
+              <a href="author.html#1370">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-08-12 11:27:41 +0200 (Wed, 12 Aug 2009)
+New Revision: 1938
+
+Modified:
+   trunk/extra/PeriodicInsertionSortCollider.cpp
+   trunk/extra/PeriodicInsertionSortCollider.hpp
+   trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp
+   trunk/pkg/dem/DataClass/SpherePack.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+   trunk/py/pack.py
+   trunk/py/yadeWrapper/yadeWrapper.cpp
+   trunk/scripts/test/gts-triax-pack.py
+   trunk/scripts/test/periodic-compress.py
+Log:
+1. Fix a few things in SpherePack
+2. Remove TriaxialTest::GenerateCloud, replaced by SpherePack::makeCloud
+3. Fix crash in BoundingVolumeMetaEngine, if MetaBody has no boundingVolume
+4. Improve sorting operator, remove workarounds for std::sort wrapping minima/maxima (<A HREF="https://bugs.launchpad.net/yade/+bug/402098">https://bugs.launchpad.net/yade/+bug/402098</A>)
+5. Limit minimum cell width in PeriIsoCompressor, to not crash.
+6. Add code for periodic packs in pack.triaxialPack (not yet fully functional)
+
+
+Modified: trunk/extra/PeriodicInsertionSortCollider.cpp
+===================================================================
+--- trunk/extra/PeriodicInsertionSortCollider.cpp	2009-08-11 11:37:21 UTC (rev 1937)
++++ trunk/extra/PeriodicInsertionSortCollider.cpp	2009-08-12 09:27:41 UTC (rev 1938)
+@@ -329,9 +329,6 @@
+ 					// are equal and the unstable std::sort has swapped them. In that case, we need to go reverse
+ 					// from V[i] until we meet the upper bound and swap the isMin flag
+ 
+-					// PERI: this can happen if each boundary wraps to different period. That is OK.
+-					// PERI: this should however be somehow distinguished from the case that they are in the same period...
+-					// PERI: perhaps check that when periods are assigned and add some hair distance to the maximum...?
+ 					#if 0
+ 					if(j==2*(size_t)nBodies-1){ /* handle case 1. of swapped min/max */
+ 						size_t k=i-1;
+@@ -363,13 +360,19 @@
+ 	if(!rb-&gt;isPeriodic){ LOG_FATAL(&quot;Being used on non-periodic simulation!&quot;); throw; }
+ 	if(state&gt;=stresses.size()) return;
+ 	// initialize values
+-	if(charLen&lt;0){
++	if(charLen&lt;=0){
+ 		BoundingVolume* bv=Body::byId(0,rb)-&gt;boundingVolume.get();
+ 		if(!bv){ LOG_FATAL(&quot;No charLen defined and body #0 has no boundingVolume&quot;); throw; }
+ 		const Vector3r sz=bv-&gt;max-bv-&gt;min;
+ 		charLen=(sz[0]+sz[1]+sz[2])/3.;
+ 		LOG_INFO(&quot;No charLen defined, taking avg bbox size of body #0 = &quot;&lt;&lt;charLen);
+ 	}
++	if(maxSpan&lt;=0){
++		FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rb-&gt;bodies){
++			if(!b-&gt;boundingVolume) continue;
++			for(int i=0; i&lt;3; i++) maxSpan=max(maxSpan,b-&gt;boundingVolume-&gt;max[i]-b-&gt;boundingVolume-&gt;min[i]);
++		}
++	}
+ 	if(maxDisplPerStep&lt;0) maxDisplPerStep=1e-2*charLen; // this should be tuned somehow&#8230;
+ 	const long&amp; step=rb-&gt;currentIteration;
+ 	Vector3r cellSize=rb-&gt;cellMax-rb-&gt;cellMin; //unused: Real cellVolume=cellSize[0]*cellSize[1]*cellSize[2];
+@@ -392,6 +395,7 @@
+ 		// FIXME: or perhaps maxDisplaPerStep=1e-2*charLen is too big??
+ 		cellGrow[axis]=1e-4*(sigma[axis]-sigmaGoal)*cellArea[axis]/(avgStiffness&gt;0?avgStiffness:1);
+ 		if(abs(cellGrow[axis])&gt;maxDisplPerStep) cellGrow[axis]=Mathr::Sign(cellGrow[axis])*maxDisplPerStep;
++		cellGrow[axis]=max(cellGrow[axis],-(cellSize[0]-2.1*maxSpan));
+ 		// crude way of predicting sigma, for steps when it is not computed from intrs
+ 		if(avgStiffness&gt;0) sigma[axis]-=cellGrow[axis]*avgStiffness;
+ 		if(abs((sigma[axis]-sigmaGoal)/sigmaGoal)&gt;5e-3) allStressesOK=false;
+@@ -409,7 +413,7 @@
+ 				#ifdef YADE_PYTHON
+ 					if(!doneHook.empty()){ LOG_DEBUG(&quot;Running doneHook: &quot;&lt;&lt;doneHook); PyGILState_STATE gstate; gstate=PyGILState_Ensure(); PyRun_SimpleString(doneHook.c_str()); PyGILState_Release(gstate); }
+ 				#endif
+-			} else { LOG_INFO(&quot;Loading to &quot;&lt;&lt;sigmaGoal&lt;&lt;&quot; done, starting going to &quot;&lt;&lt;stresses[state]&lt;&lt;&quot; now&quot;); }
++			} else { LOG_INFO(&quot;Loaded to &quot;&lt;&lt;sigmaGoal&lt;&lt;&quot; done, going to &quot;&lt;&lt;stresses[state]&lt;&lt;&quot; now&quot;); }
+ 		} else {
+ 			if((step%globalUpdateInt)==0) LOG_DEBUG(&quot;Stress=&quot;&lt;&lt;sigma&lt;&lt;&quot;, goal=&quot;&lt;&lt;sigmaGoal&lt;&lt;&quot;, unbalanced=&quot;&lt;&lt;currUnbalanced);
+ 		}
+
+Modified: trunk/extra/PeriodicInsertionSortCollider.hpp
+===================================================================
+--- trunk/extra/PeriodicInsertionSortCollider.hpp	2009-08-11 11:37:21 UTC (rev 1937)
++++ trunk/extra/PeriodicInsertionSortCollider.hpp	2009-08-12 09:27:41 UTC (rev 1938)
+@@ -87,8 +87,15 @@
+ 		//! is it the minimum (true) or maximum (false) bound?
+ 		struct{ unsigned hasBB:1; unsigned isMin:1; } flags;
+ 		Bound(Real coord_, body_id_t id_, bool isMin): coord(coord_), id(id_), period(0){ flags.isMin=isMin; }
+-		bool operator&lt;(const Bound&amp; b) const {return coord&lt;b.coord;}
+-		bool operator&gt;(const Bound&amp; b) const {return coord&gt;b.coord;}
++		bool operator&lt;(const Bound&amp; b) const {
++			/* handle special case of zero-width bodies, which could otherwise get min/max swapped in the unstable std::sort */
++			if(id==b.id &amp;&amp; coord==b.coord) return flags.isMin;
++			return coord&lt;b.coord;
++		}
++		bool operator&gt;(const Bound&amp; b) const {
++			if(id==b.id &amp;&amp; coord==b.coord) return b.flags.isMin;
++			return coord&gt;b.coord;
++		}
+ 	};
+ 	struct VecBounds{
+ 		std::vector&lt;Bound&gt; vec;
+@@ -149,6 +156,8 @@
+ 	vector&lt;Real&gt; stresses;
+ 	//! Characteristic length, should be something like mean particle diameter (default -1=invalid value))
+ 	Real charLen;
++	//! Maximum body span in terms of bbox, to prevent periodic cell getting too small; is computed automatically at the beginning
++	Real maxSpan;
+ 	//! if actual unbalanced force is smaller than this number, the packing is considered stable (default 1e-4)
+ 	Real maxUnbalanced, currUnbalanced;
+ 	//! how often to recompute average stress, stiffness and unbalanced force (default 100)
+@@ -158,8 +167,8 @@
+ 	//! python command to be run when reaching the last specified stress
+ 	string doneHook;
+ 	void action(MetaBody*);
+-	PeriIsoCompressor(): avgStiffness(-1), maxDisplPerStep(-1), sumForces(Vector3r::ZERO), sigma(Vector3r::ZERO), charLen(-1), maxUnbalanced(1e-4), currUnbalanced(-1), globalUpdateInt(100), state(0){}
+-	REGISTER_ATTRIBUTES(StandAloneEngine,(stresses)(charLen)(maxUnbalanced)(globalUpdateInt)(state)(doneHook));
++	PeriIsoCompressor(): avgStiffness(-1), maxDisplPerStep(-1), sumForces(Vector3r::ZERO), sigma(Vector3r::ZERO), charLen(-1), maxSpan(-1), maxUnbalanced(1e-4), currUnbalanced(-1), globalUpdateInt(100), state(0){}
++	REGISTER_ATTRIBUTES(StandAloneEngine,(stresses)(charLen)(maxUnbalanced)(globalUpdateInt)(state)(doneHook)(maxSpan));
+ 	DECLARE_LOGGER;
+ 	REGISTER_CLASS_AND_BASE(PeriIsoCompressor,StandAloneEngine);
+ };
+
+Modified: trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp	2009-08-11 11:37:21 UTC (rev 1937)
++++ trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp	2009-08-12 09:27:41 UTC (rev 1938)
+@@ -51,9 +51,9 @@
+ 			aabb-&gt;min=aabb-&gt;center-aabb-&gt;halfSize; aabb-&gt;max=aabb-&gt;center+aabb-&gt;halfSize;
+ 		}
+ 	}
+-	operator()(ncb-&gt;interactingGeometry,ncb-&gt;boundingVolume,ncb-&gt;physicalParameters-&gt;se3,ncb);
++	if(ncb-&gt;physicalParameters &amp;&amp; ncb-&gt;boundingVolume &amp;&amp; ncb-&gt;interactingGeometry) operator()(ncb-&gt;interactingGeometry,ncb-&gt;boundingVolume,ncb-&gt;physicalParameters-&gt;se3,ncb);
+ }
+ 
+ 
+ 
+-YADE_PLUGIN((BoundingVolumeMetaEngine));
+\ No newline at end of file
++YADE_PLUGIN((BoundingVolumeMetaEngine));
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-08-11 11:37:21 UTC (rev 1937)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-08-12 09:27:41 UTC (rev 1938)
+@@ -215,8 +215,13 @@
+ 				// skip bodies without bbox since we would possibly never meet the upper bound again (std::sort may not be stable) and we don't want to collide those anyway
+ 				if(!(V[i].flags.isMin &amp;&amp; V[i].flags.hasBB)) continue;
+ 				const body_id_t&amp; iid=V[i].id;
+-				/* If std::sort swaps equal min/max bounds, there are 2 cases distinct cases to handle:
++				/* NOTE: no longer applicable, since operator&lt; behaves specially for same ids and coords
++					NOTE: reported in <A HREF="https://bugs.launchpad.net/yade/+bug/402098">https://bugs.launchpad.net/yade/+bug/402098</A>
++					NOTE: remove next comment once the operator&lt; solutions is verified to work
+ 
++				
++					If std::sort swaps equal min/max bounds, there are 2 cases distinct cases to handle:
++
+ 					1. i is inside V, j gets to the end of V (since it loops till the maxbound is found)
+ 						here, we swap min/max to get the in the right order and continue with the loop over i;
+ 						next time this j-bound is handled (with a different i, for sure), it will be OK.
+@@ -239,19 +244,23 @@
+ 					if(!V[j].flags.isMin) continue;
+ 					/* abuse the same function here; since it does spatial overlap check first, it is OK to use it */
+ 					handleBoundInversion(iid,jid,interactions,rb);
+-					// now we are at the last element, but we still have not met the upper bound of V[i].id
+-					// that means that the upper bound is before the upper one; that can only happen if they
+-					// are equal and the unstable std::sort has swapped them. In that case, we need to go reverse
+-					// from V[i] until we meet the upper bound and swap the isMin flag
+-					if(j==2*nBodies-1){ /* handle case 1. of swapped min/max */
+-						size_t k=i-1;
+-						while(V[k].id!=iid &amp;&amp; k&gt;0) k--;
+-						assert(V[k].id==iid); // if this fails, we didn't meet the other bound in the downwards sense either; that should never happen
+-						assert(!V[k].flags.isMin); // the lower bound should be maximum in this (exceptional) case; we will fix that now
+-						V[k].flags.isMin=true; V[i].flags.isMin=false;
+-						LOG_DEBUG(&quot;Swapping coincident min/max of #&quot;&lt;&lt;iid&lt;&lt;&quot; at positions &quot;&lt;&lt;k&lt;&lt;&quot; and &quot;&lt;&lt;i&lt;&lt;&quot; (coords: &quot;&lt;&lt;V[k].coord&lt;&lt;&quot; and &quot;&lt;&lt;V[i].coord&lt;&lt;&quot;)&quot;);
+-						break; // would happen anyways
+-					}
++					// no longer applicable since operator&lt; gives minimum as smaller in case of same id and same coords
++					#if 0
++						// now we are at the last element, but we still have not met the upper bound of V[i].id
++						// that means that the upper bound is before the upper one; that can only happen if they
++						// are equal and the unstable std::sort has swapped them. In that case, we need to go reverse
++						// from V[i] until we meet the upper bound and swap the isMin flag
++						if(j==2*nBodies-1){ /* handle case 1. of swapped min/max */
++							size_t k=i-1;
++							while(V[k].id!=iid &amp;&amp; k&gt;0) k--;
++							assert(V[k].id==iid); // if this fails, we didn't meet the other bound in the downwards sense either; that should never happen
++							assert(!V[k].flags.isMin); // the lower bound should be maximum in this (exceptional) case; we will fix that now
++							V[k].flags.isMin=true; V[i].flags.isMin=false;
++							LOG_DEBUG(&quot;Swapping coincident min/max of #&quot;&lt;&lt;iid&lt;&lt;&quot; at positions &quot;&lt;&lt;k&lt;&lt;&quot; and &quot;&lt;&lt;i&lt;&lt;&quot; (coords: &quot;&lt;&lt;V[k].coord&lt;&lt;&quot; and &quot;&lt;&lt;V[i].coord&lt;&lt;&quot;)&quot;);
++							break; // would happen anyways
++						}
++					#endif
++					assert(j&lt;2*nBodies-1);
+ 				}
+ 			}
+ 		}
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp	2009-08-11 11:37:21 UTC (rev 1937)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp	2009-08-12 09:27:41 UTC (rev 1938)
+@@ -38,8 +38,15 @@
+ 		//! is it the minimum (true) or maximum (false) bound?
+ 		struct{ unsigned hasBB:1; unsigned isMin:1; } flags;
+ 		Bound(Real coord_, body_id_t id_, bool isMin): coord(coord_), id(id_){ flags.isMin=isMin; }
+-		bool operator&lt;(const Bound&amp; b) const {return coord&lt;b.coord;}
+-		bool operator&gt;(const Bound&amp; b) const {return coord&gt;b.coord;}
++		bool operator&lt;(const Bound&amp; b) const {
++			/* handle special case of zero-width bodies, which could otherwise get min/max swapped in the unstable std::sort */
++			if(id==b.id &amp;&amp; coord==b.coord) return flags.isMin;
++			return coord&lt;b.coord;
++		}
++		bool operator&gt;(const Bound&amp; b) const {
++			if(id==b.id &amp;&amp; coord==b.coord) return b.flags.isMin;
++			return coord&gt;b.coord;
++		}
+ 	};
+ 	#ifdef COLLIDE_STRIDED
+ 		// keep this dispatcher and call it ourselves as needed
+
+Modified: trunk/pkg/dem/DataClass/SpherePack.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/SpherePack.cpp	2009-08-11 11:37:21 UTC (rev 1937)
++++ trunk/pkg/dem/DataClass/SpherePack.cpp	2009-08-12 09:27:41 UTC (rev 1938)
+@@ -77,7 +77,7 @@
+ 		if(!intSph) continue;
+ 		pack.push_back(Sph(b-&gt;physicalParameters-&gt;se3.position,intSph-&gt;radius));
+ 	}
+-	if(rootBody-&gt;isPeriodic) cellSize=rootBody-&gt;cellMax-rootBody-&gt;cellMin;
++	if(rootBody-&gt;isPeriodic) { cellSize=rootBody-&gt;cellMax-rootBody-&gt;cellMin; }
+ }
+ 
+ long SpherePack::makeCloud(Vector3r mn, Vector3r mx, Real rMean, Real rRelFuzz, size_t num, bool periodic){
+@@ -89,7 +89,7 @@
+ 	for(size_t i=0; i&lt;num; i++) {
+ 		size_t t;
+ 		for(t=0; t&lt;maxTry; ++t){
+-			Real r=(rnd()-.5)*rRelFuzz+rMean; Vector3r c;
++			Real r=(rnd()-.5)*rRelFuzz*rMean+rMean; Vector3r c;
+ 			if(!periodic) { for(int axis=0; axis&lt;3; axis++) c[axis]=mn[axis]+r+(size[axis]-2*r)*rnd(); }
+ 			else { for(int axis=0; axis&lt;3; axis++) c[axis]=mn[axis]+size[axis]*rnd(); }
+ 			size_t packSize=pack.size(); bool overlap=false;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2009-08-11 11:37:21 UTC (rev 1937)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2009-08-12 09:27:41 UTC (rev 1938)
+@@ -148,6 +148,8 @@
+ 	previousTranslation[wall] = (1-wallDamping)*translation*normal[wall] + 0.8*previousTranslation[wall];// formula for &quot;steady-flow&quot; evolution with fluctuations
+ 	//cerr &lt;&lt; &quot;translation = &quot; &lt;&lt; previousTranslation[wall] &lt;&lt; endl;
+ 	p-&gt;se3.position += previousTranslation[wall];
++	// this is important is using VelocityBins. Otherwise the motion is never detected. Related to <A HREF="https://bugs.launchpad.net/yade/+bug/398089">https://bugs.launchpad.net/yade/+bug/398089</A>
++	static_cast&lt;RigidBodyParameters*&gt;(p)-&gt;velocity=previousTranslation[wall]/ncb-&gt;dt;
+ 	if(log)TRVAR2(previousTranslation,p-&gt;se3.position);
+ }
+ 
+@@ -411,4 +413,4 @@
+ 	}
+ }
+ 
+-YADE_PLUGIN((TriaxialStressController));
+\ No newline at end of file
++YADE_PLUGIN((TriaxialStressController));
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-08-11 11:37:21 UTC (rev 1937)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-08-12 09:27:41 UTC (rev 1938)
+@@ -72,6 +72,8 @@
+ #include &lt;boost/random/variate_generator.hpp&gt;
+ #include &lt;boost/random/normal_distribution.hpp&gt;
+ 
++#include&lt;yade/pkg-dem/SpherePack.hpp&gt;
++
+ //#include&lt;yade/pkg-dem/MicroMacroAnalyser.hpp&gt;
+ 
+ 
+@@ -201,7 +203,7 @@
+ 	 * OTOH, if it is specified, scale the box preserving its ratio and lowerCorner so that the radius can be as requested
+ 	 */
+ 	Real porosity=.75;
+-	vector&lt;BasicSphere&gt; sphere_list;
++	SpherePack sphere_pack;
+ 	if(importFilename==&quot;&quot;){
+ 		Vector3r dimensions=upperCorner-lowerCorner; Real volume=dimensions.X()*dimensions.Y()*dimensions.Z();
+ 		if(radiusMean&lt;=0) radiusMean=pow(volume*(1-porosity)/(Mathr::PI*(4/3.)*numberOfGrains),1/3.);
+@@ -215,11 +217,17 @@
+ 			dimensions[0]*=fixedDims[0]?1.:boxScaleFactor; dimensions[1]*=fixedDims[1]?1.:boxScaleFactor; dimensions[2]*=fixedDims[2]?1.:boxScaleFactor;
+ 			upperCorner=lowerCorner+dimensions;
+ 		}
+-		message+=GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, radiusStdDev, radiusMean, porosity);
++		long num=sphere_pack.makeCloud(lowerCorner,upperCorner,radiusMean,radiusStdDev,numberOfGrains);
++		message+=&quot;Generated a sample with &quot; + lexical_cast&lt;string&gt;(num) + &quot; spheres inside box of dimensions: (&quot;
++			+ lexical_cast&lt;string&gt;(upperCorner[0]-lowerCorner[0]) + &quot;,&quot; 
++			+ lexical_cast&lt;string&gt;(upperCorner[1]-lowerCorner[1]) + &quot;,&quot; 
++			+ lexical_cast&lt;string&gt;(upperCorner[2]-lowerCorner[2]) + &quot;).&quot;;
++		
+ 	}
+ 	else {
+ 		if(radiusMean&gt;0) LOG_WARN(&quot;radiusMean ignored, since importFilename specified.&quot;);
+-		sphere_list=Shop::loadSpheresFromFile(importFilename,lowerCorner,upperCorner);
++		sphere_pack.fromFile(importFilename);
++		sphere_pack.aabb(lowerCorner,upperCorner);
+ 	}
+ 
+ 	// setup rootBody here, since radiusMean is now at its true value (if it was negative)
+@@ -333,11 +341,11 @@
+ 			 
+ 	}
+ 
+-	vector&lt;BasicSphere&gt;::iterator it = sphere_list.begin();
+-	vector&lt;BasicSphere&gt;::iterator it_end = sphere_list.end();
+-	FOREACH(const BasicSphere&amp; it, sphere_list){
+-		LOG_DEBUG(&quot;sphere (&quot; &lt;&lt; it.first &lt;&lt; &quot; &quot; &lt;&lt; it.second &lt;&lt; &quot;)&quot;);
+-		createSphere(body,it.first,it.second,false,true);
++	size_t imax=sphere_pack.pack.size();
++	for(size_t i=0; i&lt;imax; i++){
++		const SpherePack::Sph&amp; sp(sphere_pack.pack[i]);
++		LOG_DEBUG(&quot;sphere (&quot; &lt;&lt; sp.c &lt;&lt; &quot; &quot; &lt;&lt; sp.r &lt;&lt; &quot;)&quot;);
++		createSphere(body,sp.c,sp.r,false,true);
+ 		if(biaxial2dTest){ body-&gt;physicalParameters-&gt;blockedDOFs=PhysicalParameters::DOF_Z; }
+ 		rootBody-&gt;bodies-&gt;insert(body);
+ 	}	
+@@ -641,8 +649,8 @@
+ 	rootBody-&gt;physicalParameters 	= physics;
+ 	
+ }
+-
+-
++// 0xdeadc0de, superseded by SpherePack::makeCloud
++#if 0
+ string TriaxialTest::GenerateCloud(vector&lt;BasicSphere&gt;&amp; sphere_list, Vector3r lowerCorner, Vector3r upperCorner, long number, Real rad_std_dev, Real mean_radius, Real porosity)
+ {
+ 	typedef boost::minstd_rand StdGenerator;
+@@ -684,7 +692,7 @@
+ 			+ lexical_cast&lt;string&gt;(dimensions[1]) + &quot;,&quot; 
+ 			+ lexical_cast&lt;string&gt;(dimensions[2]) + &quot;).&quot;;
+ }
++#endif
+ 
+ 
+-
+ YADE_PLUGIN((TriaxialTest));
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2009-08-11 11:37:21 UTC (rev 1937)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2009-08-12 09:27:41 UTC (rev 1938)
+@@ -141,8 +141,11 @@
+ 		void positionRootBody(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+ 
+ 		typedef pair&lt;Vector3r, Real&gt; BasicSphere;
++	//	0xdeadc0de
++	#if 0
+ 		//! generate a list of non-overlapping spheres
+ 		string GenerateCloud(vector&lt;BasicSphere&gt;&amp; sphere_list, Vector3r lowerCorner, Vector3r upperCorner, long number, Real rad_std_dev, Real mean_radius, Real porosity);
++	#endif
+ 
+ 	
+ 	public : 
+
+Modified: trunk/py/pack.py
+===================================================================
+--- trunk/py/pack.py	2009-08-11 11:37:21 UTC (rev 1937)
++++ trunk/py/pack.py	2009-08-12 09:27:41 UTC (rev 1938)
+@@ -190,7 +190,7 @@
+ 		if predicate(s[0],s[1]): ret+=[utils.sphere(s[0],radius=s[1],**kw)]
+ 	return ret
+ 
+-def triaxialPack(predicate,radius,dim=None,cropLayers=0,radiusStDev=0.,assumedFinalDensity=.6,memoizeDb=None,useOBB=True,**kw):
++def triaxialPack(predicate,radius,dim=None,cropLayers=0,radiusStDev=0.,assumedFinalDensity=.6,spheresInCell=0,memoizeDb=None,useOBB=True,**kw):
+ 	&quot;&quot;&quot;Generator of triaxial packing, using TriaxialTest. Radius is radius of spheres, radiusStDev is its standard deviation.
+ 	By default, all spheres are of the same radius. cropLayers is how many layers of spheres will be added to the computed
+ 	dimension of the box so that there no (or not so much, at least) boundary effects at the boundaries of the predicate.
+@@ -212,6 +212,7 @@
+ 	import sqlite3, os.path, cPickle, time, sys
+ 	from yade import log
+ 	from math import pi
++	wantPeri=(spheresInCell&gt;0)
+ 	if type(predicate)==inGtsSurface and useOBB:
+ 		center,dim,orientation=gtsSurfaceBestFitOBB(predicate.surf)
+ 		dim*=2 # gtsSurfaceBestFitOBB returns halfSize
+@@ -220,66 +221,72 @@
+ 		if max(dim)==float('inf'): raise RuntimeError(&quot;Infinite predicate and no dimension of packing requested.&quot;)
+ 		center=predicate.center()
+ 		orientation=None
+-	fullDim=tuple([dim[i]+4*cropLayers*radius for i in 0,1,2])
++	if not wantPeri: fullDim=tuple([dim[i]+4*cropLayers*radius for i in 0,1,2])
++	else: fullDim=dim
+ 	if(memoizeDb and os.path.exists(memoizeDb)):
+ 		# find suitable packing and return it directly
+ 		conn=sqlite3.connect(memoizeDb); c=conn.cursor();
+-		c.execute('select radius,radiusStDev,dimx,dimy,dimz,N,timestamp from packings order by N')
++		c.execute('select radius,radiusStDev,dimx,dimy,dimz,N,timestamp,periodic from packings order by N')
+ 		for row in c:
+-			R,rDev,X,Y,Z,NN,timestamp=row[0:7]; scale=radius/R
++			R,rDev,X,Y,Z,NN,timestamp,isPeri=row[0:8]; scale=radius/R
+ 			rDev*=scale; X*=scale; Y*=scale; Z*=scale
+-			if (radiusStDev==0 and rDev!=0) or (radiusStDev==0 and rDev!=0) or (radiusStDev!=0 and abs((rDev-radiusStDev)/radiusStDev)&gt;1e-2): continue # not suitable, standard deviation differs too much
+-			if X&lt;fullDim[0] or Y&lt;fullDim[1] or Z&lt;fullDim[2]: continue # not suitable, not large enough
+-			print &quot;Found suitable packing in database (radius=%g&#177;%g,N=%g,dim=%g&#215;%g&#215;%g,scale=%g), created %s&quot;%(R,rDev,NN,X,Y,Z,scale,time.asctime(time.gmtime(timestamp)))
++			print &quot;Considering packing (radius=%g&#177;%g,N=%g,dim=%g&#215;%g&#215;%g,%s,scale=%g), created %s&quot;%(R,rDev,NN,X,Y,Z,&quot;periodic&quot; if isPeri else &quot;non-periodic&quot;,scale,time.asctime(time.gmtime(timestamp)))
++			if (radiusStDev==0 and rDev!=0) or (radiusStDev==0 and rDev!=0) or (radiusStDev!=0 and abs((rDev-radiusStDev)/radiusStDev)&gt;1e-2): continue # radius fuzz differs too much
++			if isPeri and wantPeri:
++				if spheresInCell&gt;NN: continue
++				if abs((fullDim[1]/fullDim[0])/(dimy/dimx)-1)&gt;0.2 or abs((fullDim[2]/fullDim[0])/(dimz/dimx)-1)&gt;0.2: continue # proportions differing too much
++			else:
++				if (X&lt;fullDim[0] or Y&lt;fullDim[1] or Z&lt;fullDim[2]): continue # not large enough
++			print &quot;Found suitable packing in database (radius=%g&#177;%g,N=%g,dim=%g&#215;%g&#215;%g,%s,scale=%g), created %s&quot;%(R,rDev,NN,X,Y,Z,&quot;periodic&quot; if isPeri else &quot;non-periodic&quot;,scale,time.asctime(time.gmtime(timestamp)))
+ 			c.execute('select pack from packings where timestamp=?',(timestamp,))
+ 			sp=SpherePack(cPickle.loads(str(c.fetchone()[0])))
+ 			sp.scale(scale);
+ 			if orientation: sp.rotate(*orientation.ToAxisAngle())
+ 			return filterSpherePack(predicate,sp,**kw)
+-			#return filterSpherePack(inSpace(predicate.center()),sp,**kw)
+ 		print &quot;No suitable packing in database found, running triaxial&quot;
+ 		sys.stdout.flush()
+-	V=(4/3)*pi*radius**3; N=assumedFinalDensity*fullDim[0]*fullDim[1]*fullDim[2]/V;
+-	##
+-	O.switchWorld()
+-	##
+-	TriaxialTest(
+-		numberOfGrains=int(N),
+-		radiusMean=radius,
+-		# this is just size ratio if radiusMean is specified
+-		# if you comment out the line above, it will be the corner (before compaction) and radiusMean will be set accordingly
+-		upperCorner=fullDim,
+-		radiusStdDev=radiusStDev,
+-		## no need to touch any the following, I think
+-		noFiles=True,
+-		lowerCorner=[0,0,0],
+-		sigmaIsoCompaction=1e7,
+-		sigmaLateralConfinement=1e3,
+-		StabilityCriterion=.05,
+-		strainRate=.2,
+-		fast=True,
+-		thickness=-1, # will be set to sphere radius if negative
+-		maxWallVelocity=.1,
+-		wallOversizeFactor=1.5,
+-		autoUnload=True, # unload after isotropic compaction
+-		autoCompressionActivation=False # stop once unloaded
+-	).load()
+-	log.setLevel('TriaxialCompressionEngine',log.WARN)
+-	O.run(); O.wait()
+-	sp=SpherePack(); sp.fromSimulation()
+-	##
+-	O.switchWorld()
+-	##
++	O.switchWorld() ### !!
++	if wantPeri:
++		from yade.wrapper import *
++		#O.reset() # doesn't (shouldn't) affect the original simulation
++		sp=SpherePack()
++		cloudPorosity=0.25 # assume this number for the initial cloud (can be underestimated)
++		beta,gamma=fullDim[1]/fullDim[0],fullDim[2]/fullDim[0] # ratios &#946;=y&#8320;/x&#8320;, &#947;=z&#8320;/x&#8320;
++		N100=spheresInCell/cloudPorosity # number of spheres for cell being filled by spheres without porosity
++		x1=radius*(1/(beta*gamma)*N100*(4/3.)*pi)**(1/3.)
++		y1,z1=beta*x1,gamma*x1
++		O.periodicCell=((0,0,0),(x1,y1,z1))
++		print cloudPorosity,beta,gamma,N100,x1,y1,z1,O.periodicCell
++		num=sp.makeCloud(O.periodicCell[0],O.periodicCell[1],radius,radiusStDev,spheresInCell,True)
++		O.engines=[BexResetter(),BoundingVolumeMetaEngine([InteractingSphere2AABB()]),PeriodicInsertionSortCollider(),InteractionDispatchers([ef2_Sphere_Sphere_Dem3DofGeom()],[SimpleElasticRelationships()],[Law2_Dem3Dof_Elastic_Elastic()]),PeriIsoCompressor(charLen=radius/5.,stresses=[100e9,1e9],maxUnbalanced=1e-2,doneHook='O.pause();'),NewtonsDampedLaw(damping=.6)]
++		for s in sp: O.bodies.append(utils.sphere(s[0],s[1],density=1000))
++		O.dt=utils.PWaveTimeStep()
++		#for i in range(10): O.step()
++		O.run(); O.wait()
++		sp=SpherePack(); sp.fromSimulation()
++		sp.cellFill(Vector3(fullDim[0],fullDim[1],fullDim[2]))
++	else:
++		V=(4/3)*pi*radius**3; N=assumedFinalDensity*fullDim[0]*fullDim[1]*fullDim[2]/V;
++		TriaxialTest(
++			numberOfGrains=int(N),radiusMean=radius,radiusStdDev=radiusStDev,
++			# upperCorner is just size ratio, if radiusMean is specified
++			upperCorner=fullDim,
++			## no need to touch any the following
++			noFiles=True,lowerCorner=[0,0,0],sigmaIsoCompaction=1e7,sigmaLateralConfinement=1e3,StabilityCriterion=.05,strainRate=.2,fast=True,thickness=-1,maxWallVelocity=.1,wallOversizeFactor=1.5,autoUnload=True,autoCompressionActivation=False).load()
++		log.setLevel('TriaxialCompressionEngine',log.WARN)
++		O.run(); O.wait()
++		sp=SpherePack(); sp.fromSimulation()
++	O.switchWorld() ### !!
+ 	if(memoizeDb):
+ 		if os.path.exists(memoizeDb):
+ 			conn=sqlite3.connect(memoizeDb)
+ 		else:
+ 			conn=sqlite3.connect(memoizeDb)
+ 			c=conn.cursor()
+-			c.execute('create table packings (radius real, radiusStDev real, dimx real, dimy real, dimz real, N integer, timestamp real, pack blob)')
++			c.execute('create table packings (radius real, radiusStDev real, dimx real, dimy real, dimz real, N integer, timestamp real, periodic integer, pack blob)')
+ 		c=conn.cursor()
+ 		packBlob=buffer(cPickle.dumps(sp.toList_pointsAsTuples(),cPickle.HIGHEST_PROTOCOL))
+-		c.execute('insert into packings values (?,?,?,?,?,?,?,?)',(radius,radiusStDev,fullDim[0],fullDim[1],fullDim[2],len(sp),time.time(),packBlob,))
++		c.execute('insert into packings values (?,?,?,?,?,?,?,?,?)',(radius,radiusStDev,fullDim[0],fullDim[1],fullDim[2],len(sp),time.time(),wantPeri,packBlob,))
+ 		c.close()
+ 		conn.commit()
+ 		print &quot;Packing saved to the database&quot;,memoizeDb
+
+Modified: trunk/py/yadeWrapper/yadeWrapper.cpp
+===================================================================
+--- trunk/py/yadeWrapper/yadeWrapper.cpp	2009-08-11 11:37:21 UTC (rev 1937)
++++ trunk/py/yadeWrapper/yadeWrapper.cpp	2009-08-12 09:27:41 UTC (rev 1938)
+@@ -304,6 +304,8 @@
+ 	void run(long int numIter=-1,bool doWait=false){
+ 		if(numIter&gt;0) OMEGA.getRootBody()-&gt;stopAtIteration=OMEGA.getCurrentIteration()+numIter;
+ 		OMEGA.startSimulationLoop();
++		// timespec t1,t2; t1.tv_sec=0; t1.tv_nsec=40000000; /* 40 ms */
++		// while(!OMEGA.isRunning()) nanosleep(&amp;t1,&amp;t2); // wait till we start, so that calling wait() immediately afterwards doesn't return immediately
+ 		LOG_DEBUG(&quot;RUN&quot;&lt;&lt;((OMEGA.getRootBody()-&gt;stopAtIteration-OMEGA.getCurrentIteration())&gt;0?string(&quot; (&quot;+lexical_cast&lt;string&gt;(OMEGA.getRootBody()-&gt;stopAtIteration-OMEGA.getCurrentIteration())+&quot; to go)&quot;):string(&quot;&quot;))&lt;&lt;&quot;!&quot;);
+ 		if(doWait) wait();
+ 	}
+
+Modified: trunk/scripts/test/gts-triax-pack.py
+===================================================================
+--- trunk/scripts/test/gts-triax-pack.py	2009-08-11 11:37:21 UTC (rev 1937)
++++ trunk/scripts/test/gts-triax-pack.py	2009-08-12 09:27:41 UTC (rev 1938)
+@@ -2,9 +2,9 @@
+ from yade import pack
+ import pylab
+ # define the section shape as polygon in 2d; repeat first point at the end to close the polygon
+-poly=((2e-3,1e-2),(1e-2,5e-3),(1.5e-2,-5e-3),(2e-3,-1e-2),(2e-3,1e-2))
++poly=((1e-2,5e-2),(5e-2,2e-2),(7e-2,-2e-2),(1e-2,-5e-2),(1e-2,5e-2))
+ # show us the meridian shape
+-pylab.plot(*zip(*poly)); pylab.xlim(xmin=0); pylab.grid(); pylab.title('Meridian of the revolution surface\n(close to continue)'); pylab.gca().set_aspect(aspect='equal',adjustable='box'); pylab.show()
++#pylab.plot(*zip(*poly)); pylab.xlim(xmin=0); pylab.grid(); pylab.title('Meridian of the revolution surface\n(close to continue)'); pylab.gca().set_aspect(aspect='equal',adjustable='box'); pylab.show()
+ # angles at which we want this polygon to appear
+ thetas=arange(0,pi/2,pi/24)
+ # create 3d points from the 2d ones, turning the 2d meridian around the +y axis
+@@ -17,7 +17,7 @@
+ # without these transformation, it would look a little simpler:
+ # 	pts=pack.revolutionSurfaceMeridians([[(pt[0],pt[1]+2e-3*theta) for pt in poly] for theta in thetas],thetas
+ #
+-pts=pack.revolutionSurfaceMeridians([[(pt[0],pt[1]+2e-3*theta) for pt in poly] for theta in thetas],thetas,origin=Vector3(0,0,.1),orientation=Quaternion((1,1,0),pi/4))
++pts=pack.revolutionSurfaceMeridians([[(pt[0],pt[1]+1e-2*theta) for pt in poly] for theta in thetas],thetas,origin=Vector3(0,-.05,.1),orientation=Quaternion((1,1,0),pi/4))
+ # connect meridians to make surfaces
+ # caps will close it at the beginning and the end
+ # threshold will merge points closer than 1e-4; this is important: we want it to be closed for filling
+@@ -31,12 +31,18 @@
+ # parameters (or parameters that can be scaled to the same one),
+ # it will load the packing instead of running the triaxial compaction again.
+ # Try running for the second time to see the speed difference!
+-O.bodies.append(pack.triaxialPack(pack.inGtsSurface(surf),radius=1e-4,radiusStDev=1e-4,memoizeDb='/tmp/gts-triax-packings.sqlite'))
++memoizeDb='/tmp/gts-triax-packings.sqlite'
++O.bodies.append(pack.triaxialPack(pack.inGtsSurface(surf),radius=5e-3,radiusStDev=1e-4,memoizeDb=memoizeDb))
+ # We could also fill the horse with triaxial packing, but have nice approximation, the triaxial would run terribly long,
+ # since horse discard most volume of its bounding box
+ # Here, we would use a very crude one, however
+-if 0:
++if 1:
+ 	import gts
+ 	horse=gts.read(open('horse.coarse.gts'))
+-	horse.scale(.1)
+-	O.bodies.append(pack.triaxialPack(pack.inGtsSurface(horse),radius=5e-4))
++	#horse.scale(.25,.25,.25)
++	O.bodies.append(pack.gtsSurface2Facets(horse))
++	O.bodies.append(pack.triaxialPack(pack.inGtsSurface(horse),radius=5e-3,memoizeDb=memoizeDb))
++	## NB: periodic triaxial doesn't work yet
++	#horse.translate(0,.2,0)
++	#O.bodies.append(pack.gtsSurface2Facets(horse))
++	#O.bodies.append(pack.triaxialPack(pack.inGtsSurface(horse),radius=1,spheresInCell=2000))#,memoizeDb=memoizeDb))
+
+Modified: trunk/scripts/test/periodic-compress.py
+===================================================================
+--- trunk/scripts/test/periodic-compress.py	2009-08-11 11:37:21 UTC (rev 1937)
++++ trunk/scripts/test/periodic-compress.py	2009-08-12 09:27:41 UTC (rev 1938)
+@@ -16,22 +16,23 @@
+ 		[SimpleElasticRelationships()],
+ 		[Law2_Dem3Dof_Elastic_Elastic()],
+ 	),
+-	PeriIsoCompressor(charLen=.1,stresses=[50e9,1e8],doneHook=&quot;print 'FINISHED'; O.pause() &quot;),
++	PeriIsoCompressor(charLen=.5,stresses=[50e9,1e8],doneHook=&quot;print 'FINISHED'; O.pause() &quot;),
+ 	NewtonsDampedLaw(damping=.4)
+ ]
+ O.dt=utils.PWaveTimeStep()
+ O.saveTmp()
++print O.periodicCell
+ from yade import qt; qt.Controller(); qt.View()
+ O.run()
+ O.wait()
+ timing.stats()
+ 
+ # now take that packing and pad some larger volume with it
+-sp=pack.SpherePack()
+-sp.fromSimulation() # take spheres from simulation; cellSize is set as well
+-O.reset()
+-print sp.cellSize
+-sp.cellFill((30,30,30))
+-print sp.cellSize
+-for s in sp:
+-	O.bodies.append(utils.sphere(s[0],s[1]))
++#sp=pack.SpherePack()
++#sp.fromSimulation() # take spheres from simulation; cellSize is set as well
++#O.reset()
++#print sp.cellSize
++#sp.cellFill((30,30,30))
++#print sp.cellSize
++#for s in sp:
++#	O.bodies.append(utils.sphere(s[0],s[1]))
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001369.html">[deprecated list] [Yade-dev] maxDataLen in plot.py
+</A></li>
+	<LI>Next message: <A HREF="001372.html">[deprecated list] [Yade-dev] Python script. different behavior
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1370">[ date ]</a>
+              <a href="thread.html#1370">[ thread ]</a>
+              <a href="subject.html#1370">[ subject ]</a>
+              <a href="author.html#1370">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

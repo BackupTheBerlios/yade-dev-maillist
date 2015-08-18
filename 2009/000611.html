@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1634 -	trunk/pkg/common/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1634%20-%0A%09trunk/pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200901232307.n0NN70ER021143%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000612.html">
+   <LINK REL="Next"  HREF="000613.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1634 -	trunk/pkg/common/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1634%20-%0A%09trunk/pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200901232307.n0NN70ER021143%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1634 -	trunk/pkg/common/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Jan 24 00:07:00 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000612.html">[deprecated list] [Yade-dev] [svn] r1633 - in trunk: extra gui/py	gui/qt3
+</A></li>
+        <LI>Next message: <A HREF="000613.html">[deprecated list] [Yade-dev] [svn] r1635 - in trunk:	gui/qt3	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#611">[ date ]</a>
+              <a href="thread.html#611">[ thread ]</a>
+              <a href="subject.html#611">[ subject ]</a>
+              <a href="author.html#611">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-01-24 00:06:59 +0100 (Sat, 24 Jan 2009)
+New Revision: 1634
+
+Modified:
+   trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.hpp
+Log:
+omg...
+
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.cpp	2009-01-23 22:18:54 UTC (rev 1633)
++++ trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.cpp	2009-01-23 23:06:59 UTC (rev 1634)
+@@ -16,6 +16,8 @@
+ #include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+ #include&quot;SpheresFactory.hpp&quot;
+ 
++CREATE_LOGGER(SpheresFactory);
++
+ SpheresFactory::SpheresFactory() : first_run(true) 
+ {
+ 
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.hpp	2009-01-23 22:18:54 UTC (rev 1633)
++++ trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.hpp	2009-01-23 23:06:59 UTC (rev 1634)
+@@ -33,6 +33,8 @@
+ 
+ 	void createSphere(shared_ptr&lt;Body&gt;&amp; body, const Vector3r&amp; position, Real radius);
+ 
++	DECLARE_LOGGER;
++
+ 	REGISTER_ATTRIBUTES(StandAloneEngine,(factoryFacets)(labelBroadInteractor))
+ 	REGISTER_CLASS_AND_BASE(SpheresFactory, StandAloneEngine);
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000612.html">[deprecated list] [Yade-dev] [svn] r1633 - in trunk: extra gui/py	gui/qt3
+</A></li>
+	<LI>Next message: <A HREF="000613.html">[deprecated list] [Yade-dev] [svn] r1635 - in trunk:	gui/qt3	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#611">[ date ]</a>
+              <a href="thread.html#611">[ thread ]</a>
+              <a href="subject.html#611">[ subject ]</a>
+              <a href="author.html#611">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] corrigenda: broken preprocessors after recent	optimizations
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20corrigenda%3A%20broken%20preprocessors%20after%20recent%0A%09optimizations&In-Reply-To=%3C47CA80ED.6060208%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000084.html">
+   <LINK REL="Next"  HREF="000086.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] corrigenda: broken preprocessors after recent	optimizations</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20corrigenda%3A%20broken%20preprocessors%20after%20recent%0A%09optimizations&In-Reply-To=%3C47CA80ED.6060208%40arcig.cz%3E"
+       TITLE="[yade-dev] corrigenda: broken preprocessors after recent	optimizations">eudoxos at arcig.cz
+       </A><BR>
+    <I>Sun Mar  2 11:26:53 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000084.html">[yade-dev] broken preprocessors after recent optimizations
+</A></li>
+        <LI>Next message: <A HREF="000086.html">[yade-dev] broken preprocessors after recent optimizations
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#85">[ date ]</a>
+              <a href="thread.html#85">[ thread ]</a>
+              <a href="subject.html#85">[ subject ]</a>
+              <a href="author.html#85">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>I added all yade components and have the following results now (cut&amp;paste):
+
+=========================================
+SUMMARY ======================================
+
+                      BoxStack passed (257.02 iter/sec)
+                BrefcomTestGen passed (4955.9 iter/sec)
+                  ClumpTestGen passed (1252.3 iter/sec)
+          CohesiveTriaxialTest passed (145.84 iter/sec)
+                       FEMBeam passed (39078. iter/sec)
+                        Funnel passed (2077.1 iter/sec)
+                  HangingCloth passed (125.63 iter/sec)
+                 HydraulicTest passed (4963.0 iter/sec)
+                LatticeExample passed (5.6667 iter/sec)
+                   RotatingBox passed (795.01 iter/sec)
+                SDECImpactTest passed (8748.8 iter/sec)
+             SDECLinkedSpheres CRASHED (backtrace above)
+                SDECMovingWall passed (110.93 iter/sec)
+              SDECSpheresPlane passed (4219.4 iter/sec)
+                      ScrewGen passed (164.65 iter/sec)
+                  TetraTestGen passed (13255. iter/sec)
+              TetrahedronsTest passed (34.514 iter/sec)
+             ThreePointBending CRASHED (backtrace above)
+                  TriaxialTest passed (82.461 iter/sec)
+             TriaxialTestWater passed (14.811 iter/sec)
+                       USCTGen passed (33.228 iter/sec)
+
+====================================== END OF
+SUMMARY ==================================
+
+
+And parts of backtraces:
+
+SDECLinkedSpheres:
+
+#4  &lt;signal handler called&gt;
+#5  0x00007f8cb7948095 in raise () from /lib/libc.so.6
+#6  0x00007f8cb7949af0 in abort () from /lib/libc.so.6
+#7  0x00007f8cb79413df in __assert_fail () from /lib/libc.so.6
+#8  0x00007f8cad197add in
+boost::shared_ptr&lt;SpheresContactGeometry&gt;::operator-&gt; (this=0x4134dcd0)
+at /usr/include/boost/shared_ptr.hpp:315
+#9  0x00007f8cad18cdd4 in
+InteractingSphere2InteractingSphere4SpheresContactGeometry::go
+(this=0x981930, cm1=@0x986198, cm2=@0x987238, se31=@0x987110,
+se32=@0x988320, c=@0x4134ddf0) at
+pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp:78
+
+
+ThreePointBending:
+
+#4  &lt;signal handler called&gt;
+#5  0x00007f5980310161 in BodyRedirectionVector::operator[]
+(this=0x9811e0, id=0) at pkg/common/Container/BodyRedirectionVector.cpp:159
+#6  0x00007f5977a3d731 in TranslationEngine::applyCondition
+(this=0x980c90, body=0x97ecc0) at
+pkg/common/Engine/DeusExMachina/TranslationEngine.cpp:47
+#7  0x000000000048e83c in DeusExMachina::action (this=0x980c90,
+b=0x97ecc0) at core/DeusExMachina.cpp:27
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000084.html">[yade-dev] broken preprocessors after recent optimizations
+</A></li>
+	<LI>Next message: <A HREF="000086.html">[yade-dev] broken preprocessors after recent optimizations
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#85">[ date ]</a>
+              <a href="thread.html#85">[ thread ]</a>
+              <a href="subject.html#85">[ subject ]</a>
+              <a href="author.html#85">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

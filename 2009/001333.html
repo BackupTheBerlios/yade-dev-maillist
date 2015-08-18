@@ -1,0 +1,1078 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1920 - in trunk:	gui/py	pkg/common/Engine/StandAloneEngine	pkg/dem/DataClass	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor pkg/dem/meta	pkg/mass-spring/PreProcessor	pkg/realtime-rigidbody/PreProcessor	pkg/snow/PreProcessor	py/tests scripts scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1920%20-%20in%20trunk%3A%0A%09gui/py%09pkg/common/Engine/StandAloneEngine%0A%09pkg/dem/DataClass%09pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%09pkg/dem/PreProcessor%20pkg/dem/meta%0A%09pkg/mass-spring/PreProcessor%09pkg/realtime-rigidbody/PreProcessor%0A%09pkg/snow/PreProcessor%09py/tests%20scripts%20scripts/test&In-Reply-To=%3C200908050832.n758WLmS023036%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001332.html">
+   <LINK REL="Next"  HREF="001334.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1920 - in trunk:	gui/py	pkg/common/Engine/StandAloneEngine	pkg/dem/DataClass	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor pkg/dem/meta	pkg/mass-spring/PreProcessor	pkg/realtime-rigidbody/PreProcessor	pkg/snow/PreProcessor	py/tests scripts scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1920%20-%20in%20trunk%3A%0A%09gui/py%09pkg/common/Engine/StandAloneEngine%0A%09pkg/dem/DataClass%09pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%09pkg/dem/PreProcessor%20pkg/dem/meta%0A%09pkg/mass-spring/PreProcessor%09pkg/realtime-rigidbody/PreProcessor%0A%09pkg/snow/PreProcessor%09py/tests%20scripts%20scripts/test&In-Reply-To=%3C200908050832.n758WLmS023036%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1920 - in trunk:	gui/py	pkg/common/Engine/StandAloneEngine	pkg/dem/DataClass	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor pkg/dem/meta	pkg/mass-spring/PreProcessor	pkg/realtime-rigidbody/PreProcessor	pkg/snow/PreProcessor	py/tests scripts scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Aug  5 10:32:21 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001332.html">[deprecated list] [Yade-dev] [svn] r1919 - in trunk: py py/tests	py/yadeWrapper	scripts
+</A></li>
+        <LI>Next message: <A HREF="001334.html">[deprecated list] [Yade-dev] yade CRASH contest
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1333">[ date ]</a>
+              <a href="thread.html#1333">[ thread ]</a>
+              <a href="subject.html#1333">[ subject ]</a>
+              <a href="author.html#1333">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-08-05 10:32:18 +0200 (Wed, 05 Aug 2009)
+New Revision: 1920
+
+Modified:
+   trunk/gui/py/PythonUI_rc.py
+   trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp
+   trunk/pkg/dem/DataClass/Clump.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2AABB.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/NewtonsDampedLaw.cpp
+   trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/DirectShearCis.cpp
+   trunk/pkg/dem/PreProcessor/Funnel.cpp
+   trunk/pkg/dem/PreProcessor/MembraneTest.cpp
+   trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+   trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp
+   trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp
+   trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp
+   trunk/pkg/dem/PreProcessor/SimpleScene.cpp
+   trunk/pkg/dem/PreProcessor/SimpleShear.cpp
+   trunk/pkg/dem/PreProcessor/TestSimpleViscoelastic.cpp
+   trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+   trunk/pkg/dem/PreProcessor/TetrahedronsTest.hpp
+   trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+   trunk/pkg/dem/PreProcessor/UniaxialStrainerGen.cpp
+   trunk/pkg/dem/meta/Shop.cpp
+   trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+   trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp
+   trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+   trunk/pkg/snow/PreProcessor/SnowCreepTest.cpp
+   trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp
+   trunk/py/tests/__init__.py
+   trunk/py/tests/wrapper.py
+   trunk/scripts/regression-tests.py
+   trunk/scripts/simple-scene.py
+   trunk/scripts/test/wm3-wrap.py
+Log:
+1. Replace PersistentSAPCollider and DistantPersistentSAPCollider by InsertionSortCollider everywhere. The two are still in the sources, but are not compiled. Will be removed in near future. Added to deprecated table in python so that old scripts still work.
+2. Add some more regression tests for the python wrapper.
+3. Fix timestep in HangingCloth (it does some weird things, can someone check it or just remove mass-spring from the tree?)
+
+
+
+Modified: trunk/gui/py/PythonUI_rc.py
+===================================================================
+--- trunk/gui/py/PythonUI_rc.py	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/gui/py/PythonUI_rc.py	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -76,14 +76,15 @@
+ 	'BrefcomDamageColorizer':'CpmPhysDamageColorizer',
+ 	'BrefcomGlobalCharacteristics':'CpmGlobalCharacteristics',
+ 	# renamed back to comply with the c++ name, 4.8.2009
+-	'Preprocessor':'FileGenerator'
++	'Preprocessor':'FileGenerator',
++	'PersistentSAPCollider':'InsertionSortCollider',
+ }
+ 
+ for oldName in renamed:
+ 	class warnWrap:
+ 		def __init__(self,_old,_new): self.old,self.new=_old,_new
+ 		def __call__(self,*args,**kw):
+-			import warnings; warnings.warn(&quot;Class `%s' was renamed to `%s', update your code!&quot;%(self.old,self.new),DeprecationWarning,stacklevel=2);
++			import warnings; warnings.warn(&quot;Class `%s' was renamed to (or replaced by) `%s', update your code!&quot;%(self.old,self.new),DeprecationWarning,stacklevel=3);
+ 			return _proxyNamespace[self.new](*args,**kw)
+ 	_proxyNamespace[oldName]=warnWrap(oldName,renamed[oldName])
+ 
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -6,7 +6,9 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-#include &quot;DistantPersistentSAPCollider.hpp&quot;
++YADE_REQUIRE_FEATURE(Say goodbye to this piece of crappy code!)
++
++#include&quot;DistantPersistentSAPCollider.hpp&quot;
+ #include&lt;yade/core/Body.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/core/BodyContainer.hpp&gt;
+@@ -252,4 +254,4 @@
+ 	}
+ }
+ 
+-YADE_PLUGIN((DistantPersistentSAPCollider));
+\ No newline at end of file
++YADE_PLUGIN((DistantPersistentSAPCollider));
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -8,6 +8,8 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
++YADE_REQUIRE_FEATURE(Say goodbye to this piece of crappy code!)
++
+ #include&quot;PersistentSAPCollider.hpp&quot;
+ #include&lt;yade/core/Body.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+@@ -314,4 +316,4 @@
+ 	}
+ }
+ 
+-YADE_PLUGIN((PersistentSAPCollider));
+\ No newline at end of file
++YADE_PLUGIN((PersistentSAPCollider));
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -8,6 +8,8 @@
+ 
+ #pragma once
+ 
++#error PersistentSAPCollider is forbidden
++
+ #include&lt;yade/core/Collider.hpp&gt;
+ #include&lt;yade/core/InteractionContainer.hpp&gt;
+ #include &lt;list&gt;
+
+Modified: trunk/pkg/dem/DataClass/Clump.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/Clump.hpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/DataClass/Clump.hpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -52,7 +52,7 @@
+ 
+ 	@todo GravityEngine should be applied to members, not to clump as such?! Still not sure. Perhaps Clumps should have mass and inertia set to zeros so that engines unaware of clumps do not act on it. It would have some private mass and insertia that would be used in NewtonsForceLaw etc for clumps specially...
+ 
+-	@note PersistentSAPCollider bypass Clumps explicitly. This no longer depends on the absence of boundingVolume.
++	@note Collider::mayCollide (should be used by all colliders) bypasses Clumps explicitly. This no longer depends on the absence of boundingVolume.
+ 	@note Clump relies on its id being assigned (as well as id of its components); therefore, only bodies that have already been inserted to the container may be added to Clump which has been itself already added to the container. We further requier that clump id is greater than ids of clumped bodies
+  
+  */
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2AABB.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2AABB.hpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2AABB.hpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -13,7 +13,7 @@
+  * \brief This class exists for the sole purpose of creating AABB
+  * (AxisAligneBoundingBox) from class InteractingMyTetrahedron
+  *
+- * AABB is used by class PersistentSAPCollider to detect possible interaction between two
++ * AABB is used by class InsertionSortCollider to detect possible interaction between two
+  * bodies. Once you write this class for your InteractingGeometry, interactions
+  * will be automatically detected and created for you.
+  *
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/NewtonsDampedLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/NewtonsDampedLaw.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/Engine/StandAloneEngine/NewtonsDampedLaw.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -94,10 +94,13 @@
+ 			}
+ 
+ 			// blocking DOFs
+-			if(rb-&gt;blockedDOFs==0){ /* same as: rb-&gt;blockedDOFs==PhysicalParameters::DOF_NONE */
++			if(rb-&gt;blockedDOFs==PhysicalParameters::DOF_NONE){
+ 				rb-&gt;angularVelocity=rb-&gt;angularVelocity+dt*rb-&gt;angularAcceleration;
+ 				rb-&gt;velocity=rb-&gt;velocity+dt*rb-&gt;acceleration;
++			} else if(rb-&gt;blockedDOFs==PhysicalParameters::DOF_ALL){
++				/* do nothing */
+ 			} else {
++				// handle more complicated cases here
+ 				if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_X)==0) rb-&gt;velocity[0]+=dt*rb-&gt;acceleration[0];
+ 				if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_Y)==0) rb-&gt;velocity[1]+=dt*rb-&gt;acceleration[1];
+ 				if((rb-&gt;blockedDOFs &amp; PhysicalParameters::DOF_Z)==0) rb-&gt;velocity[2]+=dt*rb-&gt;acceleration[2];
+
+Modified: trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/PreProcessor/CohesiveTriaxialTest.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -30,7 +30,7 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/DistantPersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+@@ -590,7 +590,7 @@
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ //	rootBody-&gt;engines.push_back(sdecTimeStepper);	
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new DistantPersistentSAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+ 	rootBody-&gt;engines.push_back(cohesiveFrictionalContactLaw);
+@@ -697,4 +697,4 @@
+ 
+ 
+ 
+-YADE_PLUGIN((CohesiveTriaxialTest));
+\ No newline at end of file
++YADE_PLUGIN((CohesiveTriaxialTest));
+
+Modified: trunk/pkg/dem/PreProcessor/DirectShearCis.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/DirectShearCis.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/PreProcessor/DirectShearCis.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -31,7 +31,7 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+@@ -319,7 +319,7 @@
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ 	rootBody-&gt;engines.push_back(sdecTimeStepper);
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);	
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new ElasticContactLaw));
+
+Modified: trunk/pkg/dem/PreProcessor/Funnel.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/Funnel.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/PreProcessor/Funnel.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -18,7 +18,7 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+@@ -275,7 +275,7 @@
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ 	rootBody-&gt;engines.push_back(sdecTimeStepper);
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);	
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new ElasticContactLaw));
+@@ -316,4 +316,4 @@
+ }
+ 
+ 
+-YADE_PLUGIN((Funnel));
+\ No newline at end of file
++YADE_PLUGIN((Funnel));
+
+Modified: trunk/pkg/dem/PreProcessor/MembraneTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/MembraneTest.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/PreProcessor/MembraneTest.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -27,7 +27,7 @@
+ 
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ 
+@@ -310,7 +310,7 @@
+ 	rootBody-&gt;engines.clear();
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);	
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+         rootBody-&gt;engines.push_back(constitutiveLaw);
+@@ -352,4 +352,4 @@
+ 
+ 
+ 
+-YADE_PLUGIN((MembraneTest));
+\ No newline at end of file
++YADE_PLUGIN((MembraneTest));
+
+Modified: trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/PreProcessor/ModifiedTriaxialTest.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -32,7 +32,7 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+@@ -583,7 +583,7 @@
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ //	rootBody-&gt;engines.push_back(sdecTimeStepper);	
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+ 	rootBody-&gt;engines.push_back(elasticContactLaw);
+@@ -691,4 +691,4 @@
+ 
+ 
+ 
+-YADE_PLUGIN((ModifiedTriaxialTest));
+\ No newline at end of file
++YADE_PLUGIN((ModifiedTriaxialTest));
+
+Modified: trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/PreProcessor/SDECImpactTest.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -24,7 +24,7 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+@@ -449,7 +449,7 @@
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ 	rootBody-&gt;engines.push_back(sdecTimeStepper);
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+ 	rootBody-&gt;engines.push_back(elasticContactLaw);
+@@ -494,4 +494,4 @@
+ 	
+ }
+ 
+-YADE_PLUGIN((SDECImpactTest));
+\ No newline at end of file
++YADE_PLUGIN((SDECImpactTest));
+
+Modified: trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/PreProcessor/SDECLinkedSpheres.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -28,7 +28,7 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+@@ -326,7 +326,7 @@
+ 	rootBody-&gt;engines.push_back(sdecTimeStepper);
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+ 	rootBody-&gt;engines.push_back(constitutiveLaw);
+@@ -367,4 +367,4 @@
+ 	
+ }
+ 
+-YADE_PLUGIN((SDECLinkedSpheres));
+\ No newline at end of file
++YADE_PLUGIN((SDECLinkedSpheres));
+
+Modified: trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/PreProcessor/SDECMovingWall.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -21,7 +21,7 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+@@ -348,7 +348,7 @@
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ 	rootBody-&gt;engines.push_back(sdecTimeStepper);
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);	
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new ElasticContactLaw));
+@@ -395,4 +395,4 @@
+ }
+ 
+ 
+-YADE_PLUGIN((SDECMovingWall));
+\ No newline at end of file
++YADE_PLUGIN((SDECMovingWall));
+
+Modified: trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/PreProcessor/SDECSpheresPlane.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -22,7 +22,7 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+@@ -327,7 +327,7 @@
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ 	rootBody-&gt;engines.push_back(sdecTimeStepper);
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);	
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new ElasticContactLaw));
+@@ -372,4 +372,4 @@
+ }
+ 
+ 
+-YADE_PLUGIN((SDECSpheresPlane));
+\ No newline at end of file
++YADE_PLUGIN((SDECSpheresPlane));
+
+Modified: trunk/pkg/dem/PreProcessor/SimpleScene.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SimpleScene.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/PreProcessor/SimpleScene.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -29,7 +29,7 @@
+ #include&lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-dem/SimpleElasticRelationships.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ 
+ 
+ 
+@@ -56,7 +56,7 @@
+ 		// use boundingVolumeDispatcher that we defined above
+ 		rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+ 		//@
+-		shared_ptr&lt;PersistentSAPCollider&gt; collider(new PersistentSAPCollider);
++		shared_ptr&lt;InsertionSortCollider&gt; collider(new InsertionSortCollider);
+ 			rootBody-&gt;engines.push_back(collider);
+ 		//@
+ 		shared_ptr&lt;InteractionGeometryMetaEngine&gt; igeomDispatcher(new InteractionGeometryMetaEngine);
+
+Modified: trunk/pkg/dem/PreProcessor/SimpleShear.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SimpleShear.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/PreProcessor/SimpleShear.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -30,7 +30,7 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+@@ -301,7 +301,7 @@
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ 	rootBody-&gt;engines.push_back(globalStiffnessTimeStepper);
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);	
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new ContactLaw1));
+
+Modified: trunk/pkg/dem/PreProcessor/TestSimpleViscoelastic.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TestSimpleViscoelastic.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/PreProcessor/TestSimpleViscoelastic.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -21,7 +21,7 @@
+ #include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
+ #include&lt;yade/pkg-common/MetaInteractingGeometry2AABB.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionContainerReseter.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
+@@ -166,7 +166,7 @@
+     rootBody-&gt;engines.clear();
+     rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+     rootBody-&gt;engines.push_back(boundingVolumeDispatcher);	
+-    rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
++    rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+     rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+     rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+     rootBody-&gt;engines.push_back(constitutiveLaw);
+
+Modified: trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -20,7 +20,7 @@
+ #include&lt;yade/pkg-common/Box.hpp&gt;
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ 
+@@ -344,7 +344,7 @@
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ 	//rootBody-&gt;engines.push_back(sdecTimeStepper);
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);	
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new MyTetrahedronLaw));
+@@ -394,4 +394,4 @@
+ 	tet-&gt;v[3]=size*(Mathr::UnitRandom()*0.7+1.0)*Vector3r(0.16,0.93,-0.33);
+ }
+ 
+-YADE_PLUGIN((TetrahedronsTest));
+\ No newline at end of file
++YADE_PLUGIN((TetrahedronsTest));
+
+Modified: trunk/pkg/dem/PreProcessor/TetrahedronsTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TetrahedronsTest.hpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/PreProcessor/TetrahedronsTest.hpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -24,7 +24,7 @@
+  *  - with class InteractingMyTetrahedron2AABB registered in TetrahedronsTest inside an MetaEngine called
+  *     boundigVolumeDispatcher yade will automatically create AABB from InteractingMyTetrahedron
+  *
+- *  - with AABB available, the PersistentSAPCollider will be able to detect that two bodies are interacting
++ *  - with AABB available, the InsertionSortCollider will be able to detect that two bodies are interacting
+  *
+  *  - if interaction is detected, an appropriate EngineUnit will be called, in
+  *    this small example I have just two of them:
+
+Modified: trunk/pkg/dem/PreProcessor/ThreePointBending.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/PreProcessor/ThreePointBending.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -26,7 +26,7 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+@@ -313,7 +313,7 @@
+ 	rootBody-&gt;engines.push_back(sdecTimeStepper);
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+ 	rootBody-&gt;engines.push_back(constitutiveLaw);
+@@ -354,4 +354,4 @@
+ 	
+ }
+ 
+-YADE_PLUGIN((ThreePointBending));
+\ No newline at end of file
++YADE_PLUGIN((ThreePointBending));
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -30,8 +30,8 @@
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/pkg-common/Facet.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+@@ -694,4 +694,4 @@
+ 
+ 
+ 
+-YADE_PLUGIN((TriaxialTest));
+\ No newline at end of file
++YADE_PLUGIN((TriaxialTest));
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -36,7 +36,7 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+@@ -563,7 +563,7 @@
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ //	rootBody-&gt;engines.push_back(sdecTimeStepper);	
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+ 	rootBody-&gt;engines.push_back(elasticContactLaw);
+@@ -682,4 +682,4 @@
+ 
+ 
+ 
+-YADE_PLUGIN((TriaxialTestWater));
+\ No newline at end of file
++YADE_PLUGIN((TriaxialTestWater));
+
+Modified: trunk/pkg/dem/PreProcessor/UniaxialStrainerGen.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/UniaxialStrainerGen.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/PreProcessor/UniaxialStrainerGen.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -16,7 +16,7 @@
+ #include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/pkg-common/ConstitutiveLawDispatcher.hpp&gt;
+ #include&lt;yade/pkg-dem/NewtonsDampedLaw.hpp&gt;
+ #include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+@@ -95,8 +95,7 @@
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+ 
+-	shared_ptr&lt;PersistentSAPCollider&gt; collider(new PersistentSAPCollider);
+-		collider-&gt;haveDistantTransient=true;
++	shared_ptr&lt;InsertionSortCollider&gt; collider(new InsertionSortCollider);
+ 		rootBody-&gt;engines.push_back(collider);
+ 
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; igeomDispatcher(new InteractionGeometryMetaEngine);
+
+Modified: trunk/pkg/dem/meta/Shop.cpp
+===================================================================
+--- trunk/pkg/dem/meta/Shop.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/dem/meta/Shop.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -14,7 +14,7 @@
+ #include&lt;yade/pkg-common/Box.hpp&gt;
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/InteractingBox.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
+@@ -221,7 +221,7 @@
+ 
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+ 
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+ 
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+ 	interactionGeometryDispatcher-&gt;add(new InteractingSphere2InteractingSphere4SpheresContactGeometry);
+
+Modified: trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp
+===================================================================
+--- trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/mass-spring/PreProcessor/HangingCloth.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -23,7 +23,7 @@
+ #include&lt;yade/pkg-common/InteractingBox.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ //#include&lt;yade/pkg-common/FrictionLessElasticContactLaw.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ //#include&lt;yade/pkg-common/MassSpringBody2RigidBodyLaw.hpp&gt;
+ 
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+@@ -157,7 +157,7 @@
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+ 	rootBody-&gt;engines.push_back(geometricalModelDispatcher);
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+ 	rootBody-&gt;engines.push_back(explicitMassSpringConstitutiveLaw);
+@@ -181,6 +181,7 @@
+ 	physics2-&gt;se3		= Se3r(Vector3r(0,0,0),q);
+ 
+ 	rootBody-&gt;isDynamic	= false;
++	rootBody-&gt;dt=1e-2;
+ 
+ 	shared_ptr&lt;MetaInteractingGeometry&gt; set(new MetaInteractingGeometry());
+ 	set-&gt;diffuseColor	= Vector3r(0,0,1);
+@@ -505,4 +506,4 @@
+ 	body-&gt;physicalParameters	= physics;
+ }
+ 
+-YADE_PLUGIN((HangingCloth));
+\ No newline at end of file
++YADE_PLUGIN((HangingCloth));
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/BoxStack.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -16,7 +16,7 @@
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+ #include&lt;yade/pkg-common/TranslationEngine.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+@@ -258,7 +258,7 @@
+ 	rootBody-&gt;engines.clear();
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new FrictionLessElasticContactLaw));
+ 	rootBody-&gt;engines.push_back(gravityCondition);
+@@ -296,4 +296,4 @@
+ 	rootBody-&gt;physicalParameters 		= physics;
+ }
+ 
+-YADE_PLUGIN((BoxStack));
+\ No newline at end of file
++YADE_PLUGIN((BoxStack));
+
+Modified: trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/realtime-rigidbody/PreProcessor/RotatingBox.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -14,7 +14,7 @@
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+ #include&lt;yade/pkg-common/RotationEngine.hpp&gt;
+ 
+@@ -278,7 +278,7 @@
+ 	rootBody-&gt;engines.clear();
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new FrictionLessElasticContactLaw));
+ 	rootBody-&gt;engines.push_back(gravityCondition);
+@@ -317,4 +317,4 @@
+ }
+ 
+ 
+-YADE_PLUGIN((RotatingBox));
+\ No newline at end of file
++YADE_PLUGIN((RotatingBox));
+
+Modified: trunk/pkg/snow/PreProcessor/SnowCreepTest.cpp
+===================================================================
+--- trunk/pkg/snow/PreProcessor/SnowCreepTest.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/snow/PreProcessor/SnowCreepTest.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -30,7 +30,7 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/DistantPersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+@@ -602,7 +602,7 @@
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ //	rootBody-&gt;engines.push_back(sdecTimeStepper);	
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new DistantPersistentSAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+ 	rootBody-&gt;engines.push_back(cohesiveFrictionalContactLaw);
+@@ -709,4 +709,4 @@
+ 
+ 
+ 
+-YADE_PLUGIN((SnowCreepTest));
+\ No newline at end of file
++YADE_PLUGIN((SnowCreepTest));
+
+Modified: trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp
+===================================================================
+--- trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -23,7 +23,7 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/DistantPersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/InsertionSortCollider.hpp&gt;
+ #include&lt;yade/lib-serialization/IOFormatManager.hpp&gt;
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+@@ -474,7 +474,7 @@
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ //	rootBody-&gt;engines.push_back(sdecTimeStepper);	
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new DistantPersistentSAPCollider));
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+ 	rootBody-&gt;engines.push_back(cohesiveFrictionalContactLaw);
+
+Modified: trunk/py/tests/__init__.py
+===================================================================
+--- trunk/py/tests/__init__.py	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/py/tests/__init__.py	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -1 +1,26 @@
+-# python knows by this file that this directory is an importable module
++import unittest 
++
++# add any new test suites to the list here, so that they are picked up by testAll
++allTests=['wrapper',]
++
++# fully qualified module names
++allTestsFQ=['yade.tests.'+test for test in allTests]
++
++def testModule(module):
++	&quot;&quot;&quot;Run all tests defined in the module specified, return TestResult object 
++	(<A HREF="http://www.python.org/doc/2.6/lib/unittest.html#testresult-objects.html">http://www.python.org/doc/2.6/lib/unittest.html#testresult-objects.html</A>)
++	for further processing.
++
++	@param module: fully-qualified module name, e.g. yade.tests.wrapper
++	&quot;&quot;&quot;
++	suite=unittest.defaultTestLoader().loadTestsFromName(module)
++	return unittest.TextTestRunner(verbosity=2).run(suite)
++
++def testAll():
++	&quot;&quot;&quot;Run all tests defined in all yade.tests.* modules and return
++	TestResult object for further examination.&quot;&quot;&quot;
++	suite=unittest.defaultTestLoader.loadTestsFromNames(allTestsFQ)
++	return unittest.TextTestRunner(verbosity=2).run(suite)
++
++	
++
+
+Modified: trunk/py/tests/wrapper.py
+===================================================================
+--- trunk/py/tests/wrapper.py	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/py/tests/wrapper.py	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -1,6 +1,14 @@
+ import unittest
+ from yade.wrapper import *
++from miniWm3Wrap import *
++from yade._customConverters import *
++from math import *
+ 
++&quot;&quot;&quot;
++This test module covers python/c++ transitions, for both classes deriving from Serializable,
++but also for other classes that we wrap (like Wm3).
++&quot;&quot;&quot;
++
+ # copied from PythonUI_rc, should be in some common place (utils? runtime?)
+ def listChildClassesRecursive(base):
+ 	ret=set(O.childClasses(base)); ret2=set()
+@@ -54,14 +62,64 @@
+ 		self.assert_(id.physDispatcher.functors[0].name=='SimpleElasticRelationships')
+ 		self.assert_(id.constLawDispatcher.functors[0].name=='Law2_Dem3Dof_Elastic_Elastic')
+ 	def testParallelEngineCtor(self):
+-		pass
+-	## test what shold fail:
+-	## passing wrong EngineUnit type to a dispatcher
+-	## reading/writing non-existent attribute
+-
+-def run():
+-	suite=unittest.TestLoader().loadTestsFromTestCase(TestObjectInstantiation)
+-	unittest.TextTestRunner(verbosity=2).run(suite)
++		pe=ParallelEngine([InsertionSortCollider(),[BoundingVolumeMetaEngine(),BexResetter()]])
++		self.assert_(pe.slaves[0].name=='InsertionSortCollider')
++		self.assert_(len(pe.slaves[1])==2)
++		pe.slaves=[]
++		self.assert_(len(pe.slaves)==0)
++	##		
++	## testing incorrect operations that should raise exceptions
++	##
++	def testWrongFunctorType(self):
++		# dispatchers accept only correct functors
++		self.assertRaises(TypeError,lambda: ConstitutiveLawDispatcher([InteractingSphere2AABB()]))
++	def testInvalidAttr(self):
++		# accessing invalid attributes raises KeyError
++		self.assertRaises(KeyError,lambda: Sphere(attributeThatDoesntExist=42))
++		self.assertRaises(KeyError,lambda: Sphere()['attributeThatDoesntExist'])
+ 	
+-
++class TestWm3Wrapper(unittest.TestCase):
++	def assertVQAlmostEqual(self,v1,v2):
++		&quot;floating-point comparison of vectors/quaterions&quot;
++		self.assertEqual(len(v1),len(v2));
++		for i in range(len(v1)): self.assertAlmostEqual(v1[i],v2[i],msg='Component '+str(i)+' of '+str(v1)+' and '+str(v2))
++	def testVector2(self):
++		v=Vector2(1,2); v2=Vector2(3,4)
++		self.assert_(v+v2==Vector2(4,6))
++		self.assert_(Vector2.UNIT_X.Dot(Vector2.UNIT_Y)==0)
++		self.assert_(Vector2.ZERO.Length()==0)
++	def testVector3(self):
++		v=Vector3(3,4,5); v2=Vector3(3,4,5)
++		self.assert_(v[0]==3 and v[1]==4 and v[2]==5)
++		self.assert_(v.SquaredLength()==50)
++		self.assert_(v==(3,4,5)) # comparison with list/tuple
++		self.assert_(v==[3,4,5])
++		self.assert_(v==v2)
++		x,y,z,one=Vector3.UNIT_X,Vector3.UNIT_Y,Vector3.UNIT_Z,Vector3.ONE
++		self.assert_(x+y+z==one)
++		self.assert_(x.Dot(y)==0)
++		self.assert_(x.Cross(y)==z)
++	def testQuaternion(self):
++		# construction
++		q1=Quaternion((0,0,1),pi/2)
++		q2=Quaternion(Vector3(0,0,1),pi/2)
++		q1==q2
++		x,y,z,one=Vector3.UNIT_X,Vector3.UNIT_Y,Vector3.UNIT_Z,Vector3.ONE
++		self.assertVQAlmostEqual(q1*x,y)
++		self.assertVQAlmostEqual(q1*q1*x,-x)
++		self.assertVQAlmostEqual(q1*q1.Conjugate(),Quaternion.IDENTITY)
++		self.assertVQAlmostEqual(q1.ToAxisAngle()[0],(0,0,1))
++		self.assertAlmostEqual(q1.ToAxisAngle()[1],pi/2)
++	# not really wm3 thing, but closely related
++	def testSe3Conversion(self):
++		pp=PhysicalParameters()
++		pp['se3']=(Vector3.ZERO,Quaternion.IDENTITY)
++		self.assert_(pp['se3'][0]==Vector3.ZERO)
++		self.assert_(pp['se3'][1]==Quaternion.IDENTITY)
++		pp['se3']=((1,2,3),Quaternion((1,1,1),pi/4))
++		self.assert_(pp['se3'][0]==(1,2,3))
++		self.assert_(pp['se3'][0]==pp.pos)
++		self.assert_(pp['se3'][1]==Quaternion((1,1,1),pi/4))
++		self.assert_(pp['se3'][1]==pp.ori)
+ 		
++	
+
+Modified: trunk/scripts/regression-tests.py
+===================================================================
+--- trunk/scripts/regression-tests.py	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/scripts/regression-tests.py	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -1,4 +1,11 @@
+-# Run regression tests
+-# All of them should be enumerated here, so that we can run them at once.
+-from yade.tests import wrapper # add module2,module3 as they become available
+-wrapper.run()
++&quot;&quot;&quot;
++Run all defined regression tests, then exit.
++Exit status is 0 on success and nonzero on failure.
++&quot;&quot;&quot;
++import yade.tests
++result=yade.tests.testAll()
++if result.wasSuccessful():
++	print &quot;*** ALL TESTS PASSED ***&quot;
++else:
++	print &quot;********************** SOME TESTS FAILED ************************&quot;
++sys.exit(0 if result.wasSuccessful() else 1)
+
+Modified: trunk/scripts/simple-scene.py
+===================================================================
+--- trunk/scripts/simple-scene.py	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/scripts/simple-scene.py	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -31,7 +31,7 @@
+ 	]),
+ 	## Using bounding boxes created by the previous engine, find possible body collisions.
+ 	## These possible collisions are inserted in Omega.interactions container (MetaBody::transientInteractions in c++).
+-	PersistentSAPCollider(),
++	InsertionSortCollider(),
+ 	## Decide whether the potential collisions are real; if so, create geometry information about each potential collision.
+ 	## Here, the decision about which EngineUnit to use depends on types of _both_ bodies.
+ 	## Note that there is no EngineUnit for box-box collision. They are not implemented.
+
+Modified: trunk/scripts/test/wm3-wrap.py
+===================================================================
+--- trunk/scripts/test/wm3-wrap.py	2009-08-04 18:12:39 UTC (rev 1919)
++++ trunk/scripts/test/wm3-wrap.py	2009-08-05 08:32:18 UTC (rev 1920)
+@@ -6,8 +6,8 @@
+ tuple(x2)
+ # operations and operators
+ x+y+z==one
+-x.Dot(y)==z
+-x.Cross(y)==0
++x.Dot(y)==0
++x.Cross(y)==z
+ # methods
+ one.Length()
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001332.html">[deprecated list] [Yade-dev] [svn] r1919 - in trunk: py py/tests	py/yadeWrapper	scripts
+</A></li>
+	<LI>Next message: <A HREF="001334.html">[deprecated list] [Yade-dev] yade CRASH contest
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1333">[ date ]</a>
+              <a href="thread.html#1333">[ thread ]</a>
+              <a href="subject.html#1333">[ subject ]</a>
+              <a href="author.html#1333">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

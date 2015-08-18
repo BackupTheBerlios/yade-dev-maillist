@@ -1,0 +1,249 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Question%20about%20parameters%20in%0A%09SpheresContactGeometry&In-Reply-To=%3C499BDC37.90600%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000707.html">
+   <LINK REL="Next"  HREF="000686.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Question%20about%20parameters%20in%0A%09SpheresContactGeometry&In-Reply-To=%3C499BDC37.90600%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry">eudoxos at arcig.cz
+       </A><BR>
+    <I>Wed Feb 18 11:00:23 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000707.html">[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry
+</A></li>
+        <LI>Next message: <A HREF="000686.html">[deprecated list] [Yade-dev] [robot] build failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#708">[ date ]</a>
+              <a href="thread.html#708">[ thread ]</a>
+              <a href="subject.html#708">[ subject ]</a>
+              <a href="author.html#708">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>====
+Again, without attachments. Find them here:
+<A HREF="http://beta.arcig.cz/~eudoxos/yade/shear-displacement.pdf">http://beta.arcig.cz/~eudoxos/yade/shear-displacement.pdf</A> and
+<A HREF="http://beta.arcig.cz/~eudoxos/yade/shear-slip.pdf">http://beta.arcig.cz/~eudoxos/yade/shear-slip.pdf</A>
+===
+&gt;<i> (A) - maxUn (and other extrema of the variables contained in IntGeom,
+</I>&gt;<i> including initial orientations) in IntPhysics is ok with me. It will
+</I>&gt;<i> prevent the addition of excess parameters in IntGeometry.
+</I>&gt;&gt;<i> I have SpheresContactGeometry::splitToEpsTMax(Real epsTMax),
+</I>&gt;&gt;<i> which adjusts the original contact points such that |epsT|&lt;epsTMax and
+</I>&gt;&gt;<i> returns increment of eps_plastic. I believe that most constitutive laws
+</I>&gt;&gt;<i> use similar notions of plasticity, so to me it made sense to add this to
+</I>&gt;&gt;<i> SpheresContactGeometry.  
+</I>&gt;<i> You can't define this in ContGeom. This is in contradiction with (A),
+</I>&gt;<i> and also in contradiction with the fact the plastic part of a strain
+</I>&gt;<i> is defined for a given constitutive law.
+</I>slipToEpsTMax(..) doesn't add any data to SpheresContactGeometry. It
+merely adjusts initial contact points (which is really their relative
+orientations WRT each sphere).
+
+I hope it will be clear from the attached figure. c1,c2 are sphere
+centers, contact plane is perpendicular to line connecting those,
+passing through the contact point. p_01 and p_02 are initial contact
+points on sphere1 and sphere2; because spheres rotate (and move), these
+points go apart. To compute shear displacement, you have to get the
+length and direction of their trajectories (-.- on the figure), which is
+done by projecting (dotted lines; unroll* method) these arcs to the
+contact plane. That gives you projected initial contact points p'_01 and
+p'_02 and their difference is the shear displacement u_T (a Vector3, but
+always in the plane; oriented in global coords, origin shifted to
+contact point).
+
+In the case I get u_T outside the plasticity surface, I can say what is
+the maximum |u_T| in that direction. In that case, p'_01 and p'_02 will
+be shifted one towards another, such that the |u_T| is as desired, while
+keeping its direction (radial stress return, non-associated law, since
+it doesn't affect normal strain). p_01 and p_02 are adjusted such that
+this change is permament. This way, plasticity adds no extra data to the
+geometry, it merely changes initial contact points. Also, I don't need
+to remember the history, as I am always within/on the plastic surface.
+&gt;&gt;<i> If you say incremental shear, you still need access to 2 linear
+</I>&gt;&gt;<i> velocities and 2 angular velocities, not just penetrationDepth and
+</I>&gt;&gt;<i> radii.  
+</I>&gt;<i> Well, dUt could be added in IntGeometry. But YOU don't need it...
+</I>True, but I don't care about 3 extra numbers per interaction. As said, I
+can separate my code completely, it is just pain in the neck to have too
+much classes, some of them with just 1 user; why not, Yade is a
+platform, after all...
+&gt;<i> Duplicating data is bad in itself. By trying to avoid accessing bodies
+</I>&gt;<i> in constitutive laws, we are generating duplications and extra
+</I>&gt;<i> members/local variables. The variable is somewhere, let us find it
+</I>&gt;<i> where and when we need it. Forecasting what people do/will/could need
+</I>&gt;<i> in constitutive laws is almost impossible.
+</I>Duplicating data is not bad in itself; always the situation matters. For
+SpheresContactGeometry, for example, it is IS2IS4SCG that should update
+all that, no user intervention at all. If you fiddle with that, however,
+you should know what you're doing. Some data will always be duplicated;
+I think that locality makes it possible for the compiler to better
+optimize the code. And debugging is also easier, of course.
+&gt;<i> This incremental formulation needs a serious discussion.
+</I>Agreed. Some can derive those formulas and post a PDF with that and a
+few images?
+&gt;<i> I'm not really convinced by the global scale comparison with FEM. FEM
+</I>&gt;<i> nodes have rotational DOF's and radius?
+</I>Why not? In this model, they have 6 DOFs. Nodes (at sphere centers)
+don't have radii, but the elements (&quot;interactions&quot;) are generated by
+yade during the first iteration and then exported with all their
+parameters to oofem.
+&gt;<i> Looking at your code, I suspect you wrote a definition of Ut which is
+</I>&gt;<i> not the classical one (so that the increment of your Ut is not my
+</I>&gt;<i> dUt). It is not &quot;more precise&quot;, it is just &quot;something else&quot;.
+</I>I hope the figure makes it clear. To me it seems that this formulation
+is that self-explanatory that I don't see a simpler way (as far as the
+idea goes) to compute it. We can try comparing these two. They should
+really be the same. What makes thing complicate is that interaction
+don't have local coordinate system, therefore everything has to be
+transformed at every iteration.
+&gt;<i> You are perhaps also mixing the &quot;incremental formulation&quot; (no
+</I>&gt;<i> assumption on small rotations) with the approximated method to rotate
+</I>&gt;<i> current Ft in Yade (which indeed needs this assumption).
+</I>True, sorry about that. I suspect the approximated method that it will
+accumulate errors over time. Besides that, it is not necessarily true
+that angularVelocity*dt=rotation --
+&gt;<i> I've been reading &quot;slipToDisplacementTMax&quot; code, but I have now more
+</I>&gt;<i> questions than answers.
+</I>&gt;<i> I still can't understand what it is supposed to do. I guess this is
+</I>&gt;<i> because we have very different situations in mind.
+</I>&gt;<i>
+</I>&gt;<i> - How can you update the &quot;initial&quot; position based on a real instead of
+</I>&gt;<i> a 3D vector?
+</I>Attached shear-slip.pdf. There is the old u_T (from the first figure)
+and I request its maximum length (so that it is on the plasticity
+surface); projected points (original contact points in the contact
+plane) are moved in that way, then original contact points on spheres
+are moved as well.
+&gt;<i> - Not related but still interesting :
+</I>&gt;<i> if(displacementTMax&lt;=Mathr::ZERO_TOLERANCE), why not if(dMax&lt;=0)?
+</I>My fault. I wasn't sure, I corrected that now.
+&gt;<i> Quick check :
+</I>&gt;<i>
+</I>&gt;<i> A sphere is in contact with a plane. The plane and the center of the
+</I>&gt;<i> sphere are fixed, the sphere can only rotate with an axis of rotation
+</I>&gt;<i> parallel to the plane.
+</I>&gt;<i> IF the rotation of the sphere is pi/4, what is the tangential
+</I>&gt;<i> displacement?
+</I>&gt;<i>
+</I>&gt;<i> I'd say Ut here is _exactly_  (radius x pi/4). Do you agree (I
+</I>&gt;<i> anticipate you don't, with this &quot;projection&quot; feature...)?
+</I>Of course I agree. I project radius*pi/4 to the contact plane (well, not
+really radius, but the intial distance from sphere center to contact
+point) in the right direction. I get radius*pi/4 exactly.
+&gt;&gt;<i> If you think it is realiable and useful, I would be all for extracting
+</I>&gt;&gt;<i> it to a stand-alone function that would get all the parameters it needs
+</I>&gt;&gt;<i> and return what it computes.
+</I>&gt;<i> It is not just &quot;reliable&quot; : it is what most people knowing DEM will
+</I>&gt;<i> look for in Yade, it is the very root of the DEM. Really.
+</I>&gt;<i> So, yes, it will need to be adapted to the new design.
+</I>&gt;<i> And if there is an error in the code, I need to spot it.
+</I>So someone go ahead and factor new function out of that (I don't use
+that code and the idea of debugging 20 lines of ununderstandable
+formulas makes me sick already); it needs just linear and angular
+velocities, positions, contact point, normal, dt, isDynamic1, isDynamic2
+for parameters, as far as I can see.
+
+&gt;<i> Sorry to insist, but, what I'd like ideally is SpheresContactGeometry
+</I>&gt;<i> with Un, dUt, normal (dUt is actually not there, perhaps it should,
+</I>&gt;<i> rad1/rad2 are there - they should not).
+</I>&gt;<i> Anything else (rotation, etc.) should be in other classes inheriting
+</I>&gt;<i> from SpheresContactGeometry, one for each contact law.
+</I>Not one for each contact law (many need same geometry info -- then you
+would need also
+InteractingThing2InteractingThing4YetAnotherContactGeometry for every
+constitutive law!!), but otherwise I agree.
+&gt;<i> Hehe. You started the &quot;abusive storage&quot; and others filled it with
+</I>&gt;<i> their stuff.
+</I>&gt;<i> You are only &quot;partly&quot; to blame then. ;-)
+</I>No, I just _marked_ that thing &quot;abusive storage&quot;. It was there before I
+touched that code IIRC. I don't know if Vincent really uses that...
+Vincent, ping?
+
+&gt;&gt;<i> I put those extra things under condition 'hasShear', they are not
+</I>&gt;&gt;<i> assigned and should &quot;just&quot; take memory if you don't use them (29 bytes,
+</I>&gt;&gt;<i> if I calculate correctly: 5 quaternions, 2 Vector3, 3 Reals).
+</I>&gt;<i> Ok, all this instead of 2 vectors and 1 real makes, what? 4 times more?
+</I>&gt;<i> It reminds me the question of Luc about the size of xml's... 70% of an
+</I>&gt;<i> xml is for interactions...
+</I>&gt;<i>
+</I>&gt;<i> + It is harder to read.
+</I>That's very true, I will work on that.
+&gt;<i> Currently, the rotation variables for CohesiveFrictional are in
+</I>&gt;<i> CFInteractionPhysics.hpp, because it was simpler for Janek (see
+</I>&gt;<i> below). They are very similar to yours. If there is a new geometry
+</I>&gt;<i> class to put them, it is all good.
+</I>I keep that in mind. Janek, what do you need for your law? Normal displ,
+shear displ, bending and torsion is enough?
+&gt;<i> I think initial's should not move. They would store in IPhys. the
+</I>&gt;<i> extrema of some IGeom. variables (still, I wonder if kinematic
+</I>&gt;<i> variables of contact laws will always be extrema of standard geometric
+</I>&gt;<i> variables. Wait and see...)
+</I>I don't get the point here, sorry.
+&gt;<i> &quot;Yet to see&quot;?! Open your eyes then! :-P
+</I>&gt;<i> Janek has been developping non-spherical grains for a while. I did not
+</I>&gt;<i> invent this position example, I got it from him.
+</I>&gt;<i> Your clumps are a great exemple too, even with some mismatches left.
+</I>Clumps don't interact, only their constitutents do. For snow, I never
+looked.
+&gt;<i> Appart from that, yes, it is obvious that &quot;interactions&quot; should link
+</I>&gt;<i> to the particles in interaction.
+</I>&gt;<i> In PFC, you can get the pointer to grains from the pointer to an
+</I>&gt;<i> interaction, and you can get the pointer to contacts from the pointer
+</I>&gt;<i> to a particle. This is very usefull to write a number of algorithms,
+</I>&gt;<i> and I always wondered why we don't have this double-linked lists in
+</I>&gt;<i> Yade. Parallelisation is one reason now.
+</I>We could have list of interaction within body, but what are you going to
+store? Shared_ptr's wouldn't work because of broken serialization. You
+could store id of the other body, but it would need lookup in the
+interaction container, but it can be quite fast. The list would be
+maintained just by the collider, since only collider may add or delete
+interactions. That needs to be fixed in some of the constitutive law, too.
+
+Vaclav
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000707.html">[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry
+</A></li>
+	<LI>Next message: <A HREF="000686.html">[deprecated list] [Yade-dev] [robot] build failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#708">[ date ]</a>
+              <a href="thread.html#708">[ thread ]</a>
+              <a href="subject.html#708">[ subject ]</a>
+              <a href="author.html#708">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

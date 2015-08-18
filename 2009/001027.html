@@ -1,0 +1,490 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1801 - in trunk/gui: py qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1801%20-%20in%20trunk/gui%3A%20py%20qt3&In-Reply-To=%3C200906162020.n5GKKOBl016516%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001026.html">
+   <LINK REL="Next"  HREF="001028.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1801 - in trunk/gui: py qt3</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1801%20-%20in%20trunk/gui%3A%20py%20qt3&In-Reply-To=%3C200906162020.n5GKKOBl016516%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1801 - in trunk/gui: py qt3">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jun 16 22:20:24 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001026.html">[deprecated list] [Yade-dev] [svn] r1800 - in trunk/pkg/common: .	Engine/FilterEngine
+</A></li>
+        <LI>Next message: <A HREF="001028.html">[deprecated list] [Yade-dev] [svn] r1802 - in trunk: gui/py	gui/qt3	pkg/common/Engine/MetaEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1027">[ date ]</a>
+              <a href="thread.html#1027">[ thread ]</a>
+              <a href="subject.html#1027">[ subject ]</a>
+              <a href="author.html#1027">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-06-16 22:20:22 +0200 (Tue, 16 Jun 2009)
+New Revision: 1801
+
+Modified:
+   trunk/gui/py/PythonUI_rc.py
+   trunk/gui/qt3/QtGUI-python.cpp
+   trunk/gui/qt3/QtGUI.cpp
+   trunk/gui/qt3/QtGUI.hpp
+   trunk/gui/qt3/YadeQtMainWindow.cpp
+   trunk/gui/qt3/YadeQtMainWindow.hpp
+   trunk/gui/qt3/qt.py
+Log:
+A few changes to allow run primarily python with qt3 on the top of that (open, close etc as needed). This paves way to running main yade process in python ;-) (just kidding, for now)
+
+
+Modified: trunk/gui/py/PythonUI_rc.py
+===================================================================
+--- trunk/gui/py/PythonUI_rc.py	2009-06-15 17:42:13 UTC (rev 1800)
++++ trunk/gui/py/PythonUI_rc.py	2009-06-16 20:20:22 UTC (rev 1801)
+@@ -70,9 +70,11 @@
+ 
+ def cleanup():
+ 	try:
+-		import yade.qt, time
+-		yade.qt.close()
+-		while True: time.sleep(.1) # wait to be killed
++		#import yade.qt, time
++		import yade._qt
++		if yade._qt.isActive(): yade._qt.close();
++		#yade.qt.close()
++		#while True: time.sleep(.1) # wait to be killed
+ 	except ImportError: pass
+ 
+ 
+
+Modified: trunk/gui/qt3/QtGUI-python.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI-python.cpp	2009-06-15 17:42:13 UTC (rev 1800)
++++ trunk/gui/qt3/QtGUI-python.cpp	2009-06-16 20:20:22 UTC (rev 1801)
+@@ -20,8 +20,16 @@
+ 	void setRefSe3(){ proxee-&gt;setBodiesRefSe3(Omega::instance().getRootBody()); }
+ BASIC_PY_PROXY_TAIL;
+ 
+-YadeQtMainWindow* ensuredMainWindow(){if(!YadeQtMainWindow::self) throw runtime_error(&quot;No instance of YadeQtMainWindow&quot;); return YadeQtMainWindow::self; }
++#include&lt;yade/gui-qt3/QtGUI.hpp&gt;
++bool qtGuiIsActive(){return (bool)YadeQtMainWindow::self; }
++void qtGuiActivate(){
++	if(qtGuiIsActive()) return;
++	QtGUI* gui=new QtGUI();
++	gui-&gt;runNaked();
++}
+ 
++YadeQtMainWindow* ensuredMainWindow(){if(!qtGuiIsActive()){qtGuiActivate(); while(!YadeQtMainWindow::self) usleep(50000); } /* throw runtime_error(&quot;No instance of YadeQtMainWindow&quot;);*/ return YadeQtMainWindow::self; }
++
+ void centerViews(void){ensuredMainWindow()-&gt;centerViews();}
+ void Quit(void){ if(YadeQtMainWindow::self) YadeQtMainWindow::self-&gt;Quit(); }
+ pyOpenGLRenderingEngine ensuredRenderer(){ensuredMainWindow()-&gt;ensureRenderer(); return pyOpenGLRenderingEngine(ensuredMainWindow()-&gt;renderer);}
+@@ -30,7 +38,6 @@
+ POST_SYNTH_EVENT(PLAYER,player);
+ POST_SYNTH_EVENT(CONTROLLER,controller);
+ POST_SYNTH_EVENT(GENERATOR,generator);
+-// BOOST_PYTHON_FUNCTION_OVERLOADS(evtPLAYER_overloads,evtPLAYER,0,1); BOOST_PYTHON_FUNCTION_OVERLOADS(evtCONTROLLER_overloads,evtCONTROLLER,0,1); BOOST_PYTHON_FUNCTION_OVERLOADS(evtGENERATOR_overloads,evtGENERATOR,0,1);
+ #undef POST_SYNT_EVENT
+ 
+ // event associated data will be deleted in the event handler
+@@ -80,7 +87,7 @@
+ 	shared_ptr&lt;QtSimulationPlayer&gt; player=ensuredMainWindow()-&gt;player;
+ 	GLSimulationPlayerViewer* glv=player-&gt;glSimulationPlayerViewer;
+ 	string snapBase2(snapBase);
+-	if(snapBase2.empty()){ char tmpnam_str [L_tmpnam]; tmpnam(tmpnam_str); snapBase2=tmpnam_str; LOG_INFO(&quot;Using &quot;&lt;&lt;snapBase2&lt;&lt;&quot; as temporary basename for snapshots.&quot;); }
++	if(snapBase2.empty()){ char tmpnam_str [L_tmpnam]; char* ret=tmpnam(tmpnam_str); if(ret!=tmpnam_str) throw runtime_error(&quot;tmpnam failed.&quot;); snapBase2=tmpnam_str; LOG_INFO(&quot;Using &quot;&lt;&lt;snapBase2&lt;&lt;&quot; as temporary basename for snapshots.&quot;); }
+ 	glv-&gt;stride=stride;
+ 	glv-&gt;load(savedSim); // Omega locks rendering here for us
+ 	glv-&gt;saveSnapShots=true;
+@@ -102,7 +109,6 @@
+ 	return python::make_tuple(snapBase2+&quot;-%.04d.png&quot;,snaps);
+ }
+ 
+-bool qtGuiIsActive(){return (bool)YadeQtMainWindow::self;}
+ 
+ BOOST_PYTHON_FUNCTION_OVERLOADS(runPlayerSession_overloads,runPlayerSession,2,7);
+ 
+@@ -110,53 +116,57 @@
+ python::tuple vec2tuple(qglviewer::Vec v){return python::make_tuple(v[0],v[1],v[2]);};
+ 
+ class pyGLViewer{
+-	shared_ptr&lt;GLViewer&gt; glv;
+-	void init(size_t viewNo){
+-		if(YadeQtMainWindow::self-&gt;glViews.size()&lt;viewNo+1 || !YadeQtMainWindow::self-&gt;glViews[viewNo]){throw runtime_error(&quot;No view #&quot;+lexical_cast&lt;string&gt;(viewNo));}
+-		glv=YadeQtMainWindow::self-&gt;glViews[viewNo];
++	size_t viewNo;
++	void init(size_t _viewNo){
++		viewNo=_viewNo;
++		getGlv();
+ 	}
++	GLViewer* getGlv(){ if(YadeQtMainWindow::self-&gt;glViews.size()&lt;viewNo+1 || !YadeQtMainWindow::self-&gt;glViews[viewNo]){throw runtime_error(&quot;No view #&quot;+lexical_cast&lt;string&gt;(viewNo));} return YadeQtMainWindow::self-&gt;glViews[viewNo].get(); }
+ 	public:
+-		#define MUTEX GLLock _lock(glv.get());
++		#define MUTEX GLLock _lock(glv)
++		#define GLV GLViewer* glv=getGlv()
+ 		pyGLViewer(){ init(0); }
+-		pyGLViewer(size_t viewNo){init(viewNo);}
+-		pyGLViewer(const shared_ptr&lt;GLViewer&gt;&amp; _glv){glv=_glv;}
+-		python::tuple get_grid(){return python::make_tuple(glv-&gt;drawGridXYZ[0],glv-&gt;drawGridXYZ[1],glv-&gt;drawGridXYZ[2]);}
+-		void set_grid(python::tuple t){MUTEX; for(int i=0;i&lt;3;i++)glv-&gt;drawGridXYZ[i]=python::extract&lt;bool&gt;(t[i])();}
+-		#define VEC_GET_SET(property,getter,setter) python::object get_##property(){return vec2tuple(getter());} void set_##property(python::tuple t){MUTEX; setter(tuple2vec(t));}
++		pyGLViewer(size_t _viewNo){init(_viewNo);}
++		python::tuple get_grid(){GLV; return python::make_tuple(glv-&gt;drawGridXYZ[0],glv-&gt;drawGridXYZ[1],glv-&gt;drawGridXYZ[2]);}
++		void set_grid(python::tuple t){GLV; MUTEX; for(int i=0;i&lt;3;i++)glv-&gt;drawGridXYZ[i]=python::extract&lt;bool&gt;(t[i])();}
++		#define VEC_GET_SET(property,getter,setter) python::object get_##property(){GLV; return vec2tuple(getter());} void set_##property(python::tuple t){GLV; MUTEX; setter(tuple2vec(t));}
+ 		VEC_GET_SET(upVector,glv-&gt;camera()-&gt;upVector,glv-&gt;camera()-&gt;setUpVector);
+ 		VEC_GET_SET(lookAt,glv-&gt;camera()-&gt;position()+glv-&gt;camera()-&gt;viewDirection,glv-&gt;camera()-&gt;lookAt);
+ 		VEC_GET_SET(viewDir,glv-&gt;camera()-&gt;viewDirection,glv-&gt;camera()-&gt;setViewDirection);
+ 		VEC_GET_SET(eyePosition,glv-&gt;camera()-&gt;position,glv-&gt;camera()-&gt;setPosition);
+-		#define BOOL_GET_SET(property,getter,setter)void set_##property(bool b){MUTEX; setter(b);} bool get_##property(){return getter();}
++		#define BOOL_GET_SET(property,getter,setter)void set_##property(bool b){GLV; MUTEX; setter(b);} bool get_##property(){GLV; return getter();}
+ 		BOOL_GET_SET(axes,glv-&gt;axisIsDrawn,glv-&gt;setAxisIsDrawn);
+ 		BOOL_GET_SET(fps,glv-&gt;FPSIsDisplayed,glv-&gt;setFPSIsDisplayed);
+-		bool get_scale(){return glv-&gt;drawScale;} void set_scale(bool b){MUTEX; glv-&gt;drawScale=b;}
+-		bool get_orthographic(){return glv-&gt;camera()-&gt;type()==qglviewer::Camera::ORTHOGRAPHIC;}
+-		void set_orthographic(bool b){MUTEX; return glv-&gt;camera()-&gt;setType(b ? qglviewer::Camera::ORTHOGRAPHIC : qglviewer::Camera::PERSPECTIVE);}
+-		#define FLOAT_GET_SET(property,getter,setter)void set_##property(Real r){MUTEX; setter(r);} Real get_##property(){return getter();}
++		bool get_scale(){GLV; return glv-&gt;drawScale;} void set_scale(bool b){GLV; MUTEX; glv-&gt;drawScale=b;}
++		bool get_orthographic(){GLV; return glv-&gt;camera()-&gt;type()==qglviewer::Camera::ORTHOGRAPHIC;}
++		void set_orthographic(bool b){GLV; MUTEX; return glv-&gt;camera()-&gt;setType(b ? qglviewer::Camera::ORTHOGRAPHIC : qglviewer::Camera::PERSPECTIVE);}
++		#define FLOAT_GET_SET(property,getter,setter)void set_##property(Real r){GLV; MUTEX; setter(r);} Real get_##property(){GLV; return getter();}
+ 		FLOAT_GET_SET(sceneRadius,glv-&gt;sceneRadius,glv-&gt;setSceneRadius);
+-		void fitAABB(python::tuple min, python::tuple max){MUTEX; glv-&gt;camera()-&gt;fitBoundingBox(tuple2vec(min),tuple2vec(max));}
+-		void fitSphere(python::tuple center,Real radius){MUTEX; glv-&gt;camera()-&gt;fitSphere(tuple2vec(center),radius);}
+-		void showEntireScene(){MUTEX; glv-&gt;camera()-&gt;showEntireScene();}
+-		void center(bool median=false){MUTEX; if(median)glv-&gt;centerMedianQuartile(); else glv-&gt;centerScene();}
+-		python::tuple get_screenSize(){return python::make_tuple(glv-&gt;width(),glv-&gt;height());} void set_screenSize(python::tuple t){ MUTEX; vector&lt;int&gt;* ii=new(vector&lt;int&gt;); ii-&gt;push_back(ensuredMainWindow()-&gt;viewNo(glv)); ii-&gt;push_back(python::extract&lt;int&gt;(t[0])()); ii-&gt;push_back(python::extract&lt;int&gt;(t[1])()); QApplication::postEvent(ensuredMainWindow(),new QCustomEvent((QEvent::Type)YadeQtMainWindow::EVENT_RESIZE_VIEW,(void*)ii));}
+-		string pyStr(){return string(&quot;&lt;GLViewer for view #&quot;)+lexical_cast&lt;string&gt;(ensuredMainWindow()-&gt;viewNo(glv))+&quot;&gt;&quot;;}
+-		void saveDisplayParameters(size_t n){MUTEX; glv-&gt;saveDisplayParameters(n);}
+-		void useDisplayParameters(size_t n){MUTEX; glv-&gt;useDisplayParameters(n);}
+-		string get_timeDisp(){const int&amp; m(glv-&gt;timeDispMask); string ret; if(m&amp;GLViewer::TIME_REAL) ret+='r'; if(m&amp;GLViewer::TIME_VIRT) ret+=&quot;v&quot;; if(m&amp;GLViewer::TIME_ITER) ret+=&quot;i&quot;; return ret;}
+-		void set_timeDisp(string s){MUTEX; int&amp; m(glv-&gt;timeDispMask); m=0; FOREACH(char c, s){switch(c){case 'r': m|=GLViewer::TIME_REAL; break; case 'v': m|=GLViewer::TIME_VIRT; break; case 'i': m|=GLViewer::TIME_ITER; break; default: throw invalid_argument(string(&quot;Invalid flag for timeDisp: `&quot;)+c+&quot;'&quot;);}}}
++		void fitAABB(python::tuple min, python::tuple max){GLV; MUTEX; glv-&gt;camera()-&gt;fitBoundingBox(tuple2vec(min),tuple2vec(max));}
++		void fitSphere(python::tuple center,Real radius){GLV; MUTEX; glv-&gt;camera()-&gt;fitSphere(tuple2vec(center),radius);}
++		void showEntireScene(){GLV; MUTEX; glv-&gt;camera()-&gt;showEntireScene();}
++		void center(bool median=false){GLV; MUTEX; if(median)glv-&gt;centerMedianQuartile(); else glv-&gt;centerScene();}
++		python::tuple get_screenSize(){GLV; return python::make_tuple(glv-&gt;width(),glv-&gt;height());} void set_screenSize(python::tuple t){GLV; MUTEX; vector&lt;int&gt;* ii=new(vector&lt;int&gt;); ii-&gt;push_back(viewNo); ii-&gt;push_back(python::extract&lt;int&gt;(t[0])()); ii-&gt;push_back(python::extract&lt;int&gt;(t[1])()); QApplication::postEvent(ensuredMainWindow(),new QCustomEvent((QEvent::Type)YadeQtMainWindow::EVENT_RESIZE_VIEW,(void*)ii));}
++		string pyStr(){return string(&quot;&lt;GLViewer for view #&quot;)+lexical_cast&lt;string&gt;(viewNo)+&quot;&gt;&quot;;}
++		void saveDisplayParameters(size_t n){GLV; MUTEX; glv-&gt;saveDisplayParameters(n);}
++		void useDisplayParameters(size_t n){GLV; MUTEX; glv-&gt;useDisplayParameters(n);}
++		string get_timeDisp(){GLV; const int&amp; m(glv-&gt;timeDispMask); string ret; if(m&amp;GLViewer::TIME_REAL) ret+='r'; if(m&amp;GLViewer::TIME_VIRT) ret+=&quot;v&quot;; if(m&amp;GLViewer::TIME_ITER) ret+=&quot;i&quot;; return ret;}
++		void set_timeDisp(string s){GLV; MUTEX; int&amp; m(glv-&gt;timeDispMask); m=0; FOREACH(char c, s){switch(c){case 'r': m|=GLViewer::TIME_REAL; break; case 'v': m|=GLViewer::TIME_VIRT; break; case 'i': m|=GLViewer::TIME_ITER; break; default: throw invalid_argument(string(&quot;Invalid flag for timeDisp: `&quot;)+c+&quot;'&quot;);}}}
++		#undef MUTEX
++		#undef GLV
+ };
+ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyGLViewer_center_overloads,center,0,1);
+ 
+ 
+-pyGLViewer evtVIEW(){QApplication::postEvent(ensuredMainWindow(),new QCustomEvent(YadeQtMainWindow::EVENT_VIEW)); size_t origViewNo=ensuredMainWindow()-&gt;glViews.size(); while(ensuredMainWindow()-&gt;glViews.size()!=origViewNo+1) usleep(50000); return pyGLViewer(*ensuredMainWindow()-&gt;glViews.rbegin());}
++pyGLViewer evtVIEW(){QApplication::postEvent(ensuredMainWindow(),new QCustomEvent(YadeQtMainWindow::EVENT_VIEW)); size_t origViewNo=ensuredMainWindow()-&gt;glViews.size(); while(ensuredMainWindow()-&gt;glViews.size()!=origViewNo+1) usleep(50000); return pyGLViewer((*ensuredMainWindow()-&gt;glViews.rbegin())-&gt;viewId);}
+ 
+ python::list getAllViews(){
+ 	python::list ret;
+-	for(size_t i=0; i&lt;YadeQtMainWindow::self-&gt;glViews.size(); i++) ret.append(pyGLViewer(YadeQtMainWindow::self-&gt;glViews[i]));
++	FOREACH(const shared_ptr&lt;GLViewer&gt;&amp; glView, YadeQtMainWindow::self-&gt;glViews){ if(glView) ret.append(pyGLViewer(glView-&gt;viewId)); }
+ 	return ret;
+ };
+ 
++
+ BOOST_PYTHON_MODULE(_qt){
+ 	def(&quot;Generator&quot;,evtGENERATOR,&quot;Start simulation generator&quot;);
+ 	def(&quot;Controller&quot;,evtCONTROLLER,&quot;Start simulation controller&quot;);
+@@ -166,6 +176,7 @@
+ 	def(&quot;Renderer&quot;,ensuredRenderer,&quot;Return wrapped OpenGLRenderingEngine; the renderer is constructed if necessary.&quot;);
+ 	def(&quot;close&quot;,Quit);
+ 	def(&quot;isActive&quot;,qtGuiIsActive,&quot;Whether the Qt GUI is being used.&quot;);
++	def(&quot;activate&quot;,qtGuiActivate,&quot;Attempt to activate the Qt GUI from within python.&quot;);
+ 	def(&quot;runPlayerSession&quot;,runPlayerSession,runPlayerSession_overloads(args(&quot;savedQGLState&quot;,&quot;dispParamsNo&quot;,&quot;stride&quot;,&quot;postLoadHook&quot;,&quot;startWait&quot;)));
+ 	def(&quot;views&quot;,getAllViews);
+ 
+
+Modified: trunk/gui/qt3/QtGUI.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI.cpp	2009-06-15 17:42:13 UTC (rev 1800)
++++ trunk/gui/qt3/QtGUI.cpp	2009-06-16 20:20:22 UTC (rev 1801)
+@@ -10,6 +10,7 @@
+ #include&quot;YadeQtMainWindow.hpp&quot;
+ #include&quot;GLViewer.hpp&quot;
+ #include&lt;boost/algorithm/string.hpp&gt;
++#include&lt;boost/bind.hpp&gt;
+ #include &lt;boost/filesystem/operations.hpp&gt;
+ #include &lt;boost/filesystem/convenience.hpp&gt;
+ //#ifdef HAVE_CONFIG_H
+@@ -26,8 +27,9 @@
+ #endif
+ 
+ QtGUI* QtGUI::self=NULL;
++QApplication* QtGUI::app=NULL;
+ 
+-QtGUI::QtGUI(){self=this; mainWindowHidden=false;}
++QtGUI::QtGUI(){self=this; mainWindowHidden=false; }
+ QtGUI::~QtGUI(){}
+ 
+ CREATE_LOGGER(QtGUI);
+@@ -36,6 +38,7 @@
+ 	cerr&lt;&lt;&quot;Qt3 GUI\n=======\n\t-h to get this help\n&quot;&lt;&lt;endl;
+ }
+ 
++
+ int QtGUI::run(int argc, char *argv[])
+ {
+ 	int ch;
+@@ -64,18 +67,42 @@
+ 		#endif
+ 	}
+ 	XInitThreads();
+-   QApplication app(argc,argv);
++   app=new QApplication(argc,argv);
+ 	mainWindow=new YadeQtMainWindow();
+ 	mainWindow-&gt;show();
+-	app.setMainWidget(mainWindow);
++	app-&gt;setMainWidget(mainWindow);
+ 	#ifdef EMBED_PYTHON
+ 		LOG_DEBUG(&quot;Launching Python thread now...&quot;);
+ 		//PyEval_InitThreads();
+ 		boost::thread pyThread(boost::function0&lt;void&gt;(&amp;PythonUI::pythonSession));
+ 	#endif
+-	int res =  app.exec();
+-
++	int res =  app-&gt;exec();
+ 	delete mainWindow;
+ 	return res;
+ }
+ 
++
++void QtGUI::runNaked(){
++	if(!app){ // no app existing yet
++		LOG_INFO(&quot;Creating QApplication&quot;);
++		XInitThreads();
++	   app=new QApplication(0,NULL);
++		if(!YadeQtMainWindow::self){
++			mainWindow=new YadeQtMainWindow();
++			mainWindow-&gt;guiMayDisappear=true;
++			mainWindow-&gt;hide();
++			//app-&gt;setMainWidget(mainWindow);
++		} else { LOG_ERROR(&quot;Main window was there, but not QtGUI::app??&quot;); }
++		boost::thread appThread(boost::bind(&amp;QApplication::exec,app));
++	}
++	//mainWindow-&gt;showSomeGui();
++#if 0
++	else if (!YadeQtMainWindow::self){ // app exists and runs, just reopen the main window
++		//LOG_INFO(&quot;Recreating main window &quot;&lt;&lt;YadeQtMainWindow::self);
++		//mainWindow=new YadeQtMainWindow();
++		//mainWindow-&gt;guiMayDisappear=true;
++		mainWindow-&gt;showSomeGui();
++		//app-&gt;setMainWidget(mainWindow);
++	}
++#endif
++}
+
+Modified: trunk/gui/qt3/QtGUI.hpp
+===================================================================
+--- trunk/gui/qt3/QtGUI.hpp	2009-06-15 17:42:13 UTC (rev 1800)
++++ trunk/gui/qt3/QtGUI.hpp	2009-06-16 20:20:22 UTC (rev 1801)
+@@ -14,18 +14,22 @@
+ class SimulationController;
+ class GLViewer;
+ class RenderingEngine;
++class QApplication;
+ 
+ class QtGUI : public FrontEnd
+ {
+ 	private :
+ 		YadeQtMainWindow  * mainWindow;
++		// run qtApp in separate thread, without parsing args and launching python
+ 
+ 	public:	
++		static QApplication* app;
+ 		static QtGUI *self;
+ 		bool mainWindowHidden;
+ 
+ 	public :
+ 		QtGUI ();
++		void runNaked();
+ 		virtual ~QtGUI ();
+ 		virtual int run(int argc, char *argv[]);
+ 		void help();
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.cpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.cpp	2009-06-15 17:42:13 UTC (rev 1800)
++++ trunk/gui/qt3/YadeQtMainWindow.cpp	2009-06-16 20:20:22 UTC (rev 1801)
+@@ -27,6 +27,8 @@
+ #include &lt;boost/date_time/posix_time/posix_time.hpp&gt;
+ 
+ #include &lt;yade/pkg-common/GravityEngines.hpp&gt;
++#include&lt;yade/gui-qt3/QtGUI.hpp&gt;
++#include&lt;qapplication.h&gt;
+ 
+ 
+ using namespace std;
+@@ -38,6 +40,7 @@
+ YadeQtMainWindow::YadeQtMainWindow() : YadeQtGeneratedMainWindow()
+ {
+ 	self=this;
++	guiMayDisappear=false;
+ 
+ 	QGLFormat format;
+ 	format.setStencil(TRUE);
+@@ -80,15 +83,22 @@
+ 	startTimer(100);
+ }
+ 
++void YadeQtMainWindow::showSomeGui(){
++	if(controller||player||generator) return;
++	LOG_INFO(&quot;Showing main window&quot;);
++	this-&gt;show();
++}
++
+ void YadeQtMainWindow::timerEvent(QTimerEvent* evt){
+ 	#if 1
+ 	//shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
+ 		//if((rb &amp;&amp; rb-&gt;bodies-&gt;size()&gt;0) ||
+ 		if(controller || player || generator) {this-&gt;hide();}
+-		else {this-&gt;show(); }
++		else { if(!guiMayDisappear) this-&gt;show(); }
+ 	#endif
+ 	// update GL views (if any)
+ 	redrawAll(/*force=*/false);
++	if(guiMayDisappear) { QtGUI::app-&gt;processEvents(); }
+ }
+ 
+ void YadeQtMainWindow::redrawAll(bool force){
+@@ -110,11 +120,12 @@
+ 	preferences-&gt;mainWindowSizeX		= size().width();
+ 	preferences-&gt;mainWindowSizeY		= size().height();
+ 	IOFormatManager::saveToFile(&quot;XMLFormatManager&quot;,yadeQtGUIPrefPath.string(),&quot;preferences&quot;,preferences);
++	self=NULL;
+ }
+ 
+ void YadeQtMainWindow::Quit(){ emit close(); }
+ 
+-void YadeQtMainWindow::closeEvent(QCloseEvent *e){ renderer=shared_ptr&lt;OpenGLRenderingEngine&gt;(); closeAllChilds(); YadeQtGeneratedMainWindow::closeEvent(e); }
++void YadeQtMainWindow::closeEvent(QCloseEvent *e){ renderer=shared_ptr&lt;OpenGLRenderingEngine&gt;(); closeAllChilds(); YadeQtGeneratedMainWindow::closeEvent(e);  }
+ 
+ void YadeQtMainWindow::ensureRenderer(){
+ 	if(!renderer){
+@@ -215,7 +226,7 @@
+ 			}
+ 		}
+ 	}
+-	LOG_FATAL(&quot;No such view???&quot;&lt;&lt;glv);
++	LOG_ERROR(&quot;No such GLView?! &quot;&lt;&lt;glv);
+ }
+ 
+ /* Close the last view (default); close the i-th view from the beginning (0=primary) */
+@@ -232,8 +243,8 @@
+ 	throw std::invalid_argument(&quot;No such view&quot;);
+ }
+ 
+-void YadeQtMainWindow::closeAllChilds(){
+-	while(glViews.size()&gt;0 &amp;&amp; glViews[0]!=NULL) { LOG_DEBUG(&quot;glViews.size()=&quot;&lt;&lt;glViews.size()&lt;&lt;&quot;, glViews[0]=&quot;&lt;&lt;glViews[0]); closeView(-1);}
++void YadeQtMainWindow::closeAllChilds(bool closeGL){
++	if(closeGL){ while(glViews.size()&gt;0 &amp;&amp; glViews[0]!=NULL) { LOG_DEBUG(&quot;glViews.size()=&quot;&lt;&lt;glViews.size()&lt;&lt;&quot;, glViews[0]=&quot;&lt;&lt;glViews[0]); closeView(-1);} }
+ 	if(player) player=shared_ptr&lt;QtSimulationPlayer&gt;();
+ 	if(controller) controller=shared_ptr&lt;SimulationController&gt;();
+ 	if(generator) generator=shared_ptr&lt;QtFileGenerator&gt;();
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.hpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.hpp	2009-06-15 17:42:13 UTC (rev 1800)
++++ trunk/gui/qt3/YadeQtMainWindow.hpp	2009-06-16 20:20:22 UTC (rev 1801)
+@@ -31,7 +31,7 @@
+ 		void saveRendererConfig();
+ 		
+ 		void deleteSimulationController();
+-		void closeAllChilds();
++		void closeAllChilds(bool closeGL=false);
+ 		void createView();
+ 		void closeView(GLViewer*);
+ 		void closeView(int);
+@@ -41,6 +41,7 @@
+ 		void loadSimulation(string file);
+ 		void redrawAll(bool force=false);
+ 		void lookDown(shared_ptr&lt;GLViewer&gt; glv);
++		void showSomeGui();
+ 
+ 	protected :
+ 		shared_ptr&lt;QtGUIPreferences&gt; preferences;
+@@ -50,16 +51,17 @@
+ 		YadeQtMainWindow ();
+ 		virtual ~YadeQtMainWindow ();
+ 		static YadeQtMainWindow* self; // retrieve instance pointer form elsewhere
++		bool guiMayDisappear;
+ 
+ 		DECLARE_LOGGER;
+ 	public slots :
+ 		enum{EVENT_CONTROLLER=QEvent::User+1,EVENT_PLAYER,EVENT_VIEW,EVENT_GENERATOR,EVENT_RESTORE_GLVIEWER_NUM,EVENT_RESTORE_GLVIEWER_STR,EVENT_RESTORE_VIEWER_FILE,EVENT_RESIZE_VIEW};
+ 		virtual void customEvent(QCustomEvent* e);
+ 		/* each of player, controller, generator have slots for them being opened and closed: create{Player,Controller,Generator} and the instances are kept in player, controller, generator. */
+-		#define __MK_RM_CHILD(Child,child,YadeClass)  virtual void close##Child(){if(child)child=shared_ptr&lt;YadeClass&gt;();} virtual void create##Child(){closeAllChilds(); if(!child){child=shared_ptr&lt;YadeClass&gt;(new YadeClass()); connect(child.get(),SIGNAL(closeSignal()),this,SLOT(close##Child())); child-&gt;show();} else {child-&gt;show(); child-&gt;raise();}}
+-		__MK_RM_CHILD(Generator,generator,QtFileGenerator);
+-		__MK_RM_CHILD(Player,player,QtSimulationPlayer);
+-		__MK_RM_CHILD(Controller,controller,SimulationController);
++		#define __MK_RM_CHILD(Child,child,YadeClass,closeGL)  virtual void close##Child(){if(child)child=shared_ptr&lt;YadeClass&gt;();} virtual void create##Child(){closeAllChilds(closeGL); if(!child){child=shared_ptr&lt;YadeClass&gt;(new YadeClass()); connect(child.get(),SIGNAL(closeSignal()),this,SLOT(close##Child())); child-&gt;show();} else {child-&gt;show(); child-&gt;raise();}}
++		__MK_RM_CHILD(Generator,generator,QtFileGenerator,true);
++		__MK_RM_CHILD(Player,player,QtSimulationPlayer,true);
++		__MK_RM_CHILD(Controller,controller,SimulationController,false);
+ 		#undef __MK_RM_CHILD
+ 		virtual void Quit();
+ 		virtual void closeEvent(QCloseEvent * evt);
+
+Modified: trunk/gui/qt3/qt.py
+===================================================================
+--- trunk/gui/qt3/qt.py	2009-06-15 17:42:13 UTC (rev 1800)
++++ trunk/gui/qt3/qt.py	2009-06-16 20:20:22 UTC (rev 1801)
+@@ -2,7 +2,8 @@
+ from _qt import *
+ 
+ if not isActive():
+-	raise ImportError(&quot;The Qt gui is not being used (run with -N QtGUI).&quot;)
++	activate()
++#	# raise ImportError(&quot;The Qt gui is not being used (run with -N QtGUI).&quot;)
+ 
+ 
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001026.html">[deprecated list] [Yade-dev] [svn] r1800 - in trunk/pkg/common: .	Engine/FilterEngine
+</A></li>
+	<LI>Next message: <A HREF="001028.html">[deprecated list] [Yade-dev] [svn] r1802 - in trunk: gui/py	gui/qt3	pkg/common/Engine/MetaEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1027">[ date ]</a>
+              <a href="thread.html#1027">[ thread ]</a>
+              <a href="subject.html#1027">[ subject ]</a>
+              <a href="author.html#1027">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

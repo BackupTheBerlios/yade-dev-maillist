@@ -1,0 +1,205 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1782 - in trunk/pkg/dem: .	Engine/EngineUnit
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1782%20-%20in%20trunk/pkg/dem%3A%20.%0A%09Engine/EngineUnit&In-Reply-To=%3C200905280924.n4S9ObYe021272%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000990.html">
+   <LINK REL="Next"  HREF="000992.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1782 - in trunk/pkg/dem: .	Engine/EngineUnit</H1>
+    <B>richefeu at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1782%20-%20in%20trunk/pkg/dem%3A%20.%0A%09Engine/EngineUnit&In-Reply-To=%3C200905280924.n4S9ObYe021272%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1782 - in trunk/pkg/dem: .	Engine/EngineUnit">richefeu at mail.berlios.de
+       </A><BR>
+    <I>Thu May 28 11:24:37 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000990.html">[deprecated list] [Yade-dev] Exposing SpherePadder to python
+</A></li>
+        <LI>Next message: <A HREF="000992.html">[deprecated list] [Yade-dev] [svn] r1783 - trunk/extra/SpherePadder
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#991">[ date ]</a>
+              <a href="thread.html#991">[ thread ]</a>
+              <a href="subject.html#991">[ subject ]</a>
+              <a href="author.html#991">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: richefeu
+Date: 2009-05-28 11:24:36 +0200 (Thu, 28 May 2009)
+New Revision: 1782
+
+Added:
+   trunk/pkg/dem/Engine/EngineUnit/BasicViscoelasticRelationships.cpp
+   trunk/pkg/dem/Engine/EngineUnit/BasicViscoelasticRelationships.hpp
+Modified:
+   trunk/pkg/dem/SConscript
+Log:
+Add BasicViscoelasticRelationships: an alternative to SimpleViscoelasticRelationships. It accounts for the effective mass of each contact and considere the parameter cn as a dimensionless ponderation of its critical value (computed for each contact). Parameter cs is set to zero for the moment.   
+
+
+Added: trunk/pkg/dem/Engine/EngineUnit/BasicViscoelasticRelationships.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/BasicViscoelasticRelationships.cpp	2009-05-25 06:29:19 UTC (rev 1781)
++++ trunk/pkg/dem/Engine/EngineUnit/BasicViscoelasticRelationships.cpp	2009-05-28 09:24:36 UTC (rev 1782)
+@@ -0,0 +1,58 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Vincent Richefeu				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">Vincent.Richefeu at hmg.inpg.fr</A>                                          *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&quot;BasicViscoelasticRelationships.hpp&quot;
++#include&lt;yade/pkg-dem/SimpleViscoelasticBodyParameters.hpp&gt;
++#include&lt;yade/pkg-dem/ViscoelasticInteraction.hpp&gt;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/core/Omega.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++
++
++BasicViscoelasticRelationships::BasicViscoelasticRelationships()
++{
++}
++
++
++void BasicViscoelasticRelationships::registerAttributes()
++{
++}
++
++
++void BasicViscoelasticRelationships::go(  const shared_ptr&lt;PhysicalParameters&gt;&amp; b1 // SimpleViscoelasticBodyParameters
++					, const shared_ptr&lt;PhysicalParameters&gt;&amp; b2 // SimpleViscoelasticBodyParameters
++					, const shared_ptr&lt;Interaction&gt;&amp; interaction)
++{
++    if( !interaction-&gt;isNew ) return;
++
++    SimpleViscoelasticBodyParameters* sdec1 = static_cast&lt;SimpleViscoelasticBodyParameters*&gt;(b1.get());
++    SimpleViscoelasticBodyParameters* sdec2 = static_cast&lt;SimpleViscoelasticBodyParameters*&gt;(b2.get());
++
++    interaction-&gt;interactionPhysics = shared_ptr&lt;ViscoelasticInteraction&gt;(new ViscoelasticInteraction());
++    ViscoelasticInteraction* contactPhysics = YADE_CAST&lt;ViscoelasticInteraction*&gt;(interaction-&gt;interactionPhysics.get());
++
++    // Check that cn is dimensionless
++    if (sdec1-&gt;cn &gt;= 1.0) std::cout &lt;&lt; &quot;Warning: non dimensionless value for cn&quot; &lt;&lt; std::endl;
++
++    // Arbitrare ponderation...
++    contactPhysics-&gt;kn = 0.5 * (sdec1-&gt;kn + sdec2-&gt;kn);
++    contactPhysics-&gt;ks = 0.5 * (sdec1-&gt;ks + sdec2-&gt;ks);
++    contactPhysics-&gt;cn = 0.5 * (sdec1-&gt;cn + sdec2-&gt;cn);
++    contactPhysics-&gt;cs = 0.0; // not viscosity in the tangent direction
++
++    // in fact, dimensionless cn is a ponderation of the critical value cn_crit = 2sqrt(kn*meff)
++    contactPhysics-&gt;cn *= 2.0 * sqrt(contactPhysics-&gt;kn * ((sdec1-&gt;mass * sdec2-&gt;mass) / (sdec1-&gt;mass + sdec2-&gt;mass)));
++ 
++    contactPhysics-&gt;tangensOfFrictionAngle = std::tan(std::min(sdec1-&gt;frictionAngle, sdec2-&gt;frictionAngle)); 
++
++    contactPhysics-&gt;shearForce = Vector3r(0,0,0);
++    contactPhysics-&gt;prevNormal = Vector3r(0,0,0);
++
++}
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/dem/Engine/EngineUnit/BasicViscoelasticRelationships.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/BasicViscoelasticRelationships.hpp	2009-05-25 06:29:19 UTC (rev 1781)
++++ trunk/pkg/dem/Engine/EngineUnit/BasicViscoelasticRelationships.hpp	2009-05-28 09:24:36 UTC (rev 1782)
+@@ -0,0 +1,36 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Vincent Richefeu				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">Vincent.Richefeu at hmg.inpg.fr</A>                                          *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#pragma once
++
++#include&lt;yade/pkg-common/InteractionPhysicsEngineUnit.hpp&gt;
++
++/// Determine elastic stiffnesses and viscous parameters from elastic and dimensionless viscoelastic parameters 
++/// of the interacting bodies 
++class BasicViscoelasticRelationships : public InteractionPhysicsEngineUnit
++{
++	public :
++
++		BasicViscoelasticRelationships();
++
++		virtual void go(	const shared_ptr&lt;PhysicalParameters&gt;&amp; b1,
++					const shared_ptr&lt;PhysicalParameters&gt;&amp; b2,
++					const shared_ptr&lt;Interaction&gt;&amp; interaction);
++
++	protected :
++		virtual void registerAttributes();
++
++	FUNCTOR2D(SimpleViscoelasticBodyParameters,SimpleViscoelasticBodyParameters);
++	REGISTER_CLASS_NAME(BasicViscoelasticRelationships);
++	REGISTER_BASE_CLASS_NAME(InteractionPhysicsEngineUnit);
++
++};
++
++REGISTER_SERIALIZABLE(BasicViscoelasticRelationships);
++
++
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2009-05-25 06:29:19 UTC (rev 1781)
++++ trunk/pkg/dem/SConscript	2009-05-28 09:24:36 UTC (rev 1782)
+@@ -990,6 +990,13 @@
+ 		    ,'SpheresContactGeometry'
+ 		    ])
+ 
++	,env.SharedLibrary('BasicViscoelasticRelationships'
++		,['Engine/EngineUnit/BasicViscoelasticRelationships.cpp']
++		,LIBS=env['LIBS']+['SimpleViscoelasticBodyParameters'
++		    ,'ViscoelasticInteraction'
++		    ,'SpheresContactGeometry'
++		    ])
++
+ 	,env.SharedLibrary('ContactLaw1',
+ 		['Engine/StandAloneEngine/ContactLaw1.cpp'],
+ 		LIBS=env['LIBS']+['SDECLinkPhysics',
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000990.html">[deprecated list] [Yade-dev] Exposing SpherePadder to python
+</A></li>
+	<LI>Next message: <A HREF="000992.html">[deprecated list] [Yade-dev] [svn] r1783 - trunk/extra/SpherePadder
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#991">[ date ]</a>
+              <a href="thread.html#991">[ thread ]</a>
+              <a href="subject.html#991">[ subject ]</a>
+              <a href="author.html#991">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] build order (random) problem
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20build%20order%20%28random%29%20problem&In-Reply-To=%3C20090729121945.70f78a27%40atak.bl.pg.gda.pl%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001296.html">
+   <LINK REL="Next"  HREF="001302.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] build order (random) problem</H1>
+    <B>Janek Kozicki</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20build%20order%20%28random%29%20problem&In-Reply-To=%3C20090729121945.70f78a27%40atak.bl.pg.gda.pl%3E"
+       TITLE="[deprecated list] [Yade-dev] build order (random) problem">janek_listy at wp.pl
+       </A><BR>
+    <I>Wed Jul 29 12:19:45 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001296.html">[deprecated list] [Yade-dev] [svn] r1901 - in trunk: . gui/qt3 py
+</A></li>
+        <LI>Next message: <A HREF="001302.html">[deprecated list] [Yade-dev] build order (random) problem
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1299">[ date ]</a>
+              <a href="thread.html#1299">[ thread ]</a>
+              <a href="subject.html#1299">[ subject ]</a>
+              <a href="author.html#1299">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>This error occurs randomly, I've been hit by it several times. This
+mostly happens when demoing yade to someone ;)
+
+Make a fresh checkout, then built with lots of jobs (for example jobs=8).
+And there's a 50% chance that you will get this build error:
+
+  yade/gui-qt3/SimulationController.hpp:22 error:QtGeneratedSimulationController.h: No such file or directory
+
+When you invoke scons second time - it will just work.
+
+This problem occurs because sometimes SimulationController.hpp is
+included &amp; compiled *before* the file QtGeneratedSimulationController.h
+had a chance to be generated. Of course on second build it is already
+generated, so the second time it works.
+
+Vaclav can you think of adding some preconditioning/dependency which
+would make sure that QtGeneratedSimulationController.h is generated
+before compiling a file that wants to include it?
+
+The same applies to all QtGenerated* files in fact.
+
+-- 
+Janek Kozicki                                                         |
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001296.html">[deprecated list] [Yade-dev] [svn] r1901 - in trunk: . gui/qt3 py
+</A></li>
+	<LI>Next message: <A HREF="001302.html">[deprecated list] [Yade-dev] build order (random) problem
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1299">[ date ]</a>
+              <a href="thread.html#1299">[ thread ]</a>
+              <a href="subject.html#1299">[ subject ]</a>
+              <a href="author.html#1299">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

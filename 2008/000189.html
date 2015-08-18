@@ -1,0 +1,142 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] [Yade-commits] r1359 - in trunk: core gui/py lib/import	pkg/common/DataClass/PhysicalParameters pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20r1359%20-%20in%20trunk%3A%20core%20gui/py%0A%20lib/import%09pkg/common/DataClass/PhysicalParameters%0A%20pkg/common/Engine/DeusExMachina%09pkg/common/Engine/StandAloneEngine%0A%20pkg/dem/Engine/EngineUnit%0A%20pkg/dem/Engine/StandAloneEngine%09pkg/dem/RenderingEngine/GLDrawElasticContactInteraction&In-Reply-To=%3C48358C58.10705%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000193.html">
+   <LINK REL="Next"  HREF="000190.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py lib/import	pkg/common/DataClass/PhysicalParameters pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20r1359%20-%20in%20trunk%3A%20core%20gui/py%0A%20lib/import%09pkg/common/DataClass/PhysicalParameters%0A%20pkg/common/Engine/DeusExMachina%09pkg/common/Engine/StandAloneEngine%0A%20pkg/dem/Engine/EngineUnit%0A%20pkg/dem/Engine/StandAloneEngine%09pkg/dem/RenderingEngine/GLDrawElasticContactInteraction&In-Reply-To=%3C48358C58.10705%40hmg.inpg.fr%3E"
+       TITLE="[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py lib/import	pkg/common/DataClass/PhysicalParameters pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Thu May 22 17:08:08 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000193.html">[yade-dev] [Yade-commits] r1359 - in trunk
+</A></li>
+        <LI>Next message: <A HREF="000190.html">[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py	lib/import pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#189">[ date ]</a>
+              <a href="thread.html#189">[ thread ]</a>
+              <a href="subject.html#189">[ subject ]</a>
+              <a href="author.html#189">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Hello Sega,
+
+I am not sure I understand everything in this commit, and at least in 
+one case i'm sure there is a problem (see first paragraph) :
+
+
+
+
+&gt;<i> Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2008-05-20 20:05:08 UTC (rev 1358)
+</I>&gt;<i> +++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2008-05-21 18:56:45 UTC (rev 1359)
+</I>&gt;<i> @@ -38,7 +38,7 @@
+</I>&gt;<i>  	Vector3r normal = se32.position-se31.position;
+</I>&gt;<i>  	Real penetrationDepth = pow(interactionDetectionFactor*(s1-&gt;radius+s2-&gt;radius), 2) - normal.SquaredLength();// Compute a wrong value just to check sign - faster than computing distances
+</I>&gt;<i>  	//Real penetrationDepth = s1-&gt;radius+s2-&gt;radius-normal.Normalize();
+</I>&gt;<i> -	if (penetrationDepth&gt;0 || c-&gt;isReal){
+</I>&gt;<i> +	if (penetrationDepth&gt;0 /*|| c-&gt;isReal*/){
+</I>&gt;<i>   
+</I>
+We need to compute the geometry when c-&gt;isReal because an interaction 
+under tension, for instance, will not have penetrationDepth&gt;0 but will 
+still be a &quot;real&quot; interraction and needs geometrical data. I suspect 
+this change actually brakes all cohesive and capillary laws in Yade.
+
+
+&gt;<i>
+</I>&gt;<i> Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2008-05-20 20:05:08 UTC (rev 1358)
+</I>&gt;<i> +++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2008-05-21 18:56:45 UTC (rev 1359)
+</I>&gt;<i> @@ -62,7 +62,10 @@
+</I>&gt;<i>  	
+</I>&gt;<i>
+</I>&gt;<i> -			angle = dt*0.5*currentContactGeometry-&gt;normal.Dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
+</I>&gt;<i> +			//angle = dt*0.5*currentContactGeometry-&gt;normal.Dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
+</I>&gt;<i> +				//FIXME: if one body is kinematic then assumed its rotation centre does not lies along the normal
+</I>&gt;<i> +				//(i.e. virtual sphere, which replaces this kinematic body on contact, does not rotate)
+</I>&gt;<i> +			Vector3r summaryAngularVelocity(0,0,0);
+</I>&gt;<i> +			if (isDynamic1) summaryAngularVelocity += de1-&gt;angularVelocity;
+</I>&gt;<i> +			if (isDynamic2) summaryAngularVelocity += de2-&gt;angularVelocity;
+</I>&gt;<i> +			angle = dt*0.5*currentContactGeometry-&gt;normal.Dot(summaryAngularVelocity);
+</I>&gt;<i>   
+</I>Why wouldn't we take the motion of not-dynamic bodies into account?
+A typical situation where isDynamic==false is when bodies are used to 
+define prescribed velocity at boundaries.
+If you don't account for the kinematics of boundaries in the equation, 
+computed rotation will be wrong I think.
+
+&gt;<i>  		
+</I>&gt;<i>
+</I>&gt;<i> -            		Vector3r _c1x_	= currentContactGeometry-&gt;radius1*currentContactGeometry-&gt;normal;
+</I>&gt;<i> -            		Vector3r _c2x_	= -currentContactGeometry-&gt;radius2*currentContactGeometry-&gt;normal;
+</I>&gt;<i> +            		Vector3r _c1x_	= (isDynamic1) ? currentContactGeometry-&gt;radius1*currentContactGeometry-&gt;normal : x - de1-&gt;zeroPoint;
+</I>&gt;<i> +            		Vector3r _c2x_	= (isDynamic2) ? -currentContactGeometry-&gt;radius2*currentContactGeometry-&gt;normal : x - de2-&gt;zeroPoint;
+</I>&gt;<i>  			Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.Cross(_c2x_)) - (de1-&gt;velocity+de1-&gt;angularVelocity.Cross(_c1x_));
+</I>&gt;<i>  			Vector3r shearVelocity			= relativeVelocity-currentContactGeometry-&gt;normal.Dot(relativeVelocity)*currentContactGeometry-&gt;normal;
+</I>&gt;<i>  			Vector3r shearDisplacement		= shearVelocity*dt;
+</I>&gt;<i>  
+</I>&gt;<i>   
+</I>I'm a bit lost. I agree that when the body is not a sphere, cx must be 
+defined relative to the center of mass of the body (and not based on the 
+radius of the virtual sphere as it was before). But then, why should it 
+be the case only if !isDynamic?
+
+Bruno
+
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Institut National Polytechnique de Grenoble
+Laboratoire 3S (Soils Solids Structures) - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000193.html">[yade-dev] [Yade-commits] r1359 - in trunk
+</A></li>
+	<LI>Next message: <A HREF="000190.html">[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py	lib/import pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#189">[ date ]</a>
+              <a href="thread.html#189">[ thread ]</a>
+              <a href="subject.html#189">[ subject ]</a>
+              <a href="author.html#189">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

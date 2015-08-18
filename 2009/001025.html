@@ -1,0 +1,259 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1799 - in trunk: core	lib/smoothing pkg/dem
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1799%20-%20in%20trunk%3A%20core%0A%09lib/smoothing%20pkg/dem&In-Reply-To=%3C200906151734.n5FHYAj5013207%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001024.html">
+   <LINK REL="Next"  HREF="001026.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1799 - in trunk: core	lib/smoothing pkg/dem</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1799%20-%20in%20trunk%3A%20core%0A%09lib/smoothing%20pkg/dem&In-Reply-To=%3C200906151734.n5FHYAj5013207%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1799 - in trunk: core	lib/smoothing pkg/dem">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Jun 15 19:34:10 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001024.html">[deprecated list] [Yade-dev] [svn] r1798 - in trunk: gui/py gui/qt3	lib	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/DeusExMachina
+</A></li>
+        <LI>Next message: <A HREF="001026.html">[deprecated list] [Yade-dev] [svn] r1800 - in trunk/pkg/common: .	Engine/FilterEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1025">[ date ]</a>
+              <a href="thread.html#1025">[ thread ]</a>
+              <a href="subject.html#1025">[ subject ]</a>
+              <a href="author.html#1025">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-06-15 19:34:09 +0200 (Mon, 15 Jun 2009)
+New Revision: 1799
+
+Modified:
+   trunk/core/Interaction.cpp
+   trunk/core/Interaction.hpp
+   trunk/lib/smoothing/WeightedAverage2d.cpp
+   trunk/lib/smoothing/WeightedAverage2d.hpp
+   trunk/pkg/dem/ConcretePM.cpp
+   trunk/pkg/dem/ConcretePM.hpp
+Log:
+1. Add resetting interactionGeometry and interactionPhysics to Interaction::reset(), as it should be...
+2. Small things in CPM
+3. Add GaussAverage.data method to python (for debugging and plotting)
+
+
+Modified: trunk/core/Interaction.cpp
+===================================================================
+--- trunk/core/Interaction.cpp	2009-06-15 15:39:57 UTC (rev 1798)
++++ trunk/core/Interaction.cpp	2009-06-15 17:34:09 UTC (rev 1799)
+@@ -12,20 +12,25 @@
+ 
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ 
+-Interaction::Interaction(): id1(0), id2(0){ reset(); }
++Interaction::Interaction(): id1(0), id2(0){ init(); }
+ Interaction::Interaction(body_id_t newId1,body_id_t newId2): id1(newId1), id2(newId2){ reset(); }
+ 
+ bool Interaction::isFresh(MetaBody* rb){ return iterMadeReal==rb-&gt;currentIteration;}
+ 
+-
+-void Interaction::reset(){
++void Interaction::init(){
+ 	isNeighbor = true;//NOTE : TriangulationCollider needs that
+ 	iterMadeReal=-1;
+ 	functorCache.geomExists=true;
+ 	//functorCache.geom=shared_ptr&lt;InteractionGeometryEngineUnit&gt;(); functorCache.phys=shared_ptr&lt;InteractionPhysicsEngineUnit&gt;(); functorCache.constLaw=shared_ptr&lt;ConstitutiveLaw&gt;();
+ }
+ 
++void Interaction::reset(){
++	interactionGeometry=shared_ptr&lt;InteractionGeometry&gt;();
++	interactionPhysics=shared_ptr&lt;InteractionPhysics&gt;();
++	init();
++}
+ 
++
+ void Interaction::swapOrder(){
+ 	if(interactionGeometry || interactionPhysics){
+ 		throw std::logic_error(&quot;Bodies in interaction cannot be swapped if they have interactionGeometry or interactionPhysics.&quot;);
+
+Modified: trunk/core/Interaction.hpp
+===================================================================
+--- trunk/core/Interaction.hpp	2009-06-15 15:39:57 UTC (rev 1798)
++++ trunk/core/Interaction.hpp	2009-06-15 17:34:09 UTC (rev 1799)
+@@ -63,6 +63,8 @@
+ 
+ 		//! Reset interaction to the intial state (keep only body ids)
+ 		void reset();
++		//! common initialization called from both constructor and reset()
++		void init();
+ 			
+ 	REGISTER_ATTRIBUTES(/*no base*/,
+ 		(id1)
+
+Modified: trunk/lib/smoothing/WeightedAverage2d.cpp
+===================================================================
+--- trunk/lib/smoothing/WeightedAverage2d.cpp	2009-06-15 15:39:57 UTC (rev 1798)
++++ trunk/lib/smoothing/WeightedAverage2d.cpp	2009-06-15 17:34:09 UTC (rev 1799)
+@@ -22,6 +22,7 @@
+ 		.add_property(&quot;stDev&quot;,&amp;pyGaussAverage::stDev_get,&amp;pyGaussAverage::stDev_set)
+ 		.add_property(&quot;relThreshold&quot;,&amp;pyGaussAverage::relThreshold_get,&amp;pyGaussAverage::relThreshold_set)
+ 		.add_property(&quot;clips&quot;,&amp;pyGaussAverage::clips_get,&amp;pyGaussAverage::clips_set)
++		.add_property(&quot;data&quot;,&amp;pyGaussAverage::data_get)
+ 	;
+ };
+ 
+
+Modified: trunk/lib/smoothing/WeightedAverage2d.hpp
+===================================================================
+--- trunk/lib/smoothing/WeightedAverage2d.hpp	2009-06-15 15:39:57 UTC (rev 1798)
++++ trunk/lib/smoothing/WeightedAverage2d.hpp	2009-06-15 17:34:09 UTC (rev 1799)
+@@ -47,6 +47,7 @@
+ 		return ret;
+ 	}
+ 	Vector2r cell2xyMid(Vector2i cxy) const { return Vector2r(lo[0]+cellSizes[0]*(.5+cxy[0]),lo[1]+cellSizes[1]*(.5+cxy[1])); }
++	const Vector2i&amp; getSize() const{ return nCells;}
+ 
+ 	// add new element to the right cell
+ 	void add(const T&amp; t, Vector2r xy){Vector2i cxy=xy2cell(xy); grid[cxy[0]][cxy[1]].push_back(t);}
+@@ -196,5 +197,17 @@
+ 			clips.push_back(poly);
+ 		}
+ 	}
++	python::tuple data_get(){
++		python::list x,y,val;
++		const Vector2i&amp; dim=sgka-&gt;grid-&gt;getSize();
++		for(int i=0; i&lt;dim[0]; i++){
++			for(int j=0; j&lt;dim[1]; j++){
++				FOREACH(const Scalar2d&amp; element, sgka-&gt;grid-&gt;grid[i][j]){
++					x.append(element.pos[0]); y.append(element.pos[1]); val.append(element.val);
++				}
++			}
++		}
++		return python::make_tuple(x,y,val);
++	}
+ };
+ 
+
+Modified: trunk/pkg/dem/ConcretePM.cpp
+===================================================================
+--- trunk/pkg/dem/ConcretePM.cpp	2009-06-15 15:39:57 UTC (rev 1798)
++++ trunk/pkg/dem/ConcretePM.cpp	2009-06-15 17:34:09 UTC (rev 1799)
+@@ -49,7 +49,7 @@
+ 	contPhys-&gt;ks=contPhys-&gt;G*contPhys-&gt;crossSection;
+ 
+ 	if(neverDamage) contPhys-&gt;neverDamage=true;
+-	if(cohesiveThresholdIter&lt;0 || Omega::instance().getCurrentIteration()&lt;cohesiveThresholdIter) contPhys-&gt;isCohesive=true;
++	if(cohesiveThresholdIter&lt;0 || (Omega::instance().getCurrentIteration()&lt;cohesiveThresholdIter)) contPhys-&gt;isCohesive=true;
+ 	else contPhys-&gt;isCohesive=false;
+ 	contPhys-&gt;dmgTau=dmgTau;
+ 	contPhys-&gt;dmgRateExp=dmgRateExp;
+@@ -192,13 +192,12 @@
+ 
+ 	// handle broken contacts
+ 	if(epsN&gt;0. &amp;&amp; ((isCohesive &amp;&amp; omega&gt;omegaThreshold) || !isCohesive)){
+-		rootBody-&gt;interactions-&gt;requestErase(I-&gt;getId1(),I-&gt;getId2());
+ 		if(isCohesive){
+ 			const shared_ptr&lt;Body&gt;&amp; body1=Body::byId(I-&gt;getId1(),rootBody), body2=Body::byId(I-&gt;getId2(),rootBody); assert(body1); assert(body2);
+ 			const shared_ptr&lt;CpmMat&gt;&amp; rbp1=YADE_PTR_CAST&lt;CpmMat&gt;(body1-&gt;physicalParameters), rbp2=YADE_PTR_CAST&lt;CpmMat&gt;(body2-&gt;physicalParameters);
+-			if(BC-&gt;isCohesive){rbp1-&gt;numBrokenCohesive+=1; rbp2-&gt;numBrokenCohesive+=1; rbp1-&gt;epsPlBroken+=epsPlSum; rbp2-&gt;epsPlBroken+=epsPlSum;}
+-			LOG_DEBUG(&quot;Contact #&quot;&lt;&lt;I-&gt;getId1()&lt;&lt;&quot;=#&quot;&lt;&lt;I-&gt;getId2()&lt;&lt;&quot; is damaged over thershold (&quot;&lt;&lt;omega&lt;&lt;&quot;&gt;&quot;&lt;&lt;omegaThreshold&lt;&lt;&quot;) and will be deleted.&quot;);
++			rbp1-&gt;numBrokenCohesive+=1; rbp2-&gt;numBrokenCohesive+=1; rbp1-&gt;epsPlBroken+=epsPlSum; rbp2-&gt;epsPlBroken+=epsPlSum;
+ 		}
++		rootBody-&gt;interactions-&gt;requestErase(I-&gt;getId1(),I-&gt;getId2());
+ 		return;
+ 	}
+ 
+@@ -333,6 +332,7 @@
+ 
+ 
+ /********************** CpmPhysDamageColorizer ****************************/
++CREATE_LOGGER(CpmPhysDamageColorizer);
+ void CpmPhysDamageColorizer::action(MetaBody* rootBody){
+ 	//vector&lt;pair&lt;short,Real&gt; &gt; bodyDamage; /* number of cohesive interactions per body; cummulative damage of interactions */
+ 	//vector&lt;pair&lt;short,
+@@ -344,19 +344,20 @@
+ 		const body_id_t id1=I-&gt;getId1(), id2=I-&gt;getId2();
+ 		bodyStats[id1].nCohLinks++; bodyStats[id1].dmgSum+=(1-BC-&gt;relResidualStrength); bodyStats[id1].epsPlSum+=BC-&gt;epsPlSum;
+ 		bodyStats[id2].nCohLinks++; bodyStats[id2].dmgSum+=(1-BC-&gt;relResidualStrength); bodyStats[id2].epsPlSum+=BC-&gt;epsPlSum;
+-		//bodyDamage[id1].first++; bodyDamage[id2].first++;
+-		//bodyDamage[id1].second+=(1-BC-&gt;relResidualStrength); bodyDamage[id2].second+=(1-BC-&gt;relResidualStrength);
+ 		maxOmega=max(maxOmega,BC-&gt;omega);
+ 	}
+ 	FOREACH(shared_ptr&lt;Body&gt; B, *rootBody-&gt;bodies){
+-		body_id_t id=B-&gt;getId();
++		const body_id_t&amp; id=B-&gt;getId();
+ 		// add damaged contacts that have already been deleted
+ 		CpmMat* bpp=dynamic_cast&lt;CpmMat*&gt;(B-&gt;physicalParameters.get());
+ 		if(!bpp) continue;
+-		short cohLinksWhenever=bodyStats[id].nCohLinks+bpp-&gt;numBrokenCohesive;
++		int cohLinksWhenever=bodyStats[id].nCohLinks+bpp-&gt;numBrokenCohesive;
+ 		if(cohLinksWhenever&gt;0){
+ 			bpp-&gt;normDmg=(bodyStats[id].dmgSum+bpp-&gt;numBrokenCohesive)/cohLinksWhenever;
+ 			bpp-&gt;normEpsPl=(bodyStats[id].epsPlSum+bpp-&gt;epsPlBroken)/cohLinksWhenever;
++			if(bpp-&gt;normDmg&gt;1){
++				LOG_WARN(&quot;#&quot;&lt;&lt;id&lt;&lt;&quot; normDmg=&quot;&lt;&lt;bpp-&gt;normDmg&lt;&lt;&quot; nCohLinks=&quot;&lt;&lt;bodyStats[id].nCohLinks&lt;&lt;&quot;, numBrokenCohesive=&quot;&lt;&lt;bpp-&gt;numBrokenCohesive&lt;&lt;&quot;, dmgSum=&quot;&lt;&lt;bodyStats[id].dmgSum&lt;&lt;&quot;, numAllCohLinks&quot;&lt;&lt;cohLinksWhenever);
++			}
+ 		}
+ 		else { bpp-&gt;normDmg=0; bpp-&gt;normEpsPl=0;}
+ 		B-&gt;geometricalModel-&gt;diffuseColor=Vector3r(bpp-&gt;normDmg,1-bpp-&gt;normDmg,B-&gt;isDynamic?0:1);
+
+Modified: trunk/pkg/dem/ConcretePM.hpp
+===================================================================
+--- trunk/pkg/dem/ConcretePM.hpp	2009-06-15 15:39:57 UTC (rev 1798)
++++ trunk/pkg/dem/ConcretePM.hpp	2009-06-15 17:34:09 UTC (rev 1799)
+@@ -306,12 +306,13 @@
+ #endif
+ 
+ class CpmPhysDamageColorizer: public PeriodicEngine {
+-	struct BodyStats{ short nCohLinks; Real dmgSum; Real epsPlSum; BodyStats(): nCohLinks(0), dmgSum(0), epsPlSum(0.){} };
++	struct BodyStats{ int nCohLinks; Real dmgSum; Real epsPlSum; BodyStats(): nCohLinks(0), dmgSum(0.), epsPlSum(0.){} };
+ 	public:
+ 		//! maximum damage over all contacts
+ 		Real maxOmega;
+ 		CpmPhysDamageColorizer(){maxOmega=0; /* run at the very beginning */ initRun=true;}
+ 		virtual void action(MetaBody*);
++	DECLARE_LOGGER;
+ 	REGISTER_ATTRIBUTES(PeriodicEngine,(maxOmega));
+ 	REGISTER_CLASS_AND_BASE(CpmPhysDamageColorizer,PeriodicEngine);
+ };
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001024.html">[deprecated list] [Yade-dev] [svn] r1798 - in trunk: gui/py gui/qt3	lib	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/DeusExMachina
+</A></li>
+	<LI>Next message: <A HREF="001026.html">[deprecated list] [Yade-dev] [svn] r1800 - in trunk/pkg/common: .	Engine/FilterEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1025">[ date ]</a>
+              <a href="thread.html#1025">[ thread ]</a>
+              <a href="subject.html#1025">[ subject ]</a>
+              <a href="author.html#1025">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

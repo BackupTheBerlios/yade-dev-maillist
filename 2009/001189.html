@@ -1,0 +1,686 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1862 - in trunk: gui/qt3	pkg/common	pkg/common/DataClass	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem	pkg/dem/Engine/DeusExMachina scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1862%20-%20in%20trunk%3A%20gui/qt3%0A%09pkg/common%09pkg/common/DataClass%0A%09pkg/common/Engine/MetaEngine%09pkg/common/Engine/StandAloneEngine%0A%09pkg/dem%09pkg/dem/Engine/DeusExMachina%20scripts/test&In-Reply-To=%3C200907131931.n6DJVjVU012354%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001188.html">
+   <LINK REL="Next"  HREF="001190.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1862 - in trunk: gui/qt3	pkg/common	pkg/common/DataClass	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem	pkg/dem/Engine/DeusExMachina scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1862%20-%20in%20trunk%3A%20gui/qt3%0A%09pkg/common%09pkg/common/DataClass%0A%09pkg/common/Engine/MetaEngine%09pkg/common/Engine/StandAloneEngine%0A%09pkg/dem%09pkg/dem/Engine/DeusExMachina%20scripts/test&In-Reply-To=%3C200907131931.n6DJVjVU012354%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1862 - in trunk: gui/qt3	pkg/common	pkg/common/DataClass	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem	pkg/dem/Engine/DeusExMachina scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Jul 13 21:31:45 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001188.html">[deprecated list] [Yade-dev] [svn] r1861 - trunk/pkg/dem
+</A></li>
+        <LI>Next message: <A HREF="001190.html">[deprecated list] [Yade-dev] [svn] r1863 - in trunk: core	core/containers pkg/common	pkg/common/DataClass	pkg/common/Engine/MetaEngine	pkg/dem/Engine/DeusExMachina scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1189">[ date ]</a>
+              <a href="thread.html#1189">[ thread ]</a>
+              <a href="subject.html#1189">[ subject ]</a>
+              <a href="author.html#1189">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-13 21:31:44 +0200 (Mon, 13 Jul 2009)
+New Revision: 1862
+
+Added:
+   trunk/pkg/common/DataClass/VelocityBins.cpp
+   trunk/pkg/common/DataClass/VelocityBins.hpp
+Removed:
+   trunk/pkg/common/DataClass/State/
+Modified:
+   trunk/gui/qt3/QtGUI.cpp
+   trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp
+   trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp
+   trunk/pkg/common/SConscript
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+   trunk/pkg/dem/SConscript
+   trunk/scripts/test/collider-stride-triax.py
+Log:
+1. Add velocity binning for collision optimization: requires cooperation of NewtonsDampedLaw, BoundingVolumeMetaEngine and InsertionSortCollider.
+2. Remove time-based sweeping from BoundingVOlumeMetaEngine.
+3. QtGUI doesn't show annoying warning when run from python session anymore.
+
+
+
+Modified: trunk/gui/qt3/QtGUI.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI.cpp	2009-07-13 15:30:36 UTC (rev 1861)
++++ trunk/gui/qt3/QtGUI.cpp	2009-07-13 19:31:44 UTC (rev 1862)
+@@ -84,9 +84,14 @@
+ 
+ void QtGUI::runNaked(){
+ 	if(!app){ // no app existing yet
++		if(getenv(&quot;DISPLAY&quot;)==0){
++			LOG_ERROR(&quot;$DISPLAY environment var not set, not starting qt3 gui.&quot;);
++			return;
++		};
+ 		LOG_INFO(&quot;Creating QApplication&quot;);
+ 		XInitThreads();
+-	   app=new QApplication(0,NULL);
++		int argc=0;
++	   app=new QApplication(argc,(char**)NULL);
+ 		if(!YadeQtMainWindow::self){
+ 			YadeQtMainWindow::guiMayDisappear=true;
+ 			mainWindow=new YadeQtMainWindow();
+
+Added: trunk/pkg/common/DataClass/VelocityBins.cpp
+===================================================================
+--- trunk/pkg/common/DataClass/VelocityBins.cpp	2009-07-13 15:30:36 UTC (rev 1861)
++++ trunk/pkg/common/DataClass/VelocityBins.cpp	2009-07-13 19:31:44 UTC (rev 1862)
+@@ -0,0 +1,97 @@
++// 2009 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++
++
++#include&quot;VelocityBins.hpp&quot;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++#include&lt;boost/foreach.hpp&gt;
++#ifndef FOREACH
++#	define FOREACH BOOST_FOREACH
++#endif
++CREATE_LOGGER(VelocityBins);
++
++bool VelocityBins::incrementDists_shouldCollide(Real dt){
++	int i=0;
++	FOREACH(Bin&amp; bin, bins){
++		bin.currDistSq+=dt*dt*bin.currMaxVelSq; i++;
++		if(bin.currDistSq&gt;pow(bin.maxDist,2)){
++			LOG_TRACE(&quot;Collide: bin&quot;&lt;&lt;i&lt;&lt;&quot;: max dist &quot;&lt;&lt;bin.maxDist&lt;&lt;&quot;, current &quot;&lt;&lt;sqrt(bin.currDistSq));
++			return true;
++		}
++	}
++	return false;
++}
++
++void VelocityBins::setBins(MetaBody* rootBody, Real currMaxVelSq, Real refSweepLength){
++	// initialization
++		// sanity checks
++		if(nBins&lt;1 || nBins&gt;100){LOG_FATAL(&quot;Number of bins must be &gt;=1 and &lt;=100&quot;); abort(); }
++		if(binOverlap&gt;=1 || binOverlap&lt;=0){ LOG_ERROR(&quot;binOverlap set to 0.8 (was &quot;&lt;&lt;binOverlap&lt;&lt;&quot;, not in range (0&#8230;1) )&quot;); binOverlap=0.8;}
++		// number of bins changed
++		if(nBins!=bins.size()){
++			LOG_INFO(&quot;New number of bins: &quot;&lt;&lt;nBins);
++			bins.resize(nBins);	
++		}
++		// number of bodies changed
++		if(bodyBins.size()!=rootBody-&gt;bodies-&gt;size()) bodyBins.resize(rootBody-&gt;bodies-&gt;size(),-1);
++		// set the new overall refMaxVelSq
++		if(refMaxVelSq&lt;0){ refMaxVelSq=currMaxVelSq; /* first time */}
++		else {
++			// there should be some maximum speed change parameter, so that bins do not change their limits (and therefore bodies, also!) too often, depending on 1 particle going crazy
++			refMaxVelSq=min(max(refMaxVelSq*pow(1-maxRefRelStep,2),currMaxVelSq),refMaxVelSq*pow(1+maxRefRelStep,2));
++			if(refMaxVelSq==0) refMaxVelSq=currMaxVelSq;
++		}
++		LOG_TRACE(&quot;new refMaxVel: &quot;&lt;&lt;sqrt(refMaxVelSq));
++		// compute new minima/maxima for all bins, reset distance counters and real max velocity
++		for(size_t i=0; i&lt;nBins; i++){
++			Bin&amp; bin=bins[i];
++			// 0th bin (fastest) has maximum the current maximum; slowest bin has minimum 0.
++			bin.binMaxVelSq=(i==0       ? currMaxVelSq : refMaxVelSq/pow(binCoeff*binCoeff,i));
++			bin.binMinVelSq=(i==nBins-1 ? 0.           : refMaxVelSq/pow(binCoeff*binCoeff,i+1));
++			bin.maxDist=(i==0 ?
++				(refMaxVelSq==0 ? 0: sqrt(currMaxVelSq/refMaxVelSq)*abs(refSweepLength)) :
++				abs(refSweepLength)/pow(binCoeff,i)
++			);
++			bin.currDistSq=0; bin.currMaxVelSq=0; bin.nBodies=0;
++		}
++	long moveFaster=0, moveSlower=0;
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
++		RigidBodyParameters* rbp=YADE_CAST&lt;RigidBodyParameters*&gt;(b-&gt;physicalParameters.get());
++		Real velSq=VelocityBins::getBodyVelSq(rbp);
++		binNo_t newBin=-1, oldBin=bodyBins[b-&gt;getId()];
++		// we could compute logarithm and round it here, but perhaps this is faster
++		for(size_t i=0; i&lt;nBins; i++){
++			// 1. do not allow to move up (slow down) more than one bin at time (reasonable?)
++			// 2. for the current bin, put the lower margin lower by binOverlap^2, to avoid too many oscillations
++			if((oldBin&gt;=0 &amp;&amp; oldBin==(binNo_t)(i-1)) || velSq&gt;=bins[i].binMinVelSq*(oldBin==(binNo_t)i ? pow(binOverlap,2) : 1.) ){ newBin=(binNo_t)i; break;}
++		}
++		if(newBin&lt;0){ LOG_FATAL(&quot;Body #&quot;&lt;&lt;b-&gt;getId()&lt;&lt;&quot;, velSq=&quot;&lt;&lt;velSq&lt;&lt;&quot; not put in any bin!?&quot;); abort(); }
++		if(oldBin&gt;=0) { if(newBin&gt;oldBin) moveSlower++; else if(oldBin&gt;newBin) moveFaster++; }
++		bodyBins[b-&gt;getId()]=newBin;
++		// LOG_TRACE(&quot;#&quot;&lt;&lt;b-&gt;getId()&lt;&lt;&quot;: vel=&quot;&lt;&lt;sqrt(velSq)&lt;&lt;&quot;, bin &quot;&lt;&lt;(int)newBin);
++		bins[newBin].nBodies+=1;
++	}
++	#ifdef LOG4CXX
++		// if debugging output
++		if(logger-&gt;isDebugEnabled() &amp;&amp; (rootBody-&gt;currentIteration-histLast&gt;=histInterval || histLast&lt;0)){
++			histLast=rootBody-&gt;currentIteration;
++			LOG_INFO(bodyBins.size()&lt;&lt;&quot; bodies (moves: &quot;&lt;&lt;moveFaster&lt;&lt;&quot; faster, &quot;&lt;&lt;moveSlower&lt;&lt;&quot; slower), refMaxVel=&quot;&lt;&lt;sqrt(refMaxVelSq));
++			for(size_t i=0; i&lt;nBins; i++){
++				int nChars=int(80*(bins[i].nBodies/Real(bodyBins.size())));
++				string l; for(int j=0; j&lt;nChars; j++) l+=&quot;#&quot;; for(int j=nChars; j&lt;80; j++) l+=&quot; &quot;;
++				cerr&lt;&lt;&quot;\t&quot;&lt;&lt;i&lt;&lt;&quot;: |&quot;&lt;&lt;l&lt;&lt;&quot;| (&quot;&lt;&lt;bins[i].nBodies&lt;&lt;&quot;) &quot;&lt;&lt;sqrt(bins[i].binMinVelSq)&lt;&lt;&quot;&#8230;&quot;&lt;&lt;sqrt(bins[i].binMaxVelSq)&lt;&lt;endl;
++			}
++		}
++	#endif
++}
++
++/* non-parallel implementations */
++void VelocityBins::binVelSqInitialize(){ FOREACH(Bin&amp; bin, bins) bin.currMaxVelSq=0; }
++void VelocityBins::binVelSqUse(body_id_t id, Real velSq){
++	#ifdef YADE_OPENMP
++		if(omp_get_thread_num()&gt;0) {LOG_FATAL(&quot;VelocityBins do not support multiple openMP threads yet!&quot;); abort(); }
++	#endif
++	Real&amp; maxVelSq(bins[bodyBins[id]].currMaxVelSq);
++	maxVelSq=max(maxVelSq,velSq);
++}
++void VelocityBins::binVelSqFinalize(){}
+
+Added: trunk/pkg/common/DataClass/VelocityBins.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/VelocityBins.hpp	2009-07-13 15:30:36 UTC (rev 1861)
++++ trunk/pkg/common/DataClass/VelocityBins.hpp	2009-07-13 19:31:44 UTC (rev 1862)
+@@ -0,0 +1,76 @@
++// 2009 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++#pragma once 
++
++#include&lt;yade/core/Interaction.hpp&gt; // for body_id_t
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++#include&lt;vector&gt;
++
++class MetaBody;
++
++/* Class for putting bodies to velcoity bins, for optimization
++of collision detection.
++Each bin is characterized by its minimum/maximum velocity. 
++See <A HREF="http://yade.wikia.com/wiki/Insertion_Sort_Collider_Stride#Enhancement_ideas:_velocity_bins">http://yade.wikia.com/wiki/Insertion_Sort_Collider_Stride#Enhancement_ideas:_velocity_bins</A> for brief design overview.
++*/
++class VelocityBins{
++	public:
++	VelocityBins(int _nBins, Real _refMaxVelSq, Real _binCoeff=10, Real _binOverlap=0.8): refMaxVelSq(_refMaxVelSq), binCoeff(_binCoeff), binOverlap(_binOverlap), maxRefRelStep(0.05), nBins(_nBins), histInterval(200), histLast(-1){};
++	typedef signed char binNo_t;
++	struct Bin{
++		Bin(): binMinVelSq(-1), binMaxVelSq(-1), maxDist(0), currDistSq(0), currMaxVelSq(0), nBodies(0){}
++		// limits for bin memebrship
++		Real binMinVelSq, binMaxVelSq;
++		// maximum distance that body in this bin can travel before it goes out of its swept bbox
++		Real maxDist;
++		// distance so far traveled by the fastest body in this bin (since last setBins)
++		Real currDistSq;
++		// maximum velSq over all bodies in this bin
++		Real currMaxVelSq;
++		// number of bodies in this bin (for informational purposes only)
++		long nBodies;
++	};
++	// bins themselves (their number is nBins)
++	vector&lt;Bin&gt; bins;
++	// each body has its bin number stored here
++	vector&lt;binNo_t&gt; bodyBins;
++	// reference overall maximum velocity (may be different from bins[0].maxVelSq)
++	Real refMaxVelSq;
++	// factor by which maximum velocity in each bin is smaller than in the higer one
++	Real binCoeff;
++	// relative overlap beween bins; body will not be moved from faster bin until its velocity is min*binOverlap; must be &lt;=1
++	Real binOverlap;
++	// maximum relative change of reference max velocity per invocation
++	Real maxRefRelStep;
++	// number of bins; must be &gt;=1 and &lt;=100 (artificial upper limit)
++	size_t nBins;
++	// how often to show histogram, if LOG_DEBUG is enabled;
++	long histInterval, histLast;
++	// Assign bins to all bodies
++	void setBins(MetaBody*, Real currMaxVelSq, Real refSweepLength);
++
++	// Increment maximum per-bin distances and tell whether some bodies may be	already getting out of the swept bbox (in that case, we need to recompute bounding volumes and run the collider)
++	bool incrementDists_shouldCollide(Real dt);
++	
++	/* NOTE: following 3 functions are separated because of multi-threaded operation of NewtonsDampedLaw
++	in that case, every thread must have its own per-bin maximum and binVelSqFinalize will assign the
++	overall maxima to the bins.
++
++	The non-parallel implementation simply resets all Bin::realMaxVelSq, maximize if for each
++	body in that bin and binVelSqFinalize() will not do nothing.
++	*/
++	// reset per-bin max velocities
++	void binVelSqInitialize();
++	// use body max velocity -- called for every body at every step (from NewtonsDampedLaw, normally)
++	void binVelSqUse(body_id_t id, Real velSq);
++	// actually assign max velocities to their respective bins
++	void binVelSqFinalize();
++
++	// get velSq for given body; this should be called from NewtonsDampedLaw as well,
++	// to ensure that the same formulas are used (once we have angularVelocity + AABB span,
++	// for instance
++	static Real getBodyVelSq(RigidBodyParameters* rbp){
++		return rbp-&gt;velocity.SquaredLength();
++	}
++
++	DECLARE_LOGGER;
++};
+
+Modified: trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp	2009-07-13 15:30:36 UTC (rev 1861)
++++ trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.cpp	2009-07-13 19:31:44 UTC (rev 1862)
+@@ -14,6 +14,7 @@
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++#include&lt;yade/pkg-common/VelocityBins.hpp&gt;
+ 
+ CREATE_LOGGER(BoundingVolumeMetaEngine);
+ 
+@@ -21,6 +22,8 @@
+ {
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ 	const long numBodies=(long)bodies-&gt;size();
++	bool haveBins=(bool)velocityBins;
++	if(sweepDist!=0 &amp;&amp; haveBins){ LOG_FATAL(&quot;Only one of sweepDist or velocityBins can used!&quot;); abort(); }
+ 	//#pragma omp parallel for
+ 	for(int id=0; id&lt;numBodies; id++){
+ 		if(!bodies-&gt;exists(id)) continue; // don't delete this check  - Janek
+@@ -36,28 +39,15 @@
+ 		#else
+ 			operator()(ig,b-&gt;boundingVolume,b-&gt;physicalParameters-&gt;se3,b.get());
+ 		#endif
+-		if(sweepTime&gt;0){
+-			/* compute se3 the body would have after given time (linear interpolation), and use the maximum bounding volume then.
+-			It is a pessimisation that allows us to not update the aabb during some period of time. */
+-			Vector3r min0=b-&gt;boundingVolume-&gt;min, max0=b-&gt;boundingVolume-&gt;max;
+-			const Se3r&amp; se3=b-&gt;physicalParameters-&gt;se3;
+-			const RigidBodyParameters* rbp=YADE_CAST&lt;RigidBodyParameters*&gt;(b-&gt;physicalParameters.get());
+-			/* For position change, &#916;r=v&#916;t+&#189;a&#916;t&#178;; similar for orientation. */
+-			Se3r sweptSe3; sweptSe3.position=se3.position+(rbp-&gt;velocity+.5*rbp-&gt;acceleration*sweepTime)*sweepTime;
+-			Vector3r axis=rbp-&gt;angularVelocity+.5*rbp-&gt;angularAcceleration*sweepTime; Real angle=axis.Normalize(); Quaternionr q(axis,angle*sweepTime); sweptSe3.orientation=q*se3.orientation;
+-			#ifdef BV_FUNCTOR_CACHE
+-				ig-&gt;boundFunctor-&gt;go(ig,b-&gt;boundingVolume,sweptSe3,b.get());
+-			#else
+-				operator()(ig,b-&gt;boundingVolume,sweptSe3,b.get());
+-			#endif
+-			AABB* aabb=YADE_CAST&lt;AABB*&gt;(b-&gt;boundingVolume.get()); // to update halfSize and center as well
+-			aabb-&gt;min=componentMinVector(min0,aabb-&gt;min); aabb-&gt;max=componentMaxVector(max0,aabb-&gt;max);
+-			aabb-&gt;center=.5*(aabb-&gt;min+aabb-&gt;max); aabb-&gt;halfSize=.5*(aabb-&gt;max-aabb-&gt;min);
++		if(sweepDist&gt;0){
++			AABB* aabb=YADE_CAST&lt;AABB*&gt;(b-&gt;boundingVolume.get());
++			aabb-&gt;halfSize+=Vector3r(sweepDist,sweepDist,sweepDist);
++			aabb-&gt;min=aabb-&gt;center-aabb-&gt;halfSize; aabb-&gt;max=aabb-&gt;center+aabb-&gt;halfSize;
+ 		}
+-		if(sweepDist!=0){
++		if(haveBins){
+ 			AABB* aabb=YADE_CAST&lt;AABB*&gt;(b-&gt;boundingVolume.get());
+-			if(sweepDist&lt;0) aabb-&gt;halfSize=-sweepDist*aabb-&gt;halfSize; // relative scaling by abs(sweepDist)
+-			else aabb-&gt;halfSize+=Vector3r(sweepDist,sweepDist,sweepDist); // absolute distance increment
++			Real sweep=velocityBins-&gt;bins[velocityBins-&gt;bodyBins[b-&gt;getId()]].maxDist;
++			aabb-&gt;halfSize+=Vector3r(sweep,sweep,sweep);
+ 			aabb-&gt;min=aabb-&gt;center-aabb-&gt;halfSize; aabb-&gt;max=aabb-&gt;center+aabb-&gt;halfSize;
+ 		}
+ 	}
+
+Modified: trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp	2009-07-13 15:30:36 UTC (rev 1861)
++++ trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp	2009-07-13 19:31:44 UTC (rev 1862)
+@@ -16,6 +16,8 @@
+ #include&lt;yade/core/BoundingVolume.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
+ 
++class VelocityBins;
++
+ class BoundingVolumeMetaEngine :	public MetaEngine2D
+ 					&lt;	
+ 						InteractingGeometry,						// base classe for dispatch
+@@ -34,19 +36,16 @@
+ 	public :
+ 		// selectively turn off this engine (from within the collider, for instance)
+ 		bool activated;
+-		//! if &lt; 0, will set bounding volumes that the bodies (most likely) will not go over within given time interval; otherwise, do not sweep
+-		Real sweepTime;
+-		//! bounding box will be enlarged by this amount in all 3 dimensions;
+-		/// if negative, it is relative size (e.g. -2 will make the bounding box 2 &#215; bigger)
+-		/// if positive, it is absolute distance; its will be added in all 6 directions (i.e. dimensions will be enlarged by 2 &#215; this value)
++		//! bounding box will be enlarged by this amount in all 3 dimensions; must be non-negative;
+ 		Real sweepDist;
+-		BoundingVolumeMetaEngine(): activated(true), sweepTime(-1), sweepDist(0) {}
++		BoundingVolumeMetaEngine(): activated(true), sweepDist(0) {}
+ 		virtual void action(MetaBody*);
+ 		virtual bool isActivated(MetaBody*){ return activated; }
++		shared_ptr&lt;VelocityBins&gt; velocityBins;
+ 	DECLARE_LOGGER;
+ 	REGISTER_CLASS_NAME(BoundingVolumeMetaEngine);
+ 	REGISTER_BASE_CLASS_NAME(MetaEngine2D);
+-	REGISTER_ATTRIBUTES(MetaEngine,(activated)(sweepTime)(sweepDist));
++	REGISTER_ATTRIBUTES(MetaEngine,(activated)(sweepDist));
+ };
+ 
+ REGISTER_SERIALIZABLE(BoundingVolumeMetaEngine);
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-07-13 15:30:36 UTC (rev 1861)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-07-13 19:31:44 UTC (rev 1862)
+@@ -5,6 +5,7 @@
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/core/InteractionContainer.hpp&gt;
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/VelocityBins.hpp&gt;
+ #include&lt;yade/pkg-dem/NewtonsDampedLaw.hpp&gt;
+ 
+ #include&lt;algorithm&gt;
+@@ -65,12 +66,15 @@
+ 	bool InsertionSortCollider::isActivated(MetaBody* rb){
+ 		// activated if number of bodies changes (hence need to refresh collision information)
+ 		// or the time of scheduled run already came, or we were never scheduled yet
+-		if(sweepLength&lt;=0) return true;
+-		if(!newton || newton-&gt;maxVelocitySq&lt;0 || sweepVelocity&lt;0) return true; // we wouldn't be able to find the max velocity, or it has not been computed yet, or there were no data available last time
++		if(!strideActive) return true;
++		if(!newton || (nBins&gt;=1 &amp;&amp; !newton-&gt;velocityBins)) return true;
++		if(nBins&gt;=1 &amp;&amp; newton-&gt;velocityBins-&gt;incrementDists_shouldCollide(rb-&gt;dt)) return true;
++		if(nBins&lt;=0){
++			if(fastestBodyMaxDist&lt;0){fastestBodyMaxDist=0; return true;}
++			fastestBodyMaxDist+=sqrt(newton-&gt;maxVelocitySq)*rb-&gt;dt;
++			if(fastestBodyMaxDist&gt;=sweepLength) return true;
++		}
+ 		if(XX.size()!=2*rb-&gt;bodies-&gt;size()) return true;
+-		if(fastestBodyMaxDist&lt;0){fastestBodyMaxDist=0; return true;}
+-		fastestBodyMaxDist+=sqrt(newton-&gt;maxVelocitySq)*rb-&gt;dt;
+-		if(fastestBodyMaxDist&gt;=sweepLength) return true;
+ 		// we wouldn't run in this step; in that case, just delete pending interactions
+ 		// this is done in ::action normally, but it would make the call counters not reflect the stride
+ 		rb-&gt;interactions-&gt;erasePending(*this);
+@@ -128,21 +132,37 @@
+ 	ISC_CHECKPOINT(&quot;init&quot;);
+ 
+ 		#ifdef COLLIDE_STRIDED
+-			if(sweepLength&gt;0){
+-				if(newton-&gt;maxVelocitySq&gt;=0){ // non-negative, i.e. a really computed value
+-					// compute new stride value
+-					assert(sweepFactor&gt;1.);
+-					sweepVelocity=sqrt(newton-&gt;maxVelocitySq)*sweepFactor;
++			// get us ready for strides
++			if(!strideActive &amp;&amp; sweepLength&gt;0){
++				if(newton-&gt;maxVelocitySq&gt;=0){ // maxVelocitySq is a really computed value
++					strideActive=true;
++					if(nBins&gt;=1){
++						if(!newton-&gt;velocityBins){ newton-&gt;velocityBins=shared_ptr&lt;VelocityBins&gt;(new VelocityBins(nBins,newton-&gt;maxVelocitySq,binCoeff,binOverlap)); }
++						if(!boundDispatcher-&gt;velocityBins) boundDispatcher-&gt;velocityBins=newton-&gt;velocityBins;
++					}
++				}
++			}
++			if(strideActive){
++				assert(sweepLength&gt;0);
++				if(nBins&lt;=0){
++					// reset bins, in case they were active but are not anymore
++					if(newton-&gt;velocityBins) newton-&gt;velocityBins=shared_ptr&lt;VelocityBins&gt;(); if(boundDispatcher-&gt;velocityBins) boundDispatcher-&gt;velocityBins=shared_ptr&lt;VelocityBins&gt;();
++					assert(strideActive); assert(newton-&gt;maxVelocitySq&gt;=0); assert(sweepFactor&gt;1.);
++					Real sweepVelocity=sqrt(newton-&gt;maxVelocitySq)*sweepFactor; int stride=-1;
+ 					if(sweepVelocity&gt;0) {
+ 						stride=max(1,int((sweepLength/sweepVelocity)/rb-&gt;dt));
+ 						boundDispatcher-&gt;sweepDist=rb-&gt;dt*(stride-1)*sweepVelocity;
+ 					} else { // no motion
+ 						boundDispatcher-&gt;sweepDist=0; // nothing moves, no need to make bboxes larger
+ 					}
+-				} else { /* no valid data yet, run next time again */ boundDispatcher-&gt;sweepDist=0; sweepVelocity=-1; stride=1; }
+-				LOG_DEBUG(rb-&gt;simulationTime&lt;&lt;&quot;s: stride adapted to &quot;&lt;&lt;stride&lt;&lt;&quot;; sweepVelocity=&quot;&lt;&lt;sweepVelocity&lt;&lt;&quot;, maxVelocity=&quot;&lt;&lt;sqrt(newton-&gt;maxVelocitySq)&lt;&lt;&quot;, sweepDist=&quot;&lt;&lt;boundDispatcher-&gt;sweepDist);
+-				fastestBodyMaxDist=0; // reset
+-			} else { boundDispatcher-&gt;sweepTime=-1; boundDispatcher-&gt;sweepDist=0; }
++					LOG_DEBUG(rb-&gt;simulationTime&lt;&lt;&quot;s: stride &#8776;&quot;&lt;&lt;stride&lt;&lt;&quot;; maxVelocity=&quot;&lt;&lt;sqrt(newton-&gt;maxVelocitySq)&lt;&lt;&quot;, sweepDist=&quot;&lt;&lt;boundDispatcher-&gt;sweepDist);
++					fastestBodyMaxDist=0; // reset
++				} else { // nBins&gt;=1
++					assert(newton-&gt;velocityBins); assert(boundDispatcher-&gt;velocityBins);
++					// re-bin bodies
++					newton-&gt;velocityBins-&gt;setBins(rb,newton-&gt;maxVelocitySq,sweepLength);
++				}
++			}
+ 			boundDispatcher-&gt;action(rb);
+ 		#endif
+ 
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp	2009-07-13 15:30:36 UTC (rev 1861)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp	2009-07-13 19:31:44 UTC (rev 1862)
+@@ -46,21 +46,22 @@
+ 		shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundDispatcher;
+ 		// we need this to find out about current maxVelocitySq
+ 		shared_ptr&lt;NewtonsDampedLaw&gt; newton;
+-		// interval at which we will run (informative only, is updated automatically)
+-		int stride;
++		// if False, no type of striding is used
++		// if True, then either sweepLength XOR nBins is set
++		bool strideActive;
+ 		/// Absolute length that will be added to bounding boxes at each side; it should be something like 1/5 of typical grain radius
+ 		/// this value is used to adapt stride; if too large, stride will be big, but the ratio of potential-only interactions will be very big, 
+ 		/// thus slowing down collider &amp; interaction loops significantly (remember: O(addLength^3))
+ 		/// If non-positive, collider runs always, without stride adaptivity
+ 		Real sweepLength;
+-		//! Current sweeping velocity; computed from maxVelocity*sweepVelocityFactor
+-		Real sweepVelocity;
+ 		//! Overestimation factor for the sweep velocity; must be &gt;=1.0.
+ 		/// Has no influence on sweepLength, only on the computed stride.
+ 		/// Default 1.05
+ 		Real sweepFactor;
+ 		//! maximum distance that the fastest body could have travelled since the last run; if &gt;= sweepLength, we could get out of bboxes and will trigger full run
+ 		Real fastestBodyMaxDist;
++		// parameters to be passed to VelocityBins, if nBins&gt;0
++		int nBins; Real binCoeff, binOverlap;
+ 	#endif
+ 	//! storage for bounds
+ 	std::vector&lt;Bound&gt; XX,YY,ZZ;
+@@ -90,7 +91,7 @@
+ 
+ 	InsertionSortCollider():
+ 	#ifdef COLLIDE_STRIDED
+-		stride(0), sweepLength(-1), sweepVelocity(-1), sweepFactor(1.05), fastestBodyMaxDist(-1),
++		strideActive(false), sweepLength(-1), sweepFactor(1.05), fastestBodyMaxDist(-1), nBins(0), binCoeff(5), binOverlap(0.8),
+ 	#endif
+ 		sortAxis(0), sortThenCollide(false){
+ 			#ifdef ISC_TIMING
+@@ -101,7 +102,7 @@
+ 	REGISTER_CLASS_AND_BASE(InsertionSortCollider,Collider);
+ 	REGISTER_ATTRIBUTES(Collider,(sortAxis)(sortThenCollide)
+ 		#ifdef COLLIDE_STRIDED
+-			(stride)(sweepLength)(sweepFactor)(sweepVelocity)(fastestBodyMaxDist)
++			(strideActive)(sweepLength)(sweepFactor)(fastestBodyMaxDist)(nBins)(binCoeff)(binOverlap)
+ 		#endif
+ 	);
+ 	DECLARE_LOGGER;
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2009-07-13 15:30:36 UTC (rev 1861)
++++ trunk/pkg/common/SConscript	2009-07-13 19:31:44 UTC (rev 1862)
+@@ -10,8 +10,8 @@
+ 
+ env.Install('$PREFIX/lib/yade$SUFFIX/pkg-common',[
+ 
+-	env.SharedLibrary('ParallelEngine',
+-		['Engine/ParallelEngine.cpp']),
++	env.SharedLibrary('VelocityBins',['DataClass/VelocityBins.cpp']), # not a plugin
++	env.SharedLibrary('ParallelEngine',['Engine/ParallelEngine.cpp']),
+ 	env.SharedLibrary('EngineUnits',['Engine/MetaEngine/EngineUnits.cpp']),
+ 	env.SharedLibrary('AABB',['DataClass/BoundingVolume/AABB.cpp']),
+ 	env.SharedLibrary('BoundingSphere',['DataClass/BoundingVolume/BoundingSphere.cpp']),
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-07-13 15:30:36 UTC (rev 1861)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-07-13 19:31:44 UTC (rev 1862)
+@@ -9,6 +9,7 @@
+ #include&quot;NewtonsDampedLaw.hpp&quot;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++#include&lt;yade/pkg-common/VelocityBins.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ #include&lt;yade/pkg-dem/Clump.hpp&gt;
+ 
+@@ -34,6 +35,7 @@
+ 	// clumpRBP-&gt;{acceleration,angularAcceleration} are reset byt Clump::moveMembers, it is ok to just increment here
+ 	clumpRBP-&gt;acceleration+=diffClumpAccel;
+ 	clumpRBP-&gt;angularAcceleration+=diffClumpAngularAccel;
++	if(haveBins) velocityBins-&gt;binVelSqUse(memberId,VelocityBins::getBodyVelSq(rb));
+ 	maxVelocitySq=max(maxVelocitySq,rb-&gt;velocity.SquaredLength());
+ }
+ 
+@@ -42,6 +44,8 @@
+ 	ncb-&gt;bex.sync();
+ 	Real dt=Omega::instance().getTimeStep();
+ 	maxVelocitySq=-1;
++	haveBins=(bool)velocityBins;
++	if(haveBins) velocityBins-&gt;binVelSqInitialize();
+ 
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *ncb-&gt;bodies){
+ 		// clump members are non-dynamic; they skip the rest of loop once their forces are properly taken into account, however
+@@ -67,6 +71,7 @@
+ 			rb-&gt;angularAcceleration+=dAngAccel;
+ 		}
+ 
++		if(haveBins) {velocityBins-&gt;binVelSqUse(id,VelocityBins::getBodyVelSq(rb));}
+ 		maxVelocitySq=max(maxVelocitySq,rb-&gt;velocity.SquaredLength());
+ 
+ 		// blocking DOFs
+@@ -94,5 +99,7 @@
+ 
+ 		if(b-&gt;isClump()) static_cast&lt;Clump*&gt;(b.get())-&gt;moveMembers();
+ 	}
++
++	if(haveBins) velocityBins-&gt;binVelSqFinalize();
+ }
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2009-07-13 15:30:36 UTC (rev 1861)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2009-07-13 19:31:44 UTC (rev 1862)
+@@ -32,18 +32,22 @@
+  
+  */
+ class RigidBodyParameters;
++class VelocityBins;
+ 
+ class NewtonsDampedLaw : public StandAloneEngine{
+ 	inline void cundallDamp(const Real&amp; dt, const Vector3r&amp; f, const Vector3r&amp; velocity, Vector3r&amp; acceleration, const Vector3r&amp; m, const Vector3r&amp; angularVelocity, Vector3r&amp; angularAcceleration);
+ 	void handleClumpMember(MetaBody* ncb, const body_id_t memberId, RigidBodyParameters* clumpRBP);
+-
++	bool haveBins;
+ 	public:
+ 		///damping coefficient for Cundall's non viscous damping
+ 		Real damping;
+ 		/// store square of max. velocity, for informative purposes; computed again at every step
+ 		Real maxVelocitySq;
++		/// velocity bins (not used if not created)
++		shared_ptr&lt;VelocityBins&gt; velocityBins;
+ 		virtual void action(MetaBody *);		
+ 		NewtonsDampedLaw(): damping(0.2), maxVelocitySq(-1){}
++
+ 	REGISTER_ATTRIBUTES(StandAloneEngine,(damping)(maxVelocitySq));
+ 	REGISTER_CLASS_AND_BASE(NewtonsDampedLaw,StandAloneEngine);
+ };
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2009-07-13 15:30:36 UTC (rev 1861)
++++ trunk/pkg/dem/SConscript	2009-07-13 19:31:44 UTC (rev 1862)
+@@ -955,7 +955,8 @@
+ 			'yade-base',		
+ 			'yade-multimethods',
+ 			'RigidBodyParameters',
+-			'Clump'
++			'Clump',
++			'VelocityBins'
+ 			 ]),
+ 
+ 	env.SharedLibrary('SimpleViscoelasticBodyParameters'
+
+Modified: trunk/scripts/test/collider-stride-triax.py
+===================================================================
+--- trunk/scripts/test/collider-stride-triax.py	2009-07-13 15:30:36 UTC (rev 1861)
++++ trunk/scripts/test/collider-stride-triax.py	2009-07-13 19:31:44 UTC (rev 1862)
+@@ -4,9 +4,7 @@
+ import os.path
+ loadFrom='/tmp/triax.xml'
+ if not os.path.exists(loadFrom):
+-	TriaxialTest(numberOfGrains=8000,fast=True,noFiles=True).load()
+-	#O.run(500)
+-	O.save(loadFrom)
++	TriaxialTest(numberOfGrains=20000,fast=True,noFiles=True).generate(loadFrom)
+ O.load(loadFrom)
+ log.setLevel('TriaxialCompressionEngine',log.WARN) # shut up
+ log.setLevel('InsertionSortCollider',log.DEBUG)
+@@ -15,9 +13,14 @@
+ newton=utils.typedEngine('NewtonsDampedLaw')
+ 
+ # use striding; say &quot;if 0:&quot; to disable striding and compare to regular runs
+-if 0:
++if 1:
+ 	# length by which bboxes will be made larger
+ 	collider['sweepLength']=0.05*O.bodies[100].shape['radius']
++	# if this is enabled, bboxes will be enlarged based on velocity bin for each body
++	if 0:
++		collider['nBins']=3
++		collider['binCoeff']=10
++		log.setLevel('VelocityBins',log.DEBUG)
+ 
+ O.step() # filter out initialization
+ O.timingEnabled=True
+@@ -25,20 +28,12 @@
+ # run a few times 500 steps, show timings to see what is the trend
+ # notably, the percentage of collider time should decrease as the max velocity decreases as well
+ for i in range(0,5):
+-	O.run(500,True)
++	O.run(1000,True)
+ 	timing.stats()
+ 	totalTime+=sum([e.execTime for e in O.engines])
+ 	print 'Number of interactions: %d (real ratio: %g)'%(len(O.interactions),float(O.interactions.countReal())/len(O.interactions))
+ 	print '======================================================='
+ 	timing.reset()
+-	# plot velocity histogram
+-	if 0:
+-		import pylab
+-		pylab.hist([sqrt(sum([v**2 for v in b.phys['velocity']])) for b in O.bodies])
+-		pylab.title('step %d; max speed %g'%(O.iter,sqrt(newton['maxVelocitySq'])))
+-		pylab.grid()
+-		pylab.savefig('%s-%05d.png'%(loadFrom,O.iter),dpi=40)
+-		pylab.cla()
+ 
+ print 'Total time: %g s'%(totalTime/1e9)
+ #quit()
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001188.html">[deprecated list] [Yade-dev] [svn] r1861 - trunk/pkg/dem
+</A></li>
+	<LI>Next message: <A HREF="001190.html">[deprecated list] [Yade-dev] [svn] r1863 - in trunk: core	core/containers pkg/common	pkg/common/DataClass	pkg/common/Engine/MetaEngine	pkg/dem/Engine/DeusExMachina scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1189">[ date ]</a>
+              <a href="thread.html#1189">[ thread ]</a>
+              <a href="subject.html#1189">[ subject ]</a>
+              <a href="author.html#1189">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

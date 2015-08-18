@@ -1,0 +1,189 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] Note on optimized compilation / optimized coding / profiling results
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Note%20on%20optimized%20compilation%20/%20optimized%20coding%20/%0A%20profiling%20results&In-Reply-To=%3C47C41624.4050602%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000103.html">
+   <LINK REL="Next"  HREF="000070.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] Note on optimized compilation / optimized coding / profiling results</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Note%20on%20optimized%20compilation%20/%20optimized%20coding%20/%0A%20profiling%20results&In-Reply-To=%3C47C41624.4050602%40hmg.inpg.fr%3E"
+       TITLE="[yade-dev] Note on optimized compilation / optimized coding / profiling results">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Tue Feb 26 14:37:40 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000103.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+        <LI>Next message: <A HREF="000070.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#67">[ date ]</a>
+              <a href="thread.html#67">[ thread ]</a>
+              <a href="subject.html#67">[ subject ]</a>
+              <a href="author.html#67">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>V&#225;clav S a &#233;crit :
+&gt;&gt;<i> The damping dispatcher takes 89% of cpu time to do 
+</I>&gt;&gt;<i> something else, namely :
+</I>&gt;&gt;<i> - LocateMultivirtualFunctor : 50%
+</I>&gt;&gt;<i>     
+</I>&gt;<i> Good to know.
+</I>&gt;<i>   
+</I>
+Let me precise this : I'm not sure the dispatching mecanism is slow by 
+itself. What takes a lot of time in the dispatcher is for instance 
+BodyMacroParameters::getBaseClassIndex()  (around 50%), or the function 
+find() I spoke about before (10%). I'm attaching a file with the list of 
+function costs in LocateMultivirtualFunctor .
+
+Note that getBaseClassIndex() is 10 times slower that getClassIndex(), I 
+wonder why...
+
+Bruno
+
+
+
+
+
+&gt;<i> Another way would be to have boost::ublas::compressed_matrix for the 2D
+</I>&gt;<i> case, if 2D array of some 10000 elements is too much (OK, if we have
+</I>&gt;<i> 1000 classes once, that would mean 1e6 which is not nice). Should be
+</I>&gt;<i> reasonably fast as well. No 3D functors, though ;-).
+</I>&gt;<i>
+</I>&gt;<i> Will play with that if I find some time. That would sound like big speed
+</I>&gt;<i> improvement (there is quite a few dispatchers in the simulation, if they
+</I>&gt;<i> take 30% of time, that means 15% for dispatching... wow.
+</I>&gt;<i>
+</I>&gt;<i> I thought originally this stuff was part of Loki and was well optimized.
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>&gt;&gt;<i> A simple example :
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> shared_ptr&lt;PhysicalAction&gt;&amp; PhysicalActionVectorVector::find(unsigned 
+</I>&gt;&gt;<i> int id , int actionIndex )
+</I>&gt;&gt;<i> {
+</I>&gt;&gt;<i>     if( current_size &lt;= id ) // this is very rarely executed, only at 
+</I>&gt;&gt;<i> beginning.
+</I>&gt;&gt;<i>     // somebody is accesing out of bounds, make sure he will find, what 
+</I>&gt;&gt;<i> he needs - a resetted PhysicalAction of his type
+</I>&gt;&gt;<i>     {
+</I>&gt;&gt;<i>         ....
+</I>&gt;&gt;<i>     }
+</I>&gt;&gt;<i>     usedIds[id] = true;
+</I>&gt;&gt;<i>     return physicalActions[id][actionIndex];
+</I>&gt;&gt;<i> }
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> 1. There is this test at the begining, that is useless all the time 
+</I>&gt;&gt;<i> except at iteration 1.
+</I>&gt;&gt;<i> 2. there is this usedIds[id] affectation (same remark again, only 
+</I>&gt;&gt;<i> modified at iteration 1).
+</I>&gt;&gt;<i> 3. Then return a reference to a shared pointer (while shared_ptr 
+</I>&gt;&gt;<i> operations are slower than normal).
+</I>&gt;&gt;<i>   
+</I>&gt;&gt;<i>     
+</I>&gt;<i> You're right, I thought that 1. and 2. was the business of ::prepare,
+</I>&gt;<i> which is called from PhysicalActionContainerInitializer. It should be
+</I>&gt;<i> the user's responsibility to use valid indices, right?
+</I>&gt;<i>
+</I>&gt;<i> UsedIds, that's a different story; it says what index contains a
+</I>&gt;<i> non-null action so that we can iterate over non-null actions. But this
+</I>&gt;<i> flag could be put into the action instance itself. Then
+</I>&gt;<i> physicalActions[id][actionIndex] could be used directly.
+</I>&gt;<i>   
+</I>&gt;&gt;<i> Of course, this function &quot;find&quot; is used many many times. Result 3.81% of 
+</I>&gt;&gt;<i> total CPU time just for it, while we could just use 
+</I>&gt;&gt;<i> physicalActions[id][actionIndex] instead of find(), and reduce that time 
+</I>&gt;&gt;<i> a lot. But of course physicalActions is private...
+</I>&gt;&gt;<i>   
+</I>&gt;&gt;<i>     
+</I>&gt;<i> Just change that in the header and make it public, no problem. If the
+</I>&gt;<i> &quot;user&quot; screws stuff, it it his problem, not mine. I think Olivier liked
+</I>&gt;<i> having lot of stuff private, but then we have overheads for for
+</I>&gt;<i> accessors. Sadly, c++ has no way to say: this member is public for
+</I>&gt;<i> reading and private for writing, which could help in many cases.
+</I>&gt;<i>   
+</I>&gt;&gt;<i> Janek : I know that containers will be changed anyway, and that is why I 
+</I>&gt;&gt;<i> think this is the right moment to cry about speed. :)
+</I>&gt;&gt;<i> Users don't care about Godwin's law, they need SPEED!!!
+</I>&gt;&gt;<i>   
+</I>&gt;&gt;<i>     
+</I>&gt;<i> Cosurgi, should I fiddle with PhysicalActionContainer or is it going to
+</I>&gt;<i> be changed anyway?
+</I>&gt;<i>   
+</I>&gt;&gt;<i> Yes, I thought to that too, but I was not expert enough to be sure. 
+</I>&gt;&gt;<i> Can't the compiler check that nothing will be affected in some situations?
+</I>&gt;&gt;<i>   
+</I>&gt;&gt;<i>     
+</I>&gt;<i> It can in some, but I don't know in which ones. Putting const everywhere
+</I>&gt;<i> also checks that there are no side-effects of the method on its
+</I>&gt;<i> instance, for example.
+</I>&gt;<i>
+</I>&gt;<i> Another thing is that many methods should be inlined, but grepping
+</I>&gt;<i> through headers reveals that only very small subset is: for the most
+</I>&gt;<i> part, the openGl wrapper. Inlining functions is turned on by the -O3
+</I>&gt;<i> flag to g++, so we don't gain nothing here probably. But gcc manpage
+</I>&gt;<i> says for -finline-limit: &quot; This option is particularly useful for
+</I>&gt;<i> programs that use inlining heavily such as those based on recursive
+</I>&gt;<i> templates with C++.&quot; which is just our case.
+</I>&gt;<i>
+</I>&gt;<i> And by the way, I just found out that assert(...) is not compiled-out in
+</I>&gt;<i> optimized builds of scons, since we don't define NDEBUG. Will be fixed
+</I>&gt;<i> in next commit. No big deal ;-)
+</I>&gt;<i> _______________________________________________
+</I>&gt;<i> yade-dev mailing list
+</I>&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.berlios.de</A>
+</I>&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">https://lists.berlios.de/mailman/listinfo/yade-dev</A>
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Institut National Polytechnique de Grenoble
+Laboratoire 3S (Soils Solids Structures) - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000103.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+	<LI>Next message: <A HREF="000070.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#67">[ date ]</a>
+              <a href="thread.html#67">[ thread ]</a>
+              <a href="subject.html#67">[ subject ]</a>
+              <a href="author.html#67">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

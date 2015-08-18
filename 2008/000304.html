@@ -1,0 +1,73 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] InteractionGeometryMetaEngine, isReal, isNew etc.
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20InteractionGeometryMetaEngine%2C%20isReal%2C%20isNew%20etc.&In-Reply-To=%3C489AF50C.6090906%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000303.html">
+   <LINK REL="Next"  HREF="000305.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] InteractionGeometryMetaEngine, isReal, isNew etc.</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20InteractionGeometryMetaEngine%2C%20isReal%2C%20isNew%20etc.&In-Reply-To=%3C489AF50C.6090906%40arcig.cz%3E"
+       TITLE="[yade-dev] InteractionGeometryMetaEngine, isReal, isNew etc.">eudoxos at arcig.cz
+       </A><BR>
+    <I>Thu Aug  7 15:13:48 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000303.html">[yade-dev] DistantSpheresContactGeometry
+</A></li>
+        <LI>Next message: <A HREF="000305.html">[yade-dev] InteractionGeometryMetaEngine, isReal, isNew etc.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#304">[ date ]</a>
+              <a href="thread.html#304">[ thread ]</a>
+              <a href="subject.html#304">[ subject ]</a>
+              <a href="author.html#304">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>If I mark an interaction isReal=false in the constitutive law, it will
+not be deleted by the collider, since the InteractionGeometryMetaEngine
+will reset that flag to the return value of the appropriate EngineUnit.
+
+I would suggest that if(!I-&gt;isNew &amp;&amp; !I-&gt;isReal), then don't change the
+isReal flag in the MetaEngine. The current situation is that this has to
+be tested in the EngineUnit and false returned if you _really_ want the
+interaction to be deleted.
+
+What do you think?
+
+Vaclav
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000303.html">[yade-dev] DistantSpheresContactGeometry
+</A></li>
+	<LI>Next message: <A HREF="000305.html">[yade-dev] InteractionGeometryMetaEngine, isReal, isNew etc.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#304">[ date ]</a>
+              <a href="thread.html#304">[ thread ]</a>
+              <a href="subject.html#304">[ subject ]</a>
+              <a href="author.html#304">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

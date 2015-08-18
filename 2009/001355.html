@@ -1,0 +1,634 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1932 - in trunk: core extra	gui/qt3	lib/serialization	pkg/dem/DataClass/InteractionGeometry scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1932%20-%20in%20trunk%3A%20core%20extra%0A%09gui/qt3%09lib/serialization%0A%09pkg/dem/DataClass/InteractionGeometry%20scripts/test&In-Reply-To=%3C200908091717.n79HHuRM018948%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001354.html">
+   <LINK REL="Next"  HREF="001356.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1932 - in trunk: core extra	gui/qt3	lib/serialization	pkg/dem/DataClass/InteractionGeometry scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1932%20-%20in%20trunk%3A%20core%20extra%0A%09gui/qt3%09lib/serialization%0A%09pkg/dem/DataClass/InteractionGeometry%20scripts/test&In-Reply-To=%3C200908091717.n79HHuRM018948%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1932 - in trunk: core extra	gui/qt3	lib/serialization	pkg/dem/DataClass/InteractionGeometry scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Aug  9 19:17:56 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001354.html">[deprecated list] [Yade-dev] [robot] startup failed
+</A></li>
+        <LI>Next message: <A HREF="001356.html">[deprecated list] [Yade-dev] [svn] r1933 - in trunk: extra	lib	pkg/common/Engine/DeusExMachina	pkg/dem/DataClass	pkg/dem/meta py py/yadeWrapper scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1355">[ date ]</a>
+              <a href="thread.html#1355">[ thread ]</a>
+              <a href="subject.html#1355">[ subject ]</a>
+              <a href="author.html#1355">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-08-09 19:17:53 +0200 (Sun, 09 Aug 2009)
+New Revision: 1932
+
+Modified:
+   trunk/core/Interaction.cpp
+   trunk/core/Interaction.hpp
+   trunk/extra/PeriodicInsertionSortCollider.cpp
+   trunk/extra/PeriodicInsertionSortCollider.hpp
+   trunk/gui/qt3/SimulationController.cpp
+   trunk/lib/serialization/Archive.tpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp
+   trunk/scripts/test/periodic-grow.py
+Log:
+1. Working periodic collider, yay!! scripts/test/periodic-grow.py shows that
+2. A few changes related to that.
+
+
+Modified: trunk/core/Interaction.cpp
+===================================================================
+--- trunk/core/Interaction.cpp	2009-08-07 19:11:33 UTC (rev 1931)
++++ trunk/core/Interaction.cpp	2009-08-09 17:17:53 UTC (rev 1932)
+@@ -12,8 +12,8 @@
+ 
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ 
+-Interaction::Interaction(): id1(0), id2(0){ init(); }
+-Interaction::Interaction(body_id_t newId1,body_id_t newId2): id1(newId1), id2(newId2){ reset(); }
++Interaction::Interaction(): id1(0), id2(0), cellDist(Vector3&lt;int&gt;(0,0,0)) { init(); }
++Interaction::Interaction(body_id_t newId1,body_id_t newId2): id1(newId1), id2(newId2), cellDist(Vector3&lt;int&gt;(0,0,0)){ reset(); }
+ 
+ bool Interaction::isFresh(MetaBody* rb){ return iterMadeReal==rb-&gt;currentIteration;}
+ 
+@@ -21,7 +21,6 @@
+ 	isNeighbor = true;//NOTE : TriangulationCollider needs that
+ 	iterMadeReal=-1;
+ 	functorCache.geomExists=true;
+-	cellDist=Vector3&lt;int&gt;(0,0,0);
+ 	//functorCache.geom=shared_ptr&lt;InteractionGeometryEngineUnit&gt;(); functorCache.phys=shared_ptr&lt;InteractionPhysicsEngineUnit&gt;(); functorCache.constLaw=shared_ptr&lt;ConstitutiveLaw&gt;();
+ }
+ 
+
+Modified: trunk/core/Interaction.hpp
+===================================================================
+--- trunk/core/Interaction.hpp	2009-08-07 19:11:33 UTC (rev 1931)
++++ trunk/core/Interaction.hpp	2009-08-09 17:17:53 UTC (rev 1932)
+@@ -38,8 +38,14 @@
+ 		//! NOTE : TriangulationCollider needs this (nothing else)
+ 		bool isNeighbor;
+ 
+-		//! relative distance between bodies, given in (MetaBody::cellMax-MetaBody::cellMin) units
+-		//! Position of id1 must be incremented by that distance so that there is spatial interaction 
++		/*! relative distance between bodies, given in (MetaBody::cellMax-MetaBody::cellMin) units
++			Position of id1 must be incremented by that distance so that there is spatial interaction 
++
++			NOTE (tricky): cellDist must survive Interaction::reset(), it is only initialized in ctor
++			Interaction that was cancelled by the constitutive law, was reset() and became only potential
++			must have the priod information if the geometric functor again makes it real. Good to know after
++			few days of debugging that :-)
++		*/
+ 		Vector3&lt;int&gt; cellDist;
+ 
+ 		shared_ptr&lt;InteractionGeometry&gt; interactionGeometry;
+
+Modified: trunk/extra/PeriodicInsertionSortCollider.cpp
+===================================================================
+--- trunk/extra/PeriodicInsertionSortCollider.cpp	2009-08-07 19:11:33 UTC (rev 1931)
++++ trunk/extra/PeriodicInsertionSortCollider.cpp	2009-08-09 17:17:53 UTC (rev 1932)
+@@ -12,48 +12,77 @@
+ #include&lt;algorithm&gt;
+ #include&lt;vector&gt;
+ #include&lt;boost/static_assert.hpp&gt;
++#include&lt;stdexcept&gt;
+ 
+ using namespace std;
+ 
+ YADE_PLUGIN((PeriodicInsertionSortCollider))
+ CREATE_LOGGER(PeriodicInsertionSortCollider);
+ 
++// return floating value wrapped between x0 and x1 and saving period number to period
+ Real PeriodicInsertionSortCollider::cellWrap(const Real x, const Real x0, const Real x1, int&amp; period){
+ 	Real xNorm=(x-x0)/(x1-x0);
+-	period=(int)floor(xNorm); // FIXME: some people say this is very slow
++	period=(int)floor(xNorm); // some people say this is very slow; probably optimized by gcc, however (google suggests)
+ 	return x0+(xNorm-period)*(x1-x0);
+ }
+ 
++// return coordinate wrapped to x0&#8230;x1, relative to x0; don't care about period
+ Real PeriodicInsertionSortCollider::cellWrapRel(const Real x, const Real x0, const Real x1){
+ 	Real xNorm=(x-x0)/(x1-x0);
+ 	return (xNorm-floor(xNorm))*(x1-x0);
+ }
+ 
+ 
+-// return true if bodies bb overlap in all 3 dimensions
++/* Performance hint
++	================
++
++	Since this function is called (most the time) from insertionSort,
++	we actually already know what is the overlap status in that one dimension, including
++	periodicity information; both values could be passed down as a parameters, avoiding 1 of 3 loops here.
++	We do some floats math here, so the speedup could noticeable; doesn't concertn the non-periodic variant,
++	where it is only plain comparisons taking place.
++
++	In the same way, handleBoundInversion is passed only id1 and id2, but again insertionSort already knows in which sense
++	the inversion happens; if the boundaries get apart (min getting up over max), it wouldn't have to check for overlap
++	at all, for instance.
++*/
++//! return true if bodies bb overlap in all 3 dimensions
+ bool PeriodicInsertionSortCollider::spatialOverlap(body_id_t id1, body_id_t id2,MetaBody* rb, Vector3&lt;int&gt;&amp; periods) const {
+ 	assert(id1!=id2); // programming error, or weird bodies (too large?)
+ 	for(int axis=0; axis&lt;3; axis++){
+ 		Real dim=rb-&gt;cellMax[axis]-rb-&gt;cellMin[axis];
+ 		// too big bodies in interaction
+ 		assert(maxima[3*id1+axis]-minima[3*id1+axis]&lt;.99*dim); assert(maxima[3*id2+axis]-minima[3*id2+axis]&lt;.99*dim);
+-		// different way: find body of which when taken as period start will make the gap smaller
++		// find body of which when taken as period start will make the gap smaller
+ 		Real m1=minima[3*id1+axis],m2=minima[3*id2+axis];
+ 		Real wMn=(cellWrapRel(m1,m2,m2+dim)&lt;cellWrapRel(m2,m1,m1+dim)) ? m2 : m1;
+-		//TRVAR3(id1,id2,axis);
+-		//TRVAR4(minima[3*id1+axis],maxima[3*id1+axis],minima[3*id2+axis],maxima[3*id2+axis]);
+-		//TRVAR2(cellWrapRel(m1,m2,m2+dim),cellWrapRel(m2,m1,m1+dim));
+-		//TRVAR3(m1,m2,wMn);
++		#ifdef PISC_DEBUG
++		if(watchIds(id1,id2)){
++			TRVAR3(id1,id2,axis);
++			TRVAR4(minima[3*id1+axis],maxima[3*id1+axis],minima[3*id2+axis],maxima[3*id2+axis]);
++			TRVAR2(cellWrapRel(m1,m2,m2+dim),cellWrapRel(m2,m1,m1+dim));
++			TRVAR3(m1,m2,wMn);
++		}
++		#endif
+ 		int pmn1,pmx1,pmn2,pmx2;
+ 		Real mn1=cellWrap(minima[3*id1+axis],wMn,wMn+dim,pmn1), mx1=cellWrap(maxima[3*id1+axis],wMn,wMn+dim,pmx1);
+ 		Real mn2=cellWrap(minima[3*id2+axis],wMn,wMn+dim,pmn2), mx2=cellWrap(maxima[3*id2+axis],wMn,wMn+dim,pmx2);
+-		//TRVAR4(mn1,mx1,mn2,mx2);
+-		//TRVAR4(pmn1,pmx1,pmn2,pmx2);
+-		assert(pmn1==pmx1); assert(pmn2==pmx2);
++		#ifdef PISC_DEBUG
++			if(watchIds(id1,id2)){
++				TRVAR4(mn1,mx1,mn2,mx2);
++				TRVAR4(pmn1,pmx1,pmn2,pmx2);
++			}
++		#endif
++		if((pmn1!=pmx1) || (pmn2!=pmx2)){
++			LOG_FATAL(&quot;Body #&quot;&lt;&lt;(pmn1!=pmx1?id1:id2)&lt;&lt;&quot; spans over half of the cell size!&quot;);
++			throw runtime_error(__FILE__ &quot;: Body larger than half of the cell size encountered.&quot;);
++		}
+ 		periods[axis]=(int)(pmn1-pmn2);
+ 		if(!(mn1&lt;=mx2 &amp;&amp; mx1 &gt;= mn2)) return false;
+ 	}
+-	//LOG_TRACE(&quot;Returning true for #&quot;&lt;&lt;id1&lt;&lt;&quot;+#&quot;&lt;&lt;id2&lt;&lt;&quot;, periods &quot;&lt;&lt;periods);
++	#ifdef PISC_DEBUG
++		if(watchIds(id1,id2)) LOG_INFO(&quot;Overlap #&quot;&lt;&lt;id1&lt;&lt;&quot;+#&quot;&lt;&lt;id2&lt;&lt;&quot;, periods &quot;&lt;&lt;periods);
++	#endif
+ 	return true;
+ }
+ 
+@@ -65,15 +94,24 @@
+ 	// existing interaction?
+ 	const shared_ptr&lt;Interaction&gt;&amp; I=interactions-&gt;find(id1,id2);
+ 	bool hasInter=(bool)I;
++	#ifdef PISC_DEBUG
++		if(watchIds(id1,id2)) LOG_INFO(&quot;Inversion #&quot;&lt;&lt;id1&lt;&lt;&quot;+#&quot;&lt;&lt;id2&lt;&lt;&quot;, overlap==&quot;&lt;&lt;overlap&lt;&lt;&quot;, hasInter==&quot;&lt;&lt;hasInter);
++	#endif
+ 	// interaction doesn't exist and shouldn't, or it exists and should
+ 	if(!overlap &amp;&amp; !hasInter) return;
+ 	if(overlap &amp;&amp; hasInter){  return; }
+ 	// create interaction if not yet existing
+ 	if(overlap &amp;&amp; !hasInter){ // second condition only for readability
++		#ifdef PISC_DEBUG
++			if(watchIds(id1,id2)) LOG_INFO(&quot;Attemtping collision of #&quot;&lt;&lt;id1&lt;&lt;&quot;+#&quot;&lt;&lt;id2);
++		#endif
+ 		if(!Collider::mayCollide(Body::byId(id1,rb).get(),Body::byId(id2,rb).get())) return;
+ 		// LOG_TRACE(&quot;Creating new interaction #&quot;&lt;&lt;id1&lt;&lt;&quot;+#&quot;&lt;&lt;id2);
+ 		shared_ptr&lt;Interaction&gt; newI=shared_ptr&lt;Interaction&gt;(new Interaction(id1,id2));
+ 		newI-&gt;cellDist=periods;
++		#ifdef PISC_DEBUG
++			if(watchIds(id1,id2)) LOG_INFO(&quot;Created intr #&quot;&lt;&lt;id1&lt;&lt;&quot;+#&quot;&lt;&lt;id2&lt;&lt;&quot;, periods=&quot;&lt;&lt;periods);
++		#endif
+ 		interactions-&gt;insert(newI);
+ 		return;
+ 	}
+@@ -81,6 +119,50 @@
+ 	assert(false); // unreachable
+ }
+ 
++void PeriodicInsertionSortCollider::insertionSort(VecBounds&amp; v, InteractionContainer* interactions, MetaBody*rb, bool doCollide){
++	long &amp;loIdx=v.loIdx; const long &amp;size=v.size;
++	for(long _i=0; _i&lt;size; _i++){
++		const long i=v.norm(_i);
++		const long i_1=v.norm(i-1);
++		//switch period of (i) if the coord is below the lower edge cooridnate-wise and just above the split
++		if(i==loIdx &amp;&amp; v[i].coord&lt;v.cellMin){ v[i].period-=1; v[i].coord+=v.cellDim; loIdx=v.norm(loIdx+1); }
++		// coordinate of v[i] used to check inversions
++		// if crossing the split, adjust by cellDim;
++		// if we get below the loIdx however, the v[i].coord will have been adjusted already, no need to do that here
++		const Real iCmpCoord=v[i].coord+(i==loIdx ? v.cellDim : 0); 
++		// no inversion
++		if(v[i_1].coord&lt;=iCmpCoord) continue;
++		// vi is the copy that will travel down the list, while other elts go up
++		// if will be placed in the list only at the end, to avoid extra copying
++		int j=i_1; Bound vi=v[i];  const bool viHasBB=vi.flags.hasBB;
++		while(v[j].coord&gt;vi.coord + /* wrap for elt just below split */ (v.norm(j+1)==loIdx ? v.cellDim : 0)){
++			long j1=v.norm(j+1);
++			if (v[j].coord&gt;v.cellMax+v.cellDim){
++				// this condition is not strictly necessary, but the loop of insertionSort would have to run more times.
++				// Since size of particle is required to be &lt; .5*cellDim, this would mean simulation explosion anyway
++				LOG_FATAL(&quot;Body #&quot;&lt;&lt;v[j].id&lt;&lt;&quot; going faster than 1 cell in one step? Not handled.&quot;);
++				throw runtime_error(__FILE__ &quot;: body mmoving too fast (skipped 1 cell).&quot;);
++			}
++			Bound&amp; vNew(v[j1]); // elt at j+1 being overwritten by the one at j and adjusted
++			vNew=v[j];
++			// inversions close the the split need special care
++			if(j==loIdx &amp;&amp; vi.coord&lt;v.cellMin) { vi.period-=1; vi.coord+=v.cellDim; loIdx=v.norm(loIdx+1); }
++			else if(j1==loIdx) { vNew.period+=1; vNew.coord-=v.cellDim; loIdx=v.norm(loIdx-1); }
++			if(doCollide &amp;&amp; viHasBB &amp;&amp; v[j].flags.hasBB){
++				if(vi.id==vNew.id){ // BUG!!
++					LOG_FATAL(&quot;Inversion of body's #&quot;&lt;&lt;vi.id&lt;&lt;&quot; boundary with its other boundary.&quot;);
++					throw runtime_error(__FILE__ &quot;Body's boundary metting its opposite boundary.&quot;);
++				}
++				handleBoundInversion(vi.id,vNew.id,interactions,rb);
++			}
++			j=v.norm(j-1);
++		}
++		v[v.norm(j+1)]=vi;
++	}
++}
++
++// old code, can be removed later
++#if 0
+ void PeriodicInsertionSortCollider::insertionSort(VecBounds&amp; v, InteractionContainer* interactions, MetaBody* rb, bool doCollide){
+ 	// It seems that due to wrapping, it is not predetermined, how many times should we traverse the container
+ 	// We therefore add one blank traversal at the end that finds no inversions; then stop
+@@ -89,9 +171,9 @@
+ 		hadInversion=false;
+ 		long cnt=0; //loIdx
+ 		for(long i=v.norm(loIdx-1); cnt++&lt;size; i=v.norm(i-1)){
+-			long i_1=v.norm(i-1), loIdx_1=v.norm(loIdx-1);
++			long i_1=v.norm(i-1);
+ 			// fast test, if the first pair is inverted
+-			if(v[i].coord&lt;v[i_1].coord-(i_1==loIdx_1 ? v.cellDim : 0) ){
++			if(v[i].coord&lt;v[i_1].coord-(i_1==v.norm(loIdx-1) ? v.cellDim : 0) ){
+ 				//v.dump(cerr);
+ 				if(i==loIdx &amp;&amp; v[i].coord&lt;v.cellMin){ v[i].period-=1; v[i].coord+=v.cellDim; loIdx=v.norm(loIdx+1); }
+ 				hadInversion=true; Bound vi=v[i]; int j; const bool viBB=vi.flags.hasBB;
+@@ -104,7 +186,21 @@
+ 					//if(v[j1].coord&gt;v.cellMax &amp;&amp; j2==loIdx){ v[j1].period+=1; v[j1].coord-=v.cellDim; loIdx=v.norm(loIdx-1); }
+ 					if(j1==loIdx) { assert(v[j1].coord&gt;=v.cellMax); v[j1].period+=1; v[j1].coord-=v.cellDim; loIdx=v.norm(loIdx-1); }
+ 					else if (vi.coord&lt;v.cellMin &amp;&amp; j==loIdx){ vi.period-=1; vi.coord+=v.cellDim; loIdx=v.norm(loIdx+1); }
+-					if(doCollide &amp;&amp; viBB &amp;&amp; v[j].flags.hasBB) handleBoundInversion(vi.id,v[j].id,interactions,rb);
++					if(doCollide &amp;&amp; viBB &amp;&amp; v[j].flags.hasBB){
++						if(vi.id==v[j].id){ // BUG!!
++							ofstream of(&quot;/tmp/dump&quot;);
++							Omega::instance().saveSimulation(&quot;/tmp/dump.xml&quot;);
++							v.dump(of);
++							LOG_FATAL(&quot;Inversion of a body's boundary with itself, id=&quot;&lt;&lt;vi.id);
++							body_id_t id=vi.id;
++							TRVAR4(vi.coord,vi.id,vi.period,vi.flags.isMin);
++							TRVAR4(v[j].coord,v[j].id,v[j].period,v[j].flags.isMin);
++							TRVAR2(*(Vector3r*)(&amp;minima[3*id]),*(Vector3r*)(&amp;maxima[3*id]));
++							TRVAR3(i,j,v.loIdx);
++							abort();
++						}
++						handleBoundInversion(vi.id,v[j].id,interactions,rb);
++					}
+ 					//v.dump(cerr);
+ 				}
+ 				v[v.norm(j+1)]=vi;
+@@ -113,12 +209,13 @@
+ 		}
+ 	}
+ }
++#endif
+ 
+ void PeriodicInsertionSortCollider::VecBounds::update(MetaBody* rb, int axis){
+ 	assert(axis&gt;=0 &amp;&amp; axis&lt;3);
+ 	if(!rb-&gt;isPeriodic){
+ 		// maybe just set cell from -inf to +inf and go ahead?
+-		LOG_FATAL(&quot;MetaBody::isPeriodic is false, unable to continue!&quot;); throw;
++		LOG_FATAL(&quot;MetaBody::isPeriodic is false, unable to continue!&quot;); throw runtime_error(&quot;Non-periodic MetaBody for periodic collider.&quot;);
+ 	}
+ 	cellMin=rb-&gt;cellMin[axis]; cellMax=rb-&gt;cellMax[axis]; cellDim=cellMax-cellMin;
+ 	size=vec.size();
+@@ -151,7 +248,7 @@
+ 		}
+ 		if(minima.size()!=3*(size_t)nBodies){ minima.resize(3*nBodies); maxima.resize(3*nBodies); }
+ 		assert(XX.vec.size()==2*rb-&gt;bodies-&gt;size());
+-		//PERI: copy periodiciy information
++		//PERI: copy periodicity information
+ 		XX.update(rb,0); YY.update(rb,1); ZZ.update(rb,2);
+ 
+ 	// copy bounds along given axis into our arrays
+@@ -177,17 +274,11 @@
+ 					memcpy(&amp;minima[3*idXX],&amp;bvXX-&gt;min,3*sizeof(Real)); memcpy(&amp;maxima[3*idXX],&amp;bvXX-&gt;max,3*sizeof(Real)); // &#8656; faster than 6 assignments
+ 				}  
+ 				else{ const Vector3r&amp; pos=Body::byId(idXX,rb)-&gt;physicalParameters-&gt;se3.position; memcpy(&amp;minima[3*idXX],pos,3*sizeof(Real)); memcpy(&amp;maxima[3*idXX],pos,3*sizeof(Real)); }
+-				// PERI: add periods, but such that both minimum and maximum is within the cell!
+-				//Vector3r period(XX[i].period*XX.cellDim,YY[i].period*YY.cellDim,ZZ[i].period*ZZ.cellDim);
+-				//*(Vector3r*)(&amp;minima[3*idXX])+=period; *(Vector3r*)(&amp;maxima[3*idXX])+=period; //ugh
+ 			}
+ 		}
+ 
+ 	// process interactions that the constitutive law asked to be erased
+ 		interactions-&gt;erasePending(*this,rb);
+-	//LOG_TRACE(&quot;Step &quot;&lt;&lt;Omega::instance().getCurrentIteration());
+-	//ZZ.dump(cerr);
+-	// XX.dump(cerr); YY.dump(cerr); ZZ.dump(cerr);
+ 
+ 	// sort
+ 		if(!doInitSort){
+@@ -223,7 +314,8 @@
+ 				*/
+ 				// TRVAR3(i,iid,V[i].coord);
+ 				// go up until we meet the upper bound
+-				for(size_t j=i+1; /* handle case 2. of swapped min/max */ j&lt;2*(size_t)nBodies &amp;&amp; V[j].id!=iid; j++){
++				size_t cnt=0;
++				for(size_t j=V.norm(i+1); V[j].id!=iid; j=V.norm(j+1)){
+ 					const body_id_t&amp; jid=V[j].id;
+ 					/// Not sure why this doesn't work. If this condition is commented out, we have exact same interactions as from SpatialQuickSort. Otherwise some interactions are missing!
+ 					// skip bodies with smaller (arbitrary, could be greater as well) id, since they will detect us when their turn comes
+@@ -236,6 +328,11 @@
+ 					// that means that the upper bound is before the upper one; that can only happen if they
+ 					// are equal and the unstable std::sort has swapped them. In that case, we need to go reverse
+ 					// from V[i] until we meet the upper bound and swap the isMin flag
++
++					// PERI: this can happen if each boundary wraps to different period. That is OK.
++					// PERI: this should however be somehow distinguished from the case that they are in the same period...
++					// PERI: perhaps check that when periods are assigned and add some hair distance to the maximum...?
++					#if 0
+ 					if(j==2*(size_t)nBodies-1){ /* handle case 1. of swapped min/max */
+ 						size_t k=i-1;
+ 						while(V[k].id!=iid &amp;&amp; k&gt;0) k--;
+@@ -245,6 +342,8 @@
+ 						LOG_DEBUG(&quot;Swapping coincident min/max of #&quot;&lt;&lt;iid&lt;&lt;&quot; at positions &quot;&lt;&lt;k&lt;&lt;&quot; and &quot;&lt;&lt;i&lt;&lt;&quot; (coords: &quot;&lt;&lt;V[k].coord&lt;&lt;&quot; and &quot;&lt;&lt;V[i].coord&lt;&lt;&quot;)&quot;);
+ 						break; // would happen anyways
+ 					}
++					#endif
++					if(cnt++&gt;2*(size_t)nBodies){ LOG_FATAL(&quot;Uninterrupted loop in the initial sort?&quot;); throw std::logic_error(&quot;loop??&quot;); }
+ 				}
+ 			}
+ 		}
+
+Modified: trunk/extra/PeriodicInsertionSortCollider.hpp
+===================================================================
+--- trunk/extra/PeriodicInsertionSortCollider.hpp	2009-08-07 19:11:33 UTC (rev 1931)
++++ trunk/extra/PeriodicInsertionSortCollider.hpp	2009-08-09 17:17:53 UTC (rev 1932)
+@@ -17,9 +17,9 @@
+ 
+ Architecture
+ ============
+-Bounding boxes carry information about period in which they are. Their container (VecBounds)
+-holds position of where the space wraps. The sorting algorithm is changed in such way that
+-periods are changed when body crosses cell boundary.
++Values from bounding boxes are added information about period in which they are.
++Their container (VecBounds) holds position of where the space wraps.
++The sorting algorithm is changed in such way that periods are changed when body crosses cell boundary.
+ 
+ Interaction::cellDist holds information about relative cell coordinates of the 2nd body
+ relative to the 1st one. Dispatchers (InteractionGeometryMetaEngine and InteractionDispatchers)
+@@ -27,8 +27,8 @@
+ Since properly behaving InteractionGeometryEngineUnit's and ConstitutiveLaw's do not take positions
+ directly from Body::physicalParameters, the interaction is computed with the periodic positions.
+ 
+-Positions of bodies (in the sense of Body::physicalParameters) are not wrapped to the periodic cell,
+-they can be anywhere (but not &quot;too far&quot; in the sense of int overflow).
++Positions of bodies (in the sense of Body::physicalParameters) and their natural bboxes are not wrapped
++to the periodic cell, they can be anywhere (but not &quot;too far&quot; in the sense of int overflow).
+ 
+ Since Interaction::cellDists holds cell coordinates, it is possible to change the cell boundaries
+ at runtime. This should make it easy to implement some stress control on the top.
+@@ -40,6 +40,8 @@
+ OpenGLRenderingEngine renders GeometricalModel at all periodic positions that touch the
+ periodic cell (i.e. BoundingVolume crosses its boundary).
+ 
++It seems to affect body selection somehow, but that is perhaps not related at all.
++
+ Periodicity control
+ ===================
+ c++:
+@@ -50,28 +52,29 @@
+ 
+ Requirements
+ ============
+-* No body can have AABB larger than about .499*cellSize. This is currently not checked, only asserted.
+-* Constitutive law must not get body positions from Body::physicalParameters.
++* No body can have AABB larger than about .499*cellSize. Exception is thrown if that is false.
++* Constitutive law must not get body positions from Body::physicalParameters directly.
+ 	If it does, it uses Interaction::cellDist to compute periodic position.
+ 	Dem3Dof family of Ig2 functors and Law2_* engines are known to behave well.
+-* No body can get further away than MAXINT periods. It will do horrible things if there is overflow.
++* No body can get further away than MAXINT periods. It will do horrible things if there is overflow. Not checked at the moment.
++* Body cannot move over distance &gt; cellSize in one step. Since body size is limited as well, that would mean simulation explosion.
++	Exception is thrown if the movement is upwards. If downwards, it is not handled at all.
+ 
+ Possible performance improvements &amp; bugs
+ ========================================
+-This collider was not at all tuned to give decent performance (yet?)
+ 
+-* We don't enforce that bounding boxes are inside the cell; that means that every 
+-	spatialOverlap call has to wrap values, and that is probably quite slow.
+ * PeriodicInsertionSortCollider::{cellWrap,cellWrapRel} OpenGLRenderingEngine::{wrapCell,wrapCellPt} Shop::PeriodicWrap
+ 	are all very similar functions. They should be put into separate header and included from all those places.
+-* The aforementioned functions might not be the fastest implementations. In particular, I heard that (int) is
+-	rather low-performance for making conversion of floating-point to integer.
++
+ * Until this code is integrated with plain InsertionSortCollider, it will not support striding via VelocityBins
+ 	Those 2 features are orthogonal, the integration shouldn't be diffucult.
+ 
+-
+ */
+ 
++// #define to turn on some tracing information
++// all code under this can be probably removed at some point, when the collider will have been tested thoroughly
++// #define PISC_DEBUG
++
+ class PeriodicInsertionSortCollider: public Collider{
+ 	//! struct for storing bounds of bodies
+ 	struct Bound{
+@@ -113,13 +116,20 @@
+ 	bool spatialOverlap(body_id_t,body_id_t, MetaBody*, Vector3&lt;int&gt;&amp;) const;
+ 	static Real cellWrap(const Real, const Real, const Real, int&amp;);
+ 	static Real cellWrapRel(const Real, const Real, const Real);
++	#ifdef PISC_DEBUG
++		bool watchIds(body_id_t id1, body_id_t id2) const { body_id_t i1=2,i2=14; return ((id1==i1)&amp;&amp;(id2==i2))||((id1==i2)&amp;&amp;(id2==i1)); }
++	#endif
+ 
+ 
+ 	public:
+ 	//! axis for the initial sort
+ 	int sortAxis;
+ 	//! Predicate called from loop within InteractionContainer::erasePending
+-	bool shouldBeErased(body_id_t id1, body_id_t id2, MetaBody* rb) const { Vector3&lt;int&gt; foo; return !spatialOverlap(id1,id2,rb,foo); }
++	bool shouldBeErased(body_id_t id1, body_id_t id2, MetaBody* rb) const { Vector3&lt;int&gt; foo;
++		#ifdef PISC_DEBUG
++			if(watchIds(id1,id2)) LOG_INFO(&quot;Requesting erase of #&quot;&lt;&lt;id1&lt;&lt;&quot;+#&quot;&lt;&lt;id2&lt;&lt;&quot;, result: &quot;&lt;&lt;!spatialOverlap(id1,id2,rb,foo));
++		#endif
++		return !spatialOverlap(id1,id2,rb,foo); }
+ 
+ 	PeriodicInsertionSortCollider(): sortAxis(0) { }
+ 	virtual void action(MetaBody*);
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2009-08-07 19:11:33 UTC (rev 1931)
++++ trunk/gui/qt3/SimulationController.cpp	2009-08-09 17:17:53 UTC (rev 1932)
+@@ -292,7 +292,7 @@
+ void SimulationController::timerEvent( QTimerEvent* )
+ {
+ 	doUpdate(); /* update the controller, like iteration number etc */
+-	if(hasSimulation &amp;&amp; (Omega::instance().isRunning() || syncRunning || lastRenderedIteration!=Omega::instance().getCurrentIteration()))
++	if(hasSimulation) // &amp;&amp; (Omega::instance().isRunning() || syncRunning || lastRenderedIteration!=Omega::instance().getCurrentIteration()))
+ 	{
+ 		/* update GLViews */
+ 		YadeQtMainWindow::self-&gt;redrawAll(true);
+
+Modified: trunk/lib/serialization/Archive.tpp
+===================================================================
+--- trunk/lib/serialization/Archive.tpp	2009-08-07 19:11:33 UTC (rev 1931)
++++ trunk/lib/serialization/Archive.tpp	2009-08-09 17:17:53 UTC (rev 1932)
+@@ -48,13 +48,17 @@
+ 			typeid(Type)==typeid(Vector2f)		||
+ 			typeid(Type)==typeid(Vector2d)		||
+ 			typeid(Type)==typeid(Vector2&lt;long double&gt;)		||
+-			typeid(Type)==typeid(Vector2&lt;signed int&gt;)		||
++			typeid(Type)==typeid(Vector2&lt;signed int&gt;)	  		||
+ 			typeid(Type)==typeid(Vector2&lt;unsigned int&gt;)		||
+ 			typeid(Type)==typeid(Vector2&lt;signed long&gt;)		||
+ 			typeid(Type)==typeid(Vector2&lt;unsigned long&gt;)		||
+ 			typeid(Type)==typeid(Vector3f)		||
+ 			typeid(Type)==typeid(Vector3d)		||
+ 			typeid(Type)==typeid(Vector3&lt;long double&gt;)		||
++			typeid(Type)==typeid(Vector3&lt;signed int&gt;)			||
++			typeid(Type)==typeid(Vector3&lt;unsigned int&gt;)		||
++			typeid(Type)==typeid(Vector3&lt;signed long&gt;)		||
++			typeid(Type)==typeid(Vector3&lt;unsigned long&gt;)		||
+ 			typeid(Type)==typeid(Vector4f)		||
+ 			typeid(Type)==typeid(Vector4d)		||
+ 			typeid(Type)==typeid(Vector4&lt;long double&gt;)		||
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp	2009-08-07 19:11:33 UTC (rev 1931)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp	2009-08-09 17:17:53 UTC (rev 1932)
+@@ -153,7 +153,9 @@
+ 	InteractingSphere *s1=static_cast&lt;InteractingSphere*&gt;(cm1.get()), *s2=static_cast&lt;InteractingSphere*&gt;(cm2.get());
+ 	Vector3r normal=se32.position-se31.position;
+ 	Real penetrationDepthSq=pow(distanceFactor*(s1-&gt;radius+s2-&gt;radius),2)-normal.SquaredLength();
+-	if (penetrationDepthSq&lt;0 &amp;&amp; !c-&gt;isReal()) return false;
++	if (penetrationDepthSq&lt;0 &amp;&amp; !c-&gt;isReal()){
++		return false;
++	}
+ 
+ 	Real dist=normal.Normalize(); /* Normalize() works in-place and returns length before normalization; from here, normal is unit vector */
+ 	shared_ptr&lt;Dem3DofGeom_SphereSphere&gt; ss;
+
+Modified: trunk/scripts/test/periodic-grow.py
+===================================================================
+--- trunk/scripts/test/periodic-grow.py	2009-08-07 19:11:33 UTC (rev 1931)
++++ trunk/scripts/test/periodic-grow.py	2009-08-09 17:17:53 UTC (rev 1932)
+@@ -1,13 +1,12 @@
+-&quot;&quot;&quot;Script that either grows spheres inside the cell or shrinks
+-the cell progressively. It prints the total volume force once in a while.
+-This script also shows that the collider misses some interactions as spheres
+-are getting one over another. That is not acceptable, of course. &quot;&quot;&quot;
++&quot;&quot;&quot;Script that shrinks the periodic cell progressively.
++It prints strain and average stress (computed from total volume force)
++once in a while.&quot;&quot;&quot;
+ from yade import log,timing
+-
++log.setLevel(&quot;PeriodicInsertionSortCollider&quot;,log.TRACE)
+ O.engines=[
+ 	BexResetter(),
+ 	BoundingVolumeMetaEngine([InteractingSphere2AABB(),MetaInteractingGeometry2AABB()]),
+-	PeriodicInsertionSortCollider(label='collider'),
++	PeriodicInsertionSortCollider(),  # this is important, obviously
+ 	InteractionDispatchers(
+ 		[ef2_Sphere_Sphere_Dem3DofGeom()],
+ 		[SimpleElasticRelationships()],
+@@ -16,32 +15,25 @@
+ 	NewtonsDampedLaw(damping=.6)
+ ]
+ import random
+-O.bodies.append(utils.sphere((0,0,0),.5,dynamic=False,density=1000)) # stable point
+-for i in xrange(150):
+-	O.bodies.append(utils.sphere(Vector3(10*random.random(),10*random.random(),10*random.random()),.2+.2*random.random(),density=1000))
+-O.periodicCell=((-5,-5,0),(5,5,10))
+-O.dt=.8*utils.PWaveTimeStep()
++for i in xrange(250):
++	O.bodies.append(utils.sphere(Vector3(10*random.random(),10*random.random(),10*random.random()),.5+random.random(),density=1000))
++cubeSize=20
++# absolute positioning of the cell is not important
++O.periodicCell=((-.5*cubeSize,-.5*cubeSize,0),(.5*cubeSize,.5*cubeSize,cubeSize))
++O.dt=utils.PWaveTimeStep()
+ O.saveTmp()
+ from yade import qt
+ qt.Controller(); qt.View()
+ step=.01
+ O.run(200,True)
+-if 0:
+-	for i in range(0,500):
+-		O.run(500,True)
+-		for b in O.bodies:
+-			b.shape['radius']=b.shape['radius']+step
+-			b.mold['radius']=b.mold['radius']+step
+-		for i in O.interactions:
+-			if not i.isReal: continue
+-			i.geom['effR1']=i.geom['effR1']+step
+-			i.geom['effR2']=i.geom['effR2']+step
+-		print O.iter,utils.totalForceInVolume()
+-else:
+-	for i in range(0,500):
+-		O.run(100,True)
+-		mn,mx=O.periodicCell
+-		step=(mx-mn); step=Vector3(.002*step[0],.002*step[1],.002*step[2])
+-		O.periodicCell=mn+step,mx-step
+-		if (i%10==0): print O.iter,utils.totalForceInVolume()
++for i in range(0,250):
++	O.run(200,True)
++	mn,mx=O.periodicCell
++	step=(mx-mn); step=Vector3(.002*step[0],.002*step[1],.002*step[2])
++	O.periodicCell=mn+step,mx-step
++	if (i%10==0):
++		F=utils.totalForceInVolume()
++		dim=mx-mn; A=Vector3(dim[1]*dim[2],dim[0]*dim[2],dim[0]*dim[1])
++		avgStress=sum([F[i]/A[i] for i in 0,1,2])/3.
++		print 'strain',(cubeSize-dim[0])/cubeSize,'avg. stress ',avgStress,'unbalanced ',utils.unbalancedForce()
+ #O.timingEnabled=True; timing.reset(); O.run(200000,True); timing.stats()
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001354.html">[deprecated list] [Yade-dev] [robot] startup failed
+</A></li>
+	<LI>Next message: <A HREF="001356.html">[deprecated list] [Yade-dev] [svn] r1933 - in trunk: extra	lib	pkg/common/Engine/DeusExMachina	pkg/dem/DataClass	pkg/dem/meta py py/yadeWrapper scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1355">[ date ]</a>
+              <a href="thread.html#1355">[ thread ]</a>
+              <a href="subject.html#1355">[ subject ]</a>
+              <a href="author.html#1355">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

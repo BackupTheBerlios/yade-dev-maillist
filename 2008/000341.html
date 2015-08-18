@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev]   changes in the qt3 ui
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%20%20changes%20in%20the%20qt3%20ui&In-Reply-To=%3C48BEA682.40407%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000340.html">
+   <LINK REL="Next"  HREF="000342.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev]   changes in the qt3 ui</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%20%20changes%20in%20the%20qt3%20ui&In-Reply-To=%3C48BEA682.40407%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev]   changes in the qt3 ui">eudoxos at arcig.cz
+       </A><BR>
+    <I>Wed Sep  3 17:00:18 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000340.html">[deprecated list] [Yade-dev]   changes in the qt3 ui
+</A></li>
+        <LI>Next message: <A HREF="000342.html">[deprecated list] [Yade-dev]     changes in the qt3 ui
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#341">[ date ]</a>
+              <a href="thread.html#341">[ thread ]</a>
+              <a href="subject.html#341">[ subject ]</a>
+              <a href="author.html#341">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> (b) unfortunately we have no consensus. You have changed the default
+</I>&gt;<i> view direction and it turned out to be particularly annoying for me,
+</I>&gt;<i> because lattice is in XY plane. So I was always looking at it from
+</I>&gt;<i> side. And I have to patiently rotate the camera with mouse until I
+</I>&gt;<i> could see my sample. That was driving me nuts :)
+</I>&gt;<i>
+</I>&gt;<i> But I could not just change the default view direction, because then
+</I>&gt;<i> you would be driven nuts, that you always have to rotate the view to
+</I>&gt;<i> see your sample (just like I currently had).
+</I>&gt;<i>
+</I>&gt;<i> Therefore there is no best default view direction.
+</I>&gt;<i>
+</I>&gt;<i> I concluded that we need an easy way to switch view directions. One
+</I>&gt;<i> XYZ button for me, another ZXY button for you, and third button to
+</I>&gt;<i> stay complete with all possibilities.
+</I>&gt;<i>
+</I>&gt;<i> And since there is no best default view, I decided to have something
+</I>&gt;<i> like an &quot;overall view&quot; - which in general is a kind of axisymmetric
+</I>&gt;<i> look. Then the only choice I was left with was direction of gravity.
+</I>&gt;<i>
+</I>&gt;<i> Can you see my reasoning now? Can you think of any better solution
+</I>&gt;<i> for that?
+</I>&gt;<i>   
+</I>OK, let's keep it as it is. I would prefer keyboard shortcuts for this,
+but xyz is already taken for grid. Perhaps xyz for directions and XYZ
+for grid would be ok. (Those 3 buttons are quite large and to be
+consistent, you would have to put many other view controls there.)
+(Orienting by gravity engine is non-obvious and will probably make
+people wonder what determines the default orientation - until they read
+the code ;-) )
+&gt;<i> did you svn up? It works for me:
+</I>&gt;<i>
+</I>&gt;<i> 1. generate a simulation (it autoloads)
+</I>&gt;<i> 2. click XYZ/... buttons to change view.
+</I>&gt;<i>   
+</I>Curiously, it works now (I meant: without any simulation loaded; but
+that works now as well).
+
+Oh, BTW, since you're the openGL specialist, could you review the scale
+code in GLViewer? It should display 10^n long line segments in axis
+directions (in the upper left corner) to give an idea of the scene
+scale. Obviously, it is fully meaningful only with the ISO view, but
+with perspective, it should show scale on the zMid plane. It doesn't
+work in either case (try zooming in etc.), it is weird.
+
+
+Regards, Vaclav
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000340.html">[deprecated list] [Yade-dev]   changes in the qt3 ui
+</A></li>
+	<LI>Next message: <A HREF="000342.html">[deprecated list] [Yade-dev]     changes in the qt3 ui
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#341">[ date ]</a>
+              <a href="thread.html#341">[ thread ]</a>
+              <a href="subject.html#341">[ subject ]</a>
+              <a href="author.html#341">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

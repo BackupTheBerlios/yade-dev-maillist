@@ -1,0 +1,165 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1810 - in trunk:	core	pkg/realtime-rigidbody/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1810%20-%20in%20trunk%3A%0A%09core%09pkg/realtime-rigidbody/Engine/StandAloneEngine&In-Reply-To=%3C200906231934.n5NJYjTR023978%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001046.html">
+   <LINK REL="Next"  HREF="001047.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1810 - in trunk:	core	pkg/realtime-rigidbody/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1810%20-%20in%20trunk%3A%0A%09core%09pkg/realtime-rigidbody/Engine/StandAloneEngine&In-Reply-To=%3C200906231934.n5NJYjTR023978%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1810 - in trunk:	core	pkg/realtime-rigidbody/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jun 23 21:34:45 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001046.html">[deprecated list] [Yade-dev] build crash
+</A></li>
+        <LI>Next message: <A HREF="001047.html">[deprecated list] [Yade-dev] Fwd: [Yade-users] YADE documentation
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1045">[ date ]</a>
+              <a href="thread.html#1045">[ thread ]</a>
+              <a href="subject.html#1045">[ subject ]</a>
+              <a href="author.html#1045">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-06-23 21:34:44 +0200 (Tue, 23 Jun 2009)
+New Revision: 1810
+
+Modified:
+   trunk/core/yade.cpp
+   trunk/pkg/realtime-rigidbody/Engine/StandAloneEngine/FrictionLessElasticContactLaw.cpp
+Log:
+1. Remove constructor priority for log4cxx to avoid syntax unsupported by gcc&lt;=4.0. 
+2. Remove some commented cruft from FrictionLessElasticContactLaw
+
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2009-06-23 16:12:27 UTC (rev 1809)
++++ trunk/core/yade.cpp	2009-06-23 19:34:44 UTC (rev 1810)
+@@ -42,7 +42,7 @@
+ 	#endif
+ 
+ 	/* initialization of log4cxx for early logging */
+-	__attribute__((constructor(1000))) void initLog4cxx(){
++	__attribute__((constructor/* (1000) ::: can be uncommented for gcc&gt;=4.0 */)) void initLog4cxx(){
+ 		log4cxx::BasicConfigurator::configure();
+ 		log4cxx::LoggerPtr localLogger=log4cxx::Logger::getLogger(&quot;yade&quot;);
+ 		if(getenv(&quot;YADE_DEBUG&quot;)){
+
+Modified: trunk/pkg/realtime-rigidbody/Engine/StandAloneEngine/FrictionLessElasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/realtime-rigidbody/Engine/StandAloneEngine/FrictionLessElasticContactLaw.cpp	2009-06-23 16:12:27 UTC (rev 1809)
++++ trunk/pkg/realtime-rigidbody/Engine/StandAloneEngine/FrictionLessElasticContactLaw.cpp	2009-06-23 19:34:44 UTC (rev 1810)
+@@ -83,66 +83,6 @@
+ 			}
+ 		}
+ 	}
+-
+-// 	MetaBody * ncb = YADE_CAST&lt;MetaBody*&gt;(body);
+-// 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-// 
+-// 	Real dt = Omega::instance().getTimeStep();
+-// 
+-// 	for( ncb-&gt;transientInteractions-&gt;gotoFirst() ; ncb-&gt;transientInteractions-&gt;notAtEnd() ; ncb-&gt;transientInteractions-&gt;gotoNext() )
+-// 	{
+-// 		const shared_ptr&lt;Interaction&gt;&amp; contact = ncb-&gt;transientInteractions-&gt;getCurrent();
+-// 		int id1 = contact-&gt;getId1();
+-// 		int id2 = contact-&gt;getId2();
+-// 
+-// 		BodyMacroParameters* de1 				= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
+-// 		BodyMacroParameters* de2 				= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id2]-&gt;physicalParameters.get());
+-// 		SpheresContactGeometry* currentContactGeometry 	= YADE_CAST&lt;SpheresContactGeometry*&gt;(contact-&gt;interactionGeometry.get());
+-// 		ElasticContactInteraction* currentContactPhysics   	= YADE_CAST&lt;ElasticContactInteraction*&gt; (contact-&gt;interactionPhysics.get());
+-// 
+-// 		//Vector3r&amp; shearForce 			= currentContactPhysics-&gt;shearForce;
+-// 
+-// 		//if ( contact-&gt;isNew)
+-// 		//	shearForce			= Vector3r(0,0,0);
+-// 
+-// 		Real un 				= currentContactGeometry-&gt;penetrationDepth;
+-// 		currentContactPhysics-&gt;normalForce	= currentContactPhysics-&gt;kn*un*currentContactGeometry-&gt;normal;
+-// 
+-// 		Vector3r axis;
+-// 		Real angle;
+-// 
+-// 
+-// 		//axis	 		= currentContactPhysics-&gt;prevNormal.cross(currentContactGeometry-&gt;normal);
+-// 		//shearForce 	       -= shearForce.cross(axis);
+-// 		//angle 			= dt*0.5*currentContactGeometry-&gt;normal.dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
+-// 		//axis 			= angle*currentContactGeometry-&gt;normal;
+-// 		//shearForce 	       -= shearForce.cross(axis);
+-// 
+-// 		//Vector3r x				= currentContactGeometry-&gt;contactPoint;
+-// 		//Vector3r c1x				= (x - de1-&gt;se3.position);
+-// 		//Vector3r c2x				= (x - de2-&gt;se3.position);
+-// 		//Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.cross(c2x)) - (de1-&gt;velocity+de1-&gt;angularVelocity.cross(c1x));
+-// 		//Vector3r shearVelocity			= relativeVelocity-currentContactGeometry-&gt;normal.dot(relativeVelocity)*currentContactGeometry-&gt;normal;
+-// 		//Vector3r shearDisplacement		= shearVelocity*dt;
+-// 		//shearForce 			       -= currentContactPhysics-&gt;ks*shearDisplacement;
+-// 
+-// 		//Real maxFs = currentContactPhysics-&gt;normalForce.squaredLength() * std::pow(currentContactPhysics-&gt;tangensOfFrictionAngle,2);
+-// 		//if( shearForce.squaredLength() &gt; maxFs )
+-// 		//{
+-// 		//	maxFs = Mathr::sqRoot(maxFs) / shearForce.length();
+-// 		//	shearForce *= maxFs;
+-// 		//}
+-// 
+-// 		Vector3r f = currentContactPhysics-&gt;normalForce;// + shearForce;
+-// 
+-// 		static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( id1 , actionForce   -&gt;getClassIndex() ).get() )-&gt;force    -= f;
+-// 		static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( id2 , actionForce   -&gt;getClassIndex() ).get() )-&gt;force    += f;
+-// 
+-// 		static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id1 , actionMomentum-&gt;getClassIndex() ).get() )-&gt;momentum -= c1x.cross(f);
+-// 		static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id2 , actionMomentum-&gt;getClassIndex() ).get() )-&gt;momentum += c2x.cross(f);
+-// 
+-// 		//currentContactPhysics-&gt;prevNormal = currentContactGeometry-&gt;normal;
+-// 	}
+ }
+ 
+ YADE_PLUGIN();
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001046.html">[deprecated list] [Yade-dev] build crash
+</A></li>
+	<LI>Next message: <A HREF="001047.html">[deprecated list] [Yade-dev] Fwd: [Yade-users] YADE documentation
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1045">[ date ]</a>
+              <a href="thread.html#1045">[ thread ]</a>
+              <a href="subject.html#1045">[ subject ]</a>
+              <a href="author.html#1045">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

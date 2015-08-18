@@ -1,0 +1,293 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1504 - in trunk: core gui/qt3	pkg/dem	pkg/dem/Engine/DeusExMachina pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1504%20-%20in%20trunk%3A%20core%20gui/qt3%0A%09pkg/dem%09pkg/dem/Engine/DeusExMachina%20pkg/dem/PreProcessor&In-Reply-To=%3C200809042352.m84NqeMU015116%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000343.html">
+   <LINK REL="Next"  HREF="000345.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1504 - in trunk: core gui/qt3	pkg/dem	pkg/dem/Engine/DeusExMachina pkg/dem/PreProcessor</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1504%20-%20in%20trunk%3A%20core%20gui/qt3%0A%09pkg/dem%09pkg/dem/Engine/DeusExMachina%20pkg/dem/PreProcessor&In-Reply-To=%3C200809042352.m84NqeMU015116%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1504 - in trunk: core gui/qt3	pkg/dem	pkg/dem/Engine/DeusExMachina pkg/dem/PreProcessor">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Fri Sep  5 01:52:40 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000343.html">[deprecated list] [Yade-dev] Mailing list migration, continued...
+</A></li>
+        <LI>Next message: <A HREF="000345.html">[deprecated list] [Yade-dev] MakeItFlat
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#344">[ date ]</a>
+              <a href="thread.html#344">[ thread ]</a>
+              <a href="subject.html#344">[ subject ]</a>
+              <a href="author.html#344">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2008-09-05 01:52:38 +0200 (Fri, 05 Sep 2008)
+New Revision: 1504
+
+Modified:
+   trunk/core/NullGUI.cpp
+   trunk/gui/qt3/SimulationController.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.hpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+   trunk/pkg/dem/SConscript
+Log:
+more configurable MakeItFlat,
+TriaxialTest can be now a biaxial test as well.
+small fixes in UIs
+
+
+
+Modified: trunk/core/NullGUI.cpp
+===================================================================
+--- trunk/core/NullGUI.cpp	2008-09-03 02:02:15 UTC (rev 1503)
++++ trunk/core/NullGUI.cpp	2008-09-04 23:52:38 UTC (rev 1504)
+@@ -114,12 +114,13 @@
+ 	} 
+ 	else // FileGenerator
+ 	{
+-		for(int i=0; i&lt;inputFiles.size() ; ++i)
++		for(unsigned int i=0; i&lt;inputFiles.size() ; ++i)
+ 		{
+ 			std::cerr &lt;&lt; &quot;filegenerator: \&quot;&quot; &lt;&lt; inputFiles[i] &lt;&lt; &quot;\&quot;&quot;;
+ 			file=inputFiles[i];
+ 			gen();
+ 		}
++		return 0;
+ 	}
+ 
+ 	assert(false); // never reach this place
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2008-09-03 02:02:15 UTC (rev 1503)
++++ trunk/gui/qt3/SimulationController.cpp	2008-09-04 23:52:38 UTC (rev 1504)
+@@ -281,7 +281,7 @@
+ 		Omega::instance().setSimulationFileName(name);
+ 		pbResetSimulation-&gt;setEnabled(true);
+ 	}
+-
++	YadeQtMainWindow::self-&gt;redrawAll(true);
+ //	pbCenterSceneClicked();  // FIXME - add autocenter option...
+ }
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.cpp	2008-09-03 02:02:15 UTC (rev 1503)
++++ trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.cpp	2008-09-04 23:52:38 UTC (rev 1504)
+@@ -13,6 +13,9 @@
+ 
+ MakeItFlat::MakeItFlat() : actionParameterForce(new Force)
+ {
++	direction=1;
++	plane_position=0;
++	reset_force=true;
+ }
+ 
+ 
+@@ -23,14 +26,16 @@
+ 
+ void MakeItFlat::registerAttributes()
+ {
+-	// REGISTER_ATTRIBUTE(hydraulicForce);
++	REGISTER_ATTRIBUTE(direction);
++	REGISTER_ATTRIBUTE(plane_position);
++	REGISTER_ATTRIBUTE(reset_force);
+ }
+ 
+ 
+ void MakeItFlat::applyCondition(MetaBody* ncb)
+ {
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-	
++
+ 	BodyContainer::iterator bi    = bodies-&gt;begin();
+ 	BodyContainer::iterator biEnd = bodies-&gt;end();
+ 	for( ; bi!=biEnd ; ++bi )
+@@ -46,14 +51,15 @@
+ 
+ 		if(b-&gt;geometricalModel-&gt;getClassName()==&quot;Sphere&quot;)
+ 		{
+-		ParticleParameters* p = dynamic_cast&lt;ParticleParameters*&gt;(b-&gt;physicalParameters.get());
+-		if (p)
+-		{
+-			p-&gt;se3.position[1]=0;
+-			static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find( b-&gt;getId() , actionParameterForce-&gt;getClassIndex() ).get() )-&gt;force[1]=0;// 
++			ParticleParameters* p = dynamic_cast&lt;ParticleParameters*&gt;(b-&gt;physicalParameters.get());
++			if (p)
++			{
++				p-&gt;se3.position[direction]=plane_position;
++				if(reset_force)
++					static_cast&lt;Force*&gt;( ncb-&gt;physicalActions-&gt;find( b-&gt;getId() , actionParameterForce-&gt;getClassIndex() ).get() )-&gt;force[direction]=0;// 
++			}
+ 		}
+-		}
+-        }
++	}
+ }
+ 
+ YADE_PLUGIN();
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.hpp	2008-09-03 02:02:15 UTC (rev 1503)
++++ trunk/pkg/dem/Engine/DeusExMachina/MakeItFlat.hpp	2008-09-04 23:52:38 UTC (rev 1504)
+@@ -23,6 +23,10 @@
+ 		virtual ~MakeItFlat();
+ 	
+ 		virtual void applyCondition(MetaBody*);
++
++		int direction;
++		Real plane_position;
++		bool reset_force;
+ 	
+ 	protected :
+ 		virtual void registerAttributes();
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-09-03 02:02:15 UTC (rev 1503)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-09-04 23:52:38 UTC (rev 1504)
+@@ -23,6 +23,7 @@
+ #include&lt;yade/pkg-dem/GlobalStiffnessCounter.hpp&gt;
+ #include&lt;yade/pkg-dem/GlobalStiffnessTimeStepper.hpp&gt;
+ #include&lt;yade/pkg-dem/PositionOrientationRecorder.hpp&gt;
++#include&lt;yade/pkg-dem/MakeItFlat.hpp&gt;
+ 
+ #include&lt;yade/pkg-dem/AveragePositionRecorder.hpp&gt;
+ #include&lt;yade/pkg-dem/ForceRecorder.hpp&gt;
+@@ -155,6 +156,8 @@
+ 	sigmaLateralConfinement=sigmaIsoCompaction;
+ 
+ 	wallOversizeFactor=1.3;
++
++	biaxial2dTest=false;
+ 	
+ //	wall_top_id =0;
+ // 	wall_bottom_id =0;
+@@ -182,6 +185,7 @@
+ 	//REGISTER_ATTRIBUTE(nlayers);
+ 	//REGISTER_ATTRIBUTE(boxWalls);
+ 	REGISTER_ATTRIBUTE(internalCompaction);
++	REGISTER_ATTRIBUTE(biaxial2dTest);
+ 	REGISTER_ATTRIBUTE(maxMultiplier);
+ 	REGISTER_ATTRIBUTE(finalMaxMultiplier);
+ 
+@@ -251,6 +255,12 @@
+ //	unsigned int startId=boost::numeric::bounds&lt;unsigned int&gt;::highest(), endId=0; // record forces from group 2
+ 	message=&quot;&quot;;
+ 	
++	if(biaxial2dTest &amp;&amp; (8.0*(upperCorner[2]-lowerCorner[2]))&gt;(upperCorner[0]-lowerCorner[0]))
++	{
++		message=&quot;Biaxial test can be generated only if Z size is more than 8 times smaller than X size&quot;;
++		return false;
++	}
++	
+ 	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+ 	createActors(rootBody);
+ 	positionRootBody(rootBody);
+@@ -593,12 +603,16 @@
+ 	//cerr &lt;&lt; &quot;fin de section triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);&quot; &lt;&lt; std::endl;
+ 	
+ // recording global stress
+-	triaxialStateRecorder = shared_ptr&lt;TriaxialStateRecorder&gt;(new
+-	TriaxialStateRecorder);
++	triaxialStateRecorder = shared_ptr&lt;TriaxialStateRecorder&gt;(new TriaxialStateRecorder);
+ 	triaxialStateRecorder-&gt; outputFile 		= WallStressRecordFile + Key;
+ 	triaxialStateRecorder-&gt; interval 		= recordIntervalIter;
+ 	//triaxialStateRecorderer-&gt; thickness 		= thickness;
+-	
++
++	shared_ptr&lt;MakeItFlat&gt; makeItFlat(new MakeItFlat);
++	makeItFlat-&gt;direction=2;
++	makeItFlat-&gt;plane_position = (lowerCorner[2]+upperCorner[2])*0.5;
++	makeItFlat-&gt;reset_force = false;	
++
+ 	#if 0	
+ 	// moving walls to regulate the stress applied
+ 	//cerr &lt;&lt; &quot;triaxialstressController = shared_ptr&lt;TriaxialStressController&gt; (new TriaxialStressController);&quot; &lt;&lt; std::endl;
+@@ -632,6 +646,8 @@
+ 	//rootBody-&gt;engines.push_back(gravityCondition);
+ 	
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt; (new NewtonsDampedLaw));
++
++	if(biaxial2dTest) rootBody-&gt;engines.push_back(makeItFlat);
+ 	
+ 	//if(!rotationBlocked)
+ 	//	rootBody-&gt;engines.push_back(orientationIntegrator);
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2008-09-03 02:02:15 UTC (rev 1503)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2008-09-04 23:52:38 UTC (rev 1504)
+@@ -95,7 +95,8 @@
+ 				,boxWalls
+ 				//! flag for choosing between moving boundaries or increasing particles sizes during the compaction stage.
+ 				,internalCompaction
+-				,saveAnimationSnapshots;
++				,saveAnimationSnapshots
++				,biaxial2dTest;
+ 
+ 		int		 recordIntervalIter
+ 				,timeStepUpdateInterval
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2008-09-03 02:02:15 UTC (rev 1503)
++++ trunk/pkg/dem/SConscript	2008-09-04 23:52:38 UTC (rev 1504)
+@@ -637,6 +637,7 @@
+ 			'SimpleElasticRelationships',
+ 			'ElasticCriterionTimeStepper',
+ 			'PhysicalActionVectorVector',
++			'MakeItFlat',
+ 			'InteractionVecSet',
+ 			'InteractionHashMap',
+ 			'BodyRedirectionVector',
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000343.html">[deprecated list] [Yade-dev] Mailing list migration, continued...
+</A></li>
+	<LI>Next message: <A HREF="000345.html">[deprecated list] [Yade-dev] MakeItFlat
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#344">[ date ]</a>
+              <a href="thread.html#344">[ thread ]</a>
+              <a href="subject.html#344">[ subject ]</a>
+              <a href="author.html#344">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

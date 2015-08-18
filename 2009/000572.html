@@ -1,0 +1,218 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1610 - in trunk: core	pkg/dem	pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1610%20-%20in%20trunk%3A%20core%0A%09pkg/dem%09pkg/dem/PreProcessor&In-Reply-To=%3C496270FD.1050905%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000570.html">
+   <LINK REL="Next"  HREF="000574.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1610 - in trunk: core	pkg/dem	pkg/dem/PreProcessor</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1610%20-%20in%20trunk%3A%20core%0A%09pkg/dem%09pkg/dem/PreProcessor&In-Reply-To=%3C496270FD.1050905%40hmg.inpg.fr%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1610 - in trunk: core	pkg/dem	pkg/dem/PreProcessor">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Mon Jan  5 21:43:41 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000570.html">[deprecated list] [Yade-dev] [svn] r1610 - in trunk: core pkg/dem	pkg/dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000574.html">[deprecated list] [Yade-dev] [svn] r1610 - in trunk: core pkg/dem pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#572">[ date ]</a>
+              <a href="thread.html#572">[ thread ]</a>
+              <a href="subject.html#572">[ subject ]</a>
+              <a href="author.html#572">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Sorry guy, I know this is boring...
+I actually checked that it was compiling, and it was. The problem was I 
+got local files not &quot;added&quot; to svn, so my HEAD compiled but yours did 
+not, I fixed it in the later commit.
+
+Bruno
+
+
+cosurgi at BerliOS a &#233;crit :
+&gt;<i> Author: cosurgi
+</I>&gt;<i> Date: 2009-01-05 18:06:57 +0100 (Mon, 05 Jan 2009)
+</I>&gt;<i> New Revision: 1610
+</I>&gt;<i>
+</I>&gt;<i> Modified:
+</I>&gt;<i>    trunk/core/yade.cpp
+</I>&gt;<i>    trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+</I>&gt;<i>    trunk/pkg/dem/SConscript
+</I>&gt;<i> Log:
+</I>&gt;<i> 1. argh, guys. svn HEAD must compile. You didn't check your commits and then I waste 1h to fix that. See this commit, to check what I had to comment out about WATER
+</I>&gt;<i>
+</I>&gt;<i> 2. added 'yade -x' option which disables call to gdb, to speed up crashes due to missing libraries.
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i> Modified: trunk/core/yade.cpp
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/core/yade.cpp	2009-01-05 16:46:36 UTC (rev 1609)
+</I>&gt;<i> +++ trunk/core/yade.cpp	2009-01-05 17:06:57 UTC (rev 1610)
+</I>&gt;<i> @@ -31,6 +31,8 @@
+</I>&gt;<i>  
+</I>&gt;<i>  using namespace std;
+</I>&gt;<i>  
+</I>&gt;<i> +bool dontUseGdb(false);
+</I>&gt;<i> +
+</I>&gt;<i>  #ifdef LOG4CXX
+</I>&gt;<i>  	// provides parent logger for everybody
+</I>&gt;<i>  	log4cxx::LoggerPtr logger=log4cxx::Logger::getLogger(&quot;yade&quot;);
+</I>&gt;<i> @@ -57,7 +59,8 @@
+</I>&gt;<i>  		if(sig==SIGABRT || sig==SIGSEGV){
+</I>&gt;<i>  			signal(SIGSEGV,SIG_DFL); signal(SIGABRT,SIG_DFL); // prevent loops - default handlers
+</I>&gt;<i>  			cerr&lt;&lt;&quot;SIGSEGV/SIGABRT handler called; gdb batch file is `&quot;&lt;&lt;Omega::instance().gdbCrashBatch&lt;&lt;&quot;'&quot;&lt;&lt;endl;
+</I>&gt;<i> -			std::system((string(&quot;gdb -x &quot;)+Omega::instance().gdbCrashBatch).c_str());
+</I>&gt;<i> +			if(!dontUseGdb)
+</I>&gt;<i> +				std::system((string(&quot;gdb -x &quot;)+Omega::instance().gdbCrashBatch).c_str());
+</I>&gt;<i>  			unlink(Omega::instance().gdbCrashBatch.c_str()); // delete the crash batch file
+</I>&gt;<i>  			raise(sig); // reemit signal after exiting gdb
+</I>&gt;<i>  		}
+</I>&gt;<i> @@ -126,6 +129,7 @@
+</I>&gt;<i>  	-n      : use NullGUI (command line interface) instead of default GUI.\n\
+</I>&gt;<i>  	-w      : write default configuration (automatic at first run)\n\
+</I>&gt;<i>  	-c      : use the current directory ./ as configuration directory\n\
+</I>&gt;<i> +	-x      : don't use gdb\n\
+</I>&gt;<i>  	-C path : configuration directory different from the default ~/.yade-something/\n\
+</I>&gt;<i>  	-S file : load simulation from file (works with QtGUI only)\n\
+</I>&gt;<i>  	-v      : be verbose (may be repeated)\n\
+</I>&gt;<i> @@ -148,7 +152,7 @@
+</I>&gt;<i>  	string configPath=string(getenv(&quot;HOME&quot;)) + &quot;/.yade&quot; SUFFIX; // this is the default, may be overridden by -c / -C
+</I>&gt;<i>  	
+</I>&gt;<i>  	int ch; string gui=&quot;&quot;; string simulationFileName=&quot;&quot;; bool setup=false; int verbose=0; bool coreOptions=true; bool explicitUI=false;
+</I>&gt;<i> -	while(coreOptions &amp;&amp; (ch=getopt(argc,argv,&quot;hnN:wC:cvS:&quot;))!=-1)
+</I>&gt;<i> +	while(coreOptions &amp;&amp; (ch=getopt(argc,argv,&quot;hnN:wC:cxvS:&quot;))!=-1)
+</I>&gt;<i>  		switch(ch){
+</I>&gt;<i>  			case 'h': printHelp(); return 1;
+</I>&gt;<i>  			case 'n': gui=&quot;NullGUI&quot;; explicitUI=true; break;
+</I>&gt;<i> @@ -156,6 +160,7 @@
+</I>&gt;<i>  			case 'w': setup=true; break;
+</I>&gt;<i>  			case 'C': configPath=optarg; break;
+</I>&gt;<i>  			case 'c': configPath=&quot;.&quot;; break;
+</I>&gt;<i> +			case 'x': dontUseGdb=true; break;
+</I>&gt;<i>  			case 'v': verbose+=1; break;
+</I>&gt;<i>  			case 'S': simulationFileName=optarg; break;
+</I>&gt;<i>  			case '-': coreOptions=false; break;
+</I>&gt;<i>
+</I>&gt;<i> Modified: trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2009-01-05 16:46:36 UTC (rev 1609)
+</I>&gt;<i> +++ trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2009-01-05 17:06:57 UTC (rev 1610)
+</I>&gt;<i> @@ -19,7 +19,7 @@
+</I>&gt;<i>  // #include&lt;yade/pkg-dem/ElasticCohesiveLaw.hpp&gt;
+</I>&gt;<i>  #include &lt;yade/pkg-dem/CapillaryCohesiveLaw.hpp&gt;
+</I>&gt;<i>  // #include&lt;yade/pkg-dem/SimpleElasticRelationships.hpp&gt;
+</I>&gt;<i> -#include&lt;yade/pkg-dem/SimpleElasticRelationshipsWater.hpp&gt;
+</I>&gt;<i> +/////////////#include&lt;yade/pkg-dem/SimpleElasticRelationshipsWater.hpp&gt;
+</I>&gt;<i>  #include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+</I>&gt;<i>  #include&lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt;
+</I>&gt;<i>  
+</I>&gt;<i> @@ -534,8 +534,8 @@
+</I>&gt;<i>  	/// OLD
+</I>&gt;<i>  	//interactionPhysicsDispatcher-&gt;add(&quot;BodyMacroParameters&quot;,&quot;BodyMacroParameters&quot;,&quot;MacroMicroElasticRelationshipsWater&quot;);
+</I>&gt;<i>  	/// NEW
+</I>&gt;<i> -	shared_ptr&lt;InteractionPhysicsEngineUnit&gt; ss(new SimpleElasticRelationshipsWater);
+</I>&gt;<i> -	interactionPhysicsDispatcher-&gt;add(ss);
+</I>&gt;<i> +/////////////	shared_ptr&lt;InteractionPhysicsEngineUnit&gt; ss(new SimpleElasticRelationshipsWater);
+</I>&gt;<i> +/////////////	interactionPhysicsDispatcher-&gt;add(ss);
+</I>&gt;<i>  	
+</I>&gt;<i>  		
+</I>&gt;<i>  	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+</I>&gt;<i>
+</I>&gt;<i> Modified: trunk/pkg/dem/SConscript
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/pkg/dem/SConscript	2009-01-05 16:46:36 UTC (rev 1609)
+</I>&gt;<i> +++ trunk/pkg/dem/SConscript	2009-01-05 17:06:57 UTC (rev 1610)
+</I>&gt;<i> @@ -885,6 +885,8 @@
+</I>&gt;<i>  		LIBS=env['LIBS']+['ParticleParameters',
+</I>&gt;<i>  			'ElasticContactInteraction',
+</I>&gt;<i>  			'CapillaryParameters',
+</I>&gt;<i> +			'TriaxialStressController',
+</I>&gt;<i> +			'TriaxialCompressionEngine',
+</I>&gt;<i>  			'Force',
+</I>&gt;<i>  			'CapillaryCohesiveLaw']),
+</I>&gt;<i>  
+</I>&gt;<i> @@ -895,6 +897,7 @@
+</I>&gt;<i>          CapillaryCohesiveLaw
+</I>&gt;<i>          AveragePositionRecorder
+</I>&gt;<i>          VelocityRecorder
+</I>&gt;<i> +	PositionOrientationRecorder
+</I>&gt;<i>          ForceRecorder
+</I>&gt;<i>          TriaxialStateRecorder
+</I>&gt;<i>          CapillaryStressRecorder
+</I>&gt;<i> @@ -907,6 +910,7 @@
+</I>&gt;<i>          BodyRedirectionVector
+</I>&gt;<i>          InteractingSphere
+</I>&gt;<i>          InteractingBox
+</I>&gt;<i> +	NewtonsDampedLaw
+</I>&gt;<i>          CundallNonViscousDamping
+</I>&gt;<i>          CundallNonViscousDamping
+</I>&gt;<i>          MetaInteractingGeometry
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i> _______________________________________________
+</I>&gt;<i> Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+</I>&gt;<i> Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+</I>&gt;<i> Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+</I>&gt;<i> More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Grenoble INP
+Laboratoire 3SR - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000570.html">[deprecated list] [Yade-dev] [svn] r1610 - in trunk: core pkg/dem	pkg/dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000574.html">[deprecated list] [Yade-dev] [svn] r1610 - in trunk: core pkg/dem pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#572">[ date ]</a>
+              <a href="thread.html#572">[ thread ]</a>
+              <a href="subject.html#572">[ subject ]</a>
+              <a href="author.html#572">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

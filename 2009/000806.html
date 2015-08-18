@@ -1,0 +1,166 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] contact logic (again)
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20contact%20logic%20%28again%29&In-Reply-To=%3C49AC4322.5070507%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000805.html">
+   <LINK REL="Next"  HREF="000811.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] contact logic (again)</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20contact%20logic%20%28again%29&In-Reply-To=%3C49AC4322.5070507%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev] contact logic (again)">eudoxos at arcig.cz
+       </A><BR>
+    <I>Mon Mar  2 21:35:46 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000805.html">[deprecated list] [Yade-dev] contact logic (again)
+</A></li>
+        <LI>Next message: <A HREF="000811.html">[deprecated list] [Yade-dev] contact logic (again)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#806">[ date ]</a>
+              <a href="thread.html#806">[ thread ]</a>
+              <a href="subject.html#806">[ subject ]</a>
+              <a href="author.html#806">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;&gt;<i>
+</I>&gt;<i> A quick review found nothing wrong. I was just a little surprised by 
+</I>&gt;<i> the fact interactions are erased in  2 different places (in the core 
+</I>&gt;<i> of &quot;action()&quot; and in &quot;updateOverlapingBBset&quot;). I don't think this is a 
+</I>&gt;<i> recent change though.
+</I>Yes, it's been there since long.
+&gt;<i> InteractionGeometryMetaEngine can in fact only set isReal=true (in 
+</I>&gt;<i> case of geometrical &quot;interaction&quot;, i.e. overlap), it cannot revert to 
+</I>&gt;<i> isReal=false. So, the interaction will be marked !isReal by the 
+</I>&gt;<i> contact law only, not the IGME. The IGME code is :
+</I>&gt;<i>
+</I>&gt;<i> /if (penetrationDepthSq&gt;0 || c-&gt;isReal){
+</I>&gt;<i>                if (isNew) {
+</I>&gt;<i>                    create and initialise the interaction geometry;
+</I>&gt;<i>                   isNew = false;
+</I>&gt;<i>        }
+</I>&gt;<i>        return true;
+</I>&gt;<i>    }
+</I>&gt;<i>    else return false;
+</I>&gt;<i> /
+</I>&gt;<i> (and then the returned value is used by the dispatcher to set isReal 
+</I>&gt;<i> for this interaction.)
+</I>&gt;<i>
+</I>&gt;&gt;<i> Second potential problem with haveDistantTransient is that you can 
+</I>&gt;&gt;<i> have multiple constitutive laws, of which one will want to keep 
+</I>&gt;&gt;<i> distant interaction and the other would not (there are no 
+</I>&gt;&gt;<i> transient/persistent interactions anymore).
+</I>&gt;&gt;<i>
+</I>&gt;<i> I don't really see the relation between this problem and the 
+</I>&gt;<i> haveDistantTransient flag.
+</I>&gt;<i> The correct behaviour would be that a contact is &quot;Real&quot; IF there is a 
+</I>&gt;<i> geometrical overlap OR at least one physical interaction exists.
+</I>Since interactions are indexed by body id's, there can be only one 
+&quot;physical&quot; interaction between two bodies. Otherwise agreed, real means:
+
+1. geometrical overlap, but not physical interaction yet: it will be 
+created in the very same iteration, however.
+2. geometrical overlap and physical interaction: ok
+3. no geometrical overlap and physical interaction: ok
+&gt;<i> If the interaction of type1 persists while the interaction of type 2 
+</I>&gt;<i> disapears, and if law2 is after law1 in metabody-&gt;engines, then the 
+</I>&gt;<i> second law2 will make the interaction deletable even if it should not.
+</I>No way. Constitutive laws (in the sense of ConstitutiveLaw) are functors 
+in one ConstitutiveLawDispatcher, which makes sure each interaction gets 
+processed exactly once.
+&gt;<i> Perhaps it needs an additional flag &quot;isPhysical&quot;, which would be false 
+</I>&gt;<i> at the beggining of each timestep, and set equal to (isPhysical || 
+</I>&gt;<i> hasTypeX) in InteractionLawX.
+</I>&gt;<i> The collider would set isReal = isPhysical at the very begining of 
+</I>&gt;<i> each step.
+</I>&gt;<i> There is perhaps a smarter way to do this, since isPhysical would play 
+</I>&gt;<i> almost the same role as isReal (the only difference is isReal must not 
+</I>&gt;<i> be reset at each step).
+</I>See summary at the end.
+&gt;<i>
+</I>&gt;<i> - PersistentTriangulationCollider : experimental stuff, it is slower 
+</I>&gt;<i> than the default collider but it works, and since some simulations are 
+</I>&gt;<i> (or will be) maintaining a triangulation (e.g. JF Jerier for the 
+</I>&gt;<i> volumic contact law or Emanuele Catalano in the near future), it is 
+</I>&gt;<i> interesting to use it for contact detection at the same time.
+</I>Good.
+&gt;<i>
+</I>&gt;<i> - SAPCollider : I don't know this. A very old collider from early ages 
+</I>&gt;<i> of Yade IIRC. Can be removed safely.
+</I>&gt;<i>
+</I>&gt;<i> - DistantPersistentSAPCollider : the specific features of this one are 
+</I>&gt;<i> now included in PersistentSAPcollider (the &quot;if (haveDistantTransient) 
+</I>&gt;<i> {...}&quot; code that you want by default now). It can be safely removed, 
+</I>&gt;<i> except that it is still used in CohesiveFrictionalTriaxialTest. 
+</I>&gt;<i> Switching to the &quot;normal&quot; collider in this demo will be a good way to 
+</I>&gt;<i> check that everything works fine.
+</I>Will be removed, I will make sure that all other code compiles, of course.
+
+To summarize:
+
+1. Colliders:
+a) create potential (isNew !isReal) interactions, for overlapping AABBs
+b) delete interactions that were potential (isNew&amp;!isReal) but now don't 
+have overlapping AABBs
+c) keep isReal interactions (regardless of geometrical overlap)
+
+2. InteractionGeometryMetaEngine:
+a) set isReal on interactions that are real (bodies collide not only 
+with AABBs, but also with their volumes)
+
+3. ConstitutiveLaws
+a) may set !isReal, they do not change anything else (let alone deleting 
+interactions directly!)
+
+Remaining problem: who deletes interaction that was ever only potential 
+and now there is no AABB overlap anymore? It would have to keep track of 
+when was the interaction seen last (something like Interaction::cycle). 
+I propose long Interaction::lastSeen for iteration number. All 
+interactions that are isNew &amp;&amp; !isReal &amp;&amp; lastSeen&lt;currentIteration can 
+be deleted safely. Whould that be OK? Currently, PersistentSAPCollider 
+sets isReal=false at the beginning of the loop.
+
+Best, Vaclav
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000805.html">[deprecated list] [Yade-dev] contact logic (again)
+</A></li>
+	<LI>Next message: <A HREF="000811.html">[deprecated list] [Yade-dev] contact logic (again)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#806">[ date ]</a>
+              <a href="thread.html#806">[ thread ]</a>
+              <a href="subject.html#806">[ subject ]</a>
+              <a href="author.html#806">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

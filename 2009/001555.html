@@ -1,0 +1,409 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [robot] startup failed
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Brobot%5D%20startup%20failed&In-Reply-To=%3C20090822221600.DC94598077%40delta%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001554.html">
+   <LINK REL="Next"  HREF="001556.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [robot] startup failed</H1>
+    <B>Vaclav Smilauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Brobot%5D%20startup%20failed&In-Reply-To=%3C20090822221600.DC94598077%40delta%3E"
+       TITLE="[deprecated list] [Yade-dev] [robot] startup failed">eudoxos at arcig.cz
+       </A><BR>
+    <I>Sun Aug 23 00:16:00 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001554.html">[deprecated list] [Yade-dev] [Branch ~yade-dev/yade/trunk] Rev	1724: (now?)
+</A></li>
+        <LI>Next message: <A HREF="001556.html">[deprecated list] [Yade-dev] [Branch ~yade-dev/yade/trunk] Rev	1725: 1. Fix startup	crash if no	$DISPLAY set at all
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1555">[ date ]</a>
+              <a href="thread.html#1555">[ thread ]</a>
+              <a href="subject.html#1555">[ subject ]</a>
+              <a href="author.html#1555">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>+ set -x
++ bzr checkout --lightweight lp:yade /tmp/yade-5434/trunk
++ cd /tmp/yade-5434/trunk
++ scons features=log4cxx,python,opengl,gts,openmp linkStrategy=monolithic jobs=8 PREFIX=/tmp/yade-5434
+scons: Reading SConscript files ...
+Scons version too old, downloading new version. All subsequent calls will be proxied to the new version transparently.
+/tmp/tmpuXAxBw.gz 
+Last-Modified: Tue, 12 Aug 2008 21:04:40 GMT
+Accept-Ranges: bytes
+Content-Length: 375546
+Content-Type: application/x-gzip
+Date: Sat, 22 Aug 2009 19:49:46 GMT
+Server: Apache/2.2.9 (Debian) PHP/5.2.6-1+lenny3 with Suhosin-Patch mod_ssl/2.2.9 OpenSSL/0.9.8g
+ETag: &quot;30008e15-5bafa-454499ec68a00&quot;
+Age: 7865
+X-Cache: HIT from www.arcig.cz
+X-Cache-Lookup: HIT from www.arcig.cz:3128
+Via: 1.1 www.arcig.cz:3128 (squid/2.7.STABLE6)
+Connection: close
+
+Done extracting scons to ./scons-local//scons-local-1.0.0
+scons: Reading SConscript files ...
+@@@ Using profile default (scons.profile-default) @@@
+Yade version is `bzr1724', installed files will be suffixed with `-bzr1724'.
+All intermediary files will be in `/tmp/yade-5434/build-bzr1724'.
+Checking whether c++ compiler &quot;g++&quot; works...yes
+Checking for pthread_exit(NULL) in C library pthread... yes
+Checking for boost::system::error_code(); /* non-essential */ in C++ library boost_system-mt... no
+Checking for boost::system::error_code(); /* non-essential */ in C++ library boost_system... no
+Checking for boost::thread::thread() in C++ library boost_thread-mt... yes
+Checking for boost::posix_time::time_duration::time_duration() in C++ library boost_date_time-mt... yes
+Checking for boost::filesystem::path() in C++ library boost_filesystem-mt... yes
+Checking for boost::iostreams::file_sink(&quot;&quot;) in C++ library boost_iostreams-mt... yes
+Checking for boost::regex(&quot;&quot;) in C++ library boost_regex-mt... yes
+Checking for try{} catch (const boost::archive::archive_exception&amp; e) {} in C++ library boost_serialization-mt... yes
+Checking for boost::program_options::options_description o in C++ library boost_program_options-mt... yes
+Checking for C++ header file boost/foreach.hpp... yes
+Checking for sqlite3_close(0L) in C++ library sqlite3... yes
+Checking for glutGetModifiers() in C library glut... yes
+Checking for gts_object_class() in C library gts... yes
+Checking for qt-mt in /usr/share/qt3... yes
+Checking for log4cxx::Logger::getLogger(&quot;&quot;) in C++ library log4cxx... yes
+Checking for Python development files... yes
+Checking for python module `IPython' ...(cached) yes
+Checking for boost::python::scope() in C++ library boost_python-mt... yes
+Checking for C++ header file numpy/ndarrayobject.h... yes
+scons: done reading SConscript files.
+scons: Building targets ...
+&gt;<i> /tmp/yade-5434/build-bzr1724/core/core.cpp
+</I>&gt;<i> /tmp/yade-5434/build-bzr1724/lib/miniWm3.cpp
+</I>&gt;<i> /tmp/yade-5434/build-bzr1724/lib/yade-support.cpp
+</I>C lib/sqlite3x/sqlite3x_command.cpp
+C lib/sqlite3x/sqlite3x_connection.cpp
+C lib/sqlite3x/sqlite3x_cursor.cpp
+C lib/sqlite3x/sqlite3x_exception.cpp
+C lib/sqlite3x/sqlite3x_settings_db.cpp
+C /tmp/yade-5434/build-bzr1724/lib/yade-support.cpp
+C /tmp/yade-5434/build-bzr1724/lib/miniWm3.cpp
+C /tmp/yade-5434/build-bzr1724/core/core.cpp
+C lib/sqlite3x/sqlite3x_transaction.cpp
+U lib/QGLViewer/VRenderInterface_Qt3.ui
+U lib/QGLViewer/ImageInterface_Qt3.ui
+U lib/QGLViewer/VRenderInterface_Qt3.ui
+U lib/QGLViewer/ImageInterface_Qt3.ui
+C lib/QGLViewer/qglviewer.cpp
+U lib/QGLViewer/VRenderInterface_Qt3.ui
+C lib/QGLViewer/camera.cpp
+U lib/QGLViewer/ImageInterface_Qt3.ui
+C /tmp/yade-5434/build-bzr1724/lib/QGLViewer/moc_VRenderInterface_Qt3.cc
+C /tmp/yade-5434/build-bzr1724/lib/QGLViewer/moc_ImageInterface_Qt3.cc
+L libsqlite3x.so
+L libminiWm3.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/lib/libsqlite3x.so
+C /tmp/yade-5434/build-bzr1724/lib/QGLViewer/uic_ImageInterface_Qt3.cc
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/lib/libminiWm3.so
+C /tmp/yade-5434/build-bzr1724/lib/QGLViewer/uic_VRenderInterface_Qt3.cc
+C lib/QGLViewer/manipulatedFrame.cpp
+C lib/QGLViewer/manipulatedCameraFrame.cpp
+C lib/QGLViewer/frame.cpp
+C lib/QGLViewer/saveSnapshot.cpp
+C lib/QGLViewer/constraint.cpp
+C lib/QGLViewer/keyFrameInterpolator.cpp
+C lib/QGLViewer/mouseGrabber.cpp
+C lib/QGLViewer/quaternion.cpp
+C lib/QGLViewer/vec.cpp
+C lib/QGLViewer/VRender/BackFaceCullingOptimizer.cpp
+C lib/QGLViewer/VRender/BSPSortMethod.cpp
+C lib/QGLViewer/VRender/EPSExporter.cpp
+C lib/QGLViewer/VRender/Exporter.cpp
+C lib/QGLViewer/VRender/FIGExporter.cpp
+C lib/QGLViewer/VRender/gpc.cpp
+C lib/QGLViewer/VRender/ParserGL.cpp
+C lib/QGLViewer/VRender/Primitive.cpp
+C lib/QGLViewer/VRender/PrimitivePositioning.cpp
+C lib/QGLViewer/VRender/TopologicalSortMethod.cpp
+C lib/QGLViewer/VRender/VisibilityOptimizer.cpp
+C lib/QGLViewer/VRender/Vector2.cpp
+C lib/QGLViewer/VRender/Vector3.cpp
+C lib/QGLViewer/VRender/NVector3.cpp
+C lib/QGLViewer/VRender/VRender.cpp
+M lib/QGLViewer/qglviewer.h
+C /tmp/yade-5434/build-bzr1724/lib/QGLViewer/moc_qglviewer.cc
+M lib/QGLViewer/camera.h
+C /tmp/yade-5434/build-bzr1724/lib/QGLViewer/moc_camera.cc
+M lib/QGLViewer/manipulatedFrame.h
+C /tmp/yade-5434/build-bzr1724/lib/QGLViewer/moc_manipulatedFrame.cc
+M lib/QGLViewer/manipulatedCameraFrame.h
+C /tmp/yade-5434/build-bzr1724/lib/QGLViewer/moc_manipulatedCameraFrame.cc
+M lib/QGLViewer/frame.h
+C /tmp/yade-5434/build-bzr1724/lib/QGLViewer/moc_frame.cc
+M lib/QGLViewer/keyFrameInterpolator.h
+C /tmp/yade-5434/build-bzr1724/lib/QGLViewer/moc_keyFrameInterpolator.cc
+&gt;<i> /tmp/yade-5434/build-bzr1724/lib/yade-opengl.cpp
+</I>C /tmp/yade-5434/build-bzr1724/lib/yade-opengl.cpp
+&#226;&#135;&#146; /tmp/yade-5434/bin/yade-bzr1724-multi
+C extra/PeriodicInsertionSortCollider.cpp
+&gt;<i> /tmp/yade-5434/build-bzr1724/packages.cpp
+</I>C /tmp/yade-5434/build-bzr1724/packages.cpp
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/gui/PythonUI_rc.py
+C gui/py/PythonUI.cpp
+L libyade-QGLViewer.so
+U gui/qt3/QtGeneratedSimulationController.ui
+U gui/qt3/QtGeneratedSimulationPlayer.ui
+U gui/qt3/QtGeneratedSimulationController.ui
+U gui/qt3/QtGeneratedSimulationPlayer.ui
+L libyade-support.so
+U gui/qt3/QtGeneratedSimulationPlayer.ui
+U gui/qt3/QtGeneratedSimulationController.ui
+U gui/qt3/QtGeneratedMessageDialog.ui
+U gui/qt3/YadeQtGeneratedMainWindow.ui
+U gui/qt3/QtGeneratedMessageDialog.ui
+U gui/qt3/QtGeneratedMessageDialog.ui
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/lib/libyade-QGLViewer.so
+U gui/qt3/YadeQtGeneratedMainWindow.ui
+L libyade-opengl.so
+U gui/qt3/QtFileGeneratorController.ui
+U gui/qt3/QtFileGeneratorController.ui
+U gui/qt3/YadeQtGeneratedMainWindow.ui
+U gui/qt3/QtFileGeneratorController.ui
+C gui/qt3/FileDialog.cpp
+C gui/qt3/GLViewer.cpp
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/lib/libyade-opengl.so
+C gui/qt3/MessageDialog.cpp
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/lib/libyade-support.so
+C gui/qt3/QtFileGenerator.cpp
+C gui/qt3/QtGUI.cpp
+C gui/qt3/QtGUIPreferences.cpp
+L libPythonUI.so
+C gui/qt3/SimulationController.cpp
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/gui/libPythonUI.so
+C gui/qt3/YadeQtMainWindow.cpp
+C gui/qt3/YadeCamera.cpp
+C gui/qt3/GLSimulationPlayerViewer.cpp
+In file included from gui/qt3/YadeQtMainWindow.cpp:23:
+/usr/share/qt3/include/qimage.h: In member function 'bool QImageTextKeyLang::operator&lt;(const QImageTextKeyLang&amp;) const':
+/usr/share/qt3/include/qimage.h:61: warning: suggest parentheses around &amp;&amp; within ||
+C gui/qt3/QtSimulationPlayer.cpp
+C /tmp/yade-5434/build-bzr1724/gui/qt3/uic_QtGeneratedSimulationController.cc
+In file included from /tmp/yade-5434/build-bzr1724/gui/qt3/uic_QtGeneratedSimulationController.cc:24:
+/usr/share/qt3/include/qimage.h: In member function 'bool QImageTextKeyLang::operator&lt;(const QImageTextKeyLang&amp;) const':
+/usr/share/qt3/include/qimage.h:61: warning: suggest parentheses around &amp;&amp; within ||
+C /tmp/yade-5434/build-bzr1724/gui/qt3/moc_QtGeneratedSimulationController.cc
+C /tmp/yade-5434/build-bzr1724/gui/qt3/uic_QtGeneratedSimulationPlayer.cc
+In file included from /tmp/yade-5434/build-bzr1724/gui/qt3/uic_QtGeneratedSimulationPlayer.cc:23:
+/usr/share/qt3/include/qimage.h: In member function 'bool QImageTextKeyLang::operator&lt;(const QImageTextKeyLang&amp;) const':
+/usr/share/qt3/include/qimage.h:61: warning: suggest parentheses around &amp;&amp; within ||
+C /tmp/yade-5434/build-bzr1724/gui/qt3/moc_QtGeneratedSimulationPlayer.cc
+C /tmp/yade-5434/build-bzr1724/gui/qt3/uic_QtGeneratedMessageDialog.cc
+C /tmp/yade-5434/build-bzr1724/gui/qt3/moc_QtGeneratedMessageDialog.cc
+C /tmp/yade-5434/build-bzr1724/gui/qt3/uic_YadeQtGeneratedMainWindow.cc
+C /tmp/yade-5434/build-bzr1724/gui/qt3/moc_YadeQtGeneratedMainWindow.cc
+In file included from /tmp/yade-5434/build-bzr1724/gui/qt3/uic_YadeQtGeneratedMainWindow.cc:20:
+/usr/share/qt3/include/qimage.h: In member function 'bool QImageTextKeyLang::operator&lt;(const QImageTextKeyLang&amp;) const':
+/usr/share/qt3/include/qimage.h:61: warning: suggest parentheses around &amp;&amp; within ||
+C /tmp/yade-5434/build-bzr1724/gui/qt3/uic_QtFileGeneratorController.cc
+In file included from /tmp/yade-5434/build-bzr1724/gui/qt3/uic_QtFileGeneratorController.cc:22:
+/usr/share/qt3/include/qimage.h: In member function 'bool QImageTextKeyLang::operator&lt;(const QImageTextKeyLang&amp;) const':
+/usr/share/qt3/include/qimage.h:61: warning: suggest parentheses around &amp;&amp; within ||
+C /tmp/yade-5434/build-bzr1724/gui/qt3/moc_QtFileGeneratorController.cc
+M gui/qt3/GLViewer.hpp
+C /tmp/yade-5434/build-bzr1724/gui/qt3/moc_GLViewer.cc
+M gui/qt3/YadeCamera.hpp
+C /tmp/yade-5434/build-bzr1724/gui/qt3/moc_YadeCamera.cc
+C lib/serialization-qt/QtGUIGenerator.cpp
+L yade
+M lib/serialization-qt/QtGUIGenerator.hpp
+C /tmp/yade-5434/build-bzr1724/lib/serialization-qt/moc_QtGUIGenerator.cc
+C gui/qt3/SnapshotEngine.cpp
+C py/3rd-party/pygts-0.3.1/cleanup.c
+L libyade-serialization-qt.so
+C py/3rd-party/pygts-0.3.1/edge.c
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/lib/libyade-serialization-qt.so
+C py/3rd-party/pygts-0.3.1/face.c
+C py/3rd-party/pygts-0.3.1/object.c
+C py/3rd-party/pygts-0.3.1/point.c
+C py/3rd-party/pygts-0.3.1/pygts.c
+C py/3rd-party/pygts-0.3.1/segment.c
+C py/3rd-party/pygts-0.3.1/surface.c
+C py/3rd-party/pygts-0.3.1/triangle.c
+C py/3rd-party/pygts-0.3.1/vertex.c
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/gts/__init__.py
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/gts/pygts.py
+C py/3rd-party/boost-python-indexing-suite-v2-noSymlinkHeaders/indexing_slice.cpp
+C py/3rd-party/boost-python-indexing-suite-v2-noSymlinkHeaders/python_iterator.cpp
+L _gts.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/gts/_gts.so
+ln -s -f ../py/gts/_gts.so /tmp/yade-5434/lib/yade-bzr1724/lib/lib_gts__python-module.so
+C py/miniWm3Wrap/miniWm3Wrap.cpp
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/PythonTCPServer.py
+C py/WeightedAverage2d.cpp
+L libboost_python_indexing_suite_v2.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/libboost_python_indexing_suite_v2.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/__init__.py
+C py/yadeWrapper/customConverters.cpp
+C py/_eudoxos.cpp
+L WeightedAverage2d.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/WeightedAverage2d.so
+C py/_packObb.cpp
+&#226;&#135;&#146; /tmp/yade-5434/bin/yade-bzr1724
+C py/_packPredicates.cpp
+C py/_packSpheres.cpp
+L _packObb.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/_packObb.so
+C gui/qt3/QtGUI-python.cpp
+L miniWm3Wrap.so
+C py/_utils.cpp
+L _packPredicates.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/eudoxos.py
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/ipython.py
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/linterpolation.py
+C py/log.cpp
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/miniWm3Wrap.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/pack.py
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/_packPredicates.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/plot.py
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/qt.py
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/runtime.py
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/tests/__init__.py
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/tests/wrapper.py
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/timing.py
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/utils.py
+C py/yadeWrapper/yadeWrapper.cpp
+L log.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/log.so
+L libpackages.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/plugins/libpackages.so
+L _customConverters.so
+L wrapper.so
+L _utils.so
+L _packSpheres.so
+L libPeriodicInsertionSortCollider.so
+L _eudoxos.so
+L libQtGUI.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/_packSpheres.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/_eudoxos.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/_utils.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/extra/libPeriodicInsertionSortCollider.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/_customConverters.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/gui/libQtGUI.so
+L _qt.so
+L libSnapshotEngine.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/gui/libSnapshotEngine.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/_qt.so
+&#226;&#135;&#146; /tmp/yade-5434/lib/yade-bzr1724/py/yade/wrapper.so
+scons: done building targets.
+++ ls /tmp/yade-5434/bin/yade-bzr1724 /tmp/yade-5434/bin/yade-bzr1724-multi
+++ grep -v '[-]multi'
++ YADE='/tmp/yade-5434/bin/yade-bzr1724 -N PythonUI'
++ cd doc
++ /tmp/yade-5434/bin/yade-bzr1724 -N PythonUI yade-epydoc.py
+terminate called after throwing an instance of 'std::logic_error'
+  what():  basic_string::_S_construct NULL not valid
+SIGSEGV/SIGABRT handler called; gdb batch file is `/home/profesori/eudoxos/.yade-bzr1724/gdb_crash_batch-pid11458'
+GNU gdb 6.8-debian
+Copyright (C) 2008 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later &lt;<A HREF="http://gnu.org/licenses/gpl.html">http://gnu.org/licenses/gpl.html</A>&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type &quot;show copying&quot;
+and &quot;show warranty&quot; for details.
+This GDB was configured as &quot;x86_64-linux-gnu&quot;.
+[Thread debugging using libthread_db enabled]
+[New Thread 0x7fac70e36730 (LWP 11458)]
+warning: Lowest section in /usr/lib/libicudata.so.38 is .hash at 0000000000000120
+0x00007fac6bd7f4a5 in waitpid () from /lib/libc.so.6
+No symbol &quot;info&quot; in current context.
+
+Thread 1 (Thread 0x7fac70e36730 (LWP 11458)):
+#0  0x00007fac6bd7f4a5 in waitpid () from /lib/libc.so.6
+#1  0x00007fac6bd20461 in ?? () from /lib/libc.so.6
+#2  0x0000000000518177 in sigHandler (sig=6) at /tmp/yade-5434/trunk/core/yade.cpp:83
+#3  &lt;signal handler called&gt;
+#4  0x00007fac6bd14095 in raise () from /lib/libc.so.6
+#5  0x00007fac6bd15af0 in abort () from /lib/libc.so.6
+#6  0x00007fac6c5a5074 in __gnu_cxx::__verbose_terminate_handler () from /usr/lib/libstdc++.so.6
+#7  0x00007fac6c5a3486 in ?? () from /usr/lib/libstdc++.so.6
+#8  0x00007fac6c5a34b3 in std::terminate () from /usr/lib/libstdc++.so.6
+#9  0x00007fac6c5a359a in __cxa_throw () from /usr/lib/libstdc++.so.6
+#10 0x00007fac6c53f967 in std::__throw_logic_error () from /usr/lib/libstdc++.so.6
+#11 0x00007fac6c581951 in ?? () from /usr/lib/libstdc++.so.6
+#12 0x00007fac6c581a13 in std::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;::basic_string () from /usr/lib/libstdc++.so.6
+#13 0x000000000051d8f3 in main (argc=2, argv=0x7fff78e7ab78) at /tmp/yade-5434/trunk/core/yade.cpp:307
+#0  0x00007fac6bd7f4a5 in waitpid () from /lib/libc.so.6
+/home/profesori/eudoxos/yade-periodic-test.sh: line 13: 11458 Aborted                 $YADE yade-epydoc.py
++ rm -rf /home/profesori/eudoxos/www/NoBackup/yade-epydoc
++ cp -r epydoc /home/profesori/eudoxos/www/NoBackup/yade-epydoc
+cp: cannot stat `epydoc': No such file or directory
++ cd ..
++ /tmp/yade-5434/bin/yade-bzr1724 -N PythonUI -- -x -s /tmp/yade-5434/trunk/scripts/default-test.py mail:<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A><A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">,yade-dev at lists.launchpad.net</A>
+terminate called after throwing an instance of 'std::logic_error'
+  what():  basic_string::_S_construct NULL not valid
+SIGSEGV/SIGABRT handler called; gdb batch file is `/home/profesori/eudoxos/.yade-bzr1724/gdb_crash_batch-pid11483'
+GNU gdb 6.8-debian
+Copyright (C) 2008 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later &lt;<A HREF="http://gnu.org/licenses/gpl.html">http://gnu.org/licenses/gpl.html</A>&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type &quot;show copying&quot;
+and &quot;show warranty&quot; for details.
+This GDB was configured as &quot;x86_64-linux-gnu&quot;.
+[Thread debugging using libthread_db enabled]
+[New Thread 0x7f9424b30730 (LWP 11483)]
+warning: Lowest section in /usr/lib/libicudata.so.38 is .hash at 0000000000000120
+0x00007f941fa794a5 in waitpid () from /lib/libc.so.6
+No symbol &quot;info&quot; in current context.
+
+Thread 1 (Thread 0x7f9424b30730 (LWP 11483)):
+#0  0x00007f941fa794a5 in waitpid () from /lib/libc.so.6
+#1  0x00007f941fa1a461 in ?? () from /lib/libc.so.6
+#2  0x0000000000518177 in sigHandler (sig=6) at /tmp/yade-5434/trunk/core/yade.cpp:83
+#3  &lt;signal handler called&gt;
+#4  0x00007f941fa0e095 in raise () from /lib/libc.so.6
+#5  0x00007f941fa0faf0 in abort () from /lib/libc.so.6
+#6  0x00007f942029f074 in __gnu_cxx::__verbose_terminate_handler () from /usr/lib/libstdc++.so.6
+#7  0x00007f942029d486 in ?? () from /usr/lib/libstdc++.so.6
+#8  0x00007f942029d4b3 in std::terminate () from /usr/lib/libstdc++.so.6
+#9  0x00007f942029d59a in __cxa_throw () from /usr/lib/libstdc++.so.6
+#10 0x00007f9420239967 in std::__throw_logic_error () from /usr/lib/libstdc++.so.6
+#11 0x00007f942027b951 in ?? () from /usr/lib/libstdc++.so.6
+#12 0x00007f942027ba13 in std::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;::basic_string () from /usr/lib/libstdc++.so.6
+#13 0x000000000051d8f3 in main (argc=5, argv=0x7fff2cb74800) at /tmp/yade-5434/trunk/core/yade.cpp:307
+#0  0x00007f941fa794a5 in waitpid () from /lib/libc.so.6
+/home/profesori/eudoxos/yade-periodic-test.sh: line 13: 11483 Aborted                 $YADE -- -x -s $PREFIX/trunk/scripts/default-test.py mail:<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>,$ADDR
++ return 13
+
+-------------- next part --------------
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001554.html">[deprecated list] [Yade-dev] [Branch ~yade-dev/yade/trunk] Rev	1724: (now?)
+</A></li>
+	<LI>Next message: <A HREF="001556.html">[deprecated list] [Yade-dev] [Branch ~yade-dev/yade/trunk] Rev	1725: 1. Fix startup	crash if no	$DISPLAY set at all
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1555">[ date ]</a>
+              <a href="thread.html#1555">[ thread ]</a>
+              <a href="subject.html#1555">[ subject ]</a>
+              <a href="author.html#1555">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

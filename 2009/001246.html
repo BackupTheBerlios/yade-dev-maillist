@@ -1,0 +1,84 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] small changes in lots of code	(attribute registration)
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20small%20changes%20in%20lots%20of%20code%0A%09%28attribute%20registration%29&In-Reply-To=%3C1247867791.2341.7.camel%40flux%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001281.html">
+   <LINK REL="Next"  HREF="001249.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] small changes in lots of code	(attribute registration)</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20small%20changes%20in%20lots%20of%20code%0A%09%28attribute%20registration%29&In-Reply-To=%3C1247867791.2341.7.camel%40flux%3E"
+       TITLE="[deprecated list] [Yade-dev] small changes in lots of code	(attribute registration)">eudoxos at arcig.cz
+       </A><BR>
+    <I>Fri Jul 17 23:56:31 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001281.html">[deprecated list] [Yade-dev] [svn] r1875 - in trunk: . core extra/tetra gui/py gui/qt3 lib lib/multimethods lib/py lib/py/boost-python-indexing-suite-v2-noSymlinkHeaders lib/py/boost-python-indexing-suite-v2-noSymlinkHeaders/suite lib/py/boost-python-indexing-suite-v2-noSymlinkHeaders/suite/indexing lib/serialization lib/serialization-qt pkg/common/DataClass/BoundingVolume pkg/common/DataClass/GeometricalModel pkg/common/DataClass/InteractingGeometry pkg/common/DataClass/InteractionGeometry pkg/common/DataClass/PhysicalParameters pkg/common/DataClass/Widgets pkg/common/Engine pkg/common/Engine/DeusExMachina pkg/common/Engine/EngineUnit pkg/common/Engine/FilterEngine pkg/common/Engine/StandAloneEngine pkg/common/RenderingEngine/GLDrawGeometricalModel pkg/common/RenderingEngine/OpenGLRenderingEngine pkg/dem pkg/dem/DataClass/InteractingGeometry pkg/dem/DataClass/InteractionGeometry pkg/dem/DataClass/InteractionPhysics pkg/dem/DataClass/PhysicalParameters pkg/dem/Engine/DeusExMachina pkg/dem/Engin! e/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry pkg/fem/DataClass/PhysicalParameters pkg/fem/Engine/EngineUnit pkg/fem/Engine/StandAloneEngine pkg/fem/PreProcessor pkg/lattice/DataClass/GeometricalModel pkg/lattice/DataClass/InteractionPhysics pkg/lattice/DataClass/PhysicalParameters pkg/lattice/Engine/StandAloneEngine pkg/lattice/PreProcessor pkg/mass-spring/DataClass/InteractionGeometry pkg/mass-spring/DataClass/InteractionPhysics pkg/mass-spring/Engine/StandAloneEngine pkg/mass-spring/PreProcessor pkg/realtime-rigidbody/Engine/StandAloneEngine pkg/realtime-rigidbody/PreProcessor pkg/snow/DataClass pkg/snow/Engine pkg/snow/PreProcessor py py/yadeWrapper scripts/test
+</A></li>
+        <LI>Next message: <A HREF="001249.html">[deprecated list] [Yade-dev] small changes in lots of code (attribute registration)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1246">[ date ]</a>
+              <a href="thread.html#1246">[ thread ]</a>
+              <a href="subject.html#1246">[ subject ]</a>
+              <a href="author.html#1246">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Dear fellows,
+
+I had to move attribute registration to hpp files, using the
+REGISTER_ATTRIBUTES macro, in r1875. Hopefully nothing broke (I was
+trying this and that and it was OK), but please check the code you use
+that everything is OK. The syntax now is (in the .hpp file, within class
+declaration):
+	
+REGISTER_ATTRIBUTES(ParentClass,(attribute1)(attribute2) /*comment are OK */ (attribute2)
+
+	// newlines and whitespace are also OK
+	(attribute3));
+
+If you have some concerns, let me know as soon as possible. I will not be available during the next week.
+
+Best regards, Vaclav
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001281.html">[deprecated list] [Yade-dev] [svn] r1875 - in trunk: . core extra/tetra gui/py gui/qt3 lib lib/multimethods lib/py lib/py/boost-python-indexing-suite-v2-noSymlinkHeaders lib/py/boost-python-indexing-suite-v2-noSymlinkHeaders/suite lib/py/boost-python-indexing-suite-v2-noSymlinkHeaders/suite/indexing lib/serialization lib/serialization-qt pkg/common/DataClass/BoundingVolume pkg/common/DataClass/GeometricalModel pkg/common/DataClass/InteractingGeometry pkg/common/DataClass/InteractionGeometry pkg/common/DataClass/PhysicalParameters pkg/common/DataClass/Widgets pkg/common/Engine pkg/common/Engine/DeusExMachina pkg/common/Engine/EngineUnit pkg/common/Engine/FilterEngine pkg/common/Engine/StandAloneEngine pkg/common/RenderingEngine/GLDrawGeometricalModel pkg/common/RenderingEngine/OpenGLRenderingEngine pkg/dem pkg/dem/DataClass/InteractingGeometry pkg/dem/DataClass/InteractionGeometry pkg/dem/DataClass/InteractionPhysics pkg/dem/DataClass/PhysicalParameters pkg/dem/Engine/DeusExMachina pkg/dem/Engin! e/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry pkg/fem/DataClass/PhysicalParameters pkg/fem/Engine/EngineUnit pkg/fem/Engine/StandAloneEngine pkg/fem/PreProcessor pkg/lattice/DataClass/GeometricalModel pkg/lattice/DataClass/InteractionPhysics pkg/lattice/DataClass/PhysicalParameters pkg/lattice/Engine/StandAloneEngine pkg/lattice/PreProcessor pkg/mass-spring/DataClass/InteractionGeometry pkg/mass-spring/DataClass/InteractionPhysics pkg/mass-spring/Engine/StandAloneEngine pkg/mass-spring/PreProcessor pkg/realtime-rigidbody/Engine/StandAloneEngine pkg/realtime-rigidbody/PreProcessor pkg/snow/DataClass pkg/snow/Engine pkg/snow/PreProcessor py py/yadeWrapper scripts/test
+</A></li>
+	<LI>Next message: <A HREF="001249.html">[deprecated list] [Yade-dev] small changes in lots of code (attribute registration)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1246">[ date ]</a>
+              <a href="thread.html#1246">[ thread ]</a>
+              <a href="subject.html#1246">[ subject ]</a>
+              <a href="author.html#1246">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

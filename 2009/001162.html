@@ -1,0 +1,108 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1852 - trunk/scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1852%20-%20trunk/scripts/test&In-Reply-To=%3C200907100952.n6A9qYqW009734%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001161.html">
+   <LINK REL="Next"  HREF="001163.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1852 - trunk/scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1852%20-%20trunk/scripts/test&In-Reply-To=%3C200907100952.n6A9qYqW009734%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1852 - trunk/scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Jul 10 11:52:34 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001161.html">[deprecated list] [Yade-dev] [svn] r1851 - in trunk: core gui/qt3	pkg/common	pkg/common/Engine	pkg/common/Engine/DeusExMachina	pkg/common/Engine/FilterEngine	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine	pkg/lattice/Engine/StandAloneEngine	py/yadeWrapper scripts/test
+</A></li>
+        <LI>Next message: <A HREF="001163.html">[deprecated list] [Yade-dev] strided collider speedups
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1162">[ date ]</a>
+              <a href="thread.html#1162">[ thread ]</a>
+              <a href="subject.html#1162">[ subject ]</a>
+              <a href="author.html#1162">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-10 11:52:33 +0200 (Fri, 10 Jul 2009)
+New Revision: 1852
+
+Modified:
+   trunk/scripts/test/collider-stride.py
+Log:
+1. Fix collider-stride.py to match changed parameters. (it is quite useless now, anyway
+
+
+Modified: trunk/scripts/test/collider-stride.py
+===================================================================
+--- trunk/scripts/test/collider-stride.py	2009-07-10 09:49:09 UTC (rev 1851)
++++ trunk/scripts/test/collider-stride.py	2009-07-10 09:52:33 UTC (rev 1852)
+@@ -1,3 +1,6 @@
++#
++# chec kvisually whether swept bounding boxes work as expected
++#
+ 
+ O.bodies.append([
+ 	utils.facet([[1,0,0],[-1,2,0],[-1,-2,0]]),
+@@ -22,15 +25,14 @@
+ try:
+ 	renderer=qt.Renderer()
+ 	renderer['Body_bounding_volume']=True
++	qt.Controller(); qt.View()
+ except ImportError: pass
+ 
+ O.timingEnabled=True
+ isc['stride']=3
+-isc['sweepDistSafetyFactor']=.1
+-isc['sweepTimeSafetyFactor']=.1
++isc['sweepTimeFactor']=1.1
++isc['sweepVelocity']=1000
+ #log.setLevel('InsertionSortCollider',log.DEBUG)
+ #log.setLevel('BoundingVolumeMetaEngine',log.DEBUG)
+ O.saveTmp()
+-#O.run(10000,True)
+-#timing.stats()
+ O.step()
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001161.html">[deprecated list] [Yade-dev] [svn] r1851 - in trunk: core gui/qt3	pkg/common	pkg/common/Engine	pkg/common/Engine/DeusExMachina	pkg/common/Engine/FilterEngine	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine	pkg/lattice/Engine/StandAloneEngine	py/yadeWrapper scripts/test
+</A></li>
+	<LI>Next message: <A HREF="001163.html">[deprecated list] [Yade-dev] strided collider speedups
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1162">[ date ]</a>
+              <a href="thread.html#1162">[ thread ]</a>
+              <a href="subject.html#1162">[ subject ]</a>
+              <a href="author.html#1162">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

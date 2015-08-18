@@ -1,0 +1,488 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1494 - in trunk: extra	extra/clump gui gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1494%20-%20in%20trunk%3A%20extra%0A%09extra/clump%20gui%20gui/py&In-Reply-To=%3C200808250758.m7P7w5Hx000610%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000319.html">
+   <LINK REL="Next"  HREF="000321.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1494 - in trunk: extra	extra/clump gui gui/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1494%20-%20in%20trunk%3A%20extra%0A%09extra/clump%20gui%20gui/py&In-Reply-To=%3C200808250758.m7P7w5Hx000610%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1494 - in trunk: extra	extra/clump gui gui/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Aug 25 09:58:05 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000319.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-22562/bin/yade-svn1493:	DirectShearCis, FEMBeam,	HydraulicTest, SDECImpactTest, STLImporterTest, TetrahedronsTest
+</A></li>
+        <LI>Next message: <A HREF="000321.html">[deprecated list] [Yade-dev] [svn] r1495 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#320">[ date ]</a>
+              <a href="thread.html#320">[ thread ]</a>
+              <a href="subject.html#320">[ subject ]</a>
+              <a href="author.html#320">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-08-25 09:58:04 +0200 (Mon, 25 Aug 2008)
+New Revision: 1494
+
+Added:
+   trunk/gui/py/_utils.cpp
+Modified:
+   trunk/extra/SimpleScene.cpp
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/clump/Shop.hpp
+   trunk/gui/SConscript
+   trunk/gui/py/PythonUI_rc.py
+   trunk/gui/py/eudoxos.py
+   trunk/gui/py/ipython.py
+   trunk/gui/py/utils.py
+Log:
+1. Reimplement some loop-intensive functions from yade.utils in c++ for better performance (as yade._utils, imported into yade.utils automatically - transparent to the user)
+2. Add poisson's ratio and Young's modulus estimation in yade.eudoxos based on linear regressions of position?\226?\134?\146displacement mapping along different axes
+3. Rename Shop::ElasticWaveTimestepEstimate to Shop::PWaveTimeStep, wrapped in yade.utils
+
+
+
+Modified: trunk/extra/SimpleScene.cpp
+===================================================================
+--- trunk/extra/SimpleScene.cpp	2008-08-22 23:01:31 UTC (rev 1493)
++++ trunk/extra/SimpleScene.cpp	2008-08-25 07:58:04 UTC (rev 1494)
+@@ -156,7 +156,7 @@
+ 	rootBody-&gt;bodies-&gt;insert(sphere);
+ 	
+ 	//@
+-	rootBody-&gt;dt=.2*Shop::ElasticWaveTimestepEstimate(rootBody);
++	rootBody-&gt;dt=.2*Shop::PWaveTimeStep(rootBody);
+ 
+ 	//@
+ 	return true;
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2008-08-22 23:01:31 UTC (rev 1493)
++++ trunk/extra/clump/Shop.cpp	2008-08-25 07:58:04 UTC (rev 1494)
+@@ -1071,7 +1071,7 @@
+ 	{0.370512,0.415453,0.055970,0.010546},
+ 	{-1.,-1.,-1.,-1. } /* sentinel: non-positive radius */
+ };
+-
++#if 0
+ Real Shop::ElasticWaveTimestepEstimate(shared_ptr&lt;MetaBody&gt; rootBody){
+ 	Real minDt=std::numeric_limits&lt;Real&gt;::infinity();
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
+@@ -1084,6 +1084,7 @@
+ 	}
+ 	return minDt;
+ }
++#endif
+ 
+ void Shop::GLDrawLine(Vector3r from, Vector3r to, Vector3r color){
+ 	glEnable(GL_LIGHTING); glColor3v(color);
+@@ -1109,9 +1110,10 @@
+ 	glPopMatrix();
+ 
+ }
+-#if 0
+-Real Shop::PWaveTimeStep(MetaBody* rb){
+-	dt=std::numeric_limits&lt;Real&gt;::infinity();
++Real Shop::PWaveTimeStep(shared_ptr&lt;MetaBody&gt; _rb){
++	shared_ptr&lt;MetaBody&gt; rb=_rb;
++	if(!rb)rb=Omega::instance().getRootBody();
++	Real dt=std::numeric_limits&lt;Real&gt;::infinity();
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rb-&gt;bodies){
+ 		if(!b-&gt;physicalParameters || !b-&gt;geometricalModel) continue;
+ 		shared_ptr&lt;ElasticBodyParameters&gt; ebp=dynamic_pointer_cast&lt;ElasticBodyParameters&gt;(b-&gt;physicalParameters);
+@@ -1122,4 +1124,3 @@
+ 	}
+ 	return dt;
+ }
+-#endif
+
+Modified: trunk/extra/clump/Shop.hpp
+===================================================================
+--- trunk/extra/clump/Shop.hpp	2008-08-22 23:01:31 UTC (rev 1493)
++++ trunk/extra/clump/Shop.hpp	2008-08-25 07:58:04 UTC (rev 1494)
+@@ -79,9 +79,6 @@
+ 		//! Save spheres in the current simulation into a text file
+ 		static void saveSpheresToFile(string fileName);
+ 
+-		//! Estimate timestep based on P-wave propagation speed
+-		static Real ElasticWaveTimestepEstimate(shared_ptr&lt;MetaBody&gt;);
+-
+ 		static void GLDrawLine(Vector3r from, Vector3r to, Vector3r color=Vector3r(1,1,1));
+ 		static void GLDrawArrow(Vector3r from, Vector3r to, Vector3r color=Vector3r(1,1,1));
+ 		static void GLDrawText(std::string text, Vector3r pos, Vector3r color=Vector3r(1,1,1));
+@@ -101,8 +98,7 @@
+ 			static Vector3r&amp; globalStiffness(body_id_t, MetaBody* mb=NULL);
+ 			static Vector3r&amp; globalRStiffness(body_id_t, MetaBody* mb=NULL);
+ 		};
+-		#if 0
+-			Real PWaveTimeStep(MetaBody* rb);
+-		#endif
+ 
++		//! Estimate timestep based on P-wave propagation speed
++		static Real PWaveTimeStep(shared_ptr&lt;MetaBody&gt; rb=shared_ptr&lt;MetaBody&gt;());
+ };
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2008-08-22 23:01:31 UTC (rev 1493)
++++ trunk/gui/SConscript	2008-08-25 07:58:04 UTC (rev 1494)
+@@ -52,7 +52,7 @@
+ 	# python modules are one level deeper so that you can say: from yade.wrapper import *
+ 	env.Install('$PREFIX/lib/yade$SUFFIX/gui/yade',[
+ 		env.SharedLibrary('wrapper',['py/yadeControl.cpp'],SHLIBPREFIX='',
+-			LIBS=env['LIBS']+['yade-base','libboost_python','XMLFormatManager','yade-factory','yade-serialization','Shop',
++			LIBS=env['LIBS']+['libboost_python','XMLFormatManager','yade-factory','yade-serialization','Shop',
+ 				'BoundingVolumeMetaEngine',
+ 				'GeometricalModelMetaEngine',
+ 				'InteractingGeometryMetaEngine',
+@@ -63,6 +63,8 @@
+ 				'ParallelEngine'
+ 			],
+ 			),
++		env.SharedLibrary('_utils',['py/_utils.cpp'],SHLIBPREFIX='',
++			LIBS=env['LIBS']+['Shop','libboost_python']),
+ 		env.SharedLibrary('log',['py/log.cpp'],SHLIBPREFIX=''),
+ 		env.File('__init__.py','py'),
+ 		env.File('utils.py','py'),
+
+Modified: trunk/gui/py/PythonUI_rc.py
+===================================================================
+--- trunk/gui/py/PythonUI_rc.py	2008-08-22 23:01:31 UTC (rev 1493)
++++ trunk/gui/py/PythonUI_rc.py	2008-08-25 07:58:04 UTC (rev 1494)
+@@ -62,5 +62,3 @@
+ 		import yade.qt
+ 		yade.qt.close()
+ 	except ImportError: pass
+-
+-
+
+Added: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2008-08-22 23:01:31 UTC (rev 1493)
++++ trunk/gui/py/_utils.cpp	2008-08-25 07:58:04 UTC (rev 1494)
+@@ -0,0 +1,63 @@
++#include&lt;yade/extra/Shop.hpp&gt;
++#include&lt;boost/python.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/core/Omega.hpp&gt;
++#include&lt;yade/pkg-common/Sphere.hpp&gt;
++using namespace boost::python;
++
++python::tuple vec2tuple(const Vector3r&amp; v){return boost::python::make_tuple(v[0],v[1],v[2]);};
++
++/* \todo implement groupMask */
++python::tuple aabbExtrema(){
++	Real inf=std::numeric_limits&lt;Real&gt;::infinity();
++	Vector3r minimum(inf,inf,inf),maximum(-inf,-inf,-inf);
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *Omega::instance().getRootBody()-&gt;bodies){
++		shared_ptr&lt;Sphere&gt; s=dynamic_pointer_cast&lt;Sphere&gt;(b-&gt;geometricalModel); if(!s) continue;
++		Vector3r rrr(s-&gt;radius,s-&gt;radius,s-&gt;radius);
++		minimum=componentMinVector(minimum,b-&gt;physicalParameters-&gt;se3.position-rrr);
++		maximum=componentMaxVector(maximum,b-&gt;physicalParameters-&gt;se3.position+rrr);
++	}
++	return python::make_tuple(vec2tuple(minimum),vec2tuple(maximum));
++}
++
++python::tuple negPosExtremeIds(int axis, Real distFactor=1.1){
++	python::tuple extrema=aabbExtrema();
++	Real minCoord=extract&lt;double&gt;(extrema[0][axis])(),maxCoord=extract&lt;double&gt;(extrema[1][axis])();
++	python::list minIds,maxIds;
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *Omega::instance().getRootBody()-&gt;bodies){
++		shared_ptr&lt;Sphere&gt; s=dynamic_pointer_cast&lt;Sphere&gt;(b-&gt;geometricalModel); if(!s) continue;
++		if(b-&gt;physicalParameters-&gt;se3.position[axis]-s-&gt;radius*distFactor&lt;=minCoord) minIds.append(b-&gt;getId());
++		if(b-&gt;physicalParameters-&gt;se3.position[axis]+s-&gt;radius*distFactor&gt;=maxCoord) maxIds.append(b-&gt;getId());
++	}
++	return python::make_tuple(minIds,maxIds);
++}
++BOOST_PYTHON_FUNCTION_OVERLOADS(negPosExtremeIds_overloads,negPosExtremeIds,1,2);
++
++python::tuple coordsAndDisplacements(int axis){
++	python::list retCoord,retDispl;
++	FOREACH(const shared_ptr&lt;Body&gt;&amp;b, *Omega::instance().getRootBody()-&gt;bodies){
++		retCoord.append(b-&gt;physicalParameters-&gt;se3.position[axis]);
++		retDispl.append(b-&gt;physicalParameters-&gt;se3.position[axis]-b-&gt;physicalParameters-&gt;refSe3.position[axis]);
++	}
++	return python::make_tuple(retCoord,retDispl);
++}
++
++void setRefSe3(){
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *Omega::instance().getRootBody()-&gt;bodies){
++		b-&gt;physicalParameters-&gt;refSe3.position=b-&gt;physicalParameters-&gt;se3.position;
++		b-&gt;physicalParameters-&gt;refSe3.orientation=b-&gt;physicalParameters-&gt;se3.orientation;
++	}
++}
++
++
++Real PWaveTimeStep(){return Shop::PWaveTimeStep();};
++
++BOOST_PYTHON_MODULE(_utils){
++	def(&quot;PWaveTimeStep&quot;,PWaveTimeStep);
++	def(&quot;aabbExtrema&quot;,aabbExtrema);
++	def(&quot;negPosExtremeIds&quot;,negPosExtremeIds,negPosExtremeIds_overloads(args(&quot;axis&quot;,&quot;distFactor&quot;)));
++	def(&quot;coordsAndDisplacements&quot;,coordsAndDisplacements);
++	def(&quot;setRefSe3&quot;,setRefSe3);
++}
++
++
+
+Modified: trunk/gui/py/eudoxos.py
+===================================================================
+--- trunk/gui/py/eudoxos.py	2008-08-22 23:01:31 UTC (rev 1493)
++++ trunk/gui/py/eudoxos.py	2008-08-25 07:58:04 UTC (rev 1494)
+@@ -4,7 +4,39 @@
+ # I doubt there functions will be useful for anyone besides me.
+ #
+ 
++def estimatePoissonYoung(principalAxis,stress=0,plot=False):
++	&quot;&quot;&quot;Estimate Poisson's ration given the &quot;principal&quot; axis of straining.
++	For every base direction, homogenized strain is computed
++	(slope in linear regression on discrete function particle coordinate &#8594;
++	&#8594; particle displacement	in the same direction as returned by
++	utils.coordsAndDisplacements) and, (if axis '0' is the strained 
++	axis) the poisson's ratio is given as -&#189;(&#949;&#8321;+&#949;&#8322;)/&#949;&#8320;.
+ 
++	Young's modulus is computed as &#963;/&#949;&#8320;; if stress &#963; is not given (default 0),
++	the result is 0.
++	&quot;&quot;&quot;
++	dd=[] # storage for linear regression parameters
++	import pylab,numpy,stats
++	from yade import utils
++	for axis in [0,1,2]:
++		w,dw=utils.coordsAndDisplacements(axis)
++		l,ll=stats.linregress(w,dw)[0:2] # use only tangent and section
++		dd.append((l,ll,min(w),max(w)))
++		if plot: pylab.plot(w,dw,'.',label='xyz'[axis])
++	if plot:
++		for axis in [0,1,2]:
++			dist=dd[axis][-1]-dd[axis][-2]
++			c=numpy.linspace(dd[axis][-2]-.2*dist,dd[axis][-1]+.2*dist)
++			d=[dd[axis][0]*cc+dd[axis][1] for cc in c]
++			pylab.plot(c,d,label='interp '+'xyz'[axis])
++		pylab.legend()
++		pylab.show()
++	otherAxes=(principalAxis+1)%3,(principalAxis+2)%3
++	avgTransHomogenizedStrain=.5*(dd[otherAxes[0]][0]+dd[otherAxes[1]][0])
++	principalHomogenizedStrain=dd[principalAxis][0]
++	return -avgTransHomogenizedStrain/principalHomogenizedStrain,stress/principalHomogenizedStrain
++
++
+ def oofemTextExport():
+ 	&quot;&quot;&quot;Export simulation data in text format 
+ 	
+
+Modified: trunk/gui/py/ipython.py
+===================================================================
+--- trunk/gui/py/ipython.py	2008-08-22 23:01:31 UTC (rev 1493)
++++ trunk/gui/py/ipython.py	2008-08-25 07:58:04 UTC (rev 1494)
+@@ -16,4 +16,4 @@
+ import IPython.ipapi
+ ip=IPython.ipapi.get()
+ ip.set_hook('complete_command',yade_completers,re_key='.*\\b[a-zA-Z0-9_]+\[[&quot;\'][^&quot;\'\]]*$')
+-
++ip.options.profile='yade'
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-08-22 23:01:31 UTC (rev 1493)
++++ trunk/gui/py/utils.py	2008-08-25 07:58:04 UTC (rev 1494)
+@@ -4,6 +4,8 @@
+ #
+ # 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+ 
++#from yade._utils import *
++
+ import math,random
+ from yade.wrapper import *
+ try: # use psyco if available
+@@ -11,6 +13,10 @@
+ 	psyco.full()
+ except ImportError: pass
+ 
++# c++ implementations for performance reasons
++from yade._utils import *
++
++
+ def sphere(center,radius,density=1,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=True,wire=False,color=[1,1,1],physParamsClass='BodyMacroParameters'):
+ 	&quot;&quot;&quot;Create default sphere, with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
+ 	s=Body()
+@@ -18,7 +24,7 @@
+ 	s.mold=InteractingGeometry('InteractingSphere',{'radius':radius,'diffuseColor':color})
+ 	V=(4./3)*math.pi*radius**3
+ 	inert=(2./5.)*V*density*radius**2
+-	s.phys=PhysicalParameters(physParamsClass,{'se3':[center[0],center[1],center[2],1,0,0,0],'mass':V*density,'inertia':[inert,inert,inert],'young':young,'poisson':poisson,'frictionAngle':frictionAngle})
++	s.phys=PhysicalParameters(physParamsClass,{'se3':[center[0],center[1],center[2],1,0,0,0],'refSe3':[center[0],center[1],center[2],1,0,0,0],'mass':V*density,'inertia':[inert,inert,inert],'young':young,'poisson':poisson,'frictionAngle':frictionAngle})
+ 	s.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+ 	s['isDynamic']=dynamic
+ 	return s
+@@ -29,29 +35,11 @@
+ 	b.shape=GeometricalModel('Box',{'extents':extents,'diffuseColor':color,'wire':wire,'visible':True})
+ 	b.mold=InteractingGeometry('InteractingBox',{'extents':extents,'diffuseColor':color})
+ 	mass=8*extents[0]*extents[1]*extents[2]*density
+-	b.phys=PhysicalParameters(physParamsClass,{'se3':[center[0],center[1],center[2],orientation[0],orientation[1],orientation[2],orientation[3]],'mass':mass,'inertia':[mass*4*(extents[1]**2+extents[2]**2),mass*4*(extents[0]**2+extents[2]**2),mass*4*(extents[0]**2+extents[1]**2)],'young':young,'poisson':poisson,'frictionAngle':frictionAngle})
++	b.phys=PhysicalParameters(physParamsClass,{'se3':[center[0],center[1],center[2],orientation[0],orientation[1],orientation[2],orientation[3]],'refSe3':[center[0],center[1],center[2],orientation[0],orientation[1],orientation[2],orientation[3]],'mass':mass,'inertia':[mass*4*(extents[1]**2+extents[2]**2),mass*4*(extents[0]**2+extents[2]**2),mass*4*(extents[0]**2+extents[1]**2)],'young':young,'poisson':poisson,'frictionAngle':frictionAngle})
+ 	b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+ 	b['isDynamic']=dynamic
+ 	return b
+ 
+-def negPosExtremes(axis,distFactor=1.1):
+-	&quot;&quot;&quot;Get 2 lists (negative and positive extremes) of sphere ids that are close to the boundary
+-	in the direction of requested axis (0=x,1=y,2=z).
+-
+-	distFactor enlarges radius of the sphere, it can be considered 'extremal' even if it doesn't touch the extreme.
+-	&quot;&quot;&quot;
+-	inf=float('inf')
+-	extremes=[inf,-inf]
+-	ret=[[],[]]
+-	o=Omega()
+-	for b in o.bodies:
+-		extremes[1]=max(extremes[1],+b.shape['radius']+b.phys['se3'][axis])
+-		extremes[0]=min(extremes[0],-b.shape['radius']+b.phys['se3'][axis])
+-	for b in o.bodies:
+-		if b.phys['se3'][axis]-b.shape['radius']*distFactor&lt;=extremes[0]: ret[0].append(b.id)
+-		if b.phys['se3'][axis]+b.shape['radius']*distFactor&gt;=extremes[1]: ret[1].append(b.id)
+-	return ret
+-
+ def aabbWalls(extrema=None,thickness=None,oversizeFactor=1.5,**kw):
+ 	&quot;&quot;&quot;return 6 walls that will wrap existing packing;
+ 	extrema are extremal points of the AABB of the packing (will be calculated if not specified)
+@@ -74,23 +62,13 @@
+ 			walls[-1].shape['visible']=True
+ 	return walls
+ 
+-def aabbExtrema(consider=lambda body:True):
+-	&quot;&quot;&quot;return min and max points of an aabb around spherical packing (non-spheres are ignored)&quot;&quot;&quot;
+-	inf=float('inf')
+-	minimum,maximum=[inf,inf,inf],[-inf,-inf,-inf]
+-	o=Omega()
+-	for b in o.bodies:
+-		if consider(b) and b.shape.name=='Sphere':
+-			minimum=[min(minimum[i],b.phys['se3'][i]-b.shape['radius']) for i in range(3)]
+-			maximum=[max(maximum[i],b.phys['se3'][i]+b.shape['radius']) for i in range(3)]
+-	return minimum,maximum
+ 
+-def perpendicularArea(axis,consider=lambda body: True):
++def perpendicularArea(axis):
+ 	&quot;&quot;&quot;return area perpendicular to given axis (0=x,1=y,2=z) generated by bodies
+ 	for which the function consider returns True (defaults to returning True always)
+ 	and which is of the type &quot;Sphere&quot;
+ 	&quot;&quot;&quot;
+-	ext=aabbExtrema(consider)
++	ext=aabbExtrema()
+ 	other=((axis+1)%3,(axis+2)%3)
+ 	return (ext[1][other[0]]-ext[0][other[0]])*(ext[1][other[1]]-ext[0][other[1]])
+ 
+@@ -107,19 +85,6 @@
+ 		if onShapes and (b['isDynamic'] or not onlyDynamic): b.shape['diffuseColor']=color
+ 		if onMolds  and (b['isDynamic'] or not onlyDynamic): b.mold['diffuseColor']=color
+ 
+-def PWaveTimeStep():
+-	&quot;&quot;&quot;Estimate timestep by the elastic wave propagation speed (p-wave).
+-	
+-	Multiply the value returned by some safety factor &lt; 1, since shear waves are not taken into account here.&quot;&quot;&quot;
+-	o=Omega()
+-	dt=float('inf')
+-	for b in o.bodies:
+-		if not (b.phys and b.shape): continue
+-		if not (b.phys.has_key('young') and b.shape.has_key('radius')): continue
+-		density=b.phys['mass']/((4./3.)*math.pi*b.shape['radius']**3)
+-		thisDt=b.shape['radius']/math.sqrt(b.phys['young']/density)
+-		dt=min(dt,thisDt)
+-	return dt
+ 
+ def spheresFromFile(filename,scale=1.,wenjieFormat=False,**kw):
+ 	&quot;&quot;&quot;Load sphere coordinates from file, create spheres, insert them to the simulation.
+@@ -150,3 +115,48 @@
+ 		out.write('%g\t%g\t%g\t%g\n'%(b.phys['se3'][0],b.phys['se3'][1],b.phys['se3'][2],b.shape['radius']))
+ 	out.close()
+ 
++def negPosExtremes(**kw): raise DeprecationWarning(&quot;negPosExtremes is deprecated, use negPosExtremalIds instead.&quot;)
++
++# reimplemented in _utils in c++ (results verified to be identical)
++if 0:
++	def negPosExtremes(axis,distFactor=1.1):
++		&quot;&quot;&quot;Get 2 lists (negative and positive extremes) of sphere ids that are close to the boundary
++		in the direction of requested axis (0=x,1=y,2=z).
++
++		distFactor enlarges radius of the sphere, it can be considered 'extremal' even if it doesn't touch the extreme.
++		&quot;&quot;&quot;
++		inf=float('inf')
++		extremes=[inf,-inf]
++		ret=[[],[]]
++		o=Omega()
++		for b in o.bodies:
++			extremes[1]=max(extremes[1],+b.shape['radius']+b.phys['se3'][axis])
++			extremes[0]=min(extremes[0],-b.shape['radius']+b.phys['se3'][axis])
++		for b in o.bodies:
++			if b.phys['se3'][axis]-b.shape['radius']*distFactor&lt;=extremes[0]: ret[0].append(b.id)
++			if b.phys['se3'][axis]+b.shape['radius']*distFactor&gt;=extremes[1]: ret[1].append(b.id)
++		return ret
++	def aabbExtrema(consider=lambda body:True):
++		&quot;&quot;&quot;return min and max points of an aabb around spherical packing (non-spheres are ignored)&quot;&quot;&quot;
++		inf=float('inf')
++		minimum,maximum=[inf,inf,inf],[-inf,-inf,-inf]
++		o=Omega()
++		for b in o.bodies:
++			if consider(b) and b.shape.name=='Sphere':
++				minimum=[min(minimum[i],b.phys['se3'][i]-b.shape['radius']) for i in range(3)]
++				maximum=[max(maximum[i],b.phys['se3'][i]+b.shape['radius']) for i in range(3)]
++		return minimum,maximum
++	def PWaveTimeStep():
++		&quot;&quot;&quot;Estimate timestep by the elastic wave propagation speed (p-wave).
++		
++		Multiply the value returned by some safety factor &lt; 1, since shear waves are not taken into account here.&quot;&quot;&quot;
++		o=Omega()
++		dt=float('inf')
++		for b in o.bodies:
++			if not (b.phys and b.shape): continue
++			if not (b.phys.has_key('young') and b.shape.has_key('radius')): continue
++			density=b.phys['mass']/((4./3.)*math.pi*b.shape['radius']**3)
++			thisDt=b.shape['radius']/math.sqrt(b.phys['young']/density)
++			dt=min(dt,thisDt)
++		return dt
++
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000319.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-22562/bin/yade-svn1493:	DirectShearCis, FEMBeam,	HydraulicTest, SDECImpactTest, STLImporterTest, TetrahedronsTest
+</A></li>
+	<LI>Next message: <A HREF="000321.html">[deprecated list] [Yade-dev] [svn] r1495 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#320">[ date ]</a>
+              <a href="thread.html#320">[ thread ]</a>
+              <a href="subject.html#320">[ subject ]</a>
+              <a href="author.html#320">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

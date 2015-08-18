@@ -1,0 +1,390 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1566 - in trunk/pkg:	common	common/DataClass/InteractingGeometry	common/Engine/EngineUnit	common/RenderingEngine/GLDrawGeometricalModel	common/RenderingEngine/GLDrawInteractingGeometry	dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1566%20-%20in%20trunk/pkg%3A%0A%09common%09common/DataClass/InteractingGeometry%0A%09common/Engine/EngineUnit%09common/RenderingEngine/GLDrawGeometricalModel%09common/RenderingEngine/GLDrawInteractingGeometry%0A%09dem/PreProcessor&In-Reply-To=%3C200810300850.m9U8ox7e018612%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000489.html">
+   <LINK REL="Next"  HREF="000495.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1566 - in trunk/pkg:	common	common/DataClass/InteractingGeometry	common/Engine/EngineUnit	common/RenderingEngine/GLDrawGeometricalModel	common/RenderingEngine/GLDrawInteractingGeometry	dem/PreProcessor</H1>
+    <B>richefeu at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1566%20-%20in%20trunk/pkg%3A%0A%09common%09common/DataClass/InteractingGeometry%0A%09common/Engine/EngineUnit%09common/RenderingEngine/GLDrawGeometricalModel%09common/RenderingEngine/GLDrawInteractingGeometry%0A%09dem/PreProcessor&In-Reply-To=%3C200810300850.m9U8ox7e018612%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1566 - in trunk/pkg:	common	common/DataClass/InteractingGeometry	common/Engine/EngineUnit	common/RenderingEngine/GLDrawGeometricalModel	common/RenderingEngine/GLDrawInteractingGeometry	dem/PreProcessor">richefeu at mail.berlios.de
+       </A><BR>
+    <I>Thu Oct 30 09:50:59 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000489.html">[deprecated list] [Yade-dev] recent changes in	TriaxialCompressionEngine
+</A></li>
+        <LI>Next message: <A HREF="000495.html">[deprecated list] [Yade-dev] Incomprehensible crash
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#494">[ date ]</a>
+              <a href="thread.html#494">[ thread ]</a>
+              <a href="subject.html#494">[ subject ]</a>
+              <a href="author.html#494">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: richefeu
+Date: 2008-10-30 09:50:59 +0100 (Thu, 30 Oct 2008)
+New Revision: 1566
+
+Added:
+   trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawBssSweptSphereLineSegment.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawBssSweptSphereLineSegment.hpp
+Modified:
+   trunk/pkg/common/DataClass/InteractingGeometry/BssSweptSphereLineSegment.hpp
+   trunk/pkg/common/Engine/EngineUnit/ef2_BshTube_BssSweptSphereLineSegment_makeBssSweptSphereLineSegment.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTube.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTube.hpp
+   trunk/pkg/common/SConscript
+   trunk/pkg/dem/PreProcessor/MembraneTest.cpp
+Log:
+- add GLDraw plugin for BssSweptSphereLineSegment displaying
+
+
+Modified: trunk/pkg/common/DataClass/InteractingGeometry/BssSweptSphereLineSegment.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/InteractingGeometry/BssSweptSphereLineSegment.hpp	2008-10-29 19:29:18 UTC (rev 1565)
++++ trunk/pkg/common/DataClass/InteractingGeometry/BssSweptSphereLineSegment.hpp	2008-10-30 08:50:59 UTC (rev 1566)
+@@ -1,6 +1,6 @@
+ /*************************************************************************
+ *  Copyright (C) 2008 by Vincent Richefeu                                *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">vincent.richefeu at hmg.inpg.fr</A>                                               *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">vincent.richefeu at hmg.inpg.fr</A>                                          *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+
+Modified: trunk/pkg/common/Engine/EngineUnit/ef2_BshTube_BssSweptSphereLineSegment_makeBssSweptSphereLineSegment.cpp
+===================================================================
+--- trunk/pkg/common/Engine/EngineUnit/ef2_BshTube_BssSweptSphereLineSegment_makeBssSweptSphereLineSegment.cpp	2008-10-29 19:29:18 UTC (rev 1565)
++++ trunk/pkg/common/Engine/EngineUnit/ef2_BshTube_BssSweptSphereLineSegment_makeBssSweptSphereLineSegment.cpp	2008-10-30 08:50:59 UTC (rev 1566)
+@@ -20,16 +20,17 @@
+   //if(ig == 0)
+   //  ig = boost::shared_ptr&lt;InteractingGeometry&gt;(new BshTube);
+ 
+-  BssSweptSphereLineSegment* SSLS = YADE_CAST&lt;BssSweptSphereLineSegment*&gt;(ig.get());
++  BssSweptSphereLineSegment* SSLS = static_cast&lt;BssSweptSphereLineSegment*&gt;(ig.get());
+   
+   SSLS-&gt;radius = tube-&gt;radius;
+-  SSLS-&gt;length = 2.0 * tube-&gt;half_height;
++  //SSLS-&gt;length = 2.0 * tube-&gt;half_height;
+   
+-  BcpConnection* bc = YADE_CAST&lt;BcpConnection*&gt;(body-&gt;physicalParameters.get());
++  BcpConnection* bc = static_cast&lt;BcpConnection*&gt;(body-&gt;physicalParameters.get());
+ 
+   SSLS-&gt;position = (*(Omega::instance().getRootBody()-&gt;bodies))[bc-&gt;id1]-&gt;physicalParameters-&gt;se3.position;
+   Vector3r len = (*(Omega::instance().getRootBody()-&gt;bodies))[bc-&gt;id2]-&gt;physicalParameters-&gt;se3.position - SSLS-&gt;position;
+-  *(SSLS-&gt;orientation) = len.Normalize();
++  SSLS-&gt;length = len.Normalize();
++  SSLS-&gt;orientation = len;
+   
+ }
+ 	
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTube.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTube.cpp	2008-10-29 19:29:18 UTC (rev 1565)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTube.cpp	2008-10-30 08:50:59 UTC (rev 1566)
+@@ -11,7 +11,10 @@
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ 
+-
++bool GLDrawTube::first           = true;
++int  GLDrawTube::glWiredTubeList = -1;
++int  GLDrawTube::glTubeList      = -1;
++    
+ void GLDrawTube::go(const shared_ptr&lt;GeometricalModel&gt;&amp; gm, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool wire)
+ {
+ 	
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTube.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTube.hpp	2008-10-29 19:29:18 UTC (rev 1565)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawTube.hpp	2008-10-30 08:50:59 UTC (rev 1566)
+@@ -11,12 +11,13 @@
+ 
+ #include&lt;yade/pkg-common/GLDrawFunctors.hpp&gt;
+ 
++
+ class GLDrawTube : public GLDrawGeometricalModelFunctor
+ {
+ 	private :
+-		bool first;
+-		int  glWiredTubeList;
+-		int  glTubeList;
++		static bool first;
++		static int  glWiredTubeList;
++		static int  glTubeList;
+                 
+ 	public :
+ 		virtual void go(const shared_ptr&lt;GeometricalModel&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool);
+
+Added: trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawBssSweptSphereLineSegment.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawBssSweptSphereLineSegment.cpp	2008-10-29 19:29:18 UTC (rev 1565)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawBssSweptSphereLineSegment.cpp	2008-10-30 08:50:59 UTC (rev 1566)
+@@ -0,0 +1,73 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Vincent Richefeu                                *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">vincent.richefeu at hmg.inpg.fr</A>                                          *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;GLDrawBssSweptSphereLineSegment.hpp&quot;
++#include&lt;yade/pkg-common/BssSweptSphereLineSegment.hpp&gt;
++#include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
++
++bool GLDrawBssSweptSphereLineSegment::first       = true;
++int  GLDrawBssSweptSphereLineSegment::glList      = -1;
++int  GLDrawBssSweptSphereLineSegment::glWiredList = -1;
++
++GLDrawBssSweptSphereLineSegment::GLDrawBssSweptSphereLineSegment(){ /*first=true;*/ };
++
++void GLDrawBssSweptSphereLineSegment::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm, const shared_ptr&lt;PhysicalParameters&gt;&amp; ,bool)
++{
++        
++  if (first)
++  {        
++        const Real my2PI  = 6.28318530717958647692;
++        const Real myPI_6 = 5.23598775598298873077e-1;
++                                
++        glList = glGenLists(1);
++        glNewList(glList,GL_COMPILE);
++        glDisable(GL_CULL_FACE);
++        glEnable(GL_LIGHTING);
++        glBegin(GL_TRIANGLE_STRIP);
++        for (Real a = 0.0 ; a &lt; my2PI ; a += myPI_6)
++        {
++                glVertex3f(-1.0f, cos(a), sin(a));
++                glVertex3f( 1.0f, cos(a), sin(a));
++        }
++                glVertex3f(-1.0f, cos(0.0), sin(0.0));
++                glVertex3f( 1.0f, cos(0.0), sin(0.0));
++        glEnd(); 
++        glEndList();
++                
++        first = false;
++  }
++
++  BssSweptSphereLineSegment* ssls = static_cast&lt;BssSweptSphereLineSegment*&gt; (cm.get());
++  
++  Real radius = ssls-&gt;radius;
++  Real half_length = 0.5 * ssls-&gt;length;
++
++  glMaterialv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, Vector3f(cm-&gt;diffuseColor[0],cm-&gt;diffuseColor[1],cm-&gt;diffuseColor[2]));
++  glColor3v(cm-&gt;diffuseColor);
++  
++  static GLUquadric* quadric = gluNewQuadric();
++  
++  glPushMatrix();
++  glScalef(half_length,radius,radius);
++  glCallList(glList);
++  glPopMatrix();
++  
++  // It is not very elegant but it provides assistance
++  // TODO - write a gl-list that draw 2 halh spheres 
++  glTranslate(-half_length, 0.0, 0.0);
++  gluSphere(quadric, radius, 5, 5);
++  glTranslate(2.0*half_length, 0.0, 0.0);
++  gluSphere(quadric, radius, 5, 5);
++}
++
++
++
++
++
++YADE_PLUGIN();
++
+
+Added: trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawBssSweptSphereLineSegment.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawBssSweptSphereLineSegment.hpp	2008-10-29 19:29:18 UTC (rev 1565)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawBssSweptSphereLineSegment.hpp	2008-10-30 08:50:59 UTC (rev 1566)
+@@ -0,0 +1,36 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Vincent Richefeu                                *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">vincent.richefeu at hmg.inpg.fr</A>                                          *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef GLDRAW_BSS_SWEPT_SPHERE_LINE_SEGMENT_HPP
++#define GLDRAW_BSS_SWEPT_SPHERE_LINE_SEGMENT_HPP
++
++#include&lt;yade/pkg-common/GLDrawFunctors.hpp&gt;
++
++class GLDrawBssSweptSphereLineSegment : public GLDrawInteractingGeometryFunctor
++{	
++	private :
++		static bool first;
++		static int  glWiredList;
++		static int  glList;
++	
++	public :
++                GLDrawBssSweptSphereLineSegment();
++		virtual void go(const shared_ptr&lt;InteractingGeometry&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool);
++/// Serialization
++	protected :
++		virtual void postProcessAttributes(bool deserializing){if(deserializing){first=true;};};
++
++        RENDERS(BssSweptSphereLineSegment);
++        REGISTER_CLASS_NAME(GLDrawBssSweptSphereLineSegment);
++	REGISTER_BASE_CLASS_NAME(GLDrawInteractingGeometryFunctor);
++};
++
++REGISTER_SERIALIZABLE(GLDrawBssSweptSphereLineSegment,false);
++
++#endif //  GLDRAW_BSS_SWEPT_SPHERE_LINE_SEGMENT_HPP
++
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2008-10-29 19:29:18 UTC (rev 1565)
++++ trunk/pkg/common/SConscript	2008-10-30 08:50:59 UTC (rev 1566)
+@@ -164,7 +164,7 @@
+ 	env.SharedLibrary('GLDrawMesh2D',['RenderingEngine/GLDrawGeometricalModel/GLDrawMesh2D.cpp'],
+ 		LIBS=env['LIBS']+['yade-base','Mesh2D','yade-opengl']),
+ 	env.SharedLibrary('GLDrawSphere',['RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp'],
+-		LIBS=env['LIBS']+['yade-base','Sphere','yade-opengl']),
++		LIBS=env['LIBS']+['yade-base','Sphere','yade-opengl']),               
+ 	env.SharedLibrary('GLDrawQuadrilateral',['RenderingEngine/GLDrawGeometricalModel/GLDrawQuadrilateral.cpp'],
+ 		LIBS=env['LIBS']+['yade-base','Quadrilateral','yade-opengl']),
+ 	env.SharedLibrary('GLDrawFacet',['RenderingEngine/GLDrawGeometricalModel/GLDrawFacet.cpp']
+@@ -173,6 +173,8 @@
+ 		LIBS=env['LIBS']+['yade-base','InteractingBox','yade-opengl']),
+ 	env.SharedLibrary('GLDrawInteractingSphere',['RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.cpp'],
+ 		LIBS=env['LIBS']+['yade-base','InteractingSphere','yade-opengl'],),
++         env.SharedLibrary('GLDrawBssSweptSphereLineSegment',['RenderingEngine/GLDrawInteractingGeometry/GLDrawBssSweptSphereLineSegment.cpp'],
++                LIBS=env['LIBS']+['yade-base','BssSweptSphereLineSegment','yade-opengl']),               
+ 	env.SharedLibrary('GLDrawMetaInteractingGeometry',['RenderingEngine/GLDrawInteractingGeometry/GLDrawMetaInteractingGeometry.cpp'],
+ 		LIBS=env['LIBS']+['yade-opengl']),
+ 	env.SharedLibrary('GLDrawInteractingFacet',['RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingFacet.cpp']
+
+Modified: trunk/pkg/dem/PreProcessor/MembraneTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/MembraneTest.cpp	2008-10-29 19:29:18 UTC (rev 1565)
++++ trunk/pkg/dem/PreProcessor/MembraneTest.cpp	2008-10-30 08:50:59 UTC (rev 1566)
+@@ -204,6 +204,8 @@
+         tube-&gt;half_height           = 0.5 * link.Length();
+         tube-&gt;diffuseColor          = Vector3r(Mathr::UnitRandom(),Mathr::UnitRandom(),Mathr::UnitRandom());
+         
++        bss-&gt;diffuseColor           = Vector3r(Mathr::UnitRandom(),Mathr::UnitRandom(),Mathr::UnitRandom());
++        
+         body-&gt;isDynamic             = false;
+         body-&gt;geometricalModel      = tube;
+         body-&gt;interactingGeometry   = bss;
+@@ -259,10 +261,11 @@
+         shared_ptr&lt;InteractingSphere&gt; isph(new InteractingSphere);      // Bss
+         	
+         
+-	if ((i==0 &amp;&amp; j==0)||(i==0 &amp;&amp; j==nbZ)||(i==nbX &amp;&amp; j==nbZ)||(i==nbX &amp;&amp; j==0))
+-		body-&gt;isDynamic = false;
+-	else
+-		body-&gt;isDynamic = true;
++// 	if ((i==0 &amp;&amp; j==0)||(i==0 &amp;&amp; j==nbZ)||(i==nbX &amp;&amp; j==nbZ)||(i==nbX &amp;&amp; j==0))
++// 		body-&gt;isDynamic = false;
++// 	else
++// 		body-&gt;isDynamic = true;
++        body-&gt;isDynamic = false; // During interaction debuging
+         
+         node-&gt;radius                    = 0.5 * membraneThickness;
+ 	node-&gt;diffuseColor		= Vector3r(0.7,0.7,0.7);
+@@ -293,7 +296,7 @@
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Force&quot;);
+ 	//physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Momentum&quot;);
+ 	
+-	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
++	//shared_ptr&lt;InteractionPhysicsMetaEngine&gt; interactionPhysicsDispatcher(new InteractionPhysicsMetaEngine);
+         //interactionPhysicsDispatcher-&gt;add(&quot;ElasticBodySimpleRelationship&quot;);
+ 		
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+@@ -306,7 +309,7 @@
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+ 	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;); // 
+ 	//boundingVolumeDispatcher-&gt;add(&quot;InteractingBox2AABB&quot;);
+-	//boundingVolumeDispatcher-&gt;add(&quot;ef2_BssSweptSphereLineSegment_AABB_makeAABB&quot;); // 
++	//boundingVolumeDispatcher-&gt;add(&quot;ef2_BssSweptSphereLineSegment_AABB_makeAABB&quot;);
+ 	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;); 
+ 	
+ 	shared_ptr&lt;GravityEngine&gt; gravityCondition(new GravityEngine);
+@@ -329,8 +332,8 @@
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; positionIntegrator(new PhysicalParametersMetaEngine);
+ 	positionIntegrator-&gt;add(&quot;LeapFrogPositionIntegrator&quot;);
+ 
+-	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+-	orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
++	//shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
++	//orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
+ 	//////////////////
+  	
+ /*
+@@ -342,18 +345,18 @@
+ */
+ 
+ 	rootBody-&gt;engines.clear();
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
++	//rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);	
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
+-	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+-	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
++	//rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
++	//rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+ 	//rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new MyTetrahedronLaw));
+ 	rootBody-&gt;engines.push_back(gravityCondition);
+ 	//rootBody-&gt;engines.push_back(actionDampingDispatcher);
+ 	rootBody-&gt;engines.push_back(applyActionDispatcher);
+ 	rootBody-&gt;engines.push_back(positionIntegrator);
+ 	//if(!rotationBlocked)
+-		rootBody-&gt;engines.push_back(orientationIntegrator);
++	//	rootBody-&gt;engines.push_back(orientationIntegrator);
+ 	
+ 	rootBody-&gt;initializers.clear();
+ 	rootBody-&gt;initializers.push_back(physicalActionInitializer);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000489.html">[deprecated list] [Yade-dev] recent changes in	TriaxialCompressionEngine
+</A></li>
+	<LI>Next message: <A HREF="000495.html">[deprecated list] [Yade-dev] Incomprehensible crash
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#494">[ date ]</a>
+              <a href="thread.html#494">[ thread ]</a>
+              <a href="subject.html#494">[ subject ]</a>
+              <a href="author.html#494">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

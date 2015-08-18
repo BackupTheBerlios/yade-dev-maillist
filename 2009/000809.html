@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1710 - in trunk: .	pkg/realtime-rigidbody
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1710%20-%20in%20trunk%3A%20.%0A%09pkg/realtime-rigidbody&In-Reply-To=%3C200903040700.n2470lOD023249%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000808.html">
+   <LINK REL="Next"  HREF="000810.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1710 - in trunk: .	pkg/realtime-rigidbody</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1710%20-%20in%20trunk%3A%20.%0A%09pkg/realtime-rigidbody&In-Reply-To=%3C200903040700.n2470lOD023249%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1710 - in trunk: .	pkg/realtime-rigidbody">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Mar  4 08:00:47 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000808.html">[deprecated list] [Yade-dev] [svn] r1709 - in trunk: core	core/containers extra	gui/py lib/base pkg/common	pkg/common/Engine/StandAloneEngine	pkg/dem pkg/dem/PreProcessor	pkg/lattice/PreProcessor	pkg/realtime-rigidbody/PreProcessor	pkg/snow	pkg/snow/PreProcessor scripts
+</A></li>
+        <LI>Next message: <A HREF="000810.html">[deprecated list] [Yade-dev] [svn] r1711 - in trunk: extra	pkg/mass-spring
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#809">[ date ]</a>
+              <a href="thread.html#809">[ thread ]</a>
+              <a href="subject.html#809">[ subject ]</a>
+              <a href="author.html#809">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-03-04 08:00:46 +0100 (Wed, 04 Mar 2009)
+New Revision: 1710
+
+Modified:
+   trunk/SConstruct
+   trunk/pkg/realtime-rigidbody/SConscript
+Log:
+1. Fix linking of realtime-rigidbody WRT PersistentSAPCollider
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-03-03 09:07:53 UTC (rev 1709)
++++ trunk/SConstruct	2009-03-04 07:00:46 UTC (rev 1710)
+@@ -323,6 +323,7 @@
+ 	# check &quot;optional&quot; libs
+ 	if 'log4cxx' in env['features']:
+ 		ok=conf.CheckLibWithHeader('log4cxx','log4cxx/logger.h','c++','log4cxx::Logger::getLogger(&quot;&quot;);',autoadd=1)
++			#env.Append(CPPDEFINES=[('LOG4CXX','9'])
+ 		if not ok: featureNotOK('log4cxx')
+ 		env.Append(CPPDEFINES=['LOG4CXX'])
+ 	if 'python' in env['features']:
+
+Modified: trunk/pkg/realtime-rigidbody/SConscript
+===================================================================
+--- trunk/pkg/realtime-rigidbody/SConscript	2009-03-03 09:07:53 UTC (rev 1709)
++++ trunk/pkg/realtime-rigidbody/SConscript	2009-03-04 07:00:46 UTC (rev 1710)
+@@ -61,7 +61,7 @@
+ 			'Box',
+ 			'Sphere',
+ 			'AABB',
+-			'SAPCollider',
++			'PersistentSAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+ 			'TranslationEngine',
+ 			'yade-multimethods'],
+@@ -88,7 +88,7 @@
+ 			'AABB',
+ 			'Box',
+ 			'Sphere',
+-			'SAPCollider',
++			'PersistentSAPCollider',
+ 			'MetaInteractingGeometry2AABB',
+ 			'RotationEngine',
+ 			'yade-multimethods'],
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000808.html">[deprecated list] [Yade-dev] [svn] r1709 - in trunk: core	core/containers extra	gui/py lib/base pkg/common	pkg/common/Engine/StandAloneEngine	pkg/dem pkg/dem/PreProcessor	pkg/lattice/PreProcessor	pkg/realtime-rigidbody/PreProcessor	pkg/snow	pkg/snow/PreProcessor scripts
+</A></li>
+	<LI>Next message: <A HREF="000810.html">[deprecated list] [Yade-dev] [svn] r1711 - in trunk: extra	pkg/mass-spring
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#809">[ date ]</a>
+              <a href="thread.html#809">[ thread ]</a>
+              <a href="subject.html#809">[ subject ]</a>
+              <a href="author.html#809">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

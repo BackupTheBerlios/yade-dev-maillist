@@ -1,0 +1,128 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] svn1370 unstable
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20svn1370%20unstable&In-Reply-To=%3C200805291225.57407.dorofeenko%40icp.ac.ru%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000210.html">
+   <LINK REL="Next"  HREF="000212.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] svn1370 unstable</H1>
+    <B>sega</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20svn1370%20unstable&In-Reply-To=%3C200805291225.57407.dorofeenko%40icp.ac.ru%3E"
+       TITLE="[yade-dev] svn1370 unstable">dorofeenko at icp.ac.ru
+       </A><BR>
+    <I>Thu May 29 10:25:57 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000210.html">[yade-dev] [Yade-commits] r1368 - trunk/scripts
+</A></li>
+        <LI>Next message: <A HREF="000212.html">[yade-dev] svn1370 unstable
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#211">[ date ]</a>
+              <a href="thread.html#211">[ thread ]</a>
+              <a href="subject.html#211">[ subject ]</a>
+              <a href="author.html#211">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Hello!
+Since the YADE interface is changing significantly, and, as me seems, the last 
+revisions very unstable, I have the following question. Is it that making 
+changes to the trunk should not harm the YADE stability? Or, are active now 
+because the changes allowed high instability, and better just wait until all 
+the work will be completed? The issue relates to whether that should report 
+any problems in the last revisions, or about them and so well known?
+
+Now I can not even run the program:
+
+==========
+<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at sega</A>:~/work/yade/trunk/scripts&gt; yade-trunk-opt simple-scene.py
+Constructing ClassFactory  (if multiple times - check '-rdynamic' flag!).
+Constructing SerializableSingleton  (if multiple times - check '-rdynamic' 
+flag!).
+INFO  core/Omega.cpp:34 Omega: Constructing Omega  (if multiple times - 
+check '-rdynamic' flag!).
+INFO  core/yade.cpp:229 main: Loading configuration 
+file: /home/sega/.yade-trunk-opt/preferences.xml
+INFO  core/yade.cpp:231 main: Loading plugins...
+WARNING: cannot open file used for capillary law, in TriaxalTestWater
+INFO  core/yade.cpp:231 main: Plugins loaded.
+INFO  gui/qt3/YadeQtMainWindow.cpp:51 YadeQtMainWindow: Loading configuration 
+file: /home/sega/.yade-trunk-opt/QtGUIPreferences.xml.
+INFO  gui/qt3/QtGUI.cpp:67 run: Launching Python thread now...
+Running script simple-scene.py
+INFO  core/Omega.cpp:364 saveSimulation: Saving file /tmp/a.xml
+__   __    ____          ____                      _
+\ \ / /_ _|  _ \  ___   / ___|___  _ __  ___  ___ | | ___
+ \ V / _` | | | |/ _ \ | |   / _ \| '_ \/ __|/ _ \| |/ _ \
+  | | (_| | |_| |  __/ | |__| (_) | | | \__ \ (_) | |  __/
+  |_|\__,_|____/ \___|  \____\___/|_| |_|___/\___/|_|\___|
+
+In [1]: o.run()
+
+In [2]: Segmentation fault.
+<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at sega</A>:~/work/yade/trunk/scripts&gt;
+==========
+
+I looked up /tmp/a.xml and discovered that isDynamic of rootbody is &quot;88&quot;.
+I corrected it, but the program still does not work:
+
+===================
+<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at sega</A>:~/work/yade/trunk/scripts&gt; yade-trunk-opt -S /tmp/a.xml
+Constructing ClassFactory  (if multiple times - check '-rdynamic' flag!).
+Constructing SerializableSingleton  (if multiple times - check '-rdynamic' 
+flag!).
+INFO  core/Omega.cpp:34 Omega: Constructing Omega  (if multiple times - 
+check '-rdynamic' flag!).
+INFO  core/yade.cpp:229 main: Loading configuration 
+file: /home/sega/.yade-trunk-opt/preferences.xml
+INFO  core/yade.cpp:231 main: Loading plugins...
+WARNING: cannot open file used for capillary law, in TriaxalTestWater
+INFO  core/yade.cpp:231 main: Plugins loaded.
+INFO  gui/qt3/YadeQtMainWindow.cpp:51 YadeQtMainWindow: Loading configuration 
+file: /home/sega/.yade-trunk-opt/QtGUIPreferences.xml.
+Omega::instance().getSimulationFileName()=/tmp/a.xml
+INFO  core/Omega.cpp:330 loadSimulation: Loading file /tmp/a.xml
+INFO  gui/qt3/QtGUI.cpp:67 run: Launching Python thread now...
+Running simulation /tmp/a.xml
+INFO  core/Omega.cpp:330 loadSimulation: Loading file /tmp/a.xml
+[1]+  Done                    gvim /tmp/a.xml
+Segmentation fault.
+=========================
+
+--
+Best regards, Sergei D.
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000210.html">[yade-dev] [Yade-commits] r1368 - trunk/scripts
+</A></li>
+	<LI>Next message: <A HREF="000212.html">[yade-dev] svn1370 unstable
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#211">[ date ]</a>
+              <a href="thread.html#211">[ thread ]</a>
+              <a href="subject.html#211">[ subject ]</a>
+              <a href="author.html#211">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,281 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1936 - in trunk: . gui/qt3	pkg/dem/DataClass py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1936%20-%20in%20trunk%3A%20.%20gui/qt3%0A%09pkg/dem/DataClass%20py&In-Reply-To=%3C200908111047.n7BAlLkF017148%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001358.html">
+   <LINK REL="Next"  HREF="001361.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1936 - in trunk: . gui/qt3	pkg/dem/DataClass py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1936%20-%20in%20trunk%3A%20.%20gui/qt3%0A%09pkg/dem/DataClass%20py&In-Reply-To=%3C200908111047.n7BAlLkF017148%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1936 - in trunk: . gui/qt3	pkg/dem/DataClass py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Aug 11 12:47:21 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001358.html">[deprecated list] [Yade-dev] [svn] r1935 - in trunk:	examples	examples/dynamic_simulation_tests	examples/rod_penetration	pkg/dem/Engine/EngineUnit py
+</A></li>
+        <LI>Next message: <A HREF="001361.html">[deprecated list] [Yade-dev] [svn] r1936 - in trunk: . gui/qt3	pkg/dem/DataClass	py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1359">[ date ]</a>
+              <a href="thread.html#1359">[ thread ]</a>
+              <a href="subject.html#1359">[ subject ]</a>
+              <a href="author.html#1359">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-08-11 12:47:18 +0200 (Tue, 11 Aug 2009)
+New Revision: 1936
+
+Modified:
+   trunk/SConstruct
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/GLViewer.hpp
+   trunk/gui/qt3/SimulationController.cpp
+   trunk/pkg/dem/DataClass/SpherePack.cpp
+   trunk/pkg/dem/DataClass/SpherePack.hpp
+   trunk/py/_packSpheres.cpp
+Log:
+1. Try to fix locking with boost-1.35, possibly fixes <A HREF="https://bugs.launchpad.net/yade/+bug/411572">https://bugs.launchpad.net/yade/+bug/411572</A> (please confirm)
+2. Add periodic repetition function to SpherePack
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-08-10 17:59:33 UTC (rev 1935)
++++ trunk/SConstruct	2009-08-11 10:47:18 UTC (rev 1936)
+@@ -295,8 +295,9 @@
+ 
+ 	# gentoo has threaded flavour named differently and it must have precedence over the non-threaded one
+ 	def CheckLib_maybeMT(conf,lib,header,lang,func): return conf.CheckLibWithHeader(lib+'-mt',['limits.h',header],'c++',func,autoadd=1) or conf.CheckLibWithHeader(lib,['limits.h',header],lang,func,autoadd=1)
++	ok&amp;=CheckLib_maybeMT(conf,'boost_system','boost/system/error_code.hpp','c++','boost::system::error_code();')
++	ok&amp;=CheckLib_maybeMT(conf,'boost_thread','boost/thread/thread.hpp','c++','boost::thread::thread();')
+ 	ok&amp;=CheckLib_maybeMT(conf,'boost_date_time','boost/date_time/posix_time/posix_time.hpp','c++','boost::posix_time::time_duration::time_duration();')
+-	ok&amp;=CheckLib_maybeMT(conf,'boost_thread','boost/thread/thread.hpp','c++','boost::thread::thread();')
+ 	ok&amp;=CheckLib_maybeMT(conf,'boost_filesystem','boost/filesystem/path.hpp','c++','boost::filesystem::path();')
+ 	ok&amp;=CheckLib_maybeMT(conf,'boost_iostreams','boost/iostreams/device/file.hpp','c++','boost::iostreams::file_sink(&quot;&quot;);')
+ 	ok&amp;=CheckLib_maybeMT(conf,'boost_regex','boost/regex.hpp','c++','boost::regex(&quot;&quot;);')
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2009-08-10 17:59:33 UTC (rev 1935)
++++ trunk/gui/qt3/GLViewer.cpp	2009-08-11 10:47:18 UTC (rev 1936)
+@@ -25,37 +25,29 @@
+ #endif
+ 
+ CREATE_LOGGER(GLViewer);
+-GLLock::GLLock(GLViewer* _glv):
+-/* 
+- * try: doneCurrent; glFlush; glSwapBuffers after paintGL
+- */
+-#if BOOST_VERSION&lt;103500
+-	boost::try_mutex::scoped_try_lock(Omega::instance().renderMutex,true), glv(_glv){
+-		glv-&gt;makeCurrent();
+-	}
+-#else
+-	boost::try_mutex::scoped_try_lock(Omega::instance().renderMutex), glv(_glv){
+-		glv-&gt;makeCurrent();
+-	}
+-#endif
+ 
+-GLLock::~GLLock(){ glv-&gt;doneCurrent();}
++GLLock::GLLock(GLViewer* _glv): boost::try_mutex::scoped_lock(Omega::instance().renderMutex), glv(_glv){
++	glv-&gt;makeCurrent();
++}
++GLLock::~GLLock(){ glv-&gt;doneCurrent(); }
+ 
++
+ void GLViewer::updateGL(void){/*GLLock lock(this); */QGLViewer::updateGL();}
+ 
++/* additionally try: doneCurrent; glFlush; glSwapBuffers after paintGL */
+ void GLViewer::paintGL(void){
+ 	/* paintGL encapsulated preDraw, draw and postDraw within QGLViewer. If the mutex cannot be locked,
+ 	 * we just return without repainting */
++	boost::try_mutex::scoped_try_lock lock(Omega::instance().renderMutex);
+ 	#if BOOST_VERSION&lt;103500
+-		boost::try_mutex::scoped_try_lock lock(Omega::instance().renderMutex);
+-		if(lock.locked()){
++		if(lock.locked())
+ 	#else
+-		boost::try_mutex::scoped_try_lock lock(Omega::instance().renderMutex,boost::defer_lock);
+-		if(lock.owns_lock()){
++		if(lock.owns_lock())
+ 	#endif
++		{
+ 			this-&gt;makeCurrent();
+ 			QGLViewer::paintGL();
+-	}
++		}
+ 	this-&gt;doneCurrent();
+ }
+ 
+@@ -344,15 +336,16 @@
+  * &quot;central&quot; (where most bodies is) part very small or even invisible.
+  */
+ void GLViewer::centerMedianQuartile(){
+-	if(Omega::instance().getRootBody()-&gt;isPeriodic){ centerPeriodic(); return; }
+-	long nBodies=Omega::instance().getRootBody()-&gt;bodies-&gt;size();
++	MetaBody* rb=Omega::instance().getRootBody().get();
++	if(rb-&gt;isPeriodic){ centerPeriodic(); return; }
++	long nBodies=rb-&gt;bodies-&gt;size();
+ 	if(nBodies&lt;4) {
+ 		LOG_INFO(&quot;Less than 4 bodies, median makes no sense; calling centerScene() instead.&quot;);
+ 		return centerScene();
+ 	}
+ 	std::vector&lt;Real&gt; coords[3];
+ 	for(int i=0;i&lt;3;i++)coords[i].reserve(nBodies);
+-	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *Omega::instance().getRootBody()-&gt;bodies){
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rb-&gt;bodies){
+ 		for(int i=0; i&lt;3; i++) coords[i].push_back(b-&gt;physicalParameters-&gt;se3.position[i]);
+ 	}
+ 	Vector3r median,interQuart;
+@@ -394,7 +387,7 @@
+ 	LOG_DEBUG(&quot;Got scene box min=&quot;&lt;&lt;min&lt;&lt;&quot; and max=&quot;&lt;&lt;max);
+ 	Vector3r center = (max+min)*0.5;
+ 	Vector3r halfSize = (max-min)*0.5;
+-	float radius=std::max(halfSize[0],std::max(halfSize[1],halfSize[2])); if(radius==0) radius=1;
++	float radius=std::max(halfSize[0],std::max(halfSize[1],halfSize[2])); if(radius&lt;=0) radius=1;
+ 	LOG_DEBUG(&quot;Scene center=&quot;&lt;&lt;center&lt;&lt;&quot;, halfSize=&quot;&lt;&lt;halfSize&lt;&lt;&quot;, radius=&quot;&lt;&lt;radius);
+ 	setSceneCenter(qglviewer::Vec(center[0],center[1],center[2]));
+ 	setSceneRadius(radius*1.5);
+
+Modified: trunk/gui/qt3/GLViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.hpp	2009-08-10 17:59:33 UTC (rev 1935)
++++ trunk/gui/qt3/GLViewer.hpp	2009-08-11 10:47:18 UTC (rev 1936)
+@@ -112,7 +112,13 @@
+ 		virtual void mousePressEvent(QMouseEvent *e);
+ };
+ 
+-class GLLock: public boost::try_mutex::scoped_try_lock{
++/*! Get unconditional lock on a GL view.
++
++Use if you need to manipulate GL context in some way.
++The ctor doesn't return until the lock has been acquired
++and the lock is released when the GLLock object is desctructed;
++*/
++class GLLock: public boost::try_mutex::scoped_lock{
+ 	GLViewer* glv;
+ 	public:
+ 		GLLock(GLViewer* _glv);
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2009-08-10 17:59:33 UTC (rev 1935)
++++ trunk/gui/qt3/SimulationController.cpp	2009-08-11 10:47:18 UTC (rev 1936)
+@@ -414,7 +414,7 @@
+ 		boost::try_mutex::scoped_try_lock lock(Omega::instance().renderMutex);
+ 		if(!lock.locked()){
+ 	#else
+-		boost::try_mutex::scoped_try_lock lock(Omega::instance().renderMutex,boost::defer_lock);
++		boost::try_mutex::scoped_try_lock lock(Omega::instance().renderMutex,boost::try_to_lock);
+ 		if(!lock.owns_lock()){
+ 	#endif
+ 		deactivateControlsWhenLoading();
+
+Modified: trunk/pkg/dem/DataClass/SpherePack.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/SpherePack.cpp	2009-08-10 17:59:33 UTC (rev 1935)
++++ trunk/pkg/dem/DataClass/SpherePack.cpp	2009-08-11 10:47:18 UTC (rev 1936)
+@@ -111,3 +111,28 @@
+ 	return pack.size();
+ }
+ 
++void SpherePack::cellFillVolume(Vector3r vol){
++	Vector3&lt;int&gt; count;
++	for(int i=0; i&lt;3; i++) count[i]=(int)(ceil(vol[i]/cellSize[i]));
++	cellRepeat(count);
++}
++
++void SpherePack::cellRepeat(Vector3&lt;int&gt; count){
++	if(cellSize==Vector3r::ZERO){ throw std::runtime_error(&quot;cellRepeat cannot be used on non-periodic packing.&quot;); }
++	if(count[0]&lt;=0 || count[1]&lt;=0 || count[2]&lt;=0){ throw std::invalid_argument(&quot;Repeat count components must be positive.&quot;); }
++	size_t origSize=pack.size();
++	pack.reserve(origSize*count[0]*count[1]*count[2]);
++	for(int i=0; i&lt;count[0]; i++){
++		for(int j=0; j&lt;count[1]; j++){
++			for(int k=0; k&lt;count[2]; j++){
++				if((i==0) &amp;&amp; (j==0) &amp;&amp; (k==0)) continue; // original cell
++				Vector3r off(cellSize[0]*i,cellSize[1]*j,cellSize[2]*k);
++				for(size_t l=0; l&lt;origSize; l++){
++					const Sph&amp; s=pack[l]; pack.push_back(Sph(s.c+off,s.r));
++				}
++			}
++		}
++	}
++	cellSize=Vector3r(cellSize[0]*count[0],cellSize[1]*count[1],cellSize[2]*count[2]);
++}
++
+
+Modified: trunk/pkg/dem/DataClass/SpherePack.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/SpherePack.hpp	2009-08-10 17:59:33 UTC (rev 1935)
++++ trunk/pkg/dem/DataClass/SpherePack.hpp	2009-08-11 10:47:18 UTC (rev 1936)
+@@ -58,6 +58,10 @@
+ 	// random generation
+ 	long makeCloud(Vector3r min, Vector3r max, Real rMean, Real rFuzz, size_t num, bool periodic=false);
+ 
++	// periodic repetition
++	void cellRepeat(Vector3&lt;int&gt; count);
++	void cellFillVolume(Vector3r volume);
++
+ 	// spatial characteristics
+ 	Vector3r dim() const {Vector3r mn,mx; aabb(mn,mx); return mx-mn;}
+ 	#ifdef YADE_PYTHON
+
+Modified: trunk/py/_packSpheres.cpp
+===================================================================
+--- trunk/py/_packSpheres.cpp	2009-08-10 17:59:33 UTC (rev 1935)
++++ trunk/py/_packSpheres.cpp	2009-08-11 10:47:18 UTC (rev 1936)
+@@ -16,6 +16,8 @@
+ 		.def(&quot;dim&quot;,&amp;SpherePack::dim,&quot;Return dimensions of the packing in terms of aabb(), as a 3-tuple.&quot;)
+ 		.def(&quot;center&quot;,&amp;SpherePack::midPt,&quot;Return coordinates of the bounding box center.&quot;)
+ 		.def_readonly(&quot;cellSize&quot;,&amp;SpherePack::cellSize,&quot;Size of periodic cell; is Vector3(0,0,0) if not periodic.&quot;)
++		.def(&quot;cellFillVolume&quot;,&amp;SpherePack::cellFillVolume,&quot;Repeat the packing (if periodic) so that the results has dim() &gt;= given size. The packing retains periodicity, but changes cellSize. Raises exception for non-periodic packing.&quot;)
++		.def(&quot;cellRepeat&quot;,&amp;SpherePack::cellRepeat,&quot;Repeat the packing given number of times in each dimension. Periodicity is retained, cellSize changes. Raises exception for non-periodic packing.&quot;)
+ 		.def(&quot;relDensity&quot;,&amp;SpherePack::relDensity,&quot;Relative packing density, measured as sum of spheres' volumes / aabb volume.\n(Sphere overlaps are ignored.)&quot;)
+ 		.def(&quot;translate&quot;,&amp;SpherePack::translate,&quot;Translate all spheres by given vector.&quot;)
+ 		.def(&quot;rotate&quot;,&amp;SpherePack::rotate,&quot;Rotate all spheres around packing center (in terms of aabb()), given axis and angle of the rotation.&quot;)
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001358.html">[deprecated list] [Yade-dev] [svn] r1935 - in trunk:	examples	examples/dynamic_simulation_tests	examples/rod_penetration	pkg/dem/Engine/EngineUnit py
+</A></li>
+	<LI>Next message: <A HREF="001361.html">[deprecated list] [Yade-dev] [svn] r1936 - in trunk: . gui/qt3	pkg/dem/DataClass	py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1359">[ date ]</a>
+              <a href="thread.html#1359">[ thread ]</a>
+              <a href="subject.html#1359">[ subject ]</a>
+              <a href="author.html#1359">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

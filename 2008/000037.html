@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] TriaxialTest is broken in current SVN
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20TriaxialTest%20is%20broken%20in%20current%20SVN&In-Reply-To=%3C47BAE948.70708%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000036.html">
+   <LINK REL="Next"  HREF="000038.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] TriaxialTest is broken in current SVN</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20TriaxialTest%20is%20broken%20in%20current%20SVN&In-Reply-To=%3C47BAE948.70708%40arcig.cz%3E"
+       TITLE="[yade-dev] TriaxialTest is broken in current SVN">eudoxos at arcig.cz
+       </A><BR>
+    <I>Tue Feb 19 15:35:52 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000036.html">[yade-dev] TriaxialTest is broken in current SVN
+</A></li>
+        <LI>Next message: <A HREF="000038.html">[yade-dev] TriaxialTest is broken in current SVN
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#37">[ date ]</a>
+              <a href="thread.html#37">[ thread ]</a>
+              <a href="subject.html#37">[ subject ]</a>
+              <a href="author.html#37">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Don't go too far with code loading spheres, have a look at
+Shop::loadSpheresFromFile (just returns pairs of center-radius); and
+Shop::saveSpheresToFile. Vaclav
+&gt;<i> I
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i> V&#225;clav S a &#233;crit :
+</I>&gt;<i>   
+</I>&gt;&gt;&gt;<i> 4. Watch the compaction stage
+</I>&gt;&gt;&gt;<i> 5. See the spheres disapearing when compression is supposed toi start
+</I>&gt;&gt;&gt;<i>
+</I>&gt;&gt;&gt;<i> Also, I noticed that interaction types are SDECLinks in the triaxial 
+</I>&gt;&gt;&gt;<i> test, which is not supposed to happen.
+</I>&gt;&gt;&gt;<i>   
+</I>&gt;&gt;&gt;<i>     
+</I>&gt;&gt;&gt;<i>       
+</I>&gt;&gt;<i> Huh, that is my fault again. TriaxialCompressionEngine:86 should be
+</I>&gt;&gt;<i> if(0), not if(1); and the whole block can be effectively deleted. It was
+</I>&gt;&gt;<i> an experimental stuff to test what happens if I glue particles together
+</I>&gt;&gt;<i> after compaction.  I just commited the fix.
+</I>&gt;&gt;<i>   
+</I>&gt;&gt;<i>     
+</I>&gt;<i> Ok. Does it fix the SDECLink problem?
+</I>&gt;<i> TriaxialTest.cpp was also using elasticContactLaw and 
+</I>&gt;<i> elasticCohesiveContactLaw at the same time, I don't know if you or me 
+</I>&gt;<i> commited that but I reverted that and will commit soon : TriaxialTest is 
+</I>&gt;<i> not supposed to be cohesive + 2 simultaneous contact laws makes no sense.
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>&gt;&gt;<i> Do you have some precise idea what the regression test will look like?
+</I>&gt;&gt;<i> Notably, what will be the reference value checked after the run.
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i>   
+</I>&gt;&gt;<i>     
+</I>&gt;<i> I think the value of stress and strain after X iterations + the peak 
+</I>&gt;<i> stress value would make good tests. If they don't change you can be sure 
+</I>&gt;<i> that the physics and mathematics in Yade were not affected, because they 
+</I>&gt;<i> result from very complex processes, highly sensitive to initial 
+</I>&gt;<i> conditions (Lorentz sort of).
+</I>&gt;<i>
+</I>&gt;<i> The only thing is we need to swith from random positioning to a text 
+</I>&gt;<i> file, I still have to create this file and to get the code for loading 
+</I>&gt;<i> positions back.
+</I>&gt;<i>
+</I>&gt;<i> Bruno
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>&gt;&gt;<i> V.
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> _______________________________________________
+</I>&gt;&gt;<i> yade-dev mailing list
+</I>&gt;&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.berlios.de</A>
+</I>&gt;&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">https://lists.berlios.de/mailman/listinfo/yade-dev</A>
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i>   
+</I>&gt;&gt;<i>     
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000036.html">[yade-dev] TriaxialTest is broken in current SVN
+</A></li>
+	<LI>Next message: <A HREF="000038.html">[yade-dev] TriaxialTest is broken in current SVN
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#37">[ date ]</a>
+              <a href="thread.html#37">[ thread ]</a>
+              <a href="subject.html#37">[ subject ]</a>
+              <a href="author.html#37">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

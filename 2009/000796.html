@@ -1,0 +1,106 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1704 - in trunk: gui/py scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1704%20-%20in%20trunk%3A%20gui/py%20scripts&In-Reply-To=%3C200903011335.n21DZII8022635%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000794.html">
+   <LINK REL="Next"  HREF="000797.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1704 - in trunk: gui/py scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1704%20-%20in%20trunk%3A%20gui/py%20scripts&In-Reply-To=%3C200903011335.n21DZII8022635%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1704 - in trunk: gui/py scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Mar  1 14:35:18 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000794.html">[deprecated list] [Yade-dev] [svn] r1703 - in trunk: core	examples/collider-perf	extra/clump gui/py	lib/multimethods	pkg/common/Engine/MetaEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000797.html">[deprecated list] [Yade-dev] [svn] r1705 - trunk/pkg/snow/Engine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#796">[ date ]</a>
+              <a href="thread.html#796">[ thread ]</a>
+              <a href="subject.html#796">[ subject ]</a>
+              <a href="author.html#796">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-03-01 14:35:18 +0100 (Sun, 01 Mar 2009)
+New Revision: 1704
+
+Modified:
+   trunk/gui/py/PythonUI.cpp
+   trunk/scripts/default-test.py
+Log:
+1. Fix old rename of runtime.args to runtime.argv in default-test.py. Should run OK now.
+
+
+Modified: trunk/gui/py/PythonUI.cpp
+===================================================================
+--- trunk/gui/py/PythonUI.cpp	2009-03-01 13:29:51 UTC (rev 1703)
++++ trunk/gui/py/PythonUI.cpp	2009-03-01 13:35:18 UTC (rev 1704)
+@@ -33,7 +33,7 @@
+ 	*.py                       run this script (shorthand for -s *.py)\n\
+ 	*.xml *.xml.gz *.xml.bz2   open and run this simulation\n\
+ \n\
+-	remaining arguments are copied to yade.runtime.args (no escaping done) \n\
++	remaining arguments are copied to yade.runtime.argv (no escaping done) \n\
+ &quot;;
+ }
+ 
+
+Modified: trunk/scripts/default-test.py
+===================================================================
+--- trunk/scripts/default-test.py	2009-03-01 13:29:51 UTC (rev 1703)
++++ trunk/scripts/default-test.py	2009-03-01 13:35:18 UTC (rev 1704)
+@@ -75,7 +75,7 @@
+ # handle crash reports, if any
+ if reports:
+ 	mailFrom,mailTo=None,None
+-	for a in yade.runtime.args:
++	for a in yade.runtime.argv:
+ 		if 'mail:' in a: mailFrom,mailTo=a.replace('mail:','').split(',')
+ 	reportText='\n'.join([80*'#'+'\n'+r[0]+': '+r[1]+'\n'+80*'#'+'\n'+r[2] for r in reports])
+ 	if mailTo and mailFrom:
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000794.html">[deprecated list] [Yade-dev] [svn] r1703 - in trunk: core	examples/collider-perf	extra/clump gui/py	lib/multimethods	pkg/common/Engine/MetaEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000797.html">[deprecated list] [Yade-dev] [svn] r1705 - trunk/pkg/snow/Engine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#796">[ date ]</a>
+              <a href="thread.html#796">[ thread ]</a>
+              <a href="subject.html#796">[ subject ]</a>
+              <a href="author.html#796">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

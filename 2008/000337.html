@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] vector&lt;Vector3r&gt; from python
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20vector%3CVector3r%3E%20from%20python&In-Reply-To=%3C48BE725C.9080003%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000336.html">
+   <LINK REL="Next"  HREF="000338.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] vector&lt;Vector3r&gt; from python</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20vector%3CVector3r%3E%20from%20python&In-Reply-To=%3C48BE725C.9080003%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev] vector&lt;Vector3r&gt; from python">eudoxos at arcig.cz
+       </A><BR>
+    <I>Wed Sep  3 13:17:48 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000336.html">[deprecated list] [Yade-dev] vector&lt;Vector3r&gt; from python
+</A></li>
+        <LI>Next message: <A HREF="000338.html">[deprecated list] [Yade-dev] vector&lt;Vector3r&gt; from python
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#337">[ date ]</a>
+              <a href="thread.html#337">[ thread ]</a>
+              <a href="subject.html#337">[ subject ]</a>
+              <a href="author.html#337">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> Hi.
+</I>&gt;<i> Vaclav, I have vector&lt;Vector3r&gt; attribute in a class. How can I create this class from python?
+</I>&gt;<i> Now I do, for example, as
+</I>&gt;<i> b.shape=GeometricalModel('Facet',{'vertices':[[1,0,0],[0,0,1],[0,0,-1]],'diffuseColor':color,'wire':wire,'visible':True})
+</I>&gt;<i> but I get &quot;RuntimeError: Could not extract type double&quot;
+</I>&gt;<i>   
+</I>Hi, unfortunately there is a bug in RTTI or in yade-serialization that I
+wasn't able to fix although I tried rather hard. Find attached a file
+with workaround: use raw string to pass that attribute (setRaw). My idea
+was to create same utility function for edges and vertices as well, but
+I didn't have time since then; if you do it, that would be great.
+Eventually, I though of importing ASCII file with triangular mesh
+(vertex coordinates and vertex number for faces) and building simulation
+from that (since I am at odds with blender ;-) ). The advantage also
+woulds be that once we dump this yade-serialization, only internals of
+these functions will change. Once those functions work corretly, feel
+free to add them to utils.py.
+
+HTH, Vaclav
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000336.html">[deprecated list] [Yade-dev] vector&lt;Vector3r&gt; from python
+</A></li>
+	<LI>Next message: <A HREF="000338.html">[deprecated list] [Yade-dev] vector&lt;Vector3r&gt; from python
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#337">[ date ]</a>
+              <a href="thread.html#337">[ thread ]</a>
+              <a href="subject.html#337">[ subject ]</a>
+              <a href="author.html#337">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] Incomprehensible crash
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Incomprehensible%20crash&In-Reply-To=%3C49087D37.1020806%40geo.hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000491.html">
+   <LINK REL="Next"  HREF="000486.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] Incomprehensible crash</H1>
+    <B>Jerome Duriez</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Incomprehensible%20crash&In-Reply-To=%3C49087D37.1020806%40geo.hmg.inpg.fr%3E"
+       TITLE="[deprecated list] [Yade-dev] Incomprehensible crash">duriez at geo.hmg.inpg.fr
+       </A><BR>
+    <I>Wed Oct 29 16:11:51 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000491.html">[deprecated list] [Yade-dev] Incomprehensible crash
+</A></li>
+        <LI>Next message: <A HREF="000486.html">[deprecated list] [Yade-dev] Incomprehensible crash
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#492">[ date ]</a>
+              <a href="thread.html#492">[ thread ]</a>
+              <a href="subject.html#492">[ subject ]</a>
+              <a href="author.html#492">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE> From this you can extract in fact &quot;only&quot; these two &#167; : (from thread 2)
+
+#7  0xb3e903a2 in DynLibDispatcher&lt;Loki::Typelist&lt;GeometricalModel,
+Loki::Typelist&lt;InteractingGeometry, Loki::NullType&gt; &gt;,
+InteractingGeometryEngineUnit, void,
+Loki::Typelist&lt;boost::shared_ptr&lt;GeometricalModel&gt; const&amp;,
+Loki::Typelist&lt;boost::shared_ptr&lt;InteractingGeometry&gt;&amp;,
+Loki::Typelist&lt;Se3&lt;double&gt; const&amp;, Loki::Typelist&lt;Body const*,
+Loki::NullType&gt; &gt; &gt; &gt;, true&gt;::locateMultivirtualFunctor2D
+(this=0x8bc3674, index1=@0xaf7c9254, index2=@0xaf7c9258,
+base1=@0x8bc3d10, base2=@0x8bc3d18) at
+/usr/include/boost/shared_ptr.hpp:363
+#8  0xb3e77d05 in InteractingGeometryMetaEngine::action
+(this=0x8bc3650, ncb=0x8bc0350) at
+/home/vincent/yade-local/build-svn1564/include/yade-svn1564/yade/lib-multimethods/DynLibDispatcher.hpp:856 
+
+
+Why only these two ? First because that they are surely the only ones 
+that mean something for you (it speaks about 
+InteractingGeometryMetaEngine, InteractingGeometry and you begin surely 
+to interest about it) whereas it is normal (at least, it is my case) to 
+not see at all to what the others could refer ! Moreover you will surely 
+see, after a few crashes..., that most of these lines you understand 
+nothing are always the same, and only a few, corresponding generally to 
+files you modified..., differ at each time.
+    So these lines say you that it is more precisely during the 
+execution of InteractingGeometryMetaEngine::action, that something goes 
+wrong. What could this be ?? A wrong type of parameter (Body instead of 
+Metabody for exemple), access to the 10th element of something which has 
+only 5, so more or less all...
+But now you know a bit more where to search...
+
+Jerome
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000491.html">[deprecated list] [Yade-dev] Incomprehensible crash
+</A></li>
+	<LI>Next message: <A HREF="000486.html">[deprecated list] [Yade-dev] Incomprehensible crash
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#492">[ date ]</a>
+              <a href="thread.html#492">[ thread ]</a>
+              <a href="subject.html#492">[ subject ]</a>
+              <a href="author.html#492">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

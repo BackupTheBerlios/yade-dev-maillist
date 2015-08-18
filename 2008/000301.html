@@ -1,0 +1,85 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] [Yade-commits] r1455 - in trunk: core extra gui/py gui/qt3	lib/miniWm3 pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20r1455%20-%20in%20trunk%3A%20core%20extra%20gui/py%0A%20gui/qt3%09lib/miniWm3%0A%20pkg/common/Engine/DeusExMachina%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C4892158E.4040608%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000300.html">
+   <LINK REL="Next"  HREF="000302.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] [Yade-commits] r1455 - in trunk: core extra gui/py gui/qt3	lib/miniWm3 pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20r1455%20-%20in%20trunk%3A%20core%20extra%20gui/py%0A%20gui/qt3%09lib/miniWm3%0A%20pkg/common/Engine/DeusExMachina%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C4892158E.4040608%40arcig.cz%3E"
+       TITLE="[yade-dev] [Yade-commits] r1455 - in trunk: core extra gui/py gui/qt3	lib/miniWm3 pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine">eudoxos at arcig.cz
+       </A><BR>
+    <I>Thu Jul 31 21:42:06 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000300.html">[yade-dev] [Yade-commits] r1455 - in trunk: core extra gui/py gui/qt3	lib/miniWm3 pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000302.html">[yade-dev] Automated crash report for	/tmp/yade-18233/bin/yade-svn1455:	SDECLinkedSpheres,	ThreePointBending
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#301">[ date ]</a>
+              <a href="thread.html#301">[ thread ]</a>
+              <a href="subject.html#301">[ subject ]</a>
+              <a href="author.html#301">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;&gt;<i> 1. DECREASED Mathr::ZERO_TOLERANCE to 1e-20 so that we don't get identity quaternions for small rotation in ToAxisAngle (!!)  
+</I>&gt;&gt;<i>     
+</I>&gt;<i> What is that?!
+</I>&gt;<i> Rotations are rounded to identity if they &quot;look&quot; small enough? Strange...
+</I>&gt;<i> Does this change affect (in the good senses) other rotations computed in 
+</I>&gt;<i> Yade?
+</I>&gt;<i>   
+</I>I skimmed through the Wm3 code before and it seems that it is only in
+ToAxisAngle that this was used: if the quaternion norm was &lt;
+ZERO_TOLERANCE, it was taken as identity. That was, for example, that
+for a unit axis (0,0,1) the angle must have been greater than 1e-5 (now
+we can go as far as 1e-8). I found it because I was assigning a rotation
+in python (where Se3 is serialized as
+(x,y,z,axis_x,axis_y,axis_z,angle)) but when I printed that rotation, it
+was zero.
+
+That check is necessary, since the calculation in ToAxisAngle divides by
+the norm, which is (I think) zero for identity quaternion, which must be
+therefore handled specially.
+
+Regards, Vaclav
+
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000300.html">[yade-dev] [Yade-commits] r1455 - in trunk: core extra gui/py gui/qt3	lib/miniWm3 pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000302.html">[yade-dev] Automated crash report for	/tmp/yade-18233/bin/yade-svn1455:	SDECLinkedSpheres,	ThreePointBending
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#301">[ date ]</a>
+              <a href="thread.html#301">[ thread ]</a>
+              <a href="subject.html#301">[ subject ]</a>
+              <a href="author.html#301">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

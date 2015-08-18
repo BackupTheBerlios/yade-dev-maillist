@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] significat timestep improvement with non-incremental shear computation
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20significat%20timestep%20improvement%0A%20with%20non-incremental%20shear%20computation&In-Reply-To=%3C48D3A884.7010407%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000360.html">
+   <LINK REL="Next"  HREF="000364.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] significat timestep improvement with non-incremental shear computation</H1>
+    <B>Vaclav Smilauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20significat%20timestep%20improvement%0A%20with%20non-incremental%20shear%20computation&In-Reply-To=%3C48D3A884.7010407%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev] significat timestep improvement with non-incremental shear computation">eudoxos at arcig.cz
+       </A><BR>
+    <I>Fri Sep 19 15:26:28 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000360.html">[deprecated list] [Yade-dev] significat timestep improvement with	non-incremental	shear computation
+</A></li>
+        <LI>Next message: <A HREF="000364.html">[deprecated list] [Yade-dev] [svn] r1519 - in trunk:	examples	examples/rod_penetration pkg/common	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#361">[ date ]</a>
+              <a href="thread.html#361">[ thread ]</a>
+              <a href="subject.html#361">[ subject ]</a>
+              <a href="author.html#361">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+
+Bruno Chareyre napsal(a):
+&gt;<i> V&#225;clav &#352;milauer a &#233;crit :
+</I>&gt;&gt;<i> Bruno,
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> I compared today results of old brefcom that used incremental
+</I>&gt;&gt;<i> computation of epsN (roughly the same as in ElasticContactLaw)
+</I>&gt;<i> I guess you meant epsS? Because in ElasticContactLaw, Un is not computed 
+</I>&gt;<i> incrementally, only Us is.
+</I>&gt;&gt;<i>  with new
+</I>&gt;&gt;<i> version that does that based on original contact point position (see in
+</I>&gt;&gt;<i> SpheresContactGeometry docs). Before, I was using timestep
+</I>&gt;&gt;<i> .2*PWaveTimeStep, now I got to 1*PWaveTimeStep with only small change in
+</I>&gt;&gt;<i> the strain-stress diagram (the simulation didn't explode). Time per
+</I>&gt;&gt;<i> iteration is a bit larger (by about 5-10%) due to more complicated
+</I>&gt;&gt;<i> calculations involved. Let me know if you would like to try, adapting
+</I>&gt;&gt;<i> ElasticContactLaw would be quite easy.
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i>   
+</I>&gt;<i> Unfortunately, it is completely impossible to do that in 
+</I>&gt;<i> ElasticContactLaw without changing fundamentaly the physics behind.
+</I>&gt;<i> 
+</I>&gt;<i> Simple example in 1D :
+</I>&gt;<i> 1st scenario : relative displacement us : resultant force fs = 
+</I>&gt;<i> -fn*tan(phi) (provided the friction threshold was reached)
+</I>&gt;<i> 2nd scenario : relative displacement 2*us, then another displacement -us 
+</I>&gt;<i> : resultant force fs = fn*tan(phi) (sign changed)
+</I>&gt;<i> 
+</I>&gt;<i> You have the same start/end points in both cases but the forces are of 
+</I>&gt;<i> opposite sign, because the force depends on the history of the motion. 
+</I>&gt;<i> You will loose history if you don't use an incremental form.
+</I>&gt;<i> What you suggest is possible only in a purely elastic problem.
+</I>
+My algorithm tracks the original contact point, but it will be displaced 
+if there is plastic slip (Coulomb friction); therefore it ends up with 
+the same result as you suggested, provided that the -1*us displacement 
+leads to slipping. (I use something similar in brefcom as well; and it 
+works)
+
+&gt;<i> Another thing is i'm a bit surprised you could change the timestep while 
+</I>&gt;<i> keeping the same stress-strain graph, since this graph is defining - 
+</I>&gt;<i> alone - the critical timestep in your problem. Eigenfrequencies are 
+</I>&gt;<i> physical quantities that don't depend on the implementation details, 
+</I>&gt;<i> just stiffness and mass.
+</I>
+With incremental code, there are 2 factors worsening the accuracy: (1) 
+the algorithm itself is approximate, (2) errors accumulate. In the 
+non-incremental code, the algorithm is geometrically exact and errors 
+don't accumulate.
+
+Therefore I think it is possible that the simulation is more stable with 
+the new code.
+
+Vaclav
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000360.html">[deprecated list] [Yade-dev] significat timestep improvement with	non-incremental	shear computation
+</A></li>
+	<LI>Next message: <A HREF="000364.html">[deprecated list] [Yade-dev] [svn] r1519 - in trunk:	examples	examples/rod_penetration pkg/common	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#361">[ date ]</a>
+              <a href="thread.html#361">[ thread ]</a>
+              <a href="subject.html#361">[ subject ]</a>
+              <a href="author.html#361">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

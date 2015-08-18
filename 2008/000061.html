@@ -1,0 +1,177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] Note on optimized compilation / optimized coding / profiling results
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Note%20on%20optimized%20compilation%20/%20optimized%20coding%20/%0A%20profiling%20results&In-Reply-To=%3C47C30736.5050403%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000058.html">
+   <LINK REL="Next"  HREF="000064.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] Note on optimized compilation / optimized coding / profiling results</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Note%20on%20optimized%20compilation%20/%20optimized%20coding%20/%0A%20profiling%20results&In-Reply-To=%3C47C30736.5050403%40hmg.inpg.fr%3E"
+       TITLE="[yade-dev] Note on optimized compilation / optimized coding / profiling results">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Mon Feb 25 19:21:42 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000058.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+        <LI>Next message: <A HREF="000064.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#61">[ date ]</a>
+              <a href="thread.html#61">[ thread ]</a>
+              <a href="subject.html#61">[ subject ]</a>
+              <a href="author.html#61">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>V&#225;clav S a &#233;crit :
+&gt;&gt;<i> -The time that is really spent for mathematics and associated code is 
+</I>&gt;&gt;<i> less than 7% for interaction geometry and less than 12% for ContactLaw 
+</I>&gt;&gt;<i> (7 and 12 are estimates based on non-inclusive costs, i.e. time really 
+</I>&gt;&gt;<i> spent in contact and geometry dyn libs) .
+</I>&gt;&gt;<i>   
+</I>&gt;&gt;<i>     
+</I>&gt;<i> Bruno, these are really important numbers, many thanks. That also means
+</I>&gt;<i> that I will not go on to vectorize (=multiplex) operations on vectors
+</I>&gt;<i> and quaternions (addition of all 3 elements in one CPU instruction),
+</I>&gt;<i> since that would yield very small speedups.
+</I>&gt;<i>   
+</I>That is THE big problem actualy, if you ask me. Each time you see a way 
+to gain speed, you (I) realize that it is negligible compared to 
+something else. Everything is a little bit slow, so that there is 
+nothing you can do to significantly speed things up. I'm tempted to 
+blame partly boost (I may be wrong though), which make every simple 
+operation like shared_ptr(new something) or i++ (when i points to 
+shared_ptr container)  slower than normal, and also some useless tests 
+and operations in some containers (due to defensive programming most of 
+the time).
+
+Let me illustrate that point with the function 
+PhysicalActionDamper::action ().
+
+This dispatching function takes 10% of the total simulation time. It is 
+supposed to damp force and momentum.
+
+Guess what time is spent for actually damping? 5.7% for force and 5.7% 
+for moment (i.e. 0.10*0.057 of total cpu time for each of 
+CundallNonViscousForceDamping and CundallNonViscousMomentumDamping). 
+Amazing isn't it? The damping dispatcher takes 89% of cpu time to do 
+something else, namely :
+- LocateMultivirtualFunctor : 50%
+- PhysicalActionIterator::Increment : 6%
+- BodyRedirectionVector::operator[] : 4%
+-PhysicalActionVector::getValue() : 3%
+-PhysicalActionVector::isDifferent() : 3%
+- etc...
+
+So that damping in a more efficient way would be totaly futile.
+
+That is why I keep insisting for thinking about speed constantly. 
+Because if one part is slow, everybody give up speeding things in his 
+own area of interest, and we get a slow code as a result.
+
+I really think I will try and merge some engines soon (same as Luc 
+Sibille idea), to reduce container operations and see the result. But my 
+impression is that containers themselves could be a lot faster, so that 
+merging would be useless.
+
+A simple example :
+
+shared_ptr&lt;PhysicalAction&gt;&amp; PhysicalActionVectorVector::find(unsigned 
+int id , int actionIndex )
+{
+    if( current_size &lt;= id ) // this is very rarely executed, only at 
+beginning.
+    // somebody is accesing out of bounds, make sure he will find, what 
+he needs - a resetted PhysicalAction of his type
+    {
+        ....
+    }
+    usedIds[id] = true;
+    return physicalActions[id][actionIndex];
+}
+
+1. There is this test at the begining, that is useless all the time 
+except at iteration 1.
+2. there is this usedIds[id] affectation (same remark again, only 
+modified at iteration 1).
+3. Then return a reference to a shared pointer (while shared_ptr 
+operations are slower than normal).
+
+Of course, this function &quot;find&quot; is used many many times. Result 3.81% of 
+total CPU time just for it, while we could just use 
+physicalActions[id][actionIndex] instead of find(), and reduce that time 
+a lot. But of course physicalActions is private...
+
+You may think 3.81% is negligible, yes, that is true, like everything 
+else is negligible. That is the problem.
+
+Janek : I know that containers will be changed anyway, and that is why I 
+think this is the right moment to cry about speed. :)
+Users don't care about Godwin's law, they need SPEED!!!
+
+&gt;<i> Recently looking at interfaces of many classes (like containers),
+</I>&gt;<i> methods are not properly marked const if they do not change the current
+</I>&gt;<i> instance. That, I think, prevents many optimizations. Like,
+</I>&gt;<i> container.size() should be declared as
+</I>&gt;<i>
+</I>&gt;<i> class container{
+</I>&gt;<i> ...
+</I>&gt;<i>  size_t size(void) const {...}
+</I>&gt;<i> ...
+</I>&gt;<i> }
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>Yes, I thought to that too, but I was not expert enough to be sure. 
+Can't the compiler check that nothing will be affected in some situations?
+
+Bruno
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Institut National Polytechnique de Grenoble
+Laboratoire 3S (Soils Solids Structures) - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000058.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+	<LI>Next message: <A HREF="000064.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#61">[ date ]</a>
+              <a href="thread.html#61">[ thread ]</a>
+              <a href="subject.html#61">[ subject ]</a>
+              <a href="author.html#61">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

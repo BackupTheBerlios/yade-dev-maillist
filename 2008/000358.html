@@ -1,0 +1,400 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1517 - in trunk: extra	extra/clump lib/opengl	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1517%20-%20in%20trunk%3A%20extra%0A%09extra/clump%20lib/opengl%09pkg/dem/DataClass/InteractionGeometry%0A%09pkg/dem/Engine/EngineUnit%09pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry&In-Reply-To=%3C200809180950.m8I9oLlq025319%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000356.html">
+   <LINK REL="Next"  HREF="000359.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1517 - in trunk: extra	extra/clump lib/opengl	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1517%20-%20in%20trunk%3A%20extra%0A%09extra/clump%20lib/opengl%09pkg/dem/DataClass/InteractionGeometry%0A%09pkg/dem/Engine/EngineUnit%09pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry&In-Reply-To=%3C200809180950.m8I9oLlq025319%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1517 - in trunk: extra	extra/clump lib/opengl	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Sep 18 11:50:21 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000356.html">[deprecated list] [Yade-dev] [svn] r1516 - in	trunk:	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	scripts
+</A></li>
+        <LI>Next message: <A HREF="000359.html">[deprecated list] [Yade-dev] reason of failing dynamic_casts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#358">[ date ]</a>
+              <a href="thread.html#358">[ thread ]</a>
+              <a href="subject.html#358">[ subject ]</a>
+              <a href="author.html#358">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-09-18 11:50:19 +0200 (Thu, 18 Sep 2008)
+New Revision: 1517
+
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/clump/Shop.hpp
+   trunk/lib/opengl/GLUtils.hpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp
+   trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp
+Log:
+1. Remove GL things from Shop, moved to lib/opengl/GLUtils.hpp
+2. Cleanup of SpheresContactGeometry code, rename exactRot to hasShear
+
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-09-17 21:48:17 UTC (rev 1516)
++++ trunk/extra/Brefcom.cpp	2008-09-18 09:50:19 UTC (rev 1517)
+@@ -4,6 +4,7 @@
+ #include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/lib-QGLViewer/qglviewer.h&gt;
++#include&lt;yade/lib-opengl/GLUtils.hpp&gt;
+ 
+ 
+ YADE_PLUGIN(&quot;BrefcomMakeContact&quot;,&quot;BrefcomContact&quot;,&quot;BrefcomLaw&quot;,&quot;GLDrawBrefcomContact&quot;,&quot;BrefcomDamageColorizer&quot;, &quot;BrefcomPhysParams&quot;, &quot;BrefcomGlobalCharacteristics&quot; /* ,&quot;BrefcomStiffnessComputer&quot;*/ );
+@@ -314,9 +315,9 @@
+ 		min(1.,max(0.,BC-&gt;epsTrans/BC-&gt;epsCrackOnset)),
+ 		min(1.,max(0.,abs(BC-&gt;epsTrans)/BC-&gt;epsCrackOnset-1)));
+ 
+-	if(contactLine) Shop::GLDrawLine(b1-&gt;physicalParameters-&gt;dispSe3.position,b2-&gt;physicalParameters-&gt;dispSe3.position,lineColor);
+-	if(dmgLabel){ Shop::GLDrawNum(BC-&gt;omega,0.5*(b1-&gt;physicalParameters-&gt;dispSe3.position+b2-&gt;physicalParameters-&gt;dispSe3.position),lineColor); }
+-	else if(epsNLabel){ Shop::GLDrawNum(BC-&gt;epsN,0.5*(b1-&gt;physicalParameters-&gt;dispSe3.position+b2-&gt;physicalParameters-&gt;dispSe3.position),lineColor); }
++	if(contactLine) GLUtils::GLDrawLine(b1-&gt;physicalParameters-&gt;dispSe3.position,b2-&gt;physicalParameters-&gt;dispSe3.position,lineColor);
++	if(dmgLabel){ GLUtils::GLDrawNum(BC-&gt;omega,0.5*(b1-&gt;physicalParameters-&gt;dispSe3.position+b2-&gt;physicalParameters-&gt;dispSe3.position),lineColor); }
++	else if(epsNLabel){ GLUtils::GLDrawNum(BC-&gt;epsN,0.5*(b1-&gt;physicalParameters-&gt;dispSe3.position+b2-&gt;physicalParameters-&gt;dispSe3.position),lineColor); }
+ 
+ 	const Vector3r&amp; cp=static_pointer_cast&lt;SpheresContactGeometry&gt;(i-&gt;interactionGeometry)-&gt;contactPoint;
+ 	if(epsT){
+@@ -325,16 +326,16 @@
+ 		Real scale=.5*BC-&gt;equilibriumDist;
+ 		Vector3r dirShear=BC-&gt;epsT; dirShear.Normalize();
+ 		if(epsTAxes){
+-			Shop::GLDrawLine(cp-Vector3r(scale,0,0),cp+Vector3r(scale,0,0));
+-			Shop::GLDrawLine(cp-Vector3r(0,scale,0),cp+Vector3r(0,scale,0));
+-			Shop::GLDrawLine(cp-Vector3r(0,0,scale),cp+Vector3r(0,0,scale));
++			GLUtils::GLDrawLine(cp-Vector3r(scale,0,0),cp+Vector3r(scale,0,0));
++			GLUtils::GLDrawLine(cp-Vector3r(0,scale,0),cp+Vector3r(0,scale,0));
++			GLUtils::GLDrawLine(cp-Vector3r(0,0,scale),cp+Vector3r(0,0,scale));
+ 		}
+-		Shop::GLDrawArrow(cp,cp+dirShear*relShear*scale,Vector3r(1.,0.,0.));
+-		Shop::GLDrawLine(cp+dirShear*relShear*scale,cp+dirShear*scale,Vector3r(.3,.3,.3));
++		GLUtils::GLDrawArrow(cp,cp+dirShear*relShear*scale,Vector3r(1.,0.,0.));
++		GLUtils::GLDrawLine(cp+dirShear*relShear*scale,cp+dirShear*scale,Vector3r(.3,.3,.3));
+ 
+-		/* normal strain */ Shop::GLDrawArrow(cp,cp+BC-&gt;prevNormal*(BC-&gt;epsN/maxShear),Vector3r(0.,1.,0.));
++		/* normal strain */ GLUtils::GLDrawArrow(cp,cp+BC-&gt;prevNormal*(BC-&gt;epsN/maxShear),Vector3r(0.,1.,0.));
+ 	}
+-	//if(normal) Shop::GLDrawArrow(cp,cp+BC-&gt;prevNormal*.5*BC-&gt;equilibriumDist,Vector3r(0.,1.,0.));
++	//if(normal) GLUtils::GLDrawArrow(cp,cp+BC-&gt;prevNormal*.5*BC-&gt;equilibriumDist,Vector3r(0.,1.,0.));
+ }
+ 
+ /********************** BrefcomDamageColorizer ****************************/
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2008-09-17 21:48:17 UTC (rev 1516)
++++ trunk/extra/clump/Shop.cpp	2008-09-18 09:50:19 UTC (rev 1517)
+@@ -1071,56 +1071,3 @@
+ 	{0.370512,0.415453,0.055970,0.010546},
+ 	{-1.,-1.,-1.,-1. } /* sentinel: non-positive radius */
+ };
+-#if 0
+-Real Shop::ElasticWaveTimestepEstimate(shared_ptr&lt;MetaBody&gt; rootBody){
+-	Real minDt=std::numeric_limits&lt;Real&gt;::infinity();
+-	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
+-		shared_ptr&lt;Sphere&gt; sphere=dynamic_pointer_cast&lt;Sphere&gt;(b-&gt;geometricalModel);
+-		shared_ptr&lt;ElasticBodyParameters&gt; elast=dynamic_pointer_cast&lt;ElasticBodyParameters&gt;(b-&gt;physicalParameters);
+-		if(!sphere || !elast) continue;
+-		Real density=elast-&gt;mass/((4./3.)*pow(Mathr::PI*sphere-&gt;radius,3));
+-		Real thisDt=2*sphere-&gt;radius/sqrt(elast-&gt;young/density);
+-		minDt=std::min(minDt,thisDt);
+-	}
+-	return minDt;
+-}
+-#endif
+-
+-void Shop::GLDrawLine(Vector3r from, Vector3r to, Vector3r color){
+-	glEnable(GL_LIGHTING); glColor3v(color);
+-	glBegin(GL_LINES); glVertex3v(from); glVertex3v(to); glEnd();
+-}
+-
+-void Shop::GLDrawArrow(Vector3r from, Vector3r to, Vector3r color){
+-	glEnable(GL_LIGHTING); glColor3v(color); qglviewer::Vec a(from[0],from[1],from[2]),b(to[0],to[1],to[2]); QGLViewer::drawArrow(a,b);	
+-}
+-
+-void Shop::GLDrawNum(Real n, Vector3r pos, Vector3r color, unsigned precision){
+-	ostringstream oss; oss&lt;&lt;setprecision(precision)&lt;&lt; /* &quot;w=&quot;&lt;&lt; */ (double)n;
+-	Shop::GLDrawText(oss.str(),pos,color);
+-}
+-
+-void Shop::GLDrawText(std::string txt, Vector3r pos, Vector3r color){
+-	glPushMatrix();
+-	glTranslatev(pos);
+-	glColor3(color[0],color[1],color[2]);
+-	glRasterPos2i(0,0);
+-	for(unsigned int i=0;i&lt;txt.length();i++)
+-		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, txt[i]);
+-	glPopMatrix();
+-
+-}
+-Real Shop::PWaveTimeStep(shared_ptr&lt;MetaBody&gt; _rb){
+-	shared_ptr&lt;MetaBody&gt; rb=_rb;
+-	if(!rb)rb=Omega::instance().getRootBody();
+-	Real dt=std::numeric_limits&lt;Real&gt;::infinity();
+-	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rb-&gt;bodies){
+-		if(!b-&gt;physicalParameters || !b-&gt;geometricalModel) continue;
+-		shared_ptr&lt;ElasticBodyParameters&gt; ebp=dynamic_pointer_cast&lt;ElasticBodyParameters&gt;(b-&gt;physicalParameters);
+-		shared_ptr&lt;Sphere&gt; s=dynamic_pointer_cast&lt;Sphere&gt;(b-&gt;geometricalModel);
+-		if(!ebp || !s) continue;
+-		Real density=ebp-&gt;mass/((4/3.)*Mathr::PI*pow(s-&gt;radius,3));
+-		dt=min(dt,s-&gt;radius/sqrt(ebp-&gt;young/density));
+-	}
+-	return dt;
+-}
+
+Modified: trunk/extra/clump/Shop.hpp
+===================================================================
+--- trunk/extra/clump/Shop.hpp	2008-09-17 21:48:17 UTC (rev 1516)
++++ trunk/extra/clump/Shop.hpp	2008-09-18 09:50:19 UTC (rev 1517)
+@@ -79,11 +79,6 @@
+ 		//! Save spheres in the current simulation into a text file
+ 		static void saveSpheresToFile(string fileName);
+ 
+-		static void GLDrawLine(Vector3r from, Vector3r to, Vector3r color=Vector3r(1,1,1));
+-		static void GLDrawArrow(Vector3r from, Vector3r to, Vector3r color=Vector3r(1,1,1));
+-		static void GLDrawText(std::string text, Vector3r pos, Vector3r color=Vector3r(1,1,1));
+-		static void GLDrawNum(Real n, Vector3r pos, Vector3r color=Vector3r(1,1,1), unsigned precision=3);
+-
+ 		/*! Cache for class indices for physical actions (body external variables, Bex)
+ 		 *
+ 		 * It is necessary to populate the cache by calling initCache(); then supported
+
+Modified: trunk/lib/opengl/GLUtils.hpp
+===================================================================
+--- trunk/lib/opengl/GLUtils.hpp	2008-09-17 21:48:17 UTC (rev 1516)
++++ trunk/lib/opengl/GLUtils.hpp	2008-09-18 09:50:19 UTC (rev 1517)
+@@ -12,20 +12,20 @@
+ 
+ struct GLUtils{
+ 
+-	static void GLDrawArrow(Vector3r from, Vector3r to, Vector3r color){
++	static void GLDrawArrow(const Vector3r&amp; from, const Vector3r&amp; to, const Vector3r&amp; color=Vector3r(1,1,1)){
+ 		glEnable(GL_LIGHTING); glColor3v(color); qglviewer::Vec a(from[0],from[1],from[2]),b(to[0],to[1],to[2]); QGLViewer::drawArrow(a,b);	
+ 	}
+-	static void GLDrawLine(Vector3r from, Vector3r to, Vector3r color){
++	static void GLDrawLine(const Vector3r&amp; from, const Vector3r&amp; to, const Vector3r&amp; color=Vector3r(1,1,1)){
+ 		glEnable(GL_LIGHTING); glColor3v(color);
+ 		glBegin(GL_LINES); glVertex3v(from); glVertex3v(to); glEnd();
+ 	}
+ 
+-	static void GLDrawNum(Real n, Vector3r pos, Vector3r color, unsigned precision){
++	static void GLDrawNum(const Real&amp; n, const Vector3r&amp; pos, const Vector3r&amp; color=Vector3r(1,1,1), unsigned precision=3){
+ 		std::ostringstream oss; oss&lt;&lt;std::setprecision(precision)&lt;&lt; /* &quot;w=&quot;&lt;&lt; */ (double)n;
+ 		GLUtils::GLDrawText(oss.str(),pos,color);
+ 	}
+ 
+-	static void GLDrawText(std::string txt, Vector3r pos, Vector3r color){
++	static void GLDrawText(const std::string&amp; txt, const Vector3r&amp; pos, const Vector3r&amp; color=Vector3r(1,1,1)){
+ 		glPushMatrix();
+ 		glTranslatev(pos);
+ 		glColor3(color[0],color[1],color[2]);
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2008-09-17 21:48:17 UTC (rev 1516)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2008-09-18 09:50:19 UTC (rev 1517)
+@@ -9,6 +9,7 @@
+  * (should be on the plane passing through origin and oriented with normal; not checked!)
+  */
+ void SpheresContactGeometry::setTgPlanePts(Vector3r p1new, Vector3r p2new){
++	assert(hasShear);
+ 	cp1rel=ori1.Conjugate()*rollPlanePtToSphere(p1new,d1,normal);
+ 	cp2rel=ori2.Conjugate()*rollPlanePtToSphere(p2new,d2,-normal);
+ }
+@@ -19,6 +20,7 @@
+  * flip axis and the point would project on other side of the tangent plane piece.
+  */
+ void SpheresContactGeometry::relocateContactPoints(){
++	assert(hasShear);
+ 	Vector3r p1=contPtInTgPlane1(), p2=contPtInTgPlane2();
+ 	Vector3r midPt=.5*(p1+p2);
+ 	if((p1.SquaredLength()&gt;4*d1 || p2.SquaredLength()&gt;4*d2) &amp;&amp; midPt.SquaredLength()&gt;.5*min(d1,d2)){
+@@ -29,15 +31,17 @@
+ }
+ 
+ /*! Perform slip of the projected contact points so that their distance becomes equal (or remains smaller) than the given one.
+- * TODO: not yet tested
++ * The slipped distance is returned.
+  */
+-void SpheresContactGeometry::slipToDistIfNeeded(Real dist){
++Real SpheresContactGeometry::slipToDisplacementTMax(Real displacementTMax){
++	assert(hasShear);
++	assert(displacementTMax&gt;Mathr::ZERO_TOLERANCE);
+ 	Vector3r p1=contPtInTgPlane1(), p2=contPtInTgPlane2();
+ 	Real currDist=(p2-p1).Length();
+-	if(currDist&lt;dist) return; // close enough, no slip needed
+-	assert(dist&gt;Mathr::ZERO_TOLERANCE);
+-	Vector3r diff=.5*(currDist/dist-1)*(p2-p1);
++	if(currDist&lt;displacementTMax) return 0; // close enough, no slip needed
++	Vector3r diff=.5*(currDist/displacementTMax-1)*(p2-p1);
+ 	setTgPlanePts(p1+diff,p2-diff);
++	return 2*diff.Length();
+ }
+ 
+ /*! Project point from sphere surface to tangent plane,
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2008-09-17 21:48:17 UTC (rev 1516)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2008-09-18 09:50:19 UTC (rev 1517)
+@@ -30,7 +30,7 @@
+ 			contactPoint;
+ 		Real radius1,radius2,penetrationDepth;
+ 
+-		bool exactRot; // whether the exact rotation code is being used -- following fields are needed for that
++		bool hasShear; // whether the exact rotation code is being used -- following fields are needed for that
+ 		//! positions and orientations of both spheres -- must be updated at every iteration
+ 		Vector3r pos1, pos2; Quaternionr ori1, ori2;
+ 		/*! Orientation of the contact point relative to each sphere-local coordinates.
+@@ -61,18 +61,21 @@
+ 		Vector3r displacementT(bool relocate=true){ return contPtInTgPlane2()-contPtInTgPlane1();}
+ 		Vector3r epsT(){return displacementT()*(1./d0);}
+ 	
+-		void slipToDistIfNeeded(Real slip);
++		Real slipToDisplacementTMax(Real displacementTMax);
++		//! slip to epsTMax if current epsT is greater; return the relative slip magnitude
++		Real slipToEpsTMax(Real epsTMax){return (1/d0)*slipToDisplacementTMax(epsTMax*d0);}
++
+ 		void relocateContactPoints();
+ 
+-		SpheresContactGeometry():InteractionGeometry(),contactPoint(Vector3r::ZERO),radius1(0),radius2(0),exactRot(false){createIndex();}
++		SpheresContactGeometry():InteractionGeometry(),contactPoint(Vector3r::ZERO),radius1(0),radius2(0),hasShear(false){createIndex();}
+ 		virtual ~SpheresContactGeometry(){};
+ 	protected :
+ 		virtual void registerAttributes(){
+ 			REGISTER_ATTRIBUTE(radius1);
+ 			REGISTER_ATTRIBUTE(radius2);
+ 			REGISTER_ATTRIBUTE(contactPoint); // to allow access from python
+-			// exactRot
+-			REGISTER_ATTRIBUTE(exactRot);
++			// hasShear
++			REGISTER_ATTRIBUTE(hasShear);
+ 			REGISTER_ATTRIBUTE(pos1);
+ 			REGISTER_ATTRIBUTE(pos2);
+ 			REGISTER_ATTRIBUTE(ori1);
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2008-09-17 21:48:17 UTC (rev 1516)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2008-09-18 09:50:19 UTC (rev 1517)
+@@ -24,7 +24,7 @@
+ void InteractingSphere2InteractingSphere4SpheresContactGeometry::registerAttributes()
+ {	
+ 	REGISTER_ATTRIBUTE(interactionDetectionFactor);
+-	REGISTER_ATTRIBUTE(exactRot);
++	REGISTER_ATTRIBUTE(hasShear);
+ }
+ 
+ bool InteractingSphere2InteractingSphere4SpheresContactGeometry::go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+@@ -51,8 +51,8 @@
+ 		scm-&gt;radius1 = s1-&gt;radius;
+ 		scm-&gt;radius2 = s2-&gt;radius;
+ 		if (!c-&gt;interactionGeometry) c-&gt;interactionGeometry = scm;
+-		if(exactRot){
+-			scm-&gt;exactRot=true;
++		if(hasShear){
++			scm-&gt;hasShear=true;
+ 			scm-&gt;pos1=se31.position; scm-&gt;pos2=se32.position;
+ 			scm-&gt;ori1=se31.orientation; scm-&gt;ori2=se32.orientation;
+ 			if(c-&gt;isNew){
+@@ -64,8 +64,13 @@
+ 				scm-&gt;cp2rel.Align(Vector3r::UNIT_X,se32.orientation.Conjugate()*(-normal));
+ 				scm-&gt;cp1rel.Normalize(); scm-&gt;cp2rel.Normalize();
+ 			}
+-			// FIXME: temporary, testing only!
+-			if((Omega::instance().getCurrentIteration()%500)==0) scm-&gt;relocateContactPoints();
++			// testing only
++			#if 0
++			if((Omega::instance().getCurrentIteration()%10000)==0) scm-&gt;relocateContactPoints();
++			if((Omega::instance().getCurrentIteration()%10000)==0) {
++				Real slip=scm-&gt;slipToEpsNMax(1.); if(slip&gt;0) cerr&lt;&lt;&quot;SLIP by &#916;&#949;_N &quot;&lt;&lt;slip&lt;&lt;&quot; &#8594; &#949;_N=&quot;&lt;&lt;scm-&gt;epsN()&lt;&lt;endl;
++			}
++			#endif
+ 		}
+ 		return true;
+ 	} else return false;
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp	2008-09-17 21:48:17 UTC (rev 1516)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp	2008-09-18 09:50:19 UTC (rev 1517)
+@@ -26,8 +26,8 @@
+ 		 * @note This parameter is functionally coupled with InteractinSphere2AABB::aabbEnlargeFactor,
+ 		 * which will create larger bounding boxes and should be of the same value. */
+ 		double interactionDetectionFactor;
+-		/*! Whether we create SpheresContactGeometry with data necessary for exact rotation computation */
+-		bool exactRot;
++		/*! Whether we create SpheresContactGeometry with data necessary for (exact) shear computation */
++		bool hasShear;
+ 
+ 	REGISTER_CLASS_NAME(InteractingSphere2InteractingSphere4SpheresContactGeometry);
+ 	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
+
+Modified: trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp	2008-09-17 21:48:17 UTC (rev 1516)
++++ trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp	2008-09-18 09:50:19 UTC (rev 1517)
+@@ -74,7 +74,7 @@
+ 		#endif
+ 	}
+ 
+-	if(sc-&gt;exactRot){
++	if(sc-&gt;hasShear){
+ 		GLUtils::GLDrawLine(sc-&gt;pos1,sc-&gt;pos2,Vector3r(.5,.5,.5));
+ 		// sphere center to point on the sphere
+ 		//GLUtils::GLDrawText(&quot;[1]&quot;,sc-&gt;pos1,Vector3r(1,1,1)); GLUtils::GLDrawText(&quot;[2]&quot;,sc-&gt;pos2,Vector3r(1,1,1));
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000356.html">[deprecated list] [Yade-dev] [svn] r1516 - in	trunk:	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	scripts
+</A></li>
+	<LI>Next message: <A HREF="000359.html">[deprecated list] [Yade-dev] reason of failing dynamic_casts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#358">[ date ]</a>
+              <a href="thread.html#358">[ thread ]</a>
+              <a href="subject.html#358">[ subject ]</a>
+              <a href="author.html#358">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

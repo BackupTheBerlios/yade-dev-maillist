@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1825 - trunk/gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1825%20-%20trunk/gui/py&In-Reply-To=%3C200906292209.n5TM94A9002828%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001082.html">
+   <LINK REL="Next"  HREF="001084.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1825 - trunk/gui/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1825%20-%20trunk/gui/py&In-Reply-To=%3C200906292209.n5TM94A9002828%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1825 - trunk/gui/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jun 30 00:09:04 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001082.html">[deprecated list] [Yade-dev] [svn] r1824 - in trunk: gui/py	scripts/test
+</A></li>
+        <LI>Next message: <A HREF="001084.html">[deprecated list] [Yade-dev] [svn] r1826 - in trunk: . gui gui/py	lib	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1083">[ date ]</a>
+              <a href="thread.html#1083">[ thread ]</a>
+              <a href="subject.html#1083">[ subject ]</a>
+              <a href="author.html#1083">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-06-30 00:09:04 +0200 (Tue, 30 Jun 2009)
+New Revision: 1825
+
+Modified:
+   trunk/gui/py/pack.py
+Log:
+1. Padding support (though slow and not very precise) for pack.inGtsSurface
+
+
+Modified: trunk/gui/py/pack.py
+===================================================================
+--- trunk/gui/py/pack.py	2009-06-29 21:06:22 UTC (rev 1824)
++++ trunk/gui/py/pack.py	2009-06-29 22:09:04 UTC (rev 1825)
+@@ -21,14 +21,17 @@
+ 		surf=gts.read(open('horse.gts'))
+ 		inGtsSurface(surf)
+ 
+-	Note: padding is not supported, warning is given and zero used instead.
++	Note: padding is optionally supported by testing 6 points along the axes in the pad distance. This
++	must be enabled in the ctor by saying doSlowPad=True. If it is not enabled and pad is not zero,
++	warning is issued.
+ 	&quot;&quot;&quot;
+-	def __init__(self,surf):
++	def __init__(self,surf,doSlowPad=False):
+ 		# call base class ctor; necessary for virtual methods to work as expected.
+ 		# see comments in _packPredicates.cpp for struct PredicateWrap.
+ 		super(inGtsSurface,self).__init__()
+ 		if not surf.is_closed(): raise RuntimeError(&quot;Surface for inGtsSurface predicate must be closed.&quot;)
+ 		self.surf=surf
++		self.doSlowPad=doSlowPad
+ 		inf=float('inf')
+ 		mn,mx=[inf,inf,inf],[-inf,-inf,-inf]
+ 		for v in surf.vertices():
+@@ -39,8 +42,11 @@
+ 	def aabb(self): return self.mn,self.mx
+ 	def __call__(self,_pt,pad=0.):
+ 		p=gts.Point(*_pt)
+-		if(pad!=0): warnings.warn(&quot;Pad distance not supported for GTS surfaces, using 0 instead.&quot;)
+-		return p.is_inside(self.surf)
++		if not self.doSlowPad:
++			if pad!=0: warnings.warn(&quot;Pad distance not supported for GTS surfaces, using 0 instead.&quot;)
++			return p.is_inside(self.surf)
++		pp=[gts.Point(_pt[0]-pad,_pt[1],_pt[2]),gts.Point(_pt[0]+pad,_pt[1],_pt[2]),gts.Point(_pt[0],_pt[1]-pad,_pt[2]),gts.Point(_pt[0],_pt[1]+pad,_pt[2]),gts.Point(_pt[0],_pt[1],_pt[2]-pad),gts.Point(_pt[0],_pt[1],_pt[2]+pad)]
++		return p.is_inside(self.surf) and pp[0].is_inside(self.surf) and pp[1].is_inside(self.surf) and pp[2].is_inside(self.surf) and pp[3].is_inside(self.surf) and pp[4].is_inside(self.surf) and pp[5].is_inside(self.surf)
+ 
+ def gtsSurface2Facets(surf,**kw):
+ 	&quot;&quot;&quot;Construct facets from given GTS surface. **kw is passed to utils.facet.&quot;&quot;&quot;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001082.html">[deprecated list] [Yade-dev] [svn] r1824 - in trunk: gui/py	scripts/test
+</A></li>
+	<LI>Next message: <A HREF="001084.html">[deprecated list] [Yade-dev] [svn] r1826 - in trunk: . gui gui/py	lib	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1083">[ date ]</a>
+              <a href="thread.html#1083">[ thread ]</a>
+              <a href="subject.html#1083">[ subject ]</a>
+              <a href="author.html#1083">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

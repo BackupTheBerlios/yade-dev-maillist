@@ -1,0 +1,311 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1885 - in trunk: pkg/dem scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1885%20-%20in%20trunk%3A%20pkg/dem%20scripts&In-Reply-To=%3C200907241530.n6OFUnOq010920%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001259.html">
+   <LINK REL="Next"  HREF="001261.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1885 - in trunk: pkg/dem scripts</H1>
+    <B>gladky_anton at mail.berlios.de</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1885%20-%20in%20trunk%3A%20pkg/dem%20scripts&In-Reply-To=%3C200907241530.n6OFUnOq010920%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1885 - in trunk: pkg/dem scripts">gladky_anton at mail.berlios.de
+       </A><BR>
+    <I>Fri Jul 24 17:30:49 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001259.html">[deprecated list] [Yade-dev] [svn] r1884 -	trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+        <LI>Next message: <A HREF="001261.html">[deprecated list] [Yade-dev] [robot] startup failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1260">[ date ]</a>
+              <a href="thread.html#1260">[ thread ]</a>
+              <a href="subject.html#1260">[ subject ]</a>
+              <a href="author.html#1260">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: gladky_anton
+Date: 2009-07-24 17:30:47 +0200 (Fri, 24 Jul 2009)
+New Revision: 1885
+
+Added:
+   trunk/scripts/installOnUbuntu.sh
+Modified:
+   trunk/pkg/dem/RockPM.cpp
+   trunk/pkg/dem/RockPM.hpp
+Log:
+1. RockPM update. Added simple &quot;destruction mechanism&quot;
+2. Added scripts/installOnUbuntu.sh to make &quot;oneButton-checkout+compile+install+doxygen+epydoc&quot; script. Not tested yet. Requires corrections.
+
+
+
+Modified: trunk/pkg/dem/RockPM.cpp
+===================================================================
+--- trunk/pkg/dem/RockPM.cpp	2009-07-24 03:18:08 UTC (rev 1884)
++++ trunk/pkg/dem/RockPM.cpp	2009-07-24 15:30:47 UTC (rev 1885)
+@@ -34,35 +34,64 @@
+ 	Dem3DofGeom* geom=static_cast&lt;Dem3DofGeom*&gt;(ig.get());
+ 	RpmPhys* phys=static_cast&lt;RpmPhys*&gt;(ip.get());
+ 
+-	Real displN=geom-&gt;displacementN();	
++	Real displN=geom-&gt;displacementN();
++	const Real&amp; crossSection=phys-&gt;crossSection;
++	
++	Real&amp; epsN=phys-&gt;epsN;
++	Vector3r&amp; epsT=phys-&gt;epsT;
++	
++	Real&amp; sigmaN=phys-&gt;sigmaN;
++	Vector3r&amp; sigmaT=phys-&gt;sigmaT;
++	
++	const Real&amp; E = phys-&gt;E;
++	const Real&amp; G = phys-&gt;G;
++	
++	Real&amp; Fn=phys-&gt;Fn;
++	Vector3r&amp; Fs=phys-&gt;Fs;
++	
++	
+ 	const shared_ptr&lt;Body&gt;&amp; body1=Body::byId(contact-&gt;getId1(),rootBody);
+ 	const shared_ptr&lt;Body&gt;&amp; body2=Body::byId(contact-&gt;getId2(),rootBody);
+ 	assert(body1);
+ 	assert(body2);
+ 	const shared_ptr&lt;RpmMat&gt;&amp; rbp1=YADE_PTR_CAST&lt;RpmMat&gt;(body1-&gt;physicalParameters);
+ 	const shared_ptr&lt;RpmMat&gt;&amp; rbp2=YADE_PTR_CAST&lt;RpmMat&gt;(body2-&gt;physicalParameters);
+-
++	
+ 	//check, whether one of bodies is damaged
+ 	if ((rbp1-&gt;isDamaged) || (rbp2-&gt;isDamaged)) {
+ 		phys-&gt;isCohesive = false;
+ 	}
+-				
+-				
++
+ 	if(displN&lt;=0){
+ 		/*Normal Interaction*/
+-		phys-&gt;normalForce=phys-&gt;kn*displN*geom-&gt;normal;
+-		Real maxFsSq=phys-&gt;normalForce.SquaredLength()*pow(phys-&gt;tanFrictionAngle,2);
+-		Vector3r trialFs=phys-&gt;ks*geom-&gt;displacementT();
+-		if(trialFs.SquaredLength()&gt;maxFsSq){ geom-&gt;slipToDisplacementTMax(sqrt(maxFsSq)); trialFs*=sqrt(maxFsSq/(trialFs.SquaredLength()));} 
+-		applyForceAtContactPoint(phys-&gt;normalForce+trialFs,geom-&gt;contactPoint,contact-&gt;getId1(),geom-&gt;se31.position,contact-&gt;getId2(),geom-&gt;se32.position,rootBody);
++		epsN=geom-&gt;strainN();
++		epsT=geom-&gt;strainT();
++		
++		
++		sigmaN=E*epsN;
++		Fn=sigmaN*crossSection; phys-&gt;normalForce=Fn*geom-&gt;normal;
++		
++		sigmaT=G*epsT;
++
++		/*Check, whether the shear stress more, than normal force multiplicated to tanFrictionAngle*/
++		
++		Real maxFsSq = phys-&gt;normalForce.SquaredLength()*phys-&gt;tanFrictionAngle*phys-&gt;tanFrictionAngle;
++		if(sigmaT.SquaredLength()&gt;maxFsSq) {
++			sigmaT*=sqrt(maxFsSq/(sigmaT.SquaredLength()));
++		}
++		
++		Fs=sigmaT*crossSection;
++		phys-&gt;shearForce = Fs;
++
++		applyForceAtContactPoint(phys-&gt;normalForce + phys-&gt;shearForce, geom-&gt;contactPoint, contact-&gt;getId1(), geom-&gt;se31.position, contact-&gt;getId2(), geom-&gt;se32.position, rootBody);
+ 		/*Normal Interaction_____*/
+-		
+ 		if ((phys-&gt;isCohesive)&amp;&amp;(displN&lt;(-phys-&gt;lengthMaxCompression))) {
+ 			//LOG_WARN(displN&lt;&lt;&quot;__COMRESS!!!__&quot;);
+ 			phys-&gt;isCohesive = false;
+ 			rbp1-&gt;isDamaged=true;
+ 			rbp2-&gt;isDamaged=true;
+ 		}
++		return;
+ 	} else {
+ 		if (phys-&gt;isCohesive) {
+ 			if (displN&gt;(phys-&gt;lengthMaxTension)) {
+@@ -70,20 +99,17 @@
+ 				phys-&gt;isCohesive = false;
+ 				rbp1-&gt;isDamaged=true;
+ 				rbp2-&gt;isDamaged=true;
+-				return;
++				return; 
+ 			} else {
+ 				phys-&gt;normalForce=phys-&gt;kn*displN*geom-&gt;normal;
+-				Real maxFsSq=phys-&gt;normalForce.SquaredLength()*pow(phys-&gt;tanFrictionAngle,2);
+-				Vector3r trialFs=phys-&gt;ks*geom-&gt;displacementT();
+-				if(trialFs.SquaredLength()&gt;maxFsSq){ geom-&gt;slipToDisplacementTMax(sqrt(maxFsSq)); trialFs*=sqrt(maxFsSq/(trialFs.SquaredLength()));} 
+-				applyForceAtContactPoint(phys-&gt;normalForce+trialFs,geom-&gt;contactPoint,contact-&gt;getId1(),geom-&gt;se31.position,contact-&gt;getId2(),geom-&gt;se32.position,rootBody);
++				applyForceAtContactPoint(phys-&gt;normalForce, geom-&gt;contactPoint, contact-&gt;getId1(), geom-&gt;se31.position, contact-&gt;getId2(), geom-&gt;se32.position, rootBody);
++				return;
+ 			}
+ 		} else {
+ 			rootBody-&gt;interactions-&gt;requestErase(contact-&gt;getId1(),contact-&gt;getId2());
+ 			return;
+ 		}
+ 	}
+-	
+ }
+ 
+ 
+@@ -101,26 +127,28 @@
+ 	
+ 	const shared_ptr&lt;BodyMacroParameters&gt;&amp; elast1=static_pointer_cast&lt;BodyMacroParameters&gt;(pp1);
+ 	const shared_ptr&lt;BodyMacroParameters&gt;&amp; elast2=static_pointer_cast&lt;BodyMacroParameters&gt;(pp2);
+-
++	long cohesiveThresholdIter=1000;
++	
+ 	bool initCohesive = rpm1-&gt;initCohesive*rpm2-&gt;initCohesive;
+ 	
+ 	Real E12=2*elast1-&gt;young*elast2-&gt;young/(elast1-&gt;young+elast2-&gt;young);
+ 	Real minRad=(contGeom-&gt;refR1&lt;=0?contGeom-&gt;refR2:(contGeom-&gt;refR2&lt;=0?contGeom-&gt;refR1:min(contGeom-&gt;refR1,contGeom-&gt;refR2)));
+ 	Real S12=Mathr::PI*pow(minRad,2);
++	Real G_over_E = (rpm1-&gt;G_over_E + rpm2-&gt;G_over_E)/2;
+ 	shared_ptr&lt;RpmPhys&gt; contPhys(new RpmPhys());
+ 	contPhys-&gt;E=E12;
+-	contPhys-&gt;G=E12;
++	contPhys-&gt;G=E12*G_over_E;
+ 	contPhys-&gt;tanFrictionAngle=tan(.5*(elast1-&gt;frictionAngle+elast2-&gt;frictionAngle));
+ 	contPhys-&gt;crossSection=S12;
+ 	contPhys-&gt;kn=contPhys-&gt;E*contPhys-&gt;crossSection;
+ 	contPhys-&gt;ks=contPhys-&gt;G*contPhys-&gt;crossSection;
+ 	
+ 	contPhys-&gt;lengthMaxCompression=S12*(0.5*(rpm1-&gt;stressCompressMax+rpm2-&gt;stressCompressMax))/(contPhys-&gt;kn);
+-	contPhys-&gt;lengthMaxTension=S12*(0.5*(rpm1-&gt;stressTensionMax+rpm2-&gt;stressTensionMax))/(contPhys-&gt;kn);
++	contPhys-&gt;lengthMaxTension=S12*(0.5*(rpm1-&gt;stressCompressMax*rpm1-&gt;Brittleness+rpm2-&gt;stressCompressMax*rpm2-&gt;Brittleness))/(contPhys-&gt;kn);
+ 	
+ 	initDistance = contGeom-&gt;displacementN();
+ 
+-	if ((rpm1-&gt;exampleNumber==rpm2-&gt;exampleNumber)&amp;&amp;(initDistance&lt;(contPhys-&gt;lengthMaxTension))&amp;&amp;(initCohesive)&amp;&amp;(OO.getCurrentIteration()==0)) {
++	if ((rpm1-&gt;exampleNumber==rpm2-&gt;exampleNumber)&amp;&amp;(initDistance&lt;(contPhys-&gt;lengthMaxTension))&amp;&amp;(initCohesive)&amp;&amp;(OO.getCurrentIteration()&lt;=cohesiveThresholdIter)) {
+ 		contPhys-&gt;isCohesive=true;
+ 		//LOG_WARN(&quot;InitDistance=&quot;&lt;&lt;initDistance&lt;&lt;&quot;  &quot;&lt;&lt;rpm1-&gt;exampleNumber&lt;&lt;&quot;  &quot;&lt;&lt;rpm2-&gt;exampleNumber&lt;&lt;&quot; &quot;&lt;&lt;OO.getCurrentIteration());
+ 		//LOG_WARN(&quot;lengthMaxCompression=&quot;&lt;&lt;contPhys-&gt;lengthMaxCompression);
+
+Modified: trunk/pkg/dem/RockPM.hpp
+===================================================================
+--- trunk/pkg/dem/RockPM.hpp	2009-07-24 03:18:08 UTC (rev 1884)
++++ trunk/pkg/dem/RockPM.hpp	2009-07-24 15:30:47 UTC (rev 1885)
+@@ -48,15 +48,16 @@
+ 	public:
+ 		int exampleNumber; //Number of &quot;stone&quot;
+ 		bool initCohesive, isDamaged;
+-		Real stressCompressMax, stressTensionMax; //Parameters for damaging
+-
+-		RpmMat(): exampleNumber(0.), initCohesive(false), isDamaged(false), stressCompressMax(0), stressTensionMax(0) {createIndex();};
++		Real stressCompressMax, Brittleness, G_over_E; //Parameters for damaging
++		
++		RpmMat(): exampleNumber(0.), initCohesive(false), isDamaged(false), stressCompressMax(0), Brittleness(0), G_over_E(1) {createIndex();};
+ 		REGISTER_ATTRIBUTES(BodyMacroParameters, 
+ 			(exampleNumber)
+ 			(initCohesive)
+ 			(isDamaged)
+ 			(stressCompressMax)
+-			(stressTensionMax));
++			(Brittleness)
++			(G_over_E));
+ 		REGISTER_CLASS_AND_BASE(RpmMat,BodyMacroParameters);
+ };
+ REGISTER_SERIALIZABLE(RpmMat);
+@@ -65,7 +66,7 @@
+ class Ip2_RpmMat_RpmMat_RpmPhys: public InteractionPhysicsEngineUnit{
+ 	private:
+ 	public:
+-		Real sigmaT, initDistance;
++		Real initDistance;
+ 
+ 		Ip2_RpmMat_RpmMat_RpmPhys(){
+ 			initDistance = 0;
+@@ -73,7 +74,6 @@
+ 
+ 		virtual void go(const shared_ptr&lt;PhysicalParameters&gt;&amp; pp1, const shared_ptr&lt;PhysicalParameters&gt;&amp; pp2, const shared_ptr&lt;Interaction&gt;&amp; interaction);
+ 		REGISTER_ATTRIBUTES(InteractionPhysicsEngineUnit,
+-			(sigmaT)
+ 			(initDistance)
+ 		);
+ 
+@@ -88,9 +88,13 @@
+ 	private:
+ 	public:
+ 		Real crossSection,E,G,tanFrictionAngle,lengthMaxCompression,lengthMaxTension;
++		Real omega, Fn, sigmaN, epsN;
++		Vector3r epsT, sigmaT, Fs;
++		 
++
+ 		bool isCohesive;
+ 
+-		RpmPhys(): NormalShearInteraction(),crossSection(0),E(0),G(0), tanFrictionAngle(0), lengthMaxCompression(0), lengthMaxTension(0), isCohesive(false) { createIndex();}
++		RpmPhys(): NormalShearInteraction(),crossSection(0),E(0),G(0), tanFrictionAngle(0), lengthMaxCompression(0), lengthMaxTension(0), isCohesive(false) { createIndex(); epsT=Vector3r::ZERO; omega=0; Fn=0; Fs=Vector3r::ZERO;}
+ 		virtual ~RpmPhys();
+ 
+ 		REGISTER_ATTRIBUTES(NormalShearInteraction,
+
+Added: trunk/scripts/installOnUbuntu.sh
+===================================================================
+--- trunk/scripts/installOnUbuntu.sh	2009-07-24 03:18:08 UTC (rev 1884)
++++ trunk/scripts/installOnUbuntu.sh	2009-07-24 15:30:47 UTC (rev 1885)
+@@ -0,0 +1,22 @@
++#!/bin/bash
++# This script works on Ubuntu 9.04, and possibly on new Debians.
++# It &quot;compiles and installs&quot; the latest YADE SVN-version.
++# The install is maximal: you will get almost all YADE functionality, even if you dont need it
++# Please, copy this script to the empty directory and start it.
++# 
++
++
++BASEDIR='./'
++VERSION='trunk'
++sudo aptitude install scons libqt3-mt-dev qt3-dev-tools freeglut3-dev libboost-date-time-dev libboost-filesystem-dev libboost-thread-dev libboost-regex-dev fakeroot dpkg-dev build-essential g++ libboost-iostreams-dev liblog4cxx10-dev python-dev libboost-python-dev ipython python-matplotlib libsqlite3-dev python-numeric python-tk gnuplot doxygen python-pygraphviz python-epydoc
++
++svn checkout <A HREF="https://svn.berlios.de/svnroot/repos/yade/trunk">https://svn.berlios.de/svnroot/repos/yade/trunk</A>
++mkdir $BASEDIR/build
++mkdir $BASEDIR/data
++cd $BASEDIR/trunk
++scons PREFIX=$BASEDIR/../build optimize=1 -j2 openmp=True features=log4cxx,python,openGL,GTS version=$VERSION
++scons doc
++cd ..
++$BASEDIR/build/bin/yade-$VERSION yade-epydoc.py
++
++
+
+
+Property changes on: trunk/scripts/installOnUbuntu.sh
+___________________________________________________________________
+Name: svn:executable
+   + *
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001259.html">[deprecated list] [Yade-dev] [svn] r1884 -	trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+	<LI>Next message: <A HREF="001261.html">[deprecated list] [Yade-dev] [robot] startup failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1260">[ date ]</a>
+              <a href="thread.html#1260">[ thread ]</a>
+              <a href="subject.html#1260">[ subject ]</a>
+              <a href="author.html#1260">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

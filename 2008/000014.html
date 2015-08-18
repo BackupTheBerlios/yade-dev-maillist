@@ -1,0 +1,79 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] SDECSpheresPlane 1241 vs. 1244
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20SDECSpheresPlane%201241%20vs.%201244&In-Reply-To=%3C20080212164730.4438a8b3%40szpak%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000013.html">
+   <LINK REL="Next"  HREF="000015.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] SDECSpheresPlane 1241 vs. 1244</H1>
+    <B>Janek Kozicki</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20SDECSpheresPlane%201241%20vs.%201244&In-Reply-To=%3C20080212164730.4438a8b3%40szpak%3E"
+       TITLE="[yade-dev] SDECSpheresPlane 1241 vs. 1244">janek_listy at wp.pl
+       </A><BR>
+    <I>Tue Feb 12 16:47:30 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000013.html">[yade-dev] SDECSpheresPlane 1241 vs. 1244
+</A></li>
+        <LI>Next message: <A HREF="000015.html">[yade-dev] SDECSpheresPlane 1241 vs. 1244
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#14">[ date ]</a>
+              <a href="thread.html#14">[ thread ]</a>
+              <a href="subject.html#14">[ subject ]</a>
+              <a href="author.html#14">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>ok, I got it. You made a mistake here:
+
+--- pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.hpp   (revision 1244)
++++ pkg/common/Engine/EngineUnit/CundallNonViscousMomentumDamping.hpp   (working copy)
+@@ -25,7 +25,7 @@
+        protected :
+                 virtual void registerAttributes();
+
+-       FUNCTOR2D(Force,RigidBodyParameters);
++       FUNCTOR2D(Momentum,RigidBodyParameters);
+        REGISTER_CLASS_NAME(CundallNonViscousMomentumDamping);
+        REGISTER_BASE_CLASS_NAME(PhysicalActionDamperUnit);
+ };
+
+fix will go with next commit.
+
+-- 
+Janek Kozicki                                                         |
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000013.html">[yade-dev] SDECSpheresPlane 1241 vs. 1244
+</A></li>
+	<LI>Next message: <A HREF="000015.html">[yade-dev] SDECSpheresPlane 1241 vs. 1244
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#14">[ date ]</a>
+              <a href="thread.html#14">[ thread ]</a>
+              <a href="subject.html#14">[ subject ]</a>
+              <a href="author.html#14">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

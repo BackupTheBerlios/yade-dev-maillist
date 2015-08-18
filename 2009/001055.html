@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1815 -	trunk/pkg/common/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1815%20-%0A%09trunk/pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200906252054.n5PKsLO3018252%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001068.html">
+   <LINK REL="Next"  HREF="001056.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1815 -	trunk/pkg/common/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1815%20-%0A%09trunk/pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200906252054.n5PKsLO3018252%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1815 -	trunk/pkg/common/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Jun 25 22:54:21 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001068.html">[deprecated list] [Yade-dev] [svn] r1814 - in trunk: . lib lib/py	lib/py/pygts-0.3.1
+</A></li>
+        <LI>Next message: <A HREF="001056.html">[deprecated list] [Yade-dev] [svn] r1816 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1055">[ date ]</a>
+              <a href="thread.html#1055">[ thread ]</a>
+              <a href="subject.html#1055">[ subject ]</a>
+              <a href="author.html#1055">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-06-25 22:54:20 +0200 (Thu, 25 Jun 2009)
+New Revision: 1815
+
+Modified:
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+Log:
+1. Fix corner case in InsertionSortCollider related to instability of std::sort (quicksort) and bodies having the same upper and lower bounds (facet in the xy plane, for example). Thanks to Anton for providing the crasher.
+
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-06-24 22:06:24 UTC (rev 1814)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-06-25 20:54:20 UTC (rev 1815)
+@@ -130,7 +130,7 @@
+ 					#pragma omp section
+ 						std::sort(ZZ.begin(),ZZ.end());
+ 				}
+-			} else {
++			} else { // sortThenCollide
+ 				insertionSort(XX,interactions,rb,false); insertionSort(YY,interactions,rb,false); insertionSort(ZZ,interactions,rb,false);
+ 			}
+ 			// traverse the container along requested axis
+@@ -151,6 +151,19 @@
+ 					// if(jid&lt;iid) { /* LOG_TRACE(&quot;Skip #&quot;&lt;&lt;V[j].id&lt;&lt;(V[j].flags.isMin?&quot;(min)&quot;:&quot;(max)&quot;)&lt;&lt;&quot; with &quot;&lt;&lt;iid&lt;&lt;&quot; (smaller id)&quot;); */ continue; }
+ 					/* abuse the same function here; since it does spatial overlap check first, it is OK to use it */
+ 					handleBoundInversion(iid,jid,interactions,rb);
++					// now we are at the last element, but we still have not met the upper bound of V[i].id
++					// that means that the upper bound is before the upper one; that can only happen if they
++					// are equal and the unstable std::sort has swapped them. In that case, we need to go reverse
++					// from V[i] until we meet the upper bound and swap the isMin flag
++					if(j==2*nBodies-1){
++						size_t k=i-1;
++						while(V[k].id!=iid &amp;&amp; k&gt;0) k--;
++						assert(V[k].id==iid); // if this fails, we didn't meet the other bound in the downwards sense either; that should never happen
++						assert(!V[k].flags.isMin); // the lower bound should be maximum in this (exceptional) case; we will fix that now
++						V[k].flags.isMin=true; V[i].flags.isMin=false;
++						LOG_DEBUG(&quot;Swapping coincident min/max of #&quot;&lt;&lt;iid&lt;&lt;&quot; at positions &quot;&lt;&lt;k&lt;&lt;&quot; and &quot;&lt;&lt;i&lt;&lt;&quot;(coords: &quot;&lt;&lt;V[k].coord&lt;&lt;&quot; and &quot;&lt;&lt;V[i].coord);
++						break; // would happen anyways
++					}
+ 				}
+ 			}
+ 		}
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001068.html">[deprecated list] [Yade-dev] [svn] r1814 - in trunk: . lib lib/py	lib/py/pygts-0.3.1
+</A></li>
+	<LI>Next message: <A HREF="001056.html">[deprecated list] [Yade-dev] [svn] r1816 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1055">[ date ]</a>
+              <a href="thread.html#1055">[ thread ]</a>
+              <a href="subject.html#1055">[ subject ]</a>
+              <a href="author.html#1055">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

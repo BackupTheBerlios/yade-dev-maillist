@@ -1,0 +1,163 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1611 - trunk/gui/qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1611%20-%20trunk/gui/qt3&In-Reply-To=%3C200901051954.n05JsdVd011106%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000574.html">
+   <LINK REL="Next"  HREF="000575.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1611 - trunk/gui/qt3</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1611%20-%20trunk/gui/qt3&In-Reply-To=%3C200901051954.n05JsdVd011106%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1611 - trunk/gui/qt3">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Mon Jan  5 20:54:39 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000574.html">[deprecated list] [Yade-dev] [svn] r1610 - in trunk: core pkg/dem pkg/dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000575.html">[deprecated list] [Yade-dev] [svn] r1612 - in trunk/extra: .	SpherePadder mgpost/doc	mgpost/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#571">[ date ]</a>
+              <a href="thread.html#571">[ thread ]</a>
+              <a href="subject.html#571">[ subject ]</a>
+              <a href="author.html#571">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2009-01-05 20:54:39 +0100 (Mon, 05 Jan 2009)
+New Revision: 1611
+
+Modified:
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/GLViewer.hpp
+Log:
+- added keyboard shortcut '.' that toggles grid subdivision by 10
+- fixed error with grid step
+- grid step is now shown in gl window
+
+
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2009-01-05 17:06:57 UTC (rev 1610)
++++ trunk/gui/qt3/GLViewer.cpp	2009-01-05 19:54:39 UTC (rev 1611)
+@@ -31,6 +31,7 @@
+ 	viewId = id;
+ 	cut_plane = 0;
+ 	cut_plane_delta = -2;
++	grid_subdivision = false;
+ 	resize(550,550);
+ 
+ 	if (id==0) setCaption(&quot;Primary view&quot;);
+@@ -55,6 +56,7 @@
+ 	setKeyDescription(Qt::Key_X,&quot;Toggle YZ grid (or: align manipulated clip plane normal with +X)&quot;);
+ 	setKeyDescription(Qt::Key_Y,&quot;Toggle XZ grid (or: align manipulated clip plane normal with +Y)&quot;);
+ 	setKeyDescription(Qt::Key_Z,&quot;Toggle XY grid (or: align manipulated clip plane normal with +Z)&quot;);
++	setKeyDescription(Qt::Key_Period,&quot;Toggle grid subdivision by 10&quot;);
+ 	setKeyDescription(Qt::Key_S &amp; Qt::ALT,   &quot;Save QGLViewer state to /tmp/qglviewerState.xml&quot;);
+ 	setKeyDescription(Qt::Key_Delete,&quot;(lattice) increase isoValue&quot;);
+ 	setKeyDescription(Qt::Key_Insert,&quot;(lattice) decrease isoValue&quot;);
+@@ -241,6 +243,7 @@
+ 			manipulatedFrame()-&gt;setOrientation(qglviewer::Quaternion(axis,axisIdx==2?0:Mathr::PI/2));
+ 		}
+ 	}
++	else if(e-&gt;key()==Qt::Key_Period) grid_subdivision = !grid_subdivision;
+ 
+ 
+ // FIXME BEGIN - arguments for GLDraw*ers should be from dialog box, not through Omega !!!
+@@ -435,11 +438,17 @@
+ 	LOG_DEBUG(&quot;nSegments=&quot;&lt;&lt;nSegments&lt;&lt;&quot;,gridStep=&quot;&lt;&lt;gridStep&lt;&lt;&quot;,realSize=&quot;&lt;&lt;realSize);
+ 	glPushMatrix();
+ 
++	nSegments *= 2; // there's an error in QGLViewer::drawGrid(), so we need to mitigate it by '* 2'
+ 	// XYZ grids
+ 	glLineWidth(.5);
+ 	if(drawGridXYZ[0]) {glColor3f(0.6,0.3,0.3); glPushMatrix(); glRotated(90.,0.,1.,0.); QGLViewer::drawGrid(realSize,nSegments); glPopMatrix();}
+ 	if(drawGridXYZ[1]) {glColor3f(0.3,0.6,0.3); glPushMatrix(); glRotated(90.,1.,0.,0.); QGLViewer::drawGrid(realSize,nSegments); glPopMatrix();}
+ 	if(drawGridXYZ[2]) {glColor3f(0.3,0.3,0.6); glPushMatrix(); /*glRotated(90.,0.,1.,0.);*/ QGLViewer::drawGrid(realSize,nSegments); glPopMatrix();}
++	if(grid_subdivision){
++	if(drawGridXYZ[0]) {glColor3f(0.4,0.1,0.1); glPushMatrix(); glRotated(90.,0.,1.,0.); QGLViewer::drawGrid(realSize,nSegments*10); glPopMatrix();}
++	if(drawGridXYZ[1]) {glColor3f(0.1,0.4,0.1); glPushMatrix(); glRotated(90.,1.,0.,0.); QGLViewer::drawGrid(realSize,nSegments*10); glPopMatrix();}
++	if(drawGridXYZ[2]) {glColor3f(0.1,0.1,0.4); glPushMatrix(); /*glRotated(90.,0.,1.,0.);*/ QGLViewer::drawGrid(realSize,nSegments*10); glPopMatrix();}
++	}
+ 	
+ 	// scale
+ 	if(drawScale){
+@@ -497,8 +506,8 @@
+ 	#define _W3 setw(3)&lt;&lt;setfill('0')
+ 	#define _W2 setw(2)&lt;&lt;setfill('0')
+ 	if(timeDispMask!=0){
+-		const int lineHt=12;
+-		unsigned x=10,y=height()-20;
++		const int lineHt=13;
++		unsigned x=10,y=height()-3-lineHt*2;
+ 		glColor3v(Vector3r(1,1,1));
+ 		if(timeDispMask &amp; GLViewer::TIME_VIRT){
+ 			ostringstream oss;
+@@ -524,6 +533,10 @@
+ 			QGLViewer::drawText(x,y,oss.str());
+ 			y-=lineHt;
+ 		}
++		if(drawGridXYZ[0] || drawGridXYZ[1] || drawGridXYZ[2]){
++			QGLViewer::drawText(x,y,std::string(&quot;grid: &quot;+boost::lexical_cast&lt;std::string&gt;(gridStep))+(grid_subdivision?(std::string(&quot; ,subdivision: &quot;+boost::lexical_cast&lt;std::string&gt;(gridStep*0.1))):(std::string(&quot;&quot;))));
++			y-=lineHt;
++		}
+ 	}
+ 	QGLViewer::postDraw();
+ }
+
+Modified: trunk/gui/qt3/GLViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.hpp	2009-01-05 17:06:57 UTC (rev 1610)
++++ trunk/gui/qt3/GLViewer.hpp	2009-01-05 19:54:39 UTC (rev 1611)
+@@ -44,6 +44,7 @@
+ 		bool			wasDynamic;
+ 		float			cut_plane;
+ 		int			cut_plane_delta;
++		bool			grid_subdivision;
+ 		int manipulatedClipPlane;
+ 		set&lt;int&gt; boundClipPlanes;
+ 		shared_ptr&lt;qglviewer::LocalConstraint&gt; xyPlaneConstraint;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000574.html">[deprecated list] [Yade-dev] [svn] r1610 - in trunk: core pkg/dem pkg/dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000575.html">[deprecated list] [Yade-dev] [svn] r1612 - in trunk/extra: .	SpherePadder mgpost/doc	mgpost/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#571">[ date ]</a>
+              <a href="thread.html#571">[ thread ]</a>
+              <a href="subject.html#571">[ subject ]</a>
+              <a href="author.html#571">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

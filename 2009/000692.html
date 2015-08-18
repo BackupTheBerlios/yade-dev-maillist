@@ -1,0 +1,213 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1668 - in	trunk:	examples/dynamic_simulation_tests gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1668%20-%20in%0A%09trunk%3A%09examples/dynamic_simulation_tests%20gui/py&In-Reply-To=%3C200902170910.n1H9Aoa9021152%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000704.html">
+   <LINK REL="Next"  HREF="000705.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1668 - in	trunk:	examples/dynamic_simulation_tests gui/py</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1668%20-%20in%0A%09trunk%3A%09examples/dynamic_simulation_tests%20gui/py&In-Reply-To=%3C200902170910.n1H9Aoa9021152%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1668 - in	trunk:	examples/dynamic_simulation_tests gui/py">sega at mail.berlios.de
+       </A><BR>
+    <I>Tue Feb 17 10:10:51 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000704.html">[deprecated list] [Yade-dev] shared_ptr&lt;PhysicalAction&gt;
+</A></li>
+        <LI>Next message: <A HREF="000705.html">[deprecated list] [Yade-dev] [svn] r1669 - in	trunk:	core/DefaultContainerImplementations	gui/py	pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#692">[ date ]</a>
+              <a href="thread.html#692">[ thread ]</a>
+              <a href="subject.html#692">[ subject ]</a>
+              <a href="author.html#692">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2009-02-17 10:10:50 +0100 (Tue, 17 Feb 2009)
+New Revision: 1668
+
+Modified:
+   trunk/examples/dynamic_simulation_tests/ringSimpleViscoelastic.py
+   trunk/gui/py/utils.py
+Log:
+Merging utils.*_v2 functions with their &quot;first&quot; analogs.
+
+
+Modified: trunk/examples/dynamic_simulation_tests/ringSimpleViscoelastic.py
+===================================================================
+--- trunk/examples/dynamic_simulation_tests/ringSimpleViscoelastic.py	2009-02-16 19:42:09 UTC (rev 1667)
++++ trunk/examples/dynamic_simulation_tests/ringSimpleViscoelastic.py	2009-02-17 09:10:50 UTC (rev 1668)
+@@ -15,7 +15,7 @@
+ 
+ ## Import wall's geometry
+ p=utils.getViscoelasticFromSpheresInteraction(10e3,tc,en,es)
+-walls = utils.import_stl_geometry_v2('ring.stl',physicalParameters=[&quot;SimpleViscoelasticBodyParameters&quot;,{'frictionAngle':frictionAngle,'kn':p['kn'],'cn':p['cn'],'ks':p['ks'],'cs':p['cs']}])
++walls = utils.import_stl_geometry('ring.stl',frictionAngle=frictionAngle,physParamsClass=&quot;SimpleViscoelasticBodyParameters&quot;,physParamsAttr={'kn':p['kn'],'cn':p['cn'],'ks':p['ks'],'cs':p['cs']})
+ 
+ def fill_cylinder_with_spheres(sphereRadius,cylinderRadius,cylinderHeight,cylinderOrigin,cylinderSlope):
+ 	spheresCount=0
+@@ -26,7 +26,7 @@
+ 					x = cylinderOrigin[0]+2*r*sphereRadius*cos(dfi*a)
+ 					y = cylinderOrigin[1]+2*r*sphereRadius*sin(dfi*a)
+ 					z = cylinderOrigin[2]+h*2*sphereRadius
+-					s=utils.sphere_v2([x,y*cos(cylinderSlope)+z*sin(cylinderSlope),z*cos(cylinderSlope)-y*sin(cylinderSlope)],sphereRadius,density=Density,physicalParameters=[&quot;SimpleViscoelasticBodyParameters&quot;,{'frictionAngle':frictionAngle}])
++					s=utils.sphere([x,y*cos(cylinderSlope)+z*sin(cylinderSlope),z*cos(cylinderSlope)-y*sin(cylinderSlope)],sphereRadius,density=Density,frictionAngle=frictionAngle,physParamsClass=&quot;SimpleViscoelasticBodyParameters&quot;)
+ 					p=utils.getViscoelasticFromSpheresInteraction(s.phys['mass'],tc,en,es)
+ 					s.phys['kn'],s.phys['cn'],s.phys['ks'],s.phys['cs']=p['kn'],p['cn'],p['ks'],p['cs']
+ 					o.bodies.append(s)
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2009-02-16 19:42:09 UTC (rev 1667)
++++ trunk/gui/py/utils.py	2009-02-17 09:10:50 UTC (rev 1668)
+@@ -66,25 +66,23 @@
+ 	Obj should be up in the inheritance tree, otherwise some attributes may not be defined in the new class.&quot;&quot;&quot;
+ 	return obj.__class__(newClassName,dict([ (key,obj[key]) for key in obj.keys() ]))
+ 
+-def sphere_v2(center,radius,physicalParameters,density=1,dynamic=True,wire=False,color=None):
+-	&quot;&quot;&quot;Create sphere, version 2. Allow any PhysicalParamters class, not only BodyMacroParameters descendan as for sphere.&quot;&quot;&quot;
++def sphere(center,radius,density=1,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=True,wire=False,color=None,physParamsClass='BodyMacroParameters',physParamsAttr={}):
++	&quot;&quot;&quot;Create default sphere, with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
+ 	s=Body()
+ 	if not color: color=randomColor()
+ 	s.shape=GeometricalModel('Sphere',{'radius':radius,'diffuseColor':color,'wire':wire,'visible':True})
+ 	s.mold=InteractingGeometry('InteractingSphere',{'radius':radius,'diffuseColor':color})
+ 	V=(4./3)*math.pi*radius**3
+ 	inert=(2./5.)*V*density*radius**2
+-	physParams={'se3':[center[0],center[1],center[2],1,0,0,0],'refSe3':[center[0],center[1],center[2],1,0,0,0],'mass':V*density,'inertia':[inert,inert,inert]}
+-	physParams.update(physicalParameters[1])
+-	s.phys=PhysicalParameters(physicalParameters[0],physParams)
++	pp={'se3':[center[0],center[1],center[2],1,0,0,0],'refSe3':[center[0],center[1],center[2],1,0,0,0],'mass':V*density,'inertia':[inert,inert,inert],'young':young,'poisson':poisson,'frictionAngle':frictionAngle}
++	pp.update(physParamsAttr)
++	s.phys=PhysicalParameters(physParamsClass)
++	for k in [attr for attr in pp.keys() if attr in s.phys.keys()]:
++		s.phys[k]=pp[k]
+ 	s.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+ 	s['isDynamic']=dynamic
+ 	return s
+ 
+-def sphere(center,radius,density=1,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=True,wire=False,color=None,physParamsClass='BodyMacroParameters'):
+-	&quot;&quot;&quot;Create default sphere, with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
+-	return sphere_v2(center,radius,[physParamsClass,{'young':young,'poisson':poisson,'frictionAngle':frictionAngle}],density,dynamic,wire,color)
+-
+ def box(center,extents,orientation=[1,0,0,0],density=1,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=True,wire=False,color=None,physParamsClass='BodyMacroParameters'):
+ 	&quot;&quot;&quot;Create default box (cuboid), with given parameters. Physical properties such as mass and inertia are calculated automatically.&quot;&quot;&quot;
+ 	b=Body()
+@@ -97,8 +95,8 @@
+ 	b['isDynamic']=dynamic
+ 	return b
+ 
+-def facet_v2(vertices,physicalParameters,dynamic=False,wire=True,color=None):
+-	&quot;&quot;&quot;Create facet, version 2. Allow any PhysicalParamters class, not only BodyMacroParameters descendan as for facet.&quot;&quot;&quot;
++def facet(vertices,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=False,wire=True,color=None,physParamsClass='BodyMacroParameters',physParamsAttr={}):
++	&quot;&quot;&quot;Create default facet with given parameters.&quot;&quot;&quot;
+ 	b=Body()
+ 	if not color: color=randomColor()
+ 	b.shape=GeometricalModel('Facet',{'diffuseColor':color,'wire':wire,'visible':True})
+@@ -108,18 +106,16 @@
+ 	vStr='['+' '.join(['{%g %g %g}'%(v[0],v[1],v[2]) for v in vertices])+']'
+ 	b.shape.setRaw('vertices',vStr)
+ 	b.mold.setRaw('vertices',vStr)
+-	physParams={'se3':[center[0],center[1],center[2],1,0,0,0],'refSe3':[center[0],center[1],center[2],1,0,0,0]}
+-	physParams.update(physicalParameters[1])
+-	b.phys=PhysicalParameters(physicalParameters[0],physParams)
++	pp={'se3':[center[0],center[1],center[2],1,0,0,0],'refSe3':[center[0],center[1],center[2],1,0,0,0],'young':young,'poisson':poisson,'frictionAngle':frictionAngle}
++	pp.update(physParamsAttr)
++	b.phys=PhysicalParameters(physParamsClass)
++	for k in [attr for attr in pp.keys() if attr in b.phys.keys()]:
++		b.phys[k]=pp[k]
+ 	b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+ 	b['isDynamic']=dynamic
+ 	b.mold.postProcessAttributes()
+ 	return b
+ 
+-def facet(vertices,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=False,wire=True,color=None,physParamsClass='BodyMacroParameters'):
+-	&quot;&quot;&quot;Create default facet with given parameters.&quot;&quot;&quot;
+-	return facet_v2(vertices,[physParamsClass,{'young':young,'poisson':poisson,'frictionAngle':frictionAngle}],dynamic,wire,color)
+-
+ def aabbWalls(extrema=None,thickness=None,oversizeFactor=1.5,**kw):
+ 	&quot;&quot;&quot;return 6 walls that will wrap existing packing;
+ 	extrema are extremal points of the AABB of the packing (will be calculated if not specified)
+@@ -256,10 +252,8 @@
+ 	pylab.show()
+ 
+ 
+-def import_stl_geometry_v2(file, physicalParameters, color=[0,1,0],wire=True,noBoundingVolume=False,noInteractingGeometry=False):
+-	&quot;&quot;&quot;Import geometry from stl file, version 2. 
+-	Allow any PhysicalParamters class, not only BodyMacroParameters descendan as for import_stl_geometry.
+-	&quot;&quot;&quot;
++def import_stl_geometry(file, young=30e9,poisson=.3,color=[0,1,0],frictionAngle=0.5236,wire=True,noBoundingVolume=False,noInteractingGeometry=False,physParamsClass='BodyMacroParameters',physParamsAttr={}):
++	&quot;&quot;&quot; Import geometry from stl file, create facets and return list of their ids.&quot;&quot;&quot;
+ 	imp = STLImporter()
+ 	imp.wire = wire
+ 	imp.open(file)
+@@ -268,9 +262,11 @@
+ 	for i in xrange(imp.number_of_facets):
+ 		b=Body()
+ 		b['isDynamic']=False
+-		physParams={'se3':[0,0,0,1,0,0,0]}
+-		physParams.update(physicalParameters[1])
+-		b.phys=PhysicalParameters(physicalParameters[0],physParams)
++		pp={'se3':[0,0,0,1,0,0,0],'young':young,'poisson':poisson,'frictionAngle':frictionAngle}
++		pp.update(physParamsAttr)
++		b.phys=PhysicalParameters(physParamsClass)
++		for k in [attr for attr in pp.keys() if attr in b.phys.keys()]:
++			b.phys[k]=pp[k]
+ 		if not noBoundingVolume:
+ 			b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+ 		o.bodies.append(b)
+@@ -282,10 +278,6 @@
+ 		o.bodies[i].shape['diffuseColor']=color
+ 	return imported
+ 
+-def import_stl_geometry(file, young=30e9,poisson=.3,color=[0,1,0],frictionAngle=0.5236,wire=True,noBoundingVolume=False,noInteractingGeometry=False,physParamsClass='BodyMacroParameters'):
+-	&quot;&quot;&quot; Import geometry from stl file, create facets and return list of their ids.&quot;&quot;&quot;
+-	return import_stl_geometry_v2(file,[physParamsClass,{'young':young,'poisson':poisson,'frictionAngle':frictionAngle}],color,wire,noBoundingVolume,noInteractingGeometry)
+-
+ def encodeVideoFromFrames(wildcard,out,renameNotOverwrite=True,fps=24):
+ 	import pygst,sys,gobject,os
+ 	pygst.require(&quot;0.10&quot;)
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000704.html">[deprecated list] [Yade-dev] shared_ptr&lt;PhysicalAction&gt;
+</A></li>
+	<LI>Next message: <A HREF="000705.html">[deprecated list] [Yade-dev] [svn] r1669 - in	trunk:	core/DefaultContainerImplementations	gui/py	pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#692">[ date ]</a>
+              <a href="thread.html#692">[ thread ]</a>
+              <a href="subject.html#692">[ subject ]</a>
+              <a href="author.html#692">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

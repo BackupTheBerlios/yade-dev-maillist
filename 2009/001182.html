@@ -1,0 +1,317 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1856 - in trunk: examples	gui/py	pkg/dem/Engine/DeusExMachina py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1856%20-%20in%20trunk%3A%20examples%0A%09gui/py%09pkg/dem/Engine/DeusExMachina%20py&In-Reply-To=%3C200907112025.n6BKPYgk027313%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001181.html">
+   <LINK REL="Next"  HREF="001183.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1856 - in trunk: examples	gui/py	pkg/dem/Engine/DeusExMachina py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1856%20-%20in%20trunk%3A%20examples%0A%09gui/py%09pkg/dem/Engine/DeusExMachina%20py&In-Reply-To=%3C200907112025.n6BKPYgk027313%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1856 - in trunk: examples	gui/py	pkg/dem/Engine/DeusExMachina py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Jul 11 22:25:34 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001181.html">[deprecated list] [Yade-dev] [svn] r1855 - in trunk: . debian doc	py scripts
+</A></li>
+        <LI>Next message: <A HREF="001183.html">[deprecated list] [Yade-dev] [svn] r1857 - in trunk: . gui/py	pkg/common	pkg/common/Engine/MetaEngine pkg/dem py	py/yadeWrapper scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1182">[ date ]</a>
+              <a href="thread.html#1182">[ thread ]</a>
+              <a href="subject.html#1182">[ subject ]</a>
+              <a href="author.html#1182">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-11 22:25:33 +0200 (Sat, 11 Jul 2009)
+New Revision: 1856
+
+Modified:
+   trunk/examples/STLImporterTest.py
+   trunk/gui/py/pyAttrUtils.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+   trunk/py/utils.py
+Log:
+1. Change NewtonsDampedLaw to a StandAloneEngine
+2. add .updateExistingKeys (perhaps should be updateExistingAttributes) to all python-wrapped yade objects, which will change only existing attributes from given dictionary
+3. Adapt STLImporterTest to new nicer syntax.
+
+
+Modified: trunk/examples/STLImporterTest.py
+===================================================================
+--- trunk/examples/STLImporterTest.py	2009-07-11 16:09:39 UTC (rev 1855)
++++ trunk/examples/STLImporterTest.py	2009-07-11 20:25:33 UTC (rev 1856)
+@@ -1,11 +1,6 @@
+ #!/usr/local/bin/yade-trunk -x
+ # -*- encoding=utf-8 -*-
+ 
+-from yade import utils
+-
+-## Omega
+-o=Omega() 
+-
+ ## PhysicalParameters 
+ Density=2400
+ frictionAngle=radians(35)
+@@ -15,8 +10,8 @@
+ es = 0.3
+ 
+ ## Import wall's geometry
+-p=utils.getViscoelasticFromSpheresInteraction(10e3,tc,en,es)
+-imported = utils.import_stl_geometry('baraban.stl',frictionAngle=frictionAngle,physParamsClass=&quot;SimpleViscoelasticBodyParameters&quot;,physParamsAttr={'kn':p['kn'],'cn':p['cn'],'ks':p['ks'],'cs':p['cs']})
++params=utils.getViscoelasticFromSpheresInteraction(10e3,tc,en,es)
++imported = utils.import_stl_geometry('baraban.stl',frictionAngle=frictionAngle,physParamsClass=&quot;SimpleViscoelasticBodyParameters&quot;,**params) # **params sets kn, cn, ks, cs
+ 
+ ## Spheres
+ sphereRadius = 0.2
+@@ -31,45 +26,44 @@
+             s=utils.sphere([x,y,z],sphereRadius,density=Density,frictionAngle=frictionAngle,physParamsClass=&quot;SimpleViscoelasticBodyParameters&quot;)
+             p=utils.getViscoelasticFromSpheresInteraction(s.phys['mass'],tc,en,es)
+             s.phys['kn'],s.phys['cn'],s.phys['ks'],s.phys['cs']=p['kn'],p['cn'],p['ks'],p['cs']
+-            o.bodies.append(s)
++            O.bodies.append(s)
+ 
+ ## Timestep 
+-o.dt=.2*tc
++O.dt=.2*tc
+ 
+ ## Initializers 
+-o.initializers=[
++O.initializers=[
+ 	## Create bounding boxes. They are needed to zoom the 3d view properly before we start the simulation.
+-	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingFacet2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingFacet2AABB(),MetaInteractingGeometry2AABB()])
+ 	]
+ 
+ ## Engines 
+-o.engines=[
++O.engines=[
+ 	## Resets forces and momenta the act on bodies
+-	StandAloneEngine('PhysicalActionContainerReseter'),
++	BexResetter(),
+ 	## Associates bounding volume to each body.
+-	MetaEngine('BoundingVolumeMetaEngine',[
+-		EngineUnit('InteractingSphere2AABB'),
+-		EngineUnit('InteractingFacet2AABB'),
+-		EngineUnit('MetaInteractingGeometry2AABB')
++	BoundingVolumeMetaEngine([
++		InteractingSphere2AABB(),
++		InteractingFacet2AABB(),
++		MetaInteractingGeometry2AABB()
+ 	]),
+ 	## Using bounding boxes find possible body collisions.
+-    StandAloneEngine('PersistentSAPCollider'),
++	InsertionSortCollider(),
+ 	## Create geometry information about each potential collision.
+-	MetaEngine('InteractionGeometryMetaEngine',[
+-		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
+-		EngineUnit('InteractingFacet2InteractingSphere4SpheresContactGeometry')
++	InteractionGeometryMetaEngine([
++		InteractingSphere2InteractingSphere4SpheresContactGeometry(),
++		InteractingFacet2InteractingSphere4SpheresContactGeometry()
+ 	]),
+ 	## Create physical information about the interaction.
+-	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleViscoelasticRelationships')]),
++	InteractionPhysicsMetaEngine([SimpleViscoelasticRelationships()]),
+     ## Constitutive law
+-	MetaEngine('ConstitutiveLawDispatcher',[EngineUnit('ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw')]),
++	ConstitutiveLawDispatcher([ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw()]),
+ 	## Apply gravity
+-	DeusExMachina('GravityEngine',{'gravity':[0,-9.81,0]}),
++	GravityEngine(gravity=[0,-9.81,0]),
+ 	## Cundall damping must been disabled!
+-	DeusExMachina('NewtonsDampedLaw',{'damping':0}),
++	NewtonsDampedLaw(damping=0),
+ 	## Apply kinematics to walls
+-	DeusExMachina('RotationEngine',{'subscribedBodies':imported,'rotationAxis':[0,0,1],'rotateAroundZero':True,'angularVelocity':0.5}),
++	RotationEngine(subscribedBodies=imported,rotationAxis=[0,0,1],rotateAroundZero=True,angularVelocity=0.5)
+ ]
+-
+-o.saveTmp('init');
+-
++O.saveTmp();
++O.step()
+
+Modified: trunk/gui/py/pyAttrUtils.hpp
+===================================================================
+--- trunk/gui/py/pyAttrUtils.hpp	2009-07-11 16:09:39 UTC (rev 1855)
++++ trunk/gui/py/pyAttrUtils.hpp	2009-07-11 20:25:33 UTC (rev 1856)
+@@ -21,13 +21,14 @@
+  * \param ensureFunc is member function called before every attribute access. It typically would check whether acessor is not NULL, otherwise instantiate it.
+  */
+ #define ATTR_ACCESS_CXX(accessor,ensureFunc) \
+-	boost::python::object wrappedPyGet(std::string key){ensureFunc();return accessor-&gt;pyGet(key);} \
+-	void wrappedPySet(std::string key,python::object val){ensureFunc(); accessor-&gt;pySet(key,val);} \
+-	string wrappedGetAttrStr(std::string key){ensureFunc();vector&lt;string&gt; a=accessor-&gt;getAttrStr(key); string ret(&quot;[&quot;); FOREACH(string s, a) ret+=s+&quot; &quot;; return ret+&quot;]&quot;;} \
+-	void wrappedSetAttrStr(std::string key, std::string val){ensureFunc();return accessor-&gt;setAttrStr(key,val);} \
++	boost::python::object wrappedPyGet(const std::string&amp; key){ensureFunc();return accessor-&gt;pyGet(key);} \
++	void wrappedPySet(const std::string&amp; key, const python::object&amp; val){ensureFunc(); accessor-&gt;pySet(key,val);} \
++	string wrappedGetAttrStr(const std::string&amp; key){ensureFunc();vector&lt;string&gt; a=accessor-&gt;getAttrStr(key); string ret(&quot;[&quot;); FOREACH(string s, a) ret+=s+&quot; &quot;; return ret+&quot;]&quot;;} \
++	void wrappedSetAttrStr(const std::string&amp; key, const std::string&amp; val){ensureFunc();return accessor-&gt;setAttrStr(key,val);} \
+ 	boost::python::list wrappedPyKeys(){ensureFunc(); return accessor-&gt;pyKeys();} \
+ 	boost::python::dict wrappedPyDict(){ensureFunc(); return accessor-&gt;pyDict();} \
+-	bool wrappedPyHasKey(std::string key){ensureFunc(); return accessor-&gt;descriptors.find(key)!=accessor-&gt;descriptors.end();} \
++	bool wrappedPyHasKey(const std::string&amp; key){ensureFunc(); return accessor-&gt;descriptors.find(key)!=accessor-&gt;descriptors.end();} \
++	python::list wrappedUpdateExisting(const python::dict&amp; d){ python::list ret; ensureFunc(); python::list keys=d.keys(); size_t ll=python::len(keys); for(size_t i=0; i&lt;ll; i++){ string key=python::extract&lt;string&gt;(keys[i]); if(wrappedPyHasKey(key)) accessor-&gt;pySet(key,d[keys[i]]); else ret.append(key); } return ret; }
+ 	
+ 	
+ 	//boost::python::object wrappedPyGet_throw(std::string key){ensureFunc(); if(wrappedPyHasKey(key)) return accessor-&gt;pyGet(key); PyErr_SetString(PyExc_AttributeError, &quot;No such attribute.&quot;); boost::python::throw_error_already_set(); /* make compiler happy*/ return boost::python::object(); }
+@@ -38,7 +39,7 @@
+  * They define python special functions that support dictionary operations on this object and calls proxies for them. */
+ #define ATTR_ACCESS_PY(cxxClass) \
+ 	def(&quot;__getitem__&quot;,&amp;cxxClass::wrappedPyGet).def(&quot;__setitem__&quot;,&amp;cxxClass::wrappedPySet).def(&quot;keys&quot;,&amp;cxxClass::wrappedPyKeys).def(&quot;has_key&quot;,&amp;cxxClass::wrappedPyHasKey).def(&quot;dict&quot;,&amp;cxxClass::wrappedPyDict) \
+-	.def(&quot;getRaw&quot;,&amp;cxxClass::wrappedGetAttrStr).def(&quot;setRaw&quot;,&amp;cxxClass::wrappedSetAttrStr)
++	.def(&quot;getRaw&quot;,&amp;cxxClass::wrappedGetAttrStr).def(&quot;setRaw&quot;,&amp;cxxClass::wrappedSetAttrStr).def(&quot;updateExistingKeys&quot;,&amp;cxxClass::wrappedUpdateExisting,&quot;Update attributes from given dictionary, but skpping attribues that do not exist in the wrapped class; return list of names of attributes that were not set.&quot;)
+ 	//def(&quot;__getattr__&quot;,&amp;cxxClass::wrappedPyGet).def(&quot;__setattr__&quot;,&amp;cxxClass::wrappedPySet).def(&quot;attrs&quot;,&amp;cxxClass::wrappedPyKeys)
+ 
+ 	//.def(&quot;__getattribute__&quot;,&amp;cxxClass::wrappedPyGet_throw)
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-07-11 16:09:39 UTC (rev 1855)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-07-11 20:25:33 UTC (rev 1856)
+@@ -37,7 +37,7 @@
+ 	maxVelocitySq=max(maxVelocitySq,rb-&gt;velocity.SquaredLength());
+ }
+ 
+-void NewtonsDampedLaw::applyCondition ( MetaBody * ncb )
++void NewtonsDampedLaw::action(MetaBody * ncb)
+ {
+ 	ncb-&gt;bex.sync();
+ 	Real dt=Omega::instance().getTimeStep();
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2009-07-11 16:09:39 UTC (rev 1855)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2009-07-11 20:25:33 UTC (rev 1856)
+@@ -7,7 +7,7 @@
+ *************************************************************************/
+ #pragma once
+ 
+-#include&lt;yade/core/DeusExMachina.hpp&gt;
++#include&lt;yade/core/StandAloneEngine.hpp&gt;
+ #include&lt;Wm3Vector3.h&gt;
+ 
+ /*! An engine that can replace the usual series of engines used for integrating the laws of motion.
+@@ -33,7 +33,7 @@
+  */
+ class RigidBodyParameters;
+ 
+-class NewtonsDampedLaw : public DeusExMachina{
++class NewtonsDampedLaw : public StandAloneEngine{
+ 	inline void cundallDamp(const Real&amp; dt, const Vector3r&amp; f, const Vector3r&amp; velocity, Vector3r&amp; acceleration, const Vector3r&amp; m, const Vector3r&amp; angularVelocity, Vector3r&amp; angularAcceleration);
+ 	void handleClumpMember(MetaBody* ncb, const body_id_t memberId, RigidBodyParameters* clumpRBP);
+ 
+@@ -42,10 +42,10 @@
+ 		Real damping;
+ 		/// store square of max. velocity, for informative purposes; computed again at every step
+ 		Real maxVelocitySq;
+-		virtual void applyCondition(MetaBody *);		
++		virtual void action(MetaBody *);		
+ 		NewtonsDampedLaw(): damping(0.2), maxVelocitySq(-1){}
+-	REGISTER_ATTRIBUTES(DeusExMachina,(damping)(maxVelocitySq));
+-	REGISTER_CLASS_AND_BASE(NewtonsDampedLaw,DeusExMachina);
++	REGISTER_ATTRIBUTES(StandAloneEngine,(damping)(maxVelocitySq));
++	REGISTER_CLASS_AND_BASE(NewtonsDampedLaw,StandAloneEngine);
+ };
+ REGISTER_SERIALIZABLE(NewtonsDampedLaw);
+ 
+
+Modified: trunk/py/utils.py
+===================================================================
+--- trunk/py/utils.py	2009-07-11 16:09:39 UTC (rev 1855)
++++ trunk/py/utils.py	2009-07-11 20:25:33 UTC (rev 1856)
+@@ -77,7 +77,8 @@
+ 	V=(4./3)*math.pi*radius**3
+ 	inert=(2./5.)*V*density*radius**2
+ 	pp.update({'se3':[center[0],center[1],center[2],1,0,0,0],'refSe3':[center[0],center[1],center[2],1,0,0,0],'mass':V*density,'inertia':[inert,inert,inert]})
+-	s.phys=PhysicalParameters(physParamsClass,pp)
++	s.phys=PhysicalParameters(physParamsClass)
++	s.phys.updateExistingKeys(pp)
+ 	s.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+ 	s['isDynamic']=dynamic
+ 	return s
+@@ -92,7 +93,8 @@
+ 	mass=8*extents[0]*extents[1]*extents[2]*density
+ 	V=extents[0]*extents[1]*extents[2]
+ 	pp.update({'se3':[center[0],center[1],center[2],orientation[0],orientation[1],orientation[2],orientation[3]],'refSe3':[center[0],center[1],center[2],orientation[0],orientation[1],orientation[2],orientation[3]],'mass':V*density,'inertia':[mass*4*(extents[1]**2+extents[2]**2),mass*4*(extents[0]**2+extents[2]**2),mass*4*(extents[0]**2+extents[1]**2)]})
+-	b.phys=PhysicalParameters(physParamsClass,pp)
++	b.phys=PhysicalParameters(physParamsClass)
++	b.phys.updateExistingKeys(pp)
+ 	b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+ 	b['isDynamic']=dynamic
+ 	return b
+@@ -110,7 +112,8 @@
+ 	b.shape.setRaw('vertices',vStr)
+ 	b.mold.setRaw('vertices',vStr)
+ 	pp.update({'se3':[center[0],center[1],center[2],1,0,0,0],'refSe3':[center[0],center[1],center[2],1,0,0,0],'inertia':[0,0,0]})
+-	b.phys=PhysicalParameters(physParamsClass,pp)
++	b.phys=PhysicalParameters(physParamsClass)
++	b.phys.updateExistingKeys(pp)
+ 	b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+ 	b['isDynamic']=dynamic
+ 	b.mold.postProcessAttributes()
+@@ -275,7 +278,7 @@
+ 	pylab.show()
+ 
+ 
+-def import_stl_geometry(file, young=30e9,poisson=.3,color=[0,1,0],frictionAngle=0.5236,wire=True,noBoundingVolume=False,noInteractingGeometry=False,physParamsClass='BodyMacroParameters',physParamsAttr={}):
++def import_stl_geometry(file, young=30e9,poisson=.3,color=[0,1,0],frictionAngle=0.5236,wire=True,noBoundingVolume=False,noInteractingGeometry=False,physParamsClass='BodyMacroParameters',**physParamsAttr):
+ 	&quot;&quot;&quot; Import geometry from stl file, create facets and return list of their ids.&quot;&quot;&quot;
+ 	imp = STLImporter()
+ 	imp.wire = wire
+@@ -288,8 +291,7 @@
+ 		pp={'se3':[0,0,0,1,0,0,0],'young':young,'poisson':poisson,'frictionAngle':frictionAngle}
+ 		pp.update(physParamsAttr)
+ 		b.phys=PhysicalParameters(physParamsClass)
+-		for k in [attr for attr in pp.keys() if attr in b.phys.keys()]:
+-			b.phys[k]=pp[k]
++		b.phys.updateExistingKeys(pp)
+ 		if not noBoundingVolume:
+ 			b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+ 		o.bodies.append(b)
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001181.html">[deprecated list] [Yade-dev] [svn] r1855 - in trunk: . debian doc	py scripts
+</A></li>
+	<LI>Next message: <A HREF="001183.html">[deprecated list] [Yade-dev] [svn] r1857 - in trunk: . gui/py	pkg/common	pkg/common/Engine/MetaEngine pkg/dem py	py/yadeWrapper scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1182">[ date ]</a>
+              <a href="thread.html#1182">[ thread ]</a>
+              <a href="subject.html#1182">[ subject ]</a>
+              <a href="author.html#1182">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

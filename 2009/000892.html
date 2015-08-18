@@ -1,0 +1,241 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1733 - in trunk: core extra	gui/py	pkg/common/Engine/MetaEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1733%20-%20in%20trunk%3A%20core%20extra%0A%09gui/py%09pkg/common/Engine/MetaEngine&In-Reply-To=%3C200903270859.n2R8xNmU024989%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000891.html">
+   <LINK REL="Next"  HREF="000893.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1733 - in trunk: core extra	gui/py	pkg/common/Engine/MetaEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1733%20-%20in%20trunk%3A%20core%20extra%0A%09gui/py%09pkg/common/Engine/MetaEngine&In-Reply-To=%3C200903270859.n2R8xNmU024989%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1733 - in trunk: core extra	gui/py	pkg/common/Engine/MetaEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Mar 27 09:59:23 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000891.html">[deprecated list] [Yade-dev] [svn] r1732 - in trunk: core gui/py
+</A></li>
+        <LI>Next message: <A HREF="000893.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-22940/bin/yade-svn1733: BoxStack, BrefcomTestGen,	CohesiveTriaxialTest, FEMBeam, RotatingBox, SDECImpactTest,	SnowCreepTest, SnowVoxelsLoader, TetrahedronsTest,	TriaxialTestWater, USCTGen
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#892">[ date ]</a>
+              <a href="thread.html#892">[ thread ]</a>
+              <a href="subject.html#892">[ subject ]</a>
+              <a href="author.html#892">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-03-27 09:59:17 +0100 (Fri, 27 Mar 2009)
+New Revision: 1733
+
+Modified:
+   trunk/core/EngineUnit.hpp
+   trunk/core/EngineUnit1D.hpp
+   trunk/core/EngineUnit2D.hpp
+   trunk/extra/Brefcom.cpp
+   trunk/gui/py/yadeControl.cpp
+   trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp
+   trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.hpp
+Log:
+Add label attribute to engine units. Python wrapper updated.
+
+
+Modified: trunk/core/EngineUnit.hpp
+===================================================================
+--- trunk/core/EngineUnit.hpp	2009-03-26 09:56:16 UTC (rev 1732)
++++ trunk/core/EngineUnit.hpp	2009-03-27 08:59:17 UTC (rev 1733)
+@@ -19,7 +19,10 @@
+ 	public: virtual vector&lt;std::string&gt; getFunctorTypes(){throw;}
+ 		virtual list&lt;string&gt; getNeededBex(){return list&lt;string&gt;();}
+ 	shared_ptr&lt;TimingDeltas&gt; timingDeltas;
++	// label to be able to retrieve an engine unit by its label
++	string label; 
+ 	REGISTER_CLASS_AND_BASE(EngineUnit,Serializable);
++	REGISTER_ATTRIBUTES(/* no base class attributes */,(label));
+ };
+ 
+ REGISTER_SERIALIZABLE(EngineUnit);
+
+Modified: trunk/core/EngineUnit1D.hpp
+===================================================================
+--- trunk/core/EngineUnit1D.hpp	2009-03-26 09:56:16 UTC (rev 1732)
++++ trunk/core/EngineUnit1D.hpp	2009-03-27 08:59:17 UTC (rev 1733)
+@@ -26,6 +26,7 @@
+ 		virtual std::string get1DFunctorType1(void){throw runtime_error(&quot;Class &quot;+this-&gt;getClassName()+&quot; did not use FUNCTOR1D to declare its argument type?&quot;); }
+ 		virtual vector&lt;string&gt; getFunctorTypes(void){vector&lt;string&gt; ret; ret.push_back(get1DFunctorType1()); return ret;};
+ 	REGISTER_CLASS_AND_BASE(EngineUnit1D,EngineUnit FunctorWrapper);
++	REGISTER_ATTRIBUTES(EngineUnit,/*no attributes here*/);
+ };
+ 
+ 
+
+Modified: trunk/core/EngineUnit2D.hpp
+===================================================================
+--- trunk/core/EngineUnit2D.hpp	2009-03-26 09:56:16 UTC (rev 1732)
++++ trunk/core/EngineUnit2D.hpp	2009-03-27 08:59:17 UTC (rev 1733)
+@@ -28,6 +28,7 @@
+ 		virtual std::string get2DFunctorType2(void){throw runtime_error(&quot;Class &quot;+this-&gt;getClassName()+&quot; did not use FUNCTOR2D to declare its argument types?&quot;);}
+ 		virtual vector&lt;string&gt; getFunctorTypes(){vector&lt;string&gt; ret; ret.push_back(get2DFunctorType1()); ret.push_back(get2DFunctorType2()); return ret;};
+ 	REGISTER_CLASS_AND_BASE(EngineUnit2D,EngineUnit FunctorWrapper);
++	REGISTER_ATTRIBUTES(EngineUnit,/*no attributes here*/);
+ };
+ 
+ 
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-03-26 09:56:16 UTC (rev 1732)
++++ trunk/extra/Brefcom.cpp	2009-03-27 08:59:17 UTC (rev 1733)
+@@ -236,6 +236,8 @@
+ 	rootBody=_rootBody;
+ 	if(!functor) functor=shared_ptr&lt;ef2_Spheres_Brefcom_BrefcomLaw&gt;(new ef2_Spheres_Brefcom_BrefcomLaw);
+ 	functor-&gt;logStrain=logStrain;
++	LOG_FATAL(&quot;Deprecated BrefcomLaw doesn't pass its parameters to the functor, results would be garbage. Fix me or use ef2_Spheres_Brefcom_BrercomLaw directly instead.&quot;);
++	throw;
+ 	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rootBody-&gt;interactions){
+ 		if(!I-&gt;isReal) continue;
+ 		functor-&gt;go(I-&gt;interactionGeometry, I-&gt;interactionPhysics, I.get(), rootBody);
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2009-03-26 09:56:16 UTC (rev 1732)
++++ trunk/gui/py/yadeControl.cpp	2009-03-27 08:59:17 UTC (rev 1733)
+@@ -474,6 +474,16 @@
+ 				PyRun_SimpleString((&quot;__builtins__.&quot;+e-&gt;label+&quot;=Omega().labeledEngine('&quot;+e-&gt;label+&quot;')&quot;).c_str());
+ 				PyGILState_Release(gstate);
+ 			}
++			if(isChildClassOf(e-&gt;getClassName(),&quot;MetaEngine&quot;)){
++				shared_ptr&lt;MetaEngine&gt; ee=dynamic_pointer_cast&lt;MetaEngine&gt;(e);
++				FOREACH(const shared_ptr&lt;EngineUnit&gt;&amp; f, ee-&gt;functorArguments){
++					if(!f-&gt;label.empty()){
++						PyGILState_STATE gstate; gstate = PyGILState_Ensure();
++						PyRun_SimpleString((&quot;__builtins__.&quot;+f-&gt;label+&quot;=Omega().labeledEngine('&quot;+f-&gt;label+&quot;')&quot;).c_str());
++						PyGILState_Release(gstate);
++					}
++				}
++			}
+ 		}
+ 	}
+ 
+@@ -576,11 +586,15 @@
+ 				RETURN_ENGINE_IF_POSSIBLE(ParallelEngine,pyParallelEngine);
+ 				throw std::runtime_error(&quot;Unable to cast engine to MetaEngine, StandAloneEngine, DeusExMachina or ParallelEngine? ??&quot;);
+ 			}
++			shared_ptr&lt;MetaEngine&gt; me=dynamic_pointer_cast&lt;MetaEngine&gt;(eng);
++			if(me){
++				FOREACH(const shared_ptr&lt;EngineUnit&gt;&amp; eu, me-&gt;functorArguments){
++					if(eu-&gt;label==label) return python::object(pyEngineUnit(eu));
++				}
++			}
+ 		}
+ 		throw std::invalid_argument(string(&quot;No engine labeled `&quot;)+label+&quot;'&quot;);
+ 	}
+-
+-
+ 	
+ 	pyBodyContainer bodies_get(void){assertRootBody(); return pyBodyContainer(OMEGA.getRootBody()-&gt;bodies); }
+ 	pyInteractionContainer interactions_get(void){assertRootBody(); return pyInteractionContainer(OMEGA.getRootBody()-&gt;interactions); }
+@@ -722,6 +736,7 @@
+ 	boost::python::class_&lt;pyBexContainer&gt;(&quot;BexContainer&quot;,python::init&lt;pyBexContainer&amp;&gt;())
+ 		.def(&quot;f&quot;,&amp;pyBexContainer::force_get)
+ 		.def(&quot;t&quot;,&amp;pyBexContainer::torque_get)
++		.def(&quot;m&quot;,&amp;pyBexContainer::torque_get) // for compatibility with ActionContainer
+ 		.def(&quot;addF&quot;,&amp;pyBexContainer::force_add)
+ 		.def(&quot;addT&quot;,&amp;pyBexContainer::torque_add);
+ 	#endif
+
+Modified: trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp	2009-03-26 09:56:16 UTC (rev 1732)
++++ trunk/pkg/common/Engine/MetaEngine/BoundingVolumeMetaEngine.hpp	2009-03-27 08:59:17 UTC (rev 1733)
+@@ -36,6 +36,7 @@
+ 
+ 	REGISTER_CLASS_NAME(BoundingVolumeMetaEngine);
+ 	REGISTER_BASE_CLASS_NAME(MetaEngine2D);
++	REGISTER_ATTRIBUTES(MetaEngine,/* no attributes here */);
+ };
+ 
+ REGISTER_SERIALIZABLE(BoundingVolumeMetaEngine);
+
+Modified: trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp	2009-03-26 09:56:16 UTC (rev 1732)
++++ trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp	2009-03-27 08:59:17 UTC (rev 1733)
+@@ -37,6 +37,7 @@
+ 		addTorque(id1,(contactPoint-pos1).Cross(force),rb);
+ 		addTorque(id2,-(contactPoint-pos2).Cross(force),rb);
+ 	}
++	REGISTER_ATTRIBUTES(EngineUnit,/* no attributes here */);
+ };
+ REGISTER_SERIALIZABLE(ConstitutiveLaw);
+ 	
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp	2009-03-26 09:56:16 UTC (rev 1732)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp	2009-03-27 08:59:17 UTC (rev 1733)
+@@ -40,6 +40,7 @@
+ 
+ 	REGISTER_CLASS_NAME(InteractionGeometryMetaEngine);
+ 	REGISTER_BASE_CLASS_NAME(MetaEngine2D);
++	REGISTER_ATTRIBUTES(MetaEngine,/* no attributes here*/ );
+ };
+ 
+ REGISTER_SERIALIZABLE(InteractionGeometryMetaEngine);
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.hpp	2009-03-26 09:56:16 UTC (rev 1732)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.hpp	2009-03-27 08:59:17 UTC (rev 1733)
+@@ -33,6 +33,7 @@
+ 
+ 	REGISTER_CLASS_NAME(InteractionPhysicsMetaEngine);
+ 	REGISTER_BASE_CLASS_NAME(MetaEngine2D);
++	REGISTER_ATTRIBUTES(MetaEngine, /* no attributes here */);
+ };
+ 
+ REGISTER_SERIALIZABLE(InteractionPhysicsMetaEngine);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000891.html">[deprecated list] [Yade-dev] [svn] r1732 - in trunk: core gui/py
+</A></li>
+	<LI>Next message: <A HREF="000893.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-22940/bin/yade-svn1733: BoxStack, BrefcomTestGen,	CohesiveTriaxialTest, FEMBeam, RotatingBox, SDECImpactTest,	SnowCreepTest, SnowVoxelsLoader, TetrahedronsTest,	TriaxialTestWater, USCTGen
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#892">[ date ]</a>
+              <a href="thread.html#892">[ thread ]</a>
+              <a href="subject.html#892">[ subject ]</a>
+              <a href="author.html#892">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

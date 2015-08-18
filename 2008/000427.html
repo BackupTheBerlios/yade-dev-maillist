@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] random-access container for	interactions
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20random-access%20container%20for%0A%09interactions&In-Reply-To=%3C20081002161039.5f90aaf4%40szpak%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000430.html">
+   <LINK REL="Next"  HREF="000429.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] random-access container for	interactions</H1>
+    <B>Janek Kozicki</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20random-access%20container%20for%0A%09interactions&In-Reply-To=%3C20081002161039.5f90aaf4%40szpak%3E"
+       TITLE="[deprecated list] [Yade-dev] random-access container for	interactions">janek_listy at wp.pl
+       </A><BR>
+    <I>Thu Oct  2 16:10:39 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000430.html">[deprecated list] [Yade-dev] goReverse
+</A></li>
+        <LI>Next message: <A HREF="000429.html">[deprecated list] [Yade-dev] random-access container for	interactions
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#427">[ date ]</a>
+              <a href="thread.html#427">[ thread ]</a>
+              <a href="subject.html#427">[ subject ]</a>
+              <a href="author.html#427">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>V&#225;clav S(milauer said:     (by the date of Wed, 01 Oct 2008 17:51:37 +0200)
+
+
+&gt;<i> &gt; Sega is right. It goes from begin() to end() so isn't resizing the
+</I>&gt;<i> &gt; container. That shouldn't be a problem then.
+</I>&gt;<i> &gt;   
+</I>&gt;<i> Right, but I thought the problem was when running gravity in parallel
+</I>&gt;<i> mode that if number of bodies doesn't match number of physical actions,
+</I>&gt;<i> then the container is resized and crashes. I don't understant why should
+</I>&gt;<i> gravityEngine resize physicalActions container at every iteration... ?
+</I>
+If GravityEngine is resizing - it is doing that only ONCE. In fact
+the first engine in the loop that assigns any PhysicalAction is
+responsible for this resizing.
+
+So if we don't use GravityEngine - this will be another one, first in
+the loop. I didn't check in the code right now, so it would require
+some investigation.
+
+It might be better to resize once, I dunno.
+
+-- 
+Janek Kozicki                                                         |
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000430.html">[deprecated list] [Yade-dev] goReverse
+</A></li>
+	<LI>Next message: <A HREF="000429.html">[deprecated list] [Yade-dev] random-access container for	interactions
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#427">[ date ]</a>
+              <a href="thread.html#427">[ thread ]</a>
+              <a href="subject.html#427">[ subject ]</a>
+              <a href="author.html#427">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

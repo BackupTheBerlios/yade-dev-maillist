@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] polyhedron collisions
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20polyhedron%20collisions&In-Reply-To=%3C20090125234018.211ef18b%40szpak%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000620.html">
+   <LINK REL="Next"  HREF="000621.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] polyhedron collisions</H1>
+    <B>Janek Kozicki</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20polyhedron%20collisions&In-Reply-To=%3C20090125234018.211ef18b%40szpak%3E"
+       TITLE="[deprecated list] [Yade-dev] polyhedron collisions">janek_listy at wp.pl
+       </A><BR>
+    <I>Sun Jan 25 23:40:18 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000620.html">[deprecated list] [Yade-dev] polyhedron collisions
+</A></li>
+        <LI>Next message: <A HREF="000621.html">[deprecated list] [Yade-dev] [svn] r1641 - in trunk: core	examples	examples/SpheresFactory gui/py lib/import	pkg/common	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#623">[ date ]</a>
+              <a href="thread.html#623">[ thread ]</a>
+              <a href="subject.html#623">[ subject ]</a>
+              <a href="author.html#623">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>V&#225;clav S(milauer said:     (by the date of Sun, 25 Jan 2009 08:40:40 +0100)
+
+&gt;<i> Great to hear that. I hope you will also commit a very simple example,
+</I>&gt;<i> like 2 of those bumping into each other.
+</I>
+when I get it to work - yes. Something like SDECSpherePlane, but with
+random polyhedrons.
+
+&gt;<i> AFAIK the common solution is to cut the shape into parts that are
+</I>&gt;<i> convex, since convex shapes are mathematically easier to handle.
+</I>
+I'm not doing that. In fact it also won't work correctly if two
+polyhedrons have multiple surfaces of contact.... But I don't care
+about it now.
+
+I used a quite stupid approach of simplifying polyhedron into a list
+of parallelepipeds made out of each surface-triangle (and a
+tetrahedron, for more precise collision detection). This allows for
+quick collision checking - just one dot product and few cross products.
+See the comments that I have just committed, if you want...
+
+
+&gt;<i> There are sophisticated algorithms for detecting triangular surface
+</I>&gt;<i> collisions (see <A HREF="httpo://gts.sf.net">httpo://gts.sf.net</A> for some references). For such
+</I>&gt;<i> complicated shapes, 
+</I>
+I'm not going this way, it's too complex for me, to understand. And
+probably slower too. OTOH my solution is not volume-perfect in
+mathematical sense.
+
+
+&gt;<i> though, what folks in Glasgow do (and what I tried
+</I>&gt;<i> with tetraheda) is to treat the intersection as volume, i.e. compute
+</I>&gt;<i> volume and direction in which this volume is the thinnest (that is the
+</I>&gt;<i> direction of repulsive force); I used exact code for that (which is -
+</I>&gt;<i> who knows - maybe incorrect: extra/tetra), Bicanic &amp;co in Glasgow get
+</I>&gt;<i> the direction from some averages over normals of planar elements
+</I>&gt;<i> involved in the collision.
+</I>
+First I'll try a plane directed directly between centers of both
+polyhedrons in contact. If it gives stupid results, then I'll try
+least-squares fitting a plane into a cloud of 3D points, using
+algorithm directly copied from wildmagic library (LGPL).
+
+
+&gt;<i> &gt; And is much slower than spheres, so you can forget about simulations
+</I>&gt;<i> &gt; with 5000 polyhedrons, anyway.
+</I>&gt;<i> &gt;   
+</I>&gt;<i> I bet you can forget simulations with 500 polyhedra as well ;-) Do you
+</I>&gt;<i> have some benchmarks on that, BTW?
+</I>
+doesn't work yet. So no benchmarks :)
+
+-- 
+Janek Kozicki                                                         |
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000620.html">[deprecated list] [Yade-dev] polyhedron collisions
+</A></li>
+	<LI>Next message: <A HREF="000621.html">[deprecated list] [Yade-dev] [svn] r1641 - in trunk: core	examples	examples/SpheresFactory gui/py lib/import	pkg/common	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#623">[ date ]</a>
+              <a href="thread.html#623">[ thread ]</a>
+              <a href="subject.html#623">[ subject ]</a>
+              <a href="author.html#623">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

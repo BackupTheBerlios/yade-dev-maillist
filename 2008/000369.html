@@ -1,0 +1,248 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1522 - trunk/gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1522%20-%20trunk/gui/py&In-Reply-To=%3C200809221514.m8MFEjEX003366%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000368.html">
+   <LINK REL="Next"  HREF="000373.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1522 - trunk/gui/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1522%20-%20trunk/gui/py&In-Reply-To=%3C200809221514.m8MFEjEX003366%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1522 - trunk/gui/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Sep 22 17:14:45 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000368.html">[deprecated list] [Yade-dev] please reply to mailing list (was: significat timestep improvement....)
+</A></li>
+        <LI>Next message: <A HREF="000373.html">[deprecated list] [Yade-dev] [svn] r1523 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#369">[ date ]</a>
+              <a href="thread.html#369">[ thread ]</a>
+              <a href="subject.html#369">[ subject ]</a>
+              <a href="author.html#369">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-09-22 17:14:44 +0200 (Mon, 22 Sep 2008)
+New Revision: 1522
+
+Modified:
+   trunk/gui/py/_utils.cpp
+   trunk/gui/py/eudoxos.py
+   trunk/gui/py/utils.py
+Log:
+1. Move interaction direction distribution pie histograms to utils
+2. Add plotting histogram of number of contacts to plotDirections()
+
+  utils.plotDirections(utils.aabbExtrema()) # to do it on the whole specimen
+
+
+
+Modified: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2008-09-21 11:47:46 UTC (rev 1521)
++++ trunk/gui/py/_utils.cpp	2008-09-22 15:14:44 UTC (rev 1522)
+@@ -131,6 +131,29 @@
+ }
+ BOOST_PYTHON_FUNCTION_OVERLOADS(interactionAnglesHistogram_overloads,interactionAnglesHistogram,1,4);
+ 
++python::tuple bodyNumInteractionsHistogram(python::tuple aabb=python::tuple()){
++	Vector3r bbMin(Vector3r::ZERO), bbMax(Vector3r::ZERO); bool useBB=python::len(aabb)&gt;0; if(useBB){bbMin=tuple2vec(extract&lt;python::tuple&gt;(aabb[0])());bbMax=tuple2vec(extract&lt;python::tuple&gt;(aabb[1])());}
++	const shared_ptr&lt;MetaBody&gt;&amp; rb=Omega::instance().getRootBody();
++	vector&lt;int&gt; bodyNumInta; bodyNumInta.resize(rb-&gt;bodies-&gt;size(),-1 /* uninitialized */);
++	int maxInta=0;
++	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; i, *rb-&gt;transientInteractions){
++		if(!i-&gt;isReal) continue;
++		const body_id_t id1=i-&gt;getId1(), id2=i-&gt;getId2(); const shared_ptr&lt;Body&gt;&amp; b1=Body::byId(id1,rb), b2=Body::byId(id2,rb);
++		if(useBB &amp;&amp; isInBB(b1-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax)) bodyNumInta[id1]=bodyNumInta[id1]&gt;0?bodyNumInta[id1]+1:1;
++		if(useBB &amp;&amp; isInBB(b2-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax)) bodyNumInta[id2]=bodyNumInta[id2]&gt;0?bodyNumInta[id2]+1:1;
++		maxInta=max(max(maxInta,bodyNumInta[b1-&gt;getId()]),bodyNumInta[b2-&gt;getId()]);
++	}
++	vector&lt;int&gt; bins; bins.resize(maxInta+1);
++	for(size_t id=0; id&lt;bodyNumInta.size(); id++){ if(bodyNumInta[id]&gt;=0) bins[bodyNumInta[id]]+=1; }
++	python::list count,num;
++	for(size_t n=1; n&lt;bins.size(); n++){
++		if(bins[n]==0) continue;
++		num.append(n); count.append(bins[n]);
++	}
++	return python::make_tuple(num,count);
++}
++BOOST_PYTHON_FUNCTION_OVERLOADS(bodyNumInteractionsHistogram_overloads,bodyNumInteractionsHistogram,0,1);
++
+ python::tuple inscribedCircleCenter(python::list v0, python::list v1, python::list v2)
+ {
+ 	return vec2tuple(Shop::inscribedCircleCenter(Vector3r(python::extract&lt;double&gt;(v0[0]),python::extract&lt;double&gt;(v0[1]),python::extract&lt;double&gt;(v0[2])), Vector3r(python::extract&lt;double&gt;(v1[0]),python::extract&lt;double&gt;(v1[1]),python::extract&lt;double&gt;(v1[2])), Vector3r(python::extract&lt;double&gt;(v2[0]),python::extract&lt;double&gt;(v2[1]),python::extract&lt;double&gt;(v2[2]))));
+@@ -144,6 +167,7 @@
+ 	def(&quot;coordsAndDisplacements&quot;,coordsAndDisplacements,coordsAndDisplacements_overloads(args(&quot;AABB&quot;)));
+ 	def(&quot;setRefSe3&quot;,setRefSe3);
+ 	def(&quot;interactionAnglesHistogram&quot;,interactionAnglesHistogram,interactionAnglesHistogram_overloads(args(&quot;axis&quot;,&quot;mask&quot;,&quot;bins&quot;,&quot;aabb&quot;)));
++	def(&quot;bodyNumInteractionsHistogram&quot;,bodyNumInteractionsHistogram,bodyNumInteractionsHistogram_overloads(args(&quot;aabb&quot;)));
+ 	def(&quot;elasticEnergy&quot;,elasticEnergyInAABB);
+ 	def(&quot;inscribedCircleCenter&quot;,inscribedCircleCenter);
+ }
+
+Modified: trunk/gui/py/eudoxos.py
+===================================================================
+--- trunk/gui/py/eudoxos.py	2008-09-21 11:47:46 UTC (rev 1521)
++++ trunk/gui/py/eudoxos.py	2008-09-22 15:14:44 UTC (rev 1522)
+@@ -12,18 +12,6 @@
+ 	dim=utils.aabbDim(cutoff)
+ 	return utils.elasticEnergy(utils.aabbExtrema(cutoff))/(.5*strain*dim[0]*dim[1]*dim[2])
+ 
+-def plotDirections(mask=0,bins=20,aabb=()):
+-	&quot;Plot 3 histograms for distribution of interaction directions, in yz,xz and xy planes.&quot;
+-	import pylab,math
+-	from yade import utils
+-	for axis in [0,1,2]:
+-		d=utils.interactionAnglesHistogram(axis,mask=mask,bins=bins,aabb=aabb)
+-		fc=[0,0,0]; fc[axis]=1.
+-		pylab.subplot(220+axis+1,polar=True);
+-		# 1.2 makes small gaps between values (but the column is decentered)
+-		pylab.bar(d[0],d[1],width=math.pi/(1.2*bins),fc=fc,alpha=.7,label=['yz','xz','xy'][axis])
+-	pylab.show()
+-
+ def estimatePoissonYoung(principalAxis,stress=0,plot=False,cutoff=0.):
+ 	&quot;&quot;&quot;Estimate Poisson's ration given the &quot;principal&quot; axis of straining.
+ 	For every base direction, homogenized strain is computed
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-09-21 11:47:46 UTC (rev 1521)
++++ trunk/gui/py/utils.py	2008-09-22 15:14:44 UTC (rev 1522)
+@@ -144,6 +144,43 @@
+ 		out.write('%g\t%g\t%g\t%g\n'%(b.phys['se3'][0],b.phys['se3'][1],b.phys['se3'][2],b.shape['radius']))
+ 	out.close()
+ 
++def avgNumInteractions(cutoff=0.):
++	nums,counts=bodyNumInteractionsHistogram(aabbExtrema(cutoff))
++	return sum([nums[i]*counts[i] for i in range(len(nums))])/(1.*sum(counts))
++
++def plotNumInteractionsHistogram(cutoff=0.):
++	nums,counts=bodyNumInteractionsHistogram(aabbExtrema(cutoff))
++	import pylab
++	pylab.bar(nums,counts)
++	pylab.title('Number of interactions histogram, average %g (cutoff=%g)'%(avgNumInteractions(cutoff),cutoff))
++	pylab.xlabel('Number of interactions')
++	pylab.ylabel('Body count')
++	pylab.show()
++
++def plotDirections(aabb=(),mask=0,bins=20,numHist=True):
++	&quot;&quot;&quot;Plot 3 histograms for distribution of interaction directions, in yz,xz and xy planes and
++	(optional but default) histogram of number of interactions per body.&quot;&quot;&quot;
++	import pylab,math
++	from yade import utils
++	for axis in [0,1,2]:
++		d=utils.interactionAnglesHistogram(axis,mask=mask,bins=bins,aabb=aabb)
++		fc=[0,0,0]; fc[axis]=1.
++		subp=pylab.subplot(220+axis+1,polar=True);
++		# 1.1 makes small gaps between values (but the column is a bit decentered)
++		pylab.bar(d[0],d[1],width=math.pi/(1.1*bins),fc=fc,alpha=.7,label=['yz','xz','xy'][axis])
++		#pylab.title(['yz','xz','xy'][axis]+' plane')
++		pylab.text(.5,.25,['yz','xz','xy'][axis],horizontalalignment='center',verticalalignment='center',transform=subp.transAxes,fontsize='xx-large')
++	if numHist:
++		pylab.subplot(224,polar=False)
++		nums,counts=utils.bodyNumInteractionsHistogram(aabb if len(aabb)&gt;0 else utils.aabbExtrema())
++		avg=sum([nums[i]*counts[i] for i in range(len(nums))])/(1.*sum(counts))
++		pylab.bar(nums,counts,fc=[1,1,0],alpha=.7,align='center')
++		pylab.xlabel('Interactions per body (avg. %g)'%avg)
++		pylab.axvline(x=avg,linewidth=3,color='r')
++		pylab.ylabel('Body count')
++	pylab.show()
++
++
+ def import_stl_geometry(file, begin=0, young=30e9,poisson=.3,frictionAngle=0.5236,wire=True):
+ 		## Import walls geometry from STL file
+ 		imp = STLImporter()
+@@ -161,48 +198,3 @@
+ 			o.bodies[i].mold.postProcessAttributes()
+ 		return imp.number_of_facets
+ 
+-def negPosExtremes(**kw): raise DeprecationWarning(&quot;negPosExtremes is deprecated, use negPosExtremalIds instead.&quot;)
+-
+-# reimplemented in _utils in c++ (results verified to be identical)
+-if 0:
+-	def negPosExtremes(axis,distFactor=1.1):
+-		&quot;&quot;&quot;Get 2 lists (negative and positive extremes) of sphere ids that are close to the boundary
+-		in the direction of requested axis (0=x,1=y,2=z).
+-
+-		distFactor enlarges radius of the sphere, it can be considered 'extremal' even if it doesn't touch the extreme.
+-		&quot;&quot;&quot;
+-		inf=float('inf')
+-		extremes=[inf,-inf]
+-		ret=[[],[]]
+-		o=Omega()
+-		for b in o.bodies:
+-			extremes[1]=max(extremes[1],+b.shape['radius']+b.phys['se3'][axis])
+-			extremes[0]=min(extremes[0],-b.shape['radius']+b.phys['se3'][axis])
+-		for b in o.bodies:
+-			if b.phys['se3'][axis]-b.shape['radius']*distFactor&lt;=extremes[0]: ret[0].append(b.id)
+-			if b.phys['se3'][axis]+b.shape['radius']*distFactor&gt;=extremes[1]: ret[1].append(b.id)
+-		return ret
+-	def aabbExtrema(consider=lambda body:True):
+-		&quot;&quot;&quot;return min and max points of an aabb around spherical packing (non-spheres are ignored)&quot;&quot;&quot;
+-		inf=float('inf')
+-		minimum,maximum=[inf,inf,inf],[-inf,-inf,-inf]
+-		o=Omega()
+-		for b in o.bodies:
+-			if consider(b) and b.shape.name=='Sphere':
+-				minimum=[min(minimum[i],b.phys['se3'][i]-b.shape['radius']) for i in range(3)]
+-				maximum=[max(maximum[i],b.phys['se3'][i]+b.shape['radius']) for i in range(3)]
+-		return minimum,maximum
+-	def PWaveTimeStep():
+-		&quot;&quot;&quot;Estimate timestep by the elastic wave propagation speed (p-wave).
+-		
+-		Multiply the value returned by some safety factor &lt; 1, since shear waves are not taken into account here.&quot;&quot;&quot;
+-		o=Omega()
+-		dt=float('inf')
+-		for b in o.bodies:
+-			if not (b.phys and b.shape): continue
+-			if not (b.phys.has_key('young') and b.shape.has_key('radius')): continue
+-			density=b.phys['mass']/((4./3.)*math.pi*b.shape['radius']**3)
+-			thisDt=b.shape['radius']/math.sqrt(b.phys['young']/density)
+-			dt=min(dt,thisDt)
+-		return dt
+-
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000368.html">[deprecated list] [Yade-dev] please reply to mailing list (was: significat timestep improvement....)
+</A></li>
+	<LI>Next message: <A HREF="000373.html">[deprecated list] [Yade-dev] [svn] r1523 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#369">[ date ]</a>
+              <a href="thread.html#369">[ thread ]</a>
+              <a href="subject.html#369">[ subject ]</a>
+              <a href="author.html#369">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

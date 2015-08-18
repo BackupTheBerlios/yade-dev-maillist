@@ -1,0 +1,128 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1773 - trunk/gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1773%20-%20trunk/gui/py&In-Reply-To=%3C200905231026.n4NAQNbk016279%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001001.html">
+   <LINK REL="Next"  HREF="000972.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1773 - trunk/gui/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1773%20-%20trunk/gui/py&In-Reply-To=%3C200905231026.n4NAQNbk016279%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1773 - trunk/gui/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat May 23 12:26:23 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001001.html">[deprecated list] [Yade-dev] InsertionSortColllider 2x faster	than	PersistentSAPCollider
+</A></li>
+        <LI>Next message: <A HREF="000972.html">[deprecated list] [Yade-dev] [svn] r1774 - trunk/scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#971">[ date ]</a>
+              <a href="thread.html#971">[ thread ]</a>
+              <a href="subject.html#971">[ subject ]</a>
+              <a href="author.html#971">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-05-23 12:26:22 +0200 (Sat, 23 May 2009)
+New Revision: 1773
+
+Modified:
+   trunk/gui/py/utils.py
+Log:
+1. Add utils.regularSphereOrthoPack by Anoton
+
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2009-05-23 07:23:56 UTC (rev 1772)
++++ trunk/gui/py/utils.py	2009-05-23 10:26:22 UTC (rev 1773)
+@@ -448,3 +448,45 @@
+ def vmData():
+ 	l=procStatus('VmData'); ll=l.split(); assert(ll[2]=='kB')
+ 	return int(ll[1])
++
++
++
++def xcombine(*seqin):
++	'''returns a generator which returns combinations of argument sequences
++for example xcombine((1,2),(3,4)) returns a generator; calling the next()
++method on the generator will return [1,3], [1,4], [2,3], [2,4] and
++StopIteration exception.  This will not create the whole list of 
++combinations in memory at once.
++
++Source: <A HREF="http://code.activestate.com/recipes/302478/">http://code.activestate.com/recipes/302478/</A>'''
++	def rloop(seqin,comb):
++		'''recursive looping function'''
++		if seqin:				   # any more sequences to process?
++			for item in seqin[0]:
++				newcomb=comb+[item]	 # add next item to current combination
++				# call rloop w/ remaining seqs, newcomb
++				for item in rloop(seqin[1:],newcomb):   
++					yield item		  # seqs and newcomb
++		else:						   # processing last sequence
++			yield comb				  # comb finished, add to list
++	return rloop(seqin,[])
++
++
++def regularSphereOrthoPack(center,extents,radius,gap,**kw):
++	&quot;&quot;&quot;Return set of spheres regularly spaced in either a box or sphere centered around center.
++	If extents is a number, it is taken for sphere radius; if it is a sequence, it is 3 extents of the box.
++	Created spheres will have given radius and will be separated by gap space.
++	&quot;&quot;&quot;
++	from numpy import arange; from math import sqrt
++	ret=[]
++	try: # extents is a single number, do sphere
++		doSphere=True; dim=float(extents),float(extents),float(extents)
++	except TypeError: # extents is a list, do box
++		doSphere=False; dim=extents
++	xx,yy,zz=[arange(center[i]-dim[i],center[i]+dim[i],2*radius+gap) for i in 0,1,2]
++	for xyz in xcombine(xx,yy,zz):
++		if doSphere and sqrt(sum([(xyz[i]-center[i])**2 for i in 0,1,2]))&gt;extents: continue
++		ret+=[sphere(xyz,radius=radius,**kw)]
++	return ret
++
++
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001001.html">[deprecated list] [Yade-dev] InsertionSortColllider 2x faster	than	PersistentSAPCollider
+</A></li>
+	<LI>Next message: <A HREF="000972.html">[deprecated list] [Yade-dev] [svn] r1774 - trunk/scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#971">[ date ]</a>
+              <a href="thread.html#971">[ thread ]</a>
+              <a href="subject.html#971">[ subject ]</a>
+              <a href="author.html#971">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

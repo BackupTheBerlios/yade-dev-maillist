@@ -1,0 +1,199 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1819 - in trunk:	core	pkg/common/RenderingEngine/OpenGLRenderingEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1819%20-%20in%20trunk%3A%0A%09core%09pkg/common/RenderingEngine/OpenGLRenderingEngine&In-Reply-To=%3C200906262232.n5QMWj4N009530%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001072.html">
+   <LINK REL="Next"  HREF="001074.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1819 - in trunk:	core	pkg/common/RenderingEngine/OpenGLRenderingEngine</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1819%20-%20in%20trunk%3A%0A%09core%09pkg/common/RenderingEngine/OpenGLRenderingEngine&In-Reply-To=%3C200906262232.n5QMWj4N009530%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1819 - in trunk:	core	pkg/common/RenderingEngine/OpenGLRenderingEngine">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Sat Jun 27 00:32:45 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001072.html">[deprecated list] [Yade-dev] GTS
+</A></li>
+        <LI>Next message: <A HREF="001074.html">[deprecated list] [Yade-dev] [svn] r1820 - in trunk/pkg/lattice:	Engine/EngineUnit	Engine/StandAloneEngine PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1073">[ date ]</a>
+              <a href="thread.html#1073">[ thread ]</a>
+              <a href="subject.html#1073">[ subject ]</a>
+              <a href="author.html#1073">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2009-06-27 00:32:40 +0200 (Sat, 27 Jun 2009)
+New Revision: 1819
+
+Modified:
+   trunk/core/PhysicalParameters.hpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+Log:
+Add an option to display DOFs and body IDs in the OpenGL window
+
+
+
+Modified: trunk/core/PhysicalParameters.hpp
+===================================================================
+--- trunk/core/PhysicalParameters.hpp	2009-06-26 12:35:07 UTC (rev 1818)
++++ trunk/core/PhysicalParameters.hpp	2009-06-26 22:32:40 UTC (rev 1819)
+@@ -23,6 +23,13 @@
+ 		static const unsigned DOF_ALL=DOF_X|DOF_Y|DOF_Z|DOF_RX|DOF_RY|DOF_RZ; //! shorthand for all DOFs blocked
+ 		static const unsigned DOF_XYZ=DOF_X|DOF_Y|DOF_Z; //! shorthand for all displacements blocked
+ 		static const unsigned DOF_RXRYRZ=DOF_RX|DOF_RY|DOF_RZ; //! shorthand for all rotations blocked
++		void setDOFfromVector3r(Vector3r disp,Vector3r rot=Vector3r(0,0,0))
++		{
++			//! set DOFs according to two Vector3r arguments (blocked is when disp[i]==1.0 or rot[i]==1.0)
++			blockedDOFs = ((disp[0]==1.0)?DOF_X :0)|((disp[1]==1.0)?DOF_Y :0)|((disp[2]==1.0)?DOF_Z :0)|
++			              ((rot [0]==1.0)?DOF_RX:0)|((rot [1]==1.0)?DOF_RY:0)|((rot [2]==1.0)?DOF_RZ:0);
++			//Vector3&lt;bool&gt; would be actually better, I'm not checking now if it would work.
++		};
+ 		static unsigned axisDOF(int axis, bool rotationalDOF=false){return 1&lt;&lt;(axis+(rotationalDOF?3:0));} //! Return DOF_* constant for given axis&#8712;{0,1,2} and rotationalDOF&#8712;{false(default),true}; e.g. axisDOF(0,true)==DOF_RX
+ 
+ 	REGISTER_ATTRIBUTES(/*no base*/,(se3)(refSe3)(blockedDOFs));
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2009-06-26 12:35:07 UTC (rev 1818)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2009-06-26 22:32:40 UTC (rev 1819)
+@@ -16,6 +16,8 @@
+ size_t OpenGLRenderingEngine::selectBodyLimit=500;
+ 
+ OpenGLRenderingEngine::OpenGLRenderingEngine() : RenderingEngine(), clipPlaneNum(3){
++	Show_DOF = false;
++	Show_ID = false;
+ 	Body_state = false;
+ 	Body_bounding_volume = false;
+ 	Body_interacting_geom = false;
+@@ -164,6 +166,7 @@
+ 	// set displayed Se3 of body (scaling) and isDisplayed (clipping)
+ 	setBodiesDispSe3(rootBody);
+ 
++	if (Show_DOF || Show_ID) renderDOF_ID(rootBody);
+ 	if (Body_geometrical_model){
+ 		if (Cast_shadows){	
+ 			if (Fast_shadow_volume) renderSceneUsingFastShadowVolumes(rootBody,Light_position);
+@@ -356,6 +359,47 @@
+ 	else shadowVolumeDispatcher(rootBody-&gt;geometricalModel,rootBody-&gt;physicalParameters,Light_position);
+ }
+ 
++void OpenGLRenderingEngine::renderDOF_ID(const shared_ptr&lt;MetaBody&gt;&amp; rootBody){	
++	const GLfloat ambientColorSelected[4]={10.0,0.0,0.0,1.0};	
++	const GLfloat ambientColorUnselected[4]={0.5,0.5,0.5,1.0};	
++	if((rootBody-&gt;geometricalModel || Draw_inside) &amp;&amp; Draw_inside) {
++		FOREACH(const shared_ptr&lt;Body&gt; b, *rootBody-&gt;bodies){
++			if(b-&gt;geometricalModel &amp;&amp; ((b-&gt;getGroupMask() &amp; Draw_mask) || b-&gt;getGroupMask()==0)){
++				if(b-&gt;physicalParameters &amp;&amp; !b-&gt;physicalParameters-&gt;isDisplayed) continue;
++				if(!Show_ID &amp;&amp; b-&gt;physicalParameters-&gt;blockedDOFs==0) continue;
++				const Se3r&amp; se3=b-&gt;physicalParameters-&gt;dispSe3;
++				glPushMatrix();
++				glTranslatef(se3.position[0],se3.position[1],se3.position[2]);
++				if(current_selection==b-&gt;getId()){glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambientColorSelected);}
++				{ // write text
++					glColor3f(1.0-Background_color[0],1.0-Background_color[1],1.0-Background_color[2]);
++					unsigned DOF = b-&gt;physicalParameters-&gt;blockedDOFs;
++					std::string dof = std::string(&quot;&quot;) 
++					                  + (((DOF &amp; PhysicalParameters::DOF_X )!=0)?&quot;X&quot;:&quot; &quot;)
++					                  + (((DOF &amp; PhysicalParameters::DOF_Y )!=0)?&quot;Y&quot;:&quot; &quot;)
++					                  + (((DOF &amp; PhysicalParameters::DOF_Z )!=0)?&quot;Z&quot;:&quot; &quot;)
++					                  + (((DOF &amp; PhysicalParameters::DOF_RX)!=0)?&quot;RX&quot;:&quot;  &quot;)
++					                  + (((DOF &amp; PhysicalParameters::DOF_RY)!=0)?&quot;RY&quot;:&quot;  &quot;)
++					                  + (((DOF &amp; PhysicalParameters::DOF_RZ)!=0)?&quot;RZ&quot;:&quot;  &quot;);
++					std::string id = boost::lexical_cast&lt;std::string&gt;(b-&gt;getId());
++					std::string str(&quot;&quot;);
++					if(Show_DOF &amp;&amp; Show_ID) id += &quot; &quot;;
++					if(Show_ID) str += id;
++					if(Show_DOF) str += dof;
++					glPushMatrix();
++					glRasterPos2i(0,0);
++					for(unsigned int i=0;i&lt;str.length();i++)
++						glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, str[i]);
++					glPopMatrix();
++				}
++				if(current_selection == b-&gt;getId()){glLightModelfv(GL_LIGHT_MODEL_AMBIENT,ambientColorUnselected);}
++				glPopMatrix();
++			}
++		}
++	}
++	if(rootBody-&gt;geometricalModel) geometricalModelDispatcher(rootBody-&gt;geometricalModel,rootBody-&gt;physicalParameters,Body_wire);
++}
++
+ void OpenGLRenderingEngine::renderGeometricalModel(const shared_ptr&lt;MetaBody&gt;&amp; rootBody){	
+ 	const GLfloat ambientColorSelected[4]={10.0,0.0,0.0,1.0};	
+ 	const GLfloat ambientColorUnselected[4]={0.5,0.5,0.5,1.0};
+@@ -487,6 +531,8 @@
+ 	
+ 	REGISTER_ATTRIBUTE(Body_wire);
+ 
++	REGISTER_ATTRIBUTE(Show_DOF);
++	REGISTER_ATTRIBUTE(Show_ID);
+ 	REGISTER_ATTRIBUTE(Body_state);
+ 	REGISTER_ATTRIBUTE(Body_bounding_volume);
+ 	REGISTER_ATTRIBUTE(Body_interacting_geom);
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2009-06-26 12:35:07 UTC (rev 1818)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2009-06-26 22:32:40 UTC (rev 1819)
+@@ -14,7 +14,7 @@
+ {	
+ 	public :
+ 		Vector3r Light_position,Background_color;
+-		bool Body_state,Body_bounding_volume,Body_interacting_geom,Body_geometrical_model,Cast_shadows,Shadow_volumes,Fast_shadow_volume,Body_wire,Interaction_wire,Draw_inside,Interaction_geometry,Interaction_physics;
++		bool Show_DOF,Show_ID,Body_state,Body_bounding_volume,Body_interacting_geom,Body_geometrical_model,Cast_shadows,Shadow_volumes,Fast_shadow_volume,Body_wire,Interaction_wire,Draw_inside,Interaction_geometry,Interaction_physics;
+ 		body_id_t current_selection;
+ 		int Draw_mask;
+ 
+@@ -79,6 +79,7 @@
+ 		virtual void renderWithNames(const shared_ptr&lt;MetaBody&gt;&amp; );
+ 	
+ 	private :
++		void renderDOF_ID(const shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+ 		void renderGeometricalModel(const shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+ 		void renderInteractionPhysics(const shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+ 		void renderInteractionGeometry(const shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001072.html">[deprecated list] [Yade-dev] GTS
+</A></li>
+	<LI>Next message: <A HREF="001074.html">[deprecated list] [Yade-dev] [svn] r1820 - in trunk/pkg/lattice:	Engine/EngineUnit	Engine/StandAloneEngine PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1073">[ date ]</a>
+              <a href="thread.html#1073">[ thread ]</a>
+              <a href="subject.html#1073">[ subject ]</a>
+              <a href="author.html#1073">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

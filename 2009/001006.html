@@ -1,0 +1,539 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1787 - in trunk: core	examples/concrete/pack	gui/py	lib/computational-geometry	pkg/common/Engine/MetaEngine	pkg/dem pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1787%20-%20in%20trunk%3A%20core%0A%09examples/concrete/pack%09gui/py%0A%09lib/computational-geometry%09pkg/common/Engine/MetaEngine%0A%09pkg/dem%20pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200905311009.n4VA9GBX016135%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001005.html">
+   <LINK REL="Next"  HREF="001007.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1787 - in trunk: core	examples/concrete/pack	gui/py	lib/computational-geometry	pkg/common/Engine/MetaEngine	pkg/dem pkg/dem/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1787%20-%20in%20trunk%3A%20core%0A%09examples/concrete/pack%09gui/py%0A%09lib/computational-geometry%09pkg/common/Engine/MetaEngine%0A%09pkg/dem%20pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200905311009.n4VA9GBX016135%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1787 - in trunk: core	examples/concrete/pack	gui/py	lib/computational-geometry	pkg/common/Engine/MetaEngine	pkg/dem pkg/dem/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun May 31 12:09:16 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001005.html">[deprecated list] [Yade-dev] [svn] r1786 - in trunk: . core	examples	examples/collider-perf	examples/concrete	examples/concrete/pack extra extra/tetra	gui/py lib/import	pkg/common/Engine/DeusExMachina	pkg/common/Engine/EngineUnit	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor	pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction	pkg/dem/RenderingEngine/GLDrawSDECLinkGeometry	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	pkg/lattice/Engine/StandAloneEngine	pkg/lattice/PreProcessor	pkg/mass-spring/Engine/StandAloneEngine	pkg/mass-spring/PreProcessor	pkg/realtime-rigidbody/Engine/StandAloneEngine	pkg/snow/Engine	pkg/snow/RenderingEngine scripts/test
+</A></li>
+        <LI>Next message: <A HREF="001007.html">[deprecated list] [Yade-dev] [svn] r1788 - in trunk: core gui/py	lib/serialization	pkg/dem pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1006">[ date ]</a>
+              <a href="thread.html#1006">[ thread ]</a>
+              <a href="subject.html#1006">[ subject ]</a>
+              <a href="author.html#1006">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-05-31 12:09:14 +0200 (Sun, 31 May 2009)
+New Revision: 1787
+
+Added:
+   trunk/lib/computational-geometry/Hull2d.hpp
+Modified:
+   trunk/core/InteractionContainer.cpp
+   trunk/examples/concrete/pack/mk-pack.py
+   trunk/gui/py/_utils.cpp
+   trunk/gui/py/eudoxos.py
+   trunk/gui/py/utils.py
+   trunk/gui/py/yadeControl.cpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp
+   trunk/pkg/dem/ConcretePM.cpp
+   trunk/pkg/dem/ConcretePM.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.cpp
+Log:
+1. Syntax fixes in ConcretePM model
+2. Interactions will be deleted also if the ye4xist, but geometry functor fails (returns false)
+3. Add utils.approxSectionArea, utils.spheresFromFileUnixial (get some parameters useful for uniaxial tests from the sphere packing, such as cross-section, principal axis, etc)
+4. Add lib/computational-geometry/Hull2d.hpp for computing convex hull in 2d using Graham scan algorithm (I know it is in CGAL already, but I don't want to depend on that commercial stuff)
+5. Remove some unused stuff from utils.
+
+
+Modified: trunk/core/InteractionContainer.cpp
+===================================================================
+--- trunk/core/InteractionContainer.cpp	2009-05-29 14:35:22 UTC (rev 1786)
++++ trunk/core/InteractionContainer.cpp	2009-05-31 10:09:14 UTC (rev 1787)
+@@ -12,7 +12,9 @@
+ 
+ void InteractionContainer::requestErase(body_id_t id1, body_id_t id2){
+ 	find(id1,id2)-&gt;reset(); bodyIdPair v(0,2); v.push_back(id1); v.push_back(id2); 
+-	boost::mutex::scoped_lock lock(pendingEraseMutex);
++	#ifdef YADE_OPENMP
++		boost::mutex::scoped_lock lock(pendingEraseMutex);
++	#endif
+ 	pendingErase.push_back(v);
+ }
+ 
+
+Modified: trunk/examples/concrete/pack/mk-pack.py
+===================================================================
+--- trunk/examples/concrete/pack/mk-pack.py	2009-05-29 14:35:22 UTC (rev 1786)
++++ trunk/examples/concrete/pack/mk-pack.py	2009-05-31 10:09:14 UTC (rev 1787)
+@@ -12,7 +12,7 @@
+ cutoffRound=2
+ 
+ tt=TriaxialTest(
+-	numberOfGrains=500,
++	numberOfGrains=5000,
+ 	radiusMean=3e-4,
+ 	# this is just size ratio if radiusMean is specified
+ 	# if you comment out the line above, it will be the corner (before compaction) and radiusMean will be set accordingly
+@@ -44,7 +44,7 @@
+ ext=utils.aabbExtrema()
+ rSphere=tt['radiusMean']
+ 
+-outFile=tempfile.NamedTemporaryFile(delete=False)
++outFile=tempfile.NamedTemporaryFile(delete=False).name
+ 
+ if cylAxis&lt;0: # box-shaped packing
+ 	aabbMin,aabbMax=tuple([ext[0][i]+rSphere*cutoffFlat for i in 0,1,2]),tuple([ext[1][i]-rSphere*cutoffFlat for i in 0,1,2])
+@@ -67,7 +67,7 @@
+ 		return True
+ 	nSpheres=utils.spheresToFile(outFile,consider=isInCyl)
+ 
+-outFile2='pack-%d-%s.sphere'%(nSpheres,'box' if cylAxis&lt;0 else 'cyl')
++outFile2='pack-%d-%s.spheres'%(nSpheres,'box' if cylAxis&lt;0 else 'cyl')
+ shutil.move(outFile,outFile2)
+ print nSpheres,'spheres written to',outFile2
+ quit()
+
+Modified: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2009-05-29 14:35:22 UTC (rev 1786)
++++ trunk/gui/py/_utils.cpp	2009-05-31 10:09:14 UTC (rev 1787)
+@@ -8,6 +8,7 @@
+ #include&lt;yade/pkg-dem/DemXDofGeom.hpp&gt;
+ #include&lt;yade/pkg-dem/SimpleViscoelasticBodyParameters.hpp&gt;
+ #include&lt;yade/pkg-common/NormalShearInteractions.hpp&gt;
++#include&lt;yade/lib-computational-geometry/Hull2d.hpp&gt;
+ #include&lt;cmath&gt;
+ 
+ #include&lt;numpy/ndarrayobject.h&gt;
+@@ -284,7 +285,39 @@
+ 	return inside;
+ }
+ 
++/* Compute area of convex hull when when taking (swept) spheres crossing the plane at coord, perpendicular to axis.
+ 
++	All spheres that touch the plane are projected as hexagons on their circumference to the plane.
++	Convex hull from this cloud is computed.
++	The area of the hull is returned.
++
++*/
++Real approxSectionArea(Real coord, int axis){
++	std::list&lt;Vector2r&gt; cloud;
++	if(axis&lt;0 || axis&gt;2) throw invalid_argument(&quot;Axis must be &#8712; {0,1,2}&quot;);
++	const int ax1=(axis+1)%3, ax2=(axis+2)%3;
++	const Real sqrt3=sqrt(3);
++	Vector2r mm(-10.,0),mx(0,0);
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *Omega::instance().getRootBody()-&gt;bodies){
++		Sphere* s=dynamic_cast&lt;Sphere*&gt;(b-&gt;geometricalModel.get());
++		if(!s) continue;
++		const Vector3r&amp; pos(b-&gt;physicalParameters-&gt;se3.position); const Real r(s-&gt;radius);
++		if((pos[axis]&gt;coord &amp;&amp; (pos[axis]-r)&gt;coord) || (pos[axis]&lt;coord &amp;&amp; (pos[axis]+r)&lt;coord)) continue;
++		Vector2r c(pos[ax1],pos[ax2]);
++		cloud.push_back(c+Vector2r(r,0)); cloud.push_back(c+Vector2r(-r,0));
++		cloud.push_back(c+Vector2r( r/2., sqrt3*r)); cloud.push_back(c+Vector2r( r/2.,-sqrt3*r));
++		cloud.push_back(c+Vector2r(-r/2., sqrt3*r)); cloud.push_back(c+Vector2r(-r/2.,-sqrt3*r));
++		if(mm[0]==-10.){ mm=c, mx=c;}
++		mm=Vector2r(min(c[0]-r,mm[0]),min(c[1]-r,mm[1]));
++		mx=Vector2r(max(c[0]+r,mx[0]),max(c[1]+r,mx[1]));
++	}
++	if(cloud.size()==0) return 0;
++	ConvexHull2d ch2d(cloud);
++	vector&lt;Vector2r&gt; hull=ch2d();
++	return simplePolygonArea2d(hull);
++}
++
++
+ /* Project 3d point into 2d using spiral projection along given axis;
+  * the returned tuple is
+  * 	
+@@ -338,6 +371,7 @@
+ 	def(&quot;aabbExtrema&quot;,aabbExtrema,aabbExtrema_overloads(args(&quot;cutoff&quot;,&quot;centers&quot;),&quot;Return coordinates of box enclosing all bodies\n centers: do not take sphere radii in account, only their centroids (default=False)\n cutoff: 0-1 number by which the box will be scaled around its center (default=0)&quot;));
+ 	def(&quot;ptInAABB&quot;,ptInAABB,&quot;Return True/False whether the point (3-tuple) p is within box given by its min (3-tuple) and max (3-tuple) corners&quot;);
+ 	def(&quot;negPosExtremeIds&quot;,negPosExtremeIds,negPosExtremeIds_overloads(args(&quot;axis&quot;,&quot;distFactor&quot;),&quot;Return list of ids for spheres (only) that are on extremal ends of the specimen along given axis; distFactor multiplies their radius so that sphere that do not touch the boundary coordinate can also be returned.&quot;));
++	def(&quot;approxSectionArea&quot;,approxSectionArea,&quot;Compute area of convex hull when when taking (swept) spheres crossing the plane at coord, perpendicular to axis.&quot;);
+ 	def(&quot;coordsAndDisplacements&quot;,coordsAndDisplacements,coordsAndDisplacements_overloads(args(&quot;AABB&quot;),&quot;Return tuple of 2 same-length lists for coordinates and displacements (coordinate minus reference coordinate) along given axis (1st arg); if the AABB=((x_min,y_min,z_min),(x_max,y_max,z_max)) box is given, only bodies within this box will be considered.&quot;));
+ 	def(&quot;setRefSe3&quot;,setRefSe3,&quot;Set reference positions and orientation of all bodies equal to their current ones.&quot;);
+ 	def(&quot;interactionAnglesHistogram&quot;,interactionAnglesHistogram,interactionAnglesHistogram_overloads(args(&quot;axis&quot;,&quot;mask&quot;,&quot;bins&quot;,&quot;aabb&quot;)));
+
+Modified: trunk/gui/py/eudoxos.py
+===================================================================
+--- trunk/gui/py/eudoxos.py	2009-05-29 14:35:22 UTC (rev 1786)
++++ trunk/gui/py/eudoxos.py	2009-05-31 10:09:14 UTC (rev 1787)
+@@ -74,7 +74,7 @@
+ 
+ 	ph=o.interactions.nth(0).phys # some params are the same everywhere
+ 	material.append(&quot;%g %g&quot;%(ph['E'],ph['G']))
+-	material.append(&quot;%g %g %g %g&quot;%(ph['epsCrackOnset'],ph['epsFracture'],1e50,ph['xiShear']))
++	material.append(&quot;%g %g %g %g&quot;%(ph['epsCrackOnset'],ph['epsFracture'],1e50,0.0))
+ 	material.append(&quot;%g %g&quot;%(ph['undamagedCohesion'],ph['tanFrictionAngle']))
+ 
+ 	# need strainer for getting bodies in positive/negative boundary
+@@ -174,7 +174,7 @@
+ 	f.write(&quot;SimpleCS 1 thick 1.0 width 1.0\n&quot;)
+ 	# material
+ 	ph=inters[0].phys
+-	f.write(&quot;CohInt 1 kn %g ks %g e0 %g ef %g c 0. ksi %g coh %g tanphi %g damchartime %g damrateexp %g plchartime %g plrateexp %g d 1.0\n&quot;%(ph['E'],ph['G'],ph['epsCrackOnset'],ph['epsFracture'],ph['xiShear'],ph['undamagedCohesion'],ph['tanFrictionAngle'],ph['dmgTau'],ph['dmgRateExp'],ph['plTau'],ph['plRateExp']))
++	f.write(&quot;CohInt 1 kn %g ks %g e0 %g ef %g c 0. ksi %g coh %g tanphi %g damchartime %g damrateexp %g plchartime %g plrateexp %g d 1.0\n&quot;%(ph['E'],ph['G'],ph['epsCrackOnset'],ph['epsFracture'],0.0,ph['undamagedCohesion'],ph['tanFrictionAngle'],ph['dmgTau'],ph['dmgRateExp'],ph['plTau'],ph['plRateExp']))
+ 	# boundary conditions
+ 	f.write('BoundaryCondition 1 loadTimeFunction 1 prescribedvalue 0.0\n')
+ 	f.write('BoundaryCondition 2 loadTimeFunction 1 prescribedvalue 1.e-4\n')
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2009-05-29 14:35:22 UTC (rev 1786)
++++ trunk/gui/py/utils.py	2009-05-31 10:09:14 UTC (rev 1787)
+@@ -4,8 +4,6 @@
+ #
+ # 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+ 
+-#from yade._utils import *
+-
+ import math,random
+ from yade.wrapper import *
+ try: # use psyco if available
+@@ -16,16 +14,6 @@
+ # c++ implementations for performance reasons
+ from yade._utils import *
+ 
+-def resetEngineClocks():
+-	for e in O.engines: e.execTime=0
+-def engineClockStats():
+-	tSum=sum([e.execTime for e in O.engines])
+-	for e in O.engines:
+-		print e.name.ljust(30),(str(e.execTime/1000)+'ms').rjust(15),'%6.2f%%'%(e.execTime*100./tSum)
+-	print '='*53
+-	print 'TOTAL'.ljust(30),(str(tSum/1000)+'ms').rjust(15),'100.00%'
+-
+-
+ def saveVars(mark='',loadNow=False,**kw):
+ 	&quot;&quot;&quot;Save passed variables into the simulation so that it can be recovered when the simulation is loaded again.
+ 
+@@ -381,44 +369,6 @@
+ 	dictParams.update(dictDefaults); saveVars('table',**dictParams)
+ 	return len(tagsParams)
+ 
+-
+-def basicDEMEngines(interPhysics='SimpleElasticRelationships',constitutiveLaw='ElasticContactLaw',gravity=None,damping=.4):
+-	&quot;&quot;&quot;Set basic set of DEM engines and initializers.
+-	
+-	interPhysics and constitutiveLaw specify class of respective engines to use instead of defaults.
+-
+-	Gravity can be list or tuple to specify numeric value, it can also be an object that will be inserted into
+-	engines, however. By default, no gravity is applied.
+-	&quot;&quot;&quot;
+-	O.initializers=[
+-		MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('InteractingFacet2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
+-	]
+-	O.engines=[
+-		StandAloneEngine('PhysicalActionContainerReseter'),
+-		MetaEngine('BoundingVolumeMetaEngine',[
+-			EngineUnit('InteractingSphere2AABB'),
+-			EngineUnit('InteractingBox2AABB'),
+-			EngineUnit('InteractingFacet2AABB'),
+-			EngineUnit('MetaInteractingGeometry2AABB')
+-		]),
+-		StandAloneEngine('PersistentSAPCollider'),
+-		MetaEngine('InteractionGeometryMetaEngine',[
+-			EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
+-			EngineUnit('InteractingFacet2InteractingSphere4SpheresContactGeometry'),
+-			EngineUnit('InteractingBox2InteractingSphere4SpheresContactGeometry')
+-		]),
+-		MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+-		StandAloneEngine('ElasticContactLaw'),
+-	]
+-	if gravity:
+-		if islist(gravity) or istuple(gravity):
+-			O.engines=O.engines+[DeusExMachina('GravityEngine',{'gravity':gravity}),]
+-		else:
+-			O.engines=O.engines+[gravity]
+-	O.engines=O.engines+[DeusExMachina('NewtonsDampedLaw',{'damping':damping}),]
+-	
+-		
+-
+ def ColorizedVelocityFilter(isFilterActivated=True,autoScale=True,minValue=0,maxValue=0,posX=0,posY=0.2,width=0.05,height=0.5,title='Velocity, m/s'):
+     f = DeusExMachina('ColorizedVelocityFilter',{'isFilterActivated':isFilterActivated,'autoScale':autoScale,'minValue':minValue,'maxValue':maxValue,'posX':posX,'posY':posY,'width':width,'height':height,'title':title})
+     O.engines+=[f]
+@@ -494,4 +444,24 @@
+ 		ret+=[sphere(xyz,radius=radius,**kw)]
+ 	return ret
+ 
++def spheresFromFileUniaxial(filename,areaSections=10,**kw):
++	&quot;&quot;&quot;Load spheres from file, but do some additional work useful for uniaxial test:
++	
++	1. Find the dimensions that is the longest (uniaxial loading axis)
++	2. Find the minimum cross-section area of the speciment by examining several (areaSections)
++		sections perpendicular to axis, computing area of the convex hull for each one. This will
++		work also for non-prismatic specimen.
++	3. Find the bodies that are on the negative/positive boundary, to which the straining condition
++		should be applied.
+ 
++	Returns dictionary with keys 'negIds', 'posIds', 'axis', 'area'.
++	&quot;&quot;&quot;
++	ids=spheresFromFile(filename,**kw)
++	mm,mx=aabbExtrema()
++	dim=aabbDim(); axis=dim.index(max(dim))
++	import numpy
++	areas=[approxSectionArea(coord,axis) for coord in numpy.linspace(mm[axis],mx[axis],num=10)[1:-1]]
++	negIds,posIds=negPosExtremeIds(axis=axis)
++	return {'negIds':negIds,'posIds':posIds,'axis':axis,'area':min(areas)}
++
++
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2009-05-29 14:35:22 UTC (rev 1786)
++++ trunk/gui/py/yadeControl.cpp	2009-05-31 10:09:14 UTC (rev 1787)
+@@ -316,6 +316,7 @@
+ 	NONPOD_ATTRIBUTE_ACCESS(geom,pyInteractionGeometry,interactionGeometry);
+ 	NONPOD_ATTRIBUTE_ACCESS(phys,pyInteractionPhysics,interactionPhysics);
+ 	/* shorthands */ unsigned id1_get(void){ensureAcc(); return proxee-&gt;getId1();} unsigned id2_get(void){ensureAcc(); return proxee-&gt;getId2();}
++	bool isReal_get(void){ensureAcc(); return proxee-&gt;isReal(); }
+ BASIC_PY_PROXY_TAIL;
+ 
+ BASIC_PY_PROXY_HEAD(pyBody,Body)
+@@ -807,7 +808,8 @@
+ 		.add_property(&quot;phys&quot;,&amp;pyInteraction::phys_get,&amp;pyInteraction::phys_set)
+ 		.add_property(&quot;geom&quot;,&amp;pyInteraction::geom_get,&amp;pyInteraction::geom_set)
+ 		.add_property(&quot;id1&quot;,&amp;pyInteraction::id1_get)
+-		.add_property(&quot;id2&quot;,&amp;pyInteraction::id2_get);
++		.add_property(&quot;id2&quot;,&amp;pyInteraction::id2_get)
++		.add_property(&quot;isReal&quot;,&amp;pyInteraction::isReal_get);
+ 
+ 	BASIC_PY_PROXY_WRAPPER(pyFileGenerator,&quot;Preprocessor&quot;)
+ 		.def(&quot;generate&quot;,&amp;pyFileGenerator::generate)
+
+Added: trunk/lib/computational-geometry/Hull2d.hpp
+===================================================================
+--- trunk/lib/computational-geometry/Hull2d.hpp	2009-05-29 14:35:22 UTC (rev 1786)
++++ trunk/lib/computational-geometry/Hull2d.hpp	2009-05-31 10:09:14 UTC (rev 1787)
+@@ -0,0 +1,71 @@
++// 2009 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt; 
++
++
++/*! Computing convex hull of a 2d cloud of points passed to the constructor,
++	using Graham scan algorithm.
++
++	Use the operator() to launch computation and get the hull as std::list&lt;Vector2r&gt;.
++	
++	The source <A HREF="http://marknelson.us/2007/08/22/convex/">http://marknelson.us/2007/08/22/convex/</A> is gratefully acknowledged.
++	Look there for detailed description and more information.
++*/
++class ConvexHull2d{
++	list&lt;Vector2r&gt; raw_points, lower_partition_points, upper_partition_points, hull;
++	Vector2r left, right;
++	static Real direction(const Vector2r&amp; p0, const Vector2r&amp; p1, const Vector2r&amp; p2) {
++		return ((p0[0]-p1[0])*(p2[1]-p1[1]))-((p2[0]-p1[0])*(p0[1]-p1[1]));
++	}
++	struct Vector2r_xComparator{
++		bool operator()(const Vector2r&amp; p1, const Vector2r&amp; p2){return p1[0]&lt;p2[0];}
++	};
++
++	void partition_points(){
++		raw_points.sort(Vector2r_xComparator());
++		left=raw_points.front(); raw_points.pop_front();
++		right=raw_points.back(); raw_points.pop_back();
++		FOREACH(const Vector2r&amp; p, raw_points){
++			if(direction(left,right,p)&lt;0) upper_partition_points.push_back(p);
++			else lower_partition_points.push_back(p);
++		}
++	}
++	vector&lt;Vector2r&gt; build_half_hull(list&lt;Vector2r&gt;&amp; in, int factor){
++		vector&lt;Vector2r&gt; out;
++		in.push_back(right); out.push_back(left);
++		while(in.size()&gt;0){
++			out.push_back(in.front()); in.pop_front();
++			while(out.size()&gt;=3){
++				size_t end=out.size()-1;
++				if(factor*direction(out[end-2],out[end],out[end-1])&lt;=0) out.erase(out.begin()+end-1);
++				else break;
++			}
++		}
++		return out;
++	}
++	public:
++	ConvexHull2d(const list&lt;Vector2r&gt;&amp; pts){raw_points.assign(pts.begin(),pts.end());};
++	ConvexHull2d(const vector&lt;Vector2r&gt;&amp; pts){raw_points.assign(pts.begin(),pts.end());};
++	vector&lt;Vector2r&gt; operator()(void){
++		partition_points();
++		vector&lt;Vector2r&gt; lower_hull=build_half_hull(lower_partition_points,1);
++		vector&lt;Vector2r&gt; upper_hull=build_half_hull(upper_partition_points,-1);
++		vector&lt;Vector2r&gt; ret; ret.reserve(lower_hull.size()+upper_hull.size()-2);
++		for(size_t i=upper_hull.size()-1; i&gt;0; i--) ret.push_back(upper_hull[i]);
++		size_t lsize=lower_hull.size();
++		for(size_t i=0; i&lt;lsize-1;  i++) ret.push_back(lower_hull[i]);
++		return ret;
++	}
++};
++
++/*! Compute area of a simple 2d polygon, using the Surveyor's formula.
++	<A HREF="http://en.wikipedia.org/wiki/Polygon">http://en.wikipedia.org/wiki/Polygon</A>
++
++	The first and last points shouldn't be given twice.
++*/
++Real simplePolygonArea2d(vector&lt;Vector2r&gt; P){
++	Real ret=0.; size_t n=P.size();
++	for(size_t i=0; i&lt;n-1; i++) { ret+=P[i][0]*P[i+1][1]-P[i+1][0]*P[i][1];}
++	ret+=P[n-1][0]*P[0][1]-P[0][0]*P[n-1][1];
++	return abs(ret/2.);
++}
++
++
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp	2009-05-29 14:35:22 UTC (rev 1786)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp	2009-05-31 10:09:14 UTC (rev 1787)
+@@ -53,8 +53,12 @@
+ 			const shared_ptr&lt;Body&gt;&amp; b2=Body::byId(I-&gt;getId2(),rootBody);
+ 
+ 			assert(I-&gt;functorCache.geom);
++			bool wasReal=I-&gt;isReal();
+ 			bool geomCreated=I-&gt;functorCache.geom-&gt;go(b1-&gt;interactingGeometry,b2-&gt;interactingGeometry,b1-&gt;physicalParameters-&gt;se3, b2-&gt;physicalParameters-&gt;se3,I);
+-			if(!geomCreated) continue;
++			if(!geomCreated){
++				if(wasReal) rootBody-&gt;interactions-&gt;requestErase(I-&gt;getId1(),I-&gt;getId2()); // fully created interaction without geometry is reset and perhaps erased in the next step
++				continue; // in any case don't care about this one anymore
++			}
+ 
+ 			// InteractionPhysicsMetaEngine
+ 			if(!I-&gt;functorCache.phys){
+@@ -80,10 +84,14 @@
+ 			const shared_ptr&lt;Body&gt;&amp; b1=Body::byId(I-&gt;getId1(),rootBody);
+ 			const shared_ptr&lt;Body&gt;&amp; b2=Body::byId(I-&gt;getId2(),rootBody);
+ 			// InteractionGeometryMetaEngine
++			bool wasReal=I-&gt;isReal();
+ 			bool geomCreated =
+ 				b1-&gt;interactingGeometry &amp;&amp; b2-&gt;interactingGeometry &amp;&amp; // some bodies do not have interactingGeometry
+ 				geomDispatcher-&gt;operator()(b1-&gt;interactingGeometry, b2-&gt;interactingGeometry, b1-&gt;physicalParameters-&gt;se3, b2-&gt;physicalParameters-&gt;se3,I);
+-			if(!geomCreated) continue;
++			if(!geomCreated){
++				if(wasReal) *rootBody-&gt;interactions-&gt;requestErase(I-&gt;getId1(),I-&gt;getId2());
++				continue;
++			}
+ 			// InteractionPhysicsMetaEngine
+ 			// geom may have swapped bodies, get bodies again
+ 			physDispatcher-&gt;operator()(Body::byId(I-&gt;getId1(),rootBody)-&gt;physicalParameters, Body::byId(I-&gt;getId2(),rootBody)-&gt;physicalParameters,I);
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp	2009-05-29 14:35:22 UTC (rev 1786)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp	2009-05-31 10:09:14 UTC (rev 1787)
+@@ -58,14 +58,17 @@
+ 		const long size=ncb-&gt;transientInteractions-&gt;size();
+ 		#pragma omp parallel for
+ 		for(long i=0; i&lt;size; i++){
+-			const shared_ptr&lt;Interaction&gt;&amp; interaction=(*ncb-&gt;transientInteractions)[i];
++			const shared_ptr&lt;Interaction&gt;&amp; I=(*ncb-&gt;transientInteractions)[i];
+ 	#else
+-		FOREACH(const shared_ptr&lt;Interaction&gt;&amp; interaction, *ncb-&gt;interactions){
++		FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *ncb-&gt;interactions){
+ 	#endif
+-			const shared_ptr&lt;Body&gt;&amp; b1=(*bodies)[interaction-&gt;getId1()];
+-			const shared_ptr&lt;Body&gt;&amp; b2=(*bodies)[interaction-&gt;getId2()];
+-			b1-&gt;interactingGeometry &amp;&amp; b2-&gt;interactingGeometry &amp;&amp; // some bodies do not have interactingGeometry
+-			operator()(b1-&gt;interactingGeometry, b2-&gt;interactingGeometry, b1-&gt;physicalParameters-&gt;se3, b2-&gt;physicalParameters-&gt;se3, interaction);
++			const shared_ptr&lt;Body&gt;&amp; b1=(*bodies)[I-&gt;getId1()];
++			const shared_ptr&lt;Body&gt;&amp; b2=(*bodies)[I-&gt;getId2()];
++			bool wasReal=I-&gt;isReal();
++			if (!b1-&gt;interactingGeometry || !b2-&gt;interactingGeometry) { assert(!wasReal); continue; } // some bodies do not have interactingGeometry
++			bool geomCreated=operator()(b1-&gt;interactingGeometry, b2-&gt;interactingGeometry, b1-&gt;physicalParameters-&gt;se3, b2-&gt;physicalParameters-&gt;se3, I);
++			// reset &amp;&amp; erase interaction that existed but now has no geometry anymore
++			if(wasReal &amp;&amp; !geomCreated){ ncb-&gt;interactions-&gt;requestErase(I-&gt;getId1(),I-&gt;getId2()); }
+ 	}
+ }
+ 
+
+Modified: trunk/pkg/dem/ConcretePM.cpp
+===================================================================
+--- trunk/pkg/dem/ConcretePM.cpp	2009-05-29 14:35:22 UTC (rev 1786)
++++ trunk/pkg/dem/ConcretePM.cpp	2009-05-31 10:09:14 UTC (rev 1787)
+@@ -164,14 +164,14 @@
+ 		CPM_MATERIAL_MODEL
+ 	#else
+ 		// very simplified version of the constitutive law
+-		kappaD=max(max(0,epsN),kappaD); // internal variable, max positive strain (non-decreasing)
++		kappaD=max(max(0.,epsN),kappaD); // internal variable, max positive strain (non-decreasing)
+ 		omega=isCohesive?funcG(kappaD,epsCrackOnset,epsFracture,neverDamage):1.; // damage variable (non-decreasing, as funcG is also non-decreasing)
+ 		sigmaN=(1-(epsN&gt;0?omega:0))*E*epsN; // damage taken in account in tension only
+ 		sigmaT=G*epsT; // trial stress
+ 		Real yieldSigmaT=max((Real)0.,undamagedCohesion*(1-omega)-sigmaN*tanFrictionAngle); // Mohr-Coulomb law with damage
+ 		if(sigmaT.SquaredLength()&gt;yieldSigmaT*yieldSigmaT){
+ 			sigmaT*=yieldSigmaT/sigmaT.Length(); // stress return
+-			epsPlSum+=rT*contGeom-&gt;slipToStrainTMax(rT/G); // adjust strain
++			epsPlSum+=yieldSigmaT*contGeom-&gt;slipToStrainTMax(yieldSigmaT/G); // adjust strain
+ 		}
+ 		relResidualStrength=isCohesive?(kappaD&lt;epsCrackOnset?1.:(1-omega)*(kappaD)/epsCrackOnset):0;
+ 	#endif
+
+Modified: trunk/pkg/dem/ConcretePM.hpp
+===================================================================
+--- trunk/pkg/dem/ConcretePM.hpp	2009-05-29 14:35:22 UTC (rev 1786)
++++ trunk/pkg/dem/ConcretePM.hpp	2009-05-31 10:09:14 UTC (rev 1787)
+@@ -210,7 +210,7 @@
+ 			// init to signaling_NaN to force crash if not initialized (better than unknowingly using garbage values)
+ 			sigmaT=epsCrackOnset=relDuctility=G_over_E=std::numeric_limits&lt;Real&gt;::signaling_NaN();
+ 			neverDamage=false;
+-			cohesiveThresholdIter=-1;
++			cohesiveThresholdIter=10;
+ 			dmgTau=-1; dmgRateExp=0; plTau=-1; plRateExp=-1;
+ 			isoPrestress=0;
+ 		}
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.cpp	2009-05-29 14:35:22 UTC (rev 1786)
++++ trunk/pkg/dem/Engine/StandAloneEngine/UniaxialStrainer.cpp	2009-05-31 10:09:14 UTC (rev 1787)
+@@ -81,7 +81,7 @@
+ 			YADE_CAST&lt;ParticleParameters*&gt;(b-&gt;physicalParameters.get())-&gt;velocity[axis]=pNormalized*(v1-v0)+v0;
+ 		}
+ 	}
+-	stressUpdateInterval=max(1,(int)(2e-5/(abs(strainRate)*Omega::instance().getTimeStep())));
++	stressUpdateInterval=max(1,(int)(1e-5/(abs(strainRate)*Omega::instance().getTimeStep())));
+ 	LOG_INFO(&quot;Stress will be updated every &quot;&lt;&lt;stressUpdateInterval&lt;&lt;&quot; steps.&quot;);
+ 
+ 	/* if we have default (&lt;0) crossSectionArea, try to get it from root's AABB;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001005.html">[deprecated list] [Yade-dev] [svn] r1786 - in trunk: . core	examples	examples/collider-perf	examples/concrete	examples/concrete/pack extra extra/tetra	gui/py lib/import	pkg/common/Engine/DeusExMachina	pkg/common/Engine/EngineUnit	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor	pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction	pkg/dem/RenderingEngine/GLDrawSDECLinkGeometry	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	pkg/lattice/Engine/StandAloneEngine	pkg/lattice/PreProcessor	pkg/mass-spring/Engine/StandAloneEngine	pkg/mass-spring/PreProcessor	pkg/realtime-rigidbody/Engine/StandAloneEngine	pkg/snow/Engine	pkg/snow/RenderingEngine scripts/test
+</A></li>
+	<LI>Next message: <A HREF="001007.html">[deprecated list] [Yade-dev] [svn] r1788 - in trunk: core gui/py	lib/serialization	pkg/dem pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1006">[ date ]</a>
+              <a href="thread.html#1006">[ thread ]</a>
+              <a href="subject.html#1006">[ subject ]</a>
+              <a href="author.html#1006">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

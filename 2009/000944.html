@@ -1,0 +1,2274 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1766 - in trunk: extra	extra/clump gui gui/py	pkg/dem pkg/dem/DataClass	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1766%20-%20in%20trunk%3A%20extra%0A%09extra/clump%20gui%20gui/py%09pkg/dem%20pkg/dem/DataClass%0A%09pkg/dem/DataClass/InteractionGeometry%09pkg/dem/Engine/DeusExMachina%0A%09pkg/dem/Engine/EngineUnit%09pkg/dem/Engine/StandAloneEngine%09pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry%0A%09scripts/test&In-Reply-To=%3C200905050515.n455FbUS028563%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000941.html">
+   <LINK REL="Next"  HREF="000946.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1766 - in trunk: extra	extra/clump gui gui/py	pkg/dem pkg/dem/DataClass	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1766%20-%20in%20trunk%3A%20extra%0A%09extra/clump%20gui%20gui/py%09pkg/dem%20pkg/dem/DataClass%0A%09pkg/dem/DataClass/InteractionGeometry%09pkg/dem/Engine/DeusExMachina%0A%09pkg/dem/Engine/EngineUnit%09pkg/dem/Engine/StandAloneEngine%09pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry%0A%09scripts/test&In-Reply-To=%3C200905050515.n455FbUS028563%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1766 - in trunk: extra	extra/clump gui gui/py	pkg/dem pkg/dem/DataClass	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue May  5 07:15:37 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000941.html">[deprecated list] [Yade-dev] [svn] r1765 - in trunk: core	pkg/lattice/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000946.html">[deprecated list] [Yade-dev] [svn] r1767 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#944">[ date ]</a>
+              <a href="thread.html#944">[ thread ]</a>
+              <a href="subject.html#944">[ subject ]</a>
+              <a href="author.html#944">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-05-05 07:15:26 +0200 (Tue, 05 May 2009)
+New Revision: 1766
+
+Added:
+   trunk/pkg/dem/DataClass/Clump.cpp
+   trunk/pkg/dem/DataClass/Clump.hpp
+   trunk/pkg/dem/Engine/EngineUnit/ef2_Dem3Dof_NormalShear_ElasticFrictionalLaw.cpp
+   trunk/pkg/dem/Engine/EngineUnit/ef2_Dem3Dof_NormalShear_ElasticFrictionalLaw.hpp
+   trunk/scripts/test/clump.py
+Removed:
+   trunk/extra/clump/Clump.cpp
+   trunk/extra/clump/Clump.hpp
+   trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_NormalShear_ElasticFrictionalLaw.cpp
+   trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_NormalShear_ElasticFrictionalLaw.hpp
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/extra/BrefcomTestGen.cpp
+   trunk/extra/SConscript
+   trunk/extra/clump/Shop.cpp
+   trunk/gui/SConscript
+   trunk/gui/py/_eudoxos.cpp
+   trunk/gui/py/_utils.cpp
+   trunk/gui/py/yadeControl.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp
+   trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp
+   trunk/pkg/dem/SConscript
+Log:
+1. Add python wrapper for clumps, see scripts/test/clump.py on how to use it (O.bodies.appendClumped)
+2. Fix clump support in NewtonsDampedLaw (damping is quite wrong, it seems...; Bruno, any ideas on that?)
+3. Move clump to pkg-dem (even though it depends on extra/Shop)
+4. Remove absolute shear computation from SpheresContactGeometry, as Dem3Dof works fine now and Brefcom will not use SCG anymore; adapt a few other classes to that; remove ElasticContactLaw2 that was using it.
+5. 
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/extra/Brefcom.cpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -139,6 +139,7 @@
+ }
+ #endif
+ 
++
+ CREATE_LOGGER(ef2_Spheres_Brefcom_BrefcomLaw);
+ 
+ long BrefcomContact::cummBetaIter=0, BrefcomContact::cummBetaCount=0;
+@@ -295,7 +296,7 @@
+ 
+ void GLDrawBrefcomContact::go(const shared_ptr&lt;InteractionPhysics&gt;&amp; ip, const shared_ptr&lt;Interaction&gt;&amp; i, const shared_ptr&lt;Body&gt;&amp; b1, const shared_ptr&lt;Body&gt;&amp; b2, bool wireFrame){
+ 	const shared_ptr&lt;BrefcomContact&gt;&amp; BC=static_pointer_cast&lt;BrefcomContact&gt;(ip);
+-	const shared_ptr&lt;SpheresContactGeometry&gt;&amp; geom=YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(i-&gt;interactionGeometry);
++	const shared_ptr&lt;Dem3DofGeom&gt;&amp; geom=YADE_PTR_CAST&lt;Dem3DofGeom&gt;(i-&gt;interactionGeometry);
+ 
+ 	//Vector3r lineColor(BC-&gt;omega,1-BC-&gt;omega,0.0); /* damaged links red, undamaged green */
+ 	Vector3r lineColor=Shop::scalarOnColorScale(1.-BC-&gt;relResidualStrength);
+@@ -329,11 +330,11 @@
+ 		glPopMatrix();
+ 	}
+ 
+-	const Vector3r&amp; cp=static_pointer_cast&lt;SpheresContactGeometry&gt;(i-&gt;interactionGeometry)-&gt;contactPoint;
++	const Vector3r&amp; cp=static_pointer_cast&lt;Dem3DofGeom&gt;(i-&gt;interactionGeometry)-&gt;contactPoint;
+ 	if(epsT){
+ 		Real maxShear=(BC-&gt;undamagedCohesion-BC-&gt;sigmaN*BC-&gt;tanFrictionAngle)/BC-&gt;G;
+ 		Real relShear=BC-&gt;epsT.Length()/maxShear;
+-		Real scale=.5*geom-&gt;d0;
++		Real scale=.5*geom-&gt;refLength;
+ 		Vector3r dirShear=BC-&gt;epsT; dirShear.Normalize();
+ 		if(epsTAxes){
+ 			GLUtils::GLDrawLine(cp-Vector3r(scale,0,0),cp+Vector3r(scale,0,0));
+
+Modified: trunk/extra/BrefcomTestGen.cpp
+===================================================================
+--- trunk/extra/BrefcomTestGen.cpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/extra/BrefcomTestGen.cpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -17,7 +17,6 @@
+ #include&lt;yade/pkg-common/MetaInteractingGeometry2AABB.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+-#include&lt;yade/pkg-dem/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/NewtonsForceLaw.hpp&gt;
+@@ -28,6 +27,7 @@
+ #include&lt;yade/pkg-common/ConstitutiveLawDispatcher.hpp&gt;
+ #include&lt;yade/pkg-dem/PositionOrientationRecorder.hpp&gt;
+ #include&lt;yade/pkg-dem/GlobalStiffnessTimeStepper.hpp&gt;
++#include&lt;yade/pkg-dem/Dem3DofGeom_SphereSphere.hpp&gt;
+ #include&lt;yade/extra/UniaxialStrainControlledTest.hpp&gt;
+ 
+ 
+@@ -51,9 +51,8 @@
+ 	rootBody-&gt;engines.push_back(collider);
+ 
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; igeomDispatcher(new InteractionGeometryMetaEngine);
+-	shared_ptr&lt;InteractingSphere2InteractingSphere4SpheresContactGeometry&gt; is2is4scg(new InteractingSphere2InteractingSphere4SpheresContactGeometry);
+-	is2is4scg-&gt;hasShear=true;
+-	igeomDispatcher-&gt;add(is2is4scg);
++	shared_ptr&lt;ef2_Sphere_Sphere_Dem3DofGeom&gt; ef2ssd3d(new ef2_Sphere_Sphere_Dem3DofGeom);
++	igeomDispatcher-&gt;add(ef2ssd3d);
+ 	rootBody-&gt;engines.push_back(igeomDispatcher);
+ 
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; iphysDispatcher(new InteractionPhysicsMetaEngine);
+@@ -83,11 +82,6 @@
+ 	shared_ptr&lt;BrefcomDamageColorizer&gt; dmg(new BrefcomDamageColorizer);
+ 	rootBody-&gt;engines.push_back(dmg);
+ 
+-	shared_ptr&lt;PositionOrientationRecorder&gt; rec(new PositionOrientationRecorder);
+-	rec-&gt;outputFile=&quot;/tmp/brefcom-test&quot;;
+-	rec-&gt;interval=500;
+-	rec-&gt;saveRgb=true;
+-	rootBody-&gt;engines.push_back(rec);
+ #if 0
+ 	shared_ptr&lt;BrefcomStiffnessCounter&gt; bsc(new BrefcomStiffnessCounter);
+ 	bsc-&gt;interval=100;
+
+Modified: trunk/extra/SConscript
+===================================================================
+--- trunk/extra/SConscript	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/extra/SConscript	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -28,10 +28,6 @@
+ 			'yade-base',
+ 			]),
+ 
+-	env.SharedLibrary('Clump',
+-		['clump/Clump.cpp'],
+-		LIBS=env['LIBS']+['Shop']),
+-
+ 	env.SharedLibrary('Tetra',['tetra/Tetra.cpp'],LIBS=env['LIBS']+['Tetrahedron',
+          'ParticleParameters',
+          'RigidBodyParameters',
+@@ -45,7 +41,7 @@
+ 
+ 	env.SharedLibrary('Brefcom',['Brefcom.cpp'],CXXFLAGS=env['CXXFLAGS']+brefcomInclude,LIBS=env['LIBS']+['Shop','InteractingSphere2InteractingSphere4SpheresContactGeometry','DemXDofGeom']),
+ 
+-	env.SharedLibrary('BrefcomTestGen',['BrefcomTestGen.cpp'],LIBS=env['LIBS']+['Shop','UniaxialStrainControlledTest','PositionOrientationRecorder','Brefcom','ConstitutiveLawDispatcher']),
++	env.SharedLibrary('BrefcomTestGen',['BrefcomTestGen.cpp'],LIBS=env['LIBS']+['Shop','UniaxialStrainControlledTest','PositionOrientationRecorder','Brefcom','ConstitutiveLawDispatcher','Dem3DofGeom_SphereSphere']),
+ 
+ 	env.SharedLibrary('SimpleScene',['SimpleScene.cpp'],LIBS=env['LIBS']+['Shop','SimpleElasticRelationships']),
+ 
+
+Deleted: trunk/extra/clump/Clump.cpp
+===================================================================
+--- trunk/extra/clump/Clump.cpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/extra/clump/Clump.cpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -1,428 +0,0 @@
+-// (c) 2007 Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt; 
+-
+-#include&quot;Clump.hpp&quot;
+-#include&lt;algorithm&gt;
+-
+-YADE_PLUGIN(&quot;Clump&quot;,&quot;ClumpMemberMover&quot;,&quot;ClumpTestGen&quot;);
+-
+-CREATE_LOGGER(Clump);
+-CREATE_LOGGER(ClumpMemberMover);
+-CREATE_LOGGER(ClumpTestGen);
+-
+-/**************************************************************************************
+- ************************************* ClumpMemberMover ******************************
+- **************************************************************************************/
+-
+-// Constructor must be in the .cpp file (?)
+-ClumpMemberMover::ClumpMemberMover(){/*createIndex();*/ }
+-
+-/*! We only call clump's method, since it belongs there logically. It makes encapsulation of private members nicer, too.
+- * @param pp passed by the dispatcher
+- * @param clump passed by the dispatcher
+- */
+-void ClumpMemberMover::applyCondition(MetaBody* rootBody){
+-	for(BodyContainer::iterator I=rootBody-&gt;bodies-&gt;begin(); I!=rootBody-&gt;bodies-&gt;end(); ++I){
+-		shared_ptr&lt;Body&gt; b = *I;
+-		if(b-&gt;isClump()){
+-			//LOG_TRACE(&quot;Applying movement to clump #&quot;&lt;&lt;b-&gt;getId());
+-			static_cast&lt;Clump*&gt;(b.get())-&gt;moveMembers();
+-		}
+-	}
+-	//if(!clump-&gt;isDynamic) return; // perhaps clump that has been desactivated?!
+-}
+-
+-/**************************************************************************************
+- ******************************************** Clump ***********************************
+- **************************************************************************************/
+-
+-/*! Create zero'ed RigidBodyParameters; they should not be manipulated directly, since they are all calculated in Clump::update.
+- * @todo do we need to do the same for GeomtricalModel, InteractingGeometry and BoundingVolume? They will never be used. Sort that out for sure.
+- * @bug setting Clump::isDynamic in constructor is not enough (as if it were modified somewhere), must be set explicitly by the user after construction (why?)
+- */
+-Clump::Clump(): Body(){
+-	isDynamic=true;
+-	physicalParameters=shared_ptr&lt;RigidBodyParameters&gt;(new RigidBodyParameters);
+-
+-	// these will not be defined for the moment...
+-#if 0
+-	boundingVolume=shared_ptr&lt;AABB&gt;(new AABB);
+-	boundingVolume-&gt;diffuseColor=Vector3r(1,0,0);
+-
+-	interactingGeometry=shared_ptr&lt;InteractingGeometry&gt;(new InteractingGeometry);
+-	interactingGeometry-&gt;diffuseColor=Vector3r(0,0,0);
+-
+-	geometricalModel=shared_ptr&lt;GeometricalModel&gt;(new GeometricalModel);
+-	geometricalModel-&gt;diffuseColor=Vector3r(0,0,0); geometricalModel-&gt;wire=false; geometricalModel-&gt;visible=false; geometricalModel-&gt;shadowCaster=false;
+-#endif
+-
+-}
+-
+-/*! @pre Body must be dynamic.
+- * @pre Body must not be part or this clump already.
+- * @pre Body must have valid (non-NULL) Body::physicalParameters
+- * @todo se3 calculation is not tested yet
+- */
+-void Clump::add(body_id_t subId){
+-	shared_ptr&lt;Body&gt; subBody=Body::byId(subId);
+-
+-	// preconditions
+-	assert(subBody-&gt;isDynamic);
+-	assert(physicalParameters);
+-	assert(members.count(subId)==0);
+-
+-	// begin actual setup
+-	subBody-&gt;clumpId=getId();
+-	subBody-&gt;isDynamic=false;
+-	// for now, push just unitialized se3; will be updated by updateProperties
+-	members[subId]=Se3r();
+-
+-	clumpId=getId(); // identifies a clump
+-
+-	LOG_DEBUG(&quot;Added body #&quot;&lt;&lt;subId&lt;&lt;&quot; to clump #&quot;&lt;&lt;getId());
+-}
+-
+-/*! @pre Body with given id must be in the clump.
+- */
+-void Clump::del(body_id_t subId){
+-	// erase the subBody; removing body that is not part of the clump is error
+-	assert(members.erase(subId)==1);
+-	// restore body's internal parameters;
+-	shared_ptr&lt;Body&gt; subBody=Body::byId(subId);
+-	subBody-&gt;clumpId=Body::ID_NONE;
+-	subBody-&gt;isDynamic=true;
+-	LOG_DEBUG(&quot;Removed body #&quot;&lt;&lt;subId&lt;&lt;&quot; from clump #&quot;&lt;&lt;getId());
+-}
+-
+-/*! @brief Calculate positions and orientations of members based on Clump's Se3; resets acceleration and angularAccelration to zero.
+- *
+- * This method is called by the ClumpMemberMover engine after each timestep.
+- * @note Velocities of members are not updated, since members have isdynamic==false. It is possible, though, that someone needs to have a moving clump that is later broken apart and that liberated particle continue to move in the same way as they did within the clump. In that case, this will have to be completed.
+- */
+-void Clump::moveMembers(){
+-	const Se3r&amp; mySe3(physicalParameters-&gt;se3);
+-	const shared_ptr&lt;RigidBodyParameters&gt;&amp; myRBP=static_pointer_cast&lt;RigidBodyParameters&gt;(physicalParameters);
+-	for(Clump::memberMap::iterator I=members.begin(); I!=members.end(); I++){
+-		// now, I-&gt;first is Body::id_t, I-&gt;second is Se3r of that body in the clump
+-		shared_ptr&lt;Body&gt; member=Body::byId(I-&gt;first);
+-		const shared_ptr&lt;RigidBodyParameters&gt;&amp; subRBP(YADE_PTR_CAST&lt;RigidBodyParameters&gt;(member-&gt;physicalParameters));
+-		//LOG_TRACE(&quot;Old #&quot;&lt;&lt;I-&gt;first&lt;&lt;&quot;position: &quot;&lt;&lt;subRBP-&gt;se3.position);
+-		subRBP-&gt;se3.position=mySe3.position+mySe3.orientation*I-&gt;second.position;
+-		subRBP-&gt;se3.orientation=mySe3.orientation*I-&gt;second.orientation;
+-		//LOG_TRACE(&quot;New #&quot;&lt;&lt;I-&gt;first&lt;&lt;&quot;position: &quot;&lt;&lt;subRBP-&gt;se3.position);
+-		//LOG_TRACE(&quot;Clump #&quot;&lt;&lt;getId()&lt;&lt;&quot; moved #&quot;&lt;&lt;I-&gt;first&lt;&lt;&quot;.&quot;);
+-
+-		//! FIXME: we set velocity because of damping here; but since positions are integrated after all forces applied, these velocities will be used in the NEXT step for CundallNonViscousDamping. Does that matter?!
+-		subRBP-&gt;velocity=myRBP-&gt;velocity+myRBP-&gt;angularVelocity.Cross(I-&gt;second.position);
+-		subRBP-&gt;angularVelocity=myRBP-&gt;angularVelocity;
+-	}
+-	/* @bug Temporarily we reset acceleration and angularAcceleration of the clump here;
+-	 * should be a new negine that will take care of that?
+-	 */
+-	const shared_ptr&lt;RigidBodyParameters&gt;&amp; clumpRBP(YADE_PTR_CAST&lt;RigidBodyParameters&gt;(physicalParameters));
+-	#if 0
+-		if(Omega::instance().getCurrentIteration()%50==0){
+-			Real Erot=.5*clumpRBP-&gt;inertia[0]*pow(clumpRBP-&gt;angularVelocity[0],2)+.5*clumpRBP-&gt;inertia[1]*pow(clumpRBP-&gt;angularVelocity[1],2)+.5*clumpRBP-&gt;inertia[2]*pow(clumpRBP-&gt;angularVelocity[2],2);
+-			Real Etrans=.5*clumpRBP-&gt;mass*pow(clumpRBP-&gt;velocity.Length(),2);
+-			// (0,0,1) is gravity acceleration
+-			Real Epot=clumpRBP-&gt;se3.position.Dot(Vector3r(0,0,1))*clumpRBP-&gt;mass;
+-			LOG_TRACE(&quot;##&quot;&lt;&lt;clumpId&lt;&lt;&quot; energy &quot;&lt;&lt;Erot+Etrans+Epot&lt;&lt;&quot;\tv &quot;&lt;&lt;Etrans&lt;&lt;&quot;\tw &quot;&lt;&lt;Erot&lt;&lt;&quot;\tp &quot;&lt;&lt;Epot);
+-		}
+-	#endif
+-
+-	clumpRBP-&gt;acceleration=Vector3r(0,0,0);
+-	clumpRBP-&gt;angularAcceleration=Vector3r(0,0,0);
+-	
+-}
+-
+-/*! Clump's se3 will be updated (origin at centroid and axes coincident with principal inertia axes) and subSe3 modified in such a way that members positions in world coordinates will not change.
+-
+-	The clump values that are changed are:
+-	-# Clump::members (holds position and orientation in clump's coordinate system)
+-	-# Clump::physicalParameters-&gt;mass (sum of masses of all members)
+-	-# Clump::physicalParameters-&gt;inertia (inertia of the aggregate - in clump coordinate system)
+-	-# Clump::physicalParameters-&gt;se3 (position and orientation of the clump; it is such that absolute positions and orientation of members will not chage)
+-
+-	The algorithm is as follows:
+-	-# Clump::members values and Clump::physicalParameters::se3 are invalid from this point
+-	-# M=0; S=vector3r(0,0,0); I=zero tensor; (ALL calculations are in world coordinates!)
+-	-# loop over Clump::members (position x_i, mass m_i, inertia at subBody's centroid I_i) [this loop will be replaced by numerical integration (rasterization) for the intersecting case; the rest will be the same]
+-		- M+=m_i
+-		- S+=m_i*x_i (local static moments are zero (centroid)
+-		- get inertia tensor of subBody in world coordinates, by rotating the principal (local) tensor against subBody-&gt;se3-&gt;orientation; then translate it to world origin (parallel axes theorem), then I+=I_i_world
+-	-# clumpPos=S/M
+-	-# translate aggregate's inertia tensor; parallel axes on I (R=clumpPos): I^c_jk=I'_jk-M*(delta_jk R.R - R_j*R_k) [<A HREF="http://en.wikipedia.org/wiki/Moments_of_inertia#Parallel_axes_theorem">http://en.wikipedia.org/wiki/Moments_of_inertia#Parallel_axes_theorem</A>]
+-	-# eigen decomposition of I, get principal inertia and rotation matrix of the clump
+-	-# se3-&gt;orientation=quaternion(rotation_matrix); se3-&gt;position=clumpPos
+-	-#	update subSe3s
+-
+-	@todo I \em think that the order of transformation of inertia is:
+-		- from local to global: first rotate, then translate;
+-		- from global to local: first translate, then rotate,
+-	since rotation must be done with origin at the centroid... This needs to be verified, though.
+-	@todo all the rest of this routine needs to be verified!
+-	@todo implement the loop for intersecting bodies (may cut'n'paste from slum code, but that will work for spheres only!)
+-
+-	@note User is responsible for calling this function when appropriate (after adding/removing bodies and before any subsequent simulation). This function can be rather slow by virtue of numerical integration.
+-	@note subBodie's velocities are not taken into account. This means that clump will be at still after being created, even if its composing particles did have some velocities. If this is concern for someone, it needs to be completed in the code below. See Clump::moveMembers for complementary issue.
+-	@todo Needs to be tested for physical correctness
+-	@param intersecting if true, evaluate mass and inertia numerically; otherwise, use analytical methods (parallel axes theorem) which disregard any intersections, but are much faster. */
+-void Clump::updateProperties(bool intersecting){
+-	LOG_DEBUG(&quot;Updating clump #&quot;&lt;&lt;getId()&lt;&lt;&quot; parameters&quot;);
+-	assert(members.size()&gt;0);
+-
+-	/* quantities suffixed by
+-		g: global (world) coordinates
+-		s: local subBody's coordinates
+-		c: local clump coordinates */
+-	double M=0; // mass
+-	Vector3r Sg(0,0,0); // static moment
+-	Matrix3r Ig(true /* fill with zeros */ ), Ic(true); // tensors of inertia; is upper triangular, zeros instead of symmetric elements
+-	Se3r&amp; mySe3(physicalParameters-&gt;se3);
+-	const shared_ptr&lt;RigidBodyParameters&gt;&amp; clumpRBP(YADE_PTR_CAST&lt;RigidBodyParameters&gt;(physicalParameters));
+-
+-	if(members.size()==1){
+-		LOG_DEBUG(&quot;Clump of size one will be treated specially.&quot;)
+-		memberMap::iterator I=members.begin();
+-		shared_ptr&lt;Body&gt; subBody=Body::byId(I-&gt;first);
+-		const shared_ptr&lt;RigidBodyParameters&gt;&amp; subRBP(YADE_PTR_CAST&lt;RigidBodyParameters&gt;(subBody-&gt;physicalParameters));
+-		// se3 of the clump as whole is the same as the member's se3
+-		mySe3.position=subRBP-&gt;se3.position;
+-		mySe3.orientation=subRBP-&gt;se3.orientation;
+-		// relative member's se3 is identity
+-		I-&gt;second.position=Vector3r::ZERO; I-&gt;second.orientation=Quaternionr::IDENTITY;
+-		clumpRBP-&gt;inertia=subRBP-&gt;inertia;
+-		clumpRBP-&gt;mass=subRBP-&gt;mass;
+-		clumpRBP-&gt;velocity=Vector3r::ZERO;
+-		clumpRBP-&gt;angularVelocity=Vector3r::ZERO;
+-		return;
+-	}
+-
+-	if(intersecting){
+-		LOG_WARN(&quot;Self-intersecting clumps not yet implemented, intersections will be ignored.&quot;);
+-		intersecting=false;}
+-
+-	// begin non-intersecting loop here
+-	if(!intersecting){
+-		for(memberMap::iterator I=members.begin(); I!=members.end(); I++){
+-			// now, I-&gt;first is Body::id_t, I-&gt;second is Se3r of that body
+-			shared_ptr&lt;Body&gt; subBody=Body::byId(I-&gt;first);
+-			const shared_ptr&lt;RigidBodyParameters&gt;&amp; subRBP(YADE_PTR_CAST&lt;RigidBodyParameters&gt;(subBody-&gt;physicalParameters));
+-			M+=subRBP-&gt;mass;
+-			Sg+=subRBP-&gt;mass*subRBP-&gt;se3.position;
+-			// transform from local to global coords
+-			// FIXME: verify this!
+-			Quaternionr subRBP_orientation_conjugate=subRBP-&gt;se3.orientation.Conjugate();
+-			Matrix3r Imatrix(subRBP-&gt;inertia[0],subRBP-&gt;inertia[1],subRBP-&gt;inertia[2]);
+-			// TRWM3MAT(Imatrix); TRWM3QUAT(subRBP_orientation_conjugate);
+-			Ig+=Clump::inertiaTensorTranslate(Clump::inertiaTensorRotate(Imatrix,subRBP_orientation_conjugate),subRBP-&gt;mass,-1.*subRBP-&gt;se3.position);
+-
+-			//TRWM3MAT(Clump::inertiaTensorRotate(Matrix3r(subRBP-&gt;inertia),subRBP_orientation_conjugate));
+-		}
+-	}
+-	TRVAR1(M);
+-	TRWM3MAT(Ig);
+-	TRWM3VEC(Sg);
+-
+-	mySe3.position=Sg/M; // clump's centroid
+-	// this will calculate translation only, since rotation is zero
+-	Matrix3r Ic_orientG=Clump::inertiaTensorTranslate(Ig, -M /* negative mass means towards centroid */, mySe3.position); // inertia at clump's centroid but with world orientation
+-	TRWM3MAT(Ic_orientG);
+-
+-	Matrix3r R_g2c(true); //rotation matrix
+-	Ic_orientG(1,0)=Ic_orientG(0,1); Ic_orientG(2,0)=Ic_orientG(0,2); Ic_orientG(2,1)=Ic_orientG(1,2); // symmetrize
+-	//TRWM3MAT(Ic_orientG);
+-	Ic_orientG.EigenDecomposition(R_g2c,Ic);
+-	/*! @bug: eigendecomposition is wrong. see <A HREF="http://article.gmane.org/gmane.science.physics.yade.devel/99">http://article.gmane.org/gmane.science.physics.yade.devel/99</A> for message. */
+-	// has NaNs for identity matrix!
+-	TRWM3MAT(R_g2c);
+-
+-	// these two should give the same result!
+-	//TRWM3MAT(Ic);
+-	//TRWM3MAT(Clump::inertiaTensorRotate(Ic_orientG,R_g2c));
+-
+-	// set quaternion from rotation matrix
+-	mySe3.orientation.FromRotationMatrix(R_g2c);
+-	// now Ic is diagonal
+-	clumpRBP-&gt;inertia=Vector3r(Ic(0,0),Ic(1,1),Ic(2,2));
+-	clumpRBP-&gt;mass=M;
+-
+-
+-	// this block will be removed once EigenDecomposition works for diagonal matrices
+-	#if 1
+-		if(isnan(R_g2c(0,0))||isnan(R_g2c(0,1))||isnan(R_g2c(0,2))||isnan(R_g2c(1,0))||isnan(R_g2c(1,1))||isnan(R_g2c(1,2))||isnan(R_g2c(2,0))||isnan(R_g2c(2,1))||isnan(R_g2c(2,2))){
+-			LOG_FATAL(&quot;EigenDecomposition gave some NaNs, we will use imaginary values for clump inertia and orientation instead. I thought this may happen only for 1-member clumps which are now treated specially. Something is broken!&quot;);
+-			//FIXME: since EigenDecomposition is broken, use inertia of the first body instead;
+-			//!!!!! note that this is HIGHLY incorrect for all non-single clumps !!!!!
+-			memberMap::iterator I=members.begin();
+-			shared_ptr&lt;Body&gt; subBody=Body::byId(I-&gt;first);
+-			const shared_ptr&lt;RigidBodyParameters&gt;&amp; subRBP(YADE_PTR_CAST&lt;RigidBodyParameters&gt;(subBody-&gt;physicalParameters));
+-			clumpRBP-&gt;inertia=subRBP-&gt;inertia*10.; // 10 is arbitrary; just to have inertia of clump bigger
+-			// orientation of the clump is broken as well, since is result of EigenDecomposition as well (rotation matrix)
+-			mySe3.orientation.FromRotationMatrix(Matrix3r(1,0,0,0,1,0,0,0,1));
+-		}
+-	#endif
+-	TRWM3VEC(clumpRBP-&gt;inertia);
+-
+-	// TODO: these might be calculated from members... but complicated... - someone needs that?!
+-	clumpRBP-&gt;velocity=Vector3r(0,0,0);
+-	clumpRBP-&gt;angularVelocity=Vector3r(0,0,0);
+-
+-	// update subBodySe3s; subtract clump orientation (=apply its inverse first) to subBody's orientation
+-	// Conjugate is equivalent to Inverse for normalized quaternions
+-	for(memberMap::iterator I=members.begin(); I!=members.end(); I++){
+-		// now, I-&gt;first is Body::id_t, I-&gt;second is Se3r of that body
+-		shared_ptr&lt;Body&gt; subBody=Body::byId(I-&gt;first);
+-		const shared_ptr&lt;RigidBodyParameters&gt;&amp; subRBP(YADE_PTR_CAST&lt;RigidBodyParameters&gt;(subBody-&gt;physicalParameters));
+-		I-&gt;second.orientation=mySe3.orientation.Conjugate()*subRBP-&gt;se3.orientation;
+-		I-&gt;second.position=mySe3.orientation.Conjugate()*(subRBP-&gt;se3.position-mySe3.position);
+-	}
+-
+-}
+-
+-/*! @brief Recalculates inertia tensor of a body after translation away from (default) or towards its centroid.
+- *
+- * @param I inertia tensor in the original coordinates; it is assumed to be upper-triangular (elements below the diagonal are ignored).
+- * @param m mass of the body; if positive, translation is away from the centroid; if negative, towards centroid.
+- * @param off offset of the new origin from the original origin
+- * @return inertia tensor in the new coordinate system; the matrix is symmetric.
+- */
+-Matrix3r Clump::inertiaTensorTranslate(const Matrix3r&amp; I,const Real m, const Vector3r&amp; off){
+-	Real ooff=off.Dot(off);
+-	Matrix3r I2=I;
+-	//TRWM3VEC(off); TRVAR2(ooff,m); TRWM3MAT(I);
+-	// translation away from centroid
+-	/* I^c_jk=I'_jk-M*(delta_jk R.R - R_j*R_k) [<A HREF="http://en.wikipedia.org/wiki/Moments_of_inertia#Parallel_axes_theorem">http://en.wikipedia.org/wiki/Moments_of_inertia#Parallel_axes_theorem</A>] */
+-	I2+=m*Matrix3r(/* dIxx */ ooff-off[0]*off[0], /* dIxy */ -off[0]*off[1], /* dIxz */ -off[0]*off[2],
+-		/* sym */ 0, /* dIyy */ ooff-off[1]*off[1], /* dIyz */ -off[1]*off[2],
+-		/* sym */ 0, /* sym */ 0, /* dIzz */ ooff-off[2]*off[2]);
+-	I2(1,0)=I2(0,1); I2(2,0)=I2(0,2); I2(2,1)=I2(1,2);
+-	//TRWM3MAT(I2);
+-	return I2;
+-}
+-
+-/*! @brief Recalculate body's inertia tensor in rotated coordinates.
+- *
+- * @param I inertia tensor in old coordinates
+- * @param T rotation matrix from old to new coordinates
+- * @return inertia tensor in new coordinates
+- */
+-Matrix3r Clump::inertiaTensorRotate(const Matrix3r&amp; I,const Matrix3r&amp; T){
+-	/* [<A HREF="http://www.kwon3d.com/theory/moi/triten.html">http://www.kwon3d.com/theory/moi/triten.html</A>] */
+-	//TRWM3MAT(I); TRWM3MAT(T);
+-	return T.Transpose()*I*T;
+-}
+-
+-/*! @brief Recalculate body's inertia tensor in rotated coordinates.
+- *
+- * @param I inertia tensor in old coordinates
+- * @param rot quaternion that describes rotation from old to new coordinates
+- * @return inertia tensor in new coordinates
+- */
+-Matrix3r Clump::inertiaTensorRotate(const Matrix3r&amp; I, const Quaternionr&amp; rot){
+-	Matrix3r T;
+-	rot.ToRotationMatrix(T);
+-	return inertiaTensorRotate(I,T);
+-}
+-
+-
+-
+-/**************************************************************************************
+- ********************* ClumpTestGen ***************************************************
+- **************************************************************************************/
+-
+-#include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/extra/Shop.hpp&gt;
+-
+-bool ClumpTestGen::generate()
+-{
+-	//Shop::setDefault(&quot;param_pythonRunExpr&quot;,string(&quot;if S.i%50==0 and S.i&lt;1000 and S.i&gt;500:\n\tprint S.i,len(S.sel),B[1].x, B[1].E&quot;));
+-
+-	rootBody=Shop::rootBody();
+-	Shop::rootBodyActors(rootBody);
+-	// clumps do not need to subscribe currently (that will most likely change, though)
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;ClumpMemberMover&gt;(new ClumpMemberMover));
+-	
+-
+-	shared_ptr&lt;MetaBody&gt; oldRootBody=Omega::instance().getRootBody();
+-	Omega::instance().setRootBody(rootBody);
+-
+-	shared_ptr&lt;Body&gt; ground=Shop::box(Vector3r(0,0,-1),Vector3r(3,3,.2));
+-	ground-&gt;isDynamic=false;
+-	// revert random colors for this single case...
+-	ground-&gt;geometricalModel-&gt;diffuseColor=Vector3r(.6,.6,.6);
+-	ground-&gt;interactingGeometry-&gt;diffuseColor=Vector3r(.3,.3,.3);
+-	rootBody-&gt;bodies-&gt;insert(ground);
+-
+-	vector&lt;Vector3r&gt; relPos; vector&lt;Real&gt; radii; Vector3r clumpPos;
+-
+-	// standalone (non-clump!) sphere as well
+-	shared_ptr&lt;Body&gt; sphere=Shop::sphere(Vector3r(0,0,0),.5);
+-	rootBody-&gt;bodies-&gt;insert(sphere);
+-	// one-sphere clump
+-	clumpPos=Vector3r(-2,0,0);
+-	relPos.push_back(Vector3r(0,0,0)); radii.push_back(.5);
+-	createOneClump(rootBody,clumpPos,relPos,radii);
+-	relPos.clear(); radii.clear();
+-	// two-sphere clump
+-	clumpPos=Vector3r(2,0,0);
+-	relPos.push_back(Vector3r(0,-.5,.5)); radii.push_back(.5);
+-	relPos.push_back(Vector3r(0,.5,0)); radii.push_back(.5);
+-	createOneClump(rootBody,clumpPos,relPos,radii);
+-	relPos.clear(); radii.clear();
+-	// three-sphere slump
+-	clumpPos=Vector3r(0,2,0);
+-	relPos.push_back(Vector3r(0,-.5,.5)); radii.push_back(.5);
+-	relPos.push_back(Vector3r(0,.5,0)); radii.push_back(.5);
+-	relPos.push_back(Vector3r(.5,0,0)); radii.push_back(.5);
+-	createOneClump(rootBody,clumpPos,relPos,radii);
+-	relPos.clear(); radii.clear();
+-	// four-sphere slump
+-	clumpPos=Vector3r(0,-2,0);
+-	relPos.push_back(Vector3r(0,0,0)); radii.push_back(.5);
+-	relPos.push_back(Vector3r(.5,0,0)); radii.push_back(.5);
+-	relPos.push_back(Vector3r(0,.5,0)); radii.push_back(.5);
+-	relPos.push_back(Vector3r(0,0,.5)); radii.push_back(.5);
+-	createOneClump(rootBody,clumpPos,relPos,radii);
+-	relPos.clear(); radii.clear();
+-
+-	// restore Omega
+-	Omega::instance().setRootBody(oldRootBody);
+-	
+-	message=&quot;OK&quot;;
+-	return true;
+-}
+-
+-/*! \brief Generate clump of spheres, the result will be inserted into rootBody.
+- *
+- * To create a clump, first the clump itself needs to be instantiated \em and inserted into rootBody (this will assign an Body::id).
+- * In order for this to work, Omega::roootBody must have been assigned; within generators, use Omega::setRootBody for this.
+- *
+- * The body to add to clump must have been also created and added to the rootBody (so that it has id, again).
+- *
+- * Finally, call Clump::updateProperties to get physical properties physically right (inertia, position, orientation, mass, ...).
+- *
+- * @param clumpPos Center of the clump (not necessarily centroid); serves merely as reference for sphere positions.
+- * @param relPos Relative positions of individual spheres' centers.
+- * @param radii Radii of composing spheres. Must have the same length as relPos.
+- */
+-void ClumpTestGen::createOneClump(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r clumpPos, vector&lt;Vector3r&gt; relPos, vector&lt;Real&gt; radii)
+-{
+-	assert(relPos.size()==radii.size());
+-	
+-	// empty clump	
+-	shared_ptr&lt;Clump&gt; clump=shared_ptr&lt;Clump&gt;(new Clump());
+-	shared_ptr&lt;Body&gt; clumpAsBody(static_pointer_cast&lt;Body&gt;(clump));
+-	rootBody-&gt;bodies-&gt;insert(clumpAsBody);
+-
+-	clump-&gt;isDynamic=true;
+-	// if subscribedBodies work some day: clumpMover-&gt;subscribedBodies.push_back(clump-&gt;getId());
+-	
+-	for(size_t i=0; i&lt;relPos.size(); i++){
+-		shared_ptr&lt;Body&gt; sphere=Shop::sphere(clumpPos+relPos[i],radii[i]);
+-		body_id_t lastId=(body_id_t)rootBody-&gt;bodies-&gt;insert(sphere);
+-		clump-&gt;add(lastId);
+-		LOG_TRACE(&quot;Generated clumped sphere #&quot;&lt;&lt;lastId);
+-	}
+-	clump-&gt;updateProperties(false);
+-}
+-
+
+Deleted: trunk/extra/clump/Clump.hpp
+===================================================================
+--- trunk/extra/clump/Clump.hpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/extra/clump/Clump.hpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -1,148 +0,0 @@
+-// (c) 2007 Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+- 
+-/*	To compile this class, you MUST
+-		1. use recent version of scons
+-		2. say extraModules=yade-extra/clump (this will cause SConscript in this directory to be processed)
+-	Any further documentation is in doxygen comments.
+-*/
+-
+-#pragma once
+-
+-#include&lt;vector&gt;
+-#include&lt;map&gt;
+-#include&lt;yade/core/Body.hpp&gt;
+-#include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/core/FileGenerator.hpp&gt;
+-#include&lt;yade/core/DeusExMachina.hpp&gt;
+-#include&lt;yade/lib-factory/Factorable.hpp&gt;
+-#include&lt;yade/pkg-common/PhysicalParametersEngineUnit.hpp&gt;
+-#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+-#include&lt;yade/pkg-common/AABB.hpp&gt;
+-#include&lt;yade/lib-base/Logging.hpp&gt;
+-#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+-
+-
+-/*! Body representing clump (rigid aggregate) composed by other existing bodies.
+-
+-	Clump is one of bodies that reside in rootBody-&gt;bodies.
+-	When an existing body is added to ::Clump, it's ::Body::isDynamic flag is set to false
+-	(it is still subscribed to all its engines, to make it possible to remove it from the clump again).
+-	All forces acting on Clump::members are made to act on the clump itself, which will ensure that they
+-	influence all Clump::members as if the clump were a rigid particle.
+- 
+-	What are clump requirements so that they function?
+-	-# Given any body, tell
+-		- if it is a clump member: Body::isClumpMember()
+-	 	- if it is a clump: Body:: isClump(). (Correct result is assured at each call to Clump::add).
+-		 (we could use RTTI instead? Would that be more reliable?)
+-		- if it is a standalone Body: Body::isStandalone()
+-		- what is it's clump id (Body::clumpId)
+-	-# given the root body, tell
+-		- what clumps it contains (enumerate all bodies and filter clumps, see above)
+-	-#	given a clump, tell
+-		- what bodies it contains (keys of ::Clump::members)
+-		- what are se3 of these bodies (values of ::Clump::members)
+-	-# add/delete bodies from/to clump (::Clump::add, ::Clump::del)
+-		- This includes saving se3 of the subBody: it \em must be in clump's local coordinates so that it is constant. The transformation from global to local is given by clump's se3 at the moment of addition. Clump's se3 is initially (origin,identity)
+-	-# Update clump's physical properties (Clump::updateProperties)
+-		- This \em must reposition members so that they have the same se3 globally
+-	-# Apply forces acting on members to the clump instead (done in NewtonsForceLaw, NewtonsMomentumLaw) - uses world coordinates to calculate effect on the clump's centroid
+-	-# Integrate position and orientation of the clump
+-		- LeapFrogPositionIntegrator and LeapFrogOrientationIntegrator move clump as whole
+-			- clump members are skipped, since they have Body::isDynamic==false. 
+-		- ClumpMemberMover is an engine that updates positions of the clump memebers in each timestep (calls Clump::moveSubBodies internally)
+-
+-	Some more information can be found <A HREF="http://beta.arcig.cz/~eudoxos/phd/index.cgi/YaDe/HighLevelClumps">http://beta.arcig.cz/~eudoxos/phd/index.cgi/YaDe/HighLevelClumps</A>
+-
+-	For an example how to generate a clump, see ClumpTestGen::createOneClump.
+-
+-	@todo GravityEngine should be applied to members, not to clump as such?! Still not sure. Perhaps Clumps should have mass and inertia set to zeros so that engines unaware of clumps do not act on it. It would have some private mass and insertia that would be used in NewtonsForceLaw etc for clumps specially...
+-
+-	@note PersistentSAPCollider bypass Clumps explicitly. This no longer depends on the absence of boundingVolume.
+-	@note Clump relies on its id being assigned (as well as id of its components); therefore, only bodies that have already been inserted to the container may be added to Clump which has been itself already added to the container.
+- 
+- */
+-
+-class Clump: public Body {
+-		//! mapping of body IDs to their relative positions; replaces members and subSe3s;
+-	public:
+-		typedef std::map&lt;body_id_t,Se3r&gt; memberMap;
+-		memberMap members;
+-
+-		Clump();
+-		virtual ~Clump(){};
+-		//! \brief add Body to the Clump
+-		void add(body_id_t);
+-		//! \brief remove Body from the Clump
+-		void del(body_id_t);
+-		//! Recalculate physical properties of Clump.
+-		void updateProperties(bool intersecting);
+-		//! Calculate positions and orientations of members based on my own Se3.
+-		void moveMembers();
+-		//! update member positions after clump being moved by mouse (in case simulation is paused and engines will not do that).
+-		void userForcedDisplacementRedrawHook(){moveMembers();}
+-	private: // may be made public, but once properly tested...
+-		//! Recalculates inertia tensor of a body after translation away from (default) or towards its centroid.
+-		static Matrix3r inertiaTensorTranslate(const Matrix3r&amp; I,const Real m, const Vector3r&amp; off);
+-		//! Recalculate body's inertia tensor in rotated coordinates.
+-		static Matrix3r inertiaTensorRotate(const Matrix3r&amp; I, const Matrix3r&amp; T);
+-		//! Recalculate body's inertia tensor in rotated coordinates.
+-		static Matrix3r inertiaTensorRotate(const Matrix3r&amp; I, const Quaternionr&amp; rot);
+-
+-	void registerAttributes(){Body::registerAttributes(); REGISTER_ATTRIBUTE(members);}
+-	REGISTER_CLASS_NAME(Clump);
+-	REGISTER_BASE_CLASS_NAME(Body);
+-	// REGISTER_CLASS_INDEX(Clump,Body);
+-	DECLARE_LOGGER;
+-};
+-
+-REGISTER_SERIALIZABLE(Clump);
+-
+-/*! Update ::Clump::members positions so that the Clump behaves as a rigid body.
+- *
+- *
+-*/
+-class ClumpMemberMover: public DeusExMachina {
+-	public:
+-		//! Interates over rootBody-&gt;bodies and calls Clump::moveSubBodies() for clumps.
+-		virtual void applyCondition(MetaBody* rootBody);
+-		ClumpMemberMover();
+-		virtual ~ClumpMemberMover(){};
+-
+-	REGISTER_CLASS_NAME(ClumpMemberMover);
+-	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+-	// REGISTER_CLASS_INDEX(ClumpMemberMover,PhysicalParametersEngineUnit);
+-	DECLARE_LOGGER;
+-};
+-
+-REGISTER_SERIALIZABLE(ClumpMemberMover);
+-
+-/*! \brief Test some basic clump functionality; show how to use clumps as well. */
+-class ClumpTestGen : public FileGenerator {
+-	DECLARE_LOGGER;
+-	private :
+-		//Vector3r	nbTetrahedrons,groundSize,gravity;
+-		//Real	minSize,density,maxSize,dampingForce,disorder,dampingMomentum,youngModulus;
+-		//int		 timeStepUpdateInterval;
+-		//bool		 rotationBlocked;
+-		//void createBox(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Vector3r extents);
+-		void createOneClump(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r clumpPos, vector&lt;Vector3r&gt; relPos, vector&lt;Real&gt; radii);
+-		//shared_ptr&lt;Body&gt; createOneSphere(Vector3r position, Real radius);
+-		//void createActors(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+-		//void positionRootBody(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+-		//void calculatePropertiesAndReposition(const shared_ptr&lt;SlumShape&gt;&amp; slum, shared_ptr&lt;ElasticBodyParameters&gt;&amp; rbp, Real density);
+-		//void makeTet(shared_ptr&lt;Tetrahedron&gt;&amp; tet, Real radius);
+-		shared_ptr&lt;ClumpMemberMover&gt; clumpMover;
+-	public :
+-		ClumpTestGen (){};
+-		~ClumpTestGen (){};
+-		bool generate();
+-	protected :
+-		virtual void postProcessAttributes(bool deserializing){};
+-		void registerAttributes(){};
+-	REGISTER_CLASS_NAME(ClumpTestGen);
+-	REGISTER_BASE_CLASS_NAME(FileGenerator);
+-};
+-
+-REGISTER_SERIALIZABLE(ClumpTestGen);
+-
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/extra/clump/Shop.cpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -66,10 +66,7 @@
+ 
+ #include&lt;yade/extra/Tetra.hpp&gt;
+ 
+-//#include&lt;yade/extra/Clump.hpp&gt;
+-//#include &lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+ 
+-
+ #define _SPEC_CAST(orig,cast) template&lt;&gt; void Shop::setDefault&lt;orig&gt;(string key, orig val){setDefault(key,cast(val));}
+ _SPEC_CAST(const char*,string);
+ _SPEC_CAST(char*,string);
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/gui/SConscript	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -69,7 +69,8 @@
+ 				'ConstitutiveLawDispatcher',
+ 				'InteractionDispatchers',
+ 				'STLImporter',
+-				'ParallelEngine'
++				'ParallelEngine',
++				'Clump'
+ 			],
+ 			),
+ 		env.SharedLibrary('_utils',['py/_utils.cpp'],SHLIBPREFIX='',
+
+Modified: trunk/gui/py/_eudoxos.cpp
+===================================================================
+--- trunk/gui/py/_eudoxos.cpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/gui/py/_eudoxos.cpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -8,7 +8,6 @@
+ #endif
+ 
+ 
+-
+ # if 0
+ Real elasticEnergyDensityInAABB(python::tuple AABB){
+ 	Vector3r bbMin=tuple2vec(python::extract&lt;python::tuple&gt;(AABB[0])()), bbMax=tuple2vec(python::extract&lt;python::tuple&gt;(AABB[1])()); Vector3r box=bbMax-bbMin;
+
+Modified: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/gui/py/_utils.cpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -5,6 +5,7 @@
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/DemXDofGeom.hpp&gt;
+ #include&lt;yade/pkg-dem/SimpleViscoelasticBodyParameters.hpp&gt;
+ #include&lt;yade/pkg-common/NormalShearInteractions.hpp&gt;
+ #include&lt;cmath&gt;
+@@ -81,7 +82,7 @@
+ 	FOREACH(const shared_ptr&lt;Interaction&gt;&amp;i, *rb-&gt;transientInteractions){
+ 		if(!i-&gt;interactionPhysics) continue;
+ 		shared_ptr&lt;NormalShearInteraction&gt; bc=dynamic_pointer_cast&lt;NormalShearInteraction&gt;(i-&gt;interactionPhysics); if(!bc) continue;
+-		shared_ptr&lt;SpheresContactGeometry&gt; geom=dynamic_pointer_cast&lt;SpheresContactGeometry&gt;(i-&gt;interactionGeometry); if(!bc){LOG_ERROR(&quot;NormalShearInteraction contact doesn't have SpheresContactGeomety associated?!&quot;); continue;}
++		shared_ptr&lt;Dem3DofGeom&gt; geom=dynamic_pointer_cast&lt;Dem3DofGeom&gt;(i-&gt;interactionGeometry); if(!bc){LOG_ERROR(&quot;NormalShearInteraction contact doesn't have SpheresContactGeomety associated?!&quot;); continue;}
+ 		const shared_ptr&lt;Body&gt;&amp; b1=Body::byId(i-&gt;getId1(),rb), b2=Body::byId(i-&gt;getId2(),rb);
+ 		bool isIn1=isInBB(b1-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax), isIn2=isInBB(b2-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax);
+ 		if(!isIn1 &amp;&amp; !isIn2) continue;
+@@ -96,7 +97,7 @@
+ 			//cerr&lt;&lt;&quot;Interaction crosses AABB boundary, weight is &quot;&lt;&lt;weight&lt;&lt;endl;
+ 			//LOG_DEBUG(&quot;Interaction crosses AABB boundary, weight is &quot;&lt;&lt;weight);
+ 		} else {assert(isIn1 &amp;&amp; isIn2); /* cerr&lt;&lt;&quot;Interaction inside, weight is &quot;&lt;&lt;weight&lt;&lt;endl;*/ /*LOG_DEBUG(&quot;Interaction inside, weight is &quot;&lt;&lt;weight);*/}
+-		E+=geom-&gt;d0*weight*(.5*bc-&gt;kn*pow(geom-&gt;epsN(),2)+.5*bc-&gt;ks*pow(geom-&gt;epsT().Length(),2));
++		E+=geom-&gt;refLength*weight*(.5*bc-&gt;kn*pow(geom-&gt;strainN(),2)+.5*bc-&gt;ks*pow(geom-&gt;strainT().Length(),2));
+ 	}
+ 	return E;
+ }
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/gui/py/yadeControl.cpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -62,6 +62,7 @@
+ #include&lt;yade/pkg-common/ConstitutiveLaw.hpp&gt;
+ 
+ #include&lt;yade/extra/Shop.hpp&gt;
++#include&lt;yade/pkg-dem/Clump.hpp&gt;
+ 
+ using namespace boost;
+ using namespace std;
+@@ -338,6 +339,16 @@
+ 	}
+ 	body_id_t insert(pyBody b){return proxee-&gt;insert(b.proxee);}
+ 	python::list insertList(python::list bb){python::list ret; for(int i=0; i&lt;len(bb); i++){ret.append(insert(python::extract&lt;pyBody&gt;(bb[i])()));} return ret;}
++		python::tuple insertClump(python::list bb){/*clump: first add constitutents, then add clump, then add constitutents to the clump, then update clump props*/
++		python::list ids=insertList(bb);
++		shared_ptr&lt;Clump&gt; clump=shared_ptr&lt;Clump&gt;(new Clump());
++		shared_ptr&lt;Body&gt; clumpAsBody=static_pointer_cast&lt;Body&gt;(clump);
++		clump-&gt;isDynamic=true;
++		proxee-&gt;insert(clumpAsBody);
++		for(int i=0; i&lt;len(ids); i++){clump-&gt;add(python::extract&lt;body_id_t&gt;(ids[i])());}
++		clump-&gt;updateProperties(false);
++		return python::make_tuple(clump-&gt;getId(),ids);
++	}
+ 	python::list replace(python::list bb){proxee-&gt;clear(); return insertList(bb);}
+ 	long length(){return proxee-&gt;size();}
+ 	void clear(){proxee-&gt;clear();}
+@@ -702,6 +713,7 @@
+ 		.def(&quot;__len__&quot;,&amp;pyBodyContainer::length)
+ 		.def(&quot;append&quot;,&amp;pyBodyContainer::insert)
+ 		.def(&quot;append&quot;,&amp;pyBodyContainer::insertList)
++		.def(&quot;appendClumped&quot;,&amp;pyBodyContainer::insertClump)
+ 		.def(&quot;clear&quot;, &amp;pyBodyContainer::clear)
+ 		.def(&quot;replace&quot;,&amp;pyBodyContainer::replace);
+ 	boost::python::class_&lt;pyInteractionContainer&gt;(&quot;InteractionContainer&quot;,python::init&lt;pyInteractionContainer&amp;&gt;())
+
+Copied: trunk/pkg/dem/DataClass/Clump.cpp (from rev 1763, trunk/extra/clump/Clump.cpp)
+===================================================================
+--- trunk/extra/clump/Clump.cpp	2009-05-03 07:16:04 UTC (rev 1763)
++++ trunk/pkg/dem/DataClass/Clump.cpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -0,0 +1,427 @@
++// (c) 2007,2009 Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt; 
++
++#include&quot;Clump.hpp&quot;
++#include&lt;algorithm&gt;
++
++YADE_PLUGIN(&quot;Clump&quot;,&quot;ClumpMemberMover&quot;,&quot;ClumpTestGen&quot;);
++
++CREATE_LOGGER(Clump);
++CREATE_LOGGER(ClumpMemberMover);
++CREATE_LOGGER(ClumpTestGen);
++
++/**************************************************************************************
++ ************************************* ClumpMemberMover ******************************
++ **************************************************************************************/
++
++// Constructor must be in the .cpp file (?)
++ClumpMemberMover::ClumpMemberMover(){/*createIndex();*/ }
++
++/*! We only call clump's method, since it belongs there logically. It makes encapsulation of private members nicer, too.
++ * @param pp passed by the dispatcher
++ * @param clump passed by the dispatcher
++ */
++void ClumpMemberMover::applyCondition(MetaBody* rootBody){
++	for(BodyContainer::iterator I=rootBody-&gt;bodies-&gt;begin(); I!=rootBody-&gt;bodies-&gt;end(); ++I){
++		shared_ptr&lt;Body&gt; b = *I;
++		if(b-&gt;isClump()){
++			//LOG_TRACE(&quot;Applying movement to clump #&quot;&lt;&lt;b-&gt;getId());
++			static_cast&lt;Clump*&gt;(b.get())-&gt;moveMembers();
++		}
++	}
++	//if(!clump-&gt;isDynamic) return; // perhaps clump that has been desactivated?!
++}
++
++/**************************************************************************************
++ ******************************************** Clump ***********************************
++ **************************************************************************************/
++
++/*! Create zero'ed RigidBodyParameters; they should not be manipulated directly, since they are all calculated in Clump::update.
++ * @todo do we need to do the same for GeomtricalModel, InteractingGeometry and BoundingVolume? They will never be used. Sort that out for sure.
++ * @bug setting Clump::isDynamic in constructor is not enough (as if it were modified somewhere), must be set explicitly by the user after construction (why?)
++ */
++Clump::Clump(): Body(){
++	isDynamic=true;
++	physicalParameters=shared_ptr&lt;RigidBodyParameters&gt;(new RigidBodyParameters);
++
++	// these will not be defined for the moment...
++#if 0
++	boundingVolume=shared_ptr&lt;AABB&gt;(new AABB);
++	boundingVolume-&gt;diffuseColor=Vector3r(1,0,0);
++
++	interactingGeometry=shared_ptr&lt;InteractingGeometry&gt;(new InteractingGeometry);
++	interactingGeometry-&gt;diffuseColor=Vector3r(0,0,0);
++
++	geometricalModel=shared_ptr&lt;GeometricalModel&gt;(new GeometricalModel);
++	geometricalModel-&gt;diffuseColor=Vector3r(0,0,0); geometricalModel-&gt;wire=false; geometricalModel-&gt;visible=false; geometricalModel-&gt;shadowCaster=false;
++#endif
++
++}
++
++/*! @pre Body must be dynamic.
++ * @pre Body must not be part or this clump already.
++ * @pre Body must have valid (non-NULL) Body::physicalParameters
++ * @pre Body must have id that is smaller than the clump's id (reason: processing order in NewtonsDampedLaw)
++ */
++void Clump::add(body_id_t subId){
++	shared_ptr&lt;Body&gt; subBody=Body::byId(subId);
++
++	// preconditions
++	assert(subBody-&gt;isDynamic);
++	assert(physicalParameters);
++	assert(members.count(subId)==0);
++	assert(subId&lt;getId());
++
++	// begin actual setup
++	subBody-&gt;clumpId=getId();
++	subBody-&gt;isDynamic=false;
++	// for now, push just unitialized se3; will be updated by updateProperties
++	members[subId]=Se3r();
++
++	clumpId=getId(); // identifies a clump
++
++	LOG_DEBUG(&quot;Added body #&quot;&lt;&lt;subId&lt;&lt;&quot; to clump #&quot;&lt;&lt;getId());
++}
++
++/*! @pre Body with given id must be in the clump.
++ */
++void Clump::del(body_id_t subId){
++	// erase the subBody; removing body that is not part of the clump is error
++	assert(members.erase(subId)==1);
++	// restore body's internal parameters;
++	shared_ptr&lt;Body&gt; subBody=Body::byId(subId);
++	subBody-&gt;clumpId=Body::ID_NONE;
++	subBody-&gt;isDynamic=true;
++	LOG_DEBUG(&quot;Removed body #&quot;&lt;&lt;subId&lt;&lt;&quot; from clump #&quot;&lt;&lt;getId());
++}
++
++/*! @brief Calculate positions and orientations of members based on Clump's Se3; resets acceleration and angularAccelration to zero.
++ *
++ * This method is called by the ClumpMemberMover engine after each timestep.
++ * @note Velocities of members are not updated, since members have isdynamic==false. It is possible, though, that someone needs to have a moving clump that is later broken apart and that liberated particle continue to move in the same way as they did within the clump. In that case, this will have to be completed.
++ */
++void Clump::moveMembers(){
++	const Se3r&amp; mySe3(physicalParameters-&gt;se3);
++	const shared_ptr&lt;RigidBodyParameters&gt;&amp; myRBP=static_pointer_cast&lt;RigidBodyParameters&gt;(physicalParameters);
++	for(Clump::memberMap::iterator I=members.begin(); I!=members.end(); I++){
++		// now, I-&gt;first is Body::id_t, I-&gt;second is Se3r of that body in the clump
++		shared_ptr&lt;Body&gt; member=Body::byId(I-&gt;first);
++		const shared_ptr&lt;RigidBodyParameters&gt;&amp; subRBP(YADE_PTR_CAST&lt;RigidBodyParameters&gt;(member-&gt;physicalParameters));
++		//LOG_TRACE(&quot;Old #&quot;&lt;&lt;I-&gt;first&lt;&lt;&quot;position: &quot;&lt;&lt;subRBP-&gt;se3.position);
++		subRBP-&gt;se3.position=mySe3.position+mySe3.orientation*I-&gt;second.position;
++		subRBP-&gt;se3.orientation=mySe3.orientation*I-&gt;second.orientation;
++		//LOG_TRACE(&quot;New #&quot;&lt;&lt;I-&gt;first&lt;&lt;&quot;position: &quot;&lt;&lt;subRBP-&gt;se3.position);
++		//LOG_TRACE(&quot;Clump #&quot;&lt;&lt;getId()&lt;&lt;&quot; moved #&quot;&lt;&lt;I-&gt;first&lt;&lt;&quot;.&quot;);
++
++		//! FIXME: we set velocity because of damping here; but since positions are integrated after all forces applied, these velocities will be used in the NEXT step for CundallNonViscousDamping. Does that matter?!
++		subRBP-&gt;velocity=myRBP-&gt;velocity+myRBP-&gt;angularVelocity.Cross(I-&gt;second.position);
++		subRBP-&gt;angularVelocity=myRBP-&gt;angularVelocity;
++	}
++	/* @bug Temporarily we reset acceleration and angularAcceleration of the clump here;
++	 * should be a new negine that will take care of that?
++	 */
++	const shared_ptr&lt;RigidBodyParameters&gt;&amp; clumpRBP(YADE_PTR_CAST&lt;RigidBodyParameters&gt;(physicalParameters));
++	#if 0
++		if(Omega::instance().getCurrentIteration()%50==0){
++			Real Erot=.5*clumpRBP-&gt;inertia[0]*pow(clumpRBP-&gt;angularVelocity[0],2)+.5*clumpRBP-&gt;inertia[1]*pow(clumpRBP-&gt;angularVelocity[1],2)+.5*clumpRBP-&gt;inertia[2]*pow(clumpRBP-&gt;angularVelocity[2],2);
++			Real Etrans=.5*clumpRBP-&gt;mass*pow(clumpRBP-&gt;velocity.Length(),2);
++			// (0,0,1) is gravity acceleration
++			Real Epot=clumpRBP-&gt;se3.position.Dot(Vector3r(0,0,1))*clumpRBP-&gt;mass;
++			LOG_TRACE(&quot;##&quot;&lt;&lt;clumpId&lt;&lt;&quot; energy &quot;&lt;&lt;Erot+Etrans+Epot&lt;&lt;&quot;\tv &quot;&lt;&lt;Etrans&lt;&lt;&quot;\tw &quot;&lt;&lt;Erot&lt;&lt;&quot;\tp &quot;&lt;&lt;Epot);
++		}
++	#endif
++
++	clumpRBP-&gt;acceleration=Vector3r(0,0,0);
++	clumpRBP-&gt;angularAcceleration=Vector3r(0,0,0);
++	
++}
++
++/*! Clump's se3 will be updated (origin at centroid and axes coincident with principal inertia axes) and subSe3 modified in such a way that members positions in world coordinates will not change.
++
++	The clump values that are changed are:
++	-# Clump::members (holds position and orientation in clump's coordinate system)
++	-# Clump::physicalParameters-&gt;mass (sum of masses of all members)
++	-# Clump::physicalParameters-&gt;inertia (inertia of the aggregate - in clump coordinate system)
++	-# Clump::physicalParameters-&gt;se3 (position and orientation of the clump; it is such that absolute positions and orientation of members will not chage)
++
++	The algorithm is as follows:
++	-# Clump::members values and Clump::physicalParameters::se3 are invalid from this point
++	-# M=0; S=vector3r(0,0,0); I=zero tensor; (ALL calculations are in world coordinates!)
++	-# loop over Clump::members (position x_i, mass m_i, inertia at subBody's centroid I_i) [this loop will be replaced by numerical integration (rasterization) for the intersecting case; the rest will be the same]
++		- M+=m_i
++		- S+=m_i*x_i (local static moments are zero (centroid)
++		- get inertia tensor of subBody in world coordinates, by rotating the principal (local) tensor against subBody-&gt;se3-&gt;orientation; then translate it to world origin (parallel axes theorem), then I+=I_i_world
++	-# clumpPos=S/M
++	-# translate aggregate's inertia tensor; parallel axes on I (R=clumpPos): I^c_jk=I'_jk-M*(delta_jk R.R - R_j*R_k) [<A HREF="http://en.wikipedia.org/wiki/Moments_of_inertia#Parallel_axes_theorem">http://en.wikipedia.org/wiki/Moments_of_inertia#Parallel_axes_theorem</A>]
++	-# eigen decomposition of I, get principal inertia and rotation matrix of the clump
++	-# se3-&gt;orientation=quaternion(rotation_matrix); se3-&gt;position=clumpPos
++	-#	update subSe3s
++
++	@todo I \em think that the order of transformation of inertia is:
++		- from local to global: first rotate, then translate;
++		- from global to local: first translate, then rotate,
++	since rotation must be done with origin at the centroid... This needs to be verified, though.
++	@todo all the rest of this routine needs to be verified!
++	@todo implement the loop for intersecting bodies (may cut'n'paste from slum code, but that will work for spheres only!)
++
++	@note User is responsible for calling this function when appropriate (after adding/removing bodies and before any subsequent simulation). This function can be rather slow by virtue of numerical integration.
++	@note subBodie's velocities are not taken into account. This means that clump will be at still after being created, even if its composing particles did have some velocities. If this is concern for someone, it needs to be completed in the code below. See Clump::moveMembers for complementary issue.
++	@todo Needs to be tested for physical correctness
++	@param intersecting if true, evaluate mass and inertia numerically; otherwise, use analytical methods (parallel axes theorem) which disregard any intersections, but are much faster. */
++void Clump::updateProperties(bool intersecting){
++	LOG_DEBUG(&quot;Updating clump #&quot;&lt;&lt;getId()&lt;&lt;&quot; parameters&quot;);
++	assert(members.size()&gt;0);
++
++	/* quantities suffixed by
++		g: global (world) coordinates
++		s: local subBody's coordinates
++		c: local clump coordinates */
++	double M=0; // mass
++	Vector3r Sg(0,0,0); // static moment
++	Matrix3r Ig(true /* fill with zeros */ ), Ic(true); // tensors of inertia; is upper triangular, zeros instead of symmetric elements
++	Se3r&amp; mySe3(physicalParameters-&gt;se3);
++	const shared_ptr&lt;RigidBodyParameters&gt;&amp; clumpRBP(YADE_PTR_CAST&lt;RigidBodyParameters&gt;(physicalParameters));
++
++	if(members.size()==1){
++		LOG_DEBUG(&quot;Clump of size one will be treated specially.&quot;)
++		memberMap::iterator I=members.begin();
++		shared_ptr&lt;Body&gt; subBody=Body::byId(I-&gt;first);
++		const shared_ptr&lt;RigidBodyParameters&gt;&amp; subRBP(YADE_PTR_CAST&lt;RigidBodyParameters&gt;(subBody-&gt;physicalParameters));
++		// se3 of the clump as whole is the same as the member's se3
++		mySe3.position=subRBP-&gt;se3.position;
++		mySe3.orientation=subRBP-&gt;se3.orientation;
++		// relative member's se3 is identity
++		I-&gt;second.position=Vector3r::ZERO; I-&gt;second.orientation=Quaternionr::IDENTITY;
++		clumpRBP-&gt;inertia=subRBP-&gt;inertia;
++		clumpRBP-&gt;mass=subRBP-&gt;mass;
++		clumpRBP-&gt;velocity=Vector3r::ZERO;
++		clumpRBP-&gt;angularVelocity=Vector3r::ZERO;
++		return;
++	}
++
++	if(intersecting){
++		LOG_WARN(&quot;Self-intersecting clumps not yet implemented, intersections will be ignored.&quot;);
++		intersecting=false;}
++
++	// begin non-intersecting loop here
++	if(!intersecting){
++		for(memberMap::iterator I=members.begin(); I!=members.end(); I++){
++			// now, I-&gt;first is Body::id_t, I-&gt;second is Se3r of that body
++			shared_ptr&lt;Body&gt; subBody=Body::byId(I-&gt;first);
++			const shared_ptr&lt;RigidBodyParameters&gt;&amp; subRBP(YADE_PTR_CAST&lt;RigidBodyParameters&gt;(subBody-&gt;physicalParameters));
++			M+=subRBP-&gt;mass;
++			Sg+=subRBP-&gt;mass*subRBP-&gt;se3.position;
++			// transform from local to global coords
++			// FIXME: verify this!
++			Quaternionr subRBP_orientation_conjugate=subRBP-&gt;se3.orientation.Conjugate();
++			Matrix3r Imatrix(subRBP-&gt;inertia[0],subRBP-&gt;inertia[1],subRBP-&gt;inertia[2]);
++			// TRWM3MAT(Imatrix); TRWM3QUAT(subRBP_orientation_conjugate);
++			Ig+=Clump::inertiaTensorTranslate(Clump::inertiaTensorRotate(Imatrix,subRBP_orientation_conjugate),subRBP-&gt;mass,-1.*subRBP-&gt;se3.position);
++
++			//TRWM3MAT(Clump::inertiaTensorRotate(Matrix3r(subRBP-&gt;inertia),subRBP_orientation_conjugate));
++		}
++	}
++	TRVAR1(M);
++	TRWM3MAT(Ig);
++	TRWM3VEC(Sg);
++
++	mySe3.position=Sg/M; // clump's centroid
++	// this will calculate translation only, since rotation is zero
++	Matrix3r Ic_orientG=Clump::inertiaTensorTranslate(Ig, -M /* negative mass means towards centroid */, mySe3.position); // inertia at clump's centroid but with world orientation
++	TRWM3MAT(Ic_orientG);
++
++	Matrix3r R_g2c(true); //rotation matrix
++	Ic_orientG(1,0)=Ic_orientG(0,1); Ic_orientG(2,0)=Ic_orientG(0,2); Ic_orientG(2,1)=Ic_orientG(1,2); // symmetrize
++	//TRWM3MAT(Ic_orientG);
++	Ic_orientG.EigenDecomposition(R_g2c,Ic);
++	/*! @bug: eigendecomposition is wrong. see <A HREF="http://article.gmane.org/gmane.science.physics.yade.devel/99">http://article.gmane.org/gmane.science.physics.yade.devel/99</A> for message. */
++	// has NaNs for identity matrix!
++	TRWM3MAT(R_g2c);
++
++	// these two should give the same result!
++	//TRWM3MAT(Ic);
++	//TRWM3MAT(Clump::inertiaTensorRotate(Ic_orientG,R_g2c));
++
++	// set quaternion from rotation matrix
++	mySe3.orientation.FromRotationMatrix(R_g2c);
++	// now Ic is diagonal
++	clumpRBP-&gt;inertia=Vector3r(Ic(0,0),Ic(1,1),Ic(2,2));
++	clumpRBP-&gt;mass=M;
++
++
++	// this block will be removed once EigenDecomposition works for diagonal matrices
++	#if 1
++		if(isnan(R_g2c(0,0))||isnan(R_g2c(0,1))||isnan(R_g2c(0,2))||isnan(R_g2c(1,0))||isnan(R_g2c(1,1))||isnan(R_g2c(1,2))||isnan(R_g2c(2,0))||isnan(R_g2c(2,1))||isnan(R_g2c(2,2))){
++			LOG_FATAL(&quot;EigenDecomposition gave some NaNs, we will use imaginary values for clump inertia and orientation instead. I thought this may happen only for 1-member clumps which are now treated specially. Something is broken!&quot;);
++			//FIXME: since EigenDecomposition is broken, use inertia of the first body instead;
++			//!!!!! note that this is HIGHLY incorrect for all non-single clumps !!!!!
++			memberMap::iterator I=members.begin();
++			shared_ptr&lt;Body&gt; subBody=Body::byId(I-&gt;first);
++			const shared_ptr&lt;RigidBodyParameters&gt;&amp; subRBP(YADE_PTR_CAST&lt;RigidBodyParameters&gt;(subBody-&gt;physicalParameters));
++			clumpRBP-&gt;inertia=subRBP-&gt;inertia*10.; // 10 is arbitrary; just to have inertia of clump bigger
++			// orientation of the clump is broken as well, since is result of EigenDecomposition as well (rotation matrix)
++			mySe3.orientation.FromRotationMatrix(Matrix3r(1,0,0,0,1,0,0,0,1));
++		}
++	#endif
++	TRWM3VEC(clumpRBP-&gt;inertia);
++
++	// TODO: these might be calculated from members... but complicated... - someone needs that?!
++	clumpRBP-&gt;velocity=Vector3r(0,0,0);
++	clumpRBP-&gt;angularVelocity=Vector3r(0,0,0);
++
++	// update subBodySe3s; subtract clump orientation (=apply its inverse first) to subBody's orientation
++	// Conjugate is equivalent to Inverse for normalized quaternions
++	for(memberMap::iterator I=members.begin(); I!=members.end(); I++){
++		// now, I-&gt;first is Body::id_t, I-&gt;second is Se3r of that body
++		shared_ptr&lt;Body&gt; subBody=Body::byId(I-&gt;first);
++		const shared_ptr&lt;RigidBodyParameters&gt;&amp; subRBP(YADE_PTR_CAST&lt;RigidBodyParameters&gt;(subBody-&gt;physicalParameters));
++		I-&gt;second.orientation=mySe3.orientation.Conjugate()*subRBP-&gt;se3.orientation;
++		I-&gt;second.position=mySe3.orientation.Conjugate()*(subRBP-&gt;se3.position-mySe3.position);
++	}
++
++}
++
++/*! @brief Recalculates inertia tensor of a body after translation away from (default) or towards its centroid.
++ *
++ * @param I inertia tensor in the original coordinates; it is assumed to be upper-triangular (elements below the diagonal are ignored).
++ * @param m mass of the body; if positive, translation is away from the centroid; if negative, towards centroid.
++ * @param off offset of the new origin from the original origin
++ * @return inertia tensor in the new coordinate system; the matrix is symmetric.
++ */
++Matrix3r Clump::inertiaTensorTranslate(const Matrix3r&amp; I,const Real m, const Vector3r&amp; off){
++	Real ooff=off.Dot(off);
++	Matrix3r I2=I;
++	//TRWM3VEC(off); TRVAR2(ooff,m); TRWM3MAT(I);
++	// translation away from centroid
++	/* I^c_jk=I'_jk-M*(delta_jk R.R - R_j*R_k) [<A HREF="http://en.wikipedia.org/wiki/Moments_of_inertia#Parallel_axes_theorem">http://en.wikipedia.org/wiki/Moments_of_inertia#Parallel_axes_theorem</A>] */
++	I2+=m*Matrix3r(/* dIxx */ ooff-off[0]*off[0], /* dIxy */ -off[0]*off[1], /* dIxz */ -off[0]*off[2],
++		/* sym */ 0, /* dIyy */ ooff-off[1]*off[1], /* dIyz */ -off[1]*off[2],
++		/* sym */ 0, /* sym */ 0, /* dIzz */ ooff-off[2]*off[2]);
++	I2(1,0)=I2(0,1); I2(2,0)=I2(0,2); I2(2,1)=I2(1,2);
++	//TRWM3MAT(I2);
++	return I2;
++}
++
++/*! @brief Recalculate body's inertia tensor in rotated coordinates.
++ *
++ * @param I inertia tensor in old coordinates
++ * @param T rotation matrix from old to new coordinates
++ * @return inertia tensor in new coordinates
++ */
++Matrix3r Clump::inertiaTensorRotate(const Matrix3r&amp; I,const Matrix3r&amp; T){
++	/* [<A HREF="http://www.kwon3d.com/theory/moi/triten.html">http://www.kwon3d.com/theory/moi/triten.html</A>] */
++	//TRWM3MAT(I); TRWM3MAT(T);
++	return T.Transpose()*I*T;
++}
++
++/*! @brief Recalculate body's inertia tensor in rotated coordinates.
++ *
++ * @param I inertia tensor in old coordinates
++ * @param rot quaternion that describes rotation from old to new coordinates
++ * @return inertia tensor in new coordinates
++ */
++Matrix3r Clump::inertiaTensorRotate(const Matrix3r&amp; I, const Quaternionr&amp; rot){
++	Matrix3r T;
++	rot.ToRotationMatrix(T);
++	return inertiaTensorRotate(I,T);
++}
++
++
++
++/**************************************************************************************
++ ********************* ClumpTestGen ***************************************************
++ **************************************************************************************/
++
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/extra/Shop.hpp&gt;
++
++bool ClumpTestGen::generate()
++{
++	//Shop::setDefault(&quot;param_pythonRunExpr&quot;,string(&quot;if S.i%50==0 and S.i&lt;1000 and S.i&gt;500:\n\tprint S.i,len(S.sel),B[1].x, B[1].E&quot;));
++
++	rootBody=Shop::rootBody();
++	Shop::rootBodyActors(rootBody);
++	// clumps do not need to subscribe currently (that will most likely change, though)
++	rootBody-&gt;engines.push_back(shared_ptr&lt;ClumpMemberMover&gt;(new ClumpMemberMover));
++	
++
++	shared_ptr&lt;MetaBody&gt; oldRootBody=Omega::instance().getRootBody();
++	Omega::instance().setRootBody(rootBody);
++
++	shared_ptr&lt;Body&gt; ground=Shop::box(Vector3r(0,0,-1),Vector3r(3,3,.2));
++	ground-&gt;isDynamic=false;
++	// revert random colors for this single case...
++	ground-&gt;geometricalModel-&gt;diffuseColor=Vector3r(.6,.6,.6);
++	ground-&gt;interactingGeometry-&gt;diffuseColor=Vector3r(.3,.3,.3);
++	rootBody-&gt;bodies-&gt;insert(ground);
++
++	vector&lt;Vector3r&gt; relPos; vector&lt;Real&gt; radii; Vector3r clumpPos;
++
++	// standalone (non-clump!) sphere as well
++	shared_ptr&lt;Body&gt; sphere=Shop::sphere(Vector3r(0,0,0),.5);
++	rootBody-&gt;bodies-&gt;insert(sphere);
++	// one-sphere clump
++	clumpPos=Vector3r(-2,0,0);
++	relPos.push_back(Vector3r(0,0,0)); radii.push_back(.5);
++	createOneClump(rootBody,clumpPos,relPos,radii);
++	relPos.clear(); radii.clear();
++	// two-sphere clump
++	clumpPos=Vector3r(2,0,0);
++	relPos.push_back(Vector3r(0,-.5,.5)); radii.push_back(.5);
++	relPos.push_back(Vector3r(0,.5,0)); radii.push_back(.5);
++	createOneClump(rootBody,clumpPos,relPos,radii);
++	relPos.clear(); radii.clear();
++	// three-sphere slump
++	clumpPos=Vector3r(0,2,0);
++	relPos.push_back(Vector3r(0,-.5,.5)); radii.push_back(.5);
++	relPos.push_back(Vector3r(0,.5,0)); radii.push_back(.5);
++	relPos.push_back(Vector3r(.5,0,0)); radii.push_back(.5);
++	createOneClump(rootBody,clumpPos,relPos,radii);
++	relPos.clear(); radii.clear();
++	// four-sphere slump
++	clumpPos=Vector3r(0,-2,0);
++	relPos.push_back(Vector3r(0,0,0)); radii.push_back(.5);
++	relPos.push_back(Vector3r(.5,0,0)); radii.push_back(.5);
++	relPos.push_back(Vector3r(0,.5,0)); radii.push_back(.5);
++	relPos.push_back(Vector3r(0,0,.5)); radii.push_back(.5);
++	createOneClump(rootBody,clumpPos,relPos,radii);
++	relPos.clear(); radii.clear();
++
++	// restore Omega
++	Omega::instance().setRootBody(oldRootBody);
++	
++	message=&quot;OK&quot;;
++	return true;
++}
++
++/*! \brief Generate clump of spheres, the result will be inserted into rootBody.
++ *
++ * Attention here: clump's id must be greater than id of any of its constituents; therefore
++ *   1. create bodies that will be clumped, add them to bodies (at that moment they get their id) and save their ids in clumpMembers
++ *   2. create (empty) clump and add it to bodies
++ *	  3. add bodies to be clumped to the clump
++ *	  4. call Clump::updateProperties to get physical properties physically right (inertia, position, orientation, mass, ...).
++ *
++ * @param clumpPos Center of the clump (not necessarily centroid); serves merely as reference for sphere positions.
++ * @param relPos Relative positions of individual spheres' centers.
++ * @param radii Radii of composing spheres. Must have the same length as relPos.
++ */
++void ClumpTestGen::createOneClump(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r clumpPos, vector&lt;Vector3r&gt; relPos, vector&lt;Real&gt; radii)
++{
++	assert(relPos.size()==radii.size());
++	list&lt;body_id_t&gt; clumpMembers;	
++	for(size_t i=0; i&lt;relPos.size(); i++){
++		shared_ptr&lt;Body&gt; sphere=Shop::sphere(clumpPos+relPos[i],radii[i]);
++		body_id_t lastId=(body_id_t)rootBody-&gt;bodies-&gt;insert(sphere);
++		clumpMembers.push_back(lastId);
++		LOG_TRACE(&quot;Generated (not yet) clumped sphere #&quot;&lt;&lt;lastId);
++	}
++	shared_ptr&lt;Clump&gt; clump=shared_ptr&lt;Clump&gt;(new Clump());
++	shared_ptr&lt;Body&gt; clumpAsBody=static_pointer_cast&lt;Body&gt;(clump);
++	clump-&gt;isDynamic=true;
++	rootBody-&gt;bodies-&gt;insert(clumpAsBody);
++	FOREACH(body_id_t id, clumpMembers){
++		clump-&gt;add(id);
++	}
++	clump-&gt;updateProperties(false);
++}
++
+
+
+Property changes on: trunk/pkg/dem/DataClass/Clump.cpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/pkg/dem/DataClass/Clump.hpp (from rev 1763, trunk/extra/clump/Clump.hpp)
+===================================================================
+--- trunk/extra/clump/Clump.hpp	2009-05-03 07:16:04 UTC (rev 1763)
++++ trunk/pkg/dem/DataClass/Clump.hpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -0,0 +1,115 @@
++// (c) 2007 Vaclav Smilauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++ 
++#pragma once
++
++#include&lt;vector&gt;
++#include&lt;map&gt;
++#include&lt;yade/core/Body.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/core/FileGenerator.hpp&gt;
++#include&lt;yade/core/DeusExMachina.hpp&gt;
++#include&lt;yade/lib-factory/Factorable.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalParametersEngineUnit.hpp&gt;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
++#include&lt;yade/lib-base/Logging.hpp&gt;
++#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++
++
++/*! Body representing clump (rigid aggregate) composed by other existing bodies.
++
++	Clump is one of bodies that reside in rootBody-&gt;bodies.
++	When an existing body is added to ::Clump, it's ::Body::isDynamic flag is set to false
++	(it is still subscribed to all its engines, to make it possible to remove it from the clump again).
++	All forces acting on Clump::members are made to act on the clump itself, which will ensure that they
++	influence all Clump::members as if the clump were a rigid particle.
++ 
++	What are clump requirements so that they function?
++	-# Given any body, tell
++		- if it is a clump member: Body::isClumpMember()
++	 	- if it is a clump: Body:: isClump(). (Correct result is assured at each call to Clump::add).
++		 (we could use RTTI instead? Would that be more reliable?)
++		- if it is a standalone Body: Body::isStandalone()
++		- what is it's clump id (Body::clumpId)
++	-# given the root body, tell
++		- what clumps it contains (enumerate all bodies and filter clumps, see above)
++	-#	given a clump, tell
++		- what bodies it contains (keys of ::Clump::members)
++		- what are se3 of these bodies (values of ::Clump::members)
++	-# add/delete bodies from/to clump (::Clump::add, ::Clump::del)
++		- This includes saving se3 of the subBody: it \em must be in clump's local coordinates so that it is constant. The transformation from global to local is given by clump's se3 at the moment of addition. Clump's se3 is initially (origin,identity)
++	-# Update clump's physical properties (Clump::updateProperties)
++		- This \em must reposition members so that they have the same se3 globally
++	-# Apply forces acting on members to the clump instead (done in NewtonsForceLaw, NewtonsMomentumLaw) - uses world coordinates to calculate effect on the clump's centroid
++	-# Integrate position and orientation of the clump
++		- LeapFrogPositionIntegrator and LeapFrogOrientationIntegrator move clump as whole
++			- clump members are skipped, since they have Body::isDynamic==false. 
++		- ClumpMemberMover is an engine that updates positions of the clump memebers in each timestep (calls Clump::moveSubBodies internally)
++
++	Some more information can be found <A HREF="http://beta.arcig.cz/~eudoxos/phd/index.cgi/YaDe/HighLevelClumps">http://beta.arcig.cz/~eudoxos/phd/index.cgi/YaDe/HighLevelClumps</A>
++
++	For an example how to generate a clump, see ClumpTestGen::createOneClump.
++
++	@todo GravityEngine should be applied to members, not to clump as such?! Still not sure. Perhaps Clumps should have mass and inertia set to zeros so that engines unaware of clumps do not act on it. It would have some private mass and insertia that would be used in NewtonsForceLaw etc for clumps specially...
++
++	@note PersistentSAPCollider bypass Clumps explicitly. This no longer depends on the absence of boundingVolume.
++	@note Clump relies on its id being assigned (as well as id of its components); therefore, only bodies that have already been inserted to the container may be added to Clump which has been itself already added to the container. We further requier that clump id is greater than ids of clumped bodies
++ 
++ */
++
++class Clump: public Body {
++		//! mapping of body IDs to their relative positions; replaces members and subSe3s;
++	public:
++		typedef std::map&lt;body_id_t,Se3r&gt; memberMap;
++		memberMap members;
++
++		Clump();
++		virtual ~Clump(){};
++		//! \brief add Body to the Clump
++		void add(body_id_t);
++		//! \brief remove Body from the Clump
++		void del(body_id_t);
++		//! Recalculate physical properties of Clump.
++		void updateProperties(bool intersecting);
++		//! Calculate positions and orientations of members based on my own Se3.
++		void moveMembers();
++		//! update member positions after clump being moved by mouse (in case simulation is paused and engines will not do that).
++		void userForcedDisplacementRedrawHook(){moveMembers();}
++	private: // may be made public, but once properly tested...
++		//! Recalculates inertia tensor of a body after translation away from (default) or towards its centroid.
++		static Matrix3r inertiaTensorTranslate(const Matrix3r&amp; I,const Real m, const Vector3r&amp; off);
++		//! Recalculate body's inertia tensor in rotated coordinates.
++		static Matrix3r inertiaTensorRotate(const Matrix3r&amp; I, const Matrix3r&amp; T);
++		//! Recalculate body's inertia tensor in rotated coordinates.
++		static Matrix3r inertiaTensorRotate(const Matrix3r&amp; I, const Quaternionr&amp; rot);
++	REGISTER_ATTRIBUTES(Body,(members));
++	REGISTER_CLASS_AND_BASE(Clump,Body);
++	DECLARE_LOGGER;
++};
++REGISTER_SERIALIZABLE(Clump);
++
++/*! Update ::Clump::members positions so that the Clump behaves as a rigid body. */
++class ClumpMemberMover: public DeusExMachina {
++	public:
++		//! Interates over rootBody-&gt;bodies and calls Clump::moveSubBodies() for clumps.
++		virtual void applyCondition(MetaBody* rootBody);
++		ClumpMemberMover();
++		virtual ~ClumpMemberMover(){};
++	REGISTER_CLASS_AND_BASE(ClumpMemberMover,DeusExMachina);
++	REGISTER_ATTRIBUTES(DeusExMachina,/*nothing here*/);
++	DECLARE_LOGGER;
++};
++REGISTER_SERIALIZABLE(ClumpMemberMover);
++
++/*! \brief Test some basic clump functionality; show how to use clumps as well. */
++class ClumpTestGen : public FileGenerator {
++		void createOneClump(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r clumpPos, vector&lt;Vector3r&gt; relPos, vector&lt;Real&gt; radii);
++		shared_ptr&lt;ClumpMemberMover&gt; clumpMover;
++	public :
++		bool generate();
++	DECLARE_LOGGER;
++	REGISTER_CLASS_AND_BASE(ClumpTestGen,FileGenerator);
++	REGISTER_ATTRIBUTES(FileGenerator,/*nothing here*/);
++};
++REGISTER_SERIALIZABLE(ClumpTestGen);
++
+
+
+Property changes on: trunk/pkg/dem/DataClass/Clump.hpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -117,106 +117,20 @@
+ }
+ 
+ 
+-
+-
+-Vector3r SpheresContactGeometry::relRotVector() const{
+-	Quaternionr relOri12=ori1.Conjugate()*ori2;
+-	Quaternionr oriDiff=initRelOri12.Conjugate()*relOri12;
+-	Vector3r axis; Real angle;
+-	oriDiff.ToAxisAngle(axis,angle);
+-	if(angle&gt;Mathr::PI)angle-=Mathr::TWO_PI;
+-	return angle*axis;
+-}
+-
+-void SpheresContactGeometry::bendingTorsionAbs(Vector3r&amp; bend, Real&amp; tors){
+-	Vector3r relRot=relRotVector();
+-	tors=relRot.Dot(normal);
+-	bend=relRot-tors*normal;
+-}
+-
+-/* Set contact points on both spheres such that their projection is the one given
+- * (should be on the plane passing through origin and oriented with normal; not checked!)
+- */
+-void SpheresContactGeometry::setTgPlanePts(Vector3r p1new, Vector3r p2new){
+-	assert(hasShear);
+-	cp1rel=ori1.Conjugate()*rollPlanePtToSphere(p1new,d1,normal);
+-	cp2rel=ori2.Conjugate()*rollPlanePtToSphere(p2new,d2,-normal);
+-}
+-
+-
+-/* Move contact point on both spheres in such way that their relative position (displacementT) is the same;
+- * this should be done regularly to ensure that the angle doesn't go over &#960;, since then quaternion would
+- * flip axis and the point would project on other side of the tangent plane piece.
+- */
+-void SpheresContactGeometry::relocateContactPoints(){
+-	assert(hasShear);
+-	relocateContactPoints(contPtInTgPlane1(),contPtInTgPlane2());
+-}
+-
+-/* Like SpheresContactGeometry::relocateContactPoints(), but use already computed tangent plane points.
+- *
+- *
+- */
+-void SpheresContactGeometry::relocateContactPoints(const Vector3r&amp; p1, const Vector3r&amp; p2){
+-	Vector3r midPt=(d1/(d1+d2))*(p1+p2); // proportionally to radii, so that angle would be the same
+-	if((p1.SquaredLength()&gt;pow(d1,2) || p2.SquaredLength()&gt;pow(d2,2)) &amp;&amp; midPt.SquaredLength()&gt;pow(min(d1,d2),2)){
+-		//cerr&lt;&lt;&quot;RELOCATION with displacementT=&quot;&lt;&lt;displacementT(); // should be the same before and after relocation
+-		setTgPlanePts(p1-midPt,p2-midPt);
+-		//cerr&lt;&lt;&quot; &#8594; &quot;&lt;&lt;displacementT()&lt;&lt;endl;
++/* keep this for reference; declarations in the header */
++#if 0
++	Vector3r SpheresContactGeometry::relRotVector() const{
++		Quaternionr relOri12=ori1.Conjugate()*ori2;
++		Quaternionr oriDiff=initRelOri12.Conjugate()*relOri12;
++		Vector3r axis; Real angle;
++		oriDiff.ToAxisAngle(axis,angle);
++		if(angle&gt;Mathr::PI)angle-=Mathr::TWO_PI;
++		return angle*axis;
+ 	}
+-}
+ 
+-
+-/*! Perform slip of the projected contact points so that their distance becomes equal (or remains smaller) than the given one.
+- * The slipped distance is returned.
+- */
+-Real SpheresContactGeometry::slipToDisplacementTMax(Real displacementTMax){
+-	assert(hasShear);
+-	// very close, reset shear
+-	if(displacementTMax&lt;=0.){ setTgPlanePts(Vector3r(0,0,0),Vector3r(0,0,0)); return displacementTMax;}
+-	// otherwise
+-	Vector3r p1=contPtInTgPlane1(), p2=contPtInTgPlane2();
+-	Real currDistSq=(p2-p1).SquaredLength();
+-	if(currDistSq&lt;pow(displacementTMax,2)) return 0; // close enough, no slip needed
+-	Vector3r diff=.5*(sqrt(currDistSq)/displacementTMax-1)*(p2-p1);
+-	setTgPlanePts(p1+diff,p2-diff);
+-	return 2*diff.Length();
+-}
+-
+-/*! Project point from sphere surface to tangent plane,
+- * such that the angle of shortest arc from (1,0,0) pt on the sphere to the point itself is the same
+- * as the angle of segment of the same length on the tangent plane.
+- *
+- * This function is (or should be) inverse of SpheresContactGeometry::rollPlanePtToSphere.
+- * 
+- * @param fromXtoPtOri gives orientation of the vector from sphere center to the sphere point from the global +x axis.
+- * @param radius the distance from sphere center to the contact plane
+- * @param planeNormal unit vector pointing away from the sphere center, determining plane orientation on which the projected point lies.
+- * @returns The projected point coordinates (with origin at the contact point).
+- */
+-Vector3r SpheresContactGeometry::unrollSpherePtToPlane(const Quaternionr&amp; fromXtoPtOri, const Real&amp; radius, const Vector3r&amp; planeNormal){
+-	Quaternionr normal2pt; normal2pt.Align(planeNormal,fromXtoPtOri*Vector3r::UNIT_X);
+-	Vector3r axis; Real angle; normal2pt.ToAxisAngle(axis,angle);
+-	return (angle*radius) /* length */ *(axis.Cross(planeNormal)) /* direction: both are unit vectors */;
+-}
+-
+-/*! Project point from tangent plane to the sphere.
+- *
+- * This function is (or should be) inverse of SpheresContactGeometry::unrollSpherePtToPlane.
+- *
+- * @param planePt point on the tangent plane, with origin at the contact point (i.e. at sphere center + normal*radius)
+- * @param radius sphere radius
+- * @param planeNorma _unit_ vector pointing away from sphere center
+- * @returns orientation that transforms +x axis to the vector between sphere center and point on the sphere that corresponds to planePt.
+- *
+- * @note It is not checked whether planePt relly lies on the tangent plane. If not, result will be incorrect.
+- */
+-Quaternionr SpheresContactGeometry::rollPlanePtToSphere(const Vector3r&amp; planePt, const Real&amp; radius, const Vector3r&amp; planeNormal){
+-		Vector3r axis=planeNormal.Cross(planePt); axis.Normalize();
+-		Real angle=planePt.Length()/radius;
+-		Quaternionr normal2pt(axis,angle);
+-		Quaternionr ret; ret.Align(Vector3r::UNIT_X,normal2pt*planeNormal);
+-		return ret;
+-}
+-
+-
++	void SpheresContactGeometry::bendingTorsionAbs(Vector3r&amp; bend, Real&amp; tors){
++		Vector3r relRot=relRotVector();
++		tors=relRot.Dot(normal);
++		bend=relRot-tors*normal;
++	}
++#endif
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -29,70 +29,17 @@
+ 			Vector3r updateShear(const RigidBodyParameters* rbp1, const RigidBodyParameters* rbp2, Real dt, bool avoidGranularRatcheting=true);
+ 		#endif
+ 		
+-		// all the rest here will hopefully disappear at some point...
++		/* keep this for reference, until it is implemented elsewhere, like Dem6DofGeom, if it ever exists */
++		#if 0
++			// initial relative orientation, used for bending and torsion computation
++			Quaternionr initRelOri12;
++			void bendingTorsionAbs(Vector3r&amp; bend, Real&amp; tors);
++			void bendingTorsionRel(Vector3r&amp; bend, Real&amp; tors){ bendingTorsionAbs(bend,tors); bend/=d0; tors/=d0;}
++			Vector3r relRotVector() const;
++		#endif
+ 
+-		// begin abusive storage
+-		//! Whether the original contact was on the positive (1) or negative (-1) facet side; this is to permit repulsion to the right side even if the sphere passes, under extreme pressure, geometrically to the other facet's side. This is used only in InteractingFacet2IteractingSphere4SpheresContactGeometry. If at any point the contact is with the edge or vertex instead of face, this attribute is reset so that contact with the other face is possible.
+-		int facetContactFace;
+-		// end abusive storage
+ 
+-		bool hasShear; // whether the exact rotation code is being used -- following fields are needed for that
+-		//! positions and orientations of both spheres -- must be updated at every iteration
+-		Vector3r pos1, pos2; Quaternionr ori1, ori2;
+-		/*! Orientation of the contact point relative to each sphere-local coordinates.+
+-		 * Those fields are almost constant, except for a few cases
+-		 * 	(a) plastic slip and 
+-		 * 	(b) spheres mutually rolling without slipping with big angle, when the contact point must be moved since quaternions
+-		 * 		describe only rotations up to &#960; (if the rotation is bigger, then the shorter path from the other side is
+-		 * 		taken instead)
+-		 */
+-		Quaternionr cp1rel, cp2rel;
+-		// interaction &quot;radii&quot; and total length; this is _really_ constant throughout the interaction life
+-		// d1 is really distance from the sphere1 center to the contact plane, it may not correspond to the sphere radius!
+-		// therefore, d1+d2=d0 (distance at which the contact was created)
+-		// d0fixup is added to d0 when computing normal strain; it should fix problems with sphere-facet interactions never getting enough compressed
+-		Real d1, d2, d0, d0fixup;
+-		// initial relative orientation, used for bending and torsion computation
+-		Quaternionr initRelOri12;
+-
+-		// auxiliary functions; the quaternion magic is all in here
+-		static Vector3r unrollSpherePtToPlane(const Quaternionr&amp; fromXtoPtOri, const Real&amp; radius, const Vector3r&amp; normal);
+-		static Quaternionr rollPlanePtToSphere(const Vector3r&amp; planePt, const Real&amp; radius, const Vector3r&amp; normal);
+-
+-		void setTgPlanePts(Vector3r p1new, Vector3r p2new);
+-		
+-		Vector3r contPtInTgPlane1() const {assert(hasShear); return unrollSpherePtToPlane(ori1*cp1rel,d1,normal);}
+-		Vector3r contPtInTgPlane2() const {assert(hasShear); return unrollSpherePtToPlane(ori2*cp2rel,d2,-normal);}
+-		Vector3r contPt() const {return contactPoint; /*pos1+(d1/d0)*(pos2-pos1)*/}
+-
+-		Real displacementN() const {assert(hasShear); return (pos2-pos1).Length()-(d0+d0fixup);}
+-		Real epsN() const {return displacementN()*(1./(d0+d0fixup));}
+-		Vector3r displacementT() { assert(hasShear);
+-			// enabling automatic relocation decreases overall simulation speed by about 3%
+-			// perhaps: bool largeStrains ... ?
+-			#if 1 
+-				Vector3r p1=contPtInTgPlane1(), p2=contPtInTgPlane2();
+-				relocateContactPoints(p1,p2);
+-				return p2-p1; // shear before relocation, but that is OK
+-			#else
+-				return contPtInTgPlane2()-contPtInTgPlane1();
+-			#endif
+-		}
+-		Vector3r epsT() {return displacementT()*(1./(d0+d0fixup));}
+-	
+-		Real slipToDisplacementTMax(Real displacementTMax);
+-		//! slip to epsTMax if current epsT is greater; return the relative slip magnitude
+-		Real slipToStrainTMax(Real epsTMax){ return (1/d0)*slipToDisplacementTMax(epsTMax*d0);}
+-
+-		void relocateContactPoints();
+-		void relocateContactPoints(const Vector3r&amp; tgPlanePt1, const Vector3r&amp; tgPlanePt2);
+-
+-		void bendingTorsionAbs(Vector3r&amp; bend, Real&amp; tors);
+-		void bendingTorsionRel(Vector3r&amp; bend, Real&amp; tors){ bendingTorsionAbs(bend,tors); bend/=d0; tors/=d0;}
+-
+-		Vector3r relRotVector() const;
+-
+-		SpheresContactGeometry():contactPoint(Vector3r::ZERO),radius1(0.),radius2(0.),facetContactFace(0.),hasShear(false),pos1(Vector3r::ZERO),pos2(Vector3r::ZERO),ori1(Quaternionr::IDENTITY),ori2(Quaternionr::IDENTITY),cp1rel(Quaternionr::IDENTITY),cp2rel(Quaternionr::IDENTITY),d1(0),d2(0),d0(0),d0fixup(0),initRelOri12(Quaternionr::IDENTITY){createIndex();
++		SpheresContactGeometry():contactPoint(Vector3r::ZERO),radius1(0.),radius2(0.){createIndex();
+ 		#ifdef SCG_SHEAR
+ 			shear=Vector3r::ZERO; prevNormal=Vector3r::ZERO /*initialized to proper value by geom functor*/;
+ 		#endif	
+@@ -110,20 +57,7 @@
+ 				(shear)
+ 				(prevNormal)
+ 			#endif
+-			(facetContactFace)
+-			// hasShear
+-			(hasShear)
+-			(pos1)
+-			(pos2)
+-			(ori1)
+-			(ori2)
+-			(cp1rel)
+-			(cp2rel)
+-			(d1)
+-			(d2)
+-			(d0)
+-			(d0fixup)
+-			(initRelOri12));
++			);
+ 	REGISTER_CLASS_AND_BASE(SpheresContactGeometry,InteractionGeometry);
+ 	REGISTER_CLASS_INDEX(SpheresContactGeometry,InteractionGeometry);
+ };
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -10,6 +10,7 @@
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++#include&lt;yade/pkg-dem/Clump.hpp&gt;
+ 
+ YADE_PLUGIN(&quot;NewtonsDampedLaw&quot;);
+ 
+@@ -29,7 +30,8 @@
+ {
+ 	ncb-&gt;bex.sync();
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *ncb-&gt;bodies){
+-		if (!b-&gt;isDynamic) continue;
++		// clump members are non-dynamic; they skip the rest of loop once their forces are properly taken into account, however
++		if (!b-&gt;isDynamic &amp;&amp; !b-&gt;isClumpMember()) continue;
+ 		
+ 		RigidBodyParameters* rb = YADE_CAST&lt;RigidBodyParameters*&gt;(b-&gt;physicalParameters.get());
+ 		unsigned int id = b-&gt;getId();
+@@ -39,45 +41,40 @@
+ 		Real dt = Omega::instance().getTimeStep();
+ 
+ 		//Newtons mometum law :
+-		if ( b-&gt;isStandalone() ) rb-&gt;angularAcceleration=diagDiv ( m,rb-&gt;inertia );
+-		else if ( b-&gt;isClump() ) rb-&gt;angularAcceleration+=diagDiv ( m,rb-&gt;inertia );
+-		else
+-		{ // isClumpMember()
+-			const shared_ptr&lt;Body&gt;&amp; clump ( Body::byId ( b-&gt;clumpId ) );
+-			RigidBodyParameters* clumpRBP=YADE_CAST&lt;RigidBodyParameters*&gt; ( clump-&gt;physicalParameters.get() );
+-			/* angularAcceleration is reset by ClumpMemberMover engine */
+-			clumpRBP-&gt;angularAcceleration+=diagDiv ( m,clumpRBP-&gt;inertia );
++		if (b-&gt;isStandalone()){
++			rb-&gt;angularAcceleration=diagDiv(m,rb-&gt;inertia);
++			rb-&gt;acceleration=f/rb-&gt;mass;
+ 		}
+-
+-		// Newtons force law
+-		if ( b-&gt;isStandalone() ) rb-&gt;acceleration=f/rb-&gt;mass;
+-		else if ( b-&gt;isClump() )
+-		{
+-			// accel for clump reset in Clump::moveMembers, called by ClumpMemberMover engine
+-			rb-&gt;acceleration+=f/rb-&gt;mass;
++		else if (b-&gt;isClump()){
++			// at this point, forces from clump members are already summed up, this is just for forces applied to clump proper, if there are such (does it have some physical meaning?)
++			rb-&gt;angularAcceleration+=diagDiv(m,rb-&gt;inertia);
++			rb-&gt;acceleration+=f/rb-&gt;mass; // accel for clump will be reset in Clump::moveMembers, called from the clump itself
+ 		}
+-		else
+-		{ // force applied to a clump member is applied to clump itself
++		else {
++			assert(b-&gt;isClumpMember());
++			assert(b-&gt;clumpId&gt;b-&gt;id);
+ 			const shared_ptr&lt;Body&gt;&amp; clump ( Body::byId ( b-&gt;clumpId ) );
+ 			RigidBodyParameters* clumpRBP=YADE_CAST&lt;RigidBodyParameters*&gt; ( clump-&gt;physicalParameters.get() );
+-			// accels reset by Clump::moveMembers in last iteration
++			/* angularAcceleration is reset by ClumpMemberMover engine */
++			clumpRBP-&gt;angularAcceleration+=diagDiv ( m,clumpRBP-&gt;inertia );
+ 			clumpRBP-&gt;acceleration+=f/clumpRBP-&gt;mass;
+ 			clumpRBP-&gt;angularAcceleration+=diagDiv ( ( rb-&gt;se3.position-clumpRBP-&gt;se3.position ).Cross ( f ),clumpRBP-&gt;inertia ); //acceleration from torque generated by the force WRT particle centroid on the clump centroid
++			continue;
+ 		}
+ 
+ 
+-		if (!b-&gt;isClump()) {
++		// damping: applied to both clumps and non-clumps
++		// FIXME: clumps with just 1 body are not dumped? See sphere jumping forever in scripts/test/clump.py
++		//   other clumps seem to be damped in some strange way (again, see the same script).
++		//   The damping also looks different from ClumpTestGen, which uses separate engines instead of NewtonsDampedLaw
++		for ( int i=0; i&lt;3; ++i ) {
+ 			//Damping moments
+-			for ( int i=0; i&lt;3; ++i )
+-			{
+-				rb-&gt;angularAcceleration[i] *= 1 - damping*Mathr::Sign ( m[i]*(rb-&gt;angularVelocity[i] + (Real) 0.5 *dt*rb-&gt;angularAcceleration[i]) );
+-			}
++			rb-&gt;angularAcceleration[i] *= 1 - damping*Mathr::Sign ( m[i]*(rb-&gt;angularVelocity[i] + (Real) 0.5 *dt*rb-&gt;angularAcceleration[i]) );
+ 			//Damping force :
+-			for ( int i=0; i&lt;3; ++i )
+-			{
+-				rb-&gt;acceleration[i] *= 1 - damping*Mathr::Sign ( f[i]*(rb-&gt;velocity[i] + (Real) 0.5 *dt*rb-&gt;acceleration[i]) );
+-			}
++			rb-&gt;acceleration[i] *= 1 - damping*Mathr::Sign ( f[i]*(rb-&gt;velocity[i] + (Real) 0.5 *dt*rb-&gt;acceleration[i]) );
+ 		}
++
++		// blocking DOFs
+ 		if(rb-&gt;blockedDOFs==0){ /* same as: rb-&gt;blockedDOFs==PhysicalParameters::DOF_NONE */
+ 			rb-&gt;angularVelocity=rb-&gt;angularVelocity+dt*rb-&gt;angularAcceleration;
+ 			rb-&gt;velocity=rb-&gt;velocity+dt*rb-&gt;acceleration;
+@@ -98,6 +95,8 @@
+ 		rb-&gt;se3.orientation.Normalize();
+ 
+ 		rb-&gt;se3.position += rb-&gt;velocity*dt;
++
++		if(b-&gt;isClump()) static_cast&lt;Clump*&gt;(b.get())-&gt;moveMembers();
+ 	}
+ }
+ 
+@@ -106,8 +105,7 @@
+ [16:09:37] eudoxos2: for(int state=LOOP1; state!=END; state++){
+ [16:09:37] eudoxos2: 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, rootBody-&gt;bodies){
+ [16:09:38] eudoxos2: 		if(b-&gt;isClumpMember() &amp;&amp; LOOP1){ [[apply that on b-&gt;clumpId]]  }
+-[16:09:38] eudoxos2: 		if((b-&gt;isStandalone &amp;&amp; LOOP1) || (b-&gt;isClump &amp;&amp; LOOP2){ [[damping, newton, integrate]] }
+-[16:09:38] eudoxos2: 		if(b-&gt;isClump() &amp;&amp; LOOP 2){ b-&gt;moveMembers(); }
++[16:09:38] eudoxos2: 		if((b-&gt;isStandalone &amp;&amp; LOOP1) || (b-&gt;isClump &amp;&amp; LOOP2){ [[damping, newton, integrate]]; b-&gt;moveClumpMembers(); }
+ [16:09:40] eudoxos2: 		}
+ [16:09:42] eudoxos2: 	}
+ [16:09:44] eudoxos2: }*/
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -18,14 +18,12 @@
+ InteractingFacet2InteractingSphere4SpheresContactGeometry::InteractingFacet2InteractingSphere4SpheresContactGeometry() 
+ {
+ 	shrinkFactor=0;
+-	hasShear=false;
+ }
+ 
+ void InteractingFacet2InteractingSphere4SpheresContactGeometry::registerAttributes()
+ {	
+     InteractionGeometryEngineUnit::registerAttributes();
+     REGISTER_ATTRIBUTE(shrinkFactor);
+-    REGISTER_ATTRIBUTE(hasShear);
+ }
+ 
+ bool InteractingFacet2InteractingSphere4SpheresContactGeometry::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+@@ -49,7 +47,9 @@
+ 
+ 	Vector3r normal = facet-&gt;nf;
+ 	Real L = normal.Dot(cl);
++	if (L&lt;0) {normal=-normal; L=-L; }
+ 
++#if 0
+ 	int contactFace=0; // temp to save what will be maybe needed for new contact
+ 	//assert((c-&gt;interactionGeometry&amp;&amp;c-&gt;isReal)||(!c-&gt;interactionGeometry&amp;&amp;!c-&gt;isReal));
+ 	if(c-&gt;interactionGeometry){ // contact already exists, use old data here
+@@ -64,6 +64,7 @@
+ 		if (L&lt;0) { normal=-normal; L=-L; contactFace=-1;} // new contact on the negative face, reverse and save that information so that since now this contact is always reversed
+ 		else contactFace=1;
+ 	}
++#endif
+ 
+ 	Real sphereRadius = static_cast&lt;InteractingSphere*&gt;(cm2.get())-&gt;radius;
+ 	if (L&gt;sphereRadius &amp;&amp; !c-&gt;isReal)  return false; // no contact, but only if there was no previous contact; ortherwise, the constitutive law is responsible for setting Interaction::isReal=false
+@@ -100,8 +101,6 @@
+ 	}
+ 	else
+ 	{
+-		// edge or vertex contact: become indeterminate with respect to face
+-		contactFace=0;
+ 		cp = cp + ne[m]*(icr-bm);
+ 		if (cp.Dot(ne[(m-1&lt;0)?2:m-1])&gt;icr) // contact with vertex m
+ //			cp = facet-&gt;vertices[m];
+@@ -123,8 +122,7 @@
+ 		if (c-&gt;interactionGeometry)
+ 			scm = YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
+ 		else
+-			{ scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
+-			scm-&gt;facetContactFace=contactFace; }
++			scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
+ 	  
+ 		normal = facetAxisT*normal; // in global orientation
+ 		scm-&gt;contactPoint = se32.position - (sphereRadius-0.5*penetrationDepth)*normal; 
+@@ -136,23 +134,6 @@
+ 		if (!c-&gt;interactionGeometry)
+ 			c-&gt;interactionGeometry = scm;
+ 
+-		if(hasShear){
+-			scm-&gt;hasShear=true;
+-			// fictive center of the sphere representing the facet in the sphere-sphere contact
+-			scm-&gt;pos1=scm-&gt;contactPoint-(scm-&gt;radius1-.5*penetrationDepth)*normal; scm-&gt;pos2=se32.position;
+-			scm-&gt;ori1=se31.orientation; scm-&gt;ori2=se32.orientation;
+-			if(c-&gt;isNew){
+-				scm-&gt;d0=scm-&gt;radius1+scm-&gt;radius2-penetrationDepth;
+-				scm-&gt;d1=scm-&gt;radius1-.5*penetrationDepth; scm-&gt;d2=scm-&gt;radius2-.5*penetrationDepth;
+-				scm-&gt;d0fixup=-scm-&gt;radius1-.5*penetrationDepth;
+-				// quasi-constants
+-				scm-&gt;cp1rel.Align(Vector3r::UNIT_X,se31.orientation.Conjugate()*normal);
+-				scm-&gt;cp2rel.Align(Vector3r::UNIT_X,se32.orientation.Conjugate()*(-normal));
+-				scm-&gt;cp1rel.Normalize(); scm-&gt;cp2rel.Normalize();
+-			}
+-			TRVAR2(scm-&gt;contPtInTgPlane1(),scm-&gt;contPtInTgPlane2());
+-		}
+-
+ 		return true;
+ 	}
+ 	return false;
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.hpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.hpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -44,8 +44,6 @@
+ 	// multiplied by 2*shrinkFactor. By default shrinkFactor=0.
+ 	Real shrinkFactor; 
+ 
+-	bool hasShear;
+-	
+ 	protected :
+ 		virtual void registerAttributes();
+ 		
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -14,7 +14,6 @@
+ InteractingSphere2InteractingSphere4SpheresContactGeometry::InteractingSphere2InteractingSphere4SpheresContactGeometry()
+ {
+ 	interactionDetectionFactor = 1;
+-	hasShear=false;
+ }
+ 
+ bool InteractingSphere2InteractingSphere4SpheresContactGeometry::go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+@@ -42,28 +41,10 @@
+ 		scm-&gt;penetrationDepth=penetrationDepth;
+ 		scm-&gt;radius1=s1-&gt;radius;
+ 		scm-&gt;radius2=s2-&gt;radius;
+-		if(hasShear){
+-			scm-&gt;hasShear=true;
+-			scm-&gt;pos1=se31.position; scm-&gt;pos2=se32.position;
+-			scm-&gt;ori1=se31.orientation; scm-&gt;ori2=se32.orientation;
+-			if(c-&gt;isNew){
+-				// contact constants
+-				scm-&gt;d0=(se32.position-se31.position).Length();
+-				scm-&gt;d1=s1-&gt;radius-.5*penetrationDepth; scm-&gt;d2=s2-&gt;radius-.5*penetrationDepth;
+-				scm-&gt;initRelOri12=se31.orientation.Conjugate()*se32.orientation;
+-				// quasi-constants
+-				scm-&gt;cp1rel.Align(Vector3r::UNIT_X,se31.orientation.Conjugate()*normal);
+-				scm-&gt;cp2rel.Align(Vector3r::UNIT_X,se32.orientation.Conjugate()*(-normal));
+-				scm-&gt;cp1rel.Normalize(); scm-&gt;cp2rel.Normalize();
+-			}
+-			// testing only
+-			#if 0
+-			if((Omega::instance().getCurrentIteration()%10000)==0) scm-&gt;relocateContactPoints();
+-			if((Omega::instance().getCurrentIteration()%10000)==0) {
+-				Real slip=scm-&gt;slipToEpsNMax(1.); if(slip&gt;0) cerr&lt;&lt;&quot;SLIP by &#916;&#949;_N &quot;&lt;&lt;slip&lt;&lt;&quot; &#8594; &#949;_N=&quot;&lt;&lt;scm-&gt;epsN()&lt;&lt;endl;
+-			}
+-			#endif
+-		}
++		// keep this for reference on how to compute bending and torsion from relative orientation; parts in SpheresContactGeometry header
++		#if 0
++			scm-&gt;initRelOri12=se31.orientation.Conjugate()*se32.orientation;
++		#endif
+ 		return true;
+ 	}
+ 	return false;
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -25,11 +25,9 @@
+ 		 * @note This parameter is functionally coupled with InteractinSphere2AABB::aabbEnlargeFactor,
+ 		 * which will create larger bounding boxes and should be of the same value. */
+ 		double interactionDetectionFactor;
+-		/*! Whether we create SpheresContactGeometry with data necessary for (exact) shear computation. By default false */
+-		bool hasShear;
+ 
+ 	REGISTER_CLASS_AND_BASE(InteractingSphere2InteractingSphere4SpheresContactGeometry,InteractionGeometryEngineUnit);
+-	REGISTER_ATTRIBUTES(InteractionGeometryEngineUnit,(interactionDetectionFactor)(hasShear));
++	REGISTER_ATTRIBUTES(InteractionGeometryEngineUnit,(interactionDetectionFactor));
+ 	FUNCTOR2D(InteractingSphere,InteractingSphere);
+ 	// needed for the dispatcher, even if it is symmetric
+ 	DEFINE_FUNCTOR_ORDER_2D(InteractingSphere,InteractingSphere);
+
+Copied: trunk/pkg/dem/Engine/EngineUnit/ef2_Dem3Dof_NormalShear_ElasticFrictionalLaw.cpp (from rev 1763, trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_NormalShear_ElasticFrictionalLaw.cpp)
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_NormalShear_ElasticFrictionalLaw.cpp	2009-05-03 07:16:04 UTC (rev 1763)
++++ trunk/pkg/dem/Engine/EngineUnit/ef2_Dem3Dof_NormalShear_ElasticFrictionalLaw.cpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -0,0 +1,17 @@
++// 2009 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++#include&quot;ef2_Dem3Dof_NormalShear_ElasticFrictionalLaw.hpp&quot;
++#include&lt;yade/pkg-dem/DemXDofGeom.hpp&gt;
++#include&lt;yade/pkg-common/NormalShearInteractions.hpp&gt;
++YADE_PLUGIN(&quot;ef2_Dem3Dof_NormalShear_ElasticFrictionalLaw&quot;);
++
++void ef2_Dem3Dof_NormalShear_ElasticFrictionalLaw::go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody){
++	Dem3DofGeom* geom=static_cast&lt;Dem3DofGeom*&gt;(_geom.get());
++	NormalShearInteraction* phys=static_cast&lt;NormalShearInteraction*&gt;(_phys.get());
++
++	// if (geom-&gt;displacementN()&gt;0) return; // non-cohesive behavior
++	phys-&gt;normalForce=(geom-&gt;displacementN()*phys-&gt;kn)*geom-&gt;normal;
++	phys-&gt;shearForce=geom-&gt;displacementT()*phys-&gt;ks;
++
++	applyForceAtContactPoint(phys-&gt;normalForce+phys-&gt;shearForce, geom-&gt;contactPoint, I-&gt;getId1(), geom-&gt;se31.position, I-&gt;getId2(), geom-&gt;se32.position, rootBody);
++}
++
+
+
+Property changes on: trunk/pkg/dem/Engine/EngineUnit/ef2_Dem3Dof_NormalShear_ElasticFrictionalLaw.cpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/pkg/dem/Engine/EngineUnit/ef2_Dem3Dof_NormalShear_ElasticFrictionalLaw.hpp (from rev 1763, trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_NormalShear_ElasticFrictionalLaw.hpp)
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_NormalShear_ElasticFrictionalLaw.hpp	2009-05-03 07:16:04 UTC (rev 1763)
++++ trunk/pkg/dem/Engine/EngineUnit/ef2_Dem3Dof_NormalShear_ElasticFrictionalLaw.hpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -0,0 +1,10 @@
++// 2009 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++#include&lt;yade/pkg-common/ConstitutiveLaw.hpp&gt;
++/* Experimental constitutive law using the ConstitutiveLawDispatcher.
++ * Has only purely elastic normal and shear components. */
++class ef2_Dem3Dof_NormalShear_ElasticFrictionalLaw: public ConstitutiveLaw {
++	virtual void go(shared_ptr&lt;InteractionGeometry&gt;&amp;, shared_ptr&lt;InteractionPhysics&gt;&amp;, Interaction*, MetaBody*);
++	FUNCTOR2D(Dem3DofGeom,NormalShearInteraction);
++	REGISTER_CLASS_AND_BASE(ef2_Dem3Dof_NormalShear_ElasticFrictionalLaw,ConstitutiveLaw);
++};
++REGISTER_SERIALIZABLE(ef2_Dem3Dof_NormalShear_ElasticFrictionalLaw);
+
+
+Property changes on: trunk/pkg/dem/Engine/EngineUnit/ef2_Dem3Dof_NormalShear_ElasticFrictionalLaw.hpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Deleted: trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_NormalShear_ElasticFrictionalLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_NormalShear_ElasticFrictionalLaw.cpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_NormalShear_ElasticFrictionalLaw.cpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -1,17 +0,0 @@
+-// 2009 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+-#include&quot;ef2_Spheres_NormalShear_ElasticFrictionalLaw.hpp&quot;
+-#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+-#include&lt;yade/pkg-common/NormalShearInteractions.hpp&gt;
+-YADE_PLUGIN(&quot;ef2_Spheres_NormalShear_ElasticFrictionalLaw&quot;);
+-
+-void ef2_Spheres_NormalShear_ElasticFrictionalLaw::go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody){
+-	SpheresContactGeometry* geom=static_cast&lt;SpheresContactGeometry*&gt;(_geom.get());
+-	NormalShearInteraction* phys=static_cast&lt;NormalShearInteraction*&gt;(_phys.get());
+-
+-	// if (geom-&gt;displacementN()&gt;0) return; // non-cohesive behavior
+-	phys-&gt;normalForce=(geom-&gt;displacementN()*phys-&gt;kn)*geom-&gt;normal;
+-	phys-&gt;shearForce=geom-&gt;displacementT()*phys-&gt;ks;
+-
+-	applyForceAtContactPoint(phys-&gt;normalForce+phys-&gt;shearForce, geom-&gt;contPt(), I-&gt;getId1(), geom-&gt;pos1, I-&gt;getId2(), geom-&gt;pos2, rootBody);
+-}
+-
+
+Deleted: trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_NormalShear_ElasticFrictionalLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_NormalShear_ElasticFrictionalLaw.hpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_NormalShear_ElasticFrictionalLaw.hpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -1,10 +0,0 @@
+-// 2009 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+-#include&lt;yade/pkg-common/ConstitutiveLaw.hpp&gt;
+-/* Experimental constitutive law using the ConstitutiveLawDispatcher.
+- * Has only purely elastic normal and shear components. */
+-class ef2_Spheres_NormalShear_ElasticFrictionalLaw: public ConstitutiveLaw {
+-	virtual void go(shared_ptr&lt;InteractionGeometry&gt;&amp;, shared_ptr&lt;InteractionPhysics&gt;&amp;, Interaction*, MetaBody*);
+-	FUNCTOR2D(SpheresContactGeometry,NormalShearInteraction);
+-	REGISTER_CLASS_AND_BASE(ef2_Spheres_NormalShear_ElasticFrictionalLaw,ConstitutiveLaw);
+-};
+-REGISTER_SERIALIZABLE(ef2_Spheres_NormalShear_ElasticFrictionalLaw);
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -17,40 +17,9 @@
+ 
+ #include&lt;yade/extra/Shop.hpp&gt;
+ 
+-YADE_PLUGIN(&quot;ElasticContactLaw2&quot;,&quot;ef2_Spheres_Elastic_ElasticLaw&quot;,&quot;ef2_Dem3Dof_Elastic_ElasticLaw&quot;,&quot;ElasticContactLaw&quot;);
++YADE_PLUGIN(&quot;ef2_Spheres_Elastic_ElasticLaw&quot;,&quot;ef2_Dem3Dof_Elastic_ElasticLaw&quot;,&quot;ElasticContactLaw&quot;);
+ 
+-ElasticContactLaw2::ElasticContactLaw2(){
+-	isCohesive=true;
+-}
+ 
+-ElasticContactLaw2::~ElasticContactLaw2(){}
+-
+-void ElasticContactLaw2::action(MetaBody* rb){
+-	Real /* bending stiffness */ kb=1e7, /* torsion stiffness */ ktor=1e8;
+-	FOREACH(shared_ptr&lt;Interaction&gt; i, *rb-&gt;transientInteractions){
+-		if(!i-&gt;isReal) continue;
+-		shared_ptr&lt;SpheresContactGeometry&gt; contGeom=YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(i-&gt;interactionGeometry);
+-		shared_ptr&lt;ElasticContactInteraction&gt; contPhys=YADE_PTR_CAST&lt;ElasticContactInteraction&gt;(i-&gt;interactionPhysics);
+-		assert(contGeom); assert(contPhys);
+-		if(!contGeom-&gt;hasShear) throw runtime_error(&quot;SpheresContactGeometry::hasShear must be true for ElasticContactLaw2&quot;);
+-		Real Fn=contPhys-&gt;kn*contGeom-&gt;displacementN(); // scalar normal force; displacementN()&gt;=0 &#8801; elongation of the contact
+-		if(!isCohesive &amp;&amp; contGeom-&gt;displacementN()&gt;0){ cerr&lt;&lt;&quot;deleting&quot;&lt;&lt;endl; /* delete the interaction */ i-&gt;isReal=false; continue;}
+-		contPhys-&gt;normalForce=Fn*contGeom-&gt;normal;
+-		//contGeom-&gt;relocateContactPoints();
+-		//contGeom-&gt;slipToDisplacementTMax(max(0.,(-Fn*contPhys-&gt;tangensOfFrictionAngle)/contPhys-&gt;ks)); // limit shear displacement -- Coulomb criterion
+-		contPhys-&gt;shearForce=contPhys-&gt;ks*contGeom-&gt;displacementT();
+-		Vector3r force=contPhys-&gt;shearForce+contPhys-&gt;normalForce;
+-		Shop::applyForceAtContactPoint(force,contGeom-&gt;contactPoint,i-&gt;getId1(),contGeom-&gt;pos1,i-&gt;getId2(),contGeom-&gt;pos2,rb);
+-
+-		Vector3r bendAbs; Real torsionAbs; contGeom-&gt;bendingTorsionAbs(bendAbs,torsionAbs);
+-		rb-&gt;bex.addTorque(i-&gt;getId1(), contGeom-&gt;normal*torsionAbs*ktor+bendAbs*kb);
+-		rb-&gt;bex.addTorque(i-&gt;getId2(),-contGeom-&gt;normal*torsionAbs*ktor-bendAbs*kb);
+-	}
+-}
+-
+-
+-
+-
+ ElasticContactLaw::ElasticContactLaw() : InteractionSolver()
+ {
+ 	sdecGroupMask=1;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -18,22 +18,6 @@
+ #include &lt;boost/tuple/tuple.hpp&gt;
+ 
+ 
+-class ElasticContactLaw2: public InteractionSolver{
+-	public:
+-	//! this should really be property of the interaction, but for simplicity keep it here now...
+-	bool isCohesive;
+-	ElasticContactLaw2();
+-	virtual ~ElasticContactLaw2();
+-	void action(MetaBody*);
+-	void registerAttributes(){
+-		InteractionSolver::registerAttributes();
+-		REGISTER_ATTRIBUTE(isCohesive);
+-	}
+-	REGISTER_CLASS_NAME(ElasticContactLaw2);
+-	REGISTER_BASE_CLASS_NAME(InteractionSolver);
+-};
+-REGISTER_SERIALIZABLE(ElasticContactLaw2);
+-
+ class ef2_Spheres_Elastic_ElasticLaw: public ConstitutiveLaw{
+ 	public:
+ 	virtual void go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody);
+
+Modified: trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -77,43 +77,5 @@
+ 		#endif
+ 	}
+ 
+-	if(sc-&gt;hasShear){
+-		Vector3r pos1=sc-&gt;pos1, pos2=sc-&gt;pos2, contPt=sc-&gt;contPt();
+-		#if 0
+-			GLUtils::GLDrawArrow(contPt,contPt+sc-&gt;normal*.5*sc-&gt;d0); // normal of the contact
+-		#endif
+-		#if 0
+-			//Vector3r contPt=se31.position+(sc-&gt;d1/sc-&gt;d0)*(se32.position-se31.position); // must be recalculated to not be unscaled if scaling displacements ...
+-			GLUtils::GLDrawLine(pos1,pos2,Vector3r(.5,.5,.5));
+-			Vector3r bend; Real tors;
+-			sc-&gt;bendingTorsionRel(bend,tors);
+-			GLUtils::GLDrawLine(contPt,contPt+10*sc-&gt;radius1*(bend+sc-&gt;normal*tors),Vector3r(1,0,0));
+-		#endif
+-		#if 0
+-		GLUtils::GLDrawNum(bend[0],contPt-.2*sc-&gt;normal*sc-&gt;radius1,Vector3r(1,0,0));
+-		GLUtils::GLDrawNum(bend[1],contPt,Vector3r(0,1,0));
+-		GLUtils::GLDrawNum(bend[2],contPt+.2*sc-&gt;normal*sc-&gt;radius1,Vector3r(0,0,1));
+-		GLUtils::GLDrawNum(tors,contPt+.5*sc-&gt;normal*sc-&gt;radius2,Vector3r(1,1,0));
+-		#endif
+-		// sphere center to point on the sphere
+-		//GLUtils::GLDrawLine(pos1,pos1+(sc-&gt;ori1*sc-&gt;cp1rel*Vector3r::UNIT_X*sc-&gt;d1),Vector3r(0,.5,1));
+-		//GLUtils::GLDrawLine(pos2,pos2+(sc-&gt;ori2*sc-&gt;cp2rel*Vector3r::UNIT_X*sc-&gt;d2),Vector3r(0,1,.5));
+-		//TRVAR4(pos1,sc-&gt;ori1,pos2,sc-&gt;ori2);
+-		//TRVAR2(sc-&gt;cp2rel,pos2+(sc-&gt;ori2*sc-&gt;cp2rel*Vector3r::UNIT_X*sc-&gt;d2));
+-		// contact point to projected points
+-		#if 1
+-			Vector3r ptTg1=sc-&gt;contPtInTgPlane1(), ptTg2=sc-&gt;contPtInTgPlane2();
+-			//TRVAR3(ptTg1,ptTg2,sc-&gt;normal)
+-			GLUtils::GLDrawLine(contPt,contPt+ptTg1,Vector3r(0,.5,1)); GLUtils::GLDrawLine(pos1,contPt+ptTg1,Vector3r(0,.5,1));
+-			GLUtils::GLDrawLine(contPt,contPt+ptTg2,Vector3r(0,1,.5)); GLUtils::GLDrawLine(pos2,contPt+ptTg2,Vector3r(0,1,.5));
+-			// projected shear
+-			//GLUtils::GLDrawLine(contPt+ptTg1,contPt+ptTg2,Vector3r(1,1,1));
+-			// 
+-			//GLUtils::GLDrawNum(sc-&gt;epsN(),contPt,Vector3r(1,1,1));
+-		#endif
+-	}
+-
+-
+-
+ }
+ 
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/pkg/dem/SConscript	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -33,6 +33,7 @@
+ 
+ 	env.SharedLibrary('FacetTopologyAnalyzer',['Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp'],LIBS=env['LIBS']+['InteractingFacet']),
+ 
++	env.SharedLibrary('Clump',['DataClass/Clump.cpp'],LIBS=env['LIBS']+['Shop']),
+ 
+ 	env.SharedLibrary('SQLiteRecorder',
+ 		['Engine/StandAloneEngine/SQLiteRecorder.cpp'],
+@@ -949,7 +950,8 @@
+ 		LIBS=env['LIBS']+['yade-serialization',
+ 			'yade-base',		
+ 			'yade-multimethods',
+-			'RigidBodyParameters'
++			'RigidBodyParameters',
++			'Clump'
+ 			 ]),
+ 
+ 	env.SharedLibrary('SimpleViscoelasticBodyParameters'
+@@ -1049,9 +1051,9 @@
+ 				,'RotationEngine'
+ 				]),
+ 
+-	env.SharedLibrary('ef2_Spheres_NormalShear_ElasticFrictionalLaw',
+-		['Engine/EngineUnit/ef2_Spheres_NormalShear_ElasticFrictionalLaw.cpp'],
+-		LIBS=env['LIBS']+['ConstitutiveLawDispatcher','NormalShearInteractions','SpheresContactGeometry']),
++	env.SharedLibrary('ef2_Dem3Dof_NormalShear_ElasticFrictionalLaw',
++		['Engine/EngineUnit/ef2_Dem3Dof_NormalShear_ElasticFrictionalLaw.cpp'],
++		LIBS=env['LIBS']+['ConstitutiveLawDispatcher','NormalShearInteractions','DemXDofGeom']),
+ 
+ 	env.SharedLibrary('ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw',
+ 		['Engine/EngineUnit/ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp'],
+
+Added: trunk/scripts/test/clump.py
+===================================================================
+--- trunk/scripts/test/clump.py	2009-05-04 14:31:07 UTC (rev 1765)
++++ trunk/scripts/test/clump.py	2009-05-05 05:15:26 UTC (rev 1766)
+@@ -0,0 +1,33 @@
++O.initializers=[BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingBox2AABB(),MetaInteractingGeometry2AABB()])]
++O.engines=[
++	PhysicalActionContainerReseter(),
++	BoundingVolumeMetaEngine([
++		InteractingSphere2AABB(),
++		InteractingBox2AABB(),
++		MetaInteractingGeometry2AABB()
++	]),
++	PersistentSAPCollider(),
++	InteractionDispatchers(
++		[InteractingSphere2InteractingSphere4SpheresContactGeometry(),InteractingBox2InteractingSphere4SpheresContactGeometry()],
++		[SimpleElasticRelationships()],
++		[ef2_Spheres_Elastic_ElasticLaw()]
++	),
++	GravityEngine(gravity=[0,0,-9.81]),
++	NewtonsDampedLaw(damping=.2)
++]
++# support
++O.bodies.append(utils.box([0,0,-1.5],[3,3,.2],dynamic=False))
++# stand-alone sphere
++O.bodies.append(utils.sphere([0,0,0],.5,density=1000,color=[1,1,1]))
++# clumps
++relPos=[(0,-.5,-.5),(0,.5,0),(.5,0,0),(0,0,.5)]
++coords=[(-2,0,0),(2,0,0),(0,2,0),(0,-2,0)]
++for i,cc in enumerate(coords):
++	# This shorthand command does something like this:
++	# O.bodies.appendClumped([utils.sphere(...),utils.sphere(...),utils.sphere(...)])
++	# and returns tuple of clumpId,[bodyId1,bodyId2,bodyId3]
++	clump,spheres=O.bodies.appendClumped([utils.sphere([relPos[j][0]+coords[i][0],relPos[j][1]+coords[i][1],relPos[j][2]+coords[i][2]],.5,density=1000) for j in range(0,i+1)])
++	print clump,spheres
++O.dt=utils.PWaveTimeStep()
++O.saveTmp('init')
++
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000941.html">[deprecated list] [Yade-dev] [svn] r1765 - in trunk: core	pkg/lattice/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000946.html">[deprecated list] [Yade-dev] [svn] r1767 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#944">[ date ]</a>
+              <a href="thread.html#944">[ thread ]</a>
+              <a href="subject.html#944">[ subject ]</a>
+              <a href="author.html#944">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,151 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1631 - trunk/gui/qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1631%20-%20trunk/gui/qt3&In-Reply-To=%3C200901211033.n0LAXlWn014039%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000604.html">
+   <LINK REL="Next"  HREF="000607.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1631 - trunk/gui/qt3</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1631%20-%20trunk/gui/qt3&In-Reply-To=%3C200901211033.n0LAXlWn014039%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1631 - trunk/gui/qt3">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jan 21 11:33:47 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000604.html">[deprecated list] [Yade-dev] r1630 - commit
+</A></li>
+        <LI>Next message: <A HREF="000607.html">[deprecated list] [Yade-dev] dynamic_cast from Engine* to	BroadInteractor* failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#605">[ date ]</a>
+              <a href="thread.html#605">[ thread ]</a>
+              <a href="subject.html#605">[ subject ]</a>
+              <a href="author.html#605">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-01-21 11:33:46 +0100 (Wed, 21 Jan 2009)
+New Revision: 1631
+
+Modified:
+   trunk/gui/qt3/GLViewer.cpp
+Log:
+1. Fix clip plane orientation inversion as well as wheel normal movement.
+2. Clip planes not displayed at all unless one of the clip planes is being manupulated.
+
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2009-01-20 18:30:38 UTC (rev 1630)
++++ trunk/gui/qt3/GLViewer.cpp	2009-01-21 10:33:46 UTC (rev 1631)
+@@ -222,8 +222,10 @@
+ 	else if(e-&gt;key()==Qt::Key_P) camera()-&gt;setFieldOfView(camera()-&gt;fieldOfView()*1.1);
+ 	else if(e-&gt;key()==Qt::Key_R){ // reverse the clipping plane; revolve around scene center if no clipping plane selected
+ 		if(manipulatedClipPlane&gt;=0 &amp;&amp; manipulatedClipPlane&lt;renderer-&gt;clipPlaneNum){
+-			//manipulatedFrame()-&gt;setOrientation(qglviewer::Quaternion(qglviewer::Vec(0,1,0),Mathr::PI)*manipulatedFrame()-&gt;orientation());
+-			renderer-&gt;clipPlaneSe3[manipulatedClipPlane].orientation=Quaternionr(Vector3r(0,1,0),Mathr::PI)*renderer-&gt;clipPlaneSe3[manipulatedClipPlane].orientation; 
++			/* here, we must update both manipulatedFrame orientation and renderer-&gt;clipPlaneSe3 orientation in the same way */
++			Quaternionr&amp; ori=renderer-&gt;clipPlaneSe3[manipulatedClipPlane].orientation;
++			ori=Quaternionr(Vector3r(0,1,0),Mathr::PI)*ori; 
++			manipulatedFrame()-&gt;setOrientation(qglviewer::Quaternion(qglviewer::Vec(0,1,0),Mathr::PI)*manipulatedFrame()-&gt;orientation());
+ 			displayMessage(&quot;Plane #&quot;+lexical_cast&lt;string&gt;(manipulatedClipPlane+1)+&quot; reversed.&quot;);
+ 		}
+ 		else {
+@@ -485,21 +487,23 @@
+ 	}
+ 
+ 	// cutting planes (should be moved to OpenGLRenderingEngine perhaps?)
+-	// TODO: transparent planes
+-	for(int planeId=0; planeId&lt;renderer-&gt;clipPlaneNum; planeId++){
+-		if(!renderer-&gt;clipPlaneActive[planeId] &amp;&amp; planeId!=manipulatedClipPlane) continue;
+-		glPushMatrix();
+-			Real angle; Vector3r axis;	
+-			const Se3r&amp; se3=renderer-&gt;clipPlaneSe3[planeId];
+-			se3.orientation.ToAxisAngle(axis,angle);	
+-			glTranslatef(se3.position[0],se3.position[1],se3.position[2]);
+-			glRotated(angle*Mathr::RAD_TO_DEG,axis[0],axis[1],axis[2]);
+-			Real cff=1;
+-			if(!renderer-&gt;clipPlaneActive[planeId]) cff=.4;
+-			glColor3f(max((Real)0.,cff*cos(planeId)),max((Real)0.,cff*sin(planeId)),planeId==manipulatedClipPlane); // variable colors
+-			QGLViewer::drawGrid(realSize,2*nSegments);
+-			drawArrow(wholeDiameter/6);
+-		glPopMatrix();
++	// only painted if one of those is being manipulated
++	if(manipulatedClipPlane&gt;=0){
++		for(int planeId=0; planeId&lt;renderer-&gt;clipPlaneNum; planeId++){
++			if(!renderer-&gt;clipPlaneActive[planeId] &amp;&amp; planeId!=manipulatedClipPlane) continue;
++			glPushMatrix();
++				Real angle; Vector3r axis;	
++				const Se3r&amp; se3=renderer-&gt;clipPlaneSe3[planeId];
++				se3.orientation.ToAxisAngle(axis,angle);	
++				glTranslatef(se3.position[0],se3.position[1],se3.position[2]);
++				glRotated(angle*Mathr::RAD_TO_DEG,axis[0],axis[1],axis[2]);
++				Real cff=1;
++				if(!renderer-&gt;clipPlaneActive[planeId]) cff=.4;
++				glColor3f(max((Real)0.,cff*cos(planeId)),max((Real)0.,cff*sin(planeId)),planeId==manipulatedClipPlane); // variable colors
++				QGLViewer::drawGrid(realSize,2*nSegments);
++				drawArrow(wholeDiameter/6);
++			glPopMatrix();
++		}
+ 	}
+ 	
+ 	MetaBody* rb=Omega::instance().getRootBody().get();
+@@ -599,10 +603,12 @@
+ 	float distStep=1e-3*sceneRadius();
+ 	//const float wheelSensitivityCoef = 8E-4f;
+ 	//Vec trans(0.0, 0.0, -event-&gt;delta()*wheelSensitivity()*wheelSensitivityCoef*(camera-&gt;position()-position()).norm());
+-	float dist=-event-&gt;delta()*manipulatedFrame()-&gt;wheelSensitivity()*distStep;
++	float dist=event-&gt;delta()*manipulatedFrame()-&gt;wheelSensitivity()*distStep;
+ 	Vector3r normal=renderer-&gt;clipPlaneSe3[manipulatedClipPlane].orientation*Vector3r(0,0,1);
+-	qglviewer::Vec nnormal(normal[0],normal[1],normal[2]);
+-	manipulatedFrame()-&gt;setPosition(manipulatedFrame()-&gt;position()+nnormal*dist);
++	qglviewer::Vec newPos=manipulatedFrame()-&gt;position()+qglviewer::Vec(normal[0],normal[1],normal[2])*dist;
++	manipulatedFrame()-&gt;setPosition(newPos);
++	renderer-&gt;clipPlaneSe3[manipulatedClipPlane].position=Vector3r(newPos[0],newPos[1],newPos[2]);
++	updateGL();
+ 	/* in draw, bound cutting planes will be moved as well */
+ }
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000604.html">[deprecated list] [Yade-dev] r1630 - commit
+</A></li>
+	<LI>Next message: <A HREF="000607.html">[deprecated list] [Yade-dev] dynamic_cast from Engine* to	BroadInteractor* failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#605">[ date ]</a>
+              <a href="thread.html#605">[ thread ]</a>
+              <a href="subject.html#605">[ subject ]</a>
+              <a href="author.html#605">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

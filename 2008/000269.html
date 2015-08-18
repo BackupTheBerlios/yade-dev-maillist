@@ -1,0 +1,133 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] [Yade-commits] r1404 - in trunk: extra gui/py	gui/qt3 pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/GLDrawGeometricalModel pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%0A%20%3D%3Futf-8%3Fq%3F%3D5BYade-commits%3D5D_r1404_-_in_trunk%3D3A_extra%3F%3D%0A%20%3D%3Futf-8%3Fq%3F_gui/py%3D09gui/qt3_pkg/common/Engine/MetaEngine%3D09pkg/common/Eng%3F%3D%0A%20%3D%3Futf-8%3Fq%3Fine/StandAloneEngine%3D09pkg/common/RenderingEngine/GLDrawGeometr%3F%3D%0A%20%3D%3Futf-8%3Fq%3FicalModel_pkg/dem/Engine/StandAloneEngine%3F%3D&In-Reply-To=%3C200807011223.48087.dorofeenko%40icp.ac.ru%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000267.html">
+   <LINK REL="Next"  HREF="000272.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] [Yade-commits] r1404 - in trunk: extra gui/py	gui/qt3 pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/GLDrawGeometricalModel pkg/dem/Engine/StandAloneEngine</H1>
+    <B>sega</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%0A%20%3D%3Futf-8%3Fq%3F%3D5BYade-commits%3D5D_r1404_-_in_trunk%3D3A_extra%3F%3D%0A%20%3D%3Futf-8%3Fq%3F_gui/py%3D09gui/qt3_pkg/common/Engine/MetaEngine%3D09pkg/common/Eng%3F%3D%0A%20%3D%3Futf-8%3Fq%3Fine/StandAloneEngine%3D09pkg/common/RenderingEngine/GLDrawGeometr%3F%3D%0A%20%3D%3Futf-8%3Fq%3FicalModel_pkg/dem/Engine/StandAloneEngine%3F%3D&In-Reply-To=%3C200807011223.48087.dorofeenko%40icp.ac.ru%3E"
+       TITLE="[yade-dev] [Yade-commits] r1404 - in trunk: extra gui/py	gui/qt3 pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/GLDrawGeometricalModel pkg/dem/Engine/StandAloneEngine">dorofeenko at icp.ac.ru
+       </A><BR>
+    <I>Tue Jul  1 10:23:47 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000267.html">[yade-dev] [Yade-commits] r1404 - in trunk: extra gui/py	gui/qt3 pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/GLDrawGeometricalModel pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000272.html">[yade-dev] [Yade-commits] r1404 - in trunk: extra gui/py gui/qt3 pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine pkg/common/RenderingEngine/GLDrawGeometricalModel pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#269">[ date ]</a>
+              <a href="thread.html#269">[ thread ]</a>
+              <a href="subject.html#269">[ subject ]</a>
+              <a href="author.html#269">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> &gt;&gt; 1. SimulationPlayer does't update the view when playing (displayed only the first frame).
+</I>&gt;<i> &gt;&gt;     
+</I>&gt;<i> &gt;
+</I>&gt;<i> &gt; The reason: given the relative path to the position's directory and working directory is not parent of it...
+</I>&gt;<i> &gt;   
+</I>
+Fix in svn1409.
+
+
+&gt;<i> 
+</I>&gt;<i> 2. -fpermissive is needed for g++-4.3, but I am not aware of it being
+</I>&gt;<i> needed for python specifically. Can you give your compiler's vversion
+</I>&gt;<i> and what does exactly means &quot;without it I can't run python gui...&quot;?
+</I>&gt;<i> 
+</I>
+g++ 4.3.1 
+
+<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at linux</A>:~/work/yade/trunk/scripts&gt; yade-trunk-nopermissive simple-scene.py
+...
+ERROR gui/qt3/QtGUI.cpp:57 run: Unprocessed non-option argument: `simple-scene.py'
+
+compiling with -fpermissive:
+
+&gt;<i><A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at linux</A>:~/work/yade/trunk&gt; scons profile=opt
+</I>&gt;<i>scons: Reading SConscript files ...
+</I>&gt;<i>@@@ Using profile opt (scons.profile-opt) @@@
+</I>&gt;<i>Yade version is `trunk', installed files will be suffixed with `-trunk-opt'.
+</I>&gt;<i>All intermediary files will be in `/home/sega/build/yade/build-trunk-opt'.
+</I>&gt;<i>Checking whether c++ compiler &quot;g++&quot; works...(cached) yes
+</I>&gt;<i>Checking for pthread_exit(NULL) in C library pthread... (cached) yes
+</I>&gt;<i>Checking for glutGetModifiers() in C library glut... (cached) yes
+</I>&gt;<i>Checking for boost::posix_time::time_duration::time_duration() in C++ library boost_date_time-mt... (cached) yes
+</I>&gt;<i>Checking for boost::thread::thread() in C++ library boost_thread-mt... (cached) yes
+</I>&gt;<i>Checking for boost::filesystem::path() in C++ library boost_filesystem-mt... (cached) yes
+</I>&gt;<i>Checking for boost::iostreams::file_sink(&quot;&quot;) in C++ library boost_iostreams-mt... (cached) yes
+</I>&gt;<i>Checking for C++ header file boost/foreach.hpp... (cached) yes
+</I>&gt;<i>Checking for qt-mt in /usr/lib/qt3... (cached) yes
+</I>&gt;<i>Checking for Python development files... (cached) yes
+</I>&gt;<i>Checking for boost::python::scope() in C++ library boost_python-mt... (cached) yes
+</I>&gt;<i>scons: done reading SConscript files.
+</I>&gt;<i>scons: Building targets ...
+</I>
+without -fpemissive get no boost_python:
+
+&gt;<i><A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at linux</A>:~/work/yade/trunk&gt; scons profile=nopermissive
+</I>&gt;<i>scons: Reading SConscript files ...
+</I>&gt;<i>@@@ Using profile nopermissive (scons.profile-nopermissive) @@@
+</I>&gt;<i>Yade version is `trunk', installed files will be suffixed with `-trunk-nopermissive'.
+</I>&gt;<i>All intermediary files will be in `/home/sega/build/yade/build-trunk-nopermissive'.
+</I>&gt;<i>Checking whether c++ compiler &quot;g++&quot; works...yes
+</I>&gt;<i>Checking for pthread_exit(NULL) in C library pthread... yes
+</I>&gt;<i>Checking for glutGetModifiers() in C library glut... yes
+</I>&gt;<i>Checking for boost::posix_time::time_duration::time_duration() in C++ library boost_date_time-mt... yes
+</I>&gt;<i>Checking for boost::thread::thread() in C++ library boost_thread-mt... yes
+</I>&gt;<i>Checking for boost::filesystem::path() in C++ library boost_filesystem-mt... yes
+</I>&gt;<i>Checking for boost::iostreams::file_sink(&quot;&quot;) in C++ library boost_iostreams-mt... yes
+</I>&gt;<i>Checking for C++ header file boost/foreach.hpp... yes
+</I>&gt;<i>Checking for qt-mt in /usr/lib/qt3... yes
+</I>&gt;<i>Checking for Python development files... yes
+</I>&gt;<i>Checking for boost::python::scope() in C++ library boost_python-mt... no
+</I>&gt;<i>Checking for boost::python::scope() in C++ library boost_python... no
+</I>&gt;<i>scons: done reading SConscript files.
+</I>&gt;<i>scons: Building targets ...
+</I>
+Another errors:
+
+1. Viewer size does not change with SimulationPlayer window size.
+2. The Primary View of Simulation Controller does not show at first start (seems, scene size is not correct).
+
+-- 
+Best regards, Sergei D.
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000267.html">[yade-dev] [Yade-commits] r1404 - in trunk: extra gui/py	gui/qt3 pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/common/RenderingEngine/GLDrawGeometricalModel pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000272.html">[yade-dev] [Yade-commits] r1404 - in trunk: extra gui/py gui/qt3 pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine pkg/common/RenderingEngine/GLDrawGeometricalModel pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#269">[ date ]</a>
+              <a href="thread.html#269">[ thread ]</a>
+              <a href="subject.html#269">[ subject ]</a>
+              <a href="author.html#269">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

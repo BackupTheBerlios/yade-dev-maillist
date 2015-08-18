@@ -1,0 +1,132 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] Re : [svn] r1864 - trunk/pkg/dem
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Re%20%3A%20%5Bsvn%5D%20r1864%20-%20trunk/pkg/dem&In-Reply-To=%3CjUsT.aNoTheR.mEsSaGe.iD.124760703719857%40mailreader.com%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001203.html">
+   <LINK REL="Next"  HREF="001207.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] Re : [svn] r1864 - trunk/pkg/dem</H1>
+    <B>chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Re%20%3A%20%5Bsvn%5D%20r1864%20-%20trunk/pkg/dem&In-Reply-To=%3CjUsT.aNoTheR.mEsSaGe.iD.124760703719857%40mailreader.com%3E"
+       TITLE="[deprecated list] [Yade-dev] Re : [svn] r1864 - trunk/pkg/dem">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Tue Jul 14 23:27:44 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001203.html">[deprecated list] [Yade-dev] [svn] r1865 - in trunk: extra	pkg/dem	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="001207.html">[deprecated list] [Yade-dev] Re : [svn] r1864 - trunk/pkg/dem
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1204">[ date ]</a>
+              <a href="thread.html#1204">[ thread ]</a>
+              <a href="subject.html#1204">[ subject ]</a>
+              <a href="author.html#1204">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Good!
+Actually, I checked the link and I have a few remarks (for instance,
+there is no need to give the same option pretty=0 all the time, 
+like other options, it is saved in current scons.profile).
+
+I'm not sure where to comment your text, perhaps in the wiki directly?
+
+Bruno
+
+Mardi, 14 Juillet 2009, Anton Gladky &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">gladky.anton at gmail.com</A>&gt; &#233;crivait :
+
+&gt;<i>Ok, I will try to move it RockPM.I am working on FAQ already, not 
+</I>so quickly, but....<A HREF="http://yade.wikia.com/wiki/FAQ_____________________________">http://yade.wikia.com/wiki/FAQ_____________________________</A>_
+&gt;<i>
+</I>&gt;<i>[ENG] Best Regards[GER] Mit freundlichen Gr&#195;&#188;&#195;&#159;en[RUS] &#208;&#161; &#208;&#189;&#208;&#176;&#208;&#184;&#208;&#187;&#209;&#131;&#209;&#135;&#209;&#136;&#208;&#184;&#208;&#188;&#208;&#184; 
+</I>&#208;&#191;&#208;&#190;&#208;&#182;&#208;&#181;&#208;&#187;&#208;&#176;&#208;&#189;&#208;&#184;&#209;&#143;&#208;&#188;&#208;&#184;[UKR] &#208;&#151; &#208;&#189;&#208;&#176;&#208;&#185;&#208;&#186;&#209;&#128;&#208;&#176;&#209;&#137;&#208;&#184;&#208;&#188;&#208;&#184; &#208;&#191;&#208;&#190;&#208;&#177;&#208;&#176;&#208;&#182;&#208;&#176;&#208;&#189;&#208;&#189;&#209;&#143;&#208;&#188;&#208;&#184;Anton 
+Gladkyy
+&gt;<i>2009/7/14 chareyre &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at hmg.inpg.fr</A>&gt;
+</I>&gt;<i>
+</I>&gt;<i>Hello Anton,
+</I>&gt;<i>
+</I>&gt;<i>I don't know if somebody pointed that out already, but I see you
+</I>&gt;<i>have put your rock law directly into pkg/dem, which is not really
+</I>&gt;<i>conventional.
+</I>&gt;<i>There is no emergency, but you will have to move this into the appropriate
+</I>&gt;<i>subdir.
+</I>&gt;<i>If you don't want to search how to move a file with svn commands
+</I>&gt;<i>(I don't know exactly myself at the moment, though I'm sure it is
+</I>&gt;<i>not too hard), you can just :
+</I>&gt;<i>
+</I>&gt;<i>svn update
+</I>&gt;<i>svn remove trunk/pkg/dem/RockPM.cpp trunk/pkg/dem/RockPM.hpp
+</I>&gt;<i>move the files to the correct directory &#194;&#160;in your local copy (probably
+</I>&gt;<i>dem/engine/standalone) and set the correct path in dem/sconscript
+</I>&gt;<i>
+</I>&gt;<i>svn commit trunk/pkg/dem/engine/standalone/RockPM.cpp trunk/pkg/dem/engine/standalone/RockPM.
+</I>
+&gt;<i>hpp
+</I>&gt;<i>
+</I>&gt;<i>Regards
+</I>&gt;<i>
+</I>&gt;<i>Bruno
+</I>&gt;<i>
+</I>&gt;<i>p.s. Are you still thinking about starting a FAQ?
+</I>&gt;<i>
+</I>&gt;<i>===================================================================
+</I>&gt;<i>EASY and FREE access to your email anywhere: <A HREF="http://Mailreader.com/">http://Mailreader.com/</A>
+</I>&gt;<i>===================================================================
+</I>&gt;<i>
+</I>&gt;<i>_______________________________________________
+</I>&gt;<i>Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+</I>&gt;<i>Post to &#194;&#160; &#194;&#160; : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+</I>&gt;<i>Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+</I>&gt;<i>More help &#194;&#160; : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</I>&gt;<i>
+</I>&gt;<i>
+</I>
+
+
+
+===================================================================
+EASY and FREE access to your email anywhere: <A HREF="http://Mailreader.com/">http://Mailreader.com/</A>
+===================================================================
+
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001203.html">[deprecated list] [Yade-dev] [svn] r1865 - in trunk: extra	pkg/dem	pkg/dem/Engine/DeusExMachina pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="001207.html">[deprecated list] [Yade-dev] Re : [svn] r1864 - trunk/pkg/dem
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1204">[ date ]</a>
+              <a href="thread.html#1204">[ thread ]</a>
+              <a href="subject.html#1204">[ subject ]</a>
+              <a href="author.html#1204">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,560 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1549 - in trunk: core extra	extra/clump gui/py	gui/qt3	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1549%20-%20in%20trunk%3A%20core%20extra%0A%09extra/clump%20gui/py%09gui/qt3%0A%09pkg/dem/DataClass/InteractionGeometry%09pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%09pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry%0A%09scripts&In-Reply-To=%3C200810221638.m9MGcpRZ019297%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000455.html">
+   <LINK REL="Next"  HREF="000457.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1549 - in trunk: core extra	extra/clump gui/py	gui/qt3	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1549%20-%20in%20trunk%3A%20core%20extra%0A%09extra/clump%20gui/py%09gui/qt3%0A%09pkg/dem/DataClass/InteractionGeometry%09pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%09pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry%0A%09scripts&In-Reply-To=%3C200810221638.m9MGcpRZ019297%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1549 - in trunk: core extra	extra/clump gui/py	gui/qt3	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Oct 22 18:38:51 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000455.html">[deprecated list] [Yade-dev] ContactLaw1
+</A></li>
+        <LI>Next message: <A HREF="000457.html">[deprecated list] [Yade-dev] drop .gz support in favor of .bz2 only?
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#456">[ date ]</a>
+              <a href="thread.html#456">[ thread ]</a>
+              <a href="subject.html#456">[ subject ]</a>
+              <a href="author.html#456">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-10-22 18:38:47 +0200 (Wed, 22 Oct 2008)
+New Revision: 1549
+
+Modified:
+   trunk/core/DisplayParameters.hpp
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/extra/BrefcomTestGen.cpp
+   trunk/extra/clump/Shop.cpp
+   trunk/extra/clump/Shop.hpp
+   trunk/gui/py/PythonUI_rc.py
+   trunk/gui/py/_utils.cpp
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/SimulationController.cpp
+   trunk/gui/qt3/YadeQtMainWindow.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+   trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp
+   trunk/scripts/chain-distant-interactions.py
+   trunk/scripts/default-test.py
+Log:
+1. Add a quick implementation of bending and torsion code to SpheresContactGeometry
+2. Update ElasticContactLaw2 to use that code; stiffnesses are hard-coded for now.
+3. Update scripts/chain-distant-interactions.py to show that that code really works
+4. Plot residual strength instead of damage in brefcom
+5. Add some functions for spiral projections (not correctly working yet)
+6. Fix missing std:: in DisplayParameters
+
+
+
+Modified: trunk/core/DisplayParameters.hpp
+===================================================================
+--- trunk/core/DisplayParameters.hpp	2008-10-17 16:17:12 UTC (rev 1548)
++++ trunk/core/DisplayParameters.hpp	2008-10-22 16:38:47 UTC (rev 1549)
+@@ -12,13 +12,13 @@
+ 
+ class DisplayParameters: public Serializable{
+ 	private:
+-		vector&lt;string&gt; values;
+-		vector&lt;string&gt; displayTypes;
++		std::vector&lt;std::string&gt; values;
++		std::vector&lt;std::string&gt; displayTypes;
+ 	public:
+ 		//! Get value of given display type and put it in string&amp; value and return true; if there is no such display type, return false.
+-		bool getValue(string displayType, string&amp; value){assert(values.size()==displayTypes.size()); vector&lt;string&gt;::iterator I=std::find(displayTypes.begin(),displayTypes.end(),displayType); if(I==displayTypes.end()) return false; value=values[std::distance(displayTypes.begin(),I)]; return true;}
++		bool getValue(std::string displayType, std::string&amp; value){assert(values.size()==displayTypes.size()); vector&lt;string&gt;::iterator I=std::find(displayTypes.begin(),displayTypes.end(),displayType); if(I==displayTypes.end()) return false; value=values[std::distance(displayTypes.begin(),I)]; return true;}
+ 		//! Set value of given display type; if such display type exists, it is overwritten, otherwise a new one is created.
+-		void setValue(string displayType, string value){assert(values.size()==displayTypes.size()); vector&lt;string&gt;::iterator I=std::find(displayTypes.begin(),displayTypes.end(),displayType); if(I==displayTypes.end()){displayTypes.push_back(displayType); values.push_back(value);} else {values[std::distance(displayTypes.begin(),I)]=value;};}
++		void setValue(std::string displayType, std::string value){assert(values.size()==displayTypes.size()); vector&lt;string&gt;::iterator I=std::find(displayTypes.begin(),displayTypes.end(),displayType); if(I==displayTypes.end()){displayTypes.push_back(displayType); values.push_back(value);} else {values[std::distance(displayTypes.begin(),I)]=value;};}
+ 	DisplayParameters(){}
+ 	virtual ~DisplayParameters(){}
+ 	virtual void registerAttributes(){ REGISTER_ATTRIBUTE(displayTypes); REGISTER_ATTRIBUTE(values); }
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2008-10-17 16:17:12 UTC (rev 1548)
++++ trunk/extra/Brefcom.cpp	2008-10-22 16:38:47 UTC (rev 1549)
+@@ -146,7 +146,7 @@
+ 		if(BC-&gt;omega&gt;=1.0 &amp;&amp; BC-&gt;omegaThreshold&gt;=1.0) continue;
+ 
+ 		// shorthands
+-		Real&amp; epsN(BC-&gt;epsN); Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); const Real&amp; xiShear(BC-&gt;xiShear); const Real&amp; E(BC-&gt;E); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle); const Real&amp; G(BC-&gt;G); const Real&amp; crossSection(BC-&gt;crossSection); const Real&amp; tau(BC-&gt;tau); const Real&amp; expDmgRate(BC-&gt;expDmgRate); const Real&amp; omegaThreshold(BC-&gt;omegaThreshold); const Real&amp; transStrainCoeff(BC-&gt;transStrainCoeff); const Real&amp; epsTrans(BC-&gt;epsTrans); const Real&amp; epsCrackOnset(BC-&gt;epsCrackOnset);
++		Real&amp; epsN(BC-&gt;epsN); Vector3r&amp; epsT(BC-&gt;epsT); Real&amp; kappaD(BC-&gt;kappaD); const Real&amp; xiShear(BC-&gt;xiShear); const Real&amp; E(BC-&gt;E); const Real&amp; undamagedCohesion(BC-&gt;undamagedCohesion); const Real&amp; tanFrictionAngle(BC-&gt;tanFrictionAngle); const Real&amp; G(BC-&gt;G); const Real&amp; crossSection(BC-&gt;crossSection); const Real&amp; tau(BC-&gt;tau); const Real&amp; expDmgRate(BC-&gt;expDmgRate); const Real&amp; omegaThreshold(BC-&gt;omegaThreshold); const Real&amp; transStrainCoeff(BC-&gt;transStrainCoeff); const Real&amp; epsTrans(BC-&gt;epsTrans); const Real&amp; epsCrackOnset(BC-&gt;epsCrackOnset); Real&amp; relResidualStrength(BC-&gt;relResidualStrength);
+ 		// for python access
+ 		Real&amp; omega(BC-&gt;omega); Real&amp; sigmaN(BC-&gt;sigmaN);  Vector3r&amp; sigmaT(BC-&gt;sigmaT); Real&amp; Fn(BC-&gt;Fn); Vector3r&amp; Fs(BC-&gt;Fs);
+ 		// for rate-dependence
+@@ -205,18 +205,19 @@
+ 	const shared_ptr&lt;BrefcomContact&gt;&amp; BC=static_pointer_cast&lt;BrefcomContact&gt;(ip);
+ 	const shared_ptr&lt;SpheresContactGeometry&gt;&amp; geom=YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(i-&gt;interactionGeometry);
+ 
+-	Vector3r lineColor(BC-&gt;omega,1-BC-&gt;omega,0.0); /* damaged links red, undamaged green */
++	//Vector3r lineColor(BC-&gt;omega,1-BC-&gt;omega,0.0); /* damaged links red, undamaged green */
++	Vector3r lineColor=Shop::scalarOnColorScale(1.-BC-&gt;relResidualStrength);
+ 
+ 	if(colorStrain) lineColor=Vector3r(
+ 		min(1.,max(0.,-BC-&gt;epsTrans/BC-&gt;epsCrackOnset)),
+ 		min(1.,max(0.,BC-&gt;epsTrans/BC-&gt;epsCrackOnset)),
+ 		min(1.,max(0.,abs(BC-&gt;epsTrans)/BC-&gt;epsCrackOnset-1)));
+ 
+-	if(contactLine) GLUtils::GLDrawLine(b1-&gt;physicalParameters-&gt;dispSe3.position,b2-&gt;physicalParameters-&gt;dispSe3.position,.5*lineColor);
++	if(contactLine) GLUtils::GLDrawLine(b1-&gt;physicalParameters-&gt;dispSe3.position,b2-&gt;physicalParameters-&gt;dispSe3.position,lineColor);
+ 	if(dmgLabel){ GLUtils::GLDrawNum(BC-&gt;omega,0.5*(b1-&gt;physicalParameters-&gt;dispSe3.position+b2-&gt;physicalParameters-&gt;dispSe3.position),lineColor); }
+ 	else if(epsNLabel){ GLUtils::GLDrawNum(BC-&gt;epsN,0.5*(b1-&gt;physicalParameters-&gt;dispSe3.position+b2-&gt;physicalParameters-&gt;dispSe3.position),lineColor); }
+ 	if(BC-&gt;omega&gt;0 &amp;&amp; dmgPlane){
+-		Real halfSize=sqrt(BC-&gt;omega)*.705*sqrt(BC-&gt;crossSection);
++		Real halfSize=sqrt(1-BC-&gt;relResidualStrength)*.5*.705*sqrt(BC-&gt;crossSection);
+ 		Vector3r midPt=.5*Vector3r(b1-&gt;physicalParameters-&gt;dispSe3.position+b2-&gt;physicalParameters-&gt;dispSe3.position);
+ 		glDisable(GL_CULL_FACE);
+ 		glPushMatrix();
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2008-10-17 16:17:12 UTC (rev 1548)
++++ trunk/extra/Brefcom.hpp	2008-10-22 16:38:47 UTC (rev 1549)
+@@ -84,7 +84,7 @@
+ 
+ 		/*! auxiliary variable for visualization, recalculated in BrefcomLaw at every iteration */
+ 		// FIXME: Fn and Fs are stored as Vector3r normalForce, shearForce in NormalShearInteraction 
+-		Real omega, Fn, sigmaN, epsN; Vector3r epsT, sigmaT, Fs;
++		Real omega, Fn, sigmaN, epsN, relResidualStrength; Vector3r epsT, sigmaT, Fs;
+ 
+ 		BrefcomContact(): NormalShearInteraction(),E(0), G(0), tanFrictionAngle(0), undamagedCohesion(0), crossSection(0), xiShear(0), tau(0), expDmgRate(0) { createIndex(); epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; neverDamage=false; omega=0; Fn=0; Fs=Vector3r::ZERO; }
+ 		//	BrefcomContact(Real _E, Real _G, Real _tanFrictionAngle, Real _undamagedCohesion, Real _equilibriumDist, Real _crossSection, Real _epsCrackOnset, Real _epsFracture, Real _expBending, Real _xiShear, Real _tau=0, Real _expDmgRate=1): InteractionPhysics(), E(_E), G(_G), tanFrictionAngle(_tanFrictionAngle), undamagedCohesion(_undamagedCohesion), equilibriumDist(_equilibriumDist), crossSection(_crossSection), epsCrackOnset(_epsCrackOnset), epsFracture(_epsFracture), expBending(_expBending), xiShear(_xiShear), tau(_tau), expDmgRate(_expDmgRate) { epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; neverDamage=false; omega=0; Fn=0; Fs=Vector3r::ZERO; /*TRVAR5(epsCrackOnset,epsFracture,Kn,crossSection,equilibriumDist); */ }
+@@ -120,6 +120,7 @@
+ 			REGISTER_ATTRIBUTE(epsN);
+ 			REGISTER_ATTRIBUTE(sigmaN);
+ 			REGISTER_ATTRIBUTE(sigmaT);
++			REGISTER_ATTRIBUTE(relResidualStrength);
+ 		};
+ 
+ 	REGISTER_CLASS_NAME(BrefcomContact);
+
+Modified: trunk/extra/BrefcomTestGen.cpp
+===================================================================
+--- trunk/extra/BrefcomTestGen.cpp	2008-10-17 16:17:12 UTC (rev 1548)
++++ trunk/extra/BrefcomTestGen.cpp	2008-10-22 16:38:47 UTC (rev 1549)
+@@ -91,7 +91,9 @@
+ 	rootBody-&gt;engines.push_back(collider);
+ 
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; igeomDispatcher(new InteractionGeometryMetaEngine);
+-	igeomDispatcher-&gt;add(new InteractingSphere2InteractingSphere4SpheresContactGeometry);
++	shared_ptr&lt;InteractingSphere2InteractingSphere4SpheresContactGeometry&gt; is2is4scg(new InteractingSphere2InteractingSphere4SpheresContactGeometry);
++	is2is4scg-&gt;hasShear=true;
++	igeomDispatcher-&gt;add(is2is4scg);
+ 	rootBody-&gt;engines.push_back(igeomDispatcher);
+ 
+ 	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; iphysDispatcher(new InteractionPhysicsMetaEngine);
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2008-10-17 16:17:12 UTC (rev 1548)
++++ trunk/extra/clump/Shop.cpp	2008-10-22 16:38:47 UTC (rev 1549)
+@@ -1146,3 +1146,25 @@
+ 	return v0+((v2-v0)*(v1-v0).Length()+(v1-v0)*(v2-v0).Length())/((v1-v0).Length()+(v2-v1).Length()+(v0-v2).Length());
+ }
+ 
++
++/* This function is copied almost verbatim from scientific python, module Visualization, class ColorScale
++ *
++ */
++Vector3r Shop::scalarOnColorScale(Real x, Real xmin, Real xmax){
++	Real xnorm=min(1.,max((x-xmin)/(xmax-xmin),0.));
++	if(xnorm&lt;.25) return Vector3r(0,.4*xnorm,1);
++	if(xnorm&lt;.5)  return Vector3r(0,1,1.-4.*(xnorm-.25));
++	if(xnorm&lt;.75) return Vector3r(4*(xnorm-.5),1.,0);
++	return Vector3r(1,1-4*(xnorm-.75),0);
++}
++
++/* Wrap floating point number into interval (x0,x1&#9002;such that it is shifted
++ * by integral number of the interval range. If given, *period will hold
++ * this number. The wrapped value is returned.
++ */
++Real Shop::periodicWrap(Real x, Real x0, Real x1, long* period){
++	double xNorm=(x-x0)/(x1-x0);
++	double xxNorm=xNorm-floor(xNorm);
++	if(period) *period=(long)floor(xNorm);
++	return x0+xxNorm*(x1-x0);
++}
+
+Modified: trunk/extra/clump/Shop.hpp
+===================================================================
+--- trunk/extra/clump/Shop.hpp	2008-10-17 16:17:12 UTC (rev 1548)
++++ trunk/extra/clump/Shop.hpp	2008-10-22 16:38:47 UTC (rev 1549)
+@@ -108,4 +108,10 @@
+ 
+ 		//! apply force on contact point on both bodies (reversed on body 2)
+ 		static void applyForceAtContactPoint(const Vector3r&amp; force, const Vector3r&amp; contPt, body_id_t id1, const Vector3r&amp; pos1, body_id_t id2, const Vector3r&amp; pos2, MetaBody* rb);
++
++		//! map scalar variable to 1d colorscale
++		static Vector3r scalarOnColorScale(Real x, Real xmin=0., Real xmax=1.);
++
++		//! wrap floating number periodically to the given range
++		static Real periodicWrap(Real x, Real x0, Real x1, long* period=NULL);
+ };
+
+Modified: trunk/gui/py/PythonUI_rc.py
+===================================================================
+--- trunk/gui/py/PythonUI_rc.py	2008-10-17 16:17:12 UTC (rev 1548)
++++ trunk/gui/py/PythonUI_rc.py	2008-10-22 16:38:47 UTC (rev 1549)
+@@ -3,12 +3,12 @@
+ 
+ yade.runtime must have already been populated from within c++.&quot;&quot;&quot;
+ 
+-from yade import runtime
+ import sys
+ sys.excepthook=sys.__excepthook__ # apport on ubuntu overrides this, we don't need it
+ # sys.path.insert(0,runtime.prefix+'/lib/yade'+runtime.suffix+'/extra')
+ 
+ from yade.wrapper import *
++from yade import runtime
+ 
+ #try:
+ #	import yade.qt.atexit
+
+Modified: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2008-10-17 16:17:12 UTC (rev 1548)
++++ trunk/gui/py/_utils.cpp	2008-10-22 16:38:47 UTC (rev 1549)
+@@ -199,6 +199,30 @@
+ 	return ret;
+ }
+ 
++/* Project 3d point into 2d using spiral projection along given axis;
++ * the returned tuple is
++ * 	
++ *  ( (height relative to the spiral, distance from axis), theta )
++ *
++ * dH_dTheta is the inclination of the spiral (height increase per radian),
++ * theta0 is the angle for zero height (by given axis).
++ */
++python::tuple spiralProject(python::tuple _pt, Real dH_dTheta, int axis=2, Real theta0=0){
++	int ax1=(axis+1)%3,ax2=(axis+2)%3;
++	Vector3r pt=tuple2vec(_pt);
++	Real r=sqrt(pow(pt[ax1],2)+pow(pt[ax2],2));
++	Real theta;
++	if(r&gt;Mathr::ZERO_TOLERANCE) theta=acos(pt[ax1]/r);
++	if(pt[ax2]&lt;0) theta=Mathr::TWO_PI-theta;
++	else theta=0;
++	Real hRef=dH_dTheta*(theta-theta0);
++	long period;
++	Real h=Shop::periodicWrap(pt[axis],hRef-Mathr::PI*dH_dTheta,hRef+Mathr::PI*dH_dTheta,&amp;period);
++	cerr&lt;&lt;&quot;:&quot;&lt;&lt;h-hRef&lt;&lt;&quot; &quot;&lt;&lt;h&lt;&lt;&quot; &quot;&lt;&lt;hRef&lt;&lt;&quot; &quot;&lt;&lt;&quot; (&quot;&lt;&lt;hRef-Mathr::PI*dH_dTheta&lt;&lt;&quot;,&quot;&lt;&lt;hRef+Mathr::PI*dH_dTheta&lt;&lt;&quot;) &quot;&lt;&lt;theta&lt;&lt;&quot; &quot;&lt;&lt;endl;
++	return python::make_tuple(python::make_tuple(r,h-dH_dTheta*(theta-theta0+2*Mathr::PI*period)),theta);
++}
++BOOST_PYTHON_FUNCTION_OVERLOADS(spiralProject_overloads,spiralProject,2,4);
++
+ // for now, don't return anything, since we would have to include the whole yadeControl.cpp because of pyInteraction
+ void Shop__createExplicitInteraction(body_id_t id1, body_id_t id2){ (void) Shop::createExplicitInteraction(id1,id2);}
+ 
+@@ -218,6 +242,7 @@
+ 	def(&quot;sumBexForces&quot;,sumBexForces);
+ 	def(&quot;sumBexMoments&quot;,sumBexMoments);
+ 	def(&quot;createInteraction&quot;,Shop__createExplicitInteraction);
++	def(&quot;spiralProject&quot;,spiralProject,spiralProject_overloads(args(&quot;axis&quot;,&quot;theta0&quot;)));
+ }
+ 
+ 
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-10-17 16:17:12 UTC (rev 1548)
++++ trunk/gui/qt3/GLViewer.cpp	2008-10-22 16:38:47 UTC (rev 1549)
+@@ -518,7 +518,7 @@
+ 		}
+ 		if(timeDispMask &amp; GLViewer::TIME_ITER){
+ 			ostringstream oss;
+-			oss&lt;&lt;&quot;#&quot;&lt;&lt;Omega::instance().getCurrentIteration()&lt;&lt;&quot;\n&quot;;
++			oss&lt;&lt;&quot;#&quot;&lt;&lt;Omega::instance().getCurrentIteration();
+ 			QGLViewer::drawText(x,y,oss.str());
+ 			y-=lineHt;
+ 		}
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2008-10-17 16:17:12 UTC (rev 1548)
++++ trunk/gui/qt3/SimulationController.cpp	2008-10-22 16:38:47 UTC (rev 1549)
+@@ -133,7 +133,7 @@
+ 
+ void SimulationController::loadSimulationFromFileName(const std::string&amp; fileName,bool center, bool useTimeStepperIfPresent)
+ {
+-	assert(filesystem::exists(fileName));
++	assert(filesystem::exists(fileName) || fileName.find(&quot;:memory:&quot;)==(size_t)0);
+ 
+ 		Omega::instance().finishSimulationLoop();
+ 		Omega::instance().joinSimulationLoop();
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.cpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.cpp	2008-10-17 16:17:12 UTC (rev 1548)
++++ trunk/gui/qt3/YadeQtMainWindow.cpp	2008-10-22 16:38:47 UTC (rev 1549)
+@@ -114,7 +114,7 @@
+ 
+ void YadeQtMainWindow::Quit(){ emit close(); }
+ 
+-void YadeQtMainWindow::closeEvent(QCloseEvent *e){ closeAllChilds(); YadeQtGeneratedMainWindow::closeEvent(e); }
++void YadeQtMainWindow::closeEvent(QCloseEvent *e){ renderer=shared_ptr&lt;OpenGLRenderingEngine&gt;(); closeAllChilds(); YadeQtGeneratedMainWindow::closeEvent(e); }
+ 
+ void YadeQtMainWindow::ensureRenderer(){
+ 	if(!renderer){
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2008-10-17 16:17:12 UTC (rev 1548)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2008-10-22 16:38:47 UTC (rev 1549)
+@@ -8,7 +8,21 @@
+ // At least one virtual method must be in the .cpp file (!!!)
+ SpheresContactGeometry::~SpheresContactGeometry(){};
+ 
++Vector3r SpheresContactGeometry::relRotVector() const{
++	Quaternionr relOri12=ori1.Conjugate()*ori2;
++	Quaternionr oriDiff=initRelOri12.Conjugate()*relOri12;
++	Vector3r axis; Real angle;
++	oriDiff.ToAxisAngle(axis,angle);
++	if(angle&gt;Mathr::PI)angle-=Mathr::TWO_PI;
++	return angle*axis;
++}
+ 
++void SpheresContactGeometry::bendingTorsionAbs(Vector3r&amp; bend, Real&amp; tors){
++	Vector3r relRot=relRotVector();
++	tors=relRot.Dot(normal);
++	bend=relRot-tors*normal;
++}
++
+ /* Set contact points on both spheres such that their projection is the one given
+  * (should be on the plane passing through origin and oriented with normal; not checked!)
+  */
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2008-10-17 16:17:12 UTC (rev 1548)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2008-10-22 16:38:47 UTC (rev 1549)
+@@ -47,6 +47,8 @@
+ 		// d1 is really distance from the sphere1 center to the contact plane, it may not correspond to the sphere radius!
+ 		// therefore, d1+d2=d0 (distance at which the contact was created)
+ 		Real d1, d2, d0;
++		// initial relative orientation, used for bending and torsion computation
++		Quaternionr initRelOri12;
+ 
+ 		// auxiliary functions; the quaternion magic is all in here
+ 		static Vector3r unrollSpherePtToPlane(const Quaternionr&amp; fromXtoPtOri, const Real&amp; radius, const Vector3r&amp; normal);
+@@ -54,13 +56,13 @@
+ 
+ 		void setTgPlanePts(Vector3r p1new, Vector3r p2new);
+ 
+-		Vector3r contPtInTgPlane1(){assert(hasShear); return unrollSpherePtToPlane(ori1*cp1rel,d1,normal);}
+-		Vector3r contPtInTgPlane2(){assert(hasShear); return unrollSpherePtToPlane(ori2*cp2rel,d2,-normal);}
+-		Vector3r contPt(){return contactPoint; /*pos1+(d1/d0)*(pos2-pos1)*/}
++		Vector3r contPtInTgPlane1() const {assert(hasShear); return unrollSpherePtToPlane(ori1*cp1rel,d1,normal);}
++		Vector3r contPtInTgPlane2() const {assert(hasShear); return unrollSpherePtToPlane(ori2*cp2rel,d2,-normal);}
++		Vector3r contPt() const {return contactPoint; /*pos1+(d1/d0)*(pos2-pos1)*/}
+ 
+-		Real displacementN(){assert(hasShear); return (pos2-pos1).Length()-d0;}
+-		Real epsN(){return displacementN()*(1./d0);}
+-		Vector3r displacementT(){ assert(hasShear);
++		Real displacementN() const {assert(hasShear); return (pos2-pos1).Length()-d0;}
++		Real epsN() const {return displacementN()*(1./d0);}
++		Vector3r displacementT() const { assert(hasShear);
+ 			// enabling automatic relocation decreases overall simulation speed by about 3%
+ 			// perhaps: bool largeStrains ... ?
+ 			#if 0 
+@@ -71,7 +73,7 @@
+ 				return contPtInTgPlane2()-contPtInTgPlane1();
+ 			#endif
+ 		}
+-		Vector3r epsT(){return displacementT()*(1./d0);}
++		Vector3r epsT() const {return displacementT()*(1./d0);}
+ 	
+ 		Real slipToDisplacementTMax(Real displacementTMax);
+ 		//! slip to epsTMax if current epsT is greater; return the relative slip magnitude
+@@ -80,6 +82,11 @@
+ 		void relocateContactPoints();
+ 		void relocateContactPoints(const Vector3r&amp; tgPlanePt1, const Vector3r&amp; tgPlanePt2);
+ 
++		void bendingTorsionAbs(Vector3r&amp; bend, Real&amp; tors);
++		void bendingTorsionRel(Vector3r&amp; bend, Real&amp; tors){ bendingTorsionAbs(bend,tors); bend/=d0; tors/=d0;}
++
++		Vector3r relRotVector() const;
++
+ 		SpheresContactGeometry():contactPoint(Vector3r::ZERO),radius1(0),radius2(0),hasShear(false),pos1(Vector3r::ZERO),pos2(Vector3r::ZERO){createIndex();}
+ 		virtual ~SpheresContactGeometry();
+ 	protected :
+@@ -98,6 +105,7 @@
+ 			REGISTER_ATTRIBUTE(d1);
+ 			REGISTER_ATTRIBUTE(d2);
+ 			REGISTER_ATTRIBUTE(d0);
++			REGISTER_ATTRIBUTE(initRelOri12);
+ 		}
+ 	REGISTER_CLASS_NAME(SpheresContactGeometry);
+ 	REGISTER_BASE_CLASS_NAME(InteractionGeometry);
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2008-10-17 16:17:12 UTC (rev 1548)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2008-10-22 16:38:47 UTC (rev 1549)
+@@ -51,6 +51,7 @@
+ 				// contact constants
+ 				scm-&gt;d0=(se32.position-se31.position).Length();
+ 				scm-&gt;d1=s1-&gt;radius-penetrationDepth; scm-&gt;d2=s2-&gt;radius-penetrationDepth;
++				scm-&gt;initRelOri12=se31.orientation.Conjugate()*se32.orientation;
+ 				// quasi-constants
+ 				scm-&gt;cp1rel.Align(Vector3r::UNIT_X,se31.orientation.Conjugate()*normal);
+ 				scm-&gt;cp2rel.Align(Vector3r::UNIT_X,se32.orientation.Conjugate()*(-normal));
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2008-10-17 16:17:12 UTC (rev 1548)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2008-10-22 16:38:47 UTC (rev 1549)
+@@ -27,6 +27,7 @@
+ ElasticContactLaw2::~ElasticContactLaw2(){}
+ 
+ void ElasticContactLaw2::action(MetaBody* rb){
++	Real /* bending stiffness */ kb=1e7, /* torsion stiffness */ ktor=1e8;
+ 	FOREACH(shared_ptr&lt;Interaction&gt; i, *rb-&gt;transientInteractions){
+ 		if(!i-&gt;isReal) continue;
+ 		shared_ptr&lt;SpheresContactGeometry&gt; contGeom=YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(i-&gt;interactionGeometry);
+@@ -37,10 +38,16 @@
+ 		if(!isCohesive &amp;&amp; contGeom-&gt;displacementN()&gt;0){ cerr&lt;&lt;&quot;deleting&quot;&lt;&lt;endl; /* delete the interaction */ i-&gt;isReal=false; continue;}
+ 		contPhys-&gt;normalForce=Fn*contGeom-&gt;normal;
+ 		//contGeom-&gt;relocateContactPoints();
+-		contGeom-&gt;slipToDisplacementTMax(max(0.,(-Fn*contPhys-&gt;tangensOfFrictionAngle)/contPhys-&gt;ks)); // limit shear displacement -- Coulomb criterion
++		//contGeom-&gt;slipToDisplacementTMax(max(0.,(-Fn*contPhys-&gt;tangensOfFrictionAngle)/contPhys-&gt;ks)); // limit shear displacement -- Coulomb criterion
+ 		contPhys-&gt;shearForce=contPhys-&gt;ks*contGeom-&gt;displacementT();
+ 		Vector3r force=contPhys-&gt;shearForce+contPhys-&gt;normalForce;
+ 		Shop::applyForceAtContactPoint(force,contGeom-&gt;contactPoint,i-&gt;getId1(),contGeom-&gt;pos1,i-&gt;getId2(),contGeom-&gt;pos2,rb);
++
++		Vector3r bendAbs; Real torsionAbs; contGeom-&gt;bendingTorsionAbs(bendAbs,torsionAbs);
++		Shop::Bex::momentum(i-&gt;getId1(),rb)+=contGeom-&gt;normal*torsionAbs*ktor;
++		Shop::Bex::momentum(i-&gt;getId2(),rb)-=contGeom-&gt;normal*torsionAbs*ktor;
++		Shop::Bex::momentum(i-&gt;getId1(),rb)+=bendAbs*kb;
++		Shop::Bex::momentum(i-&gt;getId2(),rb)-=bendAbs*kb;
+ 	}
+ }
+ 
+
+Modified: trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp	2008-10-17 16:17:12 UTC (rev 1548)
++++ trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp	2008-10-22 16:38:47 UTC (rev 1549)
+@@ -81,6 +81,15 @@
+ 		Vector3r pos1=sc-&gt;pos1, pos2=sc-&gt;pos2, contPt=sc-&gt;contPt();
+ 		//Vector3r contPt=se31.position+(sc-&gt;d1/sc-&gt;d0)*(se32.position-se31.position); // must be recalculated to not be unscaled if scaling displacements ...
+ 		GLUtils::GLDrawLine(pos1,pos2,Vector3r(.5,.5,.5));
++		Vector3r bend; Real tors;
++		sc-&gt;bendingTorsionRel(bend,tors);
++		GLUtils::GLDrawLine(contPt,contPt+10*sc-&gt;radius1*(bend+sc-&gt;normal*tors),Vector3r(1,0,0));
++		#if 0
++		GLUtils::GLDrawNum(bend[0],contPt-.2*sc-&gt;normal*sc-&gt;radius1,Vector3r(1,0,0));
++		GLUtils::GLDrawNum(bend[1],contPt,Vector3r(0,1,0));
++		GLUtils::GLDrawNum(bend[2],contPt+.2*sc-&gt;normal*sc-&gt;radius1,Vector3r(0,0,1));
++		GLUtils::GLDrawNum(tors,contPt+.5*sc-&gt;normal*sc-&gt;radius2,Vector3r(1,1,0));
++		#endif
+ 		// sphere center to point on the sphere
+ 		//GLUtils::GLDrawLine(pos1,pos1+(sc-&gt;ori1*sc-&gt;cp1rel*Vector3r::UNIT_X*sc-&gt;d1),Vector3r(0,.5,1));
+ 		//GLUtils::GLDrawLine(pos2,pos2+(sc-&gt;ori2*sc-&gt;cp2rel*Vector3r::UNIT_X*sc-&gt;d2),Vector3r(0,1,.5));
+
+Modified: trunk/scripts/chain-distant-interactions.py
+===================================================================
+--- trunk/scripts/chain-distant-interactions.py	2008-10-17 16:17:12 UTC (rev 1548)
++++ trunk/scripts/chain-distant-interactions.py	2008-10-22 16:38:47 UTC (rev 1549)
+@@ -14,17 +14,32 @@
+ 	MetaEngine('InteractionGeometryMetaEngine',[EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry',{'hasShear':True}),]),
+ 	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+ 	StandAloneEngine('ElasticContactLaw2',{'isCohesive':True}),
+-	DeusExMachina('GravityEngine',{'gravity':[0,0,-1e5]}),
+-	DeusExMachina('NewtonsDampedLaw',{'damping':0.1})
++	#DeusExMachina('MomentEngine',{'subscribedBodies':[1],'moment':[0,1000,0]}),
++	DeusExMachina('GravityEngine',{'gravity':[0,0,-1e2]}),
++	DeusExMachina('NewtonsDampedLaw',{'damping':0.2})
+ ]
++o.miscParams=[Generic('GLDrawSphere',{'glutUse':True})]
++
+ from yade import utils
+-for n in range(20):
++from math import *
++for n in range(5):
+ 	o.bodies.append(utils.sphere([0,n,0],.5,dynamic=(n&gt;0),color=[1-(n/20.),n/20.,0],young=30e9,poisson=.3,density=2400))
+ 	# looks for metaengine found in Omega() and uses those
+ 	if n&gt;0: utils.createInteraction(n-1,n)
++for i in o.interactions: i.phys['ks']=1e7
+ 
+ 
+-o.dt=.04*utils.PWaveTimeStep()
++o.dt=utils.PWaveTimeStep()
++o.saveTmp('init')
++
++try:
++	from yade import qt
++	renderer=qt.Renderer()
++	renderer['Body_wire']=True
++	renderer['Interaction_geometry']=True
++except ImportError: pass
++
++
+ #o.save('/tmp/a.xml.bz2')
+ #o.reload()
+ #o.run(50000,True)
+
+Modified: trunk/scripts/default-test.py
+===================================================================
+--- trunk/scripts/default-test.py	2008-10-17 16:17:12 UTC (rev 1548)
++++ trunk/scripts/default-test.py	2008-10-22 16:38:47 UTC (rev 1549)
+@@ -84,7 +84,7 @@
+ 		msg['Subject']=&quot;Automated crash report for &quot;+yade.runtime.executable+&quot;: &quot;+&quot;,&quot;.join([r[0] for r in reports])
+ 		msg['From']=mailFrom
+ 		msg['To']=mailTo
+-		msg['Reply-To']='<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.berlios.de</A>'
++		msg['Reply-To']='<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>'
+ 		import smtplib
+ 		s=smtplib.SMTP()
+ 		s.connect()
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000455.html">[deprecated list] [Yade-dev] ContactLaw1
+</A></li>
+	<LI>Next message: <A HREF="000457.html">[deprecated list] [Yade-dev] drop .gz support in favor of .bz2 only?
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#456">[ date ]</a>
+              <a href="thread.html#456">[ thread ]</a>
+              <a href="subject.html#456">[ subject ]</a>
+              <a href="author.html#456">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

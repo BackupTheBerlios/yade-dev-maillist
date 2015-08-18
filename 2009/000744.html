@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] plain `svn up` breaks stuff
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20plain%20%60svn%20up%60%20breaks%20stuff&In-Reply-To=%3C20090223165953.28f63125%40szpak%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000741.html">
+   <LINK REL="Next"  HREF="000746.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] plain `svn up` breaks stuff</H1>
+    <B>Janek Kozicki</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20plain%20%60svn%20up%60%20breaks%20stuff&In-Reply-To=%3C20090223165953.28f63125%40szpak%3E"
+       TITLE="[deprecated list] [Yade-dev] plain `svn up` breaks stuff">janek_listy at wp.pl
+       </A><BR>
+    <I>Mon Feb 23 16:59:53 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000741.html">[deprecated list] [Yade-dev] [svn] r1683 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000746.html">[deprecated list] [Yade-dev] plain `svn up` breaks stuff
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#744">[ date ]</a>
+              <a href="thread.html#744">[ thread ]</a>
+              <a href="subject.html#744">[ subject ]</a>
+              <a href="author.html#744">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>I was thinking about making a /pkg/polyhedron directory with an
+example like SDECSpheresPlane, but with polyhedrons falling down on a
+plane. As a part of cleaning up the snow stuff.
+
+But it looks like that I have no time now to fix whatever got broken
+in latest svn:
+
+1. QtFileGenerator cannot generate anything because XMLFormatManager
+is not detected as a loaded plugin. So it simply cannot save the
+simulation's .xml file
+
+2. GLViewer.cpp:46 is never successful. It never can obtain the lock,
+and GL window stays black forever. Only solution is to comment out
+this line.
+
+3. The newer,faster physical actions are default which breaks all
+example simulations made by FileGenerators. If you want to make it
+default, then you must update the FileGenerators. It just throws.
+
+I cannot fix it now, because I have to focus on polyhedrons and snow.
+I'm leaving France soon and I need to leave them a working snow
+simulation stuff.
+
+-- 
+Janek Kozicki                                                         |
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000741.html">[deprecated list] [Yade-dev] [svn] r1683 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000746.html">[deprecated list] [Yade-dev] plain `svn up` breaks stuff
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#744">[ date ]</a>
+              <a href="thread.html#744">[ thread ]</a>
+              <a href="subject.html#744">[ subject ]</a>
+              <a href="author.html#744">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

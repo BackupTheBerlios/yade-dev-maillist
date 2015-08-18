@@ -1,0 +1,435 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1857 - in trunk: . gui/py	pkg/common	pkg/common/Engine/MetaEngine pkg/dem py	py/yadeWrapper scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1857%20-%20in%20trunk%3A%20.%20gui/py%0A%09pkg/common%09pkg/common/Engine/MetaEngine%20pkg/dem%20py%0A%09py/yadeWrapper%20scripts/test&In-Reply-To=%3C200907120821.n6C8LRje000850%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001182.html">
+   <LINK REL="Next"  HREF="001184.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1857 - in trunk: . gui/py	pkg/common	pkg/common/Engine/MetaEngine pkg/dem py	py/yadeWrapper scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1857%20-%20in%20trunk%3A%20.%20gui/py%0A%09pkg/common%09pkg/common/Engine/MetaEngine%20pkg/dem%20py%0A%09py/yadeWrapper%20scripts/test&In-Reply-To=%3C200907120821.n6C8LRje000850%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1857 - in trunk: . gui/py	pkg/common	pkg/common/Engine/MetaEngine pkg/dem py	py/yadeWrapper scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Jul 12 10:21:27 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001182.html">[deprecated list] [Yade-dev] [svn] r1856 - in trunk: examples	gui/py	pkg/dem/Engine/DeusExMachina py
+</A></li>
+        <LI>Next message: <A HREF="001184.html">[deprecated list] [Yade-dev] [svn] r1858 - in trunk: . debian
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1183">[ date ]</a>
+              <a href="thread.html#1183">[ thread ]</a>
+              <a href="subject.html#1183">[ subject ]</a>
+              <a href="author.html#1183">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-12 10:21:25 +0200 (Sun, 12 Jul 2009)
+New Revision: 1857
+
+Added:
+   trunk/pkg/common/Engine/MetaEngine/EngineUnits.cpp
+   trunk/scripts/test/pack-predicates.py
+Modified:
+   trunk/SConstruct
+   trunk/gui/py/pyAttrUtils.hpp
+   trunk/pkg/common/Engine/MetaEngine/BoundingVolumeEngineUnit.hpp
+   trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp
+   trunk/pkg/common/Engine/MetaEngine/GeometricalModelEngineUnit.hpp
+   trunk/pkg/common/Engine/MetaEngine/InteractingGeometryEngineUnit.hpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionGeometryEngineUnit.hpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsEngineUnit.hpp
+   trunk/pkg/common/Engine/MetaEngine/PhysicalParametersEngineUnit.hpp
+   trunk/pkg/common/SConscript
+   trunk/pkg/dem/SConscript
+   trunk/py/utils.py
+   trunk/py/yadeWrapper/yadeWrapper.cpp
+Log:
+1. Add virtual destructors to all EngineUnits so that they can by dynamic_cast'ed to. This fixes possible crash from python, bug #398255
+2. Rename updateExistingKeys to updateExistingAttrs, add updateAttrs.
+3. Add forgotten script to demonstrate predicate operators
+4. The default debug level is -ggdb2 (instead of -ggdb3). Libs are about 60% in size and still give the same debug information.
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-07-11 20:25:33 UTC (rev 1856)
++++ trunk/SConstruct	2009-07-12 08:21:25 UTC (rev 1857)
+@@ -406,7 +406,7 @@
+ if env['QUAD_PRECISION']: env.Append(CPPDEFINES='QUAD_PRECISION')
+ 
+ ### COMPILER
+-if env['debug']: env.Append(CXXFLAGS='-ggdb3',CPPDEFINES=['YADE_DEBUG'])
++if env['debug']: env.Append(CXXFLAGS='-ggdb2',CPPDEFINES=['YADE_DEBUG'])
+ else: env.Append(CXXFLAGS='-O2')
+ if env['openmp']: env.Append(CXXFLAGS='-fopenmp',LIBS='gomp',CPPDEFINES='YADE_OPENMP')
+ if env['optimize']:
+
+Modified: trunk/gui/py/pyAttrUtils.hpp
+===================================================================
+--- trunk/gui/py/pyAttrUtils.hpp	2009-07-11 20:25:33 UTC (rev 1856)
++++ trunk/gui/py/pyAttrUtils.hpp	2009-07-12 08:21:25 UTC (rev 1857)
+@@ -28,7 +28,8 @@
+ 	boost::python::list wrappedPyKeys(){ensureFunc(); return accessor-&gt;pyKeys();} \
+ 	boost::python::dict wrappedPyDict(){ensureFunc(); return accessor-&gt;pyDict();} \
+ 	bool wrappedPyHasKey(const std::string&amp; key){ensureFunc(); return accessor-&gt;descriptors.find(key)!=accessor-&gt;descriptors.end();} \
+-	python::list wrappedUpdateExisting(const python::dict&amp; d){ python::list ret; ensureFunc(); python::list keys=d.keys(); size_t ll=python::len(keys); for(size_t i=0; i&lt;ll; i++){ string key=python::extract&lt;string&gt;(keys[i]); if(wrappedPyHasKey(key)) accessor-&gt;pySet(key,d[keys[i]]); else ret.append(key); } return ret; }
++	python::list wrappedUpdateExistingAttrs(const python::dict&amp; d){ python::list ret; ensureFunc(); python::list keys=d.keys(); size_t ll=python::len(keys); for(size_t i=0; i&lt;ll; i++){ string key=python::extract&lt;string&gt;(keys[i]); if(wrappedPyHasKey(key)) accessor-&gt;pySet(key,d[keys[i]]); else ret.append(key); } return ret; } \
++	void wrappedUpdateAttrs(const python::dict&amp; d){ ensureFunc(); python::list keys=d.keys(); size_t ll=python::len(keys); for(size_t i=0; i&lt;ll; i++){ string key=python::extract&lt;string&gt;(keys[i]); accessor-&gt;pySet(key,d[keys[i]]); } }
+ 	
+ 	
+ 	//boost::python::object wrappedPyGet_throw(std::string key){ensureFunc(); if(wrappedPyHasKey(key)) return accessor-&gt;pyGet(key); PyErr_SetString(PyExc_AttributeError, &quot;No such attribute.&quot;); boost::python::throw_error_already_set(); /* make compiler happy*/ return boost::python::object(); }
+@@ -39,7 +40,7 @@
+  * They define python special functions that support dictionary operations on this object and calls proxies for them. */
+ #define ATTR_ACCESS_PY(cxxClass) \
+ 	def(&quot;__getitem__&quot;,&amp;cxxClass::wrappedPyGet).def(&quot;__setitem__&quot;,&amp;cxxClass::wrappedPySet).def(&quot;keys&quot;,&amp;cxxClass::wrappedPyKeys).def(&quot;has_key&quot;,&amp;cxxClass::wrappedPyHasKey).def(&quot;dict&quot;,&amp;cxxClass::wrappedPyDict) \
+-	.def(&quot;getRaw&quot;,&amp;cxxClass::wrappedGetAttrStr).def(&quot;setRaw&quot;,&amp;cxxClass::wrappedSetAttrStr).def(&quot;updateExistingKeys&quot;,&amp;cxxClass::wrappedUpdateExisting,&quot;Update attributes from given dictionary, but skpping attribues that do not exist in the wrapped class; return list of names of attributes that were not set.&quot;)
++	.def(&quot;getRaw&quot;,&amp;cxxClass::wrappedGetAttrStr).def(&quot;setRaw&quot;,&amp;cxxClass::wrappedSetAttrStr).def(&quot;updateExistingAttrs&quot;,&amp;cxxClass::wrappedUpdateExistingAttrs,&quot;Update attributes from given dictionary, but skpping attribues that do not exist in the wrapped class; return list of names of attributes that were not set.&quot;).def(&quot;updateAttrs&quot;,&amp;cxxClass::wrappedUpdateAttrs,&quot;Update attributes from given dictionary; all attributes must exist.&quot;)
+ 	//def(&quot;__getattr__&quot;,&amp;cxxClass::wrappedPyGet).def(&quot;__setattr__&quot;,&amp;cxxClass::wrappedPySet).def(&quot;attrs&quot;,&amp;cxxClass::wrappedPyKeys)
+ 
+ 	//.def(&quot;__getattribute__&quot;,&amp;cxxClass::wrappedPyGet_throw)
+
+Modified: trunk/pkg/common/Engine/MetaEngine/BoundingVolumeEngineUnit.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/BoundingVolumeEngineUnit.hpp	2009-07-11 20:25:33 UTC (rev 1856)
++++ trunk/pkg/common/Engine/MetaEngine/BoundingVolumeEngineUnit.hpp	2009-07-12 08:21:25 UTC (rev 1857)
+@@ -44,6 +44,7 @@
+ 			  			  )
+ 				&gt;
+ {	
++	public: virtual ~BoundingVolumeEngineUnit();
+ 	REGISTER_CLASS_AND_BASE(BoundingVolumeEngineUnit,EngineUnit2D);
+ 	REGISTER_ATTRIBUTES(EngineUnit,/* no attributes here */);
+ };
+
+Modified: trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp	2009-07-11 20:25:33 UTC (rev 1856)
++++ trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp	2009-07-12 08:21:25 UTC (rev 1857)
+@@ -9,6 +9,7 @@
+ 	&gt;{
+ 	public:
+ 		ConstitutiveLaw(){}
++		virtual ~ConstitutiveLaw();
+ 	REGISTER_CLASS_AND_BASE(ConstitutiveLaw,EngineUnit2D);
+ 	/*! Convenience functions to get forces/torques quickly. */
+ 	void addForce (const body_id_t id, const Vector3r&amp; f,MetaBody* rb){rb-&gt;bex.addForce (id,f);}
+
+Added: trunk/pkg/common/Engine/MetaEngine/EngineUnits.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/EngineUnits.cpp	2009-07-11 20:25:33 UTC (rev 1856)
++++ trunk/pkg/common/Engine/MetaEngine/EngineUnits.cpp	2009-07-12 08:21:25 UTC (rev 1857)
+@@ -0,0 +1,16 @@
++#include&lt;yade/pkg-common/BoundingVolumeEngineUnit.hpp&gt;
++#include&lt;yade/pkg-common/GeometricalModelEngineUnit.hpp&gt;
++#include&lt;yade/pkg-common/InteractingGeometryEngineUnit.hpp&gt;
++#include&lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
++#include&lt;yade/pkg-common/InteractionPhysicsEngineUnit.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalParametersEngineUnit.hpp&gt;
++#include&lt;yade/pkg-common/ConstitutiveLaw.hpp&gt;
++
++BoundingVolumeEngineUnit::~BoundingVolumeEngineUnit(){};
++GeometricalModelEngineUnit::~GeometricalModelEngineUnit(){};
++InteractingGeometryEngineUnit::~InteractingGeometryEngineUnit(){};
++InteractionGeometryEngineUnit::~InteractionGeometryEngineUnit(){};
++InteractionPhysicsEngineUnit::~InteractionPhysicsEngineUnit(){};
++PhysicalParametersEngineUnit::~PhysicalParametersEngineUnit(){};
++ConstitutiveLaw::~ConstitutiveLaw(){};
++
+
+Modified: trunk/pkg/common/Engine/MetaEngine/GeometricalModelEngineUnit.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/GeometricalModelEngineUnit.hpp	2009-07-11 20:25:33 UTC (rev 1856)
++++ trunk/pkg/common/Engine/MetaEngine/GeometricalModelEngineUnit.hpp	2009-07-12 08:21:25 UTC (rev 1857)
+@@ -41,7 +41,8 @@
+ 								, const Body*
+ 			   				  )
+ 					&gt;
+-{	
++{
++	public: virtual ~GeometricalModelEngineUnit();	
+ 	REGISTER_CLASS_NAME(GeometricalModelEngineUnit);
+ 	REGISTER_BASE_CLASS_NAME(EngineUnit2D);
+ };
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractingGeometryEngineUnit.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractingGeometryEngineUnit.hpp	2009-07-11 20:25:33 UTC (rev 1856)
++++ trunk/pkg/common/Engine/MetaEngine/InteractingGeometryEngineUnit.hpp	2009-07-12 08:21:25 UTC (rev 1857)
+@@ -39,7 +39,8 @@
+ 								, const Body* // with that - functors have all the data they may need
+ 			  				  )
+ 					&gt;
+-{	
++{
++	public: virtual ~InteractingGeometryEngineUnit();	
+ 	REGISTER_CLASS_AND_BASE(InteractingGeometryEngineUnit,EngineUnit2D);
+ 	REGISTER_ATTRIBUTES(EngineUnit,/* no attributes here */);
+ };
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionGeometryEngineUnit.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionGeometryEngineUnit.hpp	2009-07-11 20:25:33 UTC (rev 1856)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionGeometryEngineUnit.hpp	2009-07-12 08:21:25 UTC (rev 1857)
+@@ -42,6 +42,7 @@
+ 			  				  ) 
+ 					&gt;
+ {
++	public: virtual ~InteractionGeometryEngineUnit();
+ 	REGISTER_CLASS_AND_BASE(InteractionGeometryEngineUnit,EngineUnit2D);
+ 	REGISTER_ATTRIBUTES(EngineUnit,/* no attributes here */);
+ };
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsEngineUnit.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsEngineUnit.hpp	2009-07-11 20:25:33 UTC (rev 1856)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsEngineUnit.hpp	2009-07-12 08:21:25 UTC (rev 1857)
+@@ -36,6 +36,7 @@
+ 			   				  ) 
+ 					&gt;
+ {
++	public: virtual ~InteractionPhysicsEngineUnit();
+ 	REGISTER_CLASS_AND_BASE(InteractionPhysicsEngineUnit,EngineUnit2D);
+ 	REGISTER_ATTRIBUTES(EngineUnit, /* no attributes here */ );
+ };
+
+Modified: trunk/pkg/common/Engine/MetaEngine/PhysicalParametersEngineUnit.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/PhysicalParametersEngineUnit.hpp	2009-07-11 20:25:33 UTC (rev 1856)
++++ trunk/pkg/common/Engine/MetaEngine/PhysicalParametersEngineUnit.hpp	2009-07-12 08:21:25 UTC (rev 1857)
+@@ -30,7 +30,8 @@
+ 								, Body*, BexContainer&amp;
+ 			   				  )
+ 					&gt;
+-{	
++{
++	public: virtual ~PhysicalParametersEngineUnit();	
+ 	REGISTER_CLASS_NAME(PhysicalParametersEngineUnit);
+ 	REGISTER_BASE_CLASS_NAME(EngineUnit1D);
+ };
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2009-07-11 20:25:33 UTC (rev 1856)
++++ trunk/pkg/common/SConscript	2009-07-12 08:21:25 UTC (rev 1857)
+@@ -12,7 +12,7 @@
+ 
+ 	env.SharedLibrary('ParallelEngine',
+ 		['Engine/ParallelEngine.cpp']),
+-
++	env.SharedLibrary('EngineUnits',['Engine/MetaEngine/EngineUnits.cpp']),
+ 	env.SharedLibrary('AABB',['DataClass/BoundingVolume/AABB.cpp']),
+ 	env.SharedLibrary('BoundingSphere',['DataClass/BoundingVolume/BoundingSphere.cpp']),
+ 	env.SharedLibrary('InteractingBox',['DataClass/InteractingGeometry/InteractingBox.cpp'],),
+@@ -97,37 +97,37 @@
+ 		LIBS=env['LIBS']+['FilterEngine','ColorScale']),
+ 	env.SharedLibrary('ColorizedTimeFilter',['Engine/FilterEngine/ColorizedTimeFilter.cpp'],
+ 		LIBS=env['LIBS']+['FilterEngine','ColorScale']),
+-	env.SharedLibrary('BoundingVolumeMetaEngine',['Engine/MetaEngine/BoundingVolumeMetaEngine.cpp'],LIBS=env['LIBS']+['RigidBodyParameters','AABB']),
+-	env.SharedLibrary('GeometricalModelMetaEngine',['Engine/MetaEngine/GeometricalModelMetaEngine.cpp']),
+-	env.SharedLibrary('InteractingGeometryMetaEngine',['Engine/MetaEngine/InteractingGeometryMetaEngine.cpp']),
+-	env.SharedLibrary('PhysicalParametersMetaEngine',['Engine/MetaEngine/PhysicalParametersMetaEngine.cpp']),
+-	env.SharedLibrary('InteractionGeometryMetaEngine',['Engine/MetaEngine/InteractionGeometryMetaEngine.cpp']),
+-	env.SharedLibrary('InteractionPhysicsMetaEngine',['Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp']),
+-	env.SharedLibrary('PhysicalActionApplier',['Engine/MetaEngine/PhysicalActionApplier.cpp']),
+-	env.SharedLibrary('PhysicalActionDamper',['Engine/MetaEngine/PhysicalActionDamper.cpp']),
+-	env.SharedLibrary('ConstitutiveLawDispatcher',['Engine/MetaEngine/ConstitutiveLawDispatcher.cpp']),
+-	env.SharedLibrary('InteractionDispatchers',['Engine/MetaEngine/InteractionDispatchers.cpp'],LIBS=env['LIBS']+['InteractionGeometryMetaEngine','InteractionPhysicsMetaEngine','ConstitutiveLawDispatcher']),
++	env.SharedLibrary('BoundingVolumeMetaEngine',['Engine/MetaEngine/BoundingVolumeMetaEngine.cpp'],LIBS=env['LIBS']+['RigidBodyParameters','AABB','EngineUnits']),
++	env.SharedLibrary('GeometricalModelMetaEngine',['Engine/MetaEngine/GeometricalModelMetaEngine.cpp'],LIBS=env['LIBS']+['EngineUnits']),
++	env.SharedLibrary('InteractingGeometryMetaEngine',['Engine/MetaEngine/InteractingGeometryMetaEngine.cpp'],LIBS=env['LIBS']+['EngineUnits']),
++	env.SharedLibrary('PhysicalParametersMetaEngine',['Engine/MetaEngine/PhysicalParametersMetaEngine.cpp'],LIBS=env['LIBS']+['EngineUnits']),
++	env.SharedLibrary('InteractionGeometryMetaEngine',['Engine/MetaEngine/InteractionGeometryMetaEngine.cpp'],LIBS=env['LIBS']+['EngineUnits']),
++	env.SharedLibrary('InteractionPhysicsMetaEngine',['Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp'],LIBS=env['LIBS']+['EngineUnits']),
++	env.SharedLibrary('PhysicalActionApplier',['Engine/MetaEngine/PhysicalActionApplier.cpp'],LIBS=env['LIBS']+['EngineUnits']),
++	env.SharedLibrary('PhysicalActionDamper',['Engine/MetaEngine/PhysicalActionDamper.cpp'],LIBS=env['LIBS']+['EngineUnits']),
++	env.SharedLibrary('ConstitutiveLawDispatcher',['Engine/MetaEngine/ConstitutiveLawDispatcher.cpp'],LIBS=env['LIBS']+['EngineUnits']),
++	env.SharedLibrary('InteractionDispatchers',['Engine/MetaEngine/InteractionDispatchers.cpp'],LIBS=env['LIBS']+['InteractionGeometryMetaEngine','InteractionPhysicsMetaEngine','ConstitutiveLawDispatcher','EngineUnits']),
+ 	env.SharedLibrary('InteractingBox2AABB',['Engine/EngineUnit/InteractingBox2AABB.cpp'],
+-		LIBS=env['LIBS']+['BoundingVolumeMetaEngine','InteractingBox','AABB','Box',]),
++		LIBS=env['LIBS']+['BoundingVolumeMetaEngine','InteractingBox','AABB','Box','EngineUnits']),
+ 	env.SharedLibrary('MetaInteractingGeometry2AABB',['Engine/EngineUnit/MetaInteractingGeometry2AABB.cpp'],
+-		LIBS=env['LIBS']+['BoundingVolumeMetaEngine','MetaInteractingGeometry','AABB']),
++		LIBS=env['LIBS']+['BoundingVolumeMetaEngine','MetaInteractingGeometry','AABB','EngineUnits']),
+ 	env.SharedLibrary('InteractingFacet2AABB',['Engine/EngineUnit/InteractingFacet2AABB.cpp'],
+-		LIBS=env['LIBS']+['AABB','InteractingFacet']),
++		LIBS=env['LIBS']+['AABB','InteractingFacet','EngineUnits']),
+ 	env.SharedLibrary('LeapFrogOrientationIntegrator',['Engine/EngineUnit/LeapFrogOrientationIntegrator.cpp'],
+-		LIBS=env['LIBS']+['PhysicalParametersMetaEngine','ParticleParameters','RigidBodyParameters']),
++		LIBS=env['LIBS']+['PhysicalParametersMetaEngine','ParticleParameters','RigidBodyParameters','EngineUnits']),
+ 	env.SharedLibrary('LeapFrogPositionIntegrator',['Engine/EngineUnit/LeapFrogPositionIntegrator.cpp'],
+-		LIBS=env['LIBS']+['PhysicalParametersMetaEngine','ParticleParameters','RigidBodyParameters']),
++		LIBS=env['LIBS']+['PhysicalParametersMetaEngine','ParticleParameters','RigidBodyParameters','EngineUnits']),
+ 	env.SharedLibrary('NewtonsForceLaw',['Engine/EngineUnit/NewtonsForceLaw.cpp'],
+-		LIBS=env['LIBS']+['PhysicalActionApplier','ParticleParameters','RigidBodyParameters']),
++		LIBS=env['LIBS']+['PhysicalActionApplier','ParticleParameters','RigidBodyParameters','EngineUnits']),
+ 	env.SharedLibrary('NewtonsMomentumLaw',['Engine/EngineUnit/NewtonsMomentumLaw.cpp'],
+-		LIBS=env['LIBS']+['PhysicalActionApplier','RigidBodyParameters',]),
++		LIBS=env['LIBS']+['PhysicalActionApplier','RigidBodyParameters','EngineUnits']),
+ 	env.SharedLibrary('InteractingSphere2AABB',['Engine/EngineUnit/InteractingSphere2AABB.cpp'],
+-		LIBS=env['LIBS']+['BoundingVolumeMetaEngine','InteractingSphere','AABB']),
++		LIBS=env['LIBS']+['BoundingVolumeMetaEngine','InteractingSphere','AABB','EngineUnits']),
+ 	env.SharedLibrary('CundallNonViscousDamping',
+ 		['Engine/EngineUnit/CundallNonViscousDamping.cpp'],
+-		LIBS=env['LIBS']+['PhysicalActionDamper','ParticleParameters','RigidBodyParameters']),
++		LIBS=env['LIBS']+['PhysicalActionDamper','ParticleParameters','RigidBodyParameters','EngineUnits']),
+ 	env.SharedLibrary('ElasticBodySimpleRelationship',['Engine/EngineUnit/ElasticBodySimpleRelationship.cpp'],
+-		LIBS=env['LIBS']+['ElasticBodyParameters','RigidBodyParameters','ParticleParameters','InteractionPhysicsMetaEngine','NormalShearInteractions']),
++		LIBS=env['LIBS']+['ElasticBodyParameters','RigidBodyParameters','ParticleParameters','InteractionPhysicsMetaEngine','NormalShearInteractions','EngineUnits']),
+ 	env.SharedLibrary('NormalShearInteractions',['DataClass/InteractionPhysics/NormalShearInteractions.cpp']),
+ 
+ 	#env.SharedLibrary('VelocityDamping',
+@@ -157,10 +157,10 @@
+                 LIBS=env['LIBS']+['SimpleViscoelasticBodyParameters']),
+         env.SharedLibrary('ef2_BshTube_BssSweptSphereLineSegment_makeBssSweptSphereLineSegment',
+                         ['Engine/EngineUnit/ef2_BshTube_BssSweptSphereLineSegment_makeBssSweptSphereLineSegment.cpp'],
+-                LIBS=env['LIBS']+['BoundingVolumeMetaEngine','InteractingBox','AABB','Box','BshTube','BcpConnection','BssSweptSphereLineSegment']),
++                LIBS=env['LIBS']+['BoundingVolumeMetaEngine','InteractingBox','AABB','Box','BshTube','BcpConnection','BssSweptSphereLineSegment','EngineUnits']),
+         env.SharedLibrary('ef2_BssSweptSphereLineSegment_AABB_makeAABB',
+                         ['Engine/EngineUnit/ef2_BssSweptSphereLineSegment_AABB_makeAABB.cpp'],
+-                LIBS=env['LIBS']+['BoundingVolumeMetaEngine','AABB','BssSweptSphereLineSegment']),
++                LIBS=env['LIBS']+['BoundingVolumeMetaEngine','AABB','BssSweptSphereLineSegment','EngineUnits']),
+         
+                 
+ ])
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2009-07-11 20:25:33 UTC (rev 1856)
++++ trunk/pkg/dem/SConscript	2009-07-12 08:21:25 UTC (rev 1857)
+@@ -34,8 +34,8 @@
+ 	
+ 	env.SharedLibrary('RockPM',['RockPM.cpp'],LIBS=env['LIBS']+['ElasticContactInteraction','Dem3DofGeom_SphereSphere','ElasticContactLaw']),
+ 	env.SharedLibrary('DemXDofGeom',['DataClass/InteractionGeometry/DemXDofGeom.cpp']),
+-	env.SharedLibrary('Dem3DofGeom_SphereSphere',['DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp'],LIBS=env['LIBS']+['RigidBodyParameters','InteractingSphere','DemXDofGeom','yade-opengl' if 'YADE_OPENGL' in env['CPPDEFINES'] else '']),
+-	env.SharedLibrary('Dem3DofGeom_FacetSphere',['DataClass/InteractionGeometry/Dem3DofGeom_FacetSphere.cpp'],LIBS=env['LIBS']+['RigidBodyParameters','InteractingSphere','InteractingFacet','Dem3DofGeom_SphereSphere','DemXDofGeom','yade-opengl' if 'YADE_OPENGL' in env['CPPDEFINES'] else '']),
++	env.SharedLibrary('Dem3DofGeom_SphereSphere',['DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp'],LIBS=env['LIBS']+['EngineUnits','RigidBodyParameters','InteractingSphere','DemXDofGeom','yade-opengl' if 'YADE_OPENGL' in env['CPPDEFINES'] else '']),
++	env.SharedLibrary('Dem3DofGeom_FacetSphere',['DataClass/InteractionGeometry/Dem3DofGeom_FacetSphere.cpp'],LIBS=env['LIBS']+['EngineUnits','RigidBodyParameters','InteractingSphere','InteractingFacet','Dem3DofGeom_SphereSphere','DemXDofGeom','yade-opengl' if 'YADE_OPENGL' in env['CPPDEFINES'] else '']),
+ 
+ 	env.SharedLibrary('FacetTopologyAnalyzer',['Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp'],LIBS=env['LIBS']+['InteractingFacet']),
+ 
+@@ -978,6 +978,7 @@
+ 		,LIBS=env['LIBS']+['SimpleViscoelasticBodyParameters'
+ 		    ,'ViscoelasticInteraction'
+ 		    ,'SpheresContactGeometry'
++			 ,'EngineUnits',
+ 		    ])
+ 
+ 	,env.SharedLibrary('ContactLaw1',
+
+Modified: trunk/py/utils.py
+===================================================================
+--- trunk/py/utils.py	2009-07-11 20:25:33 UTC (rev 1856)
++++ trunk/py/utils.py	2009-07-12 08:21:25 UTC (rev 1857)
+@@ -78,7 +78,7 @@
+ 	inert=(2./5.)*V*density*radius**2
+ 	pp.update({'se3':[center[0],center[1],center[2],1,0,0,0],'refSe3':[center[0],center[1],center[2],1,0,0,0],'mass':V*density,'inertia':[inert,inert,inert]})
+ 	s.phys=PhysicalParameters(physParamsClass)
+-	s.phys.updateExistingKeys(pp)
++	s.phys.updateExistingAttrs(pp)
+ 	s.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+ 	s['isDynamic']=dynamic
+ 	return s
+@@ -94,7 +94,7 @@
+ 	V=extents[0]*extents[1]*extents[2]
+ 	pp.update({'se3':[center[0],center[1],center[2],orientation[0],orientation[1],orientation[2],orientation[3]],'refSe3':[center[0],center[1],center[2],orientation[0],orientation[1],orientation[2],orientation[3]],'mass':V*density,'inertia':[mass*4*(extents[1]**2+extents[2]**2),mass*4*(extents[0]**2+extents[2]**2),mass*4*(extents[0]**2+extents[1]**2)]})
+ 	b.phys=PhysicalParameters(physParamsClass)
+-	b.phys.updateExistingKeys(pp)
++	b.phys.updateExistingAttrs(pp)
+ 	b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+ 	b['isDynamic']=dynamic
+ 	return b
+@@ -113,7 +113,7 @@
+ 	b.mold.setRaw('vertices',vStr)
+ 	pp.update({'se3':[center[0],center[1],center[2],1,0,0,0],'refSe3':[center[0],center[1],center[2],1,0,0,0],'inertia':[0,0,0]})
+ 	b.phys=PhysicalParameters(physParamsClass)
+-	b.phys.updateExistingKeys(pp)
++	b.phys.updateExistingAttrs(pp)
+ 	b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+ 	b['isDynamic']=dynamic
+ 	b.mold.postProcessAttributes()
+@@ -291,7 +291,7 @@
+ 		pp={'se3':[0,0,0,1,0,0,0],'young':young,'poisson':poisson,'frictionAngle':frictionAngle}
+ 		pp.update(physParamsAttr)
+ 		b.phys=PhysicalParameters(physParamsClass)
+-		b.phys.updateExistingKeys(pp)
++		b.phys.updateExistingAttrs(pp)
+ 		if not noBoundingVolume:
+ 			b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+ 		o.bodies.append(b)
+
+Modified: trunk/py/yadeWrapper/yadeWrapper.cpp
+===================================================================
+--- trunk/py/yadeWrapper/yadeWrapper.cpp	2009-07-11 20:25:33 UTC (rev 1856)
++++ trunk/py/yadeWrapper/yadeWrapper.cpp	2009-07-12 08:21:25 UTC (rev 1857)
+@@ -262,7 +262,8 @@
+ 				bool ok=false;
+ 				/* FIXME: casting engine unit to the right type via dynamic_cast doesn't work (always unusuccessful),
+ 				 * do static_cast and if the EngineUnit is of wrong type, it will crash badly immediately. */
+-				#define TRY_ADD_FUNCTOR(P,Q) {shared_ptr&lt;P&gt; p(dynamic_pointer_cast&lt;P&gt;(me)); shared_ptr&lt;EngineUnit&gt; eu(euEx().proxee); if(p&amp;&amp;eu){p-&gt;add(static_pointer_cast&lt;Q&gt;(eu)); ok=true; }}
++				// #define TRY_ADD_FUNCTOR(P,Q) {shared_ptr&lt;P&gt; p(dynamic_pointer_cast&lt;P&gt;(me)); shared_ptr&lt;EngineUnit&gt; eu(euEx().proxee); if(p&amp;&amp;eu){p-&gt;add(static_pointer_cast&lt;Q&gt;(eu)); ok=true; }}
++				#define TRY_ADD_FUNCTOR(P,Q) {shared_ptr&lt;P&gt; p(dynamic_pointer_cast&lt;P&gt;(me)); shared_ptr&lt;Q&gt; eu(dynamic_pointer_cast&lt;Q&gt;(euEx().proxee)); if(p&amp;&amp;eu){p-&gt;add(eu); ok=true; }}
+ 				// shared_ptr&lt;Q&gt; q(dynamic_pointer_cast&lt;Q&gt;(eu)); cerr&lt;&lt;#P&lt;&lt;&quot; &quot;&lt;&lt;#Q&lt;&lt;&quot;:&quot;&lt;&lt;(bool)p&lt;&lt;&quot; &quot;&lt;&lt;(bool)q&lt;&lt;endl;
+ 				TRY_ADD_FUNCTOR(BoundingVolumeMetaEngine,BoundingVolumeEngineUnit);
+ 				TRY_ADD_FUNCTOR(GeometricalModelMetaEngine,GeometricalModelEngineUnit);
+
+Added: trunk/scripts/test/pack-predicates.py
+===================================================================
+--- trunk/scripts/test/pack-predicates.py	2009-07-11 20:25:33 UTC (rev 1856)
++++ trunk/scripts/test/pack-predicates.py	2009-07-12 08:21:25 UTC (rev 1857)
+@@ -0,0 +1,12 @@
++from yade.pack import *
++s1=inSphere((0,0,0),1)
++s2=inSphere((0,0,1),1)
++# construct using explicit composition
++s12=PredicateUnion(s1,s2)
++print s12.aabb(), s12((0,0,.5),0)
++# constuct the same predicate with operators
++print (s1|s2).aabb(), (s1|s2)((0,0,.5),0)
++# predicate difference: points in s1 and not in s2
++print (s1-s2).aabb()
++print (s1-s2)((0,0,1.5),0)
++print (s1-s2)((0,0,-0.5),0)
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001182.html">[deprecated list] [Yade-dev] [svn] r1856 - in trunk: examples	gui/py	pkg/dem/Engine/DeusExMachina py
+</A></li>
+	<LI>Next message: <A HREF="001184.html">[deprecated list] [Yade-dev] [svn] r1858 - in trunk: . debian
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1183">[ date ]</a>
+              <a href="thread.html#1183">[ thread ]</a>
+              <a href="subject.html#1183">[ subject ]</a>
+              <a href="author.html#1183">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

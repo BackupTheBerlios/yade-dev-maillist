@@ -1,0 +1,141 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1677 - in	trunk/pkg/common/Engine: DeusExMachina	MetaEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1677%20-%20in%0A%09trunk/pkg/common/Engine%3A%20DeusExMachina%09MetaEngine&In-Reply-To=%3C200902212014.n1LKEt7E013230%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000721.html">
+   <LINK REL="Next"  HREF="000725.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1677 - in	trunk/pkg/common/Engine: DeusExMachina	MetaEngine</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1677%20-%20in%0A%09trunk/pkg/common/Engine%3A%20DeusExMachina%09MetaEngine&In-Reply-To=%3C200902212014.n1LKEt7E013230%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1677 - in	trunk/pkg/common/Engine: DeusExMachina	MetaEngine">sega at mail.berlios.de
+       </A><BR>
+    <I>Sat Feb 21 21:14:55 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000721.html">[deprecated list] [Yade-dev] [svn] r1676 - trunk/core
+</A></li>
+        <LI>Next message: <A HREF="000725.html">[deprecated list] [Yade-dev] [svn] r1678 - in trunk:	core	core/DefaultContainerImplementations extra extra/clump	gui/py	lib/base	pkg/common/Engine/MetaEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#723">[ date ]</a>
+              <a href="thread.html#723">[ thread ]</a>
+              <a href="subject.html#723">[ subject ]</a>
+              <a href="author.html#723">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2009-02-21 21:14:55 +0100 (Sat, 21 Feb 2009)
+New Revision: 1677
+
+Modified:
+   trunk/pkg/common/Engine/DeusExMachina/GravityEngines.cpp
+   trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp
+Log:
+Migrate GravityEngines and ConstitutiveLaw to BEX_CONTAINER
+
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/GravityEngines.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/GravityEngines.cpp	2009-02-21 14:12:20 UTC (rev 1676)
++++ trunk/pkg/common/Engine/DeusExMachina/GravityEngines.cpp	2009-02-21 20:14:55 UTC (rev 1677)
+@@ -24,7 +24,11 @@
+ 		if(b-&gt;isClumpMember()) continue;
+ 		shared_ptr&lt;ParticleParameters&gt; p=YADE_PTR_CAST&lt;ParticleParameters&gt;(b-&gt;physicalParameters);
+ 		if(p!=0) //not everything derives from ParticleParameters; this line was    assert(p); - Janek
++#ifdef BEX_CONTAINER
++			ncb-&gt;bex.force(b-&gt;getId())+=gravity*p-&gt;mass;
++#else
+ 			static_cast&lt;Force*&gt;(ncb-&gt;physicalActions-&gt;find(b-&gt;getId(),cachedForceClassIndex).get())-&gt;force+=gravity*p-&gt;mass;
++#endif
+ 	}
+ }
+ 
+@@ -34,8 +38,13 @@
+ 		if(b-&gt;isClumpMember() || b-&gt;getId()==centralBody) continue; // skip clump members and central body
+ 		Real F=accel*YADE_PTR_CAST&lt;ParticleParameters&gt;(b-&gt;physicalParameters)-&gt;mass;
+ 		Vector3r toCenter=centralPos-b-&gt;physicalParameters-&gt;se3.position; toCenter.Normalize();
++#ifdef BEX_CONTAINER
++		rootBody-&gt;bex.force(b-&gt;getId())+=F*toCenter;
++		if(reciprocal) rootBody-&gt;bex.force(centralBody)-=F*toCenter;
++#else
+ 		static_cast&lt;Force*&gt;(rootBody-&gt;physicalActions-&gt;find(b-&gt;getId(),cachedForceClassIndex).get())-&gt;force+=F*toCenter;
+ 		if(reciprocal) static_cast&lt;Force*&gt;(rootBody-&gt;physicalActions-&gt;find(centralBody,cachedForceClassIndex).get())-&gt;force-=F*toCenter;
++#endif
+ 	}
+ }
+ 
+@@ -49,7 +58,11 @@
+ 		const Vector3r x2=axisPoint+axisDirection;
+ 		Vector3r closestAxisPoint=(x2-x1) * /* t */ (-(x1-x0).Dot(x2-x1))/((x2-x1).SquaredLength());
+ 		Vector3r toAxis=closestAxisPoint-x0; toAxis.Normalize();
++#ifdef BEX_CONTAINER
++		rootBody-&gt;bex.force(b-&gt;getId())+=acceleration*myMass*toAxis;
++#else
+ 		static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(b-&gt;getId(),cachedForceClassIndex))-&gt;force+=acceleration*myMass*toAxis;
+ 		//if(b-&gt;getId()==20){ TRVAR3(toAxis,acceleration*myMass*toAxis,static_pointer_cast&lt;Force&gt;(rootBody-&gt;physicalActions-&gt;find(b-&gt;getId(),cachedForceClassIndex))-&gt;force); }
++#endif
+ 	}
+ }
+
+Modified: trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp	2009-02-21 14:12:20 UTC (rev 1676)
++++ trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp	2009-02-21 20:14:55 UTC (rev 1677)
+@@ -22,8 +22,14 @@
+ 	 * It creates no overhead runtime overhead, since intialization of Forces/Momentums
+ 	 * is done only if the derived ConstitutiveLaw says NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;), for example.
+ 	 */
++#ifdef BEX_CONTAINER
++	inline Vector3r&amp; bodyForce(const body_id_t id, MetaBody* rb) const { return rb-&gt;bex.force(id); }
++	inline Vector3r&amp; bodyTorque(const body_id_t id, MetaBody* rb) const { return rb-&gt;bex.torque(id);}
++#else
+ 	Vector3r&amp; bodyForce(const body_id_t id, MetaBody* rb) const { return static_pointer_cast&lt;Force&gt;(rb-&gt;physicalActions-&gt;find(id,forceIdx))-&gt;force; }
+ 	Vector3r&amp; bodyTorque(const body_id_t id, MetaBody* rb) const { return static_pointer_cast&lt;Momentum&gt;(rb-&gt;physicalActions-&gt;find(id,torqueIdx))-&gt;momentum;}
++#endif
++
+ 	/*! Convenience function to apply force and torque from one force at contact point. Not sure if this is the right place for it. */
+ 	void applyForceAtContactPoint(const Vector3r&amp; force, const Vector3r&amp; contactPoint, const body_id_t id1, const Vector3r&amp; pos1, const body_id_t id2, const Vector3r&amp; pos2, MetaBody* rb){
+ 		#ifdef BEX_CONTAINER
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000721.html">[deprecated list] [Yade-dev] [svn] r1676 - trunk/core
+</A></li>
+	<LI>Next message: <A HREF="000725.html">[deprecated list] [Yade-dev] [svn] r1678 - in trunk:	core	core/DefaultContainerImplementations extra extra/clump	gui/py	lib/base	pkg/common/Engine/MetaEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#723">[ date ]</a>
+              <a href="thread.html#723">[ thread ]</a>
+              <a href="subject.html#723">[ subject ]</a>
+              <a href="author.html#723">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

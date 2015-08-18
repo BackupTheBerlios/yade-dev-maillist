@@ -1,0 +1,647 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1574 - in trunk:	extra/triangulation	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1574%20-%20in%20trunk%3A%0A%09extra/triangulation%09pkg/dem/Engine/DeusExMachina%0A%09pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200811171548.mAHFmcx6010665%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000507.html">
+   <LINK REL="Next"  HREF="000509.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1574 - in trunk:	extra/triangulation	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1574%20-%20in%20trunk%3A%0A%09extra/triangulation%09pkg/dem/Engine/DeusExMachina%0A%09pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200811171548.mAHFmcx6010665%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1574 - in trunk:	extra/triangulation	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Mon Nov 17 16:48:38 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000507.html">[deprecated list] [Yade-dev] [svn] r1573 - in trunk:	extra/triangulation	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000509.html">[deprecated list] [Yade-dev] [svn] r1575 -	trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#508">[ date ]</a>
+              <a href="thread.html#508">[ thread ]</a>
+              <a href="subject.html#508">[ subject ]</a>
+              <a href="author.html#508">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2008-11-17 16:48:37 +0100 (Mon, 17 Nov 2008)
+New Revision: 1574
+
+Added:
+   trunk/pkg/dem/Engine/StandAloneEngine/MicroMacroAnalyser.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/MicroMacroAnalyser.hpp
+Modified:
+   trunk/extra/triangulation/TesselationWrapper.h
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.hpp
+Log:
+- Few files missing in the previous commit.
+- Add a new class for computing/recording micromechanical data based on 
+tesselation
+
+
+
+
+Modified: trunk/extra/triangulation/TesselationWrapper.h
+===================================================================
+--- trunk/extra/triangulation/TesselationWrapper.h	2008-11-17 15:41:43 UTC (rev 1573)
++++ trunk/extra/triangulation/TesselationWrapper.h	2008-11-17 15:48:37 UTC (rev 1574)
+@@ -25,7 +25,7 @@
+ 
+ class TesselationWrapper{
+ 
+-private:
++public:
+ 
+ 	Tesselation* Tes;
+ 	double mean_radius;
+@@ -40,11 +40,10 @@
+     	///Insert a sphere
+ 	
+     	bool insert(double x, double y, double z, double rad, unsigned int id);
++    	void checkMinMax(double x, double y, double z, double rad);//for experimentation purpose
+     	bool move (double x, double y, double z, double rad, unsigned int id);
+     	void clear(void);
+-
+-
+-
++    	void clear2(void);
+     	    	
+ 	///Add axis aligned bounding planes (modelised as spheres with (almost) infinite radius)
+ //  	void 	AddBoundingPlanes (void); 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp	2008-11-17 15:41:43 UTC (rev 1573)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.hpp	2008-11-17 15:48:37 UTC (rev 1574)
+@@ -88,17 +88,12 @@
+ 		Real&amp; uniaxialEpsilonCurr;
+ 		//! Value of friction to use for the compression test
+ 		Real frictionAngleDegree;
+-		//! document TODO
+-		Real spheresVolume;
+-		//! Value of spheres volume 
+-		Real boxVolume;
+-		//! Value of box volume 
+-		Real calculatedPorosity;
+-		//! Value of porosity during the simulation 
+-		Real translationSpeed;
++		
+ 		//! Value of translation speed
+-		Real fixedPorosity;
++		Real translationSpeed;
+ 		//! Value of porosity chosen by the user
++		Real fixedPorosity;
++		
+ 
+ 		//! Previous state (used to detect manual changes of the state in .xml)
+ 		stateNum previousState;
+@@ -135,6 +130,7 @@
+ 	protected :
+ 		virtual void postProcessAttributes(bool);
+ 		virtual void registerAttributes();
++		
+ 	REGISTER_CLASS_NAME(TriaxialCompressionEngine);
+ 	REGISTER_BASE_CLASS_NAME(TriaxialStressController);
+ };
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp	2008-11-17 15:41:43 UTC (rev 1573)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp	2008-11-17 15:48:37 UTC (rev 1574)
+@@ -183,5 +183,127 @@
+ 
+ 
+ }
++/*
++TriaxialStressController::ComputeLoveStress ( MetaBody * ncb )
++{
++	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ 
++	Real f1_el_x=0, f1_el_y=0, f1_el_z=0, x1=0, y1=0, z1=0, x2=0, y2=0, z2=0;
++
++	Real sig11_el=0, sig22_el=0, sig33_el=0, sig12_el=0, sig13_el=0,
++ sig23_el=0;
++	//, Vwater = 0,
++ Real kinematicE = 0;
++
++ InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
++ InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
++
++ Real j = 0;
++ Real FT[3][3] = {{0,0,0},{0,0,0},{0,0,0}};
++
++ for ( ; ii!=iiEnd ; ++ii )
++ {
++	 if ( ( *ii )-&gt;isReal )
++	 {
++		 const shared_ptr&lt;Interaction&gt;&amp; interaction = *ii;
++
++		 unsigned int id1 = interaction -&gt; getId1();
++		 unsigned int id2 = interaction -&gt; getId2();
++
++		 SpheresContactGeometry* currentContactGeometry  =
++				 static_cast&lt;SpheresContactGeometry*&gt; ( interaction-&gt;interactionGeometry.
++				 get() );
++
++		 ElasticContactInteraction* currentContactPhysics =
++				 static_cast&lt;ElasticContactInteraction*&gt;
++				 ( interaction-&gt;interactionPhysics.get() );
++
++		 Real fn = currentContactPhysics-&gt;normalForce.Length();
++
++		 if ( fn!=0 )
++
++				//if (currentContactGeometry-&gt;penetrationDepth &gt;= 0)
++
++		 {
++			 j=j+1;
++
++			 Vector3r fel =
++					 currentContactPhysics-&gt;normalForce + currentContactPhysics-&gt;shearForce;
++
++			 f1_el_x=fel[0];
++			 f1_el_y=fel[1];
++			 f1_el_z=fel[2];
++
++			 int geometryIndex1 =
++					 ( *bodies ) [id1]-&gt;geometricalModel-&gt;getClassIndex();
++			 int geometryIndex2 =
++					 ( *bodies ) [id2]-&gt;geometricalModel-&gt;getClassIndex();
++
++			 if ( geometryIndex1 == geometryIndex2 )
++
++			 {
++				 BodyMacroParameters* de1 =
++						 static_cast&lt;BodyMacroParameters*&gt; ( ( *bodies ) [id1]-&gt;physicalParameters.get() );
++				 x1 = de1-&gt;se3.position[0];
++				 y1 = de1-&gt;se3.position[1];
++				 z1 = de1-&gt;se3.position[2];
++
++
++				 BodyMacroParameters* de2 =
++						 static_cast&lt;BodyMacroParameters*&gt; ( ( *bodies ) [id2]-&gt;physicalParameters.get() );
++				 x2 = de2-&gt;se3.position[0];
++				 y2 = de2-&gt;se3.position[1];
++				 z2 = de2-&gt;se3.position[2];
++
++					///Calcul des contraintes elastiques spheres/spheres
++
++				 sig11_el = sig11_el + f1_el_x* ( x2 - x1 );
++				 sig22_el = sig22_el + f1_el_y* ( y2 - y1 );
++				 sig33_el = sig33_el + f1_el_z* ( z2 - z1 );
++				 sig12_el = sig12_el + f1_el_x* ( y2 - y1 );
++				 sig13_el = sig13_el + f1_el_x* ( z2 - z1 );
++				 sig23_el = sig23_el + f1_el_y* ( z2 - z1 );
++
++			 }
++
++			 else
++
++			 {
++				 Vector3r l =
++						 std::min ( currentContactGeometry-&gt;radius2,
++						 currentContactGeometry-&gt;radius1 )
++						 *currentContactGeometry-&gt;normal;
++
++					/// Calcul des contraintes elastiques spheres/parois
++
++				 sig11_el = sig11_el + f1_el_x*l[0];
++				 sig22_el = sig22_el + f1_el_y*l[1];
++				 sig33_el = sig33_el + f1_el_z*l[2];
++				 sig12_el = sig12_el + f1_el_x*l[1];
++				 sig13_el = sig13_el + f1_el_x*l[2];
++				 sig23_el = sig23_el + f1_el_y*l[2];
++
++			 }
++
++				/// fabric tensor
++
++			 Vector3r normal = currentContactGeometry-&gt;normal;
++
++			 for ( int i=0; i&lt;3; ++i )
++			 {
++				 for ( int n=0; n&lt;3; ++n )
++				 {
++						//fabricTensor[i][n]
++					 FT[i][n]
++							 += normal[i]*normal[n];
++				 }
++			 }
++
++		 }
++	 }
++ }
++}*/
++
++
++
+ YADE_PLUGIN();
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2008-11-17 15:41:43 UTC (rev 1573)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.hpp	2008-11-17 15:48:37 UTC (rev 1574)
+@@ -31,6 +31,7 @@
+ 		//int cachedForceClassIndex;
+ 		int ForceClassIndex;
+ 		Real previousStress, previousMultiplier; //previous mean stress and size multiplier		
++		bool firstRun;
+ 		
+ 		 	
+ 	public :
+@@ -44,7 +45,7 @@
+ 		//! Stores the value of the translation at the previous time step, stiffness, and normal
+ 		Vector3r	previousTranslation [6];
+ 		//! The value of stiffness (updated according to stiffnessUpdateInterval) 
+-		Real		stiffness [6];
++		vector&lt;Real&gt;	stiffness;
+ 		Real 		strain [3];
+ 		Real volumetricStrain;
+ 		Vector3r	normal [6];
+@@ -52,6 +53,12 @@
+ 		Vector3r	stress [6];
+ 		Vector3r	force [6];
+ 		Real		meanStress;
++		//! Value of spheres volume (solid volume)
++		Real spheresVolume;
++		//! Value of box volume 
++		Real boxVolume;
++		//! Sample porosity
++		Real porosity;
+ 				
+ 		
+ 		//Real UnbalancedForce;		
+
+Added: trunk/pkg/dem/Engine/StandAloneEngine/MicroMacroAnalyser.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/MicroMacroAnalyser.cpp	2008-11-17 15:41:43 UTC (rev 1573)
++++ trunk/pkg/dem/Engine/StandAloneEngine/MicroMacroAnalyser.cpp	2008-11-17 15:48:37 UTC (rev 1574)
+@@ -0,0 +1,237 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Bruno Chareyre                                  *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at hmg.inpg.fr</A>                                            *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++
++#include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
++
++#include&lt;yade/core/Omega.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/pkg-common/Force.hpp&gt;
++#include&lt;yade/pkg-common/Momentum.hpp&gt;
++#include&lt;yade/core/PhysicalAction.hpp&gt;
++
++#include &lt;yade/pkg-common/InteractingSphere.hpp&gt;
++
++#include &quot;MicroMacroAnalyser.hpp&quot;
++
++#include &quot;TesselationWrapper.h&quot;
++
++#include &quot;KinematicLocalisationAnalyser.hpp&quot;
++#include &quot;TriaxialState.h&quot;
++
++CREATE_LOGGER(MicroMacroAnalyser);
++
++MicroMacroAnalyser::MicroMacroAnalyser() : StandAloneEngine() , actionForce(new Force) , actionMomentum(new Momentum)
++{
++	actionForceIndex = actionForce-&gt;getClassIndex();
++	actionMomentumIndex = actionMomentum-&gt;getClassIndex();
++	analyser = shared_ptr&lt;KinematicLocalisationAnalyser&gt; (new KinematicLocalisationAnalyser);
++	analyser-&gt;SetConsecutive (true);
++	analyser-&gt;SetNO_ZERO_ID (false);
++	interval = 100;
++	outputFile = &quot;MicroMacroAnalysis&quot;;
++	stateFileName = &quot;./snapshots/state&quot;;
++}
++
++
++void MicroMacroAnalyser::registerAttributes()
++{
++	REGISTER_ATTRIBUTE(interval);
++	REGISTER_ATTRIBUTE(outputFile);
++}
++
++void MicroMacroAnalyser::postProcessAttributes(bool deserializing)
++{
++	if(deserializing)
++	{
++		bool file_exists = std::ifstream (outputFile.c_str()); //if file does not exist, we will write colums titles
++		ofile.open(outputFile.c_str(), std::ios::app);
++		if (!file_exists) ofile&lt;&lt;&quot;iteration eps1w eps2w eps3w eps11g eps22g eps33g eps12g eps13g eps23g&quot;&lt;&lt; endl;
++	}
++}
++
++void MicroMacroAnalyser::action(MetaBody* ncb)
++{
++	//cerr &lt;&lt; &quot;MicroMacroAnalyser::action(MetaBody* ncb) (interval=&quot;&lt;&lt; interval &lt;&lt;&quot;, iteration=&quot;&lt;&lt; Omega::instance().getCurrentIteration()&lt;&lt;&quot;)&quot; &lt;&lt; endl;
++	if (Omega::instance().getCurrentIteration() == 0) setState(ncb, 1);
++	else if (Omega::instance().getCurrentIteration() % interval == 0) {
++		setState(ncb, 2, true, true);
++		analyser-&gt;ComputeParticlesDeformation();
++		Tenseur_sym3 epsg ( analyser-&gt;grad_u_total );
++		ofile &lt;&lt; Omega::instance().getCurrentIteration() &lt;&lt; analyser-&gt;Delta_epsilon(1,1)&lt;&lt;&quot; &quot;&lt;&lt;analyser-&gt;Delta_epsilon(2,2)&lt;&lt;&quot; &quot;&lt;&lt;analyser-&gt;Delta_epsilon(3,3)&lt;&lt;&quot; &quot;&lt;&lt;epsg(1,1)&lt;&lt;&quot; &quot;&lt;&lt;epsg(2,2)&lt;&lt; &quot; &quot;&lt;&lt;epsg(3,3)&lt;&lt;&quot; &quot;&lt;&lt;epsg(1,2)&lt;&lt;&quot; &quot;&lt;&lt;epsg(1,3)&lt;&lt;&quot; &quot;&lt;&lt;epsg(2,3)&lt;&lt;endl;
++		analyser-&gt;SwitchStates();
++	}
++	//cerr &lt;&lt; &quot;ENDOF MicroMacro::action&quot; &lt;&lt; endl;
++}
++
++
++
++void MicroMacroAnalyser::setState ( MetaBody* ncb, unsigned int state, bool saveStates, bool computeIncrement )
++{
++	LOG_INFO (&quot;MicroMacroAnalyser::setState&quot;);
++	if ( !triaxialCompressionEngine )
++	{
++		vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator itFirst = ncb-&gt;engines.begin();
++		vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator itLast = ncb-&gt;engines.end();
++		for ( ;itFirst!=itLast; ++itFirst )
++		{
++			if ( ( *itFirst )-&gt;getClassName() == &quot;TriaxialCompressionEngine&quot; ) //|| (*itFirst)-&gt;getBaseClassName() == &quot;TriaxialCompressionEngine&quot;)
++			{
++				LOG_DEBUG ( &quot;stress controller engine found&quot; );
++				triaxialCompressionEngine =  YADE_PTR_CAST&lt;TriaxialCompressionEngine&gt; ( *itFirst );
++				//triaxialCompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (static_cast&lt;TriaxialCompressionEngine*&gt; ( (*itFirst).get()));
++			}
++		}
++		if ( !triaxialCompressionEngine ) LOG_ERROR ( &quot;stress controller engine not found&quot; );
++	}
++
++	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++	TriaxialState* ts;
++	if ( state==1 ) ts = analyser-&gt;TS0;
++	else if ( state==2 ) ts = analyser-&gt;TS1;
++	else LOG_ERROR ( &quot;state must be 1 or 2, instead of &quot; &lt;&lt; state );
++	TriaxialState&amp; TS = *ts;
++
++	TS.reset();
++
++	long Ng = bodies-&gt;size();
++	//cerr &lt;&lt; &quot;Ng= &quot; &lt;&lt; Ng &lt;&lt; endl;
++	//Statefile &gt;&gt; Ng;
++	//Real x, y, z, rad; //coordonn&#65533;es/rayon
++	//Real tx, ty, tz;
++	//Point pos;
++	TS.mean_radius=0;
++	//Vecteur trans, rot;
++	//Real rad; //coordonn&#65533;es/rayon
++
++	TS.grains.resize ( Ng );
++	//cerr &lt;&lt; &quot;Ngrains =&quot; &lt;&lt; Ng &lt;&lt; endl;
++	//GrainIterator git= grains.begin();
++//  git-&gt;id=0;
++//  git-&gt;sphere = Sphere(CGAL::ORIGIN, 0);
++//  git-&gt;translation = CGAL::NULL_VECTOR;
++//  git-&gt;rotation = CGAL::NULL_VECTOR;
++
++	BodyContainer::iterator biBegin    = bodies-&gt;begin();
++	BodyContainer::iterator biEnd = bodies-&gt;end();
++	BodyContainer::iterator bi = biBegin;
++	Ng = 0;
++
++	
++	for ( ; bi!=biEnd ; ++bi )
++	{
++		body_id_t Idg = ( *bi )-&gt;getId();
++		TS.grains[Idg].id = Idg;
++		
++		if ( !( *bi )-&gt;isDynamic ) TS.grains[Idg].isSphere = false;
++		else {//then it is a sphere (not a wall)
++			++Ng;
++			const InteractingSphere* s = YADE_CAST&lt;InteractingSphere*&gt; ( ( *bi )-&gt;interactingGeometry.get() );
++			const RigidBodyParameters* p = YADE_CAST&lt;RigidBodyParameters*&gt; ( ( *bi )-&gt;physicalParameters.get() );
++			const Vector3r&amp; pos = p-&gt;se3.position;
++			Real rad = s-&gt;radius;
++
++			TS.grains[Idg].sphere = Sphere ( Point ( p-&gt;se3.position[0],p-&gt;se3.position[1],p-&gt;se3.position[2] ),  rad );
++//    TS.grains[Idg].translation = trans;
++//    grains[Idg].rotation = rot;
++			TS.box.base = Point ( min ( TS.box.base.x(), pos.X()-rad ),
++								  min ( TS.box.base.y(), pos.Y()-rad ),
++								  min ( TS.box.base.z(), pos.Z()-rad ) );
++			TS.box.sommet = Point ( max ( TS.box.sommet.x(), pos.X() +rad ),
++									max ( TS.box.sommet.y(), pos.Y() +rad ),
++									max ( TS.box.sommet.z(), pos.Z() +rad ) );
++			TS.mean_radius += TS.grains[Idg].sphere.weight();
++
++
++		}
++	}
++
++	TS.mean_radius /= Ng;//rayon moyen
++	LOG_INFO ( &quot; loaded : &quot; &lt;&lt; Ng &lt;&lt; &quot; grains with mean radius = &quot; &lt;&lt; TS.mean_radius );
++
++	InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
++	InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
++	for ( ; ii!=iiEnd ; ++ii )
++	{
++		if ( ( *ii )-&gt;isReal )
++		{
++			TriaxialState::Contact *c = new TriaxialState::Contact;
++			TS.contacts.push_back ( c );
++			TriaxialState::VectorGrain&amp; grains = TS.grains;
++			body_id_t id1 = ( *ii )-&gt;getId1();
++			body_id_t id2 = ( *ii )-&gt;getId2();
++
++			c-&gt;grain1 = &amp; ( TS.grains[id1] );
++			c-&gt;grain2 = &amp; ( TS.grains[id2] );
++			grains[id1].contacts.push_back ( c );
++			grains[id2].contacts.push_back ( c );
++			c-&gt;normal = Vecteur ( 
++					 ( YADE_CAST&lt;SpheresContactGeometry*&gt; ( ( *ii )-&gt;interactionGeometry.get() ) )-&gt;normal.X(),
++					 ( YADE_CAST&lt;SpheresContactGeometry*&gt; ( ( *ii )-&gt;interactionGeometry.get() ) )-&gt;normal.Y(),
++					 ( YADE_CAST&lt;SpheresContactGeometry*&gt; ( ( *ii )-&gt;interactionGeometry.get() ) )-&gt;normal.Z() );
++// 			c-&gt;normal = ( grains[id2].sphere.point()-grains[id1].sphere.point() );
++// 			c-&gt;normal = c-&gt;normal/sqrt ( pow ( c-&gt;normal.x(),2 ) +pow ( c-&gt;normal.y(),2 ) +pow ( c-&gt;normal.z(),2 ) );
++			c-&gt;position = Vecteur ( 
++					( YADE_CAST&lt;SpheresContactGeometry*&gt; ( ( *ii )-&gt;interactionGeometry.get() ) )-&gt;contactPoint.X(),
++					( YADE_CAST&lt;SpheresContactGeometry*&gt; ( ( *ii )-&gt;interactionGeometry.get() ) )-&gt;contactPoint.Y(),
++					( YADE_CAST&lt;SpheresContactGeometry*&gt; ( ( *ii )-&gt;interactionGeometry.get() ) )-&gt;contactPoint.Z() );
++// 			c-&gt;position = 0.5* ( ( grains[id1].sphere.point()-CGAL::ORIGIN ) +
++// 								 ( grains[id1].sphere.weight() *c-&gt;normal ) +
++// 								 ( grains[id2].sphere.point()-CGAL::ORIGIN ) -
++// 								 ( grains[id2].sphere.weight() *c-&gt;normal ) );
++
++
++			c-&gt;fn = YADE_CAST&lt;ElasticContactInteraction*&gt; ( ( ( *ii )-&gt;interactionPhysics.get() ) )-&gt;normalForce.Dot ( ( YADE_CAST&lt;SpheresContactGeometry*&gt; ( ( *ii )-&gt;interactionGeometry.get() ) )-&gt;normal );
++			Vector3r fs = YADE_CAST&lt;ElasticContactInteraction*&gt; ( ( *ii )-&gt;interactionPhysics.get() )-&gt;shearForce;
++			c-&gt;fs = Vecteur ( fs.X(),fs.Y(),fs.Z() );
++			c-&gt;old_fn = c-&gt;fn;
++			c-&gt;old_fs = c-&gt;fs;
++			c-&gt;frictional_work = 0;
++		}
++	}
++
++	//Load various parameters
++
++	//rfric = find_parameter(&quot;rfric=&quot;, Statefile);// &#65533; remettre quand les fichiers n'auront plus l'espace de trop...
++//  Eyn = find_parameter(&quot;Eyn=&quot;, Statefile);
++//  Eys = find_parameter(&quot;Eys=&quot;, Statefile);
++	TS.wszzh = triaxialCompressionEngine-&gt;stress[triaxialCompressionEngine-&gt;wall_top][1];//find_parameter(&quot;wszzh=&quot;, Statefile);
++	TS.wsxxd = triaxialCompressionEngine-&gt;stress[triaxialCompressionEngine-&gt;wall_right][0];//find_parameter(&quot;wsxxd=&quot;, Statefile);
++	TS.wsyyfa = triaxialCompressionEngine-&gt;stress[triaxialCompressionEngine-&gt;wall_front][2];//find_parameter(&quot;wsyyfa=&quot;, Statefile);
++	TS.eps3 = triaxialCompressionEngine-&gt;strain[2];//find_parameter(&quot;eps3=&quot;, Statefile);
++	TS.eps1 = triaxialCompressionEngine-&gt;strain[0];//find_parameter(&quot;eps1=&quot;, Statefile);
++	TS.eps2 = triaxialCompressionEngine-&gt;strain[1];//find_parameter(&quot;eps2=&quot;, Statefile);
++
++	TS.haut = triaxialCompressionEngine-&gt;height;//find_parameter(&quot;haut=&quot;, Statefile);
++	TS.larg = triaxialCompressionEngine-&gt;width;//find_parameter(&quot;larg=&quot;, Statefile);
++	TS.prof = triaxialCompressionEngine-&gt;depth;//find_parameter(&quot;prof=&quot;, Statefile);
++	TS.porom = analyser-&gt;ComputeMacroPorosity();//find_parameter(&quot;porom=&quot;, Statefile);
++	TS.ratio_f = triaxialCompressionEngine-&gt; ComputeUnbalancedForce ( ncb );//find_parameter(&quot;ratio_f=&quot;, Statefile);
++//  vit = find_parameter(&quot;vit=&quot;, Statefile);
++
++	
++	if ( state == 2 &amp;&amp; computeIncrement )
++	{
++		analyser-&gt;SetForceIncrements();
++		analyser-&gt;SetDisplacementIncrements();
++	}
++	if ( saveStates ) 
++	{
++		ostringstream oss;
++		oss&lt;&lt;stateFileName&lt;&lt;&quot;_&quot;&lt;&lt;Omega::instance().getCurrentIteration();
++		TS.to_file ( oss.str().c_str() );
++	}
++	cerr &lt;&lt; &quot;ENDOF MicroMacroAnalyser::setState&quot; &lt;&lt; endl;
++}
++
++
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/dem/Engine/StandAloneEngine/MicroMacroAnalyser.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/MicroMacroAnalyser.hpp	2008-11-17 15:41:43 UTC (rev 1573)
++++ trunk/pkg/dem/Engine/StandAloneEngine/MicroMacroAnalyser.hpp	2008-11-17 15:48:37 UTC (rev 1574)
+@@ -0,0 +1,61 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Bruno Chareyre                                  *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at hmg.inpg.fr</A>                                            *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef MACRO_MICRO_ANALYSER_HPP
++#define MACRO_MICRO_ANALYSER_HPP
++
++#include&lt;yade/core/StandAloneEngine.hpp&gt;
++#include&lt;yade/pkg-dem/TriaxialCompressionEngine.hpp&gt;
++
++#include &lt;set&gt;
++#include &lt;boost/tuple/tuple.hpp&gt;
++#include &lt;string&gt;
++#include &lt;fstream&gt;
++
++/*! \brief Compute quantities like fabric tensor, local porosity, local deformation, and other micromechanicaly defined quantities based on triangulation/tesselation of the packing
++		
++	This class is using a separate library built from extra/triangulation sources		
++ */
++
++class PhysicalAction;
++class KinematicLocalisationAnalyser;
++
++class MicroMacroAnalyser : public StandAloneEngine
++{
++/// Attributes
++	private :
++		shared_ptr&lt;PhysicalAction&gt; actionForce;
++		shared_ptr&lt;PhysicalAction&gt; actionMomentum;
++		int actionForceIndex;
++		int actionMomentumIndex;
++		std::ofstream ofile;
++		
++		shared_ptr&lt;TriaxialCompressionEngine&gt; triaxialCompressionEngine;
++		shared_ptr&lt;KinematicLocalisationAnalyser&gt; analyser;
++		std::string	 outputFile;
++		std::string	 stateFileName;
++		
++	public :
++		MicroMacroAnalyser();
++		void action(MetaBody*);
++		void setState(MetaBody* ncb, unsigned int state, bool saveStates = false, bool computeIncrement = false);//Set current state as initial (state=1) or final (state=2) congiguration for later kinematic analysis on the increment; if requested : save snapshots (with specific format) - possibly including contact forces increments on the state1-&gt;state2 interval
++		int interval;
++		
++	DECLARE_LOGGER;
++	
++	protected :
++		virtual void postProcessAttributes(bool deserializing);
++		void registerAttributes();
++	REGISTER_CLASS_NAME(MicroMacroAnalyser);
++	REGISTER_BASE_CLASS_NAME(StandAloneEngine);
++};
++
++REGISTER_SERIALIZABLE(MicroMacroAnalyser,false);
++
++#endif // MACRO_MICRO_ANALYZER_HPP
++
+
+
+Property changes on: trunk/pkg/dem/Engine/StandAloneEngine/MicroMacroAnalyser.hpp
+___________________________________________________________________
+Name: svn:executable
+   + *
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.hpp	2008-11-17 15:41:43 UTC (rev 1573)
++++ trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.hpp	2008-11-17 15:48:37 UTC (rev 1574)
+@@ -45,6 +45,7 @@
+ 	
+ 		VolumicContactLaw();
+ 		void action(MetaBody*);
++		void speedTest(MetaBody* ncb);
+ 
+ 	protected :
+ 		void registerAttributes();
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000507.html">[deprecated list] [Yade-dev] [svn] r1573 - in trunk:	extra/triangulation	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000509.html">[deprecated list] [Yade-dev] [svn] r1575 -	trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#508">[ date ]</a>
+              <a href="thread.html#508">[ thread ]</a>
+              <a href="subject.html#508">[ subject ]</a>
+              <a href="author.html#508">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

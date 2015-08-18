@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] commit 1583, 3d view,	serialization.
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20commit%201583%2C%203d%20view%2C%0A%09serialization.&In-Reply-To=%3C20081127002131.652f42cd%40szpak%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000530.html">
+   <LINK REL="Next"  HREF="000533.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] commit 1583, 3d view,	serialization.</H1>
+    <B>Janek Kozicki</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20commit%201583%2C%203d%20view%2C%0A%09serialization.&In-Reply-To=%3C20081127002131.652f42cd%40szpak%3E"
+       TITLE="[deprecated list] [Yade-dev] commit 1583, 3d view,	serialization.">janek_listy at wp.pl
+       </A><BR>
+    <I>Thu Nov 27 00:21:31 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000530.html">[deprecated list] [Yade-dev] commit 1583, 3d view,	serialization.
+</A></li>
+        <LI>Next message: <A HREF="000533.html">[deprecated list] [Yade-dev] commit 1583, 3d view,	serialization.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#532">[ date ]</a>
+              <a href="thread.html#532">[ thread ]</a>
+              <a href="subject.html#532">[ subject ]</a>
+              <a href="author.html#532">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>V&#225;clav S(milauer said:     (by the date of Wed, 26 Nov 2008 23:12:56 +0100)
+
+&gt;<i> 
+</I>&gt;<i> &gt; After you commit, the &quot;primary view&quot; window is empty (draws nothing),
+</I>&gt;<i> &gt; but when I click &quot;New 3D&quot; view - the new window draws everything as
+</I>&gt;<i> &gt; it should. Can you fix that?
+</I>&gt;<i> &gt;   
+</I>&gt;<i> I am not aware of changing anything related to the 3d view lately. Can
+</I>&gt;<i> you precise?
+</I>
+Well, I'm sure that it happened only after I did 'svn up', and see
+commit history. I did svn up from my 1582 to your 1583. It's not too
+annoying though, it's enough if I close the automatically opened
+3dview and reopen a new one.
+
+And (of course) it' doesn't happen always. But it never happened
+before. To reproduce this, just start GUI, generate something and let
+it automatically open the controller. The 3dview will be empty. Even
+'a','g' will not work for toggling axis/grid.
+
+
+
+&gt;<i> There is more things I would like to change in yade globally (besides
+</I>&gt;<i> serialization), so I think I will try to develop a working prototype
+</I>&gt;<i> from scratch (using existing classes here and there). 
+</I>
+yes, this is exactly what sometimes I dream about doing. But I don't
+think I'll ever have time for that.....
+
+
+&gt;<i> What I would like
+</I>&gt;<i> to address specifically is:
+</I>&gt;<i> 
+</I>&gt;<i> 1. Use shared_ptr only if necessary, it has some performance penalties.
+</I>&gt;<i> It would be enough if the owner (Body, Interaction, ...) used auto_ptr
+</I>&gt;<i> to avoid leaks. If the owned object is used after the owner has been
+</I>&gt;<i> destroyed (which is OK with shared_ptr, but will crash with auto_ptr),
+</I>&gt;<i> it is a bug anyway.
+</I>&gt;<i> 2. Better and faster python support, be it through py++ wrapper or other
+</I>&gt;<i> option, but _not_ by using conversions from and to strings.
+</I>&gt;<i> 3. Better serialization, if possible automatically getting attributes to
+</I>&gt;<i> save (needs reflection - for example reflex library from CERN's root; if
+</I>&gt;<i> we have that, most macros in class declarations can be avoided).
+</I>&gt;<i> 4. Experiment with multimethods, if it would not be faster to have
+</I>&gt;<i> hardwired if/else if/else if/... clauses for a few combinations rather
+</I>&gt;<i> than completely generic solution. I know it defeats genericity, but it
+</I>&gt;<i> is a compromise to consider.
+</I>&gt;<i> 5. Experiment with pluginless build and whether plugins should be
+</I>&gt;<i> supported. The current state is that I know of exactly 0 cases that
+</I>&gt;<i> external plugin was built and used with yade compiled elsewhere. (oofem,
+</I>&gt;<i> for example, is a single binary, and is still very modular)
+</I>&gt;<i> 6. Use some neat features from c++0x (future; g++ doesn't support those
+</I>&gt;<i> as of now)
+</I>&gt;<i> 7. Use new (or better than those new) class names, have less files, less
+</I>&gt;<i> management code, more real code that does something.
+</I>
+
+your ideas are good. Almost each of them is a great deal of work.
+
+I can tell you that multimethods won't get faster with your approach.
+Linear access time to read a function pointer in a table *is* a
+linear time. With if/else you are getting logarithmic time. If
+logarithmic time is faster than linear in case if there are only a
+few choices - honestly I don't know. But it's not worth the effort to
+check that. So that one I'd skip.
+
+But if you want to try that anyway, there's an exact copy/paste
+implementation of that in &quot;Modern C++ Design&quot; book by Andrei
+Alexandrescu.
+
+
+-- 
+Janek Kozicki                                                         |
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000530.html">[deprecated list] [Yade-dev] commit 1583, 3d view,	serialization.
+</A></li>
+	<LI>Next message: <A HREF="000533.html">[deprecated list] [Yade-dev] commit 1583, 3d view,	serialization.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#532">[ date ]</a>
+              <a href="thread.html#532">[ thread ]</a>
+              <a href="subject.html#532">[ subject ]</a>
+              <a href="author.html#532">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

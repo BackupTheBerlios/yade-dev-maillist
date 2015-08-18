@@ -1,0 +1,113 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] new contact models
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20new%20contact%20models&In-Reply-To=%3C200803111229.29858.dorofeenko%40icp.ac.ru%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000109.html">
+   <LINK REL="Next"  HREF="000110.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] new contact models</H1>
+    <B>sega</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20new%20contact%20models&In-Reply-To=%3C200803111229.29858.dorofeenko%40icp.ac.ru%3E"
+       TITLE="[yade-dev] new contact models">dorofeenko at icp.ac.ru
+       </A><BR>
+    <I>Tue Mar 11 10:29:29 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000109.html">[yade-dev] question about ElasticContactLaw
+</A></li>
+        <LI>Next message: <A HREF="000110.html">[yade-dev] new contact models
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#108">[ date ]</a>
+              <a href="thread.html#108">[ thread ]</a>
+              <a href="subject.html#108">[ subject ]</a>
+              <a href="author.html#108">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Hello.  
+
+I want realize the viscoelastic contact model (Cundall-Strack) and
+elastoplastic contact model (Walton-Braun) 
+(from Phys. Rev. E, 2001, 65, 011302 
+<A HREF="http://link.aps.org/abstract/PRE/v65/e011302">http://link.aps.org/abstract/PRE/v65/e011302</A>).  
+
+What can I do for this in the YADE framework? 
+
+For example, viscoelastic model is
+
+Fn = kn * xn + cn * vn // normal, xn - normal penetration, vn - normal 
+velocity
+Fs = ks * xs + cs * vs // tangential, xs - shear displacement, vs - shear 
+velocity
+Fs &lt;= Fn*mu // Coulumb friction
+
+where kn, ks, cn, cs is a functions of restitution coefficient and collision 
+time.
+
+Can I realize new PhysicalParameters class:
+
+class EmpyreanBodyParameters : public RigidBodyParameters {
+public:
+    double tc; // collision time
+    double epsilon; // restitution coefficient
+    double mu; // friction coefficient
+};
+
+new InteractionPhysics class:
+
+class CundallStrackInteraction : public InteractionPhysics {
+public:
+    double kn, ks; // elastic
+    double cn, cs; // viscous
+}
+
+new InteractionPhysicsEngineUnit:
+
+class CundallStrackPhysics : public InteractionPhysicsEngineUnit {
+    tc, epsilon -&gt; kn, kt, cn, cs
+}
+
+and new InteractionSolver class?
+
+class CundallStrackContactLaw : public InteractionSolver {
+    This is analog ElasticContactLaw but with viscous damping
+}
+
+Is this right?
+
+Thanks.
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000109.html">[yade-dev] question about ElasticContactLaw
+</A></li>
+	<LI>Next message: <A HREF="000110.html">[yade-dev] new contact models
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#108">[ date ]</a>
+              <a href="thread.html#108">[ thread ]</a>
+              <a href="subject.html#108">[ subject ]</a>
+              <a href="author.html#108">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

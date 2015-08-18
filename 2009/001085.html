@@ -1,0 +1,168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1827 - trunk/extra/mgpost/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1827%20-%20trunk/extra/mgpost/src&In-Reply-To=%3C200907011156.n61Buk2l014020%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001084.html">
+   <LINK REL="Next"  HREF="001086.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1827 - trunk/extra/mgpost/src</H1>
+    <B>richefeu at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1827%20-%20trunk/extra/mgpost/src&In-Reply-To=%3C200907011156.n61Buk2l014020%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1827 - trunk/extra/mgpost/src">richefeu at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul  1 13:56:46 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001084.html">[deprecated list] [Yade-dev] [svn] r1826 - in trunk: . gui gui/py	lib	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor scripts/test
+</A></li>
+        <LI>Next message: <A HREF="001086.html">[deprecated list] [Yade-dev] [svn] r1828 - trunk/extra/mgpost/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1085">[ date ]</a>
+              <a href="thread.html#1085">[ thread ]</a>
+              <a href="subject.html#1085">[ subject ]</a>
+              <a href="author.html#1085">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: richefeu
+Date: 2009-07-01 13:56:46 +0200 (Wed, 01 Jul 2009)
+New Revision: 1827
+
+Modified:
+   trunk/extra/mgpost/src/display_funcs.c
+   trunk/extra/mgpost/src/files.c
+Log:
+Add sphere reading for gdm-tk format
+
+
+Modified: trunk/extra/mgpost/src/display_funcs.c
+===================================================================
+--- trunk/extra/mgpost/src/display_funcs.c	2009-06-30 20:10:30 UTC (rev 1826)
++++ trunk/extra/mgpost/src/display_funcs.c	2009-07-01 11:56:46 UTC (rev 1827)
+@@ -107,7 +107,7 @@
+ {
+   GLdouble Xcam = Xviewp * TRANS_CAM_FACTOR, Ycam = Yviewp * TRANS_CAM_FACTOR;
+   double extendx,extendy;
+-  /*unsigned int i;*/
++  unsigned int i;
+   
+   glLoadIdentity ();
+   gluLookAt (Xcam, Ycam, distance, Xcam, Ycam, 0.0f, 0.0f, 1.0f, 0.0f);
+@@ -131,7 +131,7 @@
+   glEnd();
+  
+   glEnable (GL_LIGHTING);
+-/*
++
+   
+   for (i = 0; i &lt; nbel; i++)	
+ 	{ 
+@@ -166,7 +166,7 @@
+ 	  mgbodyselect_plein (i, state);
+ 	  
+ 	}
+-	*/
++	
+ }
+ 
+ 
+@@ -866,7 +866,7 @@
+ {
+   int i, ii, nbtac = 0, current_adh = 0, anta;
+   GLdouble Xcam = Xviewp * TRANS_CAM_FACTOR, Ycam = Yviewp * TRANS_CAM_FACTOR;
+-  int coul;
++
+   float save_valc_bleu, save_valc_rouge;
+   double dist;
+   double l, ls, lc, sina, cosa;
+
+Modified: trunk/extra/mgpost/src/files.c
+===================================================================
+--- trunk/extra/mgpost/src/files.c	2009-06-30 20:10:30 UTC (rev 1826)
++++ trunk/extra/mgpost/src/files.c	2009-07-01 11:56:46 UTC (rev 1827)
+@@ -391,6 +391,43 @@
+                     i++;
+                     nbel++;
+                   }
++
++				  if (!strcmp((const char *) token,&quot;polyg&quot;))
++				  {
++					int nbVertex = 0,v;
++					double xnode,ynode;
++					double dist=0.0,Rout=0.0;
++					fscanf(his_file, &quot;%*d %d&quot;, &amp;nbVertex);
++
++					dataqty[i]       = 1;
++					datadistrib[i]   = datapos;
++
++					for (v=0;v&lt;nbVertex;++v)
++					{
++					  fscanf(his_file, &quot;%lf %lf&quot;,&amp;xnode,&amp;ynode);
++					  dist = sqrt(xnode*xnode+ynode*ynode);
++					  if (dist&gt;Rout) Rout=dist;
++					  datas[datapos++] = xnode;
++					  dataqty[i] += 1;
++					  datas[datapos++] = ynode;
++					  dataqty[i] += 1;
++					}
++					datas[datapos++] = Rout;
++					radius[nbel][0] = Rout;
++
++					fscanf(his_file, &quot;%lf %lf %lf %lf %lf %lf&quot;,
++							&amp;x[nbel][0], &amp;y[nbel][0], &amp;rot[nbel][0],
++							&amp;vx[nbel][0], &amp;vy[nbel][0], &amp;vrot[nbel][0]);
++
++
++
++					mode2D      = MG_TRUE;
++					bdyty[i]    = MGP_POLYG;
++					bdyclass[i] = MGP_GRAIN;
++
++					i++;
++					nbel++;
++				  }
+ 				  
+ 				  if (!strcmp((const char *) token,&quot;CellBiP&quot;))
+ 				  {
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001084.html">[deprecated list] [Yade-dev] [svn] r1826 - in trunk: . gui gui/py	lib	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor scripts/test
+</A></li>
+	<LI>Next message: <A HREF="001086.html">[deprecated list] [Yade-dev] [svn] r1828 - trunk/extra/mgpost/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1085">[ date ]</a>
+              <a href="thread.html#1085">[ thread ]</a>
+              <a href="subject.html#1085">[ subject ]</a>
+              <a href="author.html#1085">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

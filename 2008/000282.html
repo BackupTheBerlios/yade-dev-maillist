@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] gcc 4.3 issue: cast from Engine* to FilterEngine* (???)
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20gcc%204.3%20issue%3A%20cast%20from%20Engine%2A%20to%20FilterEngine%2A%20%28%3F%3F%3F%29&In-Reply-To=%3C4879115B.8030207%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000281.html">
+   <LINK REL="Next"  HREF="000283.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] gcc 4.3 issue: cast from Engine* to FilterEngine* (???)</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20gcc%204.3%20issue%3A%20cast%20from%20Engine%2A%20to%20FilterEngine%2A%20%28%3F%3F%3F%29&In-Reply-To=%3C4879115B.8030207%40arcig.cz%3E"
+       TITLE="[yade-dev] gcc 4.3 issue: cast from Engine* to FilterEngine* (???)">eudoxos at arcig.cz
+       </A><BR>
+    <I>Sat Jul 12 22:17:31 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000281.html">[yade-dev] [Yade-commits] r1419
+</A></li>
+        <LI>Next message: <A HREF="000283.html">[yade-dev] scons vs. openMP
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#282">[ date ]</a>
+              <a href="thread.html#282">[ thread ]</a>
+              <a href="subject.html#282">[ subject ]</a>
+              <a href="author.html#282">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Sega, I had to #if0 #endif (again, sorry) your code in
+GLSimulationPlayerViewer
+
+    FOREACH(shared_ptr&lt;Engine&gt; e, Omega::instance().getRootBody()-&gt;engines){
+        if(dynamic_cast&lt;FilterEngine*&gt;(e.get())) {
+            filters.push_back(e);
+            simPlayer-&gt;pushMessage(&quot;Find filter: &quot;+e-&gt;getClassName());
+        }
+    }
+
+since I am not able to compile it. I desperately tried everything and
+see not reason why it should be broken, but the compiler just says:
+invalid conversion from Engine* to FilterEngine* requested. Do you have
+any idea on that? Or can you try with g++ 4.3?
+
+For another thing, I overwrote your changes in the player .ui file,
+since I couldn't see what the diff was all about (xml) but after visual
+checks I thought there were no big changes, contrary to what I did and
+didn't want to lose.
+
+Regards, Vaclav
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000281.html">[yade-dev] [Yade-commits] r1419
+</A></li>
+	<LI>Next message: <A HREF="000283.html">[yade-dev] scons vs. openMP
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#282">[ date ]</a>
+              <a href="thread.html#282">[ thread ]</a>
+              <a href="subject.html#282">[ subject ]</a>
+              <a href="author.html#282">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

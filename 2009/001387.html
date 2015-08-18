@@ -1,0 +1,1091 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1941 - in trunk:	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine	pkg/realtime-rigidbody	scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1941%20-%20in%20trunk%3A%0A%09pkg/common/Engine/DeusExMachina%09pkg/common/Engine/StandAloneEngine%0A%09pkg/realtime-rigidbody%09scripts/test&In-Reply-To=%3C200908140659.n7E6xPNA011208%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001386.html">
+   <LINK REL="Next"  HREF="001388.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1941 - in trunk:	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine	pkg/realtime-rigidbody	scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1941%20-%20in%20trunk%3A%0A%09pkg/common/Engine/DeusExMachina%09pkg/common/Engine/StandAloneEngine%0A%09pkg/realtime-rigidbody%09scripts/test&In-Reply-To=%3C200908140659.n7E6xPNA011208%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1941 - in trunk:	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine	pkg/realtime-rigidbody	scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Aug 14 08:59:25 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001386.html">[deprecated list] [Yade-dev] removing GeometricalModel?
+</A></li>
+        <LI>Next message: <A HREF="001388.html">[deprecated list] [Yade-dev] bzr switch
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1387">[ date ]</a>
+              <a href="thread.html#1387">[ thread ]</a>
+              <a href="subject.html#1387">[ subject ]</a>
+              <a href="author.html#1387">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-08-14 08:59:23 +0200 (Fri, 14 Aug 2009)
+New Revision: 1941
+
+Added:
+   trunk/scripts/test/pack-cloud.py
+Removed:
+   trunk/pkg/common/Engine/DeusExMachina/FixedOrientationEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/FixedOrientationEngine.hpp
+   trunk/pkg/common/Engine/DeusExMachina/FixedPositionEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/FixedPositionEngine.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp
+   trunk/pkg/realtime-rigidbody/DataClass/
+Log:
+1. Remove {,Distant}PersistentSAPCollider and Fixed{Position,Orientation}Engine classes
+2. Add test script for generating packing
+
+
+Deleted: trunk/pkg/common/Engine/DeusExMachina/FixedOrientationEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/FixedOrientationEngine.cpp	2009-08-13 09:01:41 UTC (rev 1940)
++++ trunk/pkg/common/Engine/DeusExMachina/FixedOrientationEngine.cpp	2009-08-14 06:59:23 UTC (rev 1941)
+@@ -1,50 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include &quot;FixedOrientationEngine.hpp&quot;
+-#include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+-
+-FixedOrientationEngine::FixedOrientationEngine()
+-{
+-	fixedOrientation=Quaternionr(1.0,0.0,0.0,0.0);
+-}
+-
+-void FixedOrientationEngine::postProcessAttributes(bool deserializing)
+-{
+-	if(deserializing)
+-	{
+-		std::cerr &lt;&lt; &quot;fixedOrientation: &quot; &lt;&lt; fixedOrientation.W() &lt;&lt; &quot; &quot; &lt;&lt; fixedOrientation.X() &lt;&lt; &quot; &quot; &lt;&lt;fixedOrientation.Y() &lt;&lt; &quot; &quot; &lt;&lt;fixedOrientation.Z() &lt;&lt; &quot;\n\n&quot;;
+-	}
+-}
+-
+-
+-
+-void FixedOrientationEngine::applyCondition(MetaBody * ncb)
+-{
+-	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-
+-	std::vector&lt;int&gt;::const_iterator ii = subscribedBodies.begin();
+-	std::vector&lt;int&gt;::const_iterator iiEnd = subscribedBodies.end();
+-
+-	for(;ii!=iiEnd;++ii)
+-		if( bodies-&gt;exists(*ii) )
+-			((*bodies)[*ii]-&gt;physicalParameters.get())-&gt;se3.orientation = fixedOrientation;
+-
+-//	BodyContainer::iterator bi    = bodies-&gt;begin();
+-//	BodyContainer::iterator biEnd = bodies-&gt;end();
+-//	for( ; bi!=biEnd ; ++bi )
+-//	{
+-//		shared_ptr&lt;Body&gt; b = *bi;
+-//		if(mask[0] != 0)  (b-&gt;physicalParameters.get())-&gt;se3.position[0] = fixedPosition[0];
+-//		if(mask[1] != 0)  (b-&gt;physicalParameters.get())-&gt;se3.position[1] = fixedPosition[1];
+-//		if(mask[2] != 0)  (b-&gt;physicalParameters.get())-&gt;se3.position[2] = fixedPosition[2];
+-//	}
+-}
+-
+-YADE_PLUGIN((FixedOrientationEngine));
+\ No newline at end of file
+
+Deleted: trunk/pkg/common/Engine/DeusExMachina/FixedOrientationEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/FixedOrientationEngine.hpp	2009-08-13 09:01:41 UTC (rev 1940)
++++ trunk/pkg/common/Engine/DeusExMachina/FixedOrientationEngine.hpp	2009-08-14 06:59:23 UTC (rev 1941)
+@@ -1,32 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2007 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#pragma once
+-
+-#include&lt;yade/core/DeusExMachina.hpp&gt;
+-#include &lt;Wm3Vector3.h&gt;
+-#include&lt;yade/lib-base/yadeWm3.hpp&gt;
+-
+-class FixedOrientationEngine : public DeusExMachina
+-{
+-	public :
+-		Quaternionr fixedOrientation;
+-		void applyCondition(MetaBody *);
+-
+-		FixedOrientationEngine();
+-
+-	protected :
+-		virtual void postProcessAttributes(bool);
+-	REGISTER_ATTRIBUTES(DeusExMachina,(fixedOrientation));
+-	REGISTER_CLASS_NAME(FixedOrientationEngine);
+-	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+-};
+-
+-REGISTER_SERIALIZABLE(FixedOrientationEngine);
+-
+-
+
+Deleted: trunk/pkg/common/Engine/DeusExMachina/FixedPositionEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/FixedPositionEngine.cpp	2009-08-13 09:01:41 UTC (rev 1940)
++++ trunk/pkg/common/Engine/DeusExMachina/FixedPositionEngine.cpp	2009-08-14 06:59:23 UTC (rev 1941)
+@@ -1,31 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include&quot;FixedPositionEngine.hpp&quot;
+-#include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;boost/foreach.hpp&gt;
+-
+-FixedPositionEngine::FixedPositionEngine(){
+-	fixedPosition=Vector3r(0,0,0);
+-	mask=Vector3r(0,0,1);
+-}
+-
+-void FixedPositionEngine::postProcessAttributes(bool deserializing){}
+-
+-
+-void FixedPositionEngine::applyCondition(MetaBody * ncb){
+-	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-	FOREACH(int id, subscribedBodies){
+-		if(!bodies-&gt;exists(id)) continue;
+-		if(mask[0]!=0) (*bodies)[id]-&gt;physicalParameters-&gt;se3.position[0]=fixedPosition[0];
+-		if(mask[1]!=0) (*bodies)[id]-&gt;physicalParameters-&gt;se3.position[1]=fixedPosition[1];
+-		if(mask[2]!=0) (*bodies)[id]-&gt;physicalParameters-&gt;se3.position[2]=fixedPosition[2];
+-	}
+-}
+-
+-YADE_PLUGIN((FixedPositionEngine));
+\ No newline at end of file
+
+Deleted: trunk/pkg/common/Engine/DeusExMachina/FixedPositionEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/FixedPositionEngine.hpp	2009-08-13 09:01:41 UTC (rev 1940)
++++ trunk/pkg/common/Engine/DeusExMachina/FixedPositionEngine.hpp	2009-08-14 06:59:23 UTC (rev 1941)
+@@ -1,32 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2007 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#pragma once
+-
+-#include&lt;yade/core/DeusExMachina.hpp&gt;
+-#include &lt;Wm3Vector3.h&gt;
+-#include&lt;yade/lib-base/yadeWm3.hpp&gt;
+-
+-/* Resets spatial position for all subscribed bodies to the desired value. */
+-class FixedPositionEngine : public DeusExMachina {
+-	public:
+-		Vector3r fixedPosition;
+-		//! Non-zero components determine which components of fixedPosition will be used 
+-		Vector3r mask;
+-		void applyCondition(MetaBody*);
+-		FixedPositionEngine();
+-	protected:
+-		virtual void postProcessAttributes(bool);
+-	REGISTER_ATTRIBUTES(DeusExMachina,(fixedPosition)(mask));
+-	REGISTER_CLASS_NAME(FixedPositionEngine);
+-	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+-};
+-
+-REGISTER_SERIALIZABLE(FixedPositionEngine);
+-
+-
+
+Deleted: trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp	2009-08-13 09:01:41 UTC (rev 1940)
++++ trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp	2009-08-14 06:59:23 UTC (rev 1941)
+@@ -1,257 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2007 by Bruno Chareyre                                  *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at hmg.inpg.fr</A>                                            *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-YADE_REQUIRE_FEATURE(Say goodbye to this piece of crappy code!)
+-
+-#include&quot;DistantPersistentSAPCollider.hpp&quot;
+-#include&lt;yade/core/Body.hpp&gt;
+-#include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/core/BodyContainer.hpp&gt;
+-
+-DistantPersistentSAPCollider::DistantPersistentSAPCollider() : Collider()
+-{
+-//	cerr &lt;&lt; &quot;DistantPersistentSAPCollider\n&quot;;
+-
+-	//this-&gt;maxObject = 150000;
+-	nbObjects=0;
+-
+-	//xBounds.resize(2*maxObject);
+-	//yBounds.resize(2*maxObject);
+-	//zBounds.resize(2*maxObject);
+-
+-	//minimums = new Real[3*maxObject];
+-	//maximums = new Real[3*maxObject];
+-	
+-	xBounds.clear();
+-	yBounds.clear();
+-	zBounds.clear();
+-
+-	minimums.clear();
+-	maximums.clear();
+-}
+-
+-DistantPersistentSAPCollider::~DistantPersistentSAPCollider()
+-{
+-
+-}
+-
+-void DistantPersistentSAPCollider::action(MetaBody* ncb)
+-{
+-
+-	shared_ptr&lt;BodyContainer&gt; bodies = ncb-&gt;bodies;
+-	
+-	if (2*bodies-&gt;size()!=xBounds.size())
+-	{
+-		xBounds.resize(2*bodies-&gt;size());
+-		yBounds.resize(2*bodies-&gt;size());
+-		zBounds.resize(2*bodies-&gt;size());
+-
+-		minimums.resize(3*bodies-&gt;size());
+-		maximums.resize(3*bodies-&gt;size());
+-	}
+-
+-	// Updates the minimums and maximums arrays according to the new center and radius of the spheres
+-	int offset;
+-	Vector3r min,max;
+-	shared_ptr&lt;Body&gt; b;
+-
+-	BodyContainer::iterator bi    = bodies-&gt;begin();
+-	BodyContainer::iterator biEnd = bodies-&gt;end();
+-	for(unsigned int i=0 ; bi!=biEnd ; ++bi,i++ )
+-	{
+-		b = *bi;
+-		
+-		offset = 3*i;
+-		//FIXME: this is broken: bodies without boundingVolume are just skipped, which means that some garbage values are used later!
+-		if(b-&gt;boundingVolume) // can't assume that everybody has BoundingVolume
+-		{
+-			min = b-&gt;boundingVolume-&gt;min;
+-			max = b-&gt;boundingVolume-&gt;max;
+-			minimums[offset+0] = min[0];
+-			minimums[offset+1] = min[1];
+-			minimums[offset+2] = min[2];
+-			maximums[offset+0] = max[0];
+-			maximums[offset+1] = max[1];
+-			maximums[offset+2] = max[2];
+-		}
+-	}
+-	
+-	transientInteractions = ncb-&gt;transientInteractions;
+-	InteractionContainer::iterator ii    = transientInteractions-&gt;begin();
+-	InteractionContainer::iterator iiEnd = transientInteractions-&gt;end();
+-	for( ; ii!=iiEnd ; ++ii)
+-	{
+-		shared_ptr&lt;Interaction&gt; interaction = *ii;
+-		//if (interaction-&gt;isReal()) // if a interaction was only potential then no geometry was created for it and so this time it is still a new one
+-			// interaction-&gt;isNew = false;
+-		//interaction-&gt;isReal = false;
+-	}
+-	
+-	updateIds(bodies-&gt;size());
+-	nbObjects = bodies-&gt;size();
+-
+-	// permutation sort of the AABBBounds along the 3 axis performed in a independant manner
+-	sortBounds(xBounds, nbObjects);
+-	sortBounds(yBounds, nbObjects);
+-	sortBounds(zBounds, nbObjects);
+-
+-}
+-
+-
+-void DistantPersistentSAPCollider::updateIds(unsigned int nbElements)
+-{
+-
+-	// the first time broadInteractionTest is called nbObject=0
+-	if (nbElements!=nbObjects)
+-	{
+-		int begin,end;
+-
+-		end = nbElements;
+-		begin = 0;
+-
+-		if (nbElements&gt;nbObjects)
+-			begin = nbObjects;
+-
+-		// initialization if the xBounds, yBounds, zBounds
+-		for(int i=begin;i&lt;end;i++)
+-		{
+-			xBounds[2*i]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,1));
+-			xBounds[2*i+1]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,0));
+-			
+-			yBounds[2*i]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,1));
+-			yBounds[2*i+1]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,0));
+-			
+-			zBounds[2*i]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,1));
+-			zBounds[2*i+1]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,0));
+-		}
+-
+-		// initialization if the field &quot;value&quot; of the xBounds, yBounds, zBounds arrays
+-		updateBounds(nbElements);
+-
+-		// modified quick sort of the xBounds, yBounds, zBounds arrays
+-		// The first time these arrays are not sorted so it is faster to use such a sort instead
+-		// of the permutation we are going to use next
+-		std::sort(xBounds.begin(),xBounds.begin()+2*nbElements,AABBBoundComparator());
+-		std::sort(yBounds.begin(),yBounds.begin()+2*nbElements,AABBBoundComparator());
+-		std::sort(zBounds.begin(),zBounds.begin()+2*nbElements,AABBBoundComparator());
+-
+-		// initialize the overlappingBB collection
+-		//for(unsigned int j=0;j&lt;nbElements;j++)
+-		//	overlappingBB[j].clear(); //attention memoire
+-
+-		findOverlappingBB(xBounds, nbElements);
+-		findOverlappingBB(yBounds, nbElements);
+-		findOverlappingBB(zBounds, nbElements);
+-
+-	}
+-	else
+-		updateBounds(nbElements);
+-}
+-
+-
+-void DistantPersistentSAPCollider::sortBounds(vector&lt;shared_ptr&lt;AABBBound&gt; &gt;&amp; bounds, int nbElements)
+-{
+-	int i,j;
+-	shared_ptr&lt;AABBBound&gt; tmp;
+-
+-	for (i=1; i&lt;2*nbElements; i++)
+-	{
+-		tmp = bounds[i];
+-		j = i;
+-		while (j&gt;0 &amp;&amp; tmp-&gt;value&lt;bounds[j-1]-&gt;value)
+-		{
+-			bounds[j] = bounds[j-1];
+-			updateOverlapingBBSet(tmp-&gt;id,bounds[j-1]-&gt;id);
+-			j--;
+-		}
+-		bounds[j] = tmp;
+-	}
+-}
+-
+-
+-void DistantPersistentSAPCollider::updateOverlapingBBSet(int id1,int id2)
+-{
+-
+-// 	// look if the pair (id1,id2) already exists in the overleppingBB collection
+-	shared_ptr&lt;Interaction&gt; interaction = transientInteractions-&gt;find(body_id_t(id1),body_id_t(id2));//Bruno's Hack
+-	//bool found = (transientInteractions-&gt;find(body_id_t(id1),body_id_t(id2))!=0);
+-bool found = (interaction!=0);//Bruno's Hack
+-
+-	
+-	// test if the AABBs of the spheres number &quot;id1&quot; and &quot;id2&quot; are overlapping
+-	int offset1 = 3*id1;
+-	int offset2 = 3*id2;
+-	// FIXME: this is perhaps an expensive operation?!
+-	const shared_ptr&lt;Body&gt;&amp; b1(Body::byId(body_id_t(id1))), b2(Body::byId(body_id_t(id2)));
+-	bool overlap =
+-
+-		(b1-&gt;isStandalone() || b2-&gt;isStandalone() || b1-&gt;clumpId!=b2-&gt;clumpId ) &amp;&amp; // only collide if at least one particle is standalone or they belong to different clumps
+-		!b1-&gt;isClump() &amp;&amp; !b2-&gt;isClump() &amp;&amp; // do not collide clumps, since they are just containers, never interact
+-
+-		!(maximums[offset1]&lt;minimums[offset2] || maximums[offset2]&lt;minimums[offset1] || 
+-		maximums[offset1+1]&lt;minimums[offset2+1] || maximums[offset2+1]&lt;minimums[offset1+1] || 
+-		maximums[offset1+2]&lt;minimums[offset2+2] || maximums[offset2+2]&lt;minimums[offset1+2]);
+-
+-	// inserts the pair p=(id1,id2) if the two AABB overlaps and if p does not exists in the overlappingBB
+-	if (overlap &amp;&amp; !found)
+-		transientInteractions-&gt;insert(body_id_t(id1),body_id_t(id2));
+-	// removes the pair p=(id1,id2) if the two AABB do not overlapp any more and if p already exists in the overlappingBB
+-	else if (!overlap &amp;&amp; found &amp;&amp; !interaction-&gt;isReal())
+-		transientInteractions-&gt;erase(body_id_t(id1),body_id_t(id2));//Bruno's hack
+-//else if (!overlap &amp;&amp; found)
+-//		transientInteractions-&gt;erase(body_id_t(id1),body_id_t(id2));
+-}
+-
+-
+-void DistantPersistentSAPCollider::updateBounds(int nbElements)
+-{
+-
+-	for(int i=0; i &lt; 2*nbElements; i++)
+-	{
+-		if (xBounds[i]-&gt;lower)
+-			xBounds[i]-&gt;value = minimums[3*xBounds[i]-&gt;id+0];
+-		else
+-			xBounds[i]-&gt;value = maximums[3*xBounds[i]-&gt;id+0];
+-
+-		if (yBounds[i]-&gt;lower)
+-			yBounds[i]-&gt;value = minimums[3*yBounds[i]-&gt;id+1];
+-		else
+-			yBounds[i]-&gt;value = maximums[3*yBounds[i]-&gt;id+1];
+-
+-		if (zBounds[i]-&gt;lower)
+-			zBounds[i]-&gt;value = minimums[3*zBounds[i]-&gt;id+2];
+-		else
+-			zBounds[i]-&gt;value = maximums[3*zBounds[i]-&gt;id+2];
+-	}
+-}
+-
+-
+-
+-
+-void DistantPersistentSAPCollider::findOverlappingBB(std::vector&lt;shared_ptr&lt;AABBBound&gt; &gt;&amp; bounds, int nbElements)
+-{
+-
+-	int i,j;
+-
+-	i = j = 0;
+-	while (i&lt;2*nbElements)
+-	{
+-		while (i&lt;2*nbElements &amp;&amp; !bounds[i]-&gt;lower)
+-			i++;
+-		j=i+1;
+-		while (j&lt;2*nbElements &amp;&amp; bounds[j]-&gt;id!=bounds[i]-&gt;id)
+-		{
+-			if (bounds[j]-&gt;lower)
+-				updateOverlapingBBSet(bounds[i]-&gt;id,bounds[j]-&gt;id);
+-			j++;
+-		}
+-		i++;
+-	}
+-}
+-
+-YADE_PLUGIN((DistantPersistentSAPCollider));
+
+Deleted: trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.hpp	2009-08-13 09:01:41 UTC (rev 1940)
++++ trunk/pkg/common/Engine/StandAloneEngine/DistantPersistentSAPCollider.hpp	2009-08-14 06:59:23 UTC (rev 1941)
+@@ -1,102 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2007 by Bruno Chareyre                                  *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at hmg.inpg.fr</A>                                            *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#pragma once
+-
+-#include&lt;yade/core/Collider.hpp&gt;
+-#include&lt;yade/core/InteractionContainer.hpp&gt;
+-#include &lt;list&gt;
+-#include &lt;set&gt;
+-#include &lt;vector&gt;
+-#include &lt;algorithm&gt;
+-
+-using namespace std;
+-
+-class DistantPersistentSAPCollider : public Collider
+-{
+-	private :
+-		// represent an extrmity of an Axis ALigned bounding box
+-		struct AABBBound
+-		{
+-			AABBBound(int i, char l) : id(i),lower(l) {};
+-			int		id;		// AABB of the &quot;id&quot; shpere
+-			char		lower;		// is it the lower or upper bound of the AABB
+-			Real		value;		// value of the bound
+-		};
+-		// strucuture that compare 2 AABBBounds =&gt; used in the sort algorithm
+-		struct AABBBoundComparator
+-		{
+-			bool operator() (shared_ptr&lt;AABBBound&gt; b1, shared_ptr&lt;AABBBound&gt; b2)
+-			{
+-				return b1-&gt;value&lt;b2-&gt;value;
+-			}
+-		};
+-
+-	protected :
+-		/// number of potential transientInteractions = number of interacting AABB
+-		int nbPotentialInteractions;
+-
+-		/// number of AABB
+-		unsigned int nbObjects;
+-
+-		/// AABB extremity of the sphere number &quot;id&quot; projected onto the X axis
+-		vector&lt;shared_ptr&lt;AABBBound&gt; &gt; xBounds;
+-
+-		/// AABB extremity of the sphere number &quot;id&quot; projected onto the Y axis
+-		vector&lt;shared_ptr&lt;AABBBound&gt; &gt; yBounds;
+-
+-		/// AABB extremity of the sphere number &quot;id&quot; projected onto the Z axis
+-		vector&lt;shared_ptr&lt;AABBBound&gt; &gt; zBounds;
+-
+-		// collection of AABB that are in interaction
+-		//protected : vector&lt; set&lt;unsigned int&gt; &gt; overlappingBB;
+-		shared_ptr&lt;InteractionContainer&gt; transientInteractions;
+-		/// upper right corner of the AABB of the objects =&gt;  for spheres = center[i]-radius
+-		vector&lt;Real&gt; maximums;
+-
+-		/// lower left corner of the AABB of the objects =&gt;  for spheres = center[i]+radius
+-		vector&lt;Real&gt; minimums;
+-
+-		/// Used the first time broadInteractionTest is called, to initialize and sort the xBounds, yBounds,
+-		/// and zBounds arrays and to initialize the overlappingBB collection
+-		void updateIds(unsigned int nbElements);
+-
+-		/// Permutation sort the xBounds, yBounds, zBounds arrays according to the &quot;value&quot; field
+-		/// Calls updateOverlapingBBSet every time a permutation between 2 AABB i and j occurs
+-		void sortBounds(vector&lt;shared_ptr&lt;AABBBound&gt; &gt;&amp; bounds, int nbElements);
+-
+-		/// Tests if the AABBi and AABBj really overlap.
+-		/// If yes, adds the pair (id1,id2) to the collection of overlapping AABBs
+-		/// If no, removes the (id1,id2) to the collection of overlapping AABBs if necessary
+-		void updateOverlapingBBSet(int id1,int id2);
+-
+-		/// update the &quot;value&quot; field of the xBounds, yBounds, zBounds arrays
+-		void updateBounds(int nbElements);
+-
+-		/// Used the first time broadInteractionTest is called
+-		/// It is necessary to initialise the overlapping AABB collection because this collection is only
+-		/// incrementally udated each time step
+-		void findOverlappingBB(vector&lt;shared_ptr&lt;AABBBound&gt; &gt;&amp; bounds, int nbElements);
+-
+-	public :
+-		DistantPersistentSAPCollider();
+-
+-		virtual ~DistantPersistentSAPCollider();
+-
+-		/// return a list &quot;transientInteractions&quot; of pairs of Body which Bounding volume are in potential interaction
+-		void action(MetaBody *);
+-
+-
+-	REGISTER_CLASS_NAME(DistantPersistentSAPCollider);
+-	REGISTER_BASE_CLASS_NAME(Collider);
+-
+-};
+-
+-REGISTER_SERIALIZABLE(DistantPersistentSAPCollider);
+-
+-
+
+Deleted: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-08-13 09:01:41 UTC (rev 1940)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-08-14 06:59:23 UTC (rev 1941)
+@@ -1,319 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004,2007 by
+-*  	Olivier Galizzi &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>&gt;
+-*  	Bruno Chareyre &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at hmg.inpg.fr</A>&gt;
+-*  	V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+-*
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-YADE_REQUIRE_FEATURE(Say goodbye to this piece of crappy code!)
+-
+-#include&quot;PersistentSAPCollider.hpp&quot;
+-#include&lt;yade/core/Body.hpp&gt;
+-#include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/core/BodyContainer.hpp&gt;
+-#include&lt;limits&gt;
+-
+-CREATE_LOGGER(PersistentSAPCollider);
+-
+-PersistentSAPCollider::PersistentSAPCollider() : Collider()
+-{
+-	haveDistantTransient=false;
+-	//ompBodiesMin=0;
+-
+-	nbObjects=0;
+-	xBounds.clear();
+-	yBounds.clear();
+-	zBounds.clear();
+-	minima.clear();
+-	maxima.clear();
+-
+-//	timingDeltas=shared_ptr&lt;TimingDeltas&gt;(new TimingDeltas);
+-}
+-
+-PersistentSAPCollider::~PersistentSAPCollider()
+-{
+-
+-}
+-
+-// template void InteractionContainer::erasePending&lt;PersistentSAPCollider&gt;(const PersistentSAPCollider&amp;);
+-
+-void PersistentSAPCollider::action(MetaBody* ncb)
+-{
+-	rootBody=ncb;
+-	shared_ptr&lt;BodyContainer&gt; bodies=ncb-&gt;bodies;
+-	transientInteractions=ncb-&gt;transientInteractions;
+-
+-//	timingDeltas-&gt;start();
+-	
+-	if (2*bodies-&gt;size()!=xBounds.size()){
+-		xBounds.resize(2*bodies-&gt;size());
+-		yBounds.resize(2*bodies-&gt;size());
+-		zBounds.resize(2*bodies-&gt;size());
+-		minima.resize(3*bodies-&gt;size());
+-		maxima.resize(3*bodies-&gt;size());
+-	}
+-
+-//	timingDeltas-&gt;checkpoint(&quot;resizeArrays&quot;);
+-
+-	// Updates the minima and maxima arrays according to the new center and radius of the spheres
+-	int offset;
+-	Vector3r min,max;
+-
+-	const long numBodies=(long)bodies-&gt;size();
+-	//#pragma omp parallel for
+-	for(int id=0; id&lt;numBodies; id++){
+-		const shared_ptr&lt;Body&gt;&amp; b=(*bodies)[id];
+-		offset=3*id;
+-		if(b-&gt;boundingVolume){ // can't assume that everybody has BoundingVolume
+-			min=b-&gt;boundingVolume-&gt;min; max=b-&gt;boundingVolume-&gt;max;
+-			minima[offset+0]=min[0]; minima[offset+1]=min[1]; minima[offset+2]=min[2];
+-			maxima[offset+0]=max[0]; maxima[offset+1]=max[1]; maxima[offset+2]=max[2];
+-		}
+-		else {
+-			/* assign the center of gravity as zero-volume bounding box;
+-			 * it should not create spurious interactions and
+-			 * is a better solution that putting nan's into minima and maxima which crashes on _some_ machines */
+-			const Vector3r&amp; pos=b-&gt;physicalParameters-&gt;se3.position;
+-			minima[offset+0]=pos[0]; minima[offset+1]=pos[1]; minima[offset+2]=pos[2];
+-			maxima[offset+0]=pos[0]; maxima[offset+1]=pos[1]; maxima[offset+2]=pos[2];
+-		}
+-	}
+-
+-//	timingDeltas-&gt;checkpoint(&quot;minMaxUpdate&quot;);
+-
+-	ncb-&gt;interactions-&gt;erasePending(*this,ncb);
+-
+-//	timingDeltas-&gt;checkpoint(&quot;deleteInvalid&quot;);
+-	
+-	updateIds(bodies-&gt;size());
+-
+-//	timingDeltas-&gt;checkpoint(&quot;updateIds&quot;);
+-
+-	nbObjects=bodies-&gt;size();
+-
+-	// permutation sort of the AABBBounds along the 3 axis performed in a independant manner
+-	// serial version
+-	//if(nbObjects&gt;ompBodiesMin || ompBodiesMin==0){ &#8230; }
+-	sortBounds(xBounds,nbObjects); sortBounds(yBounds,nbObjects); sortBounds(zBounds,nbObjects);
+-
+-//	timingDeltas-&gt;checkpoint(&quot;sortBounds&quot;);
+-}
+-
+-bool PersistentSAPCollider::probeBoundingVolume(const BoundingVolume&amp; bv)
+-{
+-	probedBodies.clear();
+-	for( vector&lt;shared_ptr&lt;AABBBound&gt; &gt;::iterator 
+-			it=xBounds.begin(),et=xBounds.end(); it &lt; et; ++it)
+-	{
+-		if ((*it)-&gt;value &gt; bv.max[0]) break;
+-		if (!(*it)-&gt;lower) continue;
+-		int offset = 3*(*it)-&gt;id;
+-		if (!(maxima[offset] &lt; bv.min[0] ||
+-				minima[offset+1] &gt; bv.max[1] ||
+-				maxima[offset+1] &lt; bv.min[1] ||
+-				minima[offset+2] &gt; bv.max[2] ||
+-				maxima[offset+2] &lt; bv.min[2] )) 
+-		{
+-			probedBodies.push_back((*it)-&gt;id);
+-		}
+-	}
+-	return (bool)probedBodies.size();
+-}
+-
+-
+-void PersistentSAPCollider::updateIds(unsigned int nbElements)
+-{
+-	// the first time broadInteractionTest is called nbObject=0
+-	if (nbElements!=nbObjects){
+-		int begin=0, end=nbElements;
+-		if (nbElements&gt;nbObjects) begin=nbObjects;
+-
+-		//timingDeltas-&gt;start();
+-
+-		// initialization if the xBounds, yBounds, zBounds
+-		for(int i=begin;i&lt;end;i++){
+-			xBounds[2*i]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,1));
+-			xBounds[2*i+1]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,0));
+-			yBounds[2*i]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,1));
+-			yBounds[2*i+1]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,0));
+-			zBounds[2*i]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,1));
+-			zBounds[2*i+1]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,0));
+-		}
+-
+-		//timingDeltas-&gt;checkpoint(&quot;init&quot;);
+-
+-		// initialization if the field &quot;value&quot; of the xBounds, yBounds, zBounds arrays
+-		updateBounds(nbElements);
+-
+-		/* Performance note: such was the timing result on initial step of 8k sphere in triaxial test.
+-			the findX, findY, findZ take almost the totality of the time.
+-			Parallelizing those is vastly beneficial (almost 3x speed increase, which can be quite sensible as the initial
+-			findOverlappingBB is really slow <A HREF="http://yade.wikia.com/wiki/Colliders_performace">http://yade.wikia.com/wiki/Colliders_performace</A> and is done in 3
+-			orthogonal directions. Therefore, it is enabled by default. updateOverlappingBBSet must be protected by 
+-			critical section, since it is called from all threads!
+-			
+-			Now sortX is right before findX etc, in the same openMP section. Beware that timingDeltas will give garbage
+-			results if used in parallelized code.
+-
+-			===
+-
+-			8k spheres:
+-			Name                                                    Count                 Time            Rel. time
+-			-------------------------------------------------------------------------------------------------------
+-			PersistentSAPCollider                                 1            3568091us              100.00%      
+-			  init                                                  1              21178us                0.59%    
+-			  sortX                                                 1              33225us                0.93%    
+-			  sortY                                                 1              29300us                0.82%    
+-			  sortZ                                                 1              28334us                0.79%    
+-			  findX                                                 1            1708426us               47.88%    
+-			  findY                                                 1             869150us               24.36%    
+-			  findZ                                                 1             867378us               24.31%    
+-			  TOTAL                                                              3556994us               99.69%    
+-
+-		*/
+-
+-		// The first time these arrays are not sorted so it is faster to use such a sort instead
+-		// of the permutation we are going to use next
+-
+-		// do not juse timingDeltas with openMP enabled, results will be garbage
+-		#pragma omp parallel sections
+-		{
+-			#pragma omp section
+-			{
+-				std::sort(xBounds.begin(),xBounds.begin()+2*nbElements,AABBBoundComparator());
+-				//timingDeltas-&gt;checkpoint(&quot;sortX&quot;);
+-				findOverlappingBB(xBounds, nbElements);
+-				//timingDeltas-&gt;checkpoint(&quot;findX&quot;);
+-			}
+-			#pragma omp section
+-			{
+-				std::sort(yBounds.begin(),yBounds.begin()+2*nbElements,AABBBoundComparator());
+-				//timingDeltas-&gt;checkpoint(&quot;sortY&quot;);
+-				findOverlappingBB(yBounds, nbElements);
+-				//timingDeltas-&gt;checkpoint(&quot;findY&quot;);
+-			}
+-			#pragma omp section
+-			{
+-				std::sort(zBounds.begin(),zBounds.begin()+2*nbElements,AABBBoundComparator());
+-				//timingDeltas-&gt;checkpoint(&quot;sortZ&quot;);
+-				findOverlappingBB(zBounds, nbElements);
+-				//timingDeltas-&gt;checkpoint(&quot;findZ&quot;);
+-			}
+-		}
+-	}
+-	else updateBounds(nbElements);
+-}
+-
+-
+-void PersistentSAPCollider::sortBounds(vector&lt;shared_ptr&lt;AABBBound&gt; &gt;&amp; bounds, int nbElements){
+-	int j;
+-	for (int i=1; i&lt;2*nbElements; i++){
+-		shared_ptr&lt;AABBBound&gt; tmp(bounds[i]);
+-		j=i;
+-		while (j&gt;0 &amp;&amp; tmp-&gt;value&lt;bounds[j-1]-&gt;value) {
+-			bounds[j]=bounds[j-1];
+-			updateOverlapingBBSet(tmp-&gt;id,bounds[j-1]-&gt;id);
+-			j--;
+-		}
+-		bounds[j]=tmp;
+-	}
+-}
+-
+-
+-bool PersistentSAPCollider::shouldBeErased(body_id_t id1, body_id_t id2) const {
+-	// if there is no bbox overlap
+-	int offset1=3*id1, offset2=3*id2;
+-	return (
+-		maxima[offset1  ]&lt;minima[offset2  ] || maxima[offset2  ]&lt;minima[offset1  ] || 
+-		maxima[offset1+1]&lt;minima[offset2+1] || maxima[offset2+1]&lt;minima[offset1+1] || 
+-		maxima[offset1+2]&lt;minima[offset2+2] || maxima[offset2+2]&lt;minima[offset1+2] );
+-}
+-
+-/* Note that this function is called only for bodies that actually overlap along some axis */
+-void PersistentSAPCollider::updateOverlapingBBSet(int id1,int id2){
+-		// look if the pair (id1,id2) already exists in the overlappingBB collection
+-		const shared_ptr&lt;Interaction&gt;&amp; interaction=transientInteractions-&gt;find(body_id_t(id1),body_id_t(id2));
+-		bool found=(bool)interaction;
+-		
+-		// test if the AABBs of the spheres number &quot;id1&quot; and &quot;id2&quot; are overlapping
+-		int offset1=3*id1, offset2=3*id2;
+-		const shared_ptr&lt;Body&gt;&amp; b1(Body::byId(body_id_t(id1),rootBody)), b2(Body::byId(body_id_t(id2),rootBody));
+-		bool overlap =
+-			Collider::mayCollide(b1.get(),b2.get()) &amp;&amp;
+-			// AABB collisions: 
+-			!(
+-				maxima[offset1  ]&lt;minima[offset2  ] || maxima[offset2  ]&lt;minima[offset1  ] || 
+-				maxima[offset1+1]&lt;minima[offset2+1] || maxima[offset2+1]&lt;minima[offset1+1] || 
+-				maxima[offset1+2]&lt;minima[offset2+2] || maxima[offset2+2]&lt;minima[offset1+2]);
+-		// inserts the pair p=(id1,id2) if the two AABB overlaps and if p does not exists in the overlappingBB
+-		//if((id1==0 &amp;&amp; id2==1) || (id1==1 &amp;&amp; id2==0)) LOG_DEBUG(&quot;Processing #0 #1&quot;);
+-		//if(interaction&amp;&amp;!interaction-&gt;isReal){ LOG_DEBUG(&quot;Unreal interaction #&quot;&lt;&lt;id1&lt;&lt;&quot;=#&quot;&lt;&lt;id2&lt;&lt;&quot; (overlap=&quot;&lt;&lt;overlap&lt;&lt;&quot;, haveDistantTransient=&quot;&lt;&lt;haveDistantTransient&lt;&lt;&quot;)&quot;);}
+-		if(overlap &amp;&amp; !found){
+-			//LOG_DEBUG(&quot;Creating interaction #&quot;&lt;&lt;id1&lt;&lt;&quot;=#&quot;&lt;&lt;id2);
+-			transientInteractions-&gt;insert(body_id_t(id1),body_id_t(id2));
+-		}
+-		// removes the pair p=(id1,id2) if the two AABB do not overlapp any more and if p already exists in the overlappingBB
+-		else if(!overlap &amp;&amp; found &amp;&amp; (haveDistantTransient ? !interaction-&gt;isReal() : true) ){
+-			//LOG_DEBUG(&quot;Erasing interaction #&quot;&lt;&lt;id1&lt;&lt;&quot;=#&quot;&lt;&lt;id2&lt;&lt;&quot; (isReal=&quot;&lt;&lt;interaction-&gt;isReal&lt;&lt;&quot;)&quot;);
+-			transientInteractions-&gt;erase(body_id_t(id1),body_id_t(id2));
+-		}
+-}
+-
+-
+-void PersistentSAPCollider::updateBounds(int nbElements)
+-{
+-	#define _BOUND_UPDATE(bounds,offset) \
+-		if (bounds[i]-&gt;lower) bounds[i]-&gt;value = minima[3*bounds[i]-&gt;id+offset]; \
+-		else bounds[i]-&gt;value = maxima[3*bounds[i]-&gt;id+offset];
+-	// for small number of bodies, run sequentially
+-	#if 0
+-	if(nbElements&lt;ompBodiesMin || ompBodiesMin==0){
+-	#endif
+-		for(int i=0; i &lt; 2*nbElements; i++){
+-			_BOUND_UPDATE(xBounds,0);
+-			_BOUND_UPDATE(yBounds,1);
+-			_BOUND_UPDATE(zBounds,2);
+-		}
+-	#if 0
+-	}
+-	else{
+-		// parallelize for large number of bodies (not used, updateBounds takes only about 5% of collider time
+-		#pragma omp parallel sections
+-		{
+-			#pragma omp section
+-			for(int i=0; i &lt; 2*nbElements; i++){ _BOUND_UPDATE(xBounds,0); }
+-			#pragma omp section
+-			for(int i=0; i &lt; 2*nbElements; i++){ _BOUND_UPDATE(yBounds,1); }
+-			#pragma omp section
+-			for(int i=0; i &lt; 2*nbElements; i++){ _BOUND_UPDATE(zBounds,2); }
+-		}
+-	}
+-	#endif
+-	#undef _BOUND_UPDATE
+-}
+-
+-
+-void PersistentSAPCollider::findOverlappingBB(std::vector&lt;shared_ptr&lt;AABBBound&gt; &gt;&amp; bounds, int nbElements){
+-	int i=0,j=0;
+-	while (i&lt;2*nbElements) {
+-		while (i&lt;2*nbElements &amp;&amp; !bounds[i]-&gt;lower) i++;
+-		j=i+1;
+-		while (j&lt;2*nbElements &amp;&amp; bounds[j]-&gt;id!=bounds[i]-&gt;id){
+-			if (bounds[j]-&gt;lower){
+-				/* findOverlappingBB is called in parallel for different data at initialization,
+-				 * but updateOverlapingBBSet touches shared global data, therefore must be protected by critical section;
+-				 * normally updateOverlapingBBSet is also called sequentially from sortBounds, where the critical section
+-				 * would penalize performance; therefore we have to protect it from here */
+-				#pragma omp critical 
+-					updateOverlapingBBSet(bounds[i]-&gt;id,bounds[j]-&gt;id);
+-			}
+-			j++;
+-		}
+-		i++;
+-	}
+-}
+-
+-YADE_PLUGIN((PersistentSAPCollider));
+
+Deleted: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp	2009-08-13 09:01:41 UTC (rev 1940)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp	2009-08-14 06:59:23 UTC (rev 1941)
+@@ -1,115 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#pragma once
+-
+-#error PersistentSAPCollider is forbidden
+-
+-#include&lt;yade/core/Collider.hpp&gt;
+-#include&lt;yade/core/InteractionContainer.hpp&gt;
+-#include &lt;list&gt;
+-#include &lt;set&gt;
+-#include &lt;vector&gt;
+-#include &lt;algorithm&gt;
+-
+-using namespace std;
+-
+-class PersistentSAPCollider : public Collider
+-{
+-	private :
+-		// represent an extrmity of an Axis ALigned bounding box
+-		struct AABBBound
+-		{
+-			AABBBound(int i, char l) : id(i),lower(l) {};
+-			int		id;		// AABB of the &quot;id&quot; shpere
+-			char		lower;		// is it the lower or upper bound of the AABB
+-			Real		value;		// value of the bound
+-		};
+-		// strucuture that compare 2 AABBBounds =&gt; used in the sort algorithm
+-		struct AABBBoundComparator
+-		{
+-			bool operator() (shared_ptr&lt;AABBBound&gt; b1, shared_ptr&lt;AABBBound&gt; b2)
+-			{
+-				return b1-&gt;value&lt;b2-&gt;value;
+-			}
+-		};
+-
+-		MetaBody* rootBody; // refreshed at every iteration; to avoid passing it to called members on stack
+-
+-	protected :
+-		/// number of potential transientInteractions = number of interacting AABB
+-		int nbPotentialInteractions;
+-
+-		/// number of AABB
+-		unsigned int nbObjects;
+-
+-		/// AABB extremity of the sphere number &quot;id&quot; projected onto the X axis
+-		vector&lt;shared_ptr&lt;AABBBound&gt; &gt; xBounds;
+-
+-		/// AABB extremity of the sphere number &quot;id&quot; projected onto the Y axis
+-		vector&lt;shared_ptr&lt;AABBBound&gt; &gt; yBounds;
+-
+-		/// AABB extremity of the sphere number &quot;id&quot; projected onto the Z axis
+-		vector&lt;shared_ptr&lt;AABBBound&gt; &gt; zBounds;
+-
+-		// collection of AABB that are in interaction
+-		//protected : vector&lt; set&lt;unsigned int&gt; &gt; overlappingBB;
+-		shared_ptr&lt;InteractionContainer&gt; transientInteractions;
+-		/// upper right corner of the AABB of the objects =&gt;  for spheres = center[i]-radius
+-		vector&lt;Real&gt; maxima;
+-
+-		/// lower left corner of the AABB of the objects =&gt;  for spheres = center[i]+radius
+-		vector&lt;Real&gt; minima;
+-
+-		/// Used the first time broadInteractionTest is called, to initialize and sort the xBounds, yBounds,
+-		/// and zBounds arrays and to initialize the overlappingBB collection
+-		void updateIds(unsigned int nbElements);
+-
+-		/// Permutation sort the xBounds, yBounds, zBounds arrays according to the &quot;value&quot; field
+-		/// Calls updateOverlapingBBSet every time a permutation between 2 AABB i and j occurs
+-		void sortBounds(vector&lt;shared_ptr&lt;AABBBound&gt; &gt;&amp; bounds, int nbElements);
+-
+-		/// Tests if the AABBi and AABBj really overlap.
+-		/// If yes, adds the pair (id1,id2) to the collection of overlapping AABBs
+-		/// If no, removes the (id1,id2) to the collection of overlapping AABBs if necessary
+-		void updateOverlapingBBSet(int id1,int id2);
+-
+-		/// update the &quot;value&quot; field of the xBounds, yBounds, zBounds arrays
+-		void updateBounds(int nbElements);
+-
+-		/// Used the first time broadInteractionTest is called
+-		/// It is necessary to initialise the overlapping AABB collection because this collection is only
+-		/// incrementally udated each time step
+-		void findOverlappingBB(vector&lt;shared_ptr&lt;AABBBound&gt; &gt;&amp; bounds, int nbElements);
+-
+-	public :
+-		PersistentSAPCollider();
+-
+-		virtual ~PersistentSAPCollider();
+-
+-		/// return a list &quot;transientInteractions&quot; of pairs of Body which Bounding volume are in potential interaction
+-		void action(MetaBody *);
+-
+-		/// return true if BoundingVolume is in potential interaction
+-		bool probeBoundingVolume(const BoundingVolume&amp; bv);
+-
+-		//! Don't break transient interaction once bodies don't overlap anymore; material law will be responsible for breaking it.
+-		bool haveDistantTransient;
+-
+-		bool shouldBeErased(body_id_t, body_id_t) const;
+-
+-	REGISTER_ATTRIBUTES(Collider,(haveDistantTransient));
+-	DECLARE_LOGGER;
+-	REGISTER_CLASS_NAME(PersistentSAPCollider);
+-	REGISTER_BASE_CLASS_NAME(Collider);
+-
+-};
+-
+-REGISTER_SERIALIZABLE(PersistentSAPCollider);
+-
+-
+
+Added: trunk/scripts/test/pack-cloud.py
+===================================================================
+--- trunk/scripts/test/pack-cloud.py	2009-08-13 09:01:41 UTC (rev 1940)
++++ trunk/scripts/test/pack-cloud.py	2009-08-14 06:59:23 UTC (rev 1941)
+@@ -0,0 +1,10 @@
++&quot;&quot;&quot; Generate random periodic sphere packing using SpherePack::makeCloud &quot;&quot;&quot;
++from yade import pack
++p=pack.SpherePack()
++O.periodicCell=(0,0,0),(10,10,10)
++print p.makeCloud(O.periodicCell[0],O.periodicCell[1],.5,.5,1200,True)
++for s in p:
++	O.bodies.append(utils.sphere(s[0],s[1]))
++O.runEngine(BoundingVolumeMetaEngine([InteractingSphere2AABB()]))
++from yade import qt
++qt.View()
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001386.html">[deprecated list] [Yade-dev] removing GeometricalModel?
+</A></li>
+	<LI>Next message: <A HREF="001388.html">[deprecated list] [Yade-dev] bzr switch
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1387">[ date ]</a>
+              <a href="thread.html#1387">[ thread ]</a>
+              <a href="subject.html#1387">[ subject ]</a>
+              <a href="author.html#1387">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

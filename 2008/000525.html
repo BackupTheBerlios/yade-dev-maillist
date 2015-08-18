@@ -1,0 +1,293 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1581 - in trunk: extra/usct	gui/qt3	pkg/common/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1581%20-%20in%20trunk%3A%20extra/usct%0A%09gui/qt3%09pkg/common/Engine/DeusExMachina&In-Reply-To=%3C200811241218.mAOCIoJa002762%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000523.html">
+   <LINK REL="Next"  HREF="000528.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1581 - in trunk: extra/usct	gui/qt3	pkg/common/Engine/DeusExMachina</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1581%20-%20in%20trunk%3A%20extra/usct%0A%09gui/qt3%09pkg/common/Engine/DeusExMachina&In-Reply-To=%3C200811241218.mAOCIoJa002762%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1581 - in trunk: extra/usct	gui/qt3	pkg/common/Engine/DeusExMachina">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Nov 24 13:18:50 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000523.html">[deprecated list] [Yade-dev] [svn] r1580 - tags
+</A></li>
+        <LI>Next message: <A HREF="000528.html">[deprecated list] [Yade-dev] commit 1583, 3d view, serialization.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#525">[ date ]</a>
+              <a href="thread.html#525">[ thread ]</a>
+              <a href="subject.html#525">[ subject ]</a>
+              <a href="author.html#525">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-11-24 13:18:47 +0100 (Mon, 24 Nov 2008)
+New Revision: 1581
+
+Added:
+   trunk/pkg/common/Engine/DeusExMachina/LinearInterpolate.hpp
+Modified:
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+   trunk/extra/usct/UniaxialStrainControlledTest.hpp
+   trunk/gui/qt3/QtGUI.cpp
+   trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/RotationEngine.hpp
+Log:
+1. Add linear templated interpolation function working on 2 lists, t and values
+2. Add InterpolatingRotationEngine that changes rotation speed as given by value table
+3. Lower info about starting python thread to debug message only.
+
+
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-11-22 22:54:46 UTC (rev 1580)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2008-11-24 12:18:47 UTC (rev 1581)
+@@ -102,6 +102,9 @@
+ 	// reverse if we're over the limit strain
+ 	if(notYetReversed &amp;&amp; limitStrain!=0 &amp;&amp; ((currentStrainRate&gt;0 &amp;&amp; strain&gt;limitStrain) || (currentStrainRate&lt;0 &amp;&amp; strain&lt;limitStrain))) { currentStrainRate*=-1; notYetReversed=false; LOG_INFO(&quot;Reversed strain rate to &quot;&lt;&lt;currentStrainRate); }
+ 
++	// if(strain==stopAtStrain){LOG_INFO(&quot;Prescibed strain &quot;&lt;&lt;stopAtStrain&lt;&lt;&quot; reached, pausing.&quot;); }
++	if(!isnan(stopAtStrain) &amp;&amp; ((strain*stopAtStrain&gt;0) &amp;&amp; abs(strain)&gt;abs(stopAtStrain))) { strain=stopAtStrain;	rootBody-&gt;stopAtIteration=Omega::instance().getCurrentIteration()+2; LOG_INFO(&quot;Prescribed strain &quot;&lt;&lt;stopAtStrain&lt;&lt;&quot; reached, will stop in 2 iterations&quot;); }
++
+ 	if(Omega::instance().getCurrentIteration()%10==0 ) {
+ 		computeAxialForce(rootBody);
+ 		#if 0
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.hpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.hpp	2008-11-22 22:54:46 UTC (rev 1580)
++++ trunk/extra/usct/UniaxialStrainControlledTest.hpp	2008-11-24 12:18:47 UTC (rev 1581)
+@@ -15,7 +15,7 @@
+ 	private:
+ 		void createEngines();
+ 	public:
+-		USCTGen(){ axis=1; limitStrain=0; damping=0.2;cohesiveThresholdIter=200; };
++		USCTGen(){ axis=1; limitStrain=0; damping=0.2;cohesiveThresholdIter=200;};
+ 		~USCTGen (){};
+ 		bool generate();
+ 		string spheresFile;
+@@ -81,6 +81,8 @@
+ 		void init();
+ 	public:
+ 		Real strainRate,currentStrainRate;
++		//! strain at which we will pause simulation; inactive (nan) by default; must be reached from below (in absolute value)
++		Real stopAtStrain;
+ 		//! distance of reference bodies in the direction of axis before straining started
+ 		Real originalLength;
+ 		vector&lt;Real&gt; originalWidths;
+@@ -124,11 +126,12 @@
+ 		Real strain, avgStress;
+ 
+ 		virtual void applyCondition(MetaBody* rootBody);
+-		UniaxialStrainer(){axis=2; asymmetry=0; currentStrainRate=0; originalLength=-1; limitStrain=0; notYetReversed=true; crossSectionArea=-1; needsInit=true; /* sensorsPusher=shared_ptr&lt;UniaxialStrainSensorPusher&gt;(); */ recordFile=&quot;/tmp/usct.data&quot;; strain=avgStress=/*avgTransStrain=*/0; blockRotations=false; blockDisplacements=false;};
++		UniaxialStrainer(){axis=2; asymmetry=0; currentStrainRate=0; originalLength=-1; limitStrain=0; notYetReversed=true; crossSectionArea=-1; needsInit=true; /* sensorsPusher=shared_ptr&lt;UniaxialStrainSensorPusher&gt;(); */ recordFile=&quot;/tmp/usct.data&quot;; strain=avgStress=/*avgTransStrain=*/0; blockRotations=false; blockDisplacements=false;  stopAtStrain=numeric_limits&lt;Real&gt;::quiet_NaN();};
+ 		virtual ~UniaxialStrainer(){};
+ 		void registerAttributes(){
+ 			DeusExMachina::registerAttributes();
+ 			REGISTER_ATTRIBUTE(strainRate);
++			REGISTER_ATTRIBUTE(stopAtStrain);
+ 			REGISTER_ATTRIBUTE(currentStrainRate);
+ 			REGISTER_ATTRIBUTE(axis);
+ 			REGISTER_ATTRIBUTE(asymmetry);
+
+Modified: trunk/gui/qt3/QtGUI.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI.cpp	2008-11-22 22:54:46 UTC (rev 1580)
++++ trunk/gui/qt3/QtGUI.cpp	2008-11-24 12:18:47 UTC (rev 1581)
+@@ -62,7 +62,7 @@
+ 	mainWindow-&gt;show();
+ 	app.setMainWidget(mainWindow);
+ 	#ifdef EMBED_PYTHON
+-		LOG_INFO(&quot;Launching Python thread now...&quot;);
++		LOG_DEBUG(&quot;Launching Python thread now...&quot;);
+ 		//PyEval_InitThreads();
+ 		boost::thread pyThread(boost::function0&lt;void&gt;(&amp;PythonUI::pythonSession));
+ 	#endif
+
+Added: trunk/pkg/common/Engine/DeusExMachina/LinearInterpolate.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/LinearInterpolate.hpp	2008-11-22 22:54:46 UTC (rev 1580)
++++ trunk/pkg/common/Engine/DeusExMachina/LinearInterpolate.hpp	2008-11-24 12:18:47 UTC (rev 1581)
+@@ -0,0 +1,47 @@
++// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++
++#include&lt;vector&gt;
++#include&lt;iostream&gt;
++#include&lt;cassert&gt;
++
++/* Linear interpolation function suitable only for sequential interpolation.
++ *
++ * Template parameter T must support: addition, subtraction, scalar multiplication.
++ *
++ * @param t &quot;time&quot; at which the interpolated variable should be evaluated.
++ * @param tt &quot;time&quot; points at which values are given; must be increasing.
++ * @param values values at &quot;time&quot; points specified by tt
++ * @param pos holds lookup state
++ *
++ * @return value at &quot;time&quot; t; out of range: t&lt;t0 &#8594; value(t0), t&gt;t_last &#8594; value(t_last)
++ */
++template&lt;typename T&gt;
++T linearInterpolate(const Real t, const std::vector&lt;Real&gt;&amp; tt, const std::vector&lt;T&gt;&amp; values, size_t&amp; pos){
++	assert(tt.size()==values.size());
++	if(t&lt;=tt[0]){ pos=0; return values[0];}
++	if(t&gt;=*tt.rbegin()){ pos=tt.size()-2; return *values.rbegin();}
++	pos=std::min(pos,tt.size()-2);
++	while((tt[pos]&gt;t) || (tt[pos+1]&lt;t)){
++		assert(tt[pos]&lt;tt[pos+1]);
++		if(tt[pos]&gt;t) pos--;
++		else pos++;
++	}
++	const Real&amp; t0=tt[pos], t1=tt[pos+1]; const T&amp; v0=values[pos], v1=values[pos+1];
++	return v0+(v1-v0)*((t-t0)/(t1-t0));
++}
++
++#if 0
++	// test program
++	int main(void){
++		Real t,v;
++		std::vector&lt;Real&gt; tt,vv;
++		while(std::cin){
++			std::cin&gt;&gt;t&gt;&gt;v;
++			tt.push_back(t); vv.push_back(v);	
++		}
++		size_t pos;
++		for(Real t=0; t&lt;10; t+=0.1){
++			std::cout&lt;&lt;t&lt;&lt;&quot; &quot;&lt;&lt;linearInterpolate&lt;Real&gt;(t,tt,vv,pos)&lt;&lt;std::endl;
++		}
++	}
++#endif 
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp	2008-11-22 22:54:46 UTC (rev 1580)
++++ trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp	2008-11-24 12:18:47 UTC (rev 1581)
+@@ -9,12 +9,20 @@
+ *************************************************************************/
+ 
+ 
+-#include &quot;RotationEngine.hpp&quot;
++#include&quot;RotationEngine.hpp&quot;
+ #include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ 
++#include&lt;yade/pkg-common/LinearInterpolate.hpp&gt;
+ 
++YADE_PLUGIN(&quot;RotationEngine&quot;,&quot;InterpolatingRotationEngine&quot;);
++
++void InterpolatingRotationEngine::applyCondition(MetaBody* rb){
++	angularVelocity=linearInterpolate&lt;Real&gt;(rb-&gt;simulationTime,times,velocities,pos);
++	RotationEngine::applyCondition(rb);
++}
++
+ RotationEngine::RotationEngine()
+ {
+ 	rotateAroundZero = false;
+@@ -73,4 +81,3 @@
+ 
+ }
+ 
+-YADE_PLUGIN();
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/RotationEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/RotationEngine.hpp	2008-11-22 22:54:46 UTC (rev 1580)
++++ trunk/pkg/common/Engine/DeusExMachina/RotationEngine.hpp	2008-11-24 12:18:47 UTC (rev 1581)
+@@ -1,18 +1,14 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
++// &#169; 2004 Olivier Galizzi &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>&gt;
++// &#169; 2008 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++#pragma once
+ 
+-#ifndef ROTATIONENGINE_HPP
+-#define ROTATIONENGINE_HPP
+-
+ #include&lt;yade/core/DeusExMachina.hpp&gt;
+-#include &lt;Wm3Vector3.h&gt;
++#include&lt;Wm3Vector3.h&gt;
+ #include&lt;yade/lib-base/yadeWm3.hpp&gt;
+ 
++/*! Engine applying rotation (by setting angular velocity) to subscribed bodies.
++ * If rotateAroundZero is set, then each body is also displaced around zeroPoint.
++ */
+ class RotationEngine : public DeusExMachina
+ {
+ 	public :
+@@ -31,8 +27,23 @@
+ 	REGISTER_CLASS_NAME(RotationEngine);
+ 	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+ };
+-
+ REGISTER_SERIALIZABLE(RotationEngine,false);
+ 
+-#endif // ROTATIONENGINE_HPP
++/*! Engine applying rotation, finding current angular velocity by interpolating in times and velocities */
++class InterpolatingRotationEngine: public RotationEngine{
++	public:
++		//! list of times at which velocities are given; must be increasing
++		vector&lt;Real&gt; times;
++		//! list of angular velocities
++		vector&lt;Real&gt; velocities;
++		//! holder of interpolation state, should not be touched by the user.
++		size_t pos;
++		InterpolatingRotationEngine(){pos=0;}
++		void registerAttributes(){ RotationEngine::registerAttributes(); REGISTER_ATTRIBUTE(times); REGISTER_ATTRIBUTE(velocities); REGISTER_ATTRIBUTE(pos); }
++		void applyCondition(MetaBody* rb);
++	REGISTER_CLASS_NAME(InterpolatingRotationEngine);
++	REGISTER_BASE_CLASS_NAME(RotationEngine);
++};
++REGISTER_SERIALIZABLE(InterpolatingRotationEngine,false);
+ 
++
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000523.html">[deprecated list] [Yade-dev] [svn] r1580 - tags
+</A></li>
+	<LI>Next message: <A HREF="000528.html">[deprecated list] [Yade-dev] commit 1583, 3d view, serialization.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#525">[ date ]</a>
+              <a href="thread.html#525">[ thread ]</a>
+              <a href="subject.html#525">[ subject ]</a>
+              <a href="author.html#525">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

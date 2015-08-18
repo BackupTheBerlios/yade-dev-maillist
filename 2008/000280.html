@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] [Yade-commits] r1419
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20r1419&In-Reply-To=%3C48766270.1080007%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000277.html">
+   <LINK REL="Next"  HREF="000281.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] [Yade-commits] r1419</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20r1419&In-Reply-To=%3C48766270.1080007%40arcig.cz%3E"
+       TITLE="[yade-dev] [Yade-commits] r1419">eudoxos at arcig.cz
+       </A><BR>
+    <I>Thu Jul 10 21:26:40 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000277.html">[yade-dev] yade-dev Digest, Vol 20, Issue 2
+</A></li>
+        <LI>Next message: <A HREF="000281.html">[yade-dev] [Yade-commits] r1419
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#280">[ date ]</a>
+              <a href="thread.html#280">[ thread ]</a>
+              <a href="subject.html#280">[ subject ]</a>
+              <a href="author.html#280">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Sega, I unfortunately had commit conflict with you and hope that my
+commits didn't break your things, please verify that. Player is now able
+to use simulation saved in sqlite and I had to merge your changes by hand.
+
+I have a few remarks:
+
+1. First and foremost, you HAVE TO document new classes you create, so
+that other people can use them (filtering engines look very useful,
+btw). (it was the same with facets, which are great, please bear this in
+mind)
+
+2. Does it seem right to put filtering engines into MetBody::engines as
+they are used only for scene rendering. Perhaps adding filter to
+OpenGLRenderingEngine would make more sense? Clipping planes and such
+could be moved to those pre-rendering engines. In such way, those
+engines would not be run if you don't need the rendering - like if you
+run without GL or if drawing is slower than simulation; they would be
+run only right before drawing. It is just a suggestion, I haven;t
+thought that through.
+
+&gt;<i> Added: trunk/core/FiltrEngine.cpp
+</I>&gt;<i>   
+</I>3. I moved it to common, which seems like more appropriate space
+(comment in the commit log). (FilterEngine? Filtr looks like a typo...)
+&gt;<i> Modified: trunk/core/Omega.cpp
+</I>&gt;<i> +void Omega::setCurrentIteration(long int i) { currentIteration=i; }
+</I>&gt;<i>   
+</I>I moved iteration to MetaBody and adjusted this.
+
+&gt;<i> +	Omega::instance().setCurrentIteration(atoi(fileName.substr(fileName.rfind('_')+1).c_str()));
+</I>&gt;<i>   
+</I>4. Added the same for sqlite here.
+
+5. Would you mind running compilation before you commit? You were
+missing one logger and had FiltrationalEngine.hpp instead of
+FiltrEngine.hpp in the player and other errors.
+
+6. Can you please decrease vertical size of the player window and put
+filtration button elsewhere (decrease the message area, get rid of
+baseName boxes etc) or something? It doesn't fit on the screen with
+1024x768!
+
+Best, Vaclav
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000277.html">[yade-dev] yade-dev Digest, Vol 20, Issue 2
+</A></li>
+	<LI>Next message: <A HREF="000281.html">[yade-dev] [Yade-commits] r1419
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#280">[ date ]</a>
+              <a href="thread.html#280">[ thread ]</a>
+              <a href="subject.html#280">[ subject ]</a>
+              <a href="author.html#280">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

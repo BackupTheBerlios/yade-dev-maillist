@@ -1,0 +1,443 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1562 - in trunk: core gui	gui/py scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1562%20-%20in%20trunk%3A%20core%20gui%0A%09gui/py%20scripts&In-Reply-To=%3C200810281030.m9SAUrgr008201%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000471.html">
+   <LINK REL="Next"  HREF="000473.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1562 - in trunk: core gui	gui/py scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1562%20-%20in%20trunk%3A%20core%20gui%0A%09gui/py%20scripts&In-Reply-To=%3C200810281030.m9SAUrgr008201%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1562 - in trunk: core gui	gui/py scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Oct 28 11:30:53 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000471.html">[deprecated list] [Yade-dev] [svn] r1561 - trunk/lib/smoothing
+</A></li>
+        <LI>Next message: <A HREF="000473.html">[deprecated list] [Yade-dev] Move a wall  and plot (force,	displacement) in a Python simulation
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#472">[ date ]</a>
+              <a href="thread.html#472">[ thread ]</a>
+              <a href="subject.html#472">[ subject ]</a>
+              <a href="author.html#472">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-10-28 11:30:53 +0100 (Tue, 28 Oct 2008)
+New Revision: 1562
+
+Added:
+   trunk/gui/py/yade-multi
+   trunk/scripts/multi.py
+   trunk/scripts/multi.table
+Modified:
+   trunk/core/MetaBody.cpp
+   trunk/gui/SConscript
+   trunk/gui/py/PythonUI_rc.py
+   trunk/gui/py/utils.py
+Log:
+1. Commit simple parametric study interface, documented at <A HREF="http://yade.wikia.com/index.php?title=ScriptParametricStudy">http://yade.wikia.com/index.php?title=ScriptParametricStudy</A> and wrapper script to queue jobs, which is installed as yade-trunk-multi, yade-trunk-opt-multi and so on.
+2. Examples of such parametric &quot;study&quot; added in scripts/multi.py and scripts/multi.table
+3. MetaBody now create Omega().tags['id'] at initialization like '20081028T102950p15498' (date, time, pid) that is unique
+
+
+
+Modified: trunk/core/MetaBody.cpp
+===================================================================
+--- trunk/core/MetaBody.cpp	2008-10-27 21:41:21 UTC (rev 1561)
++++ trunk/core/MetaBody.cpp	2008-10-28 10:30:53 UTC (rev 1562)
+@@ -52,6 +52,7 @@
+ 	string gecos(pw-&gt;pw_gecos), gecos2; size_t p=gecos.find(&quot;,&quot;); if(p!=string::npos) boost::algorithm::erase_tail(gecos,gecos.size()-p); for(size_t i=0;i&lt;gecos.size();i++){gecos2.push_back(((unsigned char)gecos[i])&lt;128 ? gecos[i] : '?'); }
+ 	tags.push_back(boost::algorithm::replace_all_copy(string(&quot;author=&quot;)+gecos2+&quot; (&quot;+string(pw-&gt;pw_name)+&quot;@&quot;+hostname+&quot;)&quot;,&quot; &quot;,&quot;~&quot;));
+ 	tags.push_back(string(&quot;isoTime=&quot;+boost::posix_time::to_iso_string(boost::posix_time::second_clock::local_time())));
++	tags.push_back(string(&quot;id=&quot;+boost::posix_time::to_iso_string(boost::posix_time::second_clock::local_time())+&quot;p&quot;+lexical_cast&lt;string&gt;(getpid())));
+ 	tags.push_back(string(&quot;description=&quot;));
+ }
+ 
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2008-10-27 21:41:21 UTC (rev 1561)
++++ trunk/gui/SConscript	2008-10-28 10:30:53 UTC (rev 1562)
+@@ -52,6 +52,8 @@
+ 			env.File('qt.py','qt3'),
+ 		])
+ 
++	env.InstallAs('$PREFIX/bin/yade$SUFFIX-multi',env.File('yade-multi','py'))
++
+ 	# python modules are one level deeper so that you can say: from yade.wrapper import *
+ 	env.Install('$PREFIX/lib/yade$SUFFIX/gui/yade',[
+ 		env.SharedLibrary('wrapper',['py/yadeControl.cpp'],SHLIBPREFIX='',
+
+Modified: trunk/gui/py/PythonUI_rc.py
+===================================================================
+--- trunk/gui/py/PythonUI_rc.py	2008-10-27 21:41:21 UTC (rev 1561)
++++ trunk/gui/py/PythonUI_rc.py	2008-10-28 10:30:53 UTC (rev 1562)
+@@ -24,6 +24,7 @@
+ import yade.PythonTCPServer
+ srv=yade.PythonTCPServer.PythonTCPServer(minPort=9000)
+ yade.runtime.cookie=srv.server.cookie
++sys.stdout.flush()
+ 
+ ## run simulation if requested from the command line
+ if runtime.simulation:
+@@ -40,7 +41,9 @@
+ 		import traceback
+ 		traceback.print_exc()
+ 		if(runtime.nonInteractive or runtime.stopAfter): sys.exit(1)
+-if runtime.stopAfter: sys.exit(0)
++if runtime.stopAfter:
++	print &quot;Finished, bye.&quot;
++	sys.exit(0)
+ 
+ # run commands if requested from the command line
+ #if yadeRunCommands:
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-10-27 21:41:21 UTC (rev 1561)
++++ trunk/gui/py/utils.py	2008-10-28 10:30:53 UTC (rev 1562)
+@@ -16,7 +16,7 @@
+ # c++ implementations for performance reasons
+ from yade._utils import *
+ 
+-def saveVars(**kw):
++def saveVars(mark='',**kw):
+ 	&quot;&quot;&quot;Save passed variables into the simulation so that it can be recovered when the simulation is loaded again.
+ 
+ 	For example, variables a=5, b=66 and c=7.5e-4 are defined. To save those, use
+@@ -31,12 +31,12 @@
+ 	and they will be defined in the __builtin__ namespace (i.e. available from anywhere in the python code).
+ 	&quot;&quot;&quot;
+ 	import cPickle
+-	Omega().tags['pickledPythonVariablesDictionary']=cPickle.dumps(kw)
++	Omega().tags['pickledPythonVariablesDictionary'+mark]=cPickle.dumps(kw)
+ 
+-def loadVars():
++def loadVars(mark=''):
+ 	import cPickle
+ 	import __builtin__
+-	d=cPickle.loads(Omega().tags['pickledPythonVariablesDictionary'])
++	d=cPickle.loads(Omega().tags['pickledPythonVariablesDictionary'+mark])
+ 	for k in d: __builtin__.__dict__[k]=d[k]
+ 
+ 
+@@ -241,14 +241,14 @@
+ 	mainloop.run()
+ 	pipeline.set_state(gst.STATE_NULL); pipeline.get_state()
+ 
+-def readParamsFromTable(tableFile=None,tableLine=None,noTableOk=False,**kw):
++def readParamsFromTable(tableFileLine=None,noTableOk=False,**kw):
+ 	&quot;&quot;&quot;
+ 	Read parameters from a file and assign them to __builtin__ variables.
+ 
+ 	tableFile is a text file (with one value per blank-separated columns)
+ 	tableLine is number of line where to get the values from
+ 
+-		The format of the file is as follows (no comments, empty lines etc allowed&#8230;)
++		The format of the file is as follows (commens starting with # and empty lines allowed
+ 		
+ 		name1 name2 &#8230; # 0th line
+ 		val1  val2  &#8230; # 1st line
+@@ -261,17 +261,22 @@
+ 	
+ 	assigns Omega().tags['defaultParams']=&quot;unassignedName1=defaultValue1,&#8230;&quot;
+ 
++	saves all parameters (default as well as settable) using saveVars('table')
++
+ 	return value is the number of assigned parameters.
+ 	&quot;&quot;&quot;
+ 	o=Omega()
+ 	tagsParams=[]
++	dictDefaults,dictParams={},{}
+ 	import os, __builtin__
+-	if not tableFile and not os.environ.has_key('PARAM_TABLE'):
++	if not tableFileLine and not os.environ.has_key('PARAM_TABLE'):
+ 		if not noTableOk: raise EnvironmentError(&quot;PARAM_TABLE is not defined in the environment&quot;)
++		o.tags['line']='l!'
+ 	else:
+-		if not tableFile: tableFile=os.environ['PARAM_TABLE']
+-		if not tableLine: tableLine=int(os.environ['PARAM_LINE'])
+-		ll=open(tableFile).readlines(); names=ll[0].split(); values=ll[tableLine].split()
++		if not tableFileLine: tableFileLine=os.environ['PARAM_TABLE']
++		tableFile,tableLine=tableFileLine.split(':')
++		o.tags['line']='l'+tableLine
++		ll=[l.split('#')[0] for l in open(tableFile).readlines()]; names=ll[0].split(); values=ll[int(tableLine)].split()
+ 		assert(len(names)==len(values))
+ 		for i in range(len(names)):
+ 			if names[i]=='description': o.tags['description']=values[i]
+@@ -279,12 +284,13 @@
+ 				if names[i] not in kw.keys(): raise NameError(&quot;Parameter `%s' has no default value assigned&quot;%names[i])
+ 				kw.pop(names[i])
+ 				eq=&quot;%s=%s&quot;%(names[i],values[i])
+-				exec('__builtin__.%s=%s'%(names[i],values[i])); tagsParams+=['%s=%s'%(names[i],values[i])]
++				exec('__builtin__.%s=%s'%(names[i],values[i])); tagsParams+=['%s=%s'%(names[i],values[i])]; dictParams[names[i]]=values[i]
+ 	defaults=[]
+ 	for k in kw.keys():
+ 		exec(&quot;__builtin__.%s=%s&quot;%(k,kw[k]))
+-		defaults+=[&quot;%s=%s&quot;%(k,kw[k])]
++		defaults+=[&quot;%s=%s&quot;%(k,kw[k])]; dictDefaults[k]=kw[k]
+ 	o.tags['defaultParams']=&quot;,&quot;.join(defaults)
+ 	o.tags['params']=&quot;,&quot;.join(tagsParams)
++	dictParams.update(dictDefaults); saveVars('table',**dictParams)
+ 	return len(tagsParams)
+ 
+
+Added: trunk/gui/py/yade-multi
+===================================================================
+--- trunk/gui/py/yade-multi	2008-10-27 21:41:21 UTC (rev 1561)
++++ trunk/gui/py/yade-multi	2008-10-28 10:30:53 UTC (rev 1562)
+@@ -0,0 +1,138 @@
++#!/usr/bin/env python
++#&#160;encoding: utf-8
++#
++# portions &#169; 2008 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++
++
++#
++# _MANY_ thanks to Mark Pettit for concurrent jobs handling!
++# <A HREF="http://code.activestate.com/recipes/534160/">http://code.activestate.com/recipes/534160/</A>
++#
++
++import os, sys, thread, time
++
++def __concurrent_batch(cmd,thread_num,completion_status_dict,exit_code_dict):
++	&quot;&quot;&quot;Helper routine for 'concurrent_batches.&quot;&quot;&quot;
++
++	t0=time.time()
++	print '#%d started on %s'%(thread_num,time.asctime())
++	exit_code_dict[thread_num] = os.system(cmd)
++	completion_status_dict[thread_num] = 1  # for sum() routine
++	dt=int(time.time()-t0)
++	strDt='%02d:%02d:%02d'%(dt//3600,(dt%3600)//60,(dt%60))
++	strStatus='done   ' if exit_code_dict[thread_num]==0 else 'FAILED '
++	print &quot;#%d %s (exit status %d), duration %s&quot;%(thread_num,strStatus,exit_code_dict[thread_num],strDt)
++
++def concurrent_batches(batchlist,maxjobs=0,maxtime=0):
++	&quot;&quot;&quot;Run a list of batch commands simultaneously.
++
++	'batchlist' is a list of strings suitable for submitting under os.system().
++	Each job will run in a separate thread, with the thread ending when the
++	subprocess ends.
++	'maxjobs' will, if greater then zero, be the maximum number of simultaneous
++	jobs which can concurrently run.  This would be used to limit the number of
++	processes where too many could flood a system, causing performance issues.
++	'maxtime', when greater than zero, be the maximum amount of time (seconds)
++	that we will wait for processes to complete.  After that, we will return,
++	but no jobs will be killed.  In other words, the jobs still running will
++	continue to run, and hopefully finish in the course of time.
++
++	example: concurrent_batches((&quot;gzip abc&quot;,&quot;gzip def&quot;,&quot;gzip xyz&quot;))
++
++	returns: a dictionary of exit status codes, but only when ALL jobs are
++			 complete, or the maximum time has been exceeded.
++			 Note that if returning due to exceeding time, the dictionary will
++			 continue to be updated by the threads as they complete.
++			 The key of the dictionary is the thread number, which matches the
++			 index of the list of batch commands.  The value is the result of
++			 the os.system call.
++
++	gotcha:  If both the maxjobs and maxtime is set, there is a possibility that
++			 not all jobs will be submitted.  The only way to detect this will be
++			 by checking for the absence of the KEY in the returned dictionary.
++	&quot;&quot;&quot;
++
++	if not batchlist: return {}
++	completion_status_dict, exit_code_dict = {}, {}
++	num_jobs = len(batchlist)
++	start_time = time.time()
++	for thread_num, cmd in enumerate(batchlist):
++		exit_code_dict[thread_num] = None
++		completion_status_dict[thread_num] = 0 # for sum() routine
++		thread.start_new_thread(__concurrent_batch,
++			  (cmd,thread_num,completion_status_dict,exit_code_dict))
++		while True:
++			completed = sum(completion_status_dict.values())
++			if num_jobs == completed:
++				return exit_code_dict	  # all done
++			running = thread_num - completed + 1
++			if maxtime &gt; 0:
++				if time.time() - start_time &gt; maxtime:
++					return exit_code_dict
++			if not maxjobs:
++				if thread_num &lt; num_jobs-1:  # have we submitted all jobs ?
++					break				  #  no, so break to for cmd loop
++				else:
++					time.sleep(.2)		 #  yes, so wait until jobs are complete
++					continue
++			if running &lt; maxjobs and thread_num &lt; num_jobs-1:
++				break	# for next for loop
++			time.sleep(.2)
++#
++# now begins the yade code
++#
++
++import sys,re,optparse
++def getNumCores(): return len([l for l in open('/proc/cpuinfo','r') if l.find('processor')==0])
++
++parser=optparse.OptionParser(usage='%prog [options] TABLE SIMULATION.py\n\n  %prog runs yade simulation multiple times with different parameters.\n  See <A HREF="http://yade.wikia.com/wiki/ScriptParametricStudy">http://yade.wikia.com/wiki/ScriptParametricStudy</A> for details.')
++parser.add_option('-j',dest='maxJobs',type='int',help=&quot;Maximum number of simultaneous jobs to run (default: number of cores, i.e. %d)&quot;%getNumCores(),metavar='NUM',default=getNumCores())
++parser.add_option('--log',dest='logFormat',help='Format of log files -- must contain a %, which will be replaced by line number (default: SIMULATION.%.log)',metavar='FORMAT')
++parser.add_option('-l','--lines',dest='lineList',help='Lines of TABLE to use, in the format 2,3-5,8,11-13 (default: all available lines in TABLE)',metavar='LIST')
++parser.add_option('--nice',dest='nice',type='int',help='Nice value of spawned jobs (default: 10)',default=10)
++parser.add_option('--executable',dest='executable',help='Name of the program to run (default: %s)'%sys.argv[0][:-6],default=sys.argv[0][:-6],metavar='FILE') ## strip the '-multi' extension
++opts,args=parser.parse_args()
++logFormat,lineList,maxJobs,nice,executable=opts.logFormat,opts.lineList,opts.maxJobs,opts.nice,opts.executable
++
++if len(args)!=2:
++	#print &quot;Exactly two non-option arguments must be specified -- parameter table and script to be run.\n&quot;
++	parser.print_help()
++	sys.exit(1)
++table,simul=args[0:2]
++if not logFormat: logFormat=(simul[:-3] if simul[-3:]=='.py' else simul)+&quot;.%.log&quot;
++if not '%' in logFormat: raise StandardError(&quot;Log string must contain a `%'&quot;)
++
++print &quot;Will run `%s' on `%s' with nice value %d, output redirected to `%s', %d jobs at a time.&quot;%(executable,simul,nice,logFormat,maxJobs)
++
++ll=open(table,'r').readlines()
++availableLines=[i for i in range(len(ll)) if not re.match(r'^\s*(#.*)?$',ll[i][:-1]) and i&gt;0]
++
++print &quot;Will use table `%s', with available lines&quot;%(table),', '.join([str(i) for i in availableLines])+'.'
++
++if lineList:
++	useLines=[]
++	def numRange2List(s):
++		ret=[]
++		for l in s.split(','):
++			if &quot;-&quot; in l: ret+=range(*[int(s) for s in l.split('-')]); ret+=[ret[-1]+1]
++			else: ret+=[int(l)]
++		return ret
++	useLines0=numRange2List(lineList)
++	for l in useLines0:
++		if l not in availableLines: print &quot;WARNING: skipping unavailable line %d that was requested from the command line.&quot;%l
++		elif l==0: print &quot;WARNING: skipping line 0 that should contain variable labels&quot;
++		else: useLines+=[l]
++else: useLines=availableLines
++print &quot;Will use lines &quot;,', '.join([str(i) for i in useLines])+'.'
++
++
++batches=[]
++for l in useLines:
++	logFile=logFormat.replace('%',str(l))
++	batches.append('PARAM_TABLE=%s:%d nice -n %d %s -N PythonUI -- -n -x %s &gt; %s 2&gt;&amp;1'%(table,l,nice,executable,simul,logFile))
++print &quot;Job summary:&quot;
++for i in range(len(batches)):
++	print '   #%d:'%i, batches[i]
++# OK, go now
++concurrent_batches(batches,maxjobs=maxJobs)
++print 'All jobs finished, bye.'
+
+
+Property changes on: trunk/gui/py/yade-multi
+___________________________________________________________________
+Name: svn:executable
+   + *
+
+Added: trunk/scripts/multi.py
+===================================================================
+--- trunk/scripts/multi.py	2008-10-27 21:41:21 UTC (rev 1561)
++++ trunk/scripts/multi.py	2008-10-28 10:30:53 UTC (rev 1562)
+@@ -0,0 +1,45 @@
++#
++# see <A HREF="http://yade.wikia.com/wiki/ScriptParametricStudy#scripts.2Fmulti.py">http://yade.wikia.com/wiki/ScriptParametricStudy#scripts.2Fmulti.py</A> for explanations
++#
++## read parameters from table here
++from yade import utils
++utils.readParamsFromTable(gravity=-9.81,density=2400,initialSpeed=20,noTableOk=True)
++print gravity,density,initialSpeed
++
++o=Omega()
++o.initializers=[
++	StandAloneEngine('PhysicalActionContainerInitializer'),
++	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingFacet2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
++	]
++o.engines=[
++	StandAloneEngine('PhysicalActionContainerReseter'),
++	MetaEngine('BoundingVolumeMetaEngine',[
++		EngineUnit('InteractingSphere2AABB'),
++		EngineUnit('InteractingBox2AABB'),
++		EngineUnit('MetaInteractingGeometry2AABB')
++	]),
++	StandAloneEngine('PersistentSAPCollider'),
++	MetaEngine('InteractionGeometryMetaEngine',[
++		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
++		EngineUnit('InteractingBox2InteractingSphere4SpheresContactGeometry')
++	]),
++	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
++	StandAloneEngine('ElasticContactLaw'),
++	DeusExMachina('GravityEngine',{'gravity':[0,0,gravity]}), ## here we use the 'gravity' parameter
++	DeusExMachina('NewtonsDampedLaw',{'damping':0.4})
++]
++o.bodies.append(utils.box([0,50,0],extents=[1,50,1],dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=density)) ## here we use the density parameter
++o.bodies.append(utils.sphere([0,0,10],1,color=[0,1,0],young=30e9,poisson=.3,density=density)) ## here again
++
++o.bodies[1].phys['velocity']=[0,initialSpeed,0] ## assign initial velocity
++
++o.dt=.8*utils.PWaveTimeStep()
++## o.saveTmp('initial')
++
++# run 30000 iterations
++o.run(30000,True)
++
++# write some results to a common file
++# (we rely on the fact that 2 processes will not write results at exactly the same time)
++# 'a' means to open for appending
++file('multi.out','a').write('%s %g %g %g %g\n'%(o.tags['description'],gravity,density,initialSpeed,o.bodies[1].phys.pos[1]))
+
+Added: trunk/scripts/multi.table
+===================================================================
+--- trunk/scripts/multi.table	2008-10-27 21:41:21 UTC (rev 1561)
++++ trunk/scripts/multi.table	2008-10-28 10:30:53 UTC (rev 1562)
+@@ -0,0 +1,9 @@
++description density initialSpeed ## comment here
++reference   2400    10
++hi_v       	2400    20
++lo_v        2400     5  # comment there
++hi_rho      5000    10
++hi_rho_v    5000    20
++hi_rh0_lo_v 5000     5
++
++  # comment-only line
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000471.html">[deprecated list] [Yade-dev] [svn] r1561 - trunk/lib/smoothing
+</A></li>
+	<LI>Next message: <A HREF="000473.html">[deprecated list] [Yade-dev] Move a wall  and plot (force,	displacement) in a Python simulation
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#472">[ date ]</a>
+              <a href="thread.html#472">[ thread ]</a>
+              <a href="subject.html#472">[ subject ]</a>
+              <a href="author.html#472">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

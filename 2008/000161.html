@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] python: unable to reproduce serializer problem on ia32
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20python%3A%20unable%20to%20reproduce%20serializer%20problem%20on%0A%20ia32&In-Reply-To=%3C48176BFD.3060002%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000160.html">
+   <LINK REL="Next"  HREF="000168.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] python: unable to reproduce serializer problem on ia32</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20python%3A%20unable%20to%20reproduce%20serializer%20problem%20on%0A%20ia32&In-Reply-To=%3C48176BFD.3060002%40arcig.cz%3E"
+       TITLE="[yade-dev] python: unable to reproduce serializer problem on ia32">eudoxos at arcig.cz
+       </A><BR>
+    <I>Tue Apr 29 20:42:05 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000160.html">[yade-dev] python: unable to reproduce serializer problem on ia32
+</A></li>
+        <LI>Next message: <A HREF="000168.html">[yade-dev] [solved?] python: unable to reproduce serializer problem	on ia32
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#161">[ date ]</a>
+              <a href="thread.html#161">[ thread ]</a>
+              <a href="subject.html#161">[ subject ]</a>
+              <a href="author.html#161">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> I finally tested python wrapper on a 32bit system (debian) and it works.
+</I>&gt;<i> Sega had problems that one tag was serialized in binary instead of text,
+</I>&gt;<i> for reasons that were not discovered (discussed on yade-dev about 2
+</I>&gt;<i> months ago). Can yet someone else reproduce that? You can run something like
+</I>&gt;<i>
+</I>&gt;<i>     yade-trunk -N cmdGui -- -s trunk/scripts/simple-scene.py
+</I>&gt;<i>
+</I>&gt;<i> I would like to fix that since I do all preprocessing in python now,
+</I>&gt;<i> which is quite convenient.
+</I>&gt;<i>   
+</I>Janek, I just experienced similar problem in the inverse way: when
+saving to binary, I get garbage file where binary and XML things are
+quite randomly interspersed. Janek, can the problem be that archives are
+created separately when constructing scene in python? I thought archive
+could be serialized either way. Can you have a look at that again,
+please? I know we will switch to boost::serialization, but that doesn't
+seem to happen in the timeframe of a few weeks, (which is what I need).
+
+Regards, Vaclav
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000160.html">[yade-dev] python: unable to reproduce serializer problem on ia32
+</A></li>
+	<LI>Next message: <A HREF="000168.html">[yade-dev] [solved?] python: unable to reproduce serializer problem	on ia32
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#161">[ date ]</a>
+              <a href="thread.html#161">[ thread ]</a>
+              <a href="subject.html#161">[ subject ]</a>
+              <a href="author.html#161">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,275 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1695 - trunk/extra/SpherePadder
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1695%20-%20trunk/extra/SpherePadder&In-Reply-To=%3C200902260835.n1Q8ZsKZ015616%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000769.html">
+   <LINK REL="Next"  HREF="000771.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1695 - trunk/extra/SpherePadder</H1>
+    <B>richefeu at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1695%20-%20trunk/extra/SpherePadder&In-Reply-To=%3C200902260835.n1Q8ZsKZ015616%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1695 - trunk/extra/SpherePadder">richefeu at mail.berlios.de
+       </A><BR>
+    <I>Thu Feb 26 09:35:54 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000769.html">[deprecated list] [Yade-dev] [svn] r1694 - trunk/extra/mgpost/src
+</A></li>
+        <LI>Next message: <A HREF="000771.html">[deprecated list] [Yade-dev] [svn] r1696 - trunk/extra/SpherePadder
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#770">[ date ]</a>
+              <a href="thread.html#770">[ thread ]</a>
+              <a href="subject.html#770">[ subject ]</a>
+              <a href="author.html#770">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: richefeu
+Date: 2009-02-26 09:35:54 +0100 (Thu, 26 Feb 2009)
+New Revision: 1695
+
+Modified:
+   trunk/extra/SpherePadder/SpherePadder.cpp
+   trunk/extra/SpherePadder/TetraMesh.cpp
+   trunk/extra/SpherePadder/TetraMesh.hpp
+   trunk/extra/SpherePadder/main.cpp
+Log:
+Fix some bugs
+
+
+
+Modified: trunk/extra/SpherePadder/SpherePadder.cpp
+===================================================================
+--- trunk/extra/SpherePadder/SpherePadder.cpp	2009-02-26 08:34:50 UTC (rev 1694)
++++ trunk/extra/SpherePadder/SpherePadder.cpp	2009-02-26 08:35:54 UTC (rev 1695)
+@@ -1045,6 +1045,8 @@
+ 
+       if ( k &lt; 0) k = -k;   
+       if ( scalar_product &lt; 0) k = -k;
++      // TODO : il suffit de prendre tester la valeur de mesh-&gt;face[f].normal_swap
++	  
+    
+     // First virtual sphere
+       /////////////////////////////////////////////   
+
+Modified: trunk/extra/SpherePadder/TetraMesh.cpp
+===================================================================
+--- trunk/extra/SpherePadder/TetraMesh.cpp	2009-02-26 08:34:50 UTC (rev 1694)
++++ trunk/extra/SpherePadder/TetraMesh.cpp	2009-02-26 08:35:54 UTC (rev 1695)
+@@ -182,6 +182,52 @@
+ 	organize ();
+ }
+ 
++void TetraMesh::write_surface_MGP (const char* name)
++{
++  ofstream fmgpost(name);
++
++  fmgpost &lt;&lt; &quot;&lt;?xml version=\&quot;1.0\&quot;?&gt;&quot; &lt;&lt; endl
++          &lt;&lt; &quot; &lt;mgpost mode=\&quot;3D\&quot;&gt;&quot; &lt;&lt; endl
++          &lt;&lt; &quot;  &lt;state id=\&quot;&quot; &lt;&lt; 1
++          &lt;&lt; &quot;\&quot; time=\&quot;&quot; &lt;&lt; 0.0 &lt;&lt; &quot;\&quot;&gt;&quot; &lt;&lt; endl;
++
++  double xm,ym,zm;
++  unsigned int id1,id2,id3;
++  unsigned int idPolyhedron = 1;
++  double div3 = 0.3333333333333333;
++  for (unsigned int i = 0 ; i &lt; face.size() ; ++i)
++  {
++	if(!(face[i].belongBoundary)) continue;
++	id1 = face[i].nodeId[0];
++	id2 = face[i].nodeId[1];
++	id3 = face[i].nodeId[2];
++	xm = div3 * (node[id1].x + node[id2].x + node[id3].x);
++	ym = div3 * (node[id1].y + node[id2].y + node[id3].y);
++	zm = div3 * (node[id1].z + node[id2].z + node[id3].z);
++
++    fmgpost &lt;&lt; &quot;   &lt;body&gt;&quot; &lt;&lt; endl;
++    fmgpost &lt;&lt; &quot;    &lt;POLYE id=\&quot;&quot; &lt;&lt; idPolyhedron++ &lt;&lt; &quot;\&quot; r=\&quot;&quot; &lt;&lt; min_segment_length &lt;&lt; &quot;\&quot;&gt;&quot; &lt;&lt; endl
++            &lt;&lt; &quot;     &lt;position x=\&quot;&quot; &lt;&lt; xm + xtrans &lt;&lt; &quot;\&quot; y=\&quot;&quot; &lt;&lt; ym + ytrans &lt;&lt; &quot;\&quot; z=\&quot;&quot; &lt;&lt; zm + ztrans &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl
++            &lt;&lt; &quot;     &lt;node x=\&quot;&quot; &lt;&lt; node[id1].x - xm &lt;&lt; &quot;\&quot; y=\&quot;&quot; &lt;&lt; node[id1].y - ym &lt;&lt; &quot;\&quot; z=\&quot;&quot; &lt;&lt; node[id1].z - zm &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl
++            &lt;&lt; &quot;     &lt;node x=\&quot;&quot; &lt;&lt; node[id2].x - xm &lt;&lt; &quot;\&quot; y=\&quot;&quot; &lt;&lt; node[id2].y - ym &lt;&lt; &quot;\&quot; z=\&quot;&quot; &lt;&lt; node[id2].z - zm &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl
++            &lt;&lt; &quot;     &lt;node x=\&quot;&quot; &lt;&lt; node[id3].x - xm &lt;&lt; &quot;\&quot; y=\&quot;&quot; &lt;&lt; node[id3].y - ym &lt;&lt; &quot;\&quot; z=\&quot;&quot; &lt;&lt; node[id3].z - zm &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl;
++
++     if (face[i].normal_swap)
++       fmgpost &lt;&lt; &quot;     &lt;face n1=\&quot;&quot; &lt;&lt; 0 &lt;&lt; &quot;\&quot; n2=\&quot;&quot; &lt;&lt; 2 &lt;&lt; &quot;\&quot; n3=\&quot;&quot; &lt;&lt; 1 &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl;
++     else
++       fmgpost &lt;&lt; &quot;     &lt;face n1=\&quot;&quot; &lt;&lt; 0 &lt;&lt; &quot;\&quot; n2=\&quot;&quot; &lt;&lt; 1 &lt;&lt; &quot;\&quot; n3=\&quot;&quot; &lt;&lt; 2 &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl;
++
++    fmgpost &lt;&lt; &quot;    &lt;/POLYE&gt;&quot; &lt;&lt; endl &lt;&lt; flush;
++
++    fmgpost &lt;&lt; &quot;   &lt;/body&gt;&quot; &lt;&lt; endl;
++  }
++  
++  fmgpost &lt;&lt; &quot;  &lt;/state&gt;&quot; &lt;&lt; endl
++          &lt;&lt; &quot; &lt;/mgpost&gt;&quot; &lt;&lt; endl;
++}
++
++
++
+ int compareInt (const void * a, const void * b)
+ {
+ 	return ( *(int*)a &gt; *(int*)b ) ? 1 :-1;
+@@ -189,8 +235,6 @@
+ 
+ void TetraMesh::organize ()
+ {
+-	//cout &lt;&lt; &quot;Organize data... &quot; &lt;&lt; flush;
+-
+ 	// Translate all nodes in such a manner that all coordinates are &gt; 0
+ 	xtrans = node[0].x;
+ 	ytrans = node[0].y;
+@@ -222,11 +266,12 @@
+ 	Face F;
+ 	F.tetraOwner.push_back(0);
+ 	F.belongBoundary = true;
++    F.normal_swap    = false;
+ 	for (unsigned int i = 0 ; i &lt; tetraedre.size() ; ++i)
+ 	{
+ 		F.tetraOwner[0] = i;
+ 
+-		// Note that nodes are still organized in ascending order
++		// Notice that nodes are still organized in ascending order
+ 		F.nodeId[0] = tetraedre[i].nodeId[0];
+ 		F.nodeId[1] = tetraedre[i].nodeId[1];
+ 		F.nodeId[2] = tetraedre[i].nodeId[2];
+@@ -273,6 +318,55 @@
+ 	}
+ 	tmpFace.clear(); // It should be usefull to free memory before the end of the function
+ 
++    // Definition of unit vectors normal to the boundary faces
++    unsigned int n1,n2,n3,n4;
++    unsigned int s1,s2,s3,s4;
++    Tetraedre current_tetra;
++    double v12[3], v13[3], v14[3], vect_product[3];
++    double scal_product;
++    for (unsigned int f = 0 ; f &lt; face.size() ; ++f)
++    {
++      if (!(face[f].belongBoundary)) continue;
++
++      current_tetra = tetraedre[ face[f].tetraOwner[0] ];
++
++      n1 = current_tetra.nodeId[0];
++      n2 = current_tetra.nodeId[1];
++      n3 = current_tetra.nodeId[2];
++      n4 = current_tetra.nodeId[3];
++
++      s1 = face[f].nodeId[0];
++      s2 = face[f].nodeId[1];
++      s3 = face[f].nodeId[2];
++
++      if      ((n1 != s1) &amp;&amp; (n1 != s2) &amp;&amp; (n1 != s3)) {s4 = n1;}
++      else if ((n2 != s1) &amp;&amp; (n2 != s2) &amp;&amp; (n2 != s3)) {s4 = n2;}
++      else if ((n3 != s1) &amp;&amp; (n3 != s2) &amp;&amp; (n3 != s3)) {s4 = n3;}
++      else                                             {s4 = n4;}
++
++	  v12[0] = node[s2].x - node[s1].x;
++	  v12[1] = node[s2].y - node[s1].y;
++	  v12[2] = node[s2].z - node[s1].z;
++
++	  v13[0] = node[s3].x - node[s1].x;
++	  v13[1] = node[s3].y - node[s1].y;
++	  v13[2] = node[s3].z - node[s1].z;
++
++	  v14[0] = node[s4].x - node[s1].x;
++	  v14[1] = node[s4].y - node[s1].y;
++	  v14[2] = node[s4].z - node[s1].z;
++
++	  vect_product[0] = v12[1]*v13[2] - v12[2]*v13[1];
++	  vect_product[1] = v12[2]*v13[0] - v12[0]*v13[2];
++	  vect_product[2] = v12[0]*v13[1] - v12[1]*v13[0];
++
++	  scal_product = v14[0]*vect_product[0] + v14[1]*vect_product[1] + v14[2]*vect_product[2];
++
++	  if (scal_product &gt; 0.0) face[f].normal_swap = true;
++    }
++
++
++    // Define for each node the faces it belong to
+ 	for (unsigned int f = 0 ; f &lt; face.size() ; ++f)
+ 	{
+ 		node[face[f].nodeId[0]].faceOwner.push_back(f);
+
+Modified: trunk/extra/SpherePadder/TetraMesh.hpp
+===================================================================
+--- trunk/extra/SpherePadder/TetraMesh.hpp	2009-02-26 08:34:50 UTC (rev 1694)
++++ trunk/extra/SpherePadder/TetraMesh.hpp	2009-02-26 08:35:54 UTC (rev 1695)
+@@ -40,6 +40,7 @@
+ 	vector&lt;unsigned int&gt; tetraOwner; // FIXME utile ???
+ 	vector&lt;unsigned int&gt; sphereId;
+ 	bool belongBoundary;
++	bool normal_swap;
+ };
+ 
+ struct Tetraedre
+@@ -52,7 +53,6 @@
+ class TetraMesh
+ {
+ protected:
+-    
+ 
+   void organize ();   
+   	
+@@ -74,5 +74,6 @@
+   
+   void read      (const char* name);
+   void read_gmsh (const char* name);
++  void write_surface_MGP (const char* name);
+ };
+ 
+
+Modified: trunk/extra/SpherePadder/main.cpp
+===================================================================
+--- trunk/extra/SpherePadder/main.cpp	2009-02-26 08:34:50 UTC (rev 1694)
++++ trunk/extra/SpherePadder/main.cpp	2009-02-26 08:35:54 UTC (rev 1695)
+@@ -26,7 +26,8 @@
+   TetraMesh * mesh = new TetraMesh();
+   //mesh-&gt;read_gmsh(&quot;meshes/test2.msh&quot;);
+   mesh-&gt;read(&quot;meshes/tomo.tetra&quot;);
+-  
++  //mesh-&gt;write_surface_MGP (&quot;tomo.mgp&quot;);
++
+   SpherePadder * padder = new SpherePadder();
+   padder-&gt;plugTetraMesh(mesh);
+   //padder-&gt;add_spherical_probe(0.7);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000769.html">[deprecated list] [Yade-dev] [svn] r1694 - trunk/extra/mgpost/src
+</A></li>
+	<LI>Next message: <A HREF="000771.html">[deprecated list] [Yade-dev] [svn] r1696 - trunk/extra/SpherePadder
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#770">[ date ]</a>
+              <a href="thread.html#770">[ thread ]</a>
+              <a href="subject.html#770">[ subject ]</a>
+              <a href="author.html#770">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

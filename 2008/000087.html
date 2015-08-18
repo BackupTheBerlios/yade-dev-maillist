@@ -1,0 +1,145 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] broken preprocessors after recent optimizations
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20broken%20preprocessors%20after%20recent%20optimizations&In-Reply-To=%3C47CBD2F0.2080405%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000086.html">
+   <LINK REL="Next"  HREF="000088.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] broken preprocessors after recent optimizations</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20broken%20preprocessors%20after%20recent%20optimizations&In-Reply-To=%3C47CBD2F0.2080405%40hmg.inpg.fr%3E"
+       TITLE="[yade-dev] broken preprocessors after recent optimizations">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Mon Mar  3 11:29:04 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000086.html">[yade-dev] broken preprocessors after recent optimizations
+</A></li>
+        <LI>Next message: <A HREF="000088.html">[yade-dev] broken preprocessors after recent optimizations
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#87">[ date ]</a>
+              <a href="thread.html#87">[ thread ]</a>
+              <a href="subject.html#87">[ subject ]</a>
+              <a href="author.html#87">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Is
+
+
+
+
+
+&gt;<i> Oh, the script can be run like this from the 'trunk' directory:
+</I>&gt;<i>
+</I>&gt;<i>  yade-trunk -N cmdGui -- -s scripts/default-test.py
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>Is it from the trunk or from the bin directory?
+
+ From bin, I have this below - I can't start cmdGui, what am I missing? :
+
+<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno at r1arduina</A>:~/YADE/bin$ ./yade-svn1272 -N cmdGui -- -s scripts/default-test.py
+Constructing ClassFactory  (if multiple times - check '-rdynamic' flag!).
+Constructing SerializableSingleton  (if multiple times - check '-rdynamic' flag!).
+terminate called after throwing an instance of 'FactoryCantCreate'
+  what():  ClassFactory::create - cannot create class named: cmdGui
+SIGSEGV/SIGABRT handler called; gdb batch file is `/home/bruno/.yade-svn1272/gdb_crash_batch-pid29497'
+GNU gdb 6.6-debian
+Copyright (C) 2006 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type &quot;show copying&quot; to see the conditions.
+There is absolutely no warranty for GDB.  Type &quot;show warranty&quot; for details.
+This GDB was configured as &quot;i486-linux-gnu&quot;.
+Using host libthread_db library &quot;/lib/tls/i686/cmov/libthread_db.so.1&quot;.
+[Thread debugging using libthread_db enabled]
+[New Thread -1237743888 (LWP 29497)]
+0xffffe410 in __kernel_vsyscall ()
+No symbol &quot;info&quot; in current context.
+
+Thread 1 (Thread -1237743888 (LWP 29497)):
+#0  0xffffe410 in __kernel_vsyscall ()
+#1  0xb71d46a3 in __waitpid_nocancel () from /lib/tls/i686/cmov/libc.so.6
+#2  0xb717ba3f in do_system () from /lib/tls/i686/cmov/libc.so.6
+#3  0xb7df153d in system () from /lib/tls/i686/cmov/libpthread.so.0
+#4  0x08103cea in sigHandler (sig=6) at core/yade.cpp:57
+#5  &lt;signal handler called&gt;
+#6  0xffffe410 in __kernel_vsyscall ()
+#7  0xb716edf0 in raise () from /lib/tls/i686/cmov/libc.so.6
+#8  0xb7170641 in abort () from /lib/tls/i686/cmov/libc.so.6
+#9  0xb7371270 in __gnu_cxx::__verbose_terminate_handler () from /usr/lib/libstdc++.so.6
+#10 0xb736eca5 in ?? () from /usr/lib/libstdc++.so.6
+#11 0xb736ece2 in std::terminate () from /usr/lib/libstdc++.so.6
+#12 0xb736ee1a in __cxa_throw () from /usr/lib/libstdc++.so.6
+#13 0xb73ad78f in ClassFactory::createShared (this=0x813ad58, name=@0xbfd53280) at lib/factory/ClassFactory.cpp:68
+#14 0x08101f14 in main (argc=6, argv=0xbfd534a4) at core/yade.cpp:247
+#0  0xffffe410 in __kernel_vsyscall ()
+Abandon (core dumped)
+
+
+
+
+
+
+
+
+&gt;<i> Best regards,
+</I>&gt;<i>
+</I>&gt;<i> Vaclav
+</I>&gt;<i> _______________________________________________
+</I>&gt;<i> yade-dev mailing list
+</I>&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.berlios.de</A>
+</I>&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">https://lists.berlios.de/mailman/listinfo/yade-dev</A>
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Institut National Polytechnique de Grenoble
+Laboratoire 3S (Soils Solids Structures) - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000086.html">[yade-dev] broken preprocessors after recent optimizations
+</A></li>
+	<LI>Next message: <A HREF="000088.html">[yade-dev] broken preprocessors after recent optimizations
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#87">[ date ]</a>
+              <a href="thread.html#87">[ thread ]</a>
+              <a href="subject.html#87">[ subject ]</a>
+              <a href="author.html#87">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

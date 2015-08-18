@@ -1,0 +1,209 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1701 -	trunk/pkg/common/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1701%20-%0A%09trunk/pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200902282139.n1SLdkc7024251%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000793.html">
+   <LINK REL="Next"  HREF="000791.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1701 -	trunk/pkg/common/Engine/StandAloneEngine</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1701%20-%0A%09trunk/pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200902282139.n1SLdkc7024251%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1701 -	trunk/pkg/common/Engine/StandAloneEngine">sega at mail.berlios.de
+       </A><BR>
+    <I>Sat Feb 28 22:39:46 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000793.html">[deprecated list] [Yade-dev] static_assert warning
+</A></li>
+        <LI>Next message: <A HREF="000791.html">[deprecated list] [Yade-dev] [svn] r1702 - in	trunk/pkg:	common/RenderingEngine/GLDrawInteractingGeometry	dem/DataClass/InteractionPhysics	dem/Engine/EngineUnit	dem/Engine/StandAloneEngine snow	snow/DataClass snow/Engine	snow/PreProcessor snow/RenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#789">[ date ]</a>
+              <a href="thread.html#789">[ thread ]</a>
+              <a href="subject.html#789">[ subject ]</a>
+              <a href="author.html#789">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2009-02-28 22:39:45 +0100 (Sat, 28 Feb 2009)
+New Revision: 1701
+
+Modified:
+   trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.hpp
+Log:
+Update contact logic for SpatialQuickSortCollider (hope, it's correct)
+
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp	2009-02-28 19:06:57 UTC (rev 1700)
++++ trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp	2009-02-28 21:39:45 UTC (rev 1701)
+@@ -14,6 +14,7 @@
+ 
+ SpatialQuickSortCollider::SpatialQuickSortCollider() : BroadInteractor()
+ {
++	haveDistantTransient=false;
+ }
+ 
+ SpatialQuickSortCollider::~SpatialQuickSortCollider()
+@@ -21,11 +22,6 @@
+ 
+ }
+ 
+-void SpatialQuickSortCollider::registerAttributes()
+-{
+-    BroadInteractor::registerAttributes();
+-}
+-
+ void SpatialQuickSortCollider::action(MetaBody* ncb)
+ {
+      shared_ptr&lt;BodyContainer&gt; bodies = ncb-&gt;bodies;
+@@ -61,13 +57,11 @@
+ 	}
+ 
+ 	shared_ptr&lt; InteractionContainer &gt; transientInteractions = ncb-&gt;transientInteractions;
+-
+ 	InteractionContainer::iterator ii    = transientInteractions-&gt;begin();
+ 	InteractionContainer::iterator iiEnd = transientInteractions-&gt;end();
+ 	for( ; ii!=iiEnd ; ++ii)
+-	   (*ii)-&gt;cycle = false;
++		(*ii)-&gt;cycle=false;
+ 
+-
+ 	sort(rank.begin(), rank.end(), xBoundComparator()); // sotring along X
+ 
+ 	int id,id2; size_t j;
+@@ -80,32 +74,45 @@
+ 	    j=i;
+ 	    while(++j&lt;nbElements)
+ 	    {
+-		if ( rank[j]-&gt;min[0] &lt; max[0])
+-		{
+-		    if (   rank[j]-&gt;min[1] &lt; max[1]
++			if ( rank[j]-&gt;min[0] &gt; max[0]) break;
++			if ( rank[j]-&gt;min[1] &lt; max[1]
+ 			&amp;&amp; rank[j]-&gt;max[1] &gt; min[1]
+ 			&amp;&amp; rank[j]-&gt;min[2] &lt; max[2]
+ 			&amp;&amp; rank[j]-&gt;max[2] &gt; min[2])
+-		    {
+-			id2=rank[j]-&gt;id;
+-			if ( (interaction = transientInteractions-&gt;find(body_id_t(id),body_id_t(id2))) == 0)
+ 			{
+-			    interaction = shared_ptr&lt;Interaction&gt;(new Interaction(id,id2) );
+-			    interaction-&gt;cycle=true;
+-			    transientInteractions-&gt;insert(interaction);
++				id2=rank[j]-&gt;id;
++				if ( (interaction = transientInteractions-&gt;find(body_id_t(id),body_id_t(id2))) == 0)
++				{
++					interaction = shared_ptr&lt;Interaction&gt;(new Interaction(id,id2) );
++					transientInteractions-&gt;insert(interaction);
++				}
++				interaction-&gt;cycle=true; 
++				// if interaction !isReal it falls back to the potential state
++				if (!haveDistantTransient &amp;&amp; !interaction-&gt;isReal) interaction-&gt;isNew=true;
+ 			}
+-			else
+-			    interaction-&gt;cycle = true;
+-		    }
+-		}
+-		else break;
+ 	    }
+ 	}
+ 
+ 	ii    = transientInteractions-&gt;begin();
+ 	iiEnd = transientInteractions-&gt;end();
+ 	for( ; ii!=iiEnd ; ++ii)
+-	   if ( !(interaction = *ii)-&gt;cycle &amp;&amp; !interaction-&gt;isReal ) transientInteractions-&gt;erase( interaction-&gt;getId1(), interaction-&gt;getId2());
++	{
++		interaction = *ii;
++		if( 
++			// if haveDistantTransient remove interactions deleted by the constitutive law
++				(haveDistantTransient &amp;&amp; !interaction-&gt;isNew &amp;&amp; !interaction-&gt;isReal)
++			// if !haveDistantTransient remove interactions without AABB overlapping
++				|| (!haveDistantTransient &amp;&amp; !interaction-&gt;cycle) 
++		) { 
++			transientInteractions-&gt;erase( interaction-&gt;getId1(), interaction-&gt;getId2() ); 
++			continue; 
++		}
++		// Once the interaction has been fully created, it is not &quot;new&quot; anymore
++		if(interaction-&gt;isReal) interaction-&gt;isNew=false;
++		// For non-distant interactions reset isReal (it would be calculated later);
++		// for distant interactions isReal is set/unset by constitutive law
++		if(!haveDistantTransient) interaction-&gt;isReal=false;
++	}
+ 
+ }
+ 
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.hpp	2009-02-28 19:06:57 UTC (rev 1700)
++++ trunk/pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.hpp	2009-02-28 21:39:45 UTC (rev 1701)
+@@ -31,8 +31,6 @@
+ 
+ 	vector&lt;shared_ptr&lt;AABBBound&gt; &gt; rank;
+ 
+-	void registerAttributes();
+-
+     public:
+ 
+ 	SpatialQuickSortCollider();
+@@ -41,6 +39,15 @@
+ 	virtual void action(MetaBody*);
+ 
+ 
++	//! Don't break transient interaction once bodies don't overlap anymore; material law will be responsible for breaking it.
++	bool haveDistantTransient;
++
++	void registerAttributes() {
++		BroadInteractor::registerAttributes();
++		REGISTER_ATTRIBUTE(haveDistantTransient);
++	}
++
++	DECLARE_LOGGER;
+ 	REGISTER_CLASS_NAME(SpatialQuickSortCollider);
+ 	REGISTER_BASE_CLASS_NAME(BroadInteractor);
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000793.html">[deprecated list] [Yade-dev] static_assert warning
+</A></li>
+	<LI>Next message: <A HREF="000791.html">[deprecated list] [Yade-dev] [svn] r1702 - in	trunk/pkg:	common/RenderingEngine/GLDrawInteractingGeometry	dem/DataClass/InteractionPhysics	dem/Engine/EngineUnit	dem/Engine/StandAloneEngine snow	snow/DataClass snow/Engine	snow/PreProcessor snow/RenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#789">[ date ]</a>
+              <a href="thread.html#789">[ thread ]</a>
+              <a href="subject.html#789">[ subject ]</a>
+              <a href="author.html#789">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

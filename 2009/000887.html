@@ -1,0 +1,314 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1728 - in	trunk:	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1728%20-%20in%0A%09trunk%3A%09pkg/dem/DataClass/InteractionGeometry%09pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%09scripts/test&In-Reply-To=%3C200903231935.n2NJZAiE013386%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000886.html">
+   <LINK REL="Next"  HREF="000888.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1728 - in	trunk:	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1728%20-%20in%0A%09trunk%3A%09pkg/dem/DataClass/InteractionGeometry%09pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%09scripts/test&In-Reply-To=%3C200903231935.n2NJZAiE013386%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1728 - in	trunk:	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Mar 23 20:35:10 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000886.html">[deprecated list] [Yade-dev] [svn] r1727 - trunk/gui/py
+</A></li>
+        <LI>Next message: <A HREF="000888.html">[deprecated list] [Yade-dev] [svn] r1729 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#887">[ date ]</a>
+              <a href="thread.html#887">[ thread ]</a>
+              <a href="subject.html#887">[ subject ]</a>
+              <a href="author.html#887">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-03-23 20:35:09 +0100 (Mon, 23 Mar 2009)
+New Revision: 1728
+
+Modified:
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+   trunk/scripts/test/triax-identical-results.py
+Log:
+1. Remove some garbage from SpheresContactGeometry
+2. Verify that SCG_SHEAR doesn't alter behavior if ElasticContactLaw::useShear is false
+3. Implement SCG_SHEAR for sphere-box interactions
+4. sphere-box interactions no longer call goReverse, but swap interaction order instead, as facets do.
+5. Fix triax-idnetical-results.py to reload generated initial config to avoid rounding issues of sphere coords in text file.
+
+
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2009-03-22 18:08:17 UTC (rev 1727)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2009-03-23 19:35:09 UTC (rev 1728)
+@@ -10,12 +10,12 @@
+ SpheresContactGeometry::~SpheresContactGeometry(){};
+ 
+ #ifdef SCG_SHEAR
+-void SpheresContactGeometry::updateShear(const RigidBodyParameters* rbp1, const RigidBodyParameters* rbp2, Real dt, bool avoidGranularRatcheting){
++Vector3r SpheresContactGeometry::updateShear(const RigidBodyParameters* rbp1, const RigidBodyParameters* rbp2, Real dt, bool avoidGranularRatcheting){
+ 
+ 	Vector3r axis;
+ 	Real angle;
+ 
+-	shearIncrement=Vector3r::ZERO;
++	Vector3r shearIncrement(Vector3r::ZERO);
+ 
+ 	// approximated rotations
+ 		axis = prevNormal.Cross(normal); 
+@@ -62,7 +62,7 @@
+ 	shearIncrement -= shearDisplacement;
+ 
+ 	shear+=shearIncrement;
+-	shearUpdateIter=Omega::instance().getCurrentIteration();
++	return shearIncrement;
+ }
+ #endif
+ 
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2009-03-22 18:08:17 UTC (rev 1727)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2009-03-23 19:35:09 UTC (rev 1728)
+@@ -24,20 +24,13 @@
+ 			Vector3r shear;
+ 			//! Normal of the contact in the previous step
+ 			Vector3r prevNormal;
+-			//! Increment of shear displacement in last step (is already added to shear); perhaps useful for viscosity or something similar
+-			Vector3r shearIncrement;
+-			long shearUpdateIter; // debugging only, to check when shear was updated last time
+-			//! update shear on this contact given dynamic parameters of bodies. Should be called from constitutive law, exactly once per iteration
+-			void updateShear(const RigidBodyParameters* rbp1, const RigidBodyParameters* rbp2, Real dt, bool avoidGranularRatcheting=true);
+-			//const Vector3r&amp; getShear(){ if(Omega::instance().getCurrentIteration()&gt;shearUpdateIter) throw runtime_error(&quot;SpheresContactGeometry::updateShear must be called prior to getShear().&quot;); return shear; }
++			//! update shear on this contact given dynamic parameters of bodies. Should be called from constitutive law, exactly once per iteration. Returns shear increment in this update, which is already added to shear.
++			Vector3r updateShear(const RigidBodyParameters* rbp1, const RigidBodyParameters* rbp2, Real dt, bool avoidGranularRatcheting=true);
+ 		#endif
+ 		
+ 		// all the rest here will hopefully disappear at some point...
+ 
+ 		// begin abusive storage
+-		bool hasNormalViscosity;
+-		Real NormalViscisity;
+-		Real NormalRelativeVelocity;
+ 		//! Whether the original contact was on the positive (1) or negative (-1) facet side; this is to permit repulsion to the right side even if the sphere passes, under extreme pressure, geometrically to the other facet's side. This is used only in InteractingFacet2IteractingSphere4SpheresContactGeometry. If at any point the contact is with the edge or vertex instead of face, this attribute is reset so that contact with the other face is possible.
+ 		int facetContactFace;
+ 		// end abusive storage
+@@ -99,7 +92,7 @@
+ 
+ 		SpheresContactGeometry():contactPoint(Vector3r::ZERO),radius1(0),radius2(0),facetContactFace(0.),hasShear(false),pos1(Vector3r::ZERO),pos2(Vector3r::ZERO),ori1(Quaternionr::IDENTITY),ori2(Quaternionr::IDENTITY),cp1rel(Quaternionr::IDENTITY),cp2rel(Quaternionr::IDENTITY),d1(0),d2(0),d0(0),initRelOri12(Quaternionr::IDENTITY){createIndex();
+ 		#ifdef SCG_SHEAR
+-			shear=Vector3r::ZERO; prevNormal=Vector3r::ZERO /*initialized to aproper value by geom functor*/; shearIncrement=Vector3r::ZERO; shearUpdateIter=-1 /* proper value from geom functor */;
++			shear=Vector3r::ZERO; prevNormal=Vector3r::ZERO /*initialized to proper value by geom functor*/;
+ 		#endif	
+ 		}
+ 		virtual ~SpheresContactGeometry();
+@@ -114,8 +107,6 @@
+ 			#ifdef SCG_SHEAR
+ 				(shear)
+ 				(prevNormal)
+-				(shearIncrement)
+-				(shearUpdateIter)
+ 			#endif
+ 			(facetContactFace)
+ 			// hasShear
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometry.cpp	2009-03-22 18:08:17 UTC (rev 1727)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometry.cpp	2009-03-23 19:35:09 UTC (rev 1728)
+@@ -87,6 +87,11 @@
+ 		shared_ptr&lt;SpheresContactGeometry&gt; scm;
+ 		if (c-&gt;isNew) scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
+ 		else scm = YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
++
++		#ifdef SCG_SHEAR
++			if(c-&gt;isNew) { /* same as below */ scm-&gt;prevNormal=pt1-pt2; scm-&gt;prevNormal.Normalize(); }
++			else {scm-&gt;prevNormal=scm-&gt;normal;}
++		#endif
+ 			
+ 		// contact point is in the middle of overlapping volumes
+ 		//(in the direction of penetration, which is normal to the box surface closest to sphere center) of overlapping volumes
+@@ -129,6 +134,10 @@
+ 		shared_ptr&lt;SpheresContactGeometry&gt; scm;
+ 		if (c-&gt;isNew) scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
+ 		else scm = YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);	
++		#ifdef SCG_SHEAR
++			if(c-&gt;isNew) { /* same as below */ scm-&gt;prevNormal=-cOnBox_sphere; }
++			else {scm-&gt;prevNormal=scm-&gt;normal;}
++		#endif
+ 		scm-&gt;contactPoint = 0.5*(pt1+pt2);
+ 		//scm-&gt;normal = pt1-pt2; scm-&gt;normal.Normalize();
+ 		//scm-&gt;penetrationDepth = (pt1-pt2).Length();
+@@ -150,19 +159,9 @@
+ 						const Se3r&amp; se32,
+ 						const shared_ptr&lt;Interaction&gt;&amp; c)
+ {
+-	bool isInteracting = go(cm2,cm1,se32,se31,c);
+-	if (isInteracting)
+-	{
+-		SpheresContactGeometry* scm = static_cast&lt;SpheresContactGeometry*&gt;(c-&gt;interactionGeometry.get());
+-		//Vector3r tmp = scm-&gt;closestsPoints[0].first;		
+-		//scm-&gt;closestsPoints[0].first = scm-&gt;closestsPoints[0].second;
+-		//scm-&gt;closestsPoints[0].second = tmp;
+-		scm-&gt;normal = -scm-&gt;normal;
+-		Real tmpR  = scm-&gt;radius1;
+-		scm-&gt;radius1 = scm-&gt;radius2;
+-		scm-&gt;radius2 = tmpR;
+-	}
+-	return isInteracting;
++	assert(c-&gt;isNew);
++	c-&gt;swapOrder();
++	return go(cm2,cm1,se32,se31,c);
+ }
+ 
+ YADE_PLUGIN();
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2009-03-22 18:08:17 UTC (rev 1727)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2009-03-23 19:35:09 UTC (rev 1728)
+@@ -165,23 +165,10 @@
+ 								const Se3r&amp; se32,
+ 								const shared_ptr&lt;Interaction&gt;&amp; c)
+ {
++	assert(c-&gt;isNew);
+ 	c-&gt;swapOrder();
+ 	//LOG_WARN(&quot;Swapped interaction order for &quot;&lt;&lt;c-&gt;getId2()&lt;&lt;&quot;&amp;&quot;&lt;&lt;c-&gt;getId1());
+ 	return go(cm2,cm1,se32,se31,c);
+-#if 0	
+-	bool isInteracting = go(cm2,cm1,se32,se31,c);
+-	if (isInteracting)
+-	{
+-	    SpheresContactGeometry* scm = static_cast&lt;SpheresContactGeometry*&gt;(c-&gt;interactionGeometry.get());
+-		 scm-&gt;normal*=-1;
+-		 std::swap(scm-&gt;radius1,scm-&gt;radius2);
+-		 if(hasShear){
+-			 swap(scm-&gt;pos1,scm-&gt;pos2); swap(scm-&gt;ori1,scm-&gt;ori2);
+-			 if(c-&gt;isNew){ swap(scm-&gt;cp1rel,scm-&gt;cp2rel); swap(scm-&gt;d1,scm-&gt;d2); }
+-		 }
+-	}
+-	return isInteracting;
+-#endif
+ }
+ 
+ YADE_PLUGIN();
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2009-03-22 18:08:17 UTC (rev 1727)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2009-03-23 19:35:09 UTC (rev 1728)
+@@ -38,14 +38,8 @@
+ 		else { scm=shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry()); c-&gt;interactionGeometry=scm; }
+ 
+ 		#ifdef SCG_SHEAR
+-			if(c-&gt;isNew){
+-				scm-&gt;prevNormal=normal;
+-				scm-&gt;shearUpdateIter=Omega::instance().getCurrentIteration(); /* no shear at the very beginning; shear initialized to zero vector in SCG ctor */
+-			} else {
+-				scm-&gt;prevNormal=scm-&gt;normal;
+-				// make sure updateShear was properly called at last iteration; debugging only
+-				//assert(scm-&gt;shearUpdateIter==Omega::instance().getCurrentIteration()-1);
+-			}
++			if(c-&gt;isNew) scm-&gt;prevNormal=normal; 
++			else scm-&gt;prevNormal=scm-&gt;normal;
+ 		#endif
+ 
+ 		Real penetrationDepth=s1-&gt;radius+s2-&gt;radius-normal.Normalize(); /* Normalize() works in-place and returns length before normalization; from here, normal is unit vector */
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2009-03-22 18:08:17 UTC (rev 1727)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2009-03-23 19:35:09 UTC (rev 1728)
+@@ -123,10 +123,10 @@
+ 					currentContactGeometry-&gt;updateShear(de1,de2,dt);
+ 					shearForce=currentContactPhysics-&gt;ks*currentContactGeometry-&gt;shear;
+ 				} else {
++			#endif
+ 					currentContactGeometry-&gt;updateShearForce(shearForce,currentContactPhysics-&gt;ks,currentContactPhysics-&gt;prevNormal,de1,de2,dt);
++			#ifdef SCG_SHEAR
+ 				}
+-			#else
+-				currentContactGeometry-&gt;updateShearForce(shearForce,currentContactPhysics-&gt;ks,currentContactPhysics-&gt;prevNormal,de1,de2,dt);
+ 			#endif
+ 			
+ 			// PFC3d SlipModel, is using friction angle. CoulombCriterion
+
+Modified: trunk/scripts/test/triax-identical-results.py
+===================================================================
+--- trunk/scripts/test/triax-identical-results.py	2009-03-22 18:08:17 UTC (rev 1727)
++++ trunk/scripts/test/triax-identical-results.py	2009-03-23 19:35:09 UTC (rev 1728)
+@@ -13,18 +13,18 @@
+ 	if not exists(outSph): break
+ 	i+=1
+ inSph='%s-in.spheres'%sph
+-if exists(inSph):
+-	print &quot;Using existing initial configuration&quot;,inSph
+-Preprocessor('TriaxialTest',{'importFilename':(inSph if exists(inSph) else ''),'numberOfGrains':400}).load()
+-if not exists(inSph):
+-	print &quot;Saving new initial configuration to&quot;,inSph
++if exists(inSph): print &quot;Using existing initial configuration&quot;,inSph
++else:
++	Preprocessor('TriaxialTest').load()
++	print &quot;Using new initial configuration in&quot;,inSph
+ 	utils.spheresToFile(inSph)
++Preprocessor('TriaxialTest',{'importFilename':inSph}).load()
+ O.usesTimeStepper=False
+ O.dt=utils.PWaveTimeStep()
+ #
+ # uncomment this line to enable shear computation in SpheresContactGeometry and then compare results with this line commented
+ #
+-#[e for e in O.engines if e.name=='ElasticContactLaw'][0]['useShear']=True
++[e for e in O.engines if e.name=='ElasticContactLaw'][0]['useShear']=True
+ if 1:
+ 	O.run(2000,True)
+ 	utils.spheresToFile(outSph)
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000886.html">[deprecated list] [Yade-dev] [svn] r1727 - trunk/gui/py
+</A></li>
+	<LI>Next message: <A HREF="000888.html">[deprecated list] [Yade-dev] [svn] r1729 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#887">[ date ]</a>
+              <a href="thread.html#887">[ thread ]</a>
+              <a href="subject.html#887">[ subject ]</a>
+              <a href="author.html#887">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

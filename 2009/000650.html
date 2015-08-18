@@ -1,0 +1,232 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1654 -	trunk/pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1654%20-%0A%09trunk/pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200902021625.n12GPDoN001683%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000648.html">
+   <LINK REL="Next"  HREF="000656.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1654 -	trunk/pkg/dem/Engine/StandAloneEngine</H1>
+    <B>richefeu at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1654%20-%0A%09trunk/pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200902021625.n12GPDoN001683%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1654 -	trunk/pkg/dem/Engine/StandAloneEngine">richefeu at mail.berlios.de
+       </A><BR>
+    <I>Mon Feb  2 17:25:13 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000648.html">[deprecated list] [Yade-dev] drawing a color legend
+</A></li>
+        <LI>Next message: <A HREF="000656.html">[deprecated list] [Yade-dev] [svn] r1655 - in trunk: . core extra	gui/py gui/qt3	pkg/dem/Engine/EngineUnit scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#650">[ date ]</a>
+              <a href="thread.html#650">[ thread ]</a>
+              <a href="subject.html#650">[ subject ]</a>
+              <a href="author.html#650">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: richefeu
+Date: 2009-02-02 17:25:12 +0100 (Mon, 02 Feb 2009)
+New Revision: 1654
+
+Added:
+   trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.hpp
+Log:
+Add a DataRecoder that generate MGP files (only for Spheres for the moment).
+The MGP files can then be read with mgpost.
+ 
+
+
+Added: trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.cpp	2009-02-02 14:25:50 UTC (rev 1653)
++++ trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.cpp	2009-02-02 16:25:12 UTC (rev 1654)
+@@ -0,0 +1,96 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Vincent Richefeu                                *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">vincent.richefeu at hmg.inpg.fr</A>                                          *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;MGPRecorder.hpp&quot;
++
++#include &lt;yade/core/Omega.hpp&gt;
++#include &lt;yade/core/MetaBody.hpp&gt;
++#include &lt;boost/lexical_cast.hpp&gt;
++
++#include &lt;yade/pkg-common/Sphere.hpp&gt;
++
++MGPRecorder::MGPRecorder(): DataRecorder()
++{
++  outputBase = &quot;mgp.out.&quot;;
++  interval   = 50;
++  stateId    = 0;
++}
++
++
++MGPRecorder::~MGPRecorder ()
++{
++
++}
++
++
++void MGPRecorder::postProcessAttributes(bool deserializing)
++{
++  if(deserializing)
++  {
++  //
++  }
++}
++
++
++void MGPRecorder::registerAttributes()
++{
++	DataRecorder::registerAttributes();
++	REGISTER_ATTRIBUTE(outputBase);
++	REGISTER_ATTRIBUTE(interval);
++	REGISTER_ATTRIBUTE(stateId);
++}
++
++bool MGPRecorder::isActivated()
++{
++   return ((Omega::instance().getCurrentIteration() % interval == 0));
++}
++
++void MGPRecorder::action(MetaBody * ncb)
++{
++  shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++
++  std::string outputFile = outputBase+lexical_cast&lt;string&gt;(stateId);
++  std::ofstream ofs(outputFile.c_str());
++
++  ofs &lt;&lt; &quot;&lt;?xml version=\&quot;1.0\&quot;?&gt;&quot; &lt;&lt; endl
++      &lt;&lt; &quot; &lt;mgpost mode=\&quot;3D\&quot;&gt;&quot; &lt;&lt; endl
++      &lt;&lt; &quot;  &lt;state id=\&quot;&quot; &lt;&lt; stateId++
++      &lt;&lt; &quot;\&quot; time=\&quot;&quot; &lt;&lt; lexical_cast&lt;string&gt;(Omega::instance().getSimulationTime()) &lt;&lt; &quot;\&quot;&gt;&quot; &lt;&lt; endl;
++
++   BodyContainer::iterator bi    = bodies-&gt;begin();
++   BodyContainer::iterator biEnd = bodies-&gt;end();
++   for(; bi != biEnd ; ++bi)
++   {
++     const shared_ptr&lt;Body&gt;&amp; b = *bi;
++     const RigidBodyParameters* p = YADE_CAST&lt;RigidBodyParameters*&gt;(b-&gt;physicalParameters.get());
++     const GeometricalModel* gm   = YADE_CAST&lt;GeometricalModel*&gt;(b-&gt;geometricalModel.get());
++
++     if ( typeid(*gm) == typeid(Sphere) )
++     {
++      ofs &lt;&lt; &quot;   &lt;body&gt;&quot; &lt;&lt; endl;
++      ofs &lt;&lt; &quot;    &lt;SPHER id=\&quot;&quot; &lt;&lt; b-&gt;getId() &lt;&lt; &quot;\&quot; r=\&quot;&quot; &lt;&lt; YADE_CAST&lt;Sphere*&gt;(b-&gt;geometricalModel.get())-&gt;radius &lt;&lt; &quot;\&quot;&gt;&quot; &lt;&lt; endl;
++      ofs &lt;&lt; &quot;     &lt;position x=\&quot;&quot; &lt;&lt; p-&gt;se3.position[0] &lt;&lt; &quot;\&quot; y=\&quot;&quot; 
++          &lt;&lt; p-&gt;se3.position[1] &lt;&lt; &quot;\&quot; z=\&quot;&quot; &lt;&lt; p-&gt;se3.position[2] &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl;   
++      ofs &lt;&lt; &quot;     &lt;velocity x=\&quot;&quot; &lt;&lt; p-&gt;velocity[0] &lt;&lt; &quot;\&quot; y=\&quot;&quot; 
++          &lt;&lt; p-&gt;velocity[1] &lt;&lt; &quot;\&quot; z=\&quot;&quot; &lt;&lt; p-&gt;velocity[2] &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl; 
++      ofs &lt;&lt; &quot;    &lt;/SPHER&gt;&quot; &lt;&lt; endl;
++      ofs &lt;&lt; &quot;   &lt;/body&gt;&quot; &lt;&lt; endl &lt;&lt; flush;
++     }
++
++
++
++   }
++
++
++  ofs &lt;&lt; &quot;  &lt;/state&gt;&quot; &lt;&lt; endl
++      &lt;&lt; &quot; &lt;/mgpost&gt;&quot; &lt;&lt; endl &lt;&lt; flush;
++
++
++}
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.hpp	2009-02-02 14:25:50 UTC (rev 1653)
++++ trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.hpp	2009-02-02 16:25:12 UTC (rev 1654)
+@@ -0,0 +1,44 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Vincent Richefeu                                *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">vincent.richefeu at hmg.inpg.fr</A>                                          *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#pragma once
++
++#include &lt;yade/core/DataRecorder.hpp&gt;
++#include &lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++#include&lt;yade/core/GeometricalModel.hpp&gt;
++//#include &lt;set&gt;
++
++
++class MGPRecorder : public DataRecorder 
++{
++private:
++    //shared_ptr&lt;RigidBodyParameters&gt; rigidBodyParameters;
++    //set&lt;int&gt; body_ids;
++
++
++public :
++    string outputBase; 
++    int interval;
++    int stateId;
++
++    MGPRecorder ();
++    ~MGPRecorder ();
++
++    virtual void action(MetaBody*);
++    bool isActivated();
++
++protected :
++    virtual void postProcessAttributes(bool deserializing);
++    void registerAttributes();
++    REGISTER_CLASS_NAME(MGPRecorder);
++    REGISTER_BASE_CLASS_NAME(DataRecorder);
++};
++
++REGISTER_SERIALIZABLE(MGPRecorder);
++
++
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000648.html">[deprecated list] [Yade-dev] drawing a color legend
+</A></li>
+	<LI>Next message: <A HREF="000656.html">[deprecated list] [Yade-dev] [svn] r1655 - in trunk: . core extra	gui/py gui/qt3	pkg/dem/Engine/EngineUnit scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#650">[ date ]</a>
+              <a href="thread.html#650">[ thread ]</a>
+              <a href="subject.html#650">[ subject ]</a>
+              <a href="author.html#650">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,562 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1890 - in trunk: . lib	lib/import	pkg/dem/PreProcessor pkg/dem/meta py py/yadeWrapper
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1890%20-%20in%20trunk%3A%20.%20lib%0A%09lib/import%09pkg/dem/PreProcessor%20pkg/dem/meta%20py%20py/yadeWrapper&In-Reply-To=%3C200907271913.n6RJD5Pm001635%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001266.html">
+   <LINK REL="Next"  HREF="001268.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1890 - in trunk: . lib	lib/import	pkg/dem/PreProcessor pkg/dem/meta py py/yadeWrapper</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1890%20-%20in%20trunk%3A%20.%20lib%0A%09lib/import%09pkg/dem/PreProcessor%20pkg/dem/meta%20py%20py/yadeWrapper&In-Reply-To=%3C200907271913.n6RJD5Pm001635%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1890 - in trunk: . lib	lib/import	pkg/dem/PreProcessor pkg/dem/meta py py/yadeWrapper">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Jul 27 21:13:05 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001266.html">[deprecated list] [Yade-dev] [svn] r1889 - trunk/debian
+</A></li>
+        <LI>Next message: <A HREF="001268.html">[deprecated list] [Yade-dev] [svn] r1891 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1267">[ date ]</a>
+              <a href="thread.html#1267">[ thread ]</a>
+              <a href="subject.html#1267">[ subject ]</a>
+              <a href="author.html#1267">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-27 21:13:04 +0200 (Mon, 27 Jul 2009)
+New Revision: 1890
+
+Added:
+   trunk/pkg/dem/PreProcessor/STLImporter.cpp
+   trunk/pkg/dem/PreProcessor/STLImporter.hpp
+Removed:
+   trunk/lib/import/STLImporter.cpp
+   trunk/lib/import/STLImporter.hpp
+Modified:
+   trunk/SConscript
+   trunk/SConstruct
+   trunk/lib/SConscript
+   trunk/pkg/dem/PreProcessor/STLImporterTest.cpp
+   trunk/pkg/dem/meta/RockPM.cpp
+   trunk/pkg/dem/meta/RockPM.hpp
+   trunk/py/SConscript
+   trunk/py/yadeWrapper/yadeWrapper.cpp
+Log:
+1. Move STILimport to pkg/dem, as it depends on dem
+2. update RockPM with the new-old version (probably svn didn't update the moved version? what a deal. We should definitely move to bzr...)
+
+
+
+
+
+Modified: trunk/SConscript
+===================================================================
+--- trunk/SConscript	2009-07-27 18:14:30 UTC (rev 1889)
++++ trunk/SConscript	2009-07-27 19:13:04 UTC (rev 1890)
+@@ -1,2 +1,5 @@
+ Import('*')
++
++import yadeSCons
++yadeSCons.buildPluginLibs(env,env['buildPlugs'])
+ SConscript(dirs=['core','lib']+[d for d in ('extra','py','gui') if d not in env['exclude']],duplicate=0)
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-07-27 18:14:30 UTC (rev 1889)
++++ trunk/SConstruct	2009-07-27 19:13:04 UTC (rev 1890)
+@@ -526,9 +526,8 @@
+ 	return list(ret)
+ 
+ env['linkPlugins']=linkPlugins
++env['buildPlugs']=buildPlugs
+ 
+-yadeSCons.buildPluginLibs(env,buildPlugs)
+-
+ # read top-level SConscript file. It is used only so that build_dir is set. This file reads all necessary SConscripts
+ env.SConscript(dirs=['.'],build_dir=buildDir,duplicate=0)
+ 
+
+Modified: trunk/lib/SConscript
+===================================================================
+--- trunk/lib/SConscript	2009-07-27 18:14:30 UTC (rev 1889)
++++ trunk/lib/SConscript	2009-07-27 19:13:04 UTC (rev 1890)
+@@ -59,8 +59,7 @@
+ 
+ # for now, keep this is as a shared lib, since it depends on things from pkg (shouldn't be the case, though...)
+ env.Install('$PREFIX/lib/yade$SUFFIX/lib',[
+-	env.SharedLibrary('STLImporter',['import/STLReader.cpp', 'import/STLImporter.cpp'],LIBS=linkPlugins(['Facet','InteractingFacet','Shop'])
+-		),
++	env.SharedLibrary('STLImporter',['import/STLReader.cpp']),
+ ])
+ 
+ #######################
+
+Deleted: trunk/lib/import/STLImporter.cpp
+===================================================================
+--- trunk/lib/import/STLImporter.cpp	2009-07-27 18:14:30 UTC (rev 1889)
++++ trunk/lib/import/STLImporter.cpp	2009-07-27 19:13:04 UTC (rev 1890)
+@@ -1,67 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2008 by Sergei Dorofeenko				 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-#include &quot;STLImporter.hpp&quot;
+-#include &lt;yade/pkg-dem/Shop.hpp&gt;
+-
+-CREATE_LOGGER(STLImporter);
+-
+-STLImporter::STLImporter()  
+-{
+-    wire=false;
+-	number_of_facets=0;
+-}
+- 
+-bool STLImporter::open(const char* filename)
+-{
+-    vector&lt;double&gt; vtmp, ntmp;
+-    vector&lt;int&gt;  etmp, ftmp;
+-    STLReader::tolerance = Math&lt;Real&gt;::ZERO_TOLERANCE;
+-    STLReader reader;
+-    if(!reader.open(filename, back_inserter(vtmp), back_inserter(etmp), back_inserter(ftmp), back_inserter(ntmp))) 
+-	{
+-		LOG_ERROR(&quot;Can't open file: &quot; &lt;&lt; filename);
+-		return false;
+-	}
+-	
+-	for(int i=0,e=ftmp.size(); i&lt;e; ++i)
+-		tr.push_back(Vector3r(vtmp[3*ftmp[i]],vtmp[3*ftmp[i]+1],vtmp[3*ftmp[i]+2])); 
+-	number_of_facets = tr.size()/3;
+-	LOG_INFO(&quot;Open file: &quot; &lt;&lt; filename &lt;&lt; &quot;: Number of facets: &quot; &lt;&lt; number_of_facets);
+-	return true;
+-}
+-
+-void STLImporter::import(shared_ptr&lt;BodyContainer&gt; bodies, unsigned int begin, bool noInteractingGeometry)
+-{
+-	unsigned int b_id = begin;
+-	for(int i=0,e=tr.size(); i&lt;e; i+=3)
+-	{
+-		Vector3r v[3]={tr[i],tr[i+1],tr[i+2]};
+-
+-		Vector3r icc = Shop::inscribedCircleCenter(v[0],v[1],v[2]);
+-
+-		shared_ptr&lt;InteractingFacet&gt; iFacet(new InteractingFacet);
+-		iFacet-&gt;diffuseColor    = Vector3r(0.8,0.3,0.3);
+-
+-		shared_ptr&lt;Facet&gt; gFacet(new Facet);
+-		gFacet-&gt;diffuseColor    = Vector3r(0.5,0.5,0.5);
+-		gFacet-&gt;wire	    = wire;
+-		gFacet-&gt;shadowCaster    = true;
+-
+-		for (int j=0; j&lt;3; ++j)
+-		{   
+-				iFacet-&gt;vertices.push_back(v[j]-icc);
+-				gFacet-&gt;vertices.push_back(v[j]-icc);
+-		}
+-
+-		(*bodies)[b_id]-&gt;physicalParameters-&gt;se3 = Se3r( icc, Quaternionr( 1,0,0,0 ) );
+-		(*bodies)[b_id]-&gt;geometricalModel	= gFacet;
+-		if (!noInteractingGeometry) (*bodies)[b_id]-&gt;interactingGeometry	= iFacet;
+-
+-		++b_id;
+-	}
+-}
+
+Deleted: trunk/lib/import/STLImporter.hpp
+===================================================================
+--- trunk/lib/import/STLImporter.hpp	2009-07-27 18:14:30 UTC (rev 1889)
++++ trunk/lib/import/STLImporter.hpp	2009-07-27 19:13:04 UTC (rev 1890)
+@@ -1,35 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2008 by Sergei Dorofeenko				 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-#pragma once
+-#include &lt;yade/pkg-common/Facet.hpp&gt;
+-#include &lt;yade/pkg-common/InteractingFacet.hpp&gt;
+-#include &quot;STLReader.hpp&quot;
+-#include&lt;yade/core/Body.hpp&gt;
+-#include&lt;yade/core/BodyContainer.hpp&gt;
+-
+-class STLImporter {
+-    public:
+-	STLImporter();	
+-
+-	/// open file
+-	bool open(const char* filename);
+-
+-	/// number of facets 
+-	unsigned int number_of_facets;
+-
+-	/// set wire attribute for facets (by default false)
+-	bool wire;
+-
+-	/// import geometry 
+-	void import(shared_ptr&lt;BodyContainer&gt; bodies, unsigned int begin=0, bool noInteractingGeometry=false);
+-
+-	DECLARE_LOGGER;
+-protected:
+-		vector&lt;Vector3r&gt; tr; 
+-};
+-
+
+Copied: trunk/pkg/dem/PreProcessor/STLImporter.cpp (from rev 1888, trunk/lib/import/STLImporter.cpp)
+
+
+Property changes on: trunk/pkg/dem/PreProcessor/STLImporter.cpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/pkg/dem/PreProcessor/STLImporter.hpp (from rev 1887, trunk/lib/import/STLImporter.hpp)
+===================================================================
+--- trunk/lib/import/STLImporter.hpp	2009-07-27 15:00:20 UTC (rev 1887)
++++ trunk/pkg/dem/PreProcessor/STLImporter.hpp	2009-07-27 19:13:04 UTC (rev 1890)
+@@ -0,0 +1,35 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++#pragma once
++#include&lt;yade/pkg-common/Facet.hpp&gt;
++#include&lt;yade/pkg-common/InteractingFacet.hpp&gt;
++#include&lt;yade/lib-import/STLReader.hpp&gt;
++#include&lt;yade/core/Body.hpp&gt;
++#include&lt;yade/core/BodyContainer.hpp&gt;
++
++class STLImporter {
++    public:
++	STLImporter();	
++
++	/// open file
++	bool open(const char* filename);
++
++	/// number of facets 
++	unsigned int number_of_facets;
++
++	/// set wire attribute for facets (by default false)
++	bool wire;
++
++	/// import geometry 
++	void import(shared_ptr&lt;BodyContainer&gt; bodies, unsigned int begin=0, bool noInteractingGeometry=false);
++
++	DECLARE_LOGGER;
++protected:
++		vector&lt;Vector3r&gt; tr; 
++};
++
+
+
+Property changes on: trunk/pkg/dem/PreProcessor/STLImporter.hpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Modified: trunk/pkg/dem/PreProcessor/STLImporterTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/STLImporterTest.cpp	2009-07-27 18:14:30 UTC (rev 1889)
++++ trunk/pkg/dem/PreProcessor/STLImporterTest.cpp	2009-07-27 19:13:04 UTC (rev 1890)
+@@ -8,7 +8,7 @@
+ 
+ #include&quot;STLImporterTest.hpp&quot;
+ #include&lt;yade/pkg-common/SpatialQuickSortCollider.hpp&gt;
+-#include&lt;yade/lib-import/STLImporter.hpp&gt;
++#include&lt;yade/pkg-dem/STLImporter.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingFacet.hpp&gt;
+ #include&lt;yade/pkg-common/Facet.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
+
+Modified: trunk/pkg/dem/meta/RockPM.cpp
+===================================================================
+--- trunk/pkg/dem/meta/RockPM.cpp	2009-07-27 18:14:30 UTC (rev 1889)
++++ trunk/pkg/dem/meta/RockPM.cpp	2009-07-27 19:13:04 UTC (rev 1890)
+@@ -34,53 +34,82 @@
+ 	Dem3DofGeom* geom=static_cast&lt;Dem3DofGeom*&gt;(ig.get());
+ 	RpmPhys* phys=static_cast&lt;RpmPhys*&gt;(ip.get());
+ 
+-	Real displN=geom-&gt;displacementN();	
++	Real displN=geom-&gt;displacementN();
++	const Real&amp; crossSection=phys-&gt;crossSection;
++	
++	Real&amp; epsN=phys-&gt;epsN;
++	Vector3r&amp; epsT=phys-&gt;epsT;
++	
++	Real&amp; sigmaN=phys-&gt;sigmaN;
++	Vector3r&amp; sigmaT=phys-&gt;sigmaT;
++	
++	const Real&amp; E = phys-&gt;E;
++	const Real&amp; G = phys-&gt;G;
++	
++	Real&amp; Fn=phys-&gt;Fn;
++	Vector3r&amp; Fs=phys-&gt;Fs;
++	
++	
+ 	const shared_ptr&lt;Body&gt;&amp; body1=Body::byId(contact-&gt;getId1(),rootBody);
+ 	const shared_ptr&lt;Body&gt;&amp; body2=Body::byId(contact-&gt;getId2(),rootBody);
+ 	assert(body1);
+ 	assert(body2);
+ 	const shared_ptr&lt;RpmMat&gt;&amp; rbp1=YADE_PTR_CAST&lt;RpmMat&gt;(body1-&gt;physicalParameters);
+ 	const shared_ptr&lt;RpmMat&gt;&amp; rbp2=YADE_PTR_CAST&lt;RpmMat&gt;(body2-&gt;physicalParameters);
+-
++	
+ 	//check, whether one of bodies is damaged
+ 	if ((rbp1-&gt;isDamaged) || (rbp2-&gt;isDamaged)) {
+ 		phys-&gt;isCohesive = false;
+ 	}
+-				
+-				
++
+ 	if(displN&lt;=0){
+ 		/*Normal Interaction*/
+-		phys-&gt;normalForce=phys-&gt;kn*displN*geom-&gt;normal;
+-		Real maxFsSq=phys-&gt;normalForce.SquaredLength()*pow(phys-&gt;tanFrictionAngle,2);
+-		Vector3r trialFs=phys-&gt;ks*geom-&gt;displacementT();
+-		if(trialFs.SquaredLength()&gt;maxFsSq){ geom-&gt;slipToDisplacementTMax(sqrt(maxFsSq)); trialFs*=sqrt(maxFsSq/(trialFs.SquaredLength()));} 
+-		applyForceAtContactPoint(phys-&gt;normalForce+trialFs,geom-&gt;contactPoint,contact-&gt;getId1(),geom-&gt;se31.position,contact-&gt;getId2(),geom-&gt;se32.position,rootBody);
++		epsN=geom-&gt;strainN();
++		epsT=geom-&gt;strainT();
++		
++		
++		sigmaN=E*epsN;
++		Fn=sigmaN*crossSection; phys-&gt;normalForce=Fn*geom-&gt;normal;
++		
++		sigmaT=G*epsT;
++
++		/*Check, whether the shear stress more, than normal force multiplicated to tanFrictionAngle*/
++		
++		Real maxFsSq = phys-&gt;normalForce.SquaredLength()*phys-&gt;tanFrictionAngle*phys-&gt;tanFrictionAngle;
++		if(sigmaT.SquaredLength()&gt;maxFsSq) {
++			sigmaT*=sqrt(maxFsSq/(sigmaT.SquaredLength()));
++		}
++		
++		Fs=sigmaT*crossSection;
++		phys-&gt;shearForce = Fs;
++
++		applyForceAtContactPoint(phys-&gt;normalForce + phys-&gt;shearForce, geom-&gt;contactPoint, contact-&gt;getId1(), geom-&gt;se31.position, contact-&gt;getId2(), geom-&gt;se32.position, rootBody);
+ 		/*Normal Interaction_____*/
+-		
+ 		if ((phys-&gt;isCohesive)&amp;&amp;(displN&lt;(-phys-&gt;lengthMaxCompression))) {
+ 			//LOG_WARN(displN&lt;&lt;&quot;__COMRESS!!!__&quot;);
+ 			phys-&gt;isCohesive = false;
+ 			rbp1-&gt;isDamaged=true;
+ 			rbp2-&gt;isDamaged=true;
+ 		}
++		return;
+ 	} else {
+ 		if (phys-&gt;isCohesive) {
+-			phys-&gt;normalForce=phys-&gt;kn*displN*geom-&gt;normal;
+ 			if (displN&gt;(phys-&gt;lengthMaxTension)) {
+ 				//LOG_WARN(displN&lt;&lt;&quot;__TENSION!!!__&quot;);
+ 				phys-&gt;isCohesive = false;
+ 				rbp1-&gt;isDamaged=true;
+ 				rbp2-&gt;isDamaged=true;
++				return; 
+ 			} else {
+-				applyForceAtContactPoint(phys-&gt;normalForce,geom-&gt;contactPoint,contact-&gt;getId1(),geom-&gt;se31.position,contact-&gt;getId2(),geom-&gt;se32.position,rootBody);
++				phys-&gt;normalForce=phys-&gt;kn*displN*geom-&gt;normal;
++				applyForceAtContactPoint(phys-&gt;normalForce, geom-&gt;contactPoint, contact-&gt;getId1(), geom-&gt;se31.position, contact-&gt;getId2(), geom-&gt;se32.position, rootBody);
++				return;
+ 			}
+-			return;
+ 		} else {
+ 			rootBody-&gt;interactions-&gt;requestErase(contact-&gt;getId1(),contact-&gt;getId2());
+ 			return;
+ 		}
+ 	}
+-	
+ }
+ 
+ 
+@@ -90,7 +119,7 @@
+ 	if(interaction-&gt;interactionPhysics) return; 
+ 
+ 	Dem3DofGeom* contGeom=YADE_CAST&lt;Dem3DofGeom*&gt;(interaction-&gt;interactionGeometry.get());
+-	
++	Omega&amp; OO=Omega::instance();
+ 	assert(contGeom);
+ 	//LOG_WARN(Omega::instance().getCurrentIteration());
+ 	const shared_ptr&lt;RpmMat&gt;&amp; rpm1=YADE_PTR_CAST&lt;RpmMat&gt;(pp1);
+@@ -98,28 +127,30 @@
+ 	
+ 	const shared_ptr&lt;BodyMacroParameters&gt;&amp; elast1=static_pointer_cast&lt;BodyMacroParameters&gt;(pp1);
+ 	const shared_ptr&lt;BodyMacroParameters&gt;&amp; elast2=static_pointer_cast&lt;BodyMacroParameters&gt;(pp2);
+-
++	long cohesiveThresholdIter=1000;
++	
+ 	bool initCohesive = rpm1-&gt;initCohesive*rpm2-&gt;initCohesive;
+ 	
+ 	Real E12=2*elast1-&gt;young*elast2-&gt;young/(elast1-&gt;young+elast2-&gt;young);
+ 	Real minRad=(contGeom-&gt;refR1&lt;=0?contGeom-&gt;refR2:(contGeom-&gt;refR2&lt;=0?contGeom-&gt;refR1:min(contGeom-&gt;refR1,contGeom-&gt;refR2)));
+ 	Real S12=Mathr::PI*pow(minRad,2);
++	Real G_over_E = (rpm1-&gt;G_over_E + rpm2-&gt;G_over_E)/2;
+ 	shared_ptr&lt;RpmPhys&gt; contPhys(new RpmPhys());
+ 	contPhys-&gt;E=E12;
+-	contPhys-&gt;G=E12;
++	contPhys-&gt;G=E12*G_over_E;
+ 	contPhys-&gt;tanFrictionAngle=tan(.5*(elast1-&gt;frictionAngle+elast2-&gt;frictionAngle));
+ 	contPhys-&gt;crossSection=S12;
+ 	contPhys-&gt;kn=contPhys-&gt;E*contPhys-&gt;crossSection;
+ 	contPhys-&gt;ks=contPhys-&gt;G*contPhys-&gt;crossSection;
+ 	
+ 	contPhys-&gt;lengthMaxCompression=S12*(0.5*(rpm1-&gt;stressCompressMax+rpm2-&gt;stressCompressMax))/(contPhys-&gt;kn);
+-	contPhys-&gt;lengthMaxTension=S12*(0.5*(rpm1-&gt;stressTensionMax+rpm2-&gt;stressTensionMax))/(contPhys-&gt;kn);
++	contPhys-&gt;lengthMaxTension=S12*(0.5*(rpm1-&gt;stressCompressMax*rpm1-&gt;Brittleness+rpm2-&gt;stressCompressMax*rpm2-&gt;Brittleness))/(contPhys-&gt;kn);
+ 	
+ 	initDistance = contGeom-&gt;displacementN();
+ 
+-	if ((rpm1-&gt;exampleNumber==rpm2-&gt;exampleNumber)&amp;&amp;(initDistance&lt;(contPhys-&gt;lengthMaxTension))&amp;&amp;(initCohesive)) {
++	if ((rpm1-&gt;exampleNumber==rpm2-&gt;exampleNumber)&amp;&amp;(initDistance&lt;(contPhys-&gt;lengthMaxTension))&amp;&amp;(initCohesive)&amp;&amp;(OO.getCurrentIteration()&lt;=cohesiveThresholdIter)) {
+ 		contPhys-&gt;isCohesive=true;
+-		//LOG_WARN(&quot;InitDistance=&quot;&lt;&lt;initDistance);
++		//LOG_WARN(&quot;InitDistance=&quot;&lt;&lt;initDistance&lt;&lt;&quot;  &quot;&lt;&lt;rpm1-&gt;exampleNumber&lt;&lt;&quot;  &quot;&lt;&lt;rpm2-&gt;exampleNumber&lt;&lt;&quot; &quot;&lt;&lt;OO.getCurrentIteration());
+ 		//LOG_WARN(&quot;lengthMaxCompression=&quot;&lt;&lt;contPhys-&gt;lengthMaxCompression);
+ 		//LOG_WARN(&quot;lengthMaxTension=&quot;&lt;&lt;contPhys-&gt;lengthMaxTension);
+ 	}
+
+Modified: trunk/pkg/dem/meta/RockPM.hpp
+===================================================================
+--- trunk/pkg/dem/meta/RockPM.hpp	2009-07-27 18:14:30 UTC (rev 1889)
++++ trunk/pkg/dem/meta/RockPM.hpp	2009-07-27 19:13:04 UTC (rev 1890)
+@@ -48,15 +48,16 @@
+ 	public:
+ 		int exampleNumber; //Number of &quot;stone&quot;
+ 		bool initCohesive, isDamaged;
+-		Real stressCompressMax, stressTensionMax; //Parameters for damaging
+-
+-		RpmMat(): exampleNumber(0.), initCohesive(false), isDamaged(false), stressCompressMax(0), stressTensionMax(0) {createIndex();};
++		Real stressCompressMax, Brittleness, G_over_E; //Parameters for damaging
++		
++		RpmMat(): exampleNumber(0.), initCohesive(false), isDamaged(false), stressCompressMax(0), Brittleness(0), G_over_E(1) {createIndex();};
+ 		REGISTER_ATTRIBUTES(BodyMacroParameters, 
+ 			(exampleNumber)
+ 			(initCohesive)
+ 			(isDamaged)
+ 			(stressCompressMax)
+-			(stressTensionMax));
++			(Brittleness)
++			(G_over_E));
+ 		REGISTER_CLASS_AND_BASE(RpmMat,BodyMacroParameters);
+ };
+ REGISTER_SERIALIZABLE(RpmMat);
+@@ -65,7 +66,7 @@
+ class Ip2_RpmMat_RpmMat_RpmPhys: public InteractionPhysicsEngineUnit{
+ 	private:
+ 	public:
+-		Real sigmaT, initDistance;
++		Real initDistance;
+ 
+ 		Ip2_RpmMat_RpmMat_RpmPhys(){
+ 			initDistance = 0;
+@@ -73,7 +74,6 @@
+ 
+ 		virtual void go(const shared_ptr&lt;PhysicalParameters&gt;&amp; pp1, const shared_ptr&lt;PhysicalParameters&gt;&amp; pp2, const shared_ptr&lt;Interaction&gt;&amp; interaction);
+ 		REGISTER_ATTRIBUTES(InteractionPhysicsEngineUnit,
+-			(sigmaT)
+ 			(initDistance)
+ 		);
+ 
+@@ -88,9 +88,13 @@
+ 	private:
+ 	public:
+ 		Real crossSection,E,G,tanFrictionAngle,lengthMaxCompression,lengthMaxTension;
++		Real omega, Fn, sigmaN, epsN;
++		Vector3r epsT, sigmaT, Fs;
++		 
++
+ 		bool isCohesive;
+ 
+-		RpmPhys(): NormalShearInteraction(),crossSection(0),E(0),G(0), tanFrictionAngle(0), lengthMaxCompression(0), lengthMaxTension(0), isCohesive(false) { createIndex();}
++		RpmPhys(): NormalShearInteraction(),crossSection(0),E(0),G(0), tanFrictionAngle(0), lengthMaxCompression(0), lengthMaxTension(0), isCohesive(false) { createIndex(); epsT=Vector3r::ZERO; omega=0; Fn=0; Fs=Vector3r::ZERO;}
+ 		virtual ~RpmPhys();
+ 
+ 		REGISTER_ATTRIBUTES(NormalShearInteraction,
+
+Modified: trunk/py/SConscript
+===================================================================
+--- trunk/py/SConscript	2009-07-27 18:14:30 UTC (rev 1889)
++++ trunk/py/SConscript	2009-07-27 19:13:04 UTC (rev 1890)
+@@ -27,8 +27,7 @@
+ 		env.File('linterpolation.py'),
+ 		env.File('timing.py'),
+ 		env.File('pack.py'),
+-		env.SharedLibrary('wrapper',['yadeWrapper/yadeWrapper.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['XMLFormatManager','yade-factory','yade-serialization','STLImporter',
+-			linkPlugins(['Shop','BoundingVolumeMetaEngine','GeometricalModelMetaEngine','InteractingGeometryMetaEngine','InteractionGeometryMetaEngine','InteractionPhysicsMetaEngine','PhysicalParametersMetaEngine','ConstitutiveLawDispatcher','InteractionDispatchers','ParallelEngine','Clump'])
++		env.SharedLibrary('wrapper',['yadeWrapper/yadeWrapper.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['XMLFormatManager','yade-factory','yade-serialization',linkPlugins(['Shop','BoundingVolumeMetaEngine','GeometricalModelMetaEngine','InteractingGeometryMetaEngine','InteractionGeometryMetaEngine','InteractionPhysicsMetaEngine','PhysicalParametersMetaEngine','ConstitutiveLawDispatcher','InteractionDispatchers','ParallelEngine','Clump','STLImporter',])
+ 			],),
+ 		env.SharedLibrary('_customConverters',['yadeWrapper/customConverters.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['boost_python_indexing_suite_v2']+linkPlugins(Split(&quot;BoundingVolumeEngineUnit GeometricalModelEngineUnit InteractingGeometryEngineUnit InteractionGeometryEngineUnit InteractionPhysicsEngineUnit PhysicalParametersEngineUnit PhysicalActionDamperUnit PhysicalActionApplierUnit ConstitutiveLaw&quot;)))
+ 	])
+
+Modified: trunk/py/yadeWrapper/yadeWrapper.cpp
+===================================================================
+--- trunk/py/yadeWrapper/yadeWrapper.cpp	2009-07-27 18:14:30 UTC (rev 1889)
++++ trunk/py/yadeWrapper/yadeWrapper.cpp	2009-07-27 19:13:04 UTC (rev 1890)
+@@ -8,7 +8,7 @@
+ 
+ 
+ #include&lt;boost/python.hpp&gt;
+-#include &lt;boost/python/raw_function.hpp&gt;
++#include&lt;boost/python/raw_function.hpp&gt;
+ #include&lt;boost/python/suite/indexing/vector_indexing_suite.hpp&gt;
+ #include&lt;boost/bind.hpp&gt;
+ #include&lt;boost/lambda/bind.hpp&gt;
+@@ -25,7 +25,7 @@
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/core/FileGenerator.hpp&gt;
+ 
+-#include&lt;yade/lib-import/STLImporter.hpp&gt;
++#include&lt;yade/pkg-dem/STLImporter.hpp&gt;
+ 
+ #include&lt;yade/core/MetaEngine.hpp&gt;
+ #include&lt;yade/core/MetaEngine1D.hpp&gt;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001266.html">[deprecated list] [Yade-dev] [svn] r1889 - trunk/debian
+</A></li>
+	<LI>Next message: <A HREF="001268.html">[deprecated list] [Yade-dev] [svn] r1891 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1267">[ date ]</a>
+              <a href="thread.html#1267">[ thread ]</a>
+              <a href="subject.html#1267">[ subject ]</a>
+              <a href="author.html#1267">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

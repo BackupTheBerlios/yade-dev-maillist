@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] svn1376 crash
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20svn1376%20crash&In-Reply-To=%3C4849222D.6080509%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000229.html">
+   <LINK REL="Next"  HREF="000234.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] svn1376 crash</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20svn1376%20crash&In-Reply-To=%3C4849222D.6080509%40arcig.cz%3E"
+       TITLE="[yade-dev] svn1376 crash">eudoxos at arcig.cz
+       </A><BR>
+    <I>Fri Jun  6 13:40:29 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000229.html">[yade-dev] svn1376 bug
+</A></li>
+        <LI>Next message: <A HREF="000234.html">[yade-dev] svn1372 crash
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#228">[ date ]</a>
+              <a href="thread.html#228">[ thread ]</a>
+              <a href="subject.html#228">[ subject ]</a>
+              <a href="author.html#228">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>As I read the backtrace, it crashes doing dot product of vectors in
+InteractingFacet2InteractingSphere4SpheresContactGeometry::go.
+
+&gt;<i> Thread 2 (Thread 1091017024 (LWP 20930)):
+</I>&gt;<i> #0  0x00002b8191590e1f in waitpid () from /lib64/libc.so.6
+</I>&gt;<i> #1  0x00002b8191539491 in do_system () from /lib64/libc.so.6
+</I>&gt;<i> #2  0x00002b8191539817 in system () from /lib64/libc.so.6
+</I>&gt;<i> #3  0x000000000056f82b in sigHandler (sig=11) at core/yade.cpp:58
+</I>&gt;<i> #4  &lt;signal handler called&gt;
+</I>&gt;<i>   
+</I>here:
+&gt;<i> #5  0x00002b819030cdce in Wm3::Vector3&lt;double&gt;::Dot (this=0x0, rkV=@0x41078a00) at /home/sega/build/yade/build-trunk/include/yade-trunk/yade/lib
+</I>&gt;<i> -miniWm3/Wm3Vector3.inl:293
+</I>&gt;<i> #6  0x00002aaac419f3f9 in InteractingFacet2InteractingSphere4SpheresContactGeometry::go (this=0xa49210, cm1=@0x41078c80, cm2=@0x41078c90, se31=@           0xb4d1e0, se32=@0xbc2650, c=@0x41078d80) at pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp:49
+</I>&gt;<i> #7  0x00002aaac419f182 in InteractingFacet2InteractingSphere4SpheresContactGeometry::goReverse (this=0xa49210, cm1=@0x41078c90, cm2=@0x41078c80,            se31=@0xbc2650, se32=@0xb4d1e0, c=@0x41078d80) at pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp:87
+</I>&gt;<i> #8  0x00002aaaadc2745f in DynLibDispatcher&lt;Loki::Typelist&lt;InteractingGeometry, 
+</I>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000229.html">[yade-dev] svn1376 bug
+</A></li>
+	<LI>Next message: <A HREF="000234.html">[yade-dev] svn1372 crash
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#228">[ date ]</a>
+              <a href="thread.html#228">[ thread ]</a>
+              <a href="subject.html#228">[ subject ]</a>
+              <a href="author.html#228">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,285 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1578 - in	trunk/pkg:	common/DataClass/InteractingGeometry	dem/Engine/EngineUnit
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1578%20-%20in%0A%09trunk/pkg%3A%09common/DataClass/InteractingGeometry%0A%09dem/Engine/EngineUnit&In-Reply-To=%3C200811211107.mALB7kWG010382%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000534.html">
+   <LINK REL="Next"  HREF="000519.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1578 - in	trunk/pkg:	common/DataClass/InteractingGeometry	dem/Engine/EngineUnit</H1>
+    <B>richefeu at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1578%20-%20in%0A%09trunk/pkg%3A%09common/DataClass/InteractingGeometry%0A%09dem/Engine/EngineUnit&In-Reply-To=%3C200811211107.mALB7kWG010382%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1578 - in	trunk/pkg:	common/DataClass/InteractingGeometry	dem/Engine/EngineUnit">richefeu at mail.berlios.de
+       </A><BR>
+    <I>Fri Nov 21 12:07:46 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000534.html">[deprecated list] [Yade-dev] Fwd: inherited PhysicalParameters	for	InteractionPhysicsEngineUnit
+</A></li>
+        <LI>Next message: <A HREF="000519.html">[deprecated list] [Yade-dev] scons, and compiling HEAD
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#518">[ date ]</a>
+              <a href="thread.html#518">[ thread ]</a>
+              <a href="subject.html#518">[ subject ]</a>
+              <a href="author.html#518">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: richefeu
+Date: 2008-11-21 12:07:45 +0100 (Fri, 21 Nov 2008)
+New Revision: 1578
+
+Added:
+   trunk/pkg/common/DataClass/InteractingGeometry/InteractingNode.cpp
+   trunk/pkg/common/DataClass/InteractingGeometry/InteractingNode.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2BssSweptSphereLineSegment4SpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2BssSweptSphereLineSegment4SpheresContactGeometry.hpp
+Log:
+- forgotten files
+
+
+
+Added: trunk/pkg/common/DataClass/InteractingGeometry/InteractingNode.cpp
+===================================================================
+--- trunk/pkg/common/DataClass/InteractingGeometry/InteractingNode.cpp	2008-11-21 11:05:06 UTC (rev 1577)
++++ trunk/pkg/common/DataClass/InteractingGeometry/InteractingNode.cpp	2008-11-21 11:07:45 UTC (rev 1578)
+@@ -0,0 +1,26 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Vincent Richefeu                                *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">vincent.richefeu at hmg.inpg.fr</A>                                          *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;InteractingNode.hpp&quot;
++
++InteractingNode::InteractingNode () : InteractingGeometry()
++{
++	createIndex();
++}
++
++InteractingNode::~InteractingNode ()
++{
++}
++
++void InteractingNode::registerAttributes()
++{
++	InteractingGeometry::registerAttributes();
++}
++
++
++YADE_PLUGIN(&quot;InteractingNode&quot;);
+
+Added: trunk/pkg/common/DataClass/InteractingGeometry/InteractingNode.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/InteractingGeometry/InteractingNode.hpp	2008-11-21 11:05:06 UTC (rev 1577)
++++ trunk/pkg/common/DataClass/InteractingGeometry/InteractingNode.hpp	2008-11-21 11:07:45 UTC (rev 1578)
+@@ -0,0 +1,32 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Vincent Richefeu                                *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">vincent.richefeu at hmg.inpg.fr</A>                                          *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef INTERACTING_NODE_HPP
++#define INTERACTING_NODE_HPP
++
++#include&lt;yade/core/InteractingGeometry.hpp&gt;
++
++class InteractingNode : public InteractingGeometry
++{
++	public :
++		InteractingNode ();
++		virtual ~InteractingNode ();
++
++/// Serialization
++	protected :
++		void registerAttributes();
++	REGISTER_CLASS_NAME(InteractingNode);
++	REGISTER_BASE_CLASS_NAME(InteractingGeometry);
++
++/// Indexable
++	REGISTER_CLASS_INDEX(InteractingNode,InteractingGeometry);
++};
++
++REGISTER_SERIALIZABLE(InteractingNode,false);
++
++#endif // INTERACTING_NODE_HPP
+
+Added: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2BssSweptSphereLineSegment4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2BssSweptSphereLineSegment4SpheresContactGeometry.cpp	2008-11-21 11:05:06 UTC (rev 1577)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2BssSweptSphereLineSegment4SpheresContactGeometry.cpp	2008-11-21 11:07:45 UTC (rev 1578)
+@@ -0,0 +1,82 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Vincent Richefeu                                *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">vincent.richefeu at hmg.inpg.fr</A>                                          *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&quot;InteractingSphere2BssSweptSphereLineSegment4SpheresContactGeometry.hpp&quot;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++#include&lt;yade/pkg-common/BssSweptSphereLineSegment.hpp&gt;
++
++#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++
++// BUILDING WORK !!!!
++
++bool InteractingSphere2BssSweptSphereLineSegment4SpheresContactGeometry::go(
++		const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++		const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++		const Se3r&amp; se31,
++  
++		const Se3r&amp; se32,
++		const shared_ptr&lt;Interaction&gt;&amp; c)
++{
++        InteractingSphere* s            = static_cast&lt;InteractingSphere*&gt;(cm1.get());
++        BssSweptSphereLineSegment* ssls = static_cast&lt;BssSweptSphereLineSegment*&gt;(cm2.get());
++        
++        Real SquaredHalfLength = 0.25 * ssls-&gt;length * ssls-&gt;length; // FIXME - ssls should store halfLength
++        Vector3r cc = se31.position - se32.position;
++        Vector3r proj = (cc.Dot(ssls-&gt;orientation)) * ssls-&gt;orientation; 
++     
++	if (proj.SquaredLength() &lt; SquaredHalfLength) // Potential contact with the cylindrical part of ssls 
++        {
++                Vector3r ccn = cc - proj;           
++                Real ccn_dist = ccn.Normalize();
++                        
++                Real overlap = ccn_dist - s-&gt;radius - ssls-&gt;radius;
++                if (overlap &lt;= 0.0)
++                {
++                        shared_ptr&lt;SpheresContactGeometry&gt; scm;
++                        if (c-&gt;isNew) scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
++                        else scm = YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
++        
++                        scm-&gt;contactPoint = se32.position + proj + (ssls-&gt;radius+0.5*overlap)*ccn;
++                        scm-&gt;normal = -ccn;
++                        scm-&gt;penetrationDepth = -overlap;
++                        scm-&gt;radius1 = s-&gt;radius;
++                        scm-&gt;radius2 = ssls-&gt;radius;
++                        c-&gt;interactionGeometry = scm;
++                        return true;
++                }
++                
++                return false;
++        }
++        // else ... TODO
++
++	return false;
++}
++
++
++bool InteractingSphere2BssSweptSphereLineSegment4SpheresContactGeometry::goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++						const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++						const Se3r&amp; se31,
++						const Se3r&amp; se32,
++						const shared_ptr&lt;Interaction&gt;&amp; c)
++{
++	bool isInteracting = go(cm2,cm1,se32,se31,c);
++	if (isInteracting)
++	{
++		SpheresContactGeometry* scm = static_cast&lt;SpheresContactGeometry*&gt;(c-&gt;interactionGeometry.get());
++
++                // Inverse the normal direction and swap the radii
++		scm-&gt;normal = -scm-&gt;normal;
++                Real tmpR  = scm-&gt;radius1;
++		scm-&gt;radius1 = scm-&gt;radius2;
++		scm-&gt;radius2 = tmpR;
++	}
++	return isInteracting;
++}
++
++YADE_PLUGIN(&quot;InteractingSphere2BssSweptSphereLineSegment4SpheresContactGeometry&quot;);
+
+Added: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2BssSweptSphereLineSegment4SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2BssSweptSphereLineSegment4SpheresContactGeometry.hpp	2008-11-21 11:05:06 UTC (rev 1577)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2BssSweptSphereLineSegment4SpheresContactGeometry.hpp	2008-11-21 11:07:45 UTC (rev 1578)
+@@ -0,0 +1,40 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Vincent Richefeu                                *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">vincent.richefeu at hmg.inpg.fr</A>                                          *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef EF2_SSLS_SPHERE_MAKE_SDECCONTACTMODEL_HPP
++#define EF2_SSLS_SPHERE_MAKE_SDECCONTACTMODEL_HPP
++
++#include&lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
++
++class InteractingSphere2BssSweptSphereLineSegment4SpheresContactGeometry : public InteractionGeometryEngineUnit
++{
++	public :
++		virtual bool go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++					const Se3r&amp; se31,
++					const Se3r&amp; se32,
++					const shared_ptr&lt;Interaction&gt;&amp; c);
++
++		virtual bool goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++					const Se3r&amp; se31,
++					const Se3r&amp; se32,
++					const shared_ptr&lt;Interaction&gt;&amp; c);
++
++        REGISTER_CLASS_NAME(InteractingSphere2BssSweptSphereLineSegment4SpheresContactGeometry);
++	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
++
++        FUNCTOR2D(InteractingSphere,BssSweptSphereLineSegment);
++
++        DEFINE_FUNCTOR_ORDER_2D(InteractingSphere,BssSweptSphereLineSegment);
++};
++
++REGISTER_SERIALIZABLE(InteractingSphere2BssSweptSphereLineSegment4SpheresContactGeometry,false);
++
++#endif // EF2_SSLS_SPHERE_MAKE_SDECCONTACTMODEL_HPP
++
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000534.html">[deprecated list] [Yade-dev] Fwd: inherited PhysicalParameters	for	InteractionPhysicsEngineUnit
+</A></li>
+	<LI>Next message: <A HREF="000519.html">[deprecated list] [Yade-dev] scons, and compiling HEAD
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#518">[ date ]</a>
+              <a href="thread.html#518">[ thread ]</a>
+              <a href="subject.html#518">[ subject ]</a>
+              <a href="author.html#518">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

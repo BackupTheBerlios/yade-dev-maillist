@@ -1,0 +1,157 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1560 - in trunk: .	gui/py	pkg/dem/DataClass/InteractionGeometry
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1560%20-%20in%20trunk%3A%20.%0A%09gui/py%09pkg/dem/DataClass/InteractionGeometry&In-Reply-To=%3C200810272026.m9RKQhZO000905%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000483.html">
+   <LINK REL="Next"  HREF="000471.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1560 - in trunk: .	gui/py	pkg/dem/DataClass/InteractionGeometry</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1560%20-%20in%20trunk%3A%20.%0A%09gui/py%09pkg/dem/DataClass/InteractionGeometry&In-Reply-To=%3C200810272026.m9RKQhZO000905%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1560 - in trunk: .	gui/py	pkg/dem/DataClass/InteractionGeometry">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Oct 27 21:26:43 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000483.html">[deprecated list] [Yade-dev] Mandatory engines
+</A></li>
+        <LI>Next message: <A HREF="000471.html">[deprecated list] [Yade-dev] [svn] r1561 - trunk/lib/smoothing
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#470">[ date ]</a>
+              <a href="thread.html#470">[ thread ]</a>
+              <a href="subject.html#470">[ subject ]</a>
+              <a href="author.html#470">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-10-27 21:26:39 +0100 (Mon, 27 Oct 2008)
+New Revision: 1560
+
+Modified:
+   trunk/SConstruct
+   trunk/gui/py/utils.py
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+Log:
+1. Add initializers for all SpheresContactGeometry members, to avoid nan's in the .xml file
+2. Add code for saving arbitrary python variables within the .xml file, see documentation on utils.saveVars() and utils.loadVars()
+3. Fix error (hopefully) caused by dangling symlinks in the symlinked buildDir/include tree
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2008-10-26 21:47:44 UTC (rev 1559)
++++ trunk/SConstruct	2008-10-27 20:26:39 UTC (rev 1560)
+@@ -451,7 +451,7 @@
+ 	If not, include tree will be created and syumlinked in buildDir, using relative symlinks.&quot;&quot;&quot;
+ 	global env
+ 	import os,string,re
+-	from os.path import join,split,isabs,isdir,exists,islink,isfile,sep
++	from os.path import join,split,isabs,isdir,exists,lexists,islink,isfile,sep
+ 	if not prefix: yadeRoot=buildDir
+ 	else: yadeRoot=prefix
+ 	yadeInc=join(yadeRoot,'include','yade-%s'%env['version'],'yade')
+@@ -489,7 +489,9 @@
+ 							while apfl[i]==aptl[i] and i&lt;min(len(apfl),len(aptl))-1: i+=1
+ 							return sep.join(['..' for j in range(0,len(apfl)-i)]+aptl[i:])
+ 						linkName=join(subInc,f); linkTarget=relpath(linkName,join(root,f))
+-						if not exists(linkName): os.symlink(linkTarget,linkName)
++						if not exists(linkName):
++							if lexists(linkName): os.remove(linkName) # broken symlink: remove it
++							os.symlink(linkTarget,linkName)
+ 					else: # install directory: use scons' Install facility
+ 						env.Install(subInc,join(root,f))
+ 
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-10-26 21:47:44 UTC (rev 1559)
++++ trunk/gui/py/utils.py	2008-10-27 20:26:39 UTC (rev 1560)
+@@ -16,7 +16,30 @@
+ # c++ implementations for performance reasons
+ from yade._utils import *
+ 
++def saveVars(**kw):
++	&quot;&quot;&quot;Save passed variables into the simulation so that it can be recovered when the simulation is loaded again.
+ 
++	For example, variables a=5, b=66 and c=7.5e-4 are defined. To save those, use
++
++	 utils.saveVars(a=a,b=b,c=c)
++
++	those variables will be save in the .xml file, when the simulation itself is saved. To recover those variables once
++	the .xml is loaded again, use
++
++	 utils.loadVars()
++
++	and they will be defined in the __builtin__ namespace (i.e. available from anywhere in the python code).
++	&quot;&quot;&quot;
++	import cPickle
++	Omega().tags['pickledPythonVariablesDictionary']=cPickle.dumps(kw)
++
++def loadVars():
++	import cPickle
++	import __builtin__
++	d=cPickle.loads(Omega().tags['pickledPythonVariablesDictionary'])
++	for k in d: __builtin__.__dict__[k]=d[k]
++
++
+ def typedEngine(name): return [e for e in Omega().engines if e.name==name][0]
+ 
+ def sphere(center,radius,density=1,young=30e9,poisson=.3,frictionAngle=0.5236,dynamic=True,wire=False,color=[1,1,1],physParamsClass='BodyMacroParameters'):
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2008-10-26 21:47:44 UTC (rev 1559)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2008-10-27 20:26:39 UTC (rev 1560)
+@@ -87,7 +87,7 @@
+ 
+ 		Vector3r relRotVector() const;
+ 
+-		SpheresContactGeometry():contactPoint(Vector3r::ZERO),radius1(0),radius2(0),hasShear(false),pos1(Vector3r::ZERO),pos2(Vector3r::ZERO){createIndex();}
++		SpheresContactGeometry():contactPoint(Vector3r::ZERO),radius1(0),radius2(0),hasShear(false),pos1(Vector3r::ZERO),pos2(Vector3r::ZERO),ori1(Quaternionr::IDENTITY),ori2(Quaternionr::IDENTITY),cp1rel(Quaternionr::IDENTITY),cp2rel(Quaternionr::IDENTITY),d1(0),d2(0),d0(0),initRelOri12(Quaternionr::IDENTITY){createIndex();}
+ 		virtual ~SpheresContactGeometry();
+ 	protected :
+ 		virtual void registerAttributes(){
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000483.html">[deprecated list] [Yade-dev] Mandatory engines
+</A></li>
+	<LI>Next message: <A HREF="000471.html">[deprecated list] [Yade-dev] [svn] r1561 - trunk/lib/smoothing
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#470">[ date ]</a>
+              <a href="thread.html#470">[ thread ]</a>
+              <a href="subject.html#470">[ subject ]</a>
+              <a href="author.html#470">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

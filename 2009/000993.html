@@ -1,0 +1,425 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1784 - trunk/extra/SpherePadder
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1784%20-%20trunk/extra/SpherePadder&In-Reply-To=%3C200905290842.n4T8glYq009593%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000992.html">
+   <LINK REL="Next"  HREF="000994.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1784 - trunk/extra/SpherePadder</H1>
+    <B>richefeu at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1784%20-%20trunk/extra/SpherePadder&In-Reply-To=%3C200905290842.n4T8glYq009593%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1784 - trunk/extra/SpherePadder">richefeu at mail.berlios.de
+       </A><BR>
+    <I>Fri May 29 10:42:47 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000992.html">[deprecated list] [Yade-dev] [svn] r1783 - trunk/extra/SpherePadder
+</A></li>
+        <LI>Next message: <A HREF="000994.html">[deprecated list] [Yade-dev] [svn] r1784 -	trunk/extra/SpherePadder
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#993">[ date ]</a>
+              <a href="thread.html#993">[ thread ]</a>
+              <a href="subject.html#993">[ subject ]</a>
+              <a href="author.html#993">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: richefeu
+Date: 2009-05-29 10:42:46 +0200 (Fri, 29 May 2009)
+New Revision: 1784
+
+Modified:
+   trunk/extra/SpherePadder/SpherePadder.hpp
+   trunk/extra/SpherePadder/SpherePadder_wrapper.cpp
+Log:
+Add a function to SpherePadder_wrapper to pass the result back to python.
+As Vaclav suggested, it is a list of (x,y,z,R) tuples.
+(Complet integration into yade is not done yet)  
+
+
+Modified: trunk/extra/SpherePadder/SpherePadder.hpp
+===================================================================
+--- trunk/extra/SpherePadder/SpherePadder.hpp	2009-05-28 13:44:55 UTC (rev 1783)
++++ trunk/extra/SpherePadder/SpherePadder.hpp	2009-05-29 08:42:46 UTC (rev 1784)
+@@ -31,155 +31,157 @@
+ typedef unsigned int id_type; // [0 -&gt; 4,294,967,295] if 32 bits
+ enum SphereType
+ {
+-  AT_NODE,
+-  AT_SEGMENT,
+-  AT_FACE,
+-  AT_TETRA_CENTER,
+-  AT_TETRA_VERTEX,
+-  INSERTED_BY_USER,
+-  FROM_TRIANGULATION,
+-  VIRTUAL
++    AT_NODE,
++    AT_SEGMENT,
++    AT_FACE,
++    AT_TETRA_CENTER,
++    AT_TETRA_VERTEX,
++    INSERTED_BY_USER,
++    FROM_TRIANGULATION,
++    VIRTUAL
+ };
+ 
+ struct Criterion
+ {
+-  bool nb_spheres;
+-  bool solid_fraction;
+-  id_type nb_spheres_max;
+-  double solid_fraction_max;
+-  double x,y,z,R;
++    bool nb_spheres;
++    bool solid_fraction;
++    id_type nb_spheres_max;
++    double solid_fraction_max;
++    double x,y,z,R;
+ };
+ 
+ struct Sphere
+ {
+-  double     x,y,z,R;
+-  SphereType type;
++    double     x,y,z,R;
++    SphereType type;
+ };
+ 
+ struct Neighbor
+ {
+-  id_type i,j;
++    id_type i,j;
+ };
+ 
+ struct neighbor_with_distance
+ {
+-  id_type sphereId;
+-  double  distance;
+-  bool    priority;
++    id_type sphereId;
++    double  distance;
++    bool    priority;
+ };
+ 
+ struct tetra_porosity
+ {
+-  id_type id1,id2,id3,id4;
+-  double  volume;
+-  double  void_volume;
++    id_type id1,id2,id3,id4;
++    double  volume;
++    double  void_volume;
+ };
+ 
+ // not used
+ class CompareNeighborId
+ {
+-  public:
+-  bool operator()(Neighbor&amp; N1, Neighbor&amp; N2)
+-  {
+-    if (N1.i &lt; N2.i) return true;
+-    if ((N1.i == N2.i) &amp;&amp; (N1.j &lt; N2.j)) return true;
+-    return false;
+-  }
++    public:
++        bool operator()(Neighbor&amp; N1, Neighbor&amp; N2)
++        {
++            if (N1.i &lt; N2.i) return true;
++            if ((N1.i == N2.i) &amp;&amp; (N1.j &lt; N2.j)) return true;
++            return false;
++        }
+ };
+ 
+ class SpherePadder
+ {
+-  protected:
++    protected:
+                 
+-	vector&lt;vector&lt;id_type&gt; &gt;    combination;
+-    SpherePackingTriangulation  triangulation;
+-    vector&lt;tetra_porosity&gt;      tetra_porosities;
+-	Criterion                   criterion;
++        vector&lt;vector&lt;id_type&gt; &gt;    combination;
++        SpherePackingTriangulation  triangulation;
++        vector&lt;tetra_porosity&gt;      tetra_porosities;
++        Criterion                   criterion;
+     
+-	double       distance_spheres (id_type i, id_type j); // deprecated
+-	double       distance_spheres (Sphere&amp; S1,Sphere&amp; S2);
+-	double       squared_distance_centre_spheres(id_type i, id_type j); // deprecated
+-    double       distance_centre_spheres(Sphere&amp; S1, Sphere&amp; S2);
+-    double       distance_vector3 (double V1[],double V2[]);
+-	void         build_sorted_list_of_neighbors(id_type sphereId, vector&lt;neighbor_with_distance&gt; &amp; neighbor);
+-	void         build_sorted_list_of_neighbors(Sphere &amp; S, vector&lt;neighbor_with_distance&gt; &amp; neighbor);
+-    double       spherical_triangle (double point1[],double point2[],double point3[],double point4[]);
+-    double       solid_volume_of_tetrahedron(Sphere&amp; S1, Sphere&amp; S2, Sphere&amp; S3, Sphere&amp; S4);
+-    void         place_at_nodes ();
+-    void         place_at_segment_middle ();
+-    void         place_at_faces ();
+-    void         place_at_tetra_centers ();
+-    void         place_at_tetra_vertexes ();
+-    void         cancel_overlaps ();
+-	unsigned int iter_densify(unsigned int nb_check = 20);
+-	void         repack_null_radii();
++        double       distance_spheres (id_type i, id_type j); // deprecated
++        double       distance_spheres (Sphere&amp; S1,Sphere&amp; S2);
++        double       squared_distance_centre_spheres(id_type i, id_type j); // deprecated
++        double       distance_centre_spheres(Sphere&amp; S1, Sphere&amp; S2);
++        double       distance_vector3 (double V1[],double V2[]);
++        void         build_sorted_list_of_neighbors(id_type sphereId, vector&lt;neighbor_with_distance&gt; &amp; neighbor);
++        void         build_sorted_list_of_neighbors(Sphere &amp; S, vector&lt;neighbor_with_distance&gt; &amp; neighbor);
++        double       spherical_triangle (double point1[],double point2[],double point3[],double point4[]);
++        double       solid_volume_of_tetrahedron(Sphere&amp; S1, Sphere&amp; S2, Sphere&amp; S3, Sphere&amp; S4);
++        void         place_at_nodes ();
++        void         place_at_segment_middle ();
++        void         place_at_faces ();
++        void         place_at_tetra_centers ();
++        void         place_at_tetra_vertexes ();
++        void         cancel_overlaps ();
++        unsigned int iter_densify(unsigned int nb_check = 20);
++        void         repack_null_radii();
+     
+     // some key functions 
+-	unsigned int place_fifth_sphere(id_type s1, id_type s2, id_type s3, id_type s4, Sphere&amp; S);
+-	unsigned int place_sphere_4contacts (id_type sphereId, unsigned int nb_combi_max = 15);//  (deprecated)
+-	unsigned int place_sphere_4contacts (Sphere&amp; S, unsigned int nb_combi_max = 15);
+-	unsigned int check_overlaps(Sphere &amp; S, id_type excludedId);
++        unsigned int place_fifth_sphere(id_type s1, id_type s2, id_type s3, id_type s4, Sphere&amp; S);
++        unsigned int place_sphere_4contacts (id_type sphereId, unsigned int nb_combi_max = 15);//  (deprecated)
++        unsigned int place_sphere_4contacts (Sphere&amp; S, unsigned int nb_combi_max = 15);
++        unsigned int check_overlaps(Sphere &amp; S, id_type excludedId);
+ 	
+-    double       rmin,rmax,rmoy;
+-    double       ratio; // rmax/rmin
+-    double       max_overlap_rate;
+-	id_type      n1,n2,n3,n4,n5,n_densify,nzero;
+-	unsigned int max_iter_densify;
+-	double       virtual_radius_factor;
+-	bool         RadiusDataIsOK,RadiusIsSet;
+-	unsigned int zmin;
+-	double       gap_max;
++        double       rmin,rmax,rmoy;
++        double       ratio; // rmax/rmin
++        double       max_overlap_rate;
++        id_type      n1,n2,n3,n4,n5,n_densify,nzero;
++        unsigned int max_iter_densify;
++        double       virtual_radius_factor;
++        bool         RadiusDataIsOK,RadiusIsSet;
++        unsigned int zmin;
++        double       gap_max;
+         
+-    TetraMesh *      mesh;
+-    vector &lt;Sphere&gt;  sphere;
+-    CellPartition    partition;
+-	list &lt;id_type&gt;   bounds;
++        TetraMesh *      mesh;
++        vector &lt;Sphere&gt;  sphere;
++        CellPartition    partition;
++        list &lt;id_type&gt;   bounds;
+     
+-	bool verbose;
+-	bool Must_Stop;
++        bool verbose;
++        bool Must_Stop;
+ 
+-  public:
++    public:
+    
+-    bool meshIsPlugged;
++        bool meshIsPlugged;
+ 
+-	void ShutUp() { verbose = false; }
+-	void Speak()  { verbose = true; }
++        void ShutUp() { verbose = false; }
++        void Speak()  { verbose = true; }
+ 	
+-	void setRadiusRatio (double r, double rapp = 0.125);
+-	void setRadiusRange (double min, double max);
+-	void setMaxOverlapRate (double r) { max_overlap_rate = fabs(r); }
+-	void setVirtualRadiusFactor (double f) {virtual_radius_factor = fabs(f);}
+-	void setMaxNumberOfSpheres (id_type max);
+-	void setMaxSolidFractioninProbe (double max, double x, double y,double z, double R);
++        void setRadiusRatio (double r, double rapp = 0.125);
++        void setRadiusRange (double min, double max);
++        void setMaxOverlapRate (double r) { max_overlap_rate = fabs(r); }
++        void setVirtualRadiusFactor (double f) {virtual_radius_factor = fabs(f);}
++        void setMaxNumberOfSpheres (id_type max);
++        void setMaxSolidFractioninProbe (double max, double x, double y,double z, double R);
+ 
+-	id_type getNumberOfSpheres ();
+-	double getMeanSolidFraction (double x, double y, double z, double R);
++        vector&lt;Sphere&gt; &amp; getSphereList() { return sphere;}
++        TetraMesh * getMesh() { return mesh; }
++        id_type getNumberOfSpheres ();
++        double getMeanSolidFraction (double x, double y, double z, double R);
+ 	
+-    void plugTetraMesh (TetraMesh * mesh);
+-    void save_mgpost (const char* name);
+-	void save_tri_mgpost (const char* name);
+-    void save_Rxyz (const char* name);
++        void plugTetraMesh (TetraMesh * mesh);
++        void save_mgpost (const char* name);
++        void save_tri_mgpost (const char* name);
++        void save_Rxyz (const char* name);
+     
+-    SpherePadder ();
++        SpherePadder ();
+ 
+ 	// Check functions only for debug (very slow!!)
+-	void detect_overlap ();
++        void detect_overlap ();
+ 
+ 	//! \brief 5-step padding (for details see Jerier et al.)
+-    void pad_5 ();
++        void pad_5 ();
+ 
+ 	//! \brief Place virtual spheres at mesh boudaries and modify the position and radius of overlapping spheres in such a way that theu are in contact with the boundary plans.
+-	void place_virtual_spheres ();
++        void place_virtual_spheres ();
+ 
+ 	//! \brief Make the packing denser by filling void spaces detected by building a Delaunay triangulation (with CGAL)
+-	void densify ();
++        void densify ();
+ 
+ 	//! \brief Insert a sphere (x,y,z,R) within the packing. Overlapping spheres are cancelled.
+-    void insert_sphere (double x, double y, double z, double R);
++        void insert_sphere (double x, double y, double z, double R);
+     
+     // FOR ANALYSIS
+-	void save_granulo (const char* name);
+-	void rdf (unsigned int Npoint, unsigned int Nrmean);
++        void save_granulo (const char* name);
++        void rdf (unsigned int Npoint, unsigned int Nrmean);
+ };
+ 
+ 
+
+Modified: trunk/extra/SpherePadder/SpherePadder_wrapper.cpp
+===================================================================
+--- trunk/extra/SpherePadder/SpherePadder_wrapper.cpp	2009-05-28 13:44:55 UTC (rev 1783)
++++ trunk/extra/SpherePadder/SpherePadder_wrapper.cpp	2009-05-29 08:42:46 UTC (rev 1784)
+@@ -10,39 +10,56 @@
+ #include &quot;TetraMesh.hpp&quot;
+ #include &lt;boost/python.hpp&gt;
+ 
+-using namespace boost::python;
+ 
+-BOOST_PYTHON_MODULE(packing){
++boost::python::list getSphereList(SpherePadder* SP)
++{
++    boost::python::list l;
++    vector &lt;Sphere&gt; &amp; spheres = SP-&gt;getSphereList();
++    double xtrans = SP-&gt;getMesh()-&gt;xtrans;
++    double ytrans = SP-&gt;getMesh()-&gt;ytrans;
++    double ztrans = SP-&gt;getMesh()-&gt;ztrans;
++    for (unsigned int i = 0 ; i &lt; spheres.size() ; ++i)
++    {
++        if (spheres[i].type == VIRTUAL || spheres[i].R &lt;= 0.0) continue;
++        l.append( boost::python::make_tuple(spheres[i].x+xtrans, spheres[i].y+ytrans, spheres[i].z+ztrans, spheres[i].R) );
++    }
++    return l;
++}
+ 
+-	class_&lt;TetraMesh&gt;(&quot;TetraMesh&quot;)
+-		.def(&quot;read&quot;, &amp;TetraMesh::read)
+-		.def(&quot;read_gmsh&quot;, &amp;TetraMesh::read_gmsh)
+-		.def(&quot;read_inp&quot;, &amp;TetraMesh::read_inp)
+-	;
+ 
+-	class_&lt;SpherePadder&gt;(&quot;SpherePadder&quot;)
++BOOST_PYTHON_MODULE(packing){
++    using namespace boost::python;
++    
++    class_&lt;TetraMesh&gt;(&quot;TetraMesh&quot;)
++            .def(&quot;read&quot;, &amp;TetraMesh::read)
++            .def(&quot;read_gmsh&quot;, &amp;TetraMesh::read_gmsh)
++            .def(&quot;read_inp&quot;, &amp;TetraMesh::read_inp)
++            ;
+ 
+-		.def(&quot;ShutUp&quot;, &amp;SpherePadder::ShutUp)
+-		.def(&quot;Speak&quot;, &amp;SpherePadder::Speak)
+-		.def(&quot;setRadiusRatio&quot;, &amp;SpherePadder::setRadiusRatio)
+-		.def(&quot;setRadiusRange&quot;, &amp;SpherePadder::setRadiusRange)
+-		.def(&quot;setMaxOverlapRate&quot;, &amp;SpherePadder::setMaxOverlapRate)
+-		.def(&quot;setVirtualRadiusFactor&quot;, &amp;SpherePadder::setVirtualRadiusFactor)
+-		.def(&quot;setMaxNumberOfSpheres&quot;, &amp;SpherePadder::setMaxNumberOfSpheres)
+-		.def(&quot;setMaxSolidFractioninProbe&quot;, &amp;SpherePadder::setMaxSolidFractioninProbe)
+-		.def(&quot;getNumberOfSpheres&quot;, &amp;SpherePadder::getNumberOfSpheres)
+-		.def(&quot;getMeanSolidFraction&quot;, &amp;SpherePadder::getMeanSolidFraction)
++    class_&lt;SpherePadder&gt;(&quot;SpherePadder&quot;)
+ 
+-		.def(&quot;plugTetraMesh&quot;, &amp;SpherePadder::plugTetraMesh)
+-		.def(&quot;save_mgpost&quot;, &amp;SpherePadder::save_mgpost)
+-		.def(&quot;save_Rxyz&quot;, &amp;SpherePadder::save_Rxyz)
++            .def(&quot;ShutUp&quot;, &amp;SpherePadder::ShutUp)
++            .def(&quot;Speak&quot;, &amp;SpherePadder::Speak)
++            .def(&quot;setRadiusRatio&quot;, &amp;SpherePadder::setRadiusRatio)
++            .def(&quot;setRadiusRange&quot;, &amp;SpherePadder::setRadiusRange)
++            .def(&quot;setMaxOverlapRate&quot;, &amp;SpherePadder::setMaxOverlapRate)
++            .def(&quot;setVirtualRadiusFactor&quot;, &amp;SpherePadder::setVirtualRadiusFactor)
++            .def(&quot;setMaxNumberOfSpheres&quot;, &amp;SpherePadder::setMaxNumberOfSpheres)
++            .def(&quot;setMaxSolidFractioninProbe&quot;, &amp;SpherePadder::setMaxSolidFractioninProbe)
++            .def(&quot;getNumberOfSpheres&quot;, &amp;SpherePadder::getNumberOfSpheres)
++            .def(&quot;getMeanSolidFraction&quot;, &amp;SpherePadder::getMeanSolidFraction)
+ 
+-		.def(&quot;pad_5&quot;, &amp;SpherePadder::pad_5)
+-		.def(&quot;place_virtual_spheres&quot;, &amp;SpherePadder::place_virtual_spheres)
+-		.def(&quot;densify&quot;, &amp;SpherePadder::densify)
+-		.def(&quot;insert_sphere&quot;, &amp;SpherePadder::insert_sphere)
+-	;
++            .def(&quot;plugTetraMesh&quot;, &amp;SpherePadder::plugTetraMesh)
++            .def(&quot;save_mgpost&quot;, &amp;SpherePadder::save_mgpost)
++            .def(&quot;save_Rxyz&quot;, &amp;SpherePadder::save_Rxyz)
+ 
++            .def(&quot;pad_5&quot;, &amp;SpherePadder::pad_5)
++            .def(&quot;place_virtual_spheres&quot;, &amp;SpherePadder::place_virtual_spheres)
++            .def(&quot;densify&quot;, &amp;SpherePadder::densify)
++            .def(&quot;insert_sphere&quot;, &amp;SpherePadder::insert_sphere)
++            ;
++    
++    def(&quot;getSphereList&quot;, getSphereList);
+ }
+ 
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000992.html">[deprecated list] [Yade-dev] [svn] r1783 - trunk/extra/SpherePadder
+</A></li>
+	<LI>Next message: <A HREF="000994.html">[deprecated list] [Yade-dev] [svn] r1784 -	trunk/extra/SpherePadder
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#993">[ date ]</a>
+              <a href="thread.html#993">[ thread ]</a>
+              <a href="subject.html#993">[ subject ]</a>
+              <a href="author.html#993">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

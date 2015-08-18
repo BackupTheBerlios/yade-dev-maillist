@@ -1,0 +1,164 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1765 - in trunk: core	pkg/lattice/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1765%20-%20in%20trunk%3A%20core%0A%09pkg/lattice/PreProcessor&In-Reply-To=%3C200905041431.n44EV8xM023657%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000978.html">
+   <LINK REL="Next"  HREF="000944.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1765 - in trunk: core	pkg/lattice/PreProcessor</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1765%20-%20in%20trunk%3A%20core%0A%09pkg/lattice/PreProcessor&In-Reply-To=%3C200905041431.n44EV8xM023657%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1765 - in trunk: core	pkg/lattice/PreProcessor">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Mon May  4 16:31:08 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000978.html">[deprecated list] [Yade-dev] Python scripts and clump creation
+</A></li>
+        <LI>Next message: <A HREF="000944.html">[deprecated list] [Yade-dev] [svn] r1766 - in trunk: extra	extra/clump gui gui/py	pkg/dem pkg/dem/DataClass	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#941">[ date ]</a>
+              <a href="thread.html#941">[ thread ]</a>
+              <a href="subject.html#941">[ subject ]</a>
+              <a href="author.html#941">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2009-05-04 16:31:07 +0200 (Mon, 04 May 2009)
+New Revision: 1765
+
+Modified:
+   trunk/core/NullGUI.cpp
+   trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+   trunk/pkg/lattice/PreProcessor/LatticeExample.hpp
+Log:
+1. NullGUI was still usin .gz while thay are not supported anymore
+2. small lattice update
+
+
+
+Modified: trunk/core/NullGUI.cpp
+===================================================================
+--- trunk/core/NullGUI.cpp	2009-05-04 08:38:56 UTC (rev 1764)
++++ trunk/core/NullGUI.cpp	2009-05-04 14:31:07 UTC (rev 1765)
+@@ -152,7 +152,12 @@
+ 
+ 	filesystem::path p(snapshotName);
+ 	if(filesystem::extension(p)==&quot;.gz&quot;)
+-		p = filesystem::basename(p); // get rid of .gz
++	{
++		std::cerr &lt;&lt; &quot;Error: .gz is no longer supported, use .bz2 instead.&quot;;
++		exit(1);
++	}
++	if(filesystem::extension(p)==&quot;.bz2&quot;)
++		p = filesystem::basename(p); // get rid of .bz2
+ 	snapshotName = filesystem::basename(p); // get rid of .xml
+ 	if( snapshotInterval != -1 )
+ 		cerr 	&lt;&lt; &quot;Saving snapshot every &quot; &lt;&lt; snapshotInterval*interval &lt;&lt; &quot; iterations, \n&quot;
+@@ -182,7 +187,7 @@
+ 			//		+ &quot;__dt_&quot; + lexical_cast&lt;string&gt;(Omega::instance().getTimeStep())
+ 			//		+ &quot;__it_&quot; + lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) 
+ 					+ &quot;_&quot; + lexical_cast&lt;string&gt;(Omega::instance().getCurrentIteration()) 
+-					+ (binary?&quot;.xml.gz&quot;:&quot;.xml&quot;);
++					+ (binary?&quot;.xml.bz2&quot;:&quot;.xml&quot;);
+ 				cerr &lt;&lt; &quot;saving snapshot: &quot; &lt;&lt; fileName &lt;&lt; &quot;   ...&quot;;
+ 				Omega::instance().saveSimulation(fileName);
+ 				cerr &lt;&lt; &quot; done.\n&quot;;
+@@ -230,7 +235,7 @@
+ 	if(snapshotName==&quot;none&quot;)
+ 		std::cerr &lt;&lt; &quot;filegenerator output name set to \&quot;none\&quot; - using default output name.\n&quot;;
+ 	else
+-		f-&gt;setFileName(snapshotName + (binary?&quot;.xml.gz&quot;:&quot;.xml&quot;));
++		f-&gt;setFileName(snapshotName + (binary?&quot;.xml.bz2&quot;:&quot;.xml&quot;));
+ 	std::cerr	&lt;&lt; &quot;calling FileGenerator: &quot; &lt;&lt; filegen 
+ 			&lt;&lt; &quot;,\nwith config file: &quot; &lt;&lt; file 
+ 			&lt;&lt; &quot;,\nto generate file: &quot; &lt;&lt; f-&gt;getFileName() &lt;&lt; &quot;\n\n&quot;;
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2009-05-04 08:38:56 UTC (rev 1764)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2009-05-04 14:31:07 UTC (rev 1765)
+@@ -86,7 +86,7 @@
+         
+         ensure2D 		 = false;
+         roughEdges 		 = false;
+-	calculate_Torsion	 = false;
++	calculate_Torsion_3D	 = false;
+ 	quads			 = false;
+         
+         region_A_min             = Vector3r(-0.006, 0.096,-1);
+@@ -278,7 +278,7 @@
+         
+         REGISTER_ATTRIBUTE(ensure2D);
+         REGISTER_ATTRIBUTE(roughEdges);
+-        REGISTER_ATTRIBUTE(calculate_Torsion);
++        REGISTER_ATTRIBUTE(calculate_Torsion_3D);
+         REGISTER_ATTRIBUTE(quads);
+         
+         REGISTER_ATTRIBUTE(triangularBaseGrid);         //              - triangles
+@@ -1192,7 +1192,7 @@
+ 	shared_ptr&lt;LatticeLaw&gt; latticeLaw(new LatticeLaw);
+         latticeLaw-&gt;ensure2D   = ensure2D;
+         latticeLaw-&gt;roughEdges = roughEdges;
+-        latticeLaw-&gt;calcTorsion= calculate_Torsion;
++        latticeLaw-&gt;calcTorsion= calculate_Torsion_3D;
+ 	latticeLaw-&gt;tension_compression_different_stiffness = true;	
+         
+         rootBody-&gt;engines.clear();
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.hpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.hpp	2009-05-04 08:38:56 UTC (rev 1764)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.hpp	2009-05-04 14:31:07 UTC (rev 1765)
+@@ -50,7 +50,7 @@
+                                 ,useStiffnessSoftening
+                                 ,ensure2D
+                                 ,roughEdges
+-				,calculate_Torsion
++				,calculate_Torsion_3D
+ 				,quads;
+         
+         // aggregates
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000978.html">[deprecated list] [Yade-dev] Python scripts and clump creation
+</A></li>
+	<LI>Next message: <A HREF="000944.html">[deprecated list] [Yade-dev] [svn] r1766 - in trunk: extra	extra/clump gui gui/py	pkg/dem pkg/dem/DataClass	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#941">[ date ]</a>
+              <a href="thread.html#941">[ thread ]</a>
+              <a href="subject.html#941">[ subject ]</a>
+              <a href="author.html#941">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

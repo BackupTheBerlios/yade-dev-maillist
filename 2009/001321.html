@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1910 - in trunk:	gui/py	pkg/common/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1910%20-%20in%20trunk%3A%0A%09gui/py%09pkg/common/Engine/DeusExMachina&In-Reply-To=%3C200907311432.n6VEWbqA027107%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001320.html">
+   <LINK REL="Next"  HREF="001416.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1910 - in trunk:	gui/py	pkg/common/Engine/DeusExMachina</H1>
+    <B>gladky_anton at mail.berlios.de</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1910%20-%20in%20trunk%3A%0A%09gui/py%09pkg/common/Engine/DeusExMachina&In-Reply-To=%3C200907311432.n6VEWbqA027107%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1910 - in trunk:	gui/py	pkg/common/Engine/DeusExMachina">gladky_anton at mail.berlios.de
+       </A><BR>
+    <I>Fri Jul 31 16:32:37 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001320.html">[deprecated list] [Yade-dev] [svn] r1909 - in trunk/pkg: fem snow
+</A></li>
+        <LI>Next message: <A HREF="001416.html">[deprecated list] [Yade-dev] [svn] r1911 - in trunk: . core core/containers gui/qt3 lib/base lib/factory lib/multimethods lib/serialization pkg/common/DataClass/BoundingVolume pkg/common/DataClass/GeometricalModel pkg/common/DataClass/InteractingGeometry pkg/common/DataClass/InteractionGeometry pkg/common/DataClass/InteractionPhysics pkg/common/DataClass/PhysicalParameters pkg/common/DataClass/Widgets pkg/common/Engine pkg/common/Engine/DeusExMachina pkg/common/Engine/EngineUnit pkg/common/Engine/FilterEngine pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine pkg/common/RenderingEngine/GLDrawBoundingVolume pkg/common/RenderingEngine/GLDrawGeometricalModel pkg/common/RenderingEngine/GLDrawInteractingGeometry pkg/common/RenderingEngine/GLDrawInteractionGeometry pkg/common/RenderingEngine/GLDrawInteractionPhysics pkg/common/RenderingEngine/GLDrawShadowVolume pkg/common/RenderingEngine/GLDrawState pkg/common/RenderingEngine/GLDrawWidgets pkg/common/RenderingEngine/OpenGLRenderingEngine! pkg/dem/DataClass pkg/dem/DataClass/InteractingGeometry pkg/dem/DataClass/InteractionGeometry pkg/dem/DataClass/InteractionPhysics pkg/dem/DataClass/PhysicalParameters pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction pkg/dem/RenderingEngine/GLDrawElasticContactInteraction pkg/dem/RenderingEngine/GLDrawInteractingMyTetrahedron pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry pkg/dem/RenderingEngine/GLDrawViscoelasticInteraction pkg/dem/meta pkg/fem/DataClass/GeometricalModel pkg/fem/DataClass/PhysicalParameters pkg/fem/Engine/EngineUnit pkg/fem/Engine/StandAloneEngine pkg/fem/PreProcessor pkg/lattice/DataClass/GeometricalModel pkg/lattice/DataClass/InteractingGeometry pkg/lattice/DataClass/InteractionPhysics pkg/lattice/DataClass/PhysicalParameters pkg/lattice/Engine/EngineUnit pkg/lattice/Engine/StandAloneEngine pkg/lattice/PreProcessor pkg/latt! ice/RenderingEngine/GLDrawLatticeBeamState pkg/lattice/Renderi! ngEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1321">[ date ]</a>
+              <a href="thread.html#1321">[ thread ]</a>
+              <a href="subject.html#1321">[ subject ]</a>
+              <a href="author.html#1321">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: gladky_anton
+Date: 2009-07-31 16:32:36 +0200 (Fri, 31 Jul 2009)
+New Revision: 1910
+
+Modified:
+   trunk/gui/py/PythonUI_rc.py
+   trunk/pkg/common/Engine/DeusExMachina/PressTestEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/PressTestEngine.hpp
+Log:
+1. Changes on PressTestEngine. Now it defines the destruction moment more precisely
+2. YADE CONSOLE emblem shows now without upper row shifted.
+
+
+
+Modified: trunk/gui/py/PythonUI_rc.py
+===================================================================
+--- trunk/gui/py/PythonUI_rc.py	2009-07-31 10:56:33 UTC (rev 1909)
++++ trunk/gui/py/PythonUI_rc.py	2009-07-31 14:32:36 UTC (rev 1910)
+@@ -126,7 +126,8 @@
+ 	else:
+ 		sys.argv[0]='&lt;embedded python interpreter&gt;'
+ 		from IPython.Shell import IPShellEmbed
+-		ipshell = IPShellEmbed(banner=r&quot;&quot;&quot;__   __    ____          ____                      _      
++		ipshell = IPShellEmbed(banner=r&quot;&quot;&quot;
++	__   __    ____          ____                      _      
+ 	\ \ / /_ _|  _ \  ___   / ___|___  _ __  ___  ___ | | ___ 
+ 	 \ V / _` | | | |/ _ \ | |   / _ \| '_ \/ __|/ _ \| |/ _ \ 
+ 	  | | (_| | |_| |  __/ | |__| (_) | | | \__ \ (_) | |  __/
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/PressTestEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/PressTestEngine.cpp	2009-07-31 10:56:33 UTC (rev 1909)
++++ trunk/pkg/common/Engine/DeusExMachina/PressTestEngine.cpp	2009-07-31 14:32:36 UTC (rev 1910)
+@@ -26,10 +26,11 @@
+ 			FOREACH(body_id_t id, subscribedBodies){
+ 				assert(ncb-&gt;bodies-&gt;exists(id));
+ 				currentVerticalForce = ncb-&gt;bex.getForce(id)[2]; //Define current vertical force
+-				minimalForce = maxVerticalForce*0.1;						 //Define minimal edge of te force (10% from Maximal)
++				minimalForce = maxVerticalForce*0.1;						 //Define minimal edge of the force (10% from Maximal)
++				minimalPredictedForce = predictedForce*0.1;			 //Define minimal edge of the Predicted force (10% from Predicted)
+ 				if (currentVerticalForce &gt; maxVerticalForce) {	 //Force increasing. Press is working normally
+ 					maxVerticalForce = currentVerticalForce;
+-				} else if ((currentVerticalForce&lt;=(minimalForce))&amp;&amp;(maxVerticalForce !=0)) {
++				} else if ((currentVerticalForce&lt;=(minimalForce))&amp;&amp;(maxVerticalForce&gt;minimalPredictedForce)) {
+ 					/*
+ 					 * Force is decreased lower, than minimal. The body seems &quot;cracked&quot;.
+ 					 * Starting the countdown
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/PressTestEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/PressTestEngine.hpp	2009-07-31 10:56:33 UTC (rev 1909)
++++ trunk/pkg/common/Engine/DeusExMachina/PressTestEngine.hpp	2009-07-31 14:32:36 UTC (rev 1910)
+@@ -29,14 +29,14 @@
+ 	public:
+ 		enum motionDirection {forward, backward, stop};
+ 		motionDirection curentDirection;
+-		Real currentVerticalForce, maxVerticalForce, minimalForce;
++		Real currentVerticalForce, maxVerticalForce, minimalForce, predictedForce, minimalPredictedForce;
+ 		long int numberIterationAfterDestruction, currentIterationAfterDestruction;
+ 		int pressVelocityForw2Back;
+ 		PressTestEngine(): curentDirection(forward), currentVerticalForce(0), maxVerticalForce(0), currentIterationAfterDestruction(0), pressVelocityForw2Back(25) {};
+ 		virtual ~PressTestEngine(){};
+ 		virtual void applyCondition(MetaBody*);
+ 	REGISTER_CLASS_AND_BASE(PressTestEngine,TranslationEngine);
+-	REGISTER_ATTRIBUTES(TranslationEngine, (numberIterationAfterDestruction));
++	REGISTER_ATTRIBUTES(TranslationEngine, (numberIterationAfterDestruction) (predictedForce));
+ 	DECLARE_LOGGER;
+ };
+ REGISTER_SERIALIZABLE(PressTestEngine);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001320.html">[deprecated list] [Yade-dev] [svn] r1909 - in trunk/pkg: fem snow
+</A></li>
+	<LI>Next message: <A HREF="001416.html">[deprecated list] [Yade-dev] [svn] r1911 - in trunk: . core core/containers gui/qt3 lib/base lib/factory lib/multimethods lib/serialization pkg/common/DataClass/BoundingVolume pkg/common/DataClass/GeometricalModel pkg/common/DataClass/InteractingGeometry pkg/common/DataClass/InteractionGeometry pkg/common/DataClass/InteractionPhysics pkg/common/DataClass/PhysicalParameters pkg/common/DataClass/Widgets pkg/common/Engine pkg/common/Engine/DeusExMachina pkg/common/Engine/EngineUnit pkg/common/Engine/FilterEngine pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine pkg/common/RenderingEngine/GLDrawBoundingVolume pkg/common/RenderingEngine/GLDrawGeometricalModel pkg/common/RenderingEngine/GLDrawInteractingGeometry pkg/common/RenderingEngine/GLDrawInteractionGeometry pkg/common/RenderingEngine/GLDrawInteractionPhysics pkg/common/RenderingEngine/GLDrawShadowVolume pkg/common/RenderingEngine/GLDrawState pkg/common/RenderingEngine/GLDrawWidgets pkg/common/RenderingEngine/OpenGLRenderingEngine! pkg/dem/DataClass pkg/dem/DataClass/InteractingGeometry pkg/dem/DataClass/InteractionGeometry pkg/dem/DataClass/InteractionPhysics pkg/dem/DataClass/PhysicalParameters pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction pkg/dem/RenderingEngine/GLDrawElasticContactInteraction pkg/dem/RenderingEngine/GLDrawInteractingMyTetrahedron pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry pkg/dem/RenderingEngine/GLDrawViscoelasticInteraction pkg/dem/meta pkg/fem/DataClass/GeometricalModel pkg/fem/DataClass/PhysicalParameters pkg/fem/Engine/EngineUnit pkg/fem/Engine/StandAloneEngine pkg/fem/PreProcessor pkg/lattice/DataClass/GeometricalModel pkg/lattice/DataClass/InteractingGeometry pkg/lattice/DataClass/InteractionPhysics pkg/lattice/DataClass/PhysicalParameters pkg/lattice/Engine/EngineUnit pkg/lattice/Engine/StandAloneEngine pkg/lattice/PreProcessor pkg/latt! ice/RenderingEngine/GLDrawLatticeBeamState pkg/lattice/Renderi! ngEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1321">[ date ]</a>
+              <a href="thread.html#1321">[ thread ]</a>
+              <a href="subject.html#1321">[ subject ]</a>
+              <a href="author.html#1321">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

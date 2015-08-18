@@ -1,0 +1,307 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1534 - in trunk: gui/py	pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1534%20-%20in%20trunk%3A%20gui/py%0A%09pkg/dem/PreProcessor&In-Reply-To=%3C200809301838.m8UIcsdP024829%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000425.html">
+   <LINK REL="Next"  HREF="000423.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1534 - in trunk: gui/py	pkg/dem/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1534%20-%20in%20trunk%3A%20gui/py%0A%09pkg/dem/PreProcessor&In-Reply-To=%3C200809301838.m8UIcsdP024829%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1534 - in trunk: gui/py	pkg/dem/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Sep 30 20:38:54 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000425.html">[deprecated list] [Yade-dev] random-access container for	interactions
+</A></li>
+        <LI>Next message: <A HREF="000423.html">[deprecated list] [Yade-dev] [svn] r1535 - in trunk: gui/py	pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#421">[ date ]</a>
+              <a href="thread.html#421">[ thread ]</a>
+              <a href="subject.html#421">[ subject ]</a>
+              <a href="author.html#421">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-09-30 20:38:52 +0200 (Tue, 30 Sep 2008)
+New Revision: 1534
+
+Modified:
+   trunk/gui/py/_utils.cpp
+   trunk/gui/py/eudoxos.py
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+Log:
+1. TriaxialTest now takes readiusMean argument (by default negative, i.e. disabled); if &gt;0, box size is scaled so that both requested porosity and mean size can be preserved.
+2. Attempt to fix computation of stress from stored elastic energy.
+
+
+Modified: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2008-09-30 10:49:22 UTC (rev 1533)
++++ trunk/gui/py/_utils.cpp	2008-09-30 18:38:52 UTC (rev 1534)
+@@ -17,20 +17,20 @@
+ bool isInBB(Vector3r p, Vector3r bbMin, Vector3r bbMax){return p[0]&gt;bbMin[0] &amp;&amp; p[0]&lt;bbMax[0] &amp;&amp; p[1]&gt;bbMin[1] &amp;&amp; p[1]&lt;bbMax[1] &amp;&amp; p[2]&gt;bbMin[2] &amp;&amp; p[2]&lt;bbMax[2];}
+ 
+ /* \todo implement groupMask */
+-python::tuple aabbExtrema(Real cutoff=0.0){
++python::tuple aabbExtrema(Real cutoff=0.0, bool centers=false){
+ 	if(cutoff&lt;0. || cutoff&gt;1.) throw invalid_argument(&quot;Cutoff must be &gt;=0 and &lt;=1.&quot;);
+ 	Real inf=std::numeric_limits&lt;Real&gt;::infinity();
+ 	Vector3r minimum(inf,inf,inf),maximum(-inf,-inf,-inf);
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *Omega::instance().getRootBody()-&gt;bodies){
+ 		shared_ptr&lt;Sphere&gt; s=dynamic_pointer_cast&lt;Sphere&gt;(b-&gt;geometricalModel); if(!s) continue;
+ 		Vector3r rrr(s-&gt;radius,s-&gt;radius,s-&gt;radius);
+-		minimum=componentMinVector(minimum,b-&gt;physicalParameters-&gt;se3.position-rrr);
+-		maximum=componentMaxVector(maximum,b-&gt;physicalParameters-&gt;se3.position+rrr);
++		minimum=componentMinVector(minimum,b-&gt;physicalParameters-&gt;se3.position-(centers?0:rrr));
++		maximum=componentMaxVector(maximum,b-&gt;physicalParameters-&gt;se3.position+(centers?0:rrr));
+ 	}
+ 	Vector3r dim=maximum-minimum;
+ 	return python::make_tuple(vec2tuple(minimum+.5*cutoff*dim),vec2tuple(maximum-.5*cutoff*dim));
+ }
+-BOOST_PYTHON_FUNCTION_OVERLOADS(aabbExtrema_overloads,aabbExtrema,0,1);
++BOOST_PYTHON_FUNCTION_OVERLOADS(aabbExtrema_overloads,aabbExtrema,0,2);
+ 
+ python::tuple negPosExtremeIds(int axis, Real distFactor=1.1){
+ 	python::tuple extrema=aabbExtrema();
+@@ -163,7 +163,7 @@
+ 
+ BOOST_PYTHON_MODULE(_utils){
+ 	def(&quot;PWaveTimeStep&quot;,PWaveTimeStep);
+-	def(&quot;aabbExtrema&quot;,aabbExtrema,aabbExtrema_overloads(args(&quot;cutoff&quot;)));
++	def(&quot;aabbExtrema&quot;,aabbExtrema,aabbExtrema_overloads(args(&quot;cutoff&quot;,&quot;centers&quot;)));
+ 	def(&quot;negPosExtremeIds&quot;,negPosExtremeIds,negPosExtremeIds_overloads(args(&quot;axis&quot;,&quot;distFactor&quot;)));
+ 	def(&quot;coordsAndDisplacements&quot;,coordsAndDisplacements,coordsAndDisplacements_overloads(args(&quot;AABB&quot;)));
+ 	def(&quot;setRefSe3&quot;,setRefSe3);
+
+Modified: trunk/gui/py/eudoxos.py
+===================================================================
+--- trunk/gui/py/eudoxos.py	2008-09-30 10:49:22 UTC (rev 1533)
++++ trunk/gui/py/eudoxos.py	2008-09-30 18:38:52 UTC (rev 1534)
+@@ -9,7 +9,7 @@
+ 	# E=(1/2)&#963;&#949;Al # global stored energy
+ 	# &#963;=EE/(.5&#949;Al)=EE/(.5&#949;V)
+ 	from yade import utils
+-	dim=utils.aabbDim(cutoff)
++	dim=utils.aabbDim(cutoff,centers=True)
+ 	return utils.elasticEnergy(utils.aabbExtrema(cutoff))/(.5*strain*dim[0]*dim[1]*dim[2])
+ 
+ def estimatePoissonYoung(principalAxis,stress=0,plot=False,cutoff=0.):
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-09-30 10:49:22 UTC (rev 1533)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-09-30 18:38:52 UTC (rev 1534)
+@@ -81,15 +81,12 @@
+ #include &lt;boost/random/normal_distribution.hpp&gt;
+ 
+ 
++CREATE_LOGGER(TriaxialTest);
+ 
+-
+ using namespace boost;
+ using namespace std;
+ 
+ 
+-typedef pair&lt;Vector3r, Real&gt; BasicSphere;
+-//! generate a list of non-overlapping spheres
+-string GenerateCloud(vector&lt;BasicSphere&gt;&amp; sphere_list, Vector3r lowerCorner, Vector3r upperCorner, long number, Real rad_std_dev, Real porosity);
+ 
+ 
+ TriaxialTest::TriaxialTest () : FileGenerator()
+@@ -161,6 +158,7 @@
+ 	biaxial2dTest=false;
+ 
+ 	radiusStdDev=0.3;
++	radiusMean=-1; // no radius specified
+ 	
+ //	wall_top_id =0;
+ // 	wall_bottom_id =0;
+@@ -192,6 +190,7 @@
+ 	REGISTER_ATTRIBUTE(maxMultiplier);
+ 	REGISTER_ATTRIBUTE(finalMaxMultiplier);
+ 	REGISTER_ATTRIBUTE(radiusStdDev);
++	REGISTER_ATTRIBUTE(radiusMean);
+ 
+ 	REGISTER_ATTRIBUTE(sphereYoungModulus);
+ 	REGISTER_ATTRIBUTE(spherePoissonRatio);
+@@ -277,6 +276,25 @@
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+ 
+ 	shared_ptr&lt;Body&gt; body;
++
++
++
++	/* if _mean_radius is not given (i.e. &lt;=0), then calculate it from box size;
++	 * OTOH, if it is specified, scale the box preserving its ratio and lowerCorner so that the radius can be as requested
++	 */
++	Vector3r dimensions=upperCorner-lowerCorner; Real volume=dimensions.X()*dimensions.Y()*dimensions.Z();
++	Real porosity=.75;
++	Real really_radiusMean;
++
++	if(radiusMean&lt;=0) really_radiusMean=pow(volume*(1-porosity)/(Mathr::PI*(4/3.)*numberOfGrains),1/3.);
++	else {
++		Real boxScaleFactor=radiusMean*pow((4/3.)*Mathr::PI*numberOfGrains/(volume*(1-porosity)),1/3.);
++		LOG_INFO(&quot;Mean radius value of &quot;&lt;&lt;radiusMean&lt;&lt;&quot; requested, scaling box by &quot;&lt;&lt;boxScaleFactor);
++		dimensions*=boxScaleFactor;
++		upperCorner=lowerCorner+dimensions;
++		really_radiusMean=radiusMean;
++	}
++
+ 	
+ 	
+ 	
+@@ -386,27 +404,18 @@
+ 	
+ 	vector&lt;BasicSphere&gt; sphere_list;
+ 	if(importFilename!=&quot;&quot;) sphere_list=Shop::loadSpheresFromFile(importFilename,lowerCorner,upperCorner);
+-	else message+=GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, radiusStdDev, 0.75);
+-	
++	else message+=GenerateCloud(sphere_list, lowerCorner, upperCorner, numberOfGrains, radiusStdDev, really_radiusMean, porosity);
+ 	vector&lt;BasicSphere&gt;::iterator it = sphere_list.begin();
+ 	vector&lt;BasicSphere&gt;::iterator it_end = sphere_list.end();
+-			
+-	for (;it!=it_end; ++it)
+-	{
+-		cerr &lt;&lt; &quot;sphere (&quot; &lt;&lt; it-&gt;first &lt;&lt; &quot; &quot; &lt;&lt; it-&gt;second &lt;&lt; &quot;)&quot;&lt;&lt;endl;
+-		createSphere(body,it-&gt;first,it-&gt;second,false,true);
++	FOREACH(const BasicSphere&amp; it, sphere_list){
++		LOG_DEBUG(&quot;sphere (&quot; &lt;&lt; it.first &lt;&lt; &quot; &quot; &lt;&lt; it.second &lt;&lt; &quot;)&quot;);
++		createSphere(body,it.first,it.second,false,true);
+ 		rootBody-&gt;bodies-&gt;insert(body);
+ 	}	
++
+ 	
+ 	
+ 	return true;
+-//  	return &quot;Generated a sample inside box of dimensions: (&quot; 
+-//  		+ lexical_cast&lt;string&gt;(lowerCorner[0]) + &quot;,&quot; 
+-//  		+ lexical_cast&lt;string&gt;(lowerCorner[1]) + &quot;,&quot; 
+-//  		+ lexical_cast&lt;string&gt;(lowerCorner[2]) + &quot;) and (&quot; 
+-//  		+ lexical_cast&lt;string&gt;(upperCorner[0]) + &quot;,&quot; 
+-//  		+ lexical_cast&lt;string&gt;(upperCorner[1]) + &quot;,&quot; 
+-//  		+ lexical_cast&lt;string&gt;(upperCorner[2]) + &quot;).&quot;;
+ 
+ }
+ 
+@@ -609,10 +618,12 @@
+ 	//cerr &lt;&lt; &quot;fin de section triaxialcompressionEngine = shared_ptr&lt;TriaxialCompressionEngine&gt; (new TriaxialCompressionEngine);&quot; &lt;&lt; std::endl;
+ 	
+ // recording global stress
+-	triaxialStateRecorder = shared_ptr&lt;TriaxialStateRecorder&gt;(new TriaxialStateRecorder);
+-	triaxialStateRecorder-&gt; outputFile 		= WallStressRecordFile + Key;
+-	triaxialStateRecorder-&gt; interval 		= recordIntervalIter;
+-	//triaxialStateRecorderer-&gt; thickness 		= thickness;
++	if(recordIntervalIter&gt;0){
++		triaxialStateRecorder = shared_ptr&lt;TriaxialStateRecorder&gt;(new TriaxialStateRecorder);
++		triaxialStateRecorder-&gt; outputFile 		= WallStressRecordFile + Key;
++		triaxialStateRecorder-&gt; interval 		= recordIntervalIter;
++		//triaxialStateRecorderer-&gt; thickness 		= thickness;
++	}
+ 
+ 	shared_ptr&lt;MakeItFlat&gt; makeItFlat(new MakeItFlat);
+ 	makeItFlat-&gt;direction=2;
+@@ -699,7 +710,7 @@
+ }
+ 
+ 
+-string GenerateCloud(vector&lt;BasicSphere&gt;&amp; sphere_list, Vector3r lowerCorner, Vector3r upperCorner, long number, Real rad_std_dev, Real porosity)
++string TriaxialTest::GenerateCloud(vector&lt;BasicSphere&gt;&amp; sphere_list, Vector3r lowerCorner, Vector3r upperCorner, long number, Real rad_std_dev, Real mean_radius, Real porosity)
+ {
+ 	typedef boost::minstd_rand StdGenerator;
+ 	static StdGenerator generator;
+@@ -711,11 +722,8 @@
+ 	sphere_list.clear();
+ 	long tries = 1000; //nb of tries for positionning the next sphere
+ 	Vector3r dimensions = upperCorner - lowerCorner;
+-		
+-	Real mean_radius = std::pow(dimensions.X()*dimensions.Y()*dimensions.Z()*(1-porosity)/(3.1416*1.3333*number),0.333333);
+-        //cerr &lt;&lt; mean_radius;
+ 
+-	std::cerr &lt;&lt; &quot;generating aggregates ... &quot;;
++	LOG_INFO(&quot;Generating aggregates ...&quot;);
+ 	
+ 	long t, i;
+ 	for (i=0; i&lt;number; ++i) {
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2008-09-30 10:49:22 UTC (rev 1533)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2008-09-30 18:38:52 UTC (rev 1534)
+@@ -73,9 +73,9 @@
+ 				StabilityCriterion,
+ 				maxMultiplier, ///max multiplier of diameters during internal compaction
+ 				finalMaxMultiplier,
+-				wallOversizeFactor,
+-				radiusStdDev; // make walls bigger (/smaller) than necessary by this factor
+-
++				wallOversizeFactor, // make walls bigger (/smaller) than necessary by this factor
++				radiusStdDev,
++				radiusMean;
+ 		bool		 wall_top
+ 				,wall_bottom
+ 				,wall_1
+@@ -127,6 +127,11 @@
+ 		void createSphere(shared_ptr&lt;Body&gt;&amp; body, Vector3r position, Real radius,bool big,bool dynamic);
+ 		void createActors(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
+ 		void positionRootBody(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
++
++		typedef pair&lt;Vector3r, Real&gt; BasicSphere;
++		//! generate a list of non-overlapping spheres
++		string GenerateCloud(vector&lt;BasicSphere&gt;&amp; sphere_list, Vector3r lowerCorner, Vector3r upperCorner, long number, Real rad_std_dev, Real mean_radius, Real porosity);
++
+ 	
+ 	public : 
+ 		TriaxialTest ();
+@@ -137,6 +142,7 @@
+ 		void registerAttributes();
+ 	REGISTER_CLASS_NAME(TriaxialTest);
+ 	REGISTER_BASE_CLASS_NAME(FileGenerator);
++	DECLARE_LOGGER;
+ };
+ 
+ REGISTER_SERIALIZABLE(TriaxialTest,false);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000425.html">[deprecated list] [Yade-dev] random-access container for	interactions
+</A></li>
+	<LI>Next message: <A HREF="000423.html">[deprecated list] [Yade-dev] [svn] r1535 - in trunk: gui/py	pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#421">[ date ]</a>
+              <a href="thread.html#421">[ thread ]</a>
+              <a href="subject.html#421">[ subject ]</a>
+              <a href="author.html#421">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

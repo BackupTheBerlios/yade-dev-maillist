@@ -1,0 +1,102 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] strided collider speedups
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20strided%20collider%20speedups&In-Reply-To=%3C1247220052.6291.12.camel%40flux%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001162.html">
+   <LINK REL="Next"  HREF="001164.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] strided collider speedups</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20strided%20collider%20speedups&In-Reply-To=%3C1247220052.6291.12.camel%40flux%3E"
+       TITLE="[deprecated list] [Yade-dev] strided collider speedups">eudoxos at arcig.cz
+       </A><BR>
+    <I>Fri Jul 10 12:00:52 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001162.html">[deprecated list] [Yade-dev] [svn] r1852 - trunk/scripts/test
+</A></li>
+        <LI>Next message: <A HREF="001164.html">[deprecated list] [Yade-dev] strided collider speedups
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1163">[ date ]</a>
+              <a href="thread.html#1163">[ thread ]</a>
+              <a href="subject.html#1163">[ subject ]</a>
+              <a href="author.html#1163">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> During N timesteps, use the same list of interactions (some will go
+</I>&gt;<i> from 
+</I>&gt;<i> virtual to real, or real to virtual, no problem with that as long as 
+</I>&gt;<i> they can change many times).
+</I>&gt;<i> I experimented that before with the triangulation collider, it worked 
+</I>&gt;<i> well, but it was not faster than SAPcollider for a stupid reason (*), 
+</I>&gt;<i> and I realised the same thing could be achieved with SAPcollider with 
+</I>&gt;<i> intDetectionFactor=1.5.
+</I>&gt;<i> It needs a few adjustments in other classes now, perhaps, perhaps not. 
+</I>
+Hi Bruno,
+
+I played with this idea yesterday, and it is commited in r1851. The
+interface is quite crude, but you will get the idea from
+scripts/test/collider-stride-triax.py, where you can play with the
+parameters and so on. I was able to get collider time percentage down to
+3.5% as speed decreases, running about every 48 steps. (60% for
+InteractionDispatchers, 22% NewtonsDampedLaw, 8% for
+TriaxialCompressionEngine).
+
+The script gives you the opportunity to try different strategies to
+determine the best values for stride/sweep distance.
+
+I have to try for my &quot;slowly moving&quot; (absolute speeds are high, but
+timestep is very small) problems, where it can make huge difference.
+
+If you have any propositions how to make ti faster, go ahead and try.
+Python is not that difficult, you see.
+
+Let me know what you think.
+
+Vaclav
+
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001162.html">[deprecated list] [Yade-dev] [svn] r1852 - trunk/scripts/test
+</A></li>
+	<LI>Next message: <A HREF="001164.html">[deprecated list] [Yade-dev] strided collider speedups
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1163">[ date ]</a>
+              <a href="thread.html#1163">[ thread ]</a>
+              <a href="subject.html#1163">[ subject ]</a>
+              <a href="author.html#1163">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

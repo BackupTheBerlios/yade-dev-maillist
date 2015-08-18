@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] run faster by +16% with r1402
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20run%20faster%20by%20%2B16%25%20with%20r1402&In-Reply-To=%3C20080626162435.68430035%40szpak%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000261.html">
+   <LINK REL="Next"  HREF="000263.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] run faster by +16% with r1402</H1>
+    <B>Janek Kozicki</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20run%20faster%20by%20%2B16%25%20with%20r1402&In-Reply-To=%3C20080626162435.68430035%40szpak%3E"
+       TITLE="[yade-dev] run faster by +16% with r1402">janek_listy at wp.pl
+       </A><BR>
+    <I>Thu Jun 26 16:24:35 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000261.html">[yade-dev] run faster by +16% (and enlarge your p*n*s size ; -) ) with r1402
+</A></li>
+        <LI>Next message: <A HREF="000263.html">[yade-dev] run faster by +16% with r1402
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#262">[ date ]</a>
+              <a href="thread.html#262">[ thread ]</a>
+              <a href="subject.html#262">[ subject ]</a>
+              <a href="author.html#262">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>V&#225;clav &#352;milauer said:     (by the date of Thu, 26 Jun 2008 15:05:48 +0200)
+
+&gt;<i> ParallelEngine was just what I cooked up this morning, since I thought
+</I>&gt;<i> it was a low-hanging fruit; but I think the summer student will have to
+</I>&gt;<i> run bunch of benchmarks to determine where it is worth to parallelize
+</I>&gt;<i> and where not (and for what number of bodies and interactions etc).
+</I>
+I'm supervising his job. And I'm already experienced with
+boost::thread, which yade uses in some places. So it may be a sad
+news for you, but the in-engine parallelization will be done using
+boost::threads. We will see how it will affect the problem caused by not
+being able to random access the containers.
+
+It will be a bit more coding though, as splitting into parallel
+blocks will have to be coded explicitly using boost::threads, whereas
+OpenMP does the split implicitly using compilers #pragmas.
+
+The student's first assignment is to write a &quot;hello world&quot;
+parallelization example in following way:
+
+- a container with forces {float force;} // write only
+- a container with interactions {float force, int id1, int id2;} // RO
+
+- he has to do a parallel loop over all interactions and add force
+  to each id1 and id2. Doing it in parallel will involve some mutexes
+  to block the access to particular force[id1] so that another thread
+  will not attempt to modify it.
+
+That's a simple job for him, just to start the work. Later he will
+incorporate that into yade. He is just a 2nd year CS student, and he has
+only 2 months to do it. We will see how far it will go.
+
+-- 
+Janek Kozicki                                                         |
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000261.html">[yade-dev] run faster by +16% (and enlarge your p*n*s size ; -) ) with r1402
+</A></li>
+	<LI>Next message: <A HREF="000263.html">[yade-dev] run faster by +16% with r1402
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#262">[ date ]</a>
+              <a href="thread.html#262">[ thread ]</a>
+              <a href="subject.html#262">[ subject ]</a>
+              <a href="author.html#262">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

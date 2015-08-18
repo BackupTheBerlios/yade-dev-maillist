@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1670 -	trunk/pkg/common/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1670%20-%0A%09trunk/pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200902172049.n1HKn3Hm031866%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000705.html">
+   <LINK REL="Next"  HREF="000709.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1670 -	trunk/pkg/common/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1670%20-%0A%09trunk/pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200902172049.n1HKn3Hm031866%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1670 -	trunk/pkg/common/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Feb 17 21:49:03 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000705.html">[deprecated list] [Yade-dev] [svn] r1669 - in	trunk:	core/DefaultContainerImplementations	gui/py	pkg/common/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000709.html">[deprecated list] [Yade-dev] [svn] r1671 - in	trunk/pkg:	common/Engine/StandAloneEngine	dem/DataClass/InteractionGeometry	dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#706">[ date ]</a>
+              <a href="thread.html#706">[ thread ]</a>
+              <a href="subject.html#706">[ subject ]</a>
+              <a href="author.html#706">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-02-17 21:49:02 +0100 (Tue, 17 Feb 2009)
+New Revision: 1670
+
+Modified:
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+Log:
+collider mistake hotfix
+
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-02-17 20:47:59 UTC (rev 1669)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-02-17 20:49:02 UTC (rev 1670)
+@@ -191,8 +191,8 @@
+ 	int offset1=3*id1, offset2=3*id2;
+ 	const shared_ptr&lt;Body&gt;&amp; b1(Body::byId(body_id_t(id1),rootBody)), b2(Body::byId(body_id_t(id2),rootBody));
+ 	bool overlap =
+-		// only collide if at least one of the bodies is not shadow
+-		((!b1-&gt;isShadow()) || (!b2-&gt;isShadow())) &amp;&amp;
++		// NOT&#160;YET&#160;IMPLEMENTED: only collide if at least one of the bodies is not shadow
++		// ((!b1-&gt;isShadow()) || (!b2-&gt;isShadow())) &amp;&amp;
+ 		// only collide if at least one particle is standalone or they belong to different clumps
+ 		(b1-&gt;isStandalone() || b2-&gt;isStandalone() || b1-&gt;clumpId!=b2-&gt;clumpId ) &amp;&amp;
+ 		 // do not collide clumps, since they are just containers, never interact
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000705.html">[deprecated list] [Yade-dev] [svn] r1669 - in	trunk:	core/DefaultContainerImplementations	gui/py	pkg/common/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000709.html">[deprecated list] [Yade-dev] [svn] r1671 - in	trunk/pkg:	common/Engine/StandAloneEngine	dem/DataClass/InteractionGeometry	dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#706">[ date ]</a>
+              <a href="thread.html#706">[ thread ]</a>
+              <a href="subject.html#706">[ subject ]</a>
+              <a href="author.html#706">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

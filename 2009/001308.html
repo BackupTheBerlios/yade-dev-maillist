@@ -1,0 +1,166 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1904 - in trunk/gui: . qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1904%20-%20in%20trunk/gui%3A%20.%20qt3&In-Reply-To=%3C200907292005.n6TK5hdP028624%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001307.html">
+   <LINK REL="Next"  HREF="001309.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1904 - in trunk/gui: . qt3</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1904%20-%20in%20trunk/gui%3A%20.%20qt3&In-Reply-To=%3C200907292005.n6TK5hdP028624%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1904 - in trunk/gui: . qt3">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul 29 22:05:43 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001307.html">[deprecated list] [Yade-dev] [svn] r1903 -	trunk/pkg/lattice/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="001309.html">[deprecated list] [Yade-dev] [svn] r1905 - in	trunk/pkg/dem:	DataClass/InteractionGeometry Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1308">[ date ]</a>
+              <a href="thread.html#1308">[ thread ]</a>
+              <a href="subject.html#1308">[ subject ]</a>
+              <a href="author.html#1308">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-29 22:05:42 +0200 (Wed, 29 Jul 2009)
+New Revision: 1904
+
+Modified:
+   trunk/gui/SConscript
+   trunk/gui/qt3/QtGUI.cpp
+   trunk/gui/qt3/QtSimulationPlayer.hpp
+Log:
+1. Fix for <A HREF="https://bugs.launchpad.net/yade/+bug/406343">https://bugs.launchpad.net/yade/+bug/406343</A> (at least for me)
+
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2009-07-29 15:50:47 UTC (rev 1903)
++++ trunk/gui/SConscript	2009-07-29 20:05:42 UTC (rev 1904)
+@@ -9,18 +9,18 @@
+ 				'qt3/GLViewer.cpp',
+ 				'qt3/MessageDialog.cpp',
+ 				'qt3/QtFileGenerator.cpp',
+-				'qt3/QtFileGeneratorController.ui',
+ 				'qt3/QtGUI.cpp',
+ 				'qt3/QtGUIPreferences.cpp',
+-				'qt3/QtGeneratedMessageDialog.ui',
+-				'qt3/QtGeneratedSimulationController.ui',
+ 				'qt3/SimulationController.cpp',
+-				'qt3/YadeQtGeneratedMainWindow.ui',
+ 				'qt3/YadeQtMainWindow.cpp',
+ 				'qt3/YadeCamera.cpp',
+ 				'qt3/GLSimulationPlayerViewer.cpp',
++				'qt3/QtSimulationPlayer.cpp',
++				'qt3/QtGeneratedSimulationController.ui',
+ 				'qt3/QtGeneratedSimulationPlayer.ui',
+-				'qt3/QtSimulationPlayer.cpp',
++				'qt3/QtGeneratedMessageDialog.ui',
++				'qt3/YadeQtGeneratedMainWindow.ui',
++				'qt3/QtFileGeneratorController.ui',
+ 				],
+ 			LIBS=(['PythonUI'] if 'YADE_PYTHON' in env['CPPDEFINES'] else [])+[
+ 				'yade-serialization-qt',
+@@ -30,6 +30,12 @@
+ 		),
+ 		env.SharedLibrary('SnapshotEngine',['qt3/SnapshotEngine.cpp'],LIBS=env['LIBS']+['QtGUI','$QGLVIEWER_LIB'],CPPPATH=env['CPPPATH']+['qt3']),
+ 	])
++	###
++	### HACK that works around <A HREF="https://bugs.launchpad.net/yade/+bug/406343">https://bugs.launchpad.net/yade/+bug/406343</A>
++	### (not clear why scons is not picking up the dependency automatically, though)
++	###
++	gens=['$buildDir/gui/qt3/'+h for h in 'QtGeneratedSimulationController.h','QtGeneratedSimulationPlayer.h','QtGeneratedMessageDialog.h','YadeQtGeneratedMainWindow.h','QtFileGeneratorController.h']
++	env.Depends(['qt3/FileDialog.cpp','qt3/GLViewer.cpp','qt3/MessageDialog.cpp','qt3/QtFileGenerator.cpp','qt3/QtGUI.cpp','qt3/QtGUIPreferences.cpp','qt3/SimulationController.cpp','qt3/YadeQtMainWindow.cpp','qt3/YadeCamera.cpp','qt3/GLSimulationPlayerViewer.cpp','qt3/QtSimulationPlayer.cpp'],gens)
+ 
+ import os.path
+ 
+
+Modified: trunk/gui/qt3/QtGUI.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI.cpp	2009-07-29 15:50:47 UTC (rev 1903)
++++ trunk/gui/qt3/QtGUI.cpp	2009-07-29 20:05:42 UTC (rev 1904)
+@@ -7,19 +7,19 @@
+ *************************************************************************/
+ 
+ #include&quot;QtGUI.hpp&quot;
+-#include&quot;YadeQtMainWindow.hpp&quot;
+-#include&quot;GLViewer.hpp&quot;
++#include&lt;yade/gui-qt3/YadeQtMainWindow.hpp&gt;
++#include&lt;yade/gui-qt3/GLViewer.hpp&gt;
+ #include&lt;boost/algorithm/string.hpp&gt;
+ #include&lt;boost/bind.hpp&gt;
+-#include &lt;boost/filesystem/operations.hpp&gt;
+-#include &lt;boost/filesystem/convenience.hpp&gt;
++#include&lt;boost/filesystem/operations.hpp&gt;
++#include&lt;boost/filesystem/convenience.hpp&gt;
+ //#ifdef HAVE_CONFIG_H
+ //	#include &lt;config.h&gt;
+ //#endif
+ //#ifdef Q_WS_X11
+-	#include &lt;X11/Xlib.h&gt;
++	#include&lt;X11/Xlib.h&gt;
+ //#endif
+-#include &lt;qapplication.h&gt;
++#include&lt;qapplication.h&gt;
+ 
+ #ifdef YADE_PYTHON
+ 	#include&lt;yade/gui-py/PythonUI.hpp&gt;
+
+Modified: trunk/gui/qt3/QtSimulationPlayer.hpp
+===================================================================
+--- trunk/gui/qt3/QtSimulationPlayer.hpp	2009-07-29 15:50:47 UTC (rev 1903)
++++ trunk/gui/qt3/QtSimulationPlayer.hpp	2009-07-29 20:05:42 UTC (rev 1904)
+@@ -11,7 +11,7 @@
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/lib-factory/Factorable.hpp&gt;
+ #include&lt;yade/lib-serialization-qt/QtGUIGenerator.hpp&gt;
+-#include &lt;QtGeneratedSimulationPlayer.h&gt;
++#include&quot;QtGeneratedSimulationPlayer.h&quot;
+ #include&lt;qlayout.h&gt;
+ #include&lt;qframe.h&gt;
+ #include&lt;qscrollview.h&gt;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001307.html">[deprecated list] [Yade-dev] [svn] r1903 -	trunk/pkg/lattice/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="001309.html">[deprecated list] [Yade-dev] [svn] r1905 - in	trunk/pkg/dem:	DataClass/InteractionGeometry Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1308">[ date ]</a>
+              <a href="thread.html#1308">[ thread ]</a>
+              <a href="subject.html#1308">[ subject ]</a>
+              <a href="author.html#1308">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

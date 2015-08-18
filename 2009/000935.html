@@ -1,0 +1,1762 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1762 - in trunk: core/containers	pkg/lattice	pkg/lattice/DataClass/GeometricalModel	pkg/lattice/Engine/StandAloneEngine	pkg/lattice/PreProcessor	pkg/lattice/RenderingEngine/GLDrawLineSegment	pkg/snow/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1762%20-%20in%20trunk%3A%20core/containers%0A%09pkg/lattice%09pkg/lattice/DataClass/GeometricalModel%09pkg/lattice/Engine/StandAloneEngine%0A%09pkg/lattice/PreProcessor%09pkg/lattice/RenderingEngine/GLDrawLineSegment%0A%09pkg/snow/PreProcessor&In-Reply-To=%3C200905011549.n41FnsaE031806%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000934.html">
+   <LINK REL="Next"  HREF="000936.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1762 - in trunk: core/containers	pkg/lattice	pkg/lattice/DataClass/GeometricalModel	pkg/lattice/Engine/StandAloneEngine	pkg/lattice/PreProcessor	pkg/lattice/RenderingEngine/GLDrawLineSegment	pkg/snow/PreProcessor</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1762%20-%20in%20trunk%3A%20core/containers%0A%09pkg/lattice%09pkg/lattice/DataClass/GeometricalModel%09pkg/lattice/Engine/StandAloneEngine%0A%09pkg/lattice/PreProcessor%09pkg/lattice/RenderingEngine/GLDrawLineSegment%0A%09pkg/snow/PreProcessor&In-Reply-To=%3C200905011549.n41FnsaE031806%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1762 - in trunk: core/containers	pkg/lattice	pkg/lattice/DataClass/GeometricalModel	pkg/lattice/Engine/StandAloneEngine	pkg/lattice/PreProcessor	pkg/lattice/RenderingEngine/GLDrawLineSegment	pkg/snow/PreProcessor">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Fri May  1 17:49:54 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000934.html">[deprecated list] [Yade-dev] [svn] r1761 - in trunk: . core extra	extra/usct gui	gui/py pkg/common/Engine/EngineUnit	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine scripts
+</A></li>
+        <LI>Next message: <A HREF="000936.html">[deprecated list] [Yade-dev] [robot] build failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#935">[ date ]</a>
+              <a href="thread.html#935">[ thread ]</a>
+              <a href="subject.html#935">[ subject ]</a>
+              <a href="author.html#935">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2009-05-01 17:49:53 +0200 (Fri, 01 May 2009)
+New Revision: 1762
+
+Added:
+   trunk/pkg/lattice/PreProcessor/LatticeExampleCTData.cpp
+   trunk/pkg/lattice/PreProcessor/LatticeExampleCTData.hpp
+   trunk/pkg/lattice/PreProcessor/LatticeExampleSimple.cpp
+   trunk/pkg/lattice/PreProcessor/LatticeExampleSimple.hpp
+Modified:
+   trunk/core/containers/BodyRedirectionVector.cpp
+   trunk/pkg/lattice/DataClass/GeometricalModel/LineSegment.cpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.cpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.hpp
+   trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.cpp
+   trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+   trunk/pkg/lattice/RenderingEngine/GLDrawLineSegment/GLDrawLineSegment.cpp
+   trunk/pkg/lattice/SConscript
+   trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.hpp
+Log:
+1. correct display of lattice rods on 0th iteration
+2. on/off switch for using different stiffness for tension and compression in lattice
+3. fixed a bug in BodyRedirectionVector related to deleting of bodies
+4. two more lattice examples
+5. few more safety checks in lattice code
+
+
+
+Modified: trunk/core/containers/BodyRedirectionVector.cpp
+===================================================================
+--- trunk/core/containers/BodyRedirectionVector.cpp	2009-05-01 15:47:26 UTC (rev 1761)
++++ trunk/core/containers/BodyRedirectionVector.cpp	2009-05-01 15:49:53 UTC (rev 1762)
+@@ -73,9 +73,14 @@
+ // FIXME - make sure that this is correct
+ unsigned int BodyRedirectionVector::insert(shared_ptr&lt;Body&gt;&amp; b)
+ {
+-	//unsigned int position = b-&gt;getId();
+-	unsigned position=0;
++	// This line is important! Otherwise the bodies are renumbered after reloading, 
++	// and all subscribedBodies breaks, which is the case if you delete bodies
++	// from simulation. Lattice is deleting bodies. /Janek
++	unsigned int position = b-&gt;getId();
+ 
++	// WRONG !!
++	//unsigned position=0;
++
+ //	std::vector&lt; shared_ptr&lt;Body&gt; &gt;::iterator tmpVii    = bodies.begin();
+ //	std::vector&lt; shared_ptr&lt;Body&gt; &gt;::iterator tmpViiEnd = bodies.end();
+ //	tmpVii = bodies.find(position);
+
+Modified: trunk/pkg/lattice/DataClass/GeometricalModel/LineSegment.cpp
+===================================================================
+--- trunk/pkg/lattice/DataClass/GeometricalModel/LineSegment.cpp	2009-05-01 15:47:26 UTC (rev 1761)
++++ trunk/pkg/lattice/DataClass/GeometricalModel/LineSegment.cpp	2009-05-01 15:49:53 UTC (rev 1762)
+@@ -20,7 +20,7 @@
+ void LineSegment::registerAttributes()
+ {
+ 	GeometricalModel::registerAttributes();
+-//	REGISTER_ATTRIBUTE(length); // no need to save it
++	REGISTER_ATTRIBUTE(length);
+ }
+ 
+ YADE_PLUGIN();
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.cpp	2009-05-01 15:47:26 UTC (rev 1761)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.cpp	2009-05-01 15:49:53 UTC (rev 1762)
+@@ -44,8 +44,19 @@
+ void LatticeLaw::calcBeamPositionOrientationNewLength(Body* body, BodyContainer* bodies)
+ {
+ // FIXME - verify that this updating of length, position, orientation and color is in correct place/plugin
+-	LatticeBeamParameters* beam 	  = static_cast&lt;LatticeBeamParameters*&gt;(body-&gt;physicalParameters.get());
++////	LatticeBeamParameters* beam 	  = static_cast&lt;LatticeBeamParameters*&gt;(body-&gt;physicalParameters.get());
+ 
++	LatticeBeamParameters* beam 	  = YADE_CAST&lt;LatticeBeamParameters*&gt;(body-&gt;physicalParameters.get());
++	if(beam==0 || (!(*(bodies)).exists(beam-&gt;id1)) || (!(*(bodies)).exists(beam-&gt;id2)))
++	{
++		std::string error(boost::lexical_cast&lt;std::string&gt;(body-&gt;getId()) + &quot; is not a beam, but it SHOULD really be a beam, ERROR. You should check if bodies are not renumbered somehow after reloading a simulation. That's probably a container error, that is changing the IDs when not asked to do so.\n&quot;);
++		std::cerr &lt;&lt; &quot;================\nERROR: &quot;;
++		std::cerr &lt;&lt; error;
++		std::cerr &lt;&lt; &quot;================\n&quot;;
++		throw error;
++	}
++//std::cerr &lt;&lt; body-&gt;getId() &lt;&lt; &quot; &quot; &lt;&lt; beam-&gt;id1 &lt;&lt; &quot; &quot; &lt;&lt; beam-&gt;id2 &lt;&lt; &quot;\n&quot;;
++
+ 	Body* bodyA 			  = (*(bodies))[beam-&gt;id1].get();
+ 	Body* bodyB 			  = (*(bodies))[beam-&gt;id2].get();
+ 	Se3r&amp; se3A 			  = bodyA-&gt;physicalParameters-&gt;se3;
+@@ -334,12 +345,19 @@
+ 			static bool first=true;
+ 			if(first)
+ 			{
++if(tension_compression_different_stiffness){
+ 				std::cerr &lt;&lt; &quot;\nusing k.b tension=0.6, k.b compression=0.2 !\n/beam-&gt;initialLength !\n&quot;;
+-				//std::cerr &lt;&lt; &quot;\nNOT! using k.b tension=0.6, k.b compression=0.2 ! (just a classical formula)\n\n&quot;;
++}else{
++				std::cerr &lt;&lt; &quot;\nNOT! using k.b tension=0.6, k.b compression=0.2 ! (just a classical formula)\n\n&quot;;
++}
+ 				first=false;
+ 			}
+ 
+ 			Real kb = beam-&gt;bendingStiffness;
++
++if(tension_compression_different_stiffness)
++{
++
+ 			Real Em = beam-&gt;criticalTensileStrain/3.0;
+ 			Real x  = beam-&gt;strain();
+ 			//const Real howmuch = 0.5;
+@@ -352,6 +370,7 @@
+ 			else if( x &lt; Em )
+ 				kb = (kb*howmuch+kb)/2.0+x*(kb*howmuch-kb)/(-2.0*Em);
+ 			// if strain &gt; criticalTensileStrain/2.0 then kb is not changed
++}
+ 
+ 			node1-&gt;countStiffness += kb/beam-&gt;initialLength;
+ 			node2-&gt;countStiffness += kb/beam-&gt;initialLength;
+@@ -415,6 +434,7 @@
+ 			if(body-&gt;isDynamic)
+ 			{
+ 				node-&gt;se3.position      += displacementTotal;
++										// DAMPING: *(1.0 - damping_with_energy_loss_0_to_1);
+ 			//	node-&gt;se3.orientation	+= ;
+ 			}
+ 			// FIXME FIXME FIXME FIXME FIXME FIXME FIXME
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.hpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.hpp	2009-05-01 15:47:26 UTC (rev 1761)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/LatticeLaw.hpp	2009-05-01 15:49:53 UTC (rev 1762)
+@@ -25,7 +25,7 @@
+                 bool deleteBeam(MetaBody* lattice , LatticeBeamParameters* beam, Body*);
+                 void calcBeamPositionOrientationNewLength(Body* body, BodyContainer* bodies);
+ 	public :
+-		bool roughEdges,ensure2D,calcTorsion; // FIXME, FIXME, FIXME 
++		bool roughEdges,ensure2D,calcTorsion,tension_compression_different_stiffness; // FIXME, FIXME, FIXME 
+ 		LatticeLaw();
+ 		virtual ~LatticeLaw();
+ 		void action(MetaBody*);
+@@ -34,6 +34,7 @@
+ 			REGISTER_ATTRIBUTE(roughEdges);
+ 			REGISTER_ATTRIBUTE(ensure2D);
+ 			REGISTER_ATTRIBUTE(calcTorsion);
++			REGISTER_ATTRIBUTE(tension_compression_different_stiffness);
+ 			// must go to derived class
+ 			//REGISTER_ATTRIBUTE(nonlocal);
+ 		};
+
+Modified: trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.cpp
+===================================================================
+--- trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.cpp	2009-05-01 15:47:26 UTC (rev 1761)
++++ trunk/pkg/lattice/Engine/StandAloneEngine/StrainRecorder.cpp	2009-05-01 15:49:53 UTC (rev 1762)
+@@ -57,6 +57,12 @@
+ //	std::cerr &lt;&lt; &quot;StrainRecorder quits\n&quot;;
+ //	return;
+ 	
++	if(subscribedBodies.size()==0)
++	{
++		std::cerr &lt;&lt; &quot;StrainRecorder quits - nothing to record!\n&quot;;
++		return;
++	}
++	
+ 	Real strain_y=0,stress_y=0,stress_s=0;//,stress_nonlocal_y=0;
+ 	
+ 	std::vector&lt;unsigned int&gt;::iterator i   = subscribedBodies.begin();
+@@ -78,9 +84,10 @@
+ 	LatticeNodeParameters* node2 = dynamic_cast&lt;LatticeNodeParameters*&gt;( (*(ncb-&gt;bodies))[*i]-&gt;physicalParameters . get() );
+ 	(*(ncb-&gt;bodies))[*i]-&gt;geometricalModel-&gt;diffuseColor = Vector3r(1.0,0.0,0.0); // FIXME [1]
+ 	++i;
+-	// FIXME - zamiast ?ledzi? tylko dwa punkty (jeden na dole i jeden u g&#243;ry), to lepiej zaznaczy? dwa obszary punkt&#243;w i liczy? ?redni? ich po?o?enia,
+-	// bo teraz, je?li kt&#243;ry? punkt zostanie wykasowany, to nie jest mo?liwe kontynuowanie pomiar&#243;w.
+-	
++	// FIXME - instead of tracking only two points (one on top, another on bottom), it's better
++	// to mark two regions of points and track their average position. Now if one point is deleted, it's impossible
++	// to continue measurements
++
+ 	Real 		currentLength = node1-&gt;se3.position[1] - node2-&gt;se3.position[1];
+ 	
+ 	strain_y = (currentLength - initialLength) / initialLength; // odkszta?cenie ca?ej pr&#243;bki
+
+Modified: trunk/pkg/lattice/PreProcessor/LatticeExample.cpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2009-05-01 15:47:26 UTC (rev 1761)
++++ trunk/pkg/lattice/PreProcessor/LatticeExample.cpp	2009-05-01 15:49:53 UTC (rev 1762)
+@@ -35,7 +35,6 @@
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/BodyRedirectionVector.hpp&gt;
+-#include&lt;yade/pkg-common/InteractionVecSet.hpp&gt;
+ 
+ #include&lt;yade/pkg-common/DisplacementEngine.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
+@@ -458,8 +457,8 @@
+ 	createActors(rootBody);
+ 	positionRootBody(rootBody);
+ 	
+-	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
+-	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
++//	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
++//	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+ 
+ 	
+ 	shared_ptr&lt;Body&gt; body;
+@@ -1017,7 +1016,7 @@
+ 	shared_ptr&lt;LatticeBeamParameters&gt; physics(new LatticeBeamParameters);
+ 	shared_ptr&lt;LineSegment&gt; gBeam(new LineSegment);
+ 	
+-	Real length 			= 1.0; // unspecified for now, calcBeamsPositionOrientationLength will calculate it
++	Real length 			= 1.0; // unspecified for now, calcBeamPositionOrientationLength will calculate it
+ 	
+ 	body-&gt;isDynamic			= true;
+ 	
+@@ -1037,7 +1036,13 @@
+ 
+ Real LatticeExample::calcBeamPositionOrientationLength(shared_ptr&lt;Body&gt;&amp; body)
+ {
+-	LatticeBeamParameters* beam = static_cast&lt;LatticeBeamParameters*&gt;(body-&gt;physicalParameters.get());
++//	LatticeBeamParameters* beam = static_cast&lt;LatticeBeamParameters*&gt;(body-&gt;physicalParameters.get());
++
++	LatticeBeamParameters* beam = dynamic_cast&lt;LatticeBeamParameters*&gt;(body-&gt;physicalParameters.get());
++	LineSegment* ls = dynamic_cast&lt;LineSegment*&gt;(body-&gt;geometricalModel.get());
++	if(beam != 0 &amp;&amp; ls != 0)
++	{
++
+ 	shared_ptr&lt;Body&gt;&amp; bodyA = (*(rootBody-&gt;bodies))[beam-&gt;id1];
+ 	shared_ptr&lt;Body&gt;&amp; bodyB = (*(rootBody-&gt;bodies))[beam-&gt;id2];
+ 	Se3r&amp; se3A 		= bodyA-&gt;physicalParameters-&gt;se3;
+@@ -1051,6 +1056,7 @@
+ 	beam-&gt;direction 	= dist;
+         beam-&gt;length            = length;
+         beam-&gt;initialLength     = length;
++	ls-&gt;length = length;	
+         
+         beam-&gt;criticalTensileStrain     = crit_TensileStrain;
+         beam-&gt;criticalCompressiveStrain = crit_ComprStrain;
+@@ -1066,6 +1072,12 @@
+ 	beam-&gt;otherDirection	= beam-&gt;se3.orientation*Vector3r::UNIT_Y; // any unit vector that is orthogonal to direction.
+ 
+ 	return length;
++	}
++	else
++	{
++		std::cerr &lt;&lt; body-&gt;getId() &lt;&lt; &quot; is not a beam, skipping\n&quot;;
++		return 10000000;
++	}
+ }
+ 
+ void LatticeExample::calcAxisAngle(LatticeBeamParameters* beam1, BodyContainer* bodies, int otherId, InteractionContainer* ints, int thisId)
+@@ -1181,6 +1193,7 @@
+         latticeLaw-&gt;ensure2D   = ensure2D;
+         latticeLaw-&gt;roughEdges = roughEdges;
+         latticeLaw-&gt;calcTorsion= calculate_Torsion;
++	latticeLaw-&gt;tension_compression_different_stiffness = true;	
+         
+         rootBody-&gt;engines.clear();
+         rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+
+Added: trunk/pkg/lattice/PreProcessor/LatticeExampleCTData.cpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExampleCTData.cpp	2009-05-01 15:47:26 UTC (rev 1761)
++++ trunk/pkg/lattice/PreProcessor/LatticeExampleCTData.cpp	2009-05-01 15:49:53 UTC (rev 1762)
+@@ -0,0 +1,594 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&lt;iostream&gt;
++#include&lt;fstream&gt;
++#include&quot;LatticeExampleCTData.hpp&quot;
++#include&lt;yade/core/MetaBody.hpp&gt;
++//#include&lt;yade/pkg-common/InteractionVecSet.hpp&gt;
++#include&lt;yade/pkg-common/BodyRedirectionVector.hpp&gt;
++#include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/GeometricalModelMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
++#include&lt;yade/pkg-common/Sphere.hpp&gt;
++#include&lt;yade/pkg-common/DisplacementEngine.hpp&gt;
++#include&quot;LatticeLaw.hpp&quot;
++#include&quot;LatticeSetParameters.hpp&quot;
++#include&quot;LatticeInteractingGeometry.hpp&quot;
++#include&quot;LatticeNodeParameters.hpp&quot;
++#include&quot;LatticeBeamParameters.hpp&quot;
++#include&quot;LineSegment.hpp&quot;
++#include&quot;LatticeBeamAngularSpring.hpp&quot;
++
++// Delaunay
++#ifndef MINIWM3
++	#include &lt;Wm3Delaunay3.h&gt;
++	#include &lt;Wm3Delaunay2.h&gt;
++	#include &lt;Wm3Query.h&gt;
++#endif
++
++using namespace boost;
++using namespace std;
++
++
++LatticeExampleCTData::LatticeExampleCTData() : FileGenerator()
++{
++	nodeGroupMask                   = 1;
++	beamGroupMask                   = 2;
++
++	// mesh generation
++	speciemen_size_in_meters        = Vector3r(0.1,0.1,0.1);
++	cell_size_in_meters             = 0.02;
++	//disorder_in_cellsize_unit       = Vector3r(0.6,0.6,0.6);
++	disorder_in_cellsize_unit       = Vector3r(0.0,0.0,0.0);
++	//max_rod_length_in_cellsize_unit = 1.5;
++	max_rod_length_in_cellsize_unit = 1.01;
++
++	// MaterialParameters of cement matrix
++	crit_tensile_strain             = 1.0;       // E_min
++	crit_compr_strain               = 0.5;       // E_max
++
++	longitudal_stiffness_no_unit    = 1.0;        // k_l
++	bending_stiffness_no_unit       = 0.6;        // k_b
++	torsional_stiffness_no_unit     = 0.6;        // k_t
++
++	// conditions - displacement of top &amp; bottom
++	smooth_edges_displacement       = false;
++	y_top_bottom_displ_in_meters    = 0.00001;
++
++	ct_data_file_name               = &quot;usg_rainier_8_2_1_50_20LH_128x128x128_binary.raw&quot;;
++}
++
++
++LatticeExampleCTData::~LatticeExampleCTData()
++{
++
++}
++
++
++void LatticeExampleCTData::registerAttributes()
++{
++	FileGenerator::registerAttributes();
++
++	// mesh generation
++	REGISTER_ATTRIBUTE(speciemen_size_in_meters);     // size
++	REGISTER_ATTRIBUTE(cell_size_in_meters);          // g [m]        - cell size
++	REGISTER_ATTRIBUTE(disorder_in_cellsize_unit);    // s [-]        - disorder 
++
++// we can hide this parameter, because it's less important, just comment this line
++	REGISTER_ATTRIBUTE(max_rod_length_in_cellsize_unit);
++
++	// MaterialParameters of cement matrix
++	REGISTER_ATTRIBUTE(crit_tensile_strain);           // E_min [%]    - default 0.02 %
++	REGISTER_ATTRIBUTE(crit_compr_strain);             // E_max [%]    - default 0.2 %
++	REGISTER_ATTRIBUTE(longitudal_stiffness_no_unit); // k_l [-]      - default 1.0
++	REGISTER_ATTRIBUTE(bending_stiffness_no_unit);    // k_b [-]      - default 0.6
++	REGISTER_ATTRIBUTE(torsional_stiffness_no_unit);  // k_t [-]      - default 0.6
++
++	// conditions - displacement of top &amp; bottom
++	REGISTER_ATTRIBUTE(smooth_edges_displacement);
++	REGISTER_ATTRIBUTE(y_top_bottom_displ_in_meters);
++
++	//CT data file name
++	REGISTER_ATTRIBUTE(ct_data_file_name);
++}
++
++bool LatticeExampleCTData::generate()
++{
++	vector&lt;vector&lt;vector&lt;unsigned char&gt; &gt; &gt; ct_data;
++	ct_data.resize(128);
++	BOOST_FOREACH(vector&lt;vector&lt;unsigned char&gt; &gt;&amp; b,ct_data)
++	{
++		b.resize(128);
++		BOOST_FOREACH(vector&lt;unsigned char&gt;&amp; c,b)
++			c.resize(128);
++	}
++	ifstream file(ct_data_file_name.c_str(),ios::in | ios::binary);
++	if(!file)
++	{
++		message=ct_data_file_name + &quot; does not exist! Cannot load CT data.&quot;;
++		return false;
++	}
++	for(int i=0;i&lt;128;i++)
++		for(int j=0;j&lt;128;j++)
++		{
++			for(int k=0;k&lt;128;k++)
++			{
++				file.read((char *)(&amp;ct_data[i][j][k]),1);
++				if(ct_data[i][j][k] &gt; 10)
++					std::cout &lt;&lt; &quot;#&quot;;
++				else
++					std::cout &lt;&lt; &quot;.&quot;;
++//				std::cerr &lt;&lt; (int)(ct_data[i][j][k]) &lt;&lt; &quot;\n&quot;;
++			}
++		std::cout &lt;&lt; &quot;\n&quot;;
++	}
++//	return false;
++
++
++	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
++	make_simulation_loop(rootBody);    // make the simulation loop
++	positionRootBody(rootBody); // set global coordinate system, etc.
++	
++// decide what containers to use
++//	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
++//	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
++
++	shared_ptr&lt;Body&gt; body;
++
++// the number of nodes to generate in each direction
++	Vector3r nbNodes = speciemen_size_in_meters / cell_size_in_meters + Vector3r(1,1,1);
++	std::vector&lt;Vector3r&gt; vert3; vert3.clear(); // Delaunay 3D
++
++// create nodes
++	setStatus(&quot;creating nodes...&quot;);
++        unsigned int totalNodesCount = 0;
++	unsigned int totalBeamsCount = 0;
++	float all = nbNodes[0]*nbNodes[1]*nbNodes[2];
++	float current = 0.0;
++
++// loop on each node in a grid, to create it
++	for( int j=0 ; j&lt;=nbNodes[1] ; j++ )
++		for( int i=0 ; i&lt;=nbNodes[0] ; i++ )
++			for( int k=0 ; k&lt;=nbNodes[2] ; k++)
++			{
++				shared_ptr&lt;Body&gt; node;
++
++				// calculate node position - orthogonal grid, see LatticeExample for tetrahedral grid
++				// WARNING - orthogonal grid may produce unrealistic results!
++				Vector3r position = Vector3r(i,j,k) * cell_size_in_meters;
++				position += Vector3r( 	  Mathr::SymmetricRandom()*disorder_in_cellsize_unit[0]
++					  		, Mathr::SymmetricRandom()*disorder_in_cellsize_unit[1]
++							, Mathr::SymmetricRandom()*disorder_in_cellsize_unit[2]) * cell_size_in_meters;
++
++				int I = (int)(128.0*position[0]/speciemen_size_in_meters[0]);
++				int J = (int)(128.0*position[1]/speciemen_size_in_meters[1]);
++				int K = (int)(128.0*position[2]/speciemen_size_in_meters[2]);
++				I = std::max(0,I); I=std::min(I,127);
++				J = std::max(0,J); J=std::min(J,127);
++				K = std::max(0,K); K=std::min(K,127);
++				if(ct_data[I][J][K] == 0)
++				{ // check if node position is not the air
++
++					if(createNodeXYZ(node,position))
++					{
++						rootBody-&gt;bodies-&gt;insert(node);
++						++totalNodesCount;
++						vert3.push_back(node-&gt;physicalParameters-&gt;se3.position); // Delaunay 3D
++					}
++				}
++				
++				setProgress(current++/all);
++				if(shouldTerminate()) return false;
++			}
++
++
++// now connect the nodes with rods
++	setStatus(&quot;creating rods...&quot;);
++
++#ifdef MINIWM3
++// if Delaunay is not avauilable produce an error message
++	message = &quot;ERROR:\n\nYade was compiled without full installation of wildmagic-dev (Wm3 foundation library), can't use Delaunay. &quot;
++	+ &quot;Please compile yade with full wm3 library installed. Don't forget CPPPATH=/usr/include/wm3 scons parameter.&quot;;
++	return false;
++#else
++// create beams, Delaunay
++	std::set&lt; std::pair&lt;int,int&gt; &gt; pairs;
++	int I,J;
++	setProgress(0); setStatus(&quot;Delaunay 3d...&quot;);
++	Delaunay3&lt;Real&gt; del3(vert3.size(),&amp;(vert3[0]),cell_size_in_meters/50,false, Query::QT_INTEGER); // Delaunay
++	
++	int del3_i = 0;
++	int del3_ind[4];
++	while(del3.GetIndexSet(del3_i++,del3_ind))
++	{
++		if(shouldTerminate()) return false;
++		setProgress((float)del3_i/(float)del3.GetSimplexQuantity());
++		shared_ptr&lt;Body&gt; beam;
++
++		for(int delauney3d_index=0 ; delauney3d_index&lt;4 ; ++delauney3d_index)
++		{
++			I=del3_ind[delauney3d_index];J=del3_ind[(delauney3d_index+1)%4];
++			if(J&gt;I) std::swap(I,J);
++			if(pairs.insert(std::make_pair(I,J)).second)
++			{
++				createBeam(beam,I,J);
++
++				//
++				// pos1 and pos2 are nodes' positions for this beam, might be useful if beam 
++				// parameters depend on position in the CT data
++				//
++				Vector3r pos1 = (*(rootBody-&gt;bodies))[I]-&gt;physicalParameters-&gt;se3.position;
++				Vector3r pos2 = (*(rootBody-&gt;bodies))[J]-&gt;physicalParameters-&gt;se3.position;
++		
++				////////////////////////////////////////////////////////////////////////
++				// the beam parameters.
++				////////////////////////////////////////////////////////////////////////
++				Real E_min = crit_tensile_strain;
++				Real E_max = crit_compr_strain;
++				Real k_l   = longitudal_stiffness_no_unit;
++				Real k_b   = bending_stiffness_no_unit;
++				Real k_t   = torsional_stiffness_no_unit;
++				////////////////////////////////////////////////////////////////////////
++				// the beam parameters END.
++				////////////////////////////////////////////////////////////////////////
++
++				// insert rod, only if it is short enough
++				if(calcBeamPositionOrientationLength(beam,E_min,E_max,k_l,k_b,k_t) &lt; max_rod_length_in_cellsize_unit*cell_size_in_meters)
++				{
++					rootBody-&gt;bodies-&gt;insert(beam);
++					++totalBeamsCount;
++				}
++			}
++		}
++	}
++#endif
++
++	create_angular_springs(totalNodesCount,rootBody);
++	if(shouldTerminate()) return false;
++
++// calculate the displacement regions, and assign displacements
++	Real disp = y_top_bottom_displ_in_meters;
++	Vector3r dir(0,1,0);
++	Vector3r min1(-1,-1,-1);
++	Vector3r max1(speciemen_size_in_meters[0]+1 , cell_size_in_meters*0.8 , speciemen_size_in_meters[2]+1 );
++	Vector3r min2(-1, speciemen_size_in_meters[1]-cell_size_in_meters*1.1 , -1);
++	Vector3r max2(speciemen_size_in_meters*2);
++
++	imposeTranslation(rootBody,min1,max1,-1.0 * dir, disp);
++	imposeTranslation(rootBody,min2,max2,       dir, disp);
++
++	if(shouldTerminate()) return false;
++
++        message=&quot;Number of nodes created: &quot;  + lexical_cast&lt;string&gt;(totalNodesCount) +
++					&quot; (&quot; + lexical_cast&lt;string&gt;(nbNodes[0]) + &quot; x &quot;
++					     + lexical_cast&lt;string&gt;(nbNodes[1]) + &quot; x &quot;
++					     + lexical_cast&lt;string&gt;(nbNodes[2]) + &quot;)\n\n&quot;
++	     + &quot;Number of beams: &quot; + lexical_cast&lt;string&gt;(totalBeamsCount) + &quot;\n\n&quot;
++	     + &quot;NOTE: sometimes it can look better when 'drawWireFrame' is enabled in Display tab.\n&quot;;
++
++	message = &quot;WARNING - orthogonal grid may produce unrealistic results! See LatticeExample.cpp for tetrahedral grid.\n\n&quot; + message;
++
++        cerr &lt;&lt; &quot;finished.. saving\n&quot; &lt;&lt; message &lt;&lt; &quot;\n&quot;;
++
++	return true;
++}
++
++void LatticeExampleCTData::create_angular_springs(int totalNodesCount,shared_ptr&lt;MetaBody&gt; rootBody)
++{
++	// check what nodes are connected with which beams, this is necessary for creating the angular/torsional springs
++        std::vector&lt; std::vector&lt; unsigned int &gt; &gt; connections;
++
++	BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
++	BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
++	connections.resize(totalNodesCount);
++	for(  ; bi!=biEnd ; ++bi )  // loop over all beams
++	{
++		if(shouldTerminate()) return;
++
++		Body* body = (*bi).get();
++		if( ! ( body-&gt;getGroupMask() &amp; beamGroupMask ) )
++			continue; // skip non-beams
++		
++		LatticeBeamParameters* beam = static_cast&lt;LatticeBeamParameters*&gt;(body-&gt;physicalParameters.get() );
++		connections[beam-&gt;id1].push_back(body-&gt;getId());
++		connections[beam-&gt;id2].push_back(body-&gt;getId());
++	}
++
++	// create angular springs between beams
++	setStatus(&quot;angular springs...&quot;);
++	bi    = rootBody-&gt;bodies-&gt;begin();
++	biEnd = rootBody-&gt;bodies-&gt;end();
++	float all_bodies = rootBody-&gt;bodies-&gt;size();
++	int current = 0;
++	for(  ; bi!=biEnd ; ++bi )  // loop over all beams
++	{
++		if(shouldTerminate()) return;
++
++		if( ++current % 100 == 0 )
++		{
++			//cerr &lt;&lt; &quot;angular springs: &quot; &lt;&lt; current &lt;&lt; &quot; , &quot; &lt;&lt; ((static_cast&lt;float&gt;(current)/all_bodies)*100.0) &lt;&lt; &quot; %\n&quot;;
++			setProgress(((float)(current)/all_bodies));
++		}
++
++		Body* body = (*bi).get();
++		if( ! ( body-&gt;getGroupMask() &amp; beamGroupMask ) )
++			continue; // skip non-beams
++
++		calcBeamAngles(body,rootBody-&gt;bodies.get(),rootBody-&gt;persistentInteractions.get(),connections);
++	}
++}
++
++bool LatticeExampleCTData::createNodeXYZ(shared_ptr&lt;Body&gt;&amp; body, Vector3r position)
++{
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),nodeGroupMask));
++	shared_ptr&lt;LatticeNodeParameters&gt; physics(new LatticeNodeParameters);
++	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
++	
++	Quaternionr q;
++	q.FromAxisAngle( Vector3r(Mathr::UnitRandom(),Mathr::UnitRandom(),Mathr::UnitRandom()) , Mathr::UnitRandom()*Mathr::PI );
++	
++	Real radius 			= cell_size_in_meters*0.05;
++	
++	body-&gt;isDynamic			= true;
++	
++	physics-&gt;se3			= Se3r(position,q);
++
++	gSphere-&gt;radius			= radius;
++	gSphere-&gt;diffuseColor		= Vector3r(0.8,0.8,0.8);
++	gSphere-&gt;wire			= false;
++	gSphere-&gt;visible		= true;
++	gSphere-&gt;shadowCaster		= false;
++	
++        body-&gt;geometricalModel          = gSphere;
++        body-&gt;physicalParameters        = physics;
++ 
++	if( 	   position[0] &gt;= speciemen_size_in_meters[0] 
++		|| position[1] &gt;= speciemen_size_in_meters[1]
++		|| position[2] &gt;= speciemen_size_in_meters[2] )
++		return false;
++	if( 	   position[0] &lt; 0 
++		|| position[1] &lt; 0
++		|| position[2] &lt; 0 )
++		return false;
++
++        return true;
++}
++
++
++void LatticeExampleCTData::createBeam(shared_ptr&lt;Body&gt;&amp; body, int i, int j)
++{
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),beamGroupMask));
++	shared_ptr&lt;LatticeBeamParameters&gt; physics(new LatticeBeamParameters);
++	shared_ptr&lt;LineSegment&gt; gBeam(new LineSegment);
++	
++	Real length 			= 1.0; // unspecified for now, calcBeamPositionOrientationLength will calculate it
++	
++	body-&gt;isDynamic			= true;
++	
++	physics-&gt;id1 			= i;
++	physics-&gt;id2 			= j;
++
++	gBeam-&gt;length			= length;
++	gBeam-&gt;diffuseColor		= Vector3r(0.6,0.6,0.6);
++	gBeam-&gt;wire			= false;
++	gBeam-&gt;visible			= true;
++	gBeam-&gt;shadowCaster		= false;
++	
++	body-&gt;geometricalModel		= gBeam;
++	body-&gt;physicalParameters	= physics;
++}
++
++
++Real LatticeExampleCTData::calcBeamPositionOrientationLength(
++	shared_ptr&lt;Body&gt;&amp; body,
++	Real E_min,
++	Real E_max,
++	Real k_l,
++	Real k_b,
++	Real k_t)
++{
++	LatticeBeamParameters* beam = dynamic_cast&lt;LatticeBeamParameters*&gt;(body-&gt;physicalParameters.get());
++	LineSegment* ls = dynamic_cast&lt;LineSegment*&gt;(body-&gt;geometricalModel.get());
++	if(beam != 0 &amp;&amp; ls != 0)
++	{
++		shared_ptr&lt;Body&gt;&amp; bodyA = (*(rootBody-&gt;bodies))[beam-&gt;id1];
++		shared_ptr&lt;Body&gt;&amp; bodyB = (*(rootBody-&gt;bodies))[beam-&gt;id2];
++		Se3r&amp; se3A 		= bodyA-&gt;physicalParameters-&gt;se3;
++		Se3r&amp; se3B 		= bodyB-&gt;physicalParameters-&gt;se3;
++		
++		Se3r se3Beam;
++		se3Beam.position 	= (se3A.position + se3B.position)*0.5;
++		Vector3r dist 		= se3A.position - se3B.position;
++		
++		Real length 		= dist.Normalize();
++		beam-&gt;direction 	= dist;
++		beam-&gt;length            = length;
++		beam-&gt;initialLength     = length;
++		ls-&gt;length = length;
++
++		beam-&gt;criticalTensileStrain     = E_min;
++		beam-&gt;criticalCompressiveStrain = E_max;
++		beam-&gt;longitudalStiffness       = k_l;
++		beam-&gt;bendingStiffness          = k_b;
++		beam-&gt;torsionalStiffness        = k_t;
++		
++		se3Beam.orientation.Align( Vector3r::UNIT_X , dist );
++		beam-&gt;se3 		= se3Beam;
++		beam-&gt;se3Displacement.position 	= Vector3r(0.0,0.0,0.0);
++		beam-&gt;se3Displacement.orientation.Align(dist,dist);
++
++		beam-&gt;otherDirection	= beam-&gt;se3.orientation*Vector3r::UNIT_Y; // any unit vector that is orthogonal to direction.
++
++		return length;
++	}
++	else
++	{
++		std::cerr &lt;&lt; body-&gt;getId() &lt;&lt; &quot; is not a beam, skipping\n&quot;;
++		return 10000000;
++	}
++}
++
++void LatticeExampleCTData::calcAxisAngle(LatticeBeamParameters* beam1, BodyContainer* bodies, int otherId, InteractionContainer* ints, int thisId)
++{ 
++	if( ! ints-&gt;find(body_id_t(otherId),body_id_t(thisId)) &amp;&amp; otherId != thisId )
++	{
++		LatticeBeamParameters* 	beam2 		= static_cast&lt;LatticeBeamParameters*&gt;( ((*(bodies))[ otherId ])-&gt;physicalParameters.get() );
++		Real 			angle;
++		
++		angle = unitVectorsAngle(beam1-&gt;direction,beam2-&gt;direction);
++
++                shared_ptr&lt;Interaction&gt;                 interaction(new Interaction( body_id_t(thisId) , body_id_t(otherId) ));
++                shared_ptr&lt;LatticeBeamAngularSpring&gt;    angularSpring(new LatticeBeamAngularSpring);
++		
++		angularSpring-&gt;initialPlaneAngle 	= angle;
++		angularSpring-&gt;planeSwap180		= false;
++		angularSpring-&gt;lastCrossProduct		= 1.0*(beam1-&gt;direction.Cross(beam2-&gt;direction));
++		angularSpring-&gt;lastCrossProduct.Normalize();
++		
++		angularSpring-&gt;initialOffPlaneAngle1	= unitVectorsAngle(beam1-&gt;otherDirection,angularSpring-&gt;lastCrossProduct);
++		angularSpring-&gt;initialOffPlaneAngle2	= unitVectorsAngle(beam2-&gt;otherDirection,angularSpring-&gt;lastCrossProduct);
++
++	//	std::cerr &lt;&lt; thisId &lt;&lt; &quot;, &quot; &lt;&lt; otherId &lt;&lt; &quot;, (&quot; &lt;&lt; beam1-&gt;otherDirection &lt;&lt; &quot;) (&quot; &lt;&lt; beam2-&gt;otherDirection &lt;&lt; &quot;) (&quot; &lt;&lt; angularSpring-&gt;lastCrossProduct &lt;&lt; &quot;)\n&quot;;
++				
++		Quaternionr	aligner1,aligner2;
++		aligner1.FromAxisAngle(beam1-&gt;direction , angularSpring-&gt;initialOffPlaneAngle1);
++		aligner2.FromAxisAngle(beam2-&gt;direction , angularSpring-&gt;initialOffPlaneAngle2);
++				
++		Vector3r	dir1			= aligner1 * angularSpring-&gt;lastCrossProduct;
++		Vector3r	dir2			= aligner2 * angularSpring-&gt;lastCrossProduct;
++
++		// insignificant error is possible here
++		if( dir1.Dot(beam1-&gt;otherDirection) &lt; 0.999999 )
++			angularSpring-&gt;initialOffPlaneAngle1   *= -1.0;//, angularSpring-&gt;offPlaneSwap1 = true;
++		if( dir2.Dot(beam2-&gt;otherDirection) &lt; 0.999999 )
++			angularSpring-&gt;initialOffPlaneAngle2   *= -1.0;//, angularSpring-&gt;offPlaneSwap2 = true;
++	
++		interaction-&gt;isReal			= true;
++		interaction-&gt;isNew 			= false;
++		interaction-&gt;interactionPhysics 	= angularSpring;
++		ints-&gt;insert(interaction);
++	}
++}
++
++void LatticeExampleCTData::calcBeamAngles(
++	Body* body, 
++	BodyContainer* bodies, 
++	InteractionContainer* ints,
++	std::vector&lt; std::vector&lt; unsigned int &gt; &gt;&amp; connections)
++{
++	LatticeBeamParameters* beam 	= static_cast&lt;LatticeBeamParameters*&gt;(body-&gt;physicalParameters.get());
++
++	std::vector&lt;unsigned int&gt;::iterator i   = connections[beam-&gt;id1].begin();
++	std::vector&lt;unsigned int&gt;::iterator end = connections[beam-&gt;id1].end();
++	
++	for( ; i != end ; ++i )
++		calcAxisAngle(beam,bodies,*i,ints,body-&gt;getId());
++	
++	i   = connections[beam-&gt;id2].begin();
++	end = connections[beam-&gt;id2].end();
++	for( ; i != end ; ++i )
++                calcAxisAngle(beam,bodies,*i,ints,body-&gt;getId());
++}
++
++
++void LatticeExampleCTData::make_simulation_loop(shared_ptr&lt;MetaBody&gt;&amp; )
++{
++	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher   = shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
++
++	shared_ptr&lt;GeometricalModelMetaEngine&gt; geometricalModelDispatcher       = shared_ptr&lt;GeometricalModelMetaEngine&gt;(new GeometricalModelMetaEngine);
++	geometricalModelDispatcher-&gt;add(&quot;LatticeSet2LatticeBeams&quot;);
++
++	shared_ptr&lt;LatticeLaw&gt; latticeLaw(new LatticeLaw);
++	latticeLaw-&gt;ensure2D   = false;
++	latticeLaw-&gt;roughEdges = !smooth_edges_displacement;
++	latticeLaw-&gt;calcTorsion= true;
++	latticeLaw-&gt;tension_compression_different_stiffness = false;
++
++	rootBody-&gt;engines.clear();
++	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
++	rootBody-&gt;engines.push_back(latticeLaw);
++	rootBody-&gt;engines.push_back(geometricalModelDispatcher);
++
++	rootBody-&gt;initializers.clear();
++	rootBody-&gt;initializers.push_back(boundingVolumeDispatcher);
++	rootBody-&gt;initializers.push_back(geometricalModelDispatcher);
++}
++
++void LatticeExampleCTData::positionRootBody(shared_ptr&lt;MetaBody&gt;&amp; rootBody)
++{
++	rootBody-&gt;isDynamic             = false;
++
++	Quaternionr q;
++	q.FromAxisAngle( Vector3r(0,0,1),0);
++	shared_ptr&lt;LatticeSetParameters&gt; physics(new LatticeSetParameters);
++	physics-&gt;se3                    = Se3r(Vector3r(0,0,0),q);
++	physics-&gt;beamGroupMask          = beamGroupMask;
++	physics-&gt;nodeGroupMask          = nodeGroupMask;
++	physics-&gt;useBendTensileSoftening= false;
++	physics-&gt;useStiffnessSoftening  = false;
++
++	shared_ptr&lt;LatticeInteractingGeometry&gt; set(new LatticeInteractingGeometry());
++
++
++	set-&gt;diffuseColor		= Vector3r(0,0,1);
++
++	shared_ptr&lt;AABB&gt; aabb(new AABB);
++	aabb-&gt;diffuseColor		= Vector3r(0,0,1);
++
++	shared_ptr&lt;GeometricalModel&gt; gm = YADE_PTR_CAST&lt;GeometricalModel&gt;(ClassFactory::instance().createShared(&quot;LatticeSetGeometry&quot;));
++	gm-&gt;diffuseColor 		= Vector3r(1,1,1);
++	gm-&gt;wire 			= false;
++	gm-&gt;visible 			= true;
++	gm-&gt;shadowCaster 		= true;
++
++	rootBody-&gt;interactingGeometry	= YADE_PTR_CAST&lt;InteractingGeometry&gt;(set);	
++	rootBody-&gt;boundingVolume	= YADE_PTR_CAST&lt;BoundingVolume&gt;(aabb);
++	rootBody-&gt;geometricalModel 	= gm;
++	rootBody-&gt;physicalParameters 	= physics;
++}
++
++void LatticeExampleCTData::imposeTranslation(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max, Vector3r direction, Real displacement)
++{
++	shared_ptr&lt;DisplacementEngine&gt; translationCondition = shared_ptr&lt;DisplacementEngine&gt;(new DisplacementEngine);
++	translationCondition-&gt;displacement  = displacement;
++	direction.Normalize();
++	translationCondition-&gt;translationAxis = direction;
++
++	rootBody-&gt;engines.push_back(translationCondition);
++	translationCondition-&gt;subscribedBodies.clear();
++
++	BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
++	BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
++	for(  ; bi!=biEnd ; ++bi )
++	{
++		shared_ptr&lt;Body&gt; b = *bi;
++
++		if( b-&gt;getGroupMask() &amp; nodeGroupMask )
++		{
++			Vector3r pos = b-&gt;physicalParameters-&gt;se3.position;
++			if(		   pos[0] &gt; min[0] 
++					&amp;&amp; pos[1] &gt; min[1] 
++					&amp;&amp; pos[2] &gt; min[2] 
++					&amp;&amp; pos[0] &lt; max[0] 
++					&amp;&amp; pos[1] &lt; max[1] 
++					&amp;&amp; pos[2] &lt; max[2] 
++					&amp;&amp; (b-&gt;getGroupMask() &amp; nodeGroupMask)
++			  )
++			{
++				b-&gt;isDynamic = false;
++				b-&gt;geometricalModel-&gt;diffuseColor = Vector3r(2.0,2.0,0.0);
++				translationCondition-&gt;subscribedBodies.push_back(b-&gt;getId());
++			}
++		}
++	}
++}
++
++YADE_PLUGIN();
++
+
+Added: trunk/pkg/lattice/PreProcessor/LatticeExampleCTData.hpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExampleCTData.hpp	2009-05-01 15:47:26 UTC (rev 1761)
++++ trunk/pkg/lattice/PreProcessor/LatticeExampleCTData.hpp	2009-05-01 15:49:53 UTC (rev 1762)
+@@ -0,0 +1,72 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#pragma once
++
++#include&lt;yade/core/FileGenerator.hpp&gt;
++#include&lt;Wm3Vector3.h&gt;
++#include&lt;yade/lib-base/yadeWm3.hpp&gt;
++#include&lt;yade/pkg-common/BodyRedirectionVector.hpp&gt;
++
++class LatticeBeamParameters;
++class StrainRecorder;
++
++class LatticeExampleCTData : public FileGenerator
++{
++	private :
++		int 		nodeGroupMask,beamGroupMask;
++
++/////////////////////////////////////////////////////////////////////////
++/////////////////////////  PARAMETERS ///////////////////////////////////
++/////////////////////////////////////////////////////////////////////////
++	// mesh generation
++		Vector3r 	 speciemen_size_in_meters       // size
++				,disorder_in_cellsize_unit;     // s
++                Real             cell_size_in_meters            // g
++				,max_rod_length_in_cellsize_unit
++
++	// MaterialParameters of cement matrix
++                                ,crit_tensile_strain            // E_min
++                                ,crit_compr_strain              // E_max
++                                ,longitudal_stiffness_no_unit   // k_l
++                                ,bending_stiffness_no_unit      // k_b
++                                ,torsional_stiffness_no_unit    // k_t
++                                ;
++	// conditions - displacement of top &amp; bottom
++		bool		 smooth_edges_displacement;
++		Real		 y_top_bottom_displ_in_meters;
++
++	// the CT data file
++		std::string	 ct_data_file_name;
++
++/////////////////////////////////////////////////////////////////////////
++/////////////////////////  PARAMETERS END  //////////////////////////////
++/////////////////////////////////////////////////////////////////////////
++
++        public : 
++		LatticeExampleCTData();
++		virtual ~LatticeExampleCTData();
++
++		bool generate();
++		void make_simulation_loop(shared_ptr&lt;MetaBody&gt;&amp; );
++		void positionRootBody(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
++		bool createNodeXYZ(shared_ptr&lt;Body&gt;&amp; body, Vector3r position);
++		void createBeam(shared_ptr&lt;Body&gt;&amp; body, int i, int j);
++		Real calcBeamPositionOrientationLength(shared_ptr&lt;Body&gt;&amp; body, Real E_min, Real E_max, Real k_l, Real k_b, Real k_t);
++		void create_angular_springs(int nodes_count,shared_ptr&lt;MetaBody&gt; rootBody);
++		void calcBeamAngles(Body* body, BodyContainer* bodies, InteractionContainer* ints,std::vector&lt; std::vector&lt; unsigned int &gt; &gt;&amp; connections);
++		void calcAxisAngle(LatticeBeamParameters* beam1, BodyContainer* bodies, int otherId, InteractionContainer* ints, int thisId);
++		void imposeTranslation(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max, Vector3r direction, Real displacement);
++
++                virtual void registerAttributes();
++                REGISTER_CLASS_NAME(LatticeExampleCTData);
++		REGISTER_BASE_CLASS_NAME(FileGenerator);
++};
++
++REGISTER_SERIALIZABLE(LatticeExampleCTData);
++
+
+Added: trunk/pkg/lattice/PreProcessor/LatticeExampleSimple.cpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExampleSimple.cpp	2009-05-01 15:47:26 UTC (rev 1761)
++++ trunk/pkg/lattice/PreProcessor/LatticeExampleSimple.cpp	2009-05-01 15:49:53 UTC (rev 1762)
+@@ -0,0 +1,546 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&quot;LatticeExampleSimple.hpp&quot;
++#include&lt;yade/core/MetaBody.hpp&gt;
++//#include&lt;yade/pkg-common/InteractionVecSet.hpp&gt;
++#include&lt;yade/pkg-common/BodyRedirectionVector.hpp&gt;
++#include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/GeometricalModelMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
++#include&lt;yade/pkg-common/Sphere.hpp&gt;
++#include&lt;yade/pkg-common/DisplacementEngine.hpp&gt;
++#include&quot;LatticeLaw.hpp&quot;
++#include&quot;LatticeSetParameters.hpp&quot;
++#include&quot;LatticeInteractingGeometry.hpp&quot;
++#include&quot;LatticeNodeParameters.hpp&quot;
++#include&quot;LatticeBeamParameters.hpp&quot;
++#include&quot;LineSegment.hpp&quot;
++#include&quot;LatticeBeamAngularSpring.hpp&quot;
++
++// Delaunay
++#ifndef MINIWM3
++	#include &lt;Wm3Delaunay3.h&gt;
++	#include &lt;Wm3Delaunay2.h&gt;
++	#include &lt;Wm3Query.h&gt;
++#endif
++
++using namespace boost;
++using namespace std;
++
++
++LatticeExampleSimple::LatticeExampleSimple() : FileGenerator()
++{
++	nodeGroupMask                   = 1;
++	beamGroupMask                   = 2;
++
++	// mesh generation
++	speciemen_size_in_meters        = Vector3r(0.1,0.1,0.1);
++	cell_size_in_meters             = 0.02;
++	//disorder_in_cellsize_unit       = Vector3r(0.6,0.6,0.6);
++	disorder_in_cellsize_unit       = Vector3r(0.0,0.0,0.0);
++	//max_rod_length_in_cellsize_unit = 1.5;
++	max_rod_length_in_cellsize_unit = 1.01;
++
++	// MaterialParameters of cement matrix
++	crit_tensile_strain             = 1.0;       // E_min
++	crit_compr_strain               = 0.5;       // E_max
++
++	longitudal_stiffness_no_unit    = 1.0;        // k_l
++	bending_stiffness_no_unit       = 0.6;        // k_b
++	torsional_stiffness_no_unit     = 0.6;        // k_t
++
++	// conditions - displacement of top &amp; bottom
++	smooth_edges_displacement       = false;
++	y_top_bottom_displ_in_meters    = 0.00001;
++}
++
++
++LatticeExampleSimple::~LatticeExampleSimple()
++{
++
++}
++
++
++void LatticeExampleSimple::registerAttributes()
++{
++	FileGenerator::registerAttributes();
++
++	// mesh generation
++	REGISTER_ATTRIBUTE(speciemen_size_in_meters);     // size
++	REGISTER_ATTRIBUTE(cell_size_in_meters);          // g [m]        - cell size
++	REGISTER_ATTRIBUTE(disorder_in_cellsize_unit);    // s [-]        - disorder 
++
++// we can hide this parameter, because it's less important, just comment this line
++	REGISTER_ATTRIBUTE(max_rod_length_in_cellsize_unit);
++
++	// MaterialParameters of cement matrix
++	REGISTER_ATTRIBUTE(crit_tensile_strain);           // E_min [%]    - default 0.02 %
++	REGISTER_ATTRIBUTE(crit_compr_strain);             // E_max [%]    - default 0.2 %
++	REGISTER_ATTRIBUTE(longitudal_stiffness_no_unit); // k_l [-]      - default 1.0
++	REGISTER_ATTRIBUTE(bending_stiffness_no_unit);    // k_b [-]      - default 0.6
++	REGISTER_ATTRIBUTE(torsional_stiffness_no_unit);  // k_t [-]      - default 0.6
++
++	// conditions - displacement of top &amp; bottom
++	REGISTER_ATTRIBUTE(smooth_edges_displacement);
++	REGISTER_ATTRIBUTE(y_top_bottom_displ_in_meters);
++}
++
++bool LatticeExampleSimple::generate()
++{
++	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
++	make_simulation_loop(rootBody);    // make the simulation loop
++	positionRootBody(rootBody); // set global coordinate system, etc.
++	
++// decide what containers to use
++//	rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionVecSet);
++//	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
++
++	shared_ptr&lt;Body&gt; body;
++
++// the number of nodes to generate in each direction
++	Vector3r nbNodes = speciemen_size_in_meters / cell_size_in_meters + Vector3r(1,1,1);
++	std::vector&lt;Vector3r&gt; vert3; vert3.clear(); // Delaunay 3D
++
++// create nodes
++	setStatus(&quot;creating nodes...&quot;);
++        unsigned int totalNodesCount = 0;
++	unsigned int totalBeamsCount = 0;
++	float all = nbNodes[0]*nbNodes[1]*nbNodes[2];
++	float current = 0.0;
++
++// loop on each node in a grid, to create it
++	for( int j=0 ; j&lt;=nbNodes[1] ; j++ )
++		for( int i=0 ; i&lt;=nbNodes[0] ; i++ )
++			for( int k=0 ; k&lt;=nbNodes[2] ; k++)
++			{
++				shared_ptr&lt;Body&gt; node;
++
++				// calculate node position - orthogonal grid, see LatticeExample for tetrahedral grid
++				// WARNING - orthogonal grid may produce unrealistic results!
++				Vector3r position = Vector3r(i,j,k) * cell_size_in_meters;
++				position += Vector3r( 	  Mathr::SymmetricRandom()*disorder_in_cellsize_unit[0]
++					  		, Mathr::SymmetricRandom()*disorder_in_cellsize_unit[1]
++							, Mathr::SymmetricRandom()*disorder_in_cellsize_unit[2]) * cell_size_in_meters;
++
++				if(createNodeXYZ(node,position))
++				{
++					rootBody-&gt;bodies-&gt;insert(node);
++					++totalNodesCount;
++					vert3.push_back(node-&gt;physicalParameters-&gt;se3.position); // Delaunay 3D
++				}
++				
++				setProgress(current++/all);
++				if(shouldTerminate()) return false;
++			}
++
++
++// now connect the nodes with rods
++	setStatus(&quot;creating rods...&quot;);
++
++#ifdef MINIWM3
++// if Delaunay is not avauilable produce an error message
++	message = &quot;ERROR:\n\nYade was compiled without full installation of wildmagic-dev (Wm3 foundation library), can't use Delaunay. &quot;
++	+ &quot;Please compile yade with full wm3 library installed. Don't forget CPPPATH=/usr/include/wm3 scons parameter.&quot;;
++	return false;
++#else
++// create beams, Delaunay
++	std::set&lt; std::pair&lt;int,int&gt; &gt; pairs;
++	int I,J;
++	setProgress(0); setStatus(&quot;Delaunay 3d...&quot;);
++	Delaunay3&lt;Real&gt; del3(vert3.size(),&amp;(vert3[0]),cell_size_in_meters/50,false, Query::QT_INTEGER); // Delaunay
++	
++	int del3_i = 0;
++	int del3_ind[4];
++	while(del3.GetIndexSet(del3_i++,del3_ind))
++	{
++		if(shouldTerminate()) return false;
++		setProgress((float)del3_i/(float)del3.GetSimplexQuantity());
++		shared_ptr&lt;Body&gt; beam;
++
++		for(int delauney3d_index=0 ; delauney3d_index&lt;4 ; ++delauney3d_index)
++		{
++			I=del3_ind[delauney3d_index];J=del3_ind[(delauney3d_index+1)%4];
++			if(J&gt;I) std::swap(I,J);
++			if(pairs.insert(std::make_pair(I,J)).second)
++			{
++				createBeam(beam,I,J);
++
++				//
++				// pos1 and pos2 are nodes' positions for this beam, might be useful if beam 
++				// parameters depend on position in the CT data
++				//
++				Vector3r pos1 = (*(rootBody-&gt;bodies))[I]-&gt;physicalParameters-&gt;se3.position;
++				Vector3r pos2 = (*(rootBody-&gt;bodies))[J]-&gt;physicalParameters-&gt;se3.position;
++		
++				////////////////////////////////////////////////////////////////////////
++				// the beam parameters.
++				////////////////////////////////////////////////////////////////////////
++				Real E_min = crit_tensile_strain;
++				Real E_max = crit_compr_strain;
++				Real k_l   = longitudal_stiffness_no_unit;
++				Real k_b   = bending_stiffness_no_unit;
++				Real k_t   = torsional_stiffness_no_unit;
++				////////////////////////////////////////////////////////////////////////
++				// the beam parameters END.
++				////////////////////////////////////////////////////////////////////////
++
++				// insert rod, only if it is short enough
++				if(calcBeamPositionOrientationLength(beam,E_min,E_max,k_l,k_b,k_t) &lt; max_rod_length_in_cellsize_unit*cell_size_in_meters)
++				{
++					rootBody-&gt;bodies-&gt;insert(beam);
++					++totalBeamsCount;
++				}
++			}
++		}
++	}
++#endif
++
++	create_angular_springs(totalNodesCount,rootBody);
++	if(shouldTerminate()) return false;
++
++// calculate the displacement regions, and assign displacements
++	Real disp = y_top_bottom_displ_in_meters;
++	Vector3r dir(0,1,0);
++	Vector3r min1(-1,-1,-1);
++	Vector3r max1(speciemen_size_in_meters[0]+1 , cell_size_in_meters*0.8 , speciemen_size_in_meters[2]+1 );
++	Vector3r min2(-1, speciemen_size_in_meters[1]-cell_size_in_meters*1.1 , -1);
++	Vector3r max2(speciemen_size_in_meters*2);
++
++	imposeTranslation(rootBody,min1,max1,-1.0 * dir, disp);
++	imposeTranslation(rootBody,min2,max2,       dir, disp);
++
++	if(shouldTerminate()) return false;
++
++        message=&quot;Number of nodes created: &quot;  + lexical_cast&lt;string&gt;(totalNodesCount) +
++					&quot; (&quot; + lexical_cast&lt;string&gt;(nbNodes[0]) + &quot; x &quot;
++					     + lexical_cast&lt;string&gt;(nbNodes[1]) + &quot; x &quot;
++					     + lexical_cast&lt;string&gt;(nbNodes[2]) + &quot;)\n\n&quot;
++	     + &quot;Number of beams: &quot; + lexical_cast&lt;string&gt;(totalBeamsCount) + &quot;\n\n&quot;
++	     + &quot;NOTE: sometimes it can look better when 'drawWireFrame' is enabled in Display tab.\n&quot;;
++
++	message = &quot;WARNING - orthogonal grid may produce unrealistic results! See LatticeExample.cpp for tetrahedral grid.\n\n&quot; + message;
++
++        cerr &lt;&lt; &quot;finished.. saving\n&quot; &lt;&lt; message &lt;&lt; &quot;\n&quot;;
++
++	return true;
++}
++
++void LatticeExampleSimple::create_angular_springs(int totalNodesCount,shared_ptr&lt;MetaBody&gt; rootBody)
++{
++	// check what nodes are connected with which beams, this is necessary for creating the angular/torsional springs
++        std::vector&lt; std::vector&lt; unsigned int &gt; &gt; connections;
++
++	BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
++	BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
++	connections.resize(totalNodesCount);
++	for(  ; bi!=biEnd ; ++bi )  // loop over all beams
++	{
++		if(shouldTerminate()) return;
++
++		Body* body = (*bi).get();
++		if( ! ( body-&gt;getGroupMask() &amp; beamGroupMask ) )
++			continue; // skip non-beams
++		
++		LatticeBeamParameters* beam = static_cast&lt;LatticeBeamParameters*&gt;(body-&gt;physicalParameters.get() );
++		connections[beam-&gt;id1].push_back(body-&gt;getId());
++		connections[beam-&gt;id2].push_back(body-&gt;getId());
++	}
++
++	// create angular springs between beams
++	setStatus(&quot;angular springs...&quot;);
++	bi    = rootBody-&gt;bodies-&gt;begin();
++	biEnd = rootBody-&gt;bodies-&gt;end();
++	float all_bodies = rootBody-&gt;bodies-&gt;size();
++	int current = 0;
++	for(  ; bi!=biEnd ; ++bi )  // loop over all beams
++	{
++		if(shouldTerminate()) return;
++
++		if( ++current % 100 == 0 )
++		{
++			//cerr &lt;&lt; &quot;angular springs: &quot; &lt;&lt; current &lt;&lt; &quot; , &quot; &lt;&lt; ((static_cast&lt;float&gt;(current)/all_bodies)*100.0) &lt;&lt; &quot; %\n&quot;;
++			setProgress(((float)(current)/all_bodies));
++		}
++
++		Body* body = (*bi).get();
++		if( ! ( body-&gt;getGroupMask() &amp; beamGroupMask ) )
++			continue; // skip non-beams
++
++		calcBeamAngles(body,rootBody-&gt;bodies.get(),rootBody-&gt;persistentInteractions.get(),connections);
++	}
++}
++
++bool LatticeExampleSimple::createNodeXYZ(shared_ptr&lt;Body&gt;&amp; body, Vector3r position)
++{
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),nodeGroupMask));
++	shared_ptr&lt;LatticeNodeParameters&gt; physics(new LatticeNodeParameters);
++	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
++	
++	Quaternionr q;
++	q.FromAxisAngle( Vector3r(Mathr::UnitRandom(),Mathr::UnitRandom(),Mathr::UnitRandom()) , Mathr::UnitRandom()*Mathr::PI );
++	
++	Real radius 			= cell_size_in_meters*0.05;
++	
++	body-&gt;isDynamic			= true;
++	
++	physics-&gt;se3			= Se3r(position,q);
++
++	gSphere-&gt;radius			= radius;
++	gSphere-&gt;diffuseColor		= Vector3r(0.8,0.8,0.8);
++	gSphere-&gt;wire			= false;
++	gSphere-&gt;visible		= true;
++	gSphere-&gt;shadowCaster		= false;
++	
++        body-&gt;geometricalModel          = gSphere;
++        body-&gt;physicalParameters        = physics;
++ 
++	if( 	   position[0] &gt;= speciemen_size_in_meters[0] 
++		|| position[1] &gt;= speciemen_size_in_meters[1]
++		|| position[2] &gt;= speciemen_size_in_meters[2] )
++		return false;
++	if( 	   position[0] &lt; 0 
++		|| position[1] &lt; 0
++		|| position[2] &lt; 0 )
++		return false;
++
++        return true;
++}
++
++
++void LatticeExampleSimple::createBeam(shared_ptr&lt;Body&gt;&amp; body, int i, int j)
++{
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),beamGroupMask));
++	shared_ptr&lt;LatticeBeamParameters&gt; physics(new LatticeBeamParameters);
++	shared_ptr&lt;LineSegment&gt; gBeam(new LineSegment);
++	
++	Real length 			= 1.0; // unspecified for now, calcBeamPositionOrientationLength will calculate it
++	
++	body-&gt;isDynamic			= true;
++	
++	physics-&gt;id1 			= i;
++	physics-&gt;id2 			= j;
++
++	gBeam-&gt;length			= length;
++	gBeam-&gt;diffuseColor		= Vector3r(0.6,0.6,0.6);
++	gBeam-&gt;wire			= false;
++	gBeam-&gt;visible			= true;
++	gBeam-&gt;shadowCaster		= false;
++	
++	body-&gt;geometricalModel		= gBeam;
++	body-&gt;physicalParameters	= physics;
++}
++
++
++Real LatticeExampleSimple::calcBeamPositionOrientationLength(
++	shared_ptr&lt;Body&gt;&amp; body,
++	Real E_min,
++	Real E_max,
++	Real k_l,
++	Real k_b,
++	Real k_t)
++{
++	LatticeBeamParameters* beam = dynamic_cast&lt;LatticeBeamParameters*&gt;(body-&gt;physicalParameters.get());
++	LineSegment* ls = dynamic_cast&lt;LineSegment*&gt;(body-&gt;geometricalModel.get());
++	if(beam != 0 &amp;&amp; ls != 0)
++	{
++		shared_ptr&lt;Body&gt;&amp; bodyA = (*(rootBody-&gt;bodies))[beam-&gt;id1];
++		shared_ptr&lt;Body&gt;&amp; bodyB = (*(rootBody-&gt;bodies))[beam-&gt;id2];
++		Se3r&amp; se3A 		= bodyA-&gt;physicalParameters-&gt;se3;
++		Se3r&amp; se3B 		= bodyB-&gt;physicalParameters-&gt;se3;
++		
++		Se3r se3Beam;
++		se3Beam.position 	= (se3A.position + se3B.position)*0.5;
++		Vector3r dist 		= se3A.position - se3B.position;
++		
++		Real length 		= dist.Normalize();
++		beam-&gt;direction 	= dist;
++		beam-&gt;length            = length;
++		beam-&gt;initialLength     = length;
++		ls-&gt;length = length;
++
++		beam-&gt;criticalTensileStrain     = E_min;
++		beam-&gt;criticalCompressiveStrain = E_max;
++		beam-&gt;longitudalStiffness       = k_l;
++		beam-&gt;bendingStiffness          = k_b;
++		beam-&gt;torsionalStiffness        = k_t;
++		
++		se3Beam.orientation.Align( Vector3r::UNIT_X , dist );
++		beam-&gt;se3 		= se3Beam;
++		beam-&gt;se3Displacement.position 	= Vector3r(0.0,0.0,0.0);
++		beam-&gt;se3Displacement.orientation.Align(dist,dist);
++
++		beam-&gt;otherDirection	= beam-&gt;se3.orientation*Vector3r::UNIT_Y; // any unit vector that is orthogonal to direction.
++
++		return length;
++	}
++	else
++	{
++		std::cerr &lt;&lt; body-&gt;getId() &lt;&lt; &quot; is not a beam, skipping\n&quot;;
++		return 10000000;
++	}
++}
++
++void LatticeExampleSimple::calcAxisAngle(LatticeBeamParameters* beam1, BodyContainer* bodies, int otherId, InteractionContainer* ints, int thisId)
++{ 
++	if( ! ints-&gt;find(body_id_t(otherId),body_id_t(thisId)) &amp;&amp; otherId != thisId )
++	{
++		LatticeBeamParameters* 	beam2 		= static_cast&lt;LatticeBeamParameters*&gt;( ((*(bodies))[ otherId ])-&gt;physicalParameters.get() );
++		Real 			angle;
++		
++		angle = unitVectorsAngle(beam1-&gt;direction,beam2-&gt;direction);
++
++                shared_ptr&lt;Interaction&gt;                 interaction(new Interaction( body_id_t(thisId) , body_id_t(otherId) ));
++                shared_ptr&lt;LatticeBeamAngularSpring&gt;    angularSpring(new LatticeBeamAngularSpring);
++		
++		angularSpring-&gt;initialPlaneAngle 	= angle;
++		angularSpring-&gt;planeSwap180		= false;
++		angularSpring-&gt;lastCrossProduct		= 1.0*(beam1-&gt;direction.Cross(beam2-&gt;direction));
++		angularSpring-&gt;lastCrossProduct.Normalize();
++		
++		angularSpring-&gt;initialOffPlaneAngle1	= unitVectorsAngle(beam1-&gt;otherDirection,angularSpring-&gt;lastCrossProduct);
++		angularSpring-&gt;initialOffPlaneAngle2	= unitVectorsAngle(beam2-&gt;otherDirection,angularSpring-&gt;lastCrossProduct);
++
++	//	std::cerr &lt;&lt; thisId &lt;&lt; &quot;, &quot; &lt;&lt; otherId &lt;&lt; &quot;, (&quot; &lt;&lt; beam1-&gt;otherDirection &lt;&lt; &quot;) (&quot; &lt;&lt; beam2-&gt;otherDirection &lt;&lt; &quot;) (&quot; &lt;&lt; angularSpring-&gt;lastCrossProduct &lt;&lt; &quot;)\n&quot;;
++				
++		Quaternionr	aligner1,aligner2;
++		aligner1.FromAxisAngle(beam1-&gt;direction , angularSpring-&gt;initialOffPlaneAngle1);
++		aligner2.FromAxisAngle(beam2-&gt;direction , angularSpring-&gt;initialOffPlaneAngle2);
++				
++		Vector3r	dir1			= aligner1 * angularSpring-&gt;lastCrossProduct;
++		Vector3r	dir2			= aligner2 * angularSpring-&gt;lastCrossProduct;
++
++		// insignificant error is possible here
++		if( dir1.Dot(beam1-&gt;otherDirection) &lt; 0.999999 )
++			angularSpring-&gt;initialOffPlaneAngle1   *= -1.0;//, angularSpring-&gt;offPlaneSwap1 = true;
++		if( dir2.Dot(beam2-&gt;otherDirection) &lt; 0.999999 )
++			angularSpring-&gt;initialOffPlaneAngle2   *= -1.0;//, angularSpring-&gt;offPlaneSwap2 = true;
++	
++		interaction-&gt;isReal			= true;
++		interaction-&gt;isNew 			= false;
++		interaction-&gt;interactionPhysics 	= angularSpring;
++		ints-&gt;insert(interaction);
++	}
++}
++
++void LatticeExampleSimple::calcBeamAngles(
++	Body* body, 
++	BodyContainer* bodies, 
++	InteractionContainer* ints,
++	std::vector&lt; std::vector&lt; unsigned int &gt; &gt;&amp; connections)
++{
++	LatticeBeamParameters* beam 	= static_cast&lt;LatticeBeamParameters*&gt;(body-&gt;physicalParameters.get());
++
++	std::vector&lt;unsigned int&gt;::iterator i   = connections[beam-&gt;id1].begin();
++	std::vector&lt;unsigned int&gt;::iterator end = connections[beam-&gt;id1].end();
++	
++	for( ; i != end ; ++i )
++		calcAxisAngle(beam,bodies,*i,ints,body-&gt;getId());
++	
++	i   = connections[beam-&gt;id2].begin();
++	end = connections[beam-&gt;id2].end();
++	for( ; i != end ; ++i )
++                calcAxisAngle(beam,bodies,*i,ints,body-&gt;getId());
++}
++
++
++void LatticeExampleSimple::make_simulation_loop(shared_ptr&lt;MetaBody&gt;&amp; )
++{
++	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher   = shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
++	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
++
++	shared_ptr&lt;GeometricalModelMetaEngine&gt; geometricalModelDispatcher       = shared_ptr&lt;GeometricalModelMetaEngine&gt;(new GeometricalModelMetaEngine);
++	geometricalModelDispatcher-&gt;add(&quot;LatticeSet2LatticeBeams&quot;);
++
++	shared_ptr&lt;LatticeLaw&gt; latticeLaw(new LatticeLaw);
++	latticeLaw-&gt;ensure2D   = false;
++	latticeLaw-&gt;roughEdges = !smooth_edges_displacement;
++	latticeLaw-&gt;calcTorsion= true;
++	latticeLaw-&gt;tension_compression_different_stiffness = false;
++
++	rootBody-&gt;engines.clear();
++	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
++	rootBody-&gt;engines.push_back(latticeLaw);
++	rootBody-&gt;engines.push_back(geometricalModelDispatcher);
++
++	rootBody-&gt;initializers.clear();
++	rootBody-&gt;initializers.push_back(boundingVolumeDispatcher);
++	rootBody-&gt;initializers.push_back(geometricalModelDispatcher);
++}
++
++void LatticeExampleSimple::positionRootBody(shared_ptr&lt;MetaBody&gt;&amp; rootBody)
++{
++	rootBody-&gt;isDynamic             = false;
++
++	Quaternionr q;
++	q.FromAxisAngle( Vector3r(0,0,1),0);
++	shared_ptr&lt;LatticeSetParameters&gt; physics(new LatticeSetParameters);
++	physics-&gt;se3                    = Se3r(Vector3r(0,0,0),q);
++	physics-&gt;beamGroupMask          = beamGroupMask;
++	physics-&gt;nodeGroupMask          = nodeGroupMask;
++	physics-&gt;useBendTensileSoftening= false;
++	physics-&gt;useStiffnessSoftening  = false;
++
++	shared_ptr&lt;LatticeInteractingGeometry&gt; set(new LatticeInteractingGeometry());
++
++
++	set-&gt;diffuseColor		= Vector3r(0,0,1);
++
++	shared_ptr&lt;AABB&gt; aabb(new AABB);
++	aabb-&gt;diffuseColor		= Vector3r(0,0,1);
++
++	shared_ptr&lt;GeometricalModel&gt; gm = YADE_PTR_CAST&lt;GeometricalModel&gt;(ClassFactory::instance().createShared(&quot;LatticeSetGeometry&quot;));
++	gm-&gt;diffuseColor 		= Vector3r(1,1,1);
++	gm-&gt;wire 			= false;
++	gm-&gt;visible 			= true;
++	gm-&gt;shadowCaster 		= true;
++
++	rootBody-&gt;interactingGeometry	= YADE_PTR_CAST&lt;InteractingGeometry&gt;(set);	
++	rootBody-&gt;boundingVolume	= YADE_PTR_CAST&lt;BoundingVolume&gt;(aabb);
++	rootBody-&gt;geometricalModel 	= gm;
++	rootBody-&gt;physicalParameters 	= physics;
++}
++
++void LatticeExampleSimple::imposeTranslation(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max, Vector3r direction, Real displacement)
++{
++	shared_ptr&lt;DisplacementEngine&gt; translationCondition = shared_ptr&lt;DisplacementEngine&gt;(new DisplacementEngine);
++	translationCondition-&gt;displacement  = displacement;
++	direction.Normalize();
++	translationCondition-&gt;translationAxis = direction;
++
++	rootBody-&gt;engines.push_back(translationCondition);
++	translationCondition-&gt;subscribedBodies.clear();
++
++	BodyContainer::iterator bi    = rootBody-&gt;bodies-&gt;begin();
++	BodyContainer::iterator biEnd = rootBody-&gt;bodies-&gt;end();
++	for(  ; bi!=biEnd ; ++bi )
++	{
++		shared_ptr&lt;Body&gt; b = *bi;
++
++		if( b-&gt;getGroupMask() &amp; nodeGroupMask )
++		{
++			Vector3r pos = b-&gt;physicalParameters-&gt;se3.position;
++			if(		   pos[0] &gt; min[0] 
++					&amp;&amp; pos[1] &gt; min[1] 
++					&amp;&amp; pos[2] &gt; min[2] 
++					&amp;&amp; pos[0] &lt; max[0] 
++					&amp;&amp; pos[1] &lt; max[1] 
++					&amp;&amp; pos[2] &lt; max[2] 
++					&amp;&amp; (b-&gt;getGroupMask() &amp; nodeGroupMask)
++			  )
++			{
++				b-&gt;isDynamic = false;
++				b-&gt;geometricalModel-&gt;diffuseColor = Vector3r(2.0,2.0,0.0);
++				translationCondition-&gt;subscribedBodies.push_back(b-&gt;getId());
++			}
++		}
++	}
++}
++
++YADE_PLUGIN();
++
+
+Added: trunk/pkg/lattice/PreProcessor/LatticeExampleSimple.hpp
+===================================================================
+--- trunk/pkg/lattice/PreProcessor/LatticeExampleSimple.hpp	2009-05-01 15:47:26 UTC (rev 1761)
++++ trunk/pkg/lattice/PreProcessor/LatticeExampleSimple.hpp	2009-05-01 15:49:53 UTC (rev 1762)
+@@ -0,0 +1,69 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#pragma once
++
++#include&lt;yade/core/FileGenerator.hpp&gt;
++#include&lt;Wm3Vector3.h&gt;
++#include&lt;yade/lib-base/yadeWm3.hpp&gt;
++#include&lt;yade/pkg-common/BodyRedirectionVector.hpp&gt;
++
++class LatticeBeamParameters;
++class StrainRecorder;
++
++class LatticeExampleSimple : public FileGenerator
++{
++	private :
++		int 		nodeGroupMask,beamGroupMask;
++
++/////////////////////////////////////////////////////////////////////////
++/////////////////////////  PARAMETERS ///////////////////////////////////
++/////////////////////////////////////////////////////////////////////////
++	// mesh generation
++		Vector3r 	 speciemen_size_in_meters       // size
++				,disorder_in_cellsize_unit;     // s
++                Real             cell_size_in_meters            // g
++				,max_rod_length_in_cellsize_unit
++
++	// MaterialParameters of cement matrix
++                                ,crit_tensile_strain            // E_min
++                                ,crit_compr_strain              // E_max
++                                ,longitudal_stiffness_no_unit   // k_l
++                                ,bending_stiffness_no_unit      // k_b
++                                ,torsional_stiffness_no_unit    // k_t
++                                ;
++	// conditions - displacement of top &amp; bottom
++		bool		 smooth_edges_displacement;
++		Real		 y_top_bottom_displ_in_meters;
++
++/////////////////////////////////////////////////////////////////////////
++/////////////////////////  PARAMETERS END  //////////////////////////////
++/////////////////////////////////////////////////////////////////////////
++
++        public : 
++		LatticeExampleSimple();
++		virtual ~LatticeExampleSimple();
++
++		bool generate();
++		void make_simulation_loop(shared_ptr&lt;MetaBody&gt;&amp; );
++		void positionRootBody(shared_ptr&lt;MetaBody&gt;&amp; rootBody);
++		bool createNodeXYZ(shared_ptr&lt;Body&gt;&amp; body, Vector3r position);
++		void createBeam(shared_ptr&lt;Body&gt;&amp; body, int i, int j);
++		Real calcBeamPositionOrientationLength(shared_ptr&lt;Body&gt;&amp; body, Real E_min, Real E_max, Real k_l, Real k_b, Real k_t);
++		void create_angular_springs(int nodes_count,shared_ptr&lt;MetaBody&gt; rootBody);
++		void calcBeamAngles(Body* body, BodyContainer* bodies, InteractionContainer* ints,std::vector&lt; std::vector&lt; unsigned int &gt; &gt;&amp; connections);
++		void calcAxisAngle(LatticeBeamParameters* beam1, BodyContainer* bodies, int otherId, InteractionContainer* ints, int thisId);
++		void imposeTranslation(shared_ptr&lt;MetaBody&gt;&amp; rootBody, Vector3r min, Vector3r max, Vector3r direction, Real displacement);
++
++                virtual void registerAttributes();
++                REGISTER_CLASS_NAME(LatticeExampleSimple);
++		REGISTER_BASE_CLASS_NAME(FileGenerator);
++};
++
++REGISTER_SERIALIZABLE(LatticeExampleSimple);
++
+
+Modified: trunk/pkg/lattice/RenderingEngine/GLDrawLineSegment/GLDrawLineSegment.cpp
+===================================================================
+--- trunk/pkg/lattice/RenderingEngine/GLDrawLineSegment/GLDrawLineSegment.cpp	2009-05-01 15:47:26 UTC (rev 1761)
++++ trunk/pkg/lattice/RenderingEngine/GLDrawLineSegment/GLDrawLineSegment.cpp	2009-05-01 15:49:53 UTC (rev 1762)
+@@ -19,10 +19,16 @@
+ 	// FIXME : check that : one of those 2 lines are useless
+   	glMaterialv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, Vector3f(gm-&gt;diffuseColor[0],gm-&gt;diffuseColor[1],gm-&gt;diffuseColor[2]));
+ 	glColor3v(gm-&gt;diffuseColor);
++
++
++	LineSegment* lll = dynamic_cast&lt;LineSegment*&gt;(gm.get());
++	if(lll)
++	{
+ 	
+-	Real len = (static_cast&lt;LineSegment*&gt;(gm.get()))-&gt;length;
+-	if(len &gt;1.0)
+-		return;
++	//Real len = (static_cast&lt;LineSegment*&gt;(gm.get()))-&gt;length;
++	Real len = lll-&gt;length;
++	//if(len &gt;1.0)
++	//	return;
+ 
+ 	maxLen = std::max(len,maxLen);
+ 
+@@ -56,6 +62,7 @@
+ 		glEnable(GL_LIGHTING);
+ 		glutSolidCube(1);
+ 	}
++	}
+ }
+ 
+ YADE_PLUGIN();
+
+Modified: trunk/pkg/lattice/SConscript
+===================================================================
+--- trunk/pkg/lattice/SConscript	2009-05-01 15:47:26 UTC (rev 1761)
++++ trunk/pkg/lattice/SConscript	2009-05-01 15:49:53 UTC (rev 1762)
+@@ -147,6 +147,80 @@
+ 			'DataClass/InteractingGeometry',
+ 			'DataClass/PhysicalParameters']),
+ 
++	env.SharedLibrary('LatticeExampleSimple',
++		['PreProcessor/LatticeExampleSimple.cpp'],
++		LIBS=env['LIBS']+['yade-base',
++			'LineSegment',
++			'LatticeSetParameters',
++			'LatticeBeamParameters',
++			'LatticeNodeParameters',
++			'NonLocalDependency',
++			'NonLocalInitializer',
++			'StrainRecorder',
++			'NodeRecorder',
++			'BeamRecorder',
++			'MovingSupport',
++			'MeasurePoisson',
++			'LatticeBeamAngularSpring',
++			'MetaInteractingGeometry',
++			'LatticeInteractingGeometry',
++			'GeometricalModelMetaEngine',
++			'InteractionPhysicsMetaEngine',
++			'BoundingVolumeMetaEngine',
++			'PhysicalActionApplier',
++			'PhysicalParametersMetaEngine',
++			'ParticleParameters',
++			'AABB',
++			'Quadrilateral',
++			'ParticleParameters',
++			'Sphere',
++			'DisplacementEngine',
++			'LatticeLaw',
++			'yade-base',
++			],
++		CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine',
++			'DataClass/InteractionPhysics',
++			'DataClass/GeometricalModel',
++			'DataClass/InteractingGeometry',
++			'DataClass/PhysicalParameters']),
++
++	env.SharedLibrary('LatticeExampleCTData',
++		['PreProcessor/LatticeExampleCTData.cpp'],
++		LIBS=env['LIBS']+['yade-base',
++			'LineSegment',
++			'LatticeSetParameters',
++			'LatticeBeamParameters',
++			'LatticeNodeParameters',
++			'NonLocalDependency',
++			'NonLocalInitializer',
++			'StrainRecorder',
++			'NodeRecorder',
++			'BeamRecorder',
++			'MovingSupport',
++			'MeasurePoisson',
++			'LatticeBeamAngularSpring',
++			'MetaInteractingGeometry',
++			'LatticeInteractingGeometry',
++			'GeometricalModelMetaEngine',
++			'InteractionPhysicsMetaEngine',
++			'BoundingVolumeMetaEngine',
++			'PhysicalActionApplier',
++			'PhysicalParametersMetaEngine',
++			'ParticleParameters',
++			'AABB',
++			'Quadrilateral',
++			'ParticleParameters',
++			'Sphere',
++			'DisplacementEngine',
++			'LatticeLaw',
++			'yade-base',
++			],
++		CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine',
++			'DataClass/InteractionPhysics',
++			'DataClass/GeometricalModel',
++			'DataClass/InteractingGeometry',
++			'DataClass/PhysicalParameters']),
++
+ 	env.SharedLibrary('LatticeExample',
+ 		['PreProcessor/LatticeExample.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',
+
+Modified: trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.hpp
+===================================================================
+--- trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.hpp	2009-05-01 15:47:26 UTC (rev 1761)
++++ trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.hpp	2009-05-01 15:49:53 UTC (rev 1762)
+@@ -1,6 +1,5 @@
+ /*************************************************************************
+-*  Copyright (C) 2008 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
++*  Copyright (C) 2008 by Janek Kozicki &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>&gt;              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+
+
+-------------- next part --------------
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000934.html">[deprecated list] [Yade-dev] [svn] r1761 - in trunk: . core extra	extra/usct gui	gui/py pkg/common/Engine/EngineUnit	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine scripts
+</A></li>
+	<LI>Next message: <A HREF="000936.html">[deprecated list] [Yade-dev] [robot] build failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#935">[ date ]</a>
+              <a href="thread.html#935">[ thread ]</a>
+              <a href="subject.html#935">[ subject ]</a>
+              <a href="author.html#935">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

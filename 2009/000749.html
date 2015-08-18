@@ -1,0 +1,704 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1685 - in trunk: core extra gui	gui/py gui/qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1685%20-%20in%20trunk%3A%20core%20extra%20gui%0A%09gui/py%20gui/qt3&In-Reply-To=%3C200902232125.n1NLPYSf002317%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000745.html">
+   <LINK REL="Next"  HREF="000750.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1685 - in trunk: core extra gui	gui/py gui/qt3</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1685%20-%20in%20trunk%3A%20core%20extra%20gui%0A%09gui/py%20gui/qt3&In-Reply-To=%3C200902232125.n1NLPYSf002317%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1685 - in trunk: core extra gui	gui/py gui/qt3">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Feb 23 22:25:34 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000745.html">[deprecated list] [Yade-dev] [svn] r1684 - trunk
+</A></li>
+        <LI>Next message: <A HREF="000750.html">[deprecated list] [Yade-dev] [svn] r1686 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#749">[ date ]</a>
+              <a href="thread.html#749">[ thread ]</a>
+              <a href="subject.html#749">[ subject ]</a>
+              <a href="author.html#749">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-02-23 22:25:32 +0100 (Mon, 23 Feb 2009)
+New Revision: 1685
+
+Added:
+   trunk/core/Timing.hpp
+Modified:
+   trunk/core/Engine.hpp
+   trunk/core/EngineUnit.hpp
+   trunk/core/MetaBody.cpp
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/gui/SConscript
+   trunk/gui/py/_utils.cpp
+   trunk/gui/py/utils.py
+   trunk/gui/py/yadeControl.cpp
+   trunk/gui/qt3/QtFileGenerator.cpp
+   trunk/gui/qt3/QtFileGenerator.hpp
+   trunk/gui/qt3/QtFileGeneratorController.ui
+   trunk/gui/qt3/SimulationController.cpp
+Log:
+1. Add time-profiling classes. See <A HREF="http://yade.wikia.com/wiki/Speed_profiling_using_TimingInfo_and_TimingDeltas_classes">http://yade.wikia.com/wiki/Speed_profiling_using_TimingInfo_and_TimingDeltas_classes</A> for details. It is accessible from python as well.
+2. SimulationController no longer asks for output format. It just uses XML, the only available one.
+3. Engine, EngineUnit have timingInfo member and pointer to optional timingDeltas. Timing is disabled by default, but it may still have some overhead in the order &lt;1% perhaps (will test)
+
+
+Modified: trunk/core/Engine.hpp
+===================================================================
+--- trunk/core/Engine.hpp	2009-02-23 16:18:55 UTC (rev 1684)
++++ trunk/core/Engine.hpp	2009-02-23 21:25:32 UTC (rev 1685)
+@@ -11,7 +11,8 @@
+ #pragma once
+ 
+ #include&lt;yade/lib-serialization/Serializable.hpp&gt;
+-#include &quot;Omega.hpp&quot;
++#include&quot;Omega.hpp&quot;
++#include&lt;yade/core/Timing.hpp&gt;
+ 
+ class Body;
+ 
+@@ -19,6 +20,8 @@
+ {
+ 	public :
+ 		string label; /* user-definable label, to convenienty retrieve this particular engine instance even if multiple engines of the same type exist */
++		TimingInfo timingInfo; // hihg-level profiling information; not serializable
++		shared_ptr&lt;TimingDeltas&gt; timingDeltas;
+ 		Engine() {};
+ 		virtual ~Engine() {};
+ 	
+@@ -28,9 +31,7 @@
+ 		virtual list&lt;string&gt; getNeededBex(){return list&lt;string&gt;();}
+ 	REGISTER_ATTRIBUTES(/*no base*/,(label));
+ 	REGISTER_CLASS_AND_BASE(Engine,Serializable);
+-
+ };
+-
+ REGISTER_SERIALIZABLE(Engine);
+ 
+ 
+
+Modified: trunk/core/EngineUnit.hpp
+===================================================================
+--- trunk/core/EngineUnit.hpp	2009-02-23 16:18:55 UTC (rev 1684)
++++ trunk/core/EngineUnit.hpp	2009-02-23 21:25:32 UTC (rev 1685)
+@@ -12,10 +12,13 @@
+ 
+ #include&lt;yade/lib-serialization/Serializable.hpp&gt;
+ 
++class TimingDeltas;
++
+ class EngineUnit : public Serializable
+ {
+ 	public: virtual vector&lt;std::string&gt; getFunctorTypes(){throw;}
+ 		virtual list&lt;string&gt; getNeededBex(){return list&lt;string&gt;();}
++	shared_ptr&lt;TimingDeltas&gt; timingDeltas;
+ 	REGISTER_CLASS_AND_BASE(EngineUnit,Serializable);
+ };
+ 
+
+Modified: trunk/core/MetaBody.cpp
+===================================================================
+--- trunk/core/MetaBody.cpp	2009-02-23 16:18:55 UTC (rev 1684)
++++ trunk/core/MetaBody.cpp	2009-02-23 21:25:32 UTC (rev 1685)
+@@ -10,6 +10,7 @@
+ 
+ #include&quot;MetaBody.hpp&quot;
+ #include&lt;yade/core/Engine.hpp&gt;
++#include&lt;yade/core/Timing.hpp&gt;
+ #include&lt;yade/core/TimeStepper.hpp&gt;
+ 
+ #include&lt;Wm3Math.h&gt;
+@@ -28,7 +29,11 @@
+ // POSIX-only
+ #include&lt;pwd.h&gt;
+ #include&lt;unistd.h&gt;
++#include&lt;time.h&gt;
+ 
++// should be elsewhere, probably
++bool TimingInfo::enabled=false;
++
+ MetaBody::MetaBody() :
+ 	  Body(),bodies(new BodyRedirectionVector), interactions(new InteractionVecSet), persistentInteractions(interactions),transientInteractions(interactions),physicalActions(new PhysicalActionVectorVector)
+ {	
+@@ -77,7 +82,13 @@
+ 		FOREACH(shared_ptr&lt;Engine&gt; e, initializers){ if(e-&gt;isActivated()) e-&gt;action(this); }
+ 		needsInitializers=false;
+ 	}
+-	FOREACH(const shared_ptr&lt;Engine&gt;&amp; e, engines){ if(e-&gt;isActivated()){ e-&gt;action(this); }}
++	TimingInfo::delta last=TimingInfo::getNow();
++	FOREACH(const shared_ptr&lt;Engine&gt;&amp; e, engines){
++		if(e-&gt;isActivated()){
++			e-&gt;action(this);
++			if(TimingInfo::enabled) {TimingInfo::delta now=TimingInfo::getNow(); e-&gt;timingInfo.nsec+=now-last; e-&gt;timingInfo.nExec+=1; last=now;}
++		}
++	}
+ }
+ 
+ shared_ptr&lt;Engine&gt; MetaBody::engineByName(string s){
+
+Added: trunk/core/Timing.hpp
+===================================================================
+--- trunk/core/Timing.hpp	2009-02-23 16:18:55 UTC (rev 1684)
++++ trunk/core/Timing.hpp	2009-02-23 21:25:32 UTC (rev 1685)
+@@ -0,0 +1,32 @@
++// 2009 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++#pragma once
++#include&lt;time.h&gt;
++
++struct TimingInfo{
++	typedef unsigned long long delta;
++	long nExec;
++	delta nsec;
++	TimingInfo():nExec(0),nsec(0){}
++	static delta getNow(){ if(!enabled) return 0L; struct timespec ts; clock_gettime(CLOCK_MONOTONIC,&amp;ts); return delta(1e9*ts.tv_sec+ts.tv_nsec);}
++	static bool enabled;
++};
++
++/* Create TimingDeltas object, then every call to checkpoint() will add
++ * (or use existing) TimingInfo to data. It increases its nExec by 1
++ * and nsec by time elapsed since construction or last checkpoint.
++ */
++class TimingDeltas{
++		TimingInfo::delta last;
++		size_t i;
++	public:
++		vector&lt;TimingInfo&gt; data;
++		vector&lt;string&gt; labels;
++		TimingDeltas():i(0){}
++		void start(){if(!TimingInfo::enabled)return; i=0;last=TimingInfo::getNow();}
++		void checkpoint(const string&amp; label){
++			if(!TimingInfo::enabled) return;
++			if(data.size()&lt;=i) { data.resize(i+1); labels.resize(i+1); labels[i]=label;}
++			TimingInfo::delta now=TimingInfo::getNow();
++			data[i].nExec+=1; data[i].nsec+=now-last; last=now; i++;
++		}
++};
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-02-23 16:18:55 UTC (rev 1684)
++++ trunk/extra/Brefcom.cpp	2009-02-23 21:25:32 UTC (rev 1685)
+@@ -134,6 +134,7 @@
+ CREATE_LOGGER(ef2_Spheres_Brefcom_BrefcomLaw);
+ 
+ void ef2_Spheres_Brefcom_BrefcomLaw::go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody){
++	//timingDeltas-&gt;start();
+ 	SpheresContactGeometry* contGeom=static_cast&lt;SpheresContactGeometry*&gt;(_geom.get());
+ 	BrefcomContact* BC=static_cast&lt;BrefcomContact*&gt;(_phys.get());
+ 
+@@ -149,16 +150,19 @@
+ 	Real&amp; omega(BC-&gt;omega); Real&amp; sigmaN(BC-&gt;sigmaN);  Vector3r&amp; sigmaT(BC-&gt;sigmaT); Real&amp; Fn(BC-&gt;Fn); Vector3r&amp; Fs(BC-&gt;Fs); // for python access
+ 
+ 	assert(contGeom-&gt;hasShear);
++	//timingDeltas-&gt;checkpoint(&quot;setup&quot;);
+ 	epsN=contGeom-&gt;epsN(); epsT=contGeom-&gt;epsT();
+ 	// already in SpheresContactGeometry:
+ 	// contGeom-&gt;relocateContactPoints(); // allow very large mutual rotations
+ 	if(logStrain &amp;&amp; epsN&lt;0){ Real epsN0=epsN; epsN=log(epsN0+1); epsT*=epsN/epsN0; }
++	//timingDeltas-&gt;checkpoint(&quot;geom&quot;);
+ 	#ifdef BREFCOM_MATERIAL_MODEL
+ 		BREFCOM_MATERIAL_MODEL
+ 	#else
+ 		sigmaN=E*epsN;
+ 		sigmaT=G*epsT;
+ 	#endif
++	//timingDeltas-&gt;checkpoint(&quot;material&quot;);
+ 	if(omega&gt;omegaThreshold){
+ 		I-&gt;isReal=false;
+ 		const shared_ptr&lt;Body&gt;&amp; body1=Body::byId(I-&gt;getId1(),rootBody), body2=Body::byId(I-&gt;getId2(),rootBody); assert(body1); assert(body2);
+@@ -176,6 +180,7 @@
+ 	Fs=sigmaT*crossSection; BC-&gt;shearForce=Fs;
+ 
+ 	applyForceAtContactPoint(BC-&gt;normalForce+BC-&gt;shearForce, contGeom-&gt;contactPoint, I-&gt;getId1(), contGeom-&gt;pos1, I-&gt;getId2(), contGeom-&gt;pos2, rootBody);
++	//timingDeltas-&gt;checkpoint(&quot;rest&quot;);
+ }
+ 
+ 
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2009-02-23 16:18:55 UTC (rev 1684)
++++ trunk/extra/Brefcom.hpp	2009-02-23 21:25:32 UTC (rev 1685)
+@@ -162,7 +162,7 @@
+ 	}
+ 	public:
+ 		bool logStrain;
+-		ef2_Spheres_Brefcom_BrefcomLaw(): logStrain(false){}
++		ef2_Spheres_Brefcom_BrefcomLaw(): logStrain(false){ /*timingDeltas=shared_ptr&lt;TimingDeltas&gt;(new TimingDeltas);*/ }
+ 		void go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody);
+ 	FUNCTOR2D(SpheresContactGeometry,BrefcomContact);
+ 	REGISTER_CLASS_AND_BASE(ef2_Spheres_Brefcom_BrefcomLaw,ConstitutiveLaw);
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2009-02-23 16:18:55 UTC (rev 1684)
++++ trunk/gui/SConscript	2009-02-23 21:25:32 UTC (rev 1685)
+@@ -81,6 +81,7 @@
+ 		env.File('ipython.py','py'),
+ 		env.File('plot.py','py'),
+ 		env.File('linterpolation.py','py'),
++		env.File('timing.py','py'),
+ 		env.File('PythonTCPServer.py','py'),
+ 	])
+ 
+
+Modified: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2009-02-23 16:18:55 UTC (rev 1684)
++++ trunk/gui/py/_utils.cpp	2009-02-23 21:25:32 UTC (rev 1685)
+@@ -286,7 +286,7 @@
+ 		return python::make_tuple(python::make_tuple(r,h),theta);
+ 	}
+ 	else{
+-		Real hPeriodStart=(periodStart-theta0)*dH_dTheta;
++		// Real hPeriodStart=(periodStart-theta0)*dH_dTheta;
+ 		//TRVAR4(hPeriodStart,periodStart,theta0,theta);
+ 		//Real h=Shop::periodicWrap(pt[axis]-hRef,hPeriodStart,hPeriodStart+2*Mathr::PI*dH_dTheta,&amp;period);
+ 		theta=Shop::periodicWrap(theta,periodStart,periodStart+2*Mathr::PI,&amp;period);
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2009-02-23 16:18:55 UTC (rev 1684)
++++ trunk/gui/py/utils.py	2009-02-23 21:25:32 UTC (rev 1685)
+@@ -16,6 +16,16 @@
+ # c++ implementations for performance reasons
+ from yade._utils import *
+ 
++def resetEngineClocks():
++	for e in O.engines: e.execTime=0
++def engineClockStats():
++	tSum=sum([e.execTime for e in O.engines])
++	for e in O.engines:
++		print e.name.ljust(30),(str(e.execTime/1000)+'ms').rjust(15),'%6.2f%%'%(e.execTime*100./tSum)
++	print '='*53
++	print 'TOTAL'.ljust(30),(str(tSum/1000)+'ms').rjust(15),'100.00%'
++
++
+ def saveVars(mark='',loadNow=False,**kw):
+ 	&quot;&quot;&quot;Save passed variables into the simulation so that it can be recovered when the simulation is loaded again.
+ 
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2009-02-23 16:18:55 UTC (rev 1684)
++++ trunk/gui/py/yadeControl.cpp	2009-02-23 21:25:32 UTC (rev 1685)
+@@ -164,9 +164,34 @@
+ BASIC_PY_PROXY(pyBoundingVolume,BoundingVolume);
+ BASIC_PY_PROXY(pyInteractingGeometry,InteractingGeometry);
+ 
+-BASIC_PY_PROXY(pyDeusExMachina,DeusExMachina);
+-BASIC_PY_PROXY(pyStandAloneEngine,StandAloneEngine);
++struct pyTimingDeltas{
++	shared_ptr&lt;TimingDeltas&gt; proxee;
++	pyTimingDeltas(shared_ptr&lt;TimingDeltas&gt; td){proxee=td;}
++	python::list data_get(){
++		python::list ret;
++		for(size_t i=0; i&lt;proxee-&gt;data.size(); i++){
++			ret.append(python::make_tuple(proxee-&gt;labels[i],proxee-&gt;data[i].nsec,proxee-&gt;data[i].nExec));
++		}
++		return ret;
++	}
++	void reset(){proxee-&gt;data.clear(); proxee-&gt;labels.clear();}
++};
+ 
++#define PY_PROXY_TIMING \
++	TimingInfo::delta execTime_get(void){return proxee-&gt;timingInfo.nsec;} void execTime_set(TimingInfo::delta t){proxee-&gt;timingInfo.nsec=t;} \
++	long execCount_get(void){return proxee-&gt;timingInfo.nExec;} void execCount_set(long n){proxee-&gt;timingInfo.nExec=n;} \
++	python::object timingDeltas_get(void){return proxee-&gt;timingDeltas?python::object(pyTimingDeltas(proxee-&gt;timingDeltas)):python::object();}
++
++
++BASIC_PY_PROXY_HEAD(pyDeusExMachina,DeusExMachina)
++	PY_PROXY_TIMING
++BASIC_PY_PROXY_TAIL;
++
++BASIC_PY_PROXY_HEAD(pyStandAloneEngine,StandAloneEngine)
++	PY_PROXY_TIMING
++BASIC_PY_PROXY_TAIL;
++	
++
+ python::list anyEngines_get(const vector&lt;shared_ptr&lt;Engine&gt; &gt;&amp;);
+ void anyEngines_set(vector&lt;shared_ptr&lt;Engine&gt; &gt;&amp;, python::object);
+ 
+@@ -200,6 +225,7 @@
+ 
+ BASIC_PY_PROXY_HEAD(pyEngineUnit,EngineUnit)
+ 	python::list bases_get(void){ python::list ret; vector&lt;string&gt; t=proxee-&gt;getFunctorTypes(); for(size_t i=0; i&lt;t.size(); i++) ret.append(t[i]); return ret; }
++	python::object timingDeltas_get(){return proxee-&gt;timingDeltas?python::object(pyTimingDeltas(proxee-&gt;timingDeltas)):python::object();}
+ BASIC_PY_PROXY_TAIL;
+ 
+ 
+@@ -244,6 +270,7 @@
+ 				#undef TRY_ADD_FUNCTOR
+ 			}
+ 		}
++	PY_PROXY_TIMING
+ BASIC_PY_PROXY_TAIL;
+ 
+ python::list anyEngines_get(const vector&lt;shared_ptr&lt;Engine&gt; &gt;&amp; engContainer){
+@@ -436,6 +463,9 @@
+ 	bool usesTimeStepper_get(){return OMEGA.timeStepperActive();}
+ 	void usesTimeStepper_set(bool use){OMEGA.skipTimeStepper(!use);}
+ 
++	bool timingEnabled_get(){return TimingInfo::enabled;}
++	void timingEnabled_set(bool enabled){TimingInfo::enabled=enabled;}
++
+ 	void run(long int numIter=-1,bool doWait=false){
+ 		if(numIter&gt;0) OMEGA.getRootBody()-&gt;stopAtIteration=OMEGA.getCurrentIteration()+numIter;
+ 		OMEGA.startSimulationLoop();
+@@ -619,6 +649,7 @@
+ 		.add_property(&quot;bodyContainer&quot;,&amp;pyOmega::bodyContainer_get,&amp;pyOmega::bodyContainer_set)
+ 		.add_property(&quot;interactionContainer&quot;,&amp;pyOmega::interactionContainer_get,&amp;pyOmega::interactionContainer_set)
+ 		.add_property(&quot;actionContainer&quot;,&amp;pyOmega::physicalActionContainer_get,&amp;pyOmega::physicalActionContainer_set)
++		.add_property(&quot;timingEnabled&quot;,&amp;pyOmega::timingEnabled_get,&amp;pyOmega::timingEnabled_set)
+ 		;
+ 	boost::python::class_&lt;pyTags&gt;(&quot;TagsWrapper&quot;,python::init&lt;pyTags&amp;&gt;())
+ 		.def(&quot;__getitem__&quot;,&amp;pyTags::getItem)
+@@ -652,17 +683,29 @@
+ 		.def(&quot;m&quot;,&amp;pyBexContainer::torque_get);
+ 	#endif
+ 
+-	BASIC_PY_PROXY_WRAPPER(pyStandAloneEngine,&quot;StandAloneEngine&quot;);
++	boost::python::class_&lt;pyTimingDeltas&gt;(&quot;TimingDeltas&quot;,python::init&lt;pyTimingDeltas&amp;&gt;())
++		.def(&quot;reset&quot;,&amp;pyTimingDeltas::reset)
++		.add_property(&quot;data&quot;,&amp;pyTimingDeltas::data_get);
++
++	#define TIMING_PROPS(class) .add_property(&quot;execTime&quot;,&amp;class::execTime_get,&amp;class::execTime_set).add_property(&quot;execCount&quot;,&amp;class::execCount_get,&amp;class::execCount_set).add_property(&quot;timingDeltas&quot;,&amp;class::timingDeltas_get)
++
++	BASIC_PY_PROXY_WRAPPER(pyStandAloneEngine,&quot;StandAloneEngine&quot;)
++		TIMING_PROPS(pyStandAloneEngine);
+ 	BASIC_PY_PROXY_WRAPPER(pyMetaEngine,&quot;MetaEngine&quot;)
+ 		.add_property(&quot;functors&quot;,&amp;pyMetaEngine::functors_get,&amp;pyMetaEngine::functors_set)
++		TIMING_PROPS(pyMetaEngine)
+ 		.def(python::init&lt;string,python::list&gt;());
+ 	BASIC_PY_PROXY_WRAPPER(pyParallelEngine,&quot;ParallelEngine&quot;)
+ 		.add_property(&quot;slaves&quot;,&amp;pyParallelEngine::slaves_get,&amp;pyParallelEngine::slaves_set)
+ 		.def(python::init&lt;python::list&gt;());
+-	BASIC_PY_PROXY_WRAPPER(pyDeusExMachina,&quot;DeusExMachina&quot;);
++	BASIC_PY_PROXY_WRAPPER(pyDeusExMachina,&quot;DeusExMachina&quot;)
++		TIMING_PROPS(pyDeusExMachina);
+ 	BASIC_PY_PROXY_WRAPPER(pyEngineUnit,&quot;EngineUnit&quot;)
++		.add_property(&quot;timingDeltas&quot;,&amp;pyEngineUnit::timingDeltas_get)
+ 		.add_property(&quot;bases&quot;,&amp;pyEngineUnit::bases_get);
+ 
++	#undef TIMING_PROPS
++
+ 	BASIC_PY_PROXY_WRAPPER(pyGeometricalModel,&quot;GeometricalModel&quot;);
+ 	BASIC_PY_PROXY_WRAPPER(pyInteractingGeometry,&quot;InteractingGeometry&quot;);
+ 	BASIC_PY_PROXY_WRAPPER(pyPhysicalParameters,&quot;PhysicalParameters&quot;)	
+
+Modified: trunk/gui/qt3/QtFileGenerator.cpp
+===================================================================
+--- trunk/gui/qt3/QtFileGenerator.cpp	2009-02-23 16:18:55 UTC (rev 1684)
++++ trunk/gui/qt3/QtFileGenerator.cpp	2009-02-23 21:25:32 UTC (rev 1685)
+@@ -33,17 +33,15 @@
+ 	setMinimumSize(s);
+ 	setMaximumSize(QSize(s.width(),32000));	
+ 	textLabel1-&gt;setText(&quot;waiting for orders&quot;);
+-	
++
+ 	map&lt;string,DynlibDescriptor&gt;::const_iterator di    = Omega::instance().getDynlibsDescriptor().begin();
+ 	map&lt;string,DynlibDescriptor&gt;::const_iterator diEnd = Omega::instance().getDynlibsDescriptor().end();
+ 	for(;di!=diEnd;++di)
+ 	{
+ 		if (Omega::instance().isInheritingFrom((*di).first,&quot;FileGenerator&quot;))
+ 			cbGeneratorName-&gt;insertItem((*di).first);
+-		if (Omega::instance().isInheritingFrom((*di).first,&quot;IOFormatManager&quot;))
+-			cbSerializationName-&gt;insertItem((*di).first);
+ 	}
+-	setSerializationName(&quot;XMLFormatManager&quot;);
++
+ 	
+ 	leOutputFileName-&gt;setText(&quot;./scene.xml&quot;);
+ 
+@@ -69,15 +67,6 @@
+ 
+ }
+ 
+-void QtFileGenerator::setSerializationName(string n)
+-{
+-	for(int i=0 ; i&lt;cbSerializationName-&gt;count() ; ++i)
+-	{
+-		cbSerializationName-&gt;setCurrentItem(i);
+-		if(cbSerializationName-&gt;currentText() == n)
+-			return;
+-	}
+-}
+ 
+ void QtFileGenerator::setGeneratorName(string n)
+ {
+@@ -93,26 +82,10 @@
+ {
+ 	string selectedFilter;
+ 	std::vector&lt;string&gt; filters;
+-	filters.push_back(&quot;Yade Binary File (*.yade)&quot;);
+ 	filters.push_back(&quot;XML Yade File (*.xml)&quot;);
+-	string fileName = FileDialog::getSaveFileName(&quot;.&quot;, filters , &quot;Choose a file to save&quot;, 
+-		#ifdef USE_WORKSPACE
+-			this-&gt;parentWidget()-&gt;parentWidget()
+-		#else
+-			NULL
+-		#endif
+-	,selectedFilter );
++	string fileName = FileDialog::getSaveFileName(&quot;.&quot;, filters , &quot;Choose a file to save&quot;, NULL,selectedFilter );
+ 
+-	if (fileName.size()!=0 &amp;&amp; selectedFilter == &quot;XML Yade File (*.xml)&quot; &amp;&amp; fileName!=&quot;/&quot; )
+-	{
+-		setSerializationName(&quot;XMLFormatManager&quot;);
+-		leOutputFileName-&gt;setText(fileName);
+-	}
+-	else if (fileName.size()!=0 &amp;&amp; selectedFilter == &quot;Yade Binary File (*.yade)&quot; &amp;&amp; fileName!=&quot;/&quot; )
+-	{
+-		setSerializationName(&quot;BINFormatManager&quot;);
+-		leOutputFileName-&gt;setText(fileName);
+-	}
++	leOutputFileName-&gt;setText(fileName);
+ }
+ 
+ void QtFileGenerator::displayFileGeneratorAttributes(shared_ptr&lt;FileGenerator&gt;&amp; fg)
+@@ -158,21 +131,6 @@
+ 	displayFileGeneratorAttributes(fg);
+ }
+ 
+-void QtFileGenerator::cbSerializationNameActivated(const QString&amp; s)
+-{
+-	string fileName = leOutputFileName-&gt;text();
+-	string ext;
+-	if( s == &quot;BINFormatManager&quot;)
+-		ext = &quot;.yade&quot;;
+-	else if ( s == &quot;XMLFormatManager&quot;)
+-		ext = &quot;.xml&quot;;
+-	else ext = &quot;.unknownFormat&quot;;
+-	if( filesystem::extension(fileName) != &quot;&quot; )
+-	{
+-		filesystem::path p = filesystem::change_extension(fileName,ext);
+-		leOutputFileName-&gt;setText(p.string());
+-	}
+-}
+ 
+ #include &lt;boost/thread/thread.hpp&gt;
+ #include &lt;boost/function.hpp&gt;
+@@ -188,7 +146,7 @@
+ 	guiGen.deserialize(m_worker);
+ 
+ 	m_worker-&gt;setFileName(leOutputFileName-&gt;text());
+-	m_worker-&gt;setSerializationLibrary(cbSerializationName-&gt;currentText());
++	m_worker-&gt;setSerializationLibrary(&quot;XMLFormatManager&quot;);
+ 		
+ 	m_runner   = shared_ptr&lt;ThreadRunner&gt;(new ThreadRunner(m_worker.get()));
+ 	m_runner-&gt;spawnSingleAction();
+@@ -219,13 +177,7 @@
+ 		bool successfullyGenerated=boost::any_cast&lt;bool&gt;(m_worker-&gt;getReturnValue());
+ 		string message=m_worker-&gt;message;
+ 
+-		shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(string(successfullyGenerated?&quot;SUCCESS:\n\n&quot;:&quot;FAILURE!\n\n&quot;)+message,
+-		#ifdef USE_WORKSPACE
+-			this-&gt;parentWidget()-&gt;parentWidget()
+-		#else
+-			NULL
+-		#endif
+-		));
++		shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(string(successfullyGenerated?&quot;SUCCESS:\n\n&quot;:&quot;FAILURE!\n\n&quot;)+message,	NULL));
+ 		md-&gt;exec();
+ 
+ 		m_worker=shared_ptr&lt;FileGenerator&gt;();
+@@ -273,13 +225,7 @@
+ 	string selectedFilter;
+ 	std::vector&lt;string&gt; filters;
+ 	filters.push_back(&quot;XML Yade File (*.xml)&quot;);
+-	string fileName = FileDialog::getOpenFileName(&quot;.&quot;, filters, &quot;Choose a FileGenerator configuration to load&quot;, 
+-		#ifdef USE_WORKSPACE
+-			this-&gt;parentWidget()-&gt;parentWidget()
+-		#else
+-			NULL
+-		#endif
+-		, selectedFilter );
++	string fileName = FileDialog::getOpenFileName(&quot;.&quot;, filters, &quot;Choose a FileGenerator configuration to load&quot;, NULL, selectedFilter );
+ 	if ( 	   fileName.size()!=0 
+ 		&amp;&amp; (selectedFilter == &quot;XML Yade File (*.xml)&quot;) 
+ 		&amp;&amp; filesystem::exists(fileName) 
+@@ -295,18 +241,11 @@
+ 			if(tmp!=&quot;./scene.xml&quot;) // this check to avoid resetting data, when loading older file.
+ 			{
+ 				leOutputFileName-&gt;setText(tmp);
+-				setSerializationName(fg-&gt;getSerializationLibrary());
+ 			}
+ 		} 
+ 		catch(SerializableError&amp; e) // catching it...
+ 		{
+-			shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(string(&quot;FileGenerator failed to load: &quot;) + e.what(),
+-			#ifdef USE_WORKSPACE
+-				this-&gt;parentWidget()-&gt;parentWidget()
+-			#else
+-				NULL
+-			#endif	
+-				));
++			shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(string(&quot;FileGenerator failed to load: &quot;) + e.what(),NULL));
+ 			md-&gt;exec();
+ 			return;
+ 		}
+@@ -320,19 +259,13 @@
+ 	
+ 	guiGen.deserialize(fg);
+ 	fg-&gt;setFileName(leOutputFileName-&gt;text());
+-	fg-&gt;setSerializationLibrary(cbSerializationName-&gt;currentText());
++	fg-&gt;setSerializationLibrary(&quot;XMLFormatManager&quot;);
+ 	
+ 	string selectedFilter;
+ 	std::vector&lt;string&gt; filters;
+ 	filters.push_back(&quot;XML Yade File (*.xml)&quot;);
+ 	string title = &quot;Save FileGenerator \&quot;&quot; + fg-&gt;getClassName() + &quot;\&quot; configuration&quot;;
+-	string fileName = FileDialog::getSaveFileName(&quot;.&quot;, filters, title, 
+-		#ifdef USE_WORKSPACE
+-			this-&gt;parentWidget()-&gt;parentWidget()
+-		#else
+-			NULL
+-		#endif
+-	, selectedFilter );
++	string fileName = FileDialog::getSaveFileName(&quot;.&quot;, filters, title, NULL, selectedFilter );
+ 
+ 	if ( 	   fileName.size()!=0
+ 		&amp;&amp; (selectedFilter == &quot;XML Yade File (*.xml)&quot;) 
+@@ -349,13 +282,7 @@
+ 	}
+ 	else
+ 	{
+-		shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(&quot;Save failed - bad file extension.&quot;,
+-		#ifdef USE_WORKSPACE
+-			this-&gt;parentWidget()-&gt;parentWidget()
+-		#else
+-			NULL
+-		#endif
+-		));
++		shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(&quot;Save failed - bad file extension.&quot;,NULL));
+ 		md-&gt;exec(); 
+ 	}
+ }
+
+Modified: trunk/gui/qt3/QtFileGenerator.hpp
+===================================================================
+--- trunk/gui/qt3/QtFileGenerator.hpp	2009-02-23 16:18:55 UTC (rev 1684)
++++ trunk/gui/qt3/QtFileGenerator.hpp	2009-02-23 21:25:32 UTC (rev 1685)
+@@ -40,7 +40,6 @@
+ 	public slots :
+ 		virtual void pbChooseClicked(); 
+ 		virtual void cbGeneratorNameActivated(const QString&amp; s);
+-		virtual void cbSerializationNameActivated(const QString&amp; s);
+ 		virtual void pbGenerateClicked(); 
+ 		virtual void pbCloseClicked(); // FIXME - stupid qt3-designer. This is now &quot;Stop&quot; not &quot;Close&quot;
+ 		virtual void pbLoadClicked();
+
+Modified: trunk/gui/qt3/QtFileGeneratorController.ui
+===================================================================
+--- trunk/gui/qt3/QtFileGeneratorController.ui	2009-02-23 16:18:55 UTC (rev 1684)
++++ trunk/gui/qt3/QtFileGeneratorController.ui	2009-02-23 21:25:32 UTC (rev 1685)
+@@ -68,17 +68,6 @@
+                 &lt;property name=&quot;name&quot;&gt;
+                     &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                 &lt;/property&gt;
+-                &lt;widget class=&quot;QLabel&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;tlOutputDynlibName&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;text&quot;&gt;
+-                        &lt;string&gt;Output Library Name :&lt;/string&gt;
+-                    &lt;/property&gt;
+-                    &lt;property name=&quot;alignment&quot;&gt;
+-                        &lt;set&gt;AlignVCenter|AlignRight&lt;/set&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+                 &lt;widget class=&quot;QLineEdit&quot; row=&quot;0&quot; column=&quot;1&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+                         &lt;cstring&gt;leOutputFileName&lt;/cstring&gt;
+@@ -95,11 +84,6 @@
+                         &lt;pixmap&gt;image0&lt;/pixmap&gt;
+                     &lt;/property&gt;
+                 &lt;/widget&gt;
+-                &lt;widget class=&quot;QComboBox&quot; row=&quot;1&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;cbSerializationName&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                &lt;/widget&gt;
+                 &lt;widget class=&quot;QLabel&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+                         &lt;cstring&gt;tlGeneratorName&lt;/cstring&gt;
+@@ -329,12 +313,6 @@
+         &lt;receiver&gt;QtFileGeneratorController&lt;/receiver&gt;
+         &lt;slot&gt;pbSaveClicked()&lt;/slot&gt;
+     &lt;/connection&gt;
+-    &lt;connection&gt;
+-        &lt;sender&gt;cbSerializationName&lt;/sender&gt;
+-        &lt;signal&gt;activated(const QString&amp;)&lt;/signal&gt;
+-        &lt;receiver&gt;QtFileGeneratorController&lt;/receiver&gt;
+-        &lt;slot&gt;cbSerializationNameActivated(const QString&amp;)&lt;/slot&gt;
+-    &lt;/connection&gt;
+ &lt;/connections&gt;
+ &lt;signals&gt;
+     &lt;signal&gt;closeSignal()&lt;/signal&gt;
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2009-02-23 16:18:55 UTC (rev 1684)
++++ trunk/gui/qt3/SimulationController.cpp	2009-02-23 21:25:32 UTC (rev 1685)
+@@ -222,13 +222,7 @@
+ 	}
+ 	else
+ 	{
+-		shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(&quot;Save aborted (check file extension).&quot;,
+-		#ifdef USE_WORKSPACE
+-			this-&gt;parentWidget()-&gt;parentWidget()
+-		#else
+-			NULL
+-		#endif
+-		));
++		shared_ptr&lt;MessageDialog&gt; md = shared_ptr&lt;MessageDialog&gt;(new MessageDialog(&quot;Save aborted (check file extension).&quot;,NULL));
+ 		md-&gt;exec(); 
+ 	}
+ }
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000745.html">[deprecated list] [Yade-dev] [svn] r1684 - trunk
+</A></li>
+	<LI>Next message: <A HREF="000750.html">[deprecated list] [Yade-dev] [svn] r1686 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#749">[ date ]</a>
+              <a href="thread.html#749">[ thread ]</a>
+              <a href="subject.html#749">[ subject ]</a>
+              <a href="author.html#749">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

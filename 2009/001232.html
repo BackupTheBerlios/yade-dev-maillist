@@ -1,0 +1,434 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1870 - in trunk: core	extra	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1870%20-%20in%20trunk%3A%20core%0A%09extra%09pkg/common/Engine/MetaEngine%09pkg/common/Engine/StandAloneEngine%0A%09pkg/dem&In-Reply-To=%3C200907161016.n6GAGf7a010982%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001279.html">
+   <LINK REL="Next"  HREF="001233.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1870 - in trunk: core	extra	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1870%20-%20in%20trunk%3A%20core%0A%09extra%09pkg/common/Engine/MetaEngine%09pkg/common/Engine/StandAloneEngine%0A%09pkg/dem&In-Reply-To=%3C200907161016.n6GAGf7a010982%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1870 - in trunk: core	extra	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Jul 16 12:16:41 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001279.html">[deprecated list] [Yade-dev] yade crash launching xml
+</A></li>
+        <LI>Next message: <A HREF="001233.html">[deprecated list] [Yade-dev] yade crash launching xml
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1232">[ date ]</a>
+              <a href="thread.html#1232">[ thread ]</a>
+              <a href="subject.html#1232">[ subject ]</a>
+              <a href="author.html#1232">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-16 12:16:39 +0200 (Thu, 16 Jul 2009)
+New Revision: 1870
+
+Modified:
+   trunk/core/Body.hpp
+   trunk/core/InteractionContainer.cpp
+   trunk/core/InteractionContainer.hpp
+   trunk/core/PhysicalParameters.hpp
+   trunk/extra/SConscript
+   trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp
+   trunk/pkg/dem/ConcretePM.cpp
+Log:
+1. Remove mutex from requestErase (should be verified to compile on non-openMP machine!)
+2. Add mutex to PhysicalParameters, so that body state can be locked while updating from the interaction loop.
+3. Add linking with EngineUnits to Tetra (thans Emanuelle)
+
+
+
+Modified: trunk/core/Body.hpp
+===================================================================
+--- trunk/core/Body.hpp	2009-07-15 16:46:34 UTC (rev 1869)
++++ trunk/core/Body.hpp	2009-07-16 10:16:39 UTC (rev 1870)
+@@ -21,6 +21,8 @@
+ #include&lt;yade/lib-serialization/Serializable.hpp&gt;
+ #include&lt;yade/lib-multimethods/Indexable.hpp&gt;
+ 
++#define ISDYNAMIC_REDEFINED
++
+ class MetaBody;
+ 
+ /*! \brief Abstract interface for bodies stored in BodyContainer, Body represents the atomic element of simulation.
+
+Modified: trunk/core/InteractionContainer.cpp
+===================================================================
+--- trunk/core/InteractionContainer.cpp	2009-07-15 16:46:34 UTC (rev 1869)
++++ trunk/core/InteractionContainer.cpp	2009-07-16 10:16:39 UTC (rev 1870)
+@@ -9,18 +9,31 @@
+ *************************************************************************/
+ 
+ #include &quot;InteractionContainer.hpp&quot;
++#include&lt;omp.h&gt;
+ 
+ void InteractionContainer::requestErase(body_id_t id1, body_id_t id2){
+-	find(id1,id2)-&gt;reset(); bodyIdPair v(id1,id2); //v.push_back(id1); v.push_back(id2); 
++	find(id1,id2)-&gt;reset(); bodyIdPair v(id1,id2);
+ 	#ifdef YADE_OPENMP
+-		boost::mutex::scoped_lock lock(pendingEraseMutex);
++		threadsPendingErase[omp_get_thread_num()].push_back(v);
++	#else
++		pendingErase.push_back(v);
+ 	#endif
+-	pendingErase.push_back(v);
+ }
+ 
+-void InteractionContainer::unconditionalErasePending(){
+-	FOREACH(const bodyIdPair&amp; p, pendingErase){ erase(p[0],p[1]); }
+-	pendingErase.clear();
++int InteractionContainer::unconditionalErasePending(){
++	int ret=0;
++	#ifdef YADE_OPENMP
++		// shadow this-&gt;pendingErase by the local variable, to share code
++		FOREACH(list&lt;bodyIdPair&gt;&amp; pendingErase, threadsPendingErase){
++	#endif
++			if(pendingErase.size()&gt;0){
++				FOREACH(const bodyIdPair&amp; p, pendingErase){ ret++; erase(p[0],p[1]); }
++				pendingErase.clear();
++			}
++	#ifdef YADE_OPENMP
++		}
++	#endif
++	return ret;
+ }
+ 
+ 
+@@ -44,6 +57,10 @@
+ 		for( ; i!=iEnd ; ++i )
+ 			interaction.push_back(*i);
+ 		if(serializeSorted) std::sort(interaction.begin(),interaction.end(),compPtrInteraction());
++		#ifdef YADE_OPENMP
++			// copy per-thread erasable pairs to the global attribute that will be serialized
++			FOREACH(const list&lt;bodyIdPair&gt;&amp; threadPendingErase, threadsPendingErase){ pendingErase.insert(pendingErase.end(),threadPendingErase.begin(),threadPendingErase.end()); }
++		#endif
+ 	}
+ }
+ 
+@@ -58,6 +75,10 @@
+ 		for( ; it != itEnd ; ++it)
+ 			this-&gt;insert(*it);
+ 		interaction.clear();
++		#ifdef YADE_OPENMP
++			// copy global deserialized pairs to be erased to the list of thread #0
++			threadsPendingErase[0].insert(threadsPendingErase[0].end(),pendingErase.begin(),pendingErase.end());
++		#endif
+ 	}
+ 	else
+ 	{
+
+Modified: trunk/core/InteractionContainer.hpp
+===================================================================
+--- trunk/core/InteractionContainer.hpp	2009-07-15 16:46:34 UTC (rev 1869)
++++ trunk/core/InteractionContainer.hpp	2009-07-16 10:16:39 UTC (rev 1870)
+@@ -14,6 +14,7 @@
+ #include&lt;boost/thread/mutex.hpp&gt;
+ #include&lt;iostream&gt;
+ #include&lt;boost/range.hpp&gt;
++#include&lt;omp.h&gt;
+ 
+ // BOOST_FOREACH compatibility
+ #ifndef FOREACH
+@@ -86,7 +87,11 @@
+ 	public :
+ 		boost::mutex	drawloopmutex;
+ 
+-		InteractionContainer(): serializeSorted(false) { };
++		InteractionContainer(): serializeSorted(false) {
++			#ifdef YADE_OPENMP
++				threadsPendingErase.resize(omp_get_max_threads());
++			#endif
++		}
+ 		virtual ~InteractionContainer() {};
+ 
+ 		virtual bool insert(body_id_t /*id1*/,body_id_t /*id2*/)				{throw;};
+@@ -117,6 +122,9 @@
+ 			If accessed from within a parallel section, pendingEraseMutex must be locked (this is done inside requestErase for you)
+ 			If there is, at one point, a multi-threaded collider, pendingEraseMutex should be moved to the public part and used from there as well.
+ 		*/
++		#ifdef YADE_OPENMP
++			vector&lt;list&lt;bodyIdPair&gt; &gt; threadsPendingErase;
++		#endif
+ 		list&lt;bodyIdPair&gt; pendingErase;
+ 		/*! Erase all pending interactions unconditionally.
+ 
+@@ -126,7 +134,7 @@
+ 
+ 			This function doesn't lock pendingEraseMutex, as it is (supposedly) called from no-parallel sections only once per iteration
+ 		*/
+-		void unconditionalErasePending();
++		int unconditionalErasePending();
+ 		/*! Traverse all pending interactions and erase them if the (T*)-&gt;shouldBeErased(id1,id2) return true
+ 			and keep it if it return false; finally, pendingErase will be clear()'ed.
+ 
+@@ -135,16 +143,23 @@
+ 				bool shouldBeErased(body_id_t, body_id_t) const
+ 
+ 			method which will be called for every interaction.
++
++			Returns number of interactions, have they been erased or not (this is useful to check if there were some erased, after traversing those)
+ 		*/
+-		template&lt;class T&gt; void erasePending(const T&amp; t){
+-			FOREACH(const Vector2&lt;body_id_t&gt;&amp; p, pendingErase){ if(t.shouldBeErased(p[0],p[1])) erase(p[0],p[1]); }
+-			pendingErase.clear();
++		template&lt;class T&gt; int erasePending(const T&amp; t){
++			int ret=0;
++			#ifdef YADE_OPENMP
++				// shadow the this-&gt;pendingErase by the local variable, to share the code
++				FOREACH(list&lt;bodyIdPair&gt;&amp; pendingErase, threadsPendingErase){
++			#endif
++					FOREACH(const Vector2&lt;body_id_t&gt;&amp; p, pendingErase){ ret++; if(t.shouldBeErased(p[0],p[1])) erase(p[0],p[1]); }
++					pendingErase.clear();
++			#ifdef YADE_OPENMP
++				}
++			#endif
++			return ret;
+ 		}
+ 	private :
+-		#ifdef YADE_OPENMP
+-			// This is used only from within requestErase() for now, therefore it can be private
+-			boost::mutex pendingEraseMutex;
+-		#endif
+ 		// used only during serialization/deserialization
+ 		vector&lt;shared_ptr&lt;Interaction&gt; &gt; interaction;
+ 	protected :
+
+Modified: trunk/core/PhysicalParameters.hpp
+===================================================================
+--- trunk/core/PhysicalParameters.hpp	2009-07-15 16:46:34 UTC (rev 1869)
++++ trunk/core/PhysicalParameters.hpp	2009-07-16 10:16:39 UTC (rev 1870)
+@@ -19,6 +19,10 @@
+ 		bool isDisplayed; //! False if the body is not displayed in this cycle (clipped, for instance)
+ 
+ 		unsigned blockedDOFs; //! Bitmask for degrees of freedom where velocity will be always zero, regardless of applied forces
++
++		// mutex for updating the parameters from within the interaction loop
++		boost::mutex updateMutex;
++
+ 		enum {DOF_NONE=0,DOF_X=1,DOF_Y=2,DOF_Z=4,DOF_RX=8,DOF_RY=16,DOF_RZ=32};
+ 		static const unsigned DOF_ALL=DOF_X|DOF_Y|DOF_Z|DOF_RX|DOF_RY|DOF_RZ; //! shorthand for all DOFs blocked
+ 		static const unsigned DOF_XYZ=DOF_X|DOF_Y|DOF_Z; //! shorthand for all displacements blocked
+
+Modified: trunk/extra/SConscript
+===================================================================
+--- trunk/extra/SConscript	2009-07-15 16:46:34 UTC (rev 1869)
++++ trunk/extra/SConscript	2009-07-16 10:16:39 UTC (rev 1870)
+@@ -10,7 +10,9 @@
+          'RigidBodyParameters',
+ 			'ElasticBodyParameters',
+ 			'BodyMacroParameters',
+-         'AABB']),
++         'AABB',
++			'EngineUnits',
++			]),
+ 	
+ 	env.SharedLibrary('TetraTestGen',['tetra/TetraTestGen.cpp'],LIBS=env['LIBS']+['Shop','Tetra']),
+ 
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp	2009-07-15 16:46:34 UTC (rev 1869)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp	2009-07-16 10:16:39 UTC (rev 1870)
+@@ -3,22 +3,36 @@
+ YADE_PLUGIN(&quot;InteractionDispatchers&quot;);
+ CREATE_LOGGER(InteractionDispatchers);
+ 
++// #define IDISP_TIMING
++
++#ifdef IDISP_TIMING
++	#define IDISP_CHECKPOINT(cpt) timingDeltas-&gt;checkpoint(cpt)
++#else
++	#define IDISP_CHECKPOINT(cpt)
++#endif
++
++
++
++
+ InteractionDispatchers::InteractionDispatchers(){
+ 	geomDispatcher=shared_ptr&lt;InteractionGeometryMetaEngine&gt;(new InteractionGeometryMetaEngine);
+ 	physDispatcher=shared_ptr&lt;InteractionPhysicsMetaEngine&gt;(new InteractionPhysicsMetaEngine);
+ 	constLawDispatcher=shared_ptr&lt;ConstitutiveLawDispatcher&gt;(new ConstitutiveLawDispatcher);
+ 	alreadyWarnedNoCollider=false;
++	#ifdef IDISP_TIMING
++		timingDeltas=shared_ptr&lt;TimingDeltas&gt;(new TimingDeltas);
++	#endif
+ }
+ 
+ #define DISPATCH_CACHE
+ 
+ void InteractionDispatchers::action(MetaBody* rootBody){
+-	if(rootBody-&gt;interactions-&gt;pendingErase.size()&gt;0){
+-		if(!alreadyWarnedNoCollider){
+-			LOG_WARN(&quot;Interactions pending erase found, no collider being used?&quot;);
+-			alreadyWarnedNoCollider=true;
+-		}
+-		rootBody-&gt;interactions-&gt;unconditionalErasePending();
++	#ifdef IDISP_TIMING
++		timingDeltas-&gt;start();
++	#endif
++	if(rootBody-&gt;interactions-&gt;unconditionalErasePending()&gt;0 &amp;&amp; !alreadyWarnedNoCollider){
++		LOG_WARN(&quot;Interactions pending erase found (erased), no collider being used?&quot;);
++		alreadyWarnedNoCollider=true;
+ 	}
+ 	#ifdef YADE_OPENMP
+ 		const long size=rootBody-&gt;interactions-&gt;size();
+@@ -29,6 +43,7 @@
+ 		FOREACH(shared_ptr&lt;Interaction&gt; I, *rootBody-&gt;interactions){
+ 	#endif
+ 		#ifdef DISPATCH_CACHE
++
+ 			const shared_ptr&lt;Body&gt;&amp; b1_=Body::byId(I-&gt;getId1(),rootBody);
+ 			const shared_ptr&lt;Body&gt;&amp; b2_=Body::byId(I-&gt;getId2(),rootBody);
+ 
+@@ -63,6 +78,7 @@
+ 				continue; // in any case don't care about this one anymore
+ 			}
+ 
++
+ 			// InteractionPhysicsMetaEngine
+ 			if(!I-&gt;functorCache.phys){
+ 				I-&gt;functorCache.phys=physDispatcher-&gt;getFunctor2D(b1-&gt;physicalParameters,b2-&gt;physicalParameters,swap);
+@@ -74,7 +90,6 @@
+ 
+ 			if(!wasReal) I-&gt;iterMadeReal=rootBody-&gt;currentIteration; // mark the interaction as created right now
+ 
+-
+ 			// ConstitutiveLawDispatcher
+ 			// populating constLaw cache must be done after geom and physics dispatchers have been called, since otherwise the interaction
+ 			// would not have interactionGeometry and interactionPhysics yet.
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp	2009-07-15 16:46:34 UTC (rev 1869)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp	2009-07-16 10:16:39 UTC (rev 1870)
+@@ -45,12 +45,9 @@
+ void InteractionGeometryMetaEngine::action(MetaBody* ncb)
+ {
+ 	// Erase interaction that were requested for erase, but not processed by the collider, if any (and warn once about that, as it is suspicious)
+-	if(ncb-&gt;interactions-&gt;pendingErase.size()&gt;0){
+-		if(!alreadyWarnedNoCollider){
+-			LOG_WARN(&quot;Interactions pending erase found, no collider being used?&quot;);
+-			alreadyWarnedNoCollider=true;
+-		}
+-		ncb-&gt;interactions-&gt;unconditionalErasePending();
++	if(ncb-&gt;interactions-&gt;unconditionalErasePending()&gt;0 &amp;&amp; !alreadyWarnedNoCollider){
++		LOG_WARN(&quot;Interactions pending erase found, no collider being used?&quot;);
++		alreadyWarnedNoCollider=true;
+ 	}
+ 
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-07-15 16:46:34 UTC (rev 1869)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-07-16 10:16:39 UTC (rev 1870)
+@@ -132,15 +132,9 @@
+ 	ISC_CHECKPOINT(&quot;init&quot;);
+ 
+ 		#ifdef COLLIDE_STRIDED
+-			// get us ready for strides
+-			if(!strideActive &amp;&amp; sweepLength&gt;0){
+-				if(newton-&gt;maxVelocitySq&gt;=0){ // maxVelocitySq is a really computed value
+-					strideActive=true;
+-					if(nBins&gt;=1){
+-						if(!newton-&gt;velocityBins){ newton-&gt;velocityBins=shared_ptr&lt;VelocityBins&gt;(new VelocityBins(nBins,newton-&gt;maxVelocitySq,binCoeff,binOverlap)); }
+-						if(!boundDispatcher-&gt;velocityBins) boundDispatcher-&gt;velocityBins=newton-&gt;velocityBins;
+-					}
+-				}
++			// get us ready for strides, if they were deactivated
++			if(!strideActive &amp;&amp; sweepLength&gt;0 &amp;&amp; newton-&gt;maxVelocitySq&gt;=0){ // maxVelocitySq is a really computed value
++				strideActive=true;
+ 			}
+ 			if(strideActive){
+ 				assert(sweepLength&gt;0);
+@@ -158,7 +152,10 @@
+ 					LOG_DEBUG(rb-&gt;simulationTime&lt;&lt;&quot;s: stride &#8776;&quot;&lt;&lt;stride&lt;&lt;&quot;; maxVelocity=&quot;&lt;&lt;sqrt(newton-&gt;maxVelocitySq)&lt;&lt;&quot;, sweepDist=&quot;&lt;&lt;boundDispatcher-&gt;sweepDist);
+ 					fastestBodyMaxDist=0; // reset
+ 				} else { // nBins&gt;=1
+-					assert(newton-&gt;velocityBins); assert(boundDispatcher-&gt;velocityBins);
++					if(!newton-&gt;velocityBins){ newton-&gt;velocityBins=shared_ptr&lt;VelocityBins&gt;(new VelocityBins(nBins,newton-&gt;maxVelocitySq,binCoeff,binOverlap)); }
++					if(!boundDispatcher-&gt;velocityBins) boundDispatcher-&gt;velocityBins=newton-&gt;velocityBins;
++					newton-&gt;velocityBins-&gt;nBins=nBins; newton-&gt;velocityBins-&gt;binCoeff=binCoeff; newton-&gt;velocityBins-&gt;binOverlap=binOverlap; // update things 
++					boundDispatcher-&gt;sweepDist=0;
+ 					// re-bin bodies
+ 					newton-&gt;velocityBins-&gt;setBins(rb,newton-&gt;maxVelocitySq,sweepLength);
+ 				}
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp	2009-07-15 16:46:34 UTC (rev 1869)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp	2009-07-16 10:16:39 UTC (rev 1870)
+@@ -20,7 +20,7 @@
+ //#define ISC_TIMING
+ 
+ #ifdef ISC_TIMING
+-	#define ISC_CHECKPOINT(cpt) timingDeltas-&gt;checkPoint(cpt)
++	#define ISC_CHECKPOINT(cpt) timingDeltas-&gt;checkpoint(cpt)
+ #else
+ 	#define ISC_CHECKPOINT(cpt)
+ #endif
+
+Modified: trunk/pkg/dem/ConcretePM.cpp
+===================================================================
+--- trunk/pkg/dem/ConcretePM.cpp	2009-07-15 16:46:34 UTC (rev 1869)
++++ trunk/pkg/dem/ConcretePM.cpp	2009-07-16 10:16:39 UTC (rev 1870)
+@@ -197,8 +197,8 @@
+ 			const shared_ptr&lt;Body&gt;&amp; body1=Body::byId(I-&gt;getId1(),rootBody), body2=Body::byId(I-&gt;getId2(),rootBody); assert(body1); assert(body2);
+ 			const shared_ptr&lt;CpmMat&gt;&amp; rbp1=YADE_PTR_CAST&lt;CpmMat&gt;(body1-&gt;physicalParameters), rbp2=YADE_PTR_CAST&lt;CpmMat&gt;(body2-&gt;physicalParameters);
+ 			// nice article about openMP::critical vs. scoped locks: <A HREF="http://www.thinkingparallel.com/2006/08/21/scoped-locking-vs-critical-in-openmp-a-personal-shootout/">http://www.thinkingparallel.com/2006/08/21/scoped-locking-vs-critical-in-openmp-a-personal-shootout/</A>
+-			#pragma omp critical
+-			{ rbp1-&gt;numBrokenCohesive+=1; rbp2-&gt;numBrokenCohesive+=1; rbp1-&gt;epsPlBroken+=epsPlSum; rbp2-&gt;epsPlBroken+=epsPlSum; }
++			{ boost::mutex::scoped_lock lock(rbp1-&gt;updateMutex); rbp1-&gt;numBrokenCohesive+=1; rbp1-&gt;epsPlBroken+=epsPlSum; }
++			{ boost::mutex::scoped_lock lock(rbp2-&gt;updateMutex); rbp2-&gt;numBrokenCohesive+=1; rbp2-&gt;epsPlBroken+=epsPlSum; }
+ 		}
+ 		rootBody-&gt;interactions-&gt;requestErase(I-&gt;getId1(),I-&gt;getId2());
+ 		return;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001279.html">[deprecated list] [Yade-dev] yade crash launching xml
+</A></li>
+	<LI>Next message: <A HREF="001233.html">[deprecated list] [Yade-dev] yade crash launching xml
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1232">[ date ]</a>
+              <a href="thread.html#1232">[ thread ]</a>
+              <a href="subject.html#1232">[ subject ]</a>
+              <a href="author.html#1232">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

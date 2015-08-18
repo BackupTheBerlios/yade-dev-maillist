@@ -1,0 +1,208 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1802 - in trunk: gui/py	gui/qt3	pkg/common/Engine/MetaEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1802%20-%20in%20trunk%3A%20gui/py%0A%09gui/qt3%09pkg/common/Engine/MetaEngine&In-Reply-To=%3C200906171249.n5HCnArA012597%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001027.html">
+   <LINK REL="Next"  HREF="001062.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1802 - in trunk: gui/py	gui/qt3	pkg/common/Engine/MetaEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1802%20-%20in%20trunk%3A%20gui/py%0A%09gui/qt3%09pkg/common/Engine/MetaEngine&In-Reply-To=%3C200906171249.n5HCnArA012597%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1802 - in trunk: gui/py	gui/qt3	pkg/common/Engine/MetaEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jun 17 14:49:10 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001027.html">[deprecated list] [Yade-dev] [svn] r1801 - in trunk/gui: py qt3
+</A></li>
+        <LI>Next message: <A HREF="001062.html">[deprecated list] [Yade-dev] Ellipsoid
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1028">[ date ]</a>
+              <a href="thread.html#1028">[ thread ]</a>
+              <a href="subject.html#1028">[ subject ]</a>
+              <a href="author.html#1028">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-06-17 14:49:09 +0200 (Wed, 17 Jun 2009)
+New Revision: 1802
+
+Modified:
+   trunk/gui/py/yadeControl.cpp
+   trunk/gui/qt3/QtGUI.cpp
+   trunk/gui/qt3/YadeQtMainWindow.cpp
+   trunk/gui/qt3/YadeQtMainWindow.hpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp
+Log:
+1. Handle groupMasks of bodies in InteractionDispatchers directly (not in geometry functors etc).
+2. Fixes for qt3 started from within python
+3. Add Body().dynamic flag to the wrapper, instead of using Body()['isDynamic'] all the time.
+
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2009-06-16 20:20:22 UTC (rev 1801)
++++ trunk/gui/py/yadeControl.cpp	2009-06-17 12:49:09 UTC (rev 1802)
+@@ -327,6 +327,7 @@
+ 	unsigned id_get(){ensureAcc(); return proxee-&gt;getId();}
+ 	int mask_get(){ensureAcc(); return proxee-&gt;groupMask;}
+ 	void mask_set(int m){ensureAcc(); proxee-&gt;groupMask=m;}
++	bool dynamic_get(){ensureAcc(); return proxee-&gt;isDynamic;} void dynamic_set(bool dyn){ensureAcc(); proxee-&gt;isDynamic=dyn;}
+ 	bool isStandalone(){ensureAcc(); return proxee-&gt;isStandalone();} bool isClumpMember(){ensureAcc(); return proxee-&gt;isClumpMember();} bool isClump(){ensureAcc(); return proxee-&gt;isClump();}
+ BASIC_PY_PROXY_TAIL;
+ 
+@@ -798,6 +799,7 @@
+ 		.add_property(&quot;mold&quot;,&amp;pyBody::mold_get,&amp;pyBody::mold_set)
+ 		.add_property(&quot;bound&quot;,&amp;pyBody::bound_get,&amp;pyBody::bound_set)
+ 		.add_property(&quot;phys&quot;,&amp;pyBody::phys_get,&amp;pyBody::phys_set)
++		.add_property(&quot;dynamic&quot;,&amp;pyBody::dynamic_get,&amp;pyBody::dynamic_set)
+ 		.add_property(&quot;id&quot;,&amp;pyBody::id_get)
+ 		.add_property(&quot;mask&quot;,&amp;pyBody::mask_get,&amp;pyBody::mask_set)
+ 		.add_property(&quot;isStandalone&quot;,&amp;pyBody::isStandalone)
+
+Modified: trunk/gui/qt3/QtGUI.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI.cpp	2009-06-16 20:20:22 UTC (rev 1801)
++++ trunk/gui/qt3/QtGUI.cpp	2009-06-17 12:49:09 UTC (rev 1802)
+@@ -88,21 +88,10 @@
+ 		XInitThreads();
+ 	   app=new QApplication(0,NULL);
+ 		if(!YadeQtMainWindow::self){
++			YadeQtMainWindow::guiMayDisappear=true;
+ 			mainWindow=new YadeQtMainWindow();
+-			mainWindow-&gt;guiMayDisappear=true;
+ 			mainWindow-&gt;hide();
+-			//app-&gt;setMainWidget(mainWindow);
+ 		} else { LOG_ERROR(&quot;Main window was there, but not QtGUI::app??&quot;); }
+ 		boost::thread appThread(boost::bind(&amp;QApplication::exec,app));
+ 	}
+-	//mainWindow-&gt;showSomeGui();
+-#if 0
+-	else if (!YadeQtMainWindow::self){ // app exists and runs, just reopen the main window
+-		//LOG_INFO(&quot;Recreating main window &quot;&lt;&lt;YadeQtMainWindow::self);
+-		//mainWindow=new YadeQtMainWindow();
+-		//mainWindow-&gt;guiMayDisappear=true;
+-		mainWindow-&gt;showSomeGui();
+-		//app-&gt;setMainWidget(mainWindow);
+-	}
+-#endif
+ }
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.cpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.cpp	2009-06-16 20:20:22 UTC (rev 1801)
++++ trunk/gui/qt3/YadeQtMainWindow.cpp	2009-06-17 12:49:09 UTC (rev 1802)
+@@ -36,11 +36,11 @@
+ CREATE_LOGGER(YadeQtMainWindow);
+ 
+ YadeQtMainWindow* YadeQtMainWindow::self=NULL;
++bool YadeQtMainWindow::guiMayDisappear=false;
+ 
+ YadeQtMainWindow::YadeQtMainWindow() : YadeQtGeneratedMainWindow()
+ {
+ 	self=this;
+-	guiMayDisappear=false;
+ 
+ 	QGLFormat format;
+ 	format.setStencil(TRUE);
+@@ -76,19 +76,13 @@
+ 	move(preferences-&gt;mainWindowPositionX,preferences-&gt;mainWindowPositionY);
+ 
+ 	// HACK
+-	if(Omega::instance().getSimulationFileName()!=&quot;&quot;) createController();
++	if(!guiMayDisappear &amp;&amp; Omega::instance().getSimulationFileName()!=&quot;&quot;) createController();
+ 
+ 
+ 	// updates GL views, may also hide/show this window as needed
+ 	startTimer(100);
+ }
+ 
+-void YadeQtMainWindow::showSomeGui(){
+-	if(controller||player||generator) return;
+-	LOG_INFO(&quot;Showing main window&quot;);
+-	this-&gt;show();
+-}
+-
+ void YadeQtMainWindow::timerEvent(QTimerEvent* evt){
+ 	#if 1
+ 	//shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.hpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.hpp	2009-06-16 20:20:22 UTC (rev 1801)
++++ trunk/gui/qt3/YadeQtMainWindow.hpp	2009-06-17 12:49:09 UTC (rev 1802)
+@@ -41,7 +41,6 @@
+ 		void loadSimulation(string file);
+ 		void redrawAll(bool force=false);
+ 		void lookDown(shared_ptr&lt;GLViewer&gt; glv);
+-		void showSomeGui();
+ 
+ 	protected :
+ 		shared_ptr&lt;QtGUIPreferences&gt; preferences;
+@@ -51,7 +50,7 @@
+ 		YadeQtMainWindow ();
+ 		virtual ~YadeQtMainWindow ();
+ 		static YadeQtMainWindow* self; // retrieve instance pointer form elsewhere
+-		bool guiMayDisappear;
++		static bool guiMayDisappear;
+ 
+ 		DECLARE_LOGGER;
+ 	public slots :
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp	2009-06-16 20:20:22 UTC (rev 1801)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp	2009-06-17 12:49:09 UTC (rev 1802)
+@@ -32,6 +32,9 @@
+ 			const shared_ptr&lt;Body&gt;&amp; b1_=Body::byId(I-&gt;getId1(),rootBody);
+ 			const shared_ptr&lt;Body&gt;&amp; b2_=Body::byId(I-&gt;getId2(),rootBody);
+ 
++			// go fast if this pair of bodies cannot interact at all
++			if((b1_-&gt;getGroupMask() &amp; b2_-&gt;getGroupMask())==0) continue;
++
+ 			// we know there is no geometry functor already, take the short path
+ 			if(!I-&gt;functorCache.geomExists) { assert(!I-&gt;isReal()); continue; }
+ 			// no interaction geometry for either of bodies; no interaction possible
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001027.html">[deprecated list] [Yade-dev] [svn] r1801 - in trunk/gui: py qt3
+</A></li>
+	<LI>Next message: <A HREF="001062.html">[deprecated list] [Yade-dev] Ellipsoid
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1028">[ date ]</a>
+              <a href="thread.html#1028">[ thread ]</a>
+              <a href="subject.html#1028">[ subject ]</a>
+              <a href="author.html#1028">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

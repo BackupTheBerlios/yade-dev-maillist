@@ -1,0 +1,328 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1632 - in trunk: core	pkg/common	pkg/common/Engine/StandAloneEngine scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1632%20-%20in%20trunk%3A%20core%0A%09pkg/common%09pkg/common/Engine/StandAloneEngine%20scripts&In-Reply-To=%3C200901230905.n0N9542D000541%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000610.html">
+   <LINK REL="Next"  HREF="000609.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1632 - in trunk: core	pkg/common	pkg/common/Engine/StandAloneEngine scripts</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1632%20-%20in%20trunk%3A%20core%0A%09pkg/common%09pkg/common/Engine/StandAloneEngine%20scripts&In-Reply-To=%3C200901230905.n0N9542D000541%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1632 - in trunk: core	pkg/common	pkg/common/Engine/StandAloneEngine scripts">sega at mail.berlios.de
+       </A><BR>
+    <I>Fri Jan 23 10:05:04 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000610.html">[deprecated list] [Yade-dev] dynamic_cast from Engine* to	BroadInteractor* failed
+</A></li>
+        <LI>Next message: <A HREF="000609.html">[deprecated list] [Yade-dev] Python scripting and Yade
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#606">[ date ]</a>
+              <a href="thread.html#606">[ thread ]</a>
+              <a href="subject.html#606">[ subject ]</a>
+              <a href="author.html#606">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2009-01-23 10:05:03 +0100 (Fri, 23 Jan 2009)
+New Revision: 1632
+
+Added:
+   trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.hpp
+Modified:
+   trunk/core/BroadInteractor.hpp
+   trunk/core/MetaBody.cpp
+   trunk/core/MetaBody.hpp
+   trunk/pkg/common/SConscript
+   trunk/scripts/test-sphere-facet.py
+Log:
+Intermediate commit for SpheresFactory. Don't work yet.
+1. New engine SpheresFactory
+2. Add function engineByLabel to MetaBody
+3. Add members to BroadInteractor.
+
+
+
+Modified: trunk/core/BroadInteractor.hpp
+===================================================================
+--- trunk/core/BroadInteractor.hpp	2009-01-21 10:33:46 UTC (rev 1631)
++++ trunk/core/BroadInteractor.hpp	2009-01-23 09:05:03 UTC (rev 1632)
+@@ -9,6 +9,7 @@
+ #ifndef BROADINTERACTOR_HPP
+ #define BROADINTERACTOR_HPP
+ 
++#include &lt;yade/core/BoundingVolume.hpp&gt;
+ #include &quot;StandAloneEngine.hpp&quot;
+ 
+ class BroadInteractor : public StandAloneEngine
+@@ -16,7 +17,11 @@
+ 	public :
+ 		BroadInteractor() {};
+ 		virtual ~BroadInteractor() {};
++		virtual  bool probeBoundingVolume(const shared_ptr&lt;BoundingVolume&gt;&amp; bv, const Vector3r&amp; center){throw;}
++		vector&lt;body_id_t&gt; probedBodies;
+ 
++	protected:
++
+ 	REGISTER_CLASS_NAME(BroadInteractor);	
+ 	REGISTER_BASE_CLASS_NAME(StandAloneEngine);
+ };
+
+Modified: trunk/core/MetaBody.cpp
+===================================================================
+--- trunk/core/MetaBody.cpp	2009-01-21 10:33:46 UTC (rev 1631)
++++ trunk/core/MetaBody.cpp	2009-01-23 09:05:03 UTC (rev 1632)
+@@ -85,6 +85,12 @@
+ 	return shared_ptr&lt;Engine&gt;();
+ }
+ 
++shared_ptr&lt;Engine&gt; MetaBody::engineByLabel(string s){
++	FOREACH(shared_ptr&lt;Engine&gt; e, engines){
++		if(e-&gt;label==s) return e;
++	}
++	return shared_ptr&lt;Engine&gt;();
++}
+ 
+ void MetaBody::setTimeSteppersActive(bool a)
+ {
+
+Modified: trunk/core/MetaBody.hpp
+===================================================================
+--- trunk/core/MetaBody.hpp	2009-01-21 10:33:46 UTC (rev 1631)
++++ trunk/core/MetaBody.hpp	2009-01-23 09:05:03 UTC (rev 1632)
+@@ -40,6 +40,7 @@
+ 
+ 		void setTimeSteppersActive(bool a);
+ 		shared_ptr&lt;Engine&gt; engineByName(string s);
++		shared_ptr&lt;Engine&gt; engineByLabel(string s);
+ 
+ 		Real dt;
+ 		long currentIteration;
+
+Added: trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.cpp	2009-01-21 10:33:46 UTC (rev 1631)
++++ trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.cpp	2009-01-23 09:05:03 UTC (rev 1632)
+@@ -0,0 +1,106 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Sergei Dorofeenko				 				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&lt;boost/random.hpp&gt;
++#include&lt;yade/core/Body.hpp&gt;
++#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
++#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++#include&lt;yade/pkg-common/InteractingFacet.hpp&gt;
++#include&lt;yade/pkg-common/Sphere.hpp&gt;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&quot;SpheresFactory.hpp&quot;
++
++SpheresFactory::SpheresFactory() : first_run(true) 
++{
++
++}
++
++SpheresFactory::~SpheresFactory()
++{
++	
++}
++
++
++
++void SpheresFactory::action(MetaBody* ncb)
++{
++	if (first_run)
++	{
++		//FIXME: Why dynamic_cast failed here???
++		Engine* eng = ncb-&gt;engineByLabel(labelBroadInteractor).get();
++		bI=dynamic_cast&lt;BroadInteractor*&gt;(eng);
++		if (!bI) 
++		{
++			LOG_FATAL(&quot;For engine with label '&quot; &lt;&lt; labelBroadInteractor &lt;&lt; &quot;' dynamic_cast from class '&quot; &lt;&lt; eng-&gt;getClassName() &lt;&lt; &quot;' to class 'BroadInteractor' failed!&quot; );
++			return;
++		}
++		first_run=false;
++	}
++
++	static boost::variate_generator&lt;boost::minstd_rand,boost::uniform_int&lt;&gt; &gt; randomFacet(boost::minstd_rand(),boost::uniform_int&lt;&gt;(0,factoryFacets.size()-1));
++
++	static boost::variate_generator&lt;boost::mt19937,boost::uniform_real&lt;&gt; &gt; random(boost::mt19937(),boost::uniform_real&lt;&gt;(0,1));
++
++	body_id_t facetId = factoryFacets[randomFacet()];
++	Real t1 = random();
++	Real t2 = random()*(1-t1);
++
++	shared_ptr&lt;Body&gt; facet = Body::byId(factoryFacets[facetId]);
++	InteractingFacet* ifacet = static_cast&lt;InteractingFacet*&gt;(facet-&gt;interactingGeometry.get());
++
++	Vector3r position = t1*(ifacet-&gt;vertices[1]-ifacet-&gt;vertices[0])+t2*(ifacet-&gt;vertices[2]-ifacet-&gt;vertices[0])+ifacet-&gt;vertices[0]+facet-&gt;physicalParameters-&gt;se3.position;
++
++	Real radius=0.1;
++
++	shared_ptr&lt;Body&gt; sphere;
++	createSphere(sphere,position,radius);
++	ncb-&gt;bodies-&gt;insert(sphere);
++
++	bI-&gt;action(ncb);
++}
++
++void SpheresFactory::createSphere(shared_ptr&lt;Body&gt;&amp; body, const Vector3r&amp; position, Real radius)
++{
++	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),1));
++	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
++	shared_ptr&lt;AABB&gt; aabb(new AABB);
++	shared_ptr&lt;Sphere&gt; gSphere(new Sphere);
++	shared_ptr&lt;InteractingSphere&gt; iSphere(new InteractingSphere);
++	
++	Quaternionr q;
++	q.FromAxisAngle( Vector3r(0,0,1),0);
++	
++	body-&gt;isDynamic			= false;
++	
++	physics-&gt;angularVelocity	= Vector3r(0,0,0);
++	physics-&gt;velocity		= Vector3r(0,0,0);
++	physics-&gt;mass			= 4.0/3.0*Mathr::PI*radius*radius*radius*2400;
++	physics-&gt;inertia		= Vector3r(2.0/5.0*physics-&gt;mass*radius*radius,2.0/5.0*physics-&gt;mass*radius*radius,2.0/5.0*physics-&gt;mass*radius*radius); //
++	physics-&gt;se3			= Se3r(position,q);
++	physics-&gt;young			= 0.15e9;
++	physics-&gt;poisson		= 0.3;
++	//physics-&gt;frictionAngle	= sphereFrictionDeg * Mathr::PI/180.0;
++
++	aabb-&gt;diffuseColor		= Vector3r(0,1,0);
++
++	gSphere-&gt;radius			= radius;
++	gSphere-&gt;diffuseColor		= Vector3r(Mathr::UnitRandom(),Mathr::UnitRandom(),Mathr::UnitRandom());
++	gSphere-&gt;wire			= false;
++	gSphere-&gt;visible		= true;
++	gSphere-&gt;shadowCaster		= true;
++	
++	iSphere-&gt;radius			= radius;
++	iSphere-&gt;diffuseColor		= Vector3r(0.8,0.3,0.3);
++
++	body-&gt;interactingGeometry	= iSphere;
++	body-&gt;geometricalModel		= gSphere;
++	body-&gt;boundingVolume		= aabb;
++	body-&gt;physicalParameters	= physics;
++}
++
+
+Added: trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.hpp	2009-01-21 10:33:46 UTC (rev 1631)
++++ trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.hpp	2009-01-23 09:05:03 UTC (rev 1632)
+@@ -0,0 +1,43 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Sergei Dorofeenko				 				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++#ifndef ___SPHERESFACTORYENGINE___
++#define ___SPHERESFACTORYENGINE___
++
++#include &lt;yade/core/StandAloneEngine.hpp&gt;
++#include &lt;yade/core/BroadInteractor.hpp&gt;
++#include &lt;yade/core/MetaBody.hpp&gt;
++#include &lt;vector&gt;
++#include &lt;string&gt;
++
++using namespace std;
++
++class SpheresFactory : public StandAloneEngine {
++public:
++
++	SpheresFactory();
++	virtual ~SpheresFactory();
++
++	virtual void action(MetaBody*);
++
++	vector&lt;body_id_t&gt; factoryFacets; 
++	string labelBroadInteractor;
++
++protected:
++	BroadInteractor* bI;
++	bool first_run;
++
++	void createSphere(shared_ptr&lt;Body&gt;&amp; body, const Vector3r&amp; position, Real radius);
++
++	REGISTER_ATTRIBUTES(StandAloneEngine,(factoryFacets)(labelBroadInteractor))
++	REGISTER_CLASS_AND_BASE(SpheresFactory, StandAloneEngine);
++
++};
++REGISTER_SERIALIZABLE(SpheresFactory);
++
++#endif //___SPHERESFACTORYENGINE___
++
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2009-01-21 10:33:46 UTC (rev 1631)
++++ trunk/pkg/common/SConscript	2009-01-23 09:05:03 UTC (rev 1632)
+@@ -152,6 +152,8 @@
+ 	#	LIBS=env['LIBS']+['yade-base', 'TesselationWrapper', 'CGAL',  'InteractingSphere', 'RigidBodyParameters'],
+ 	#	CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine', '$PREFIX/include', '/home/bruno/micromacro/KdevMicroMacro/src']),
+     
++	env.SharedLibrary('SpheresFactory',['Engine/StandAloneEngine/SpheresFactory.cpp'],
++		LIBS=env['LIBS']+['AABB','InteractingSphere','InteractingFacet','Sphere','BodyMacroParameters','PersistentSAPCollider']),
+ 	env.SharedLibrary('SpatialQuickSortCollider',['Engine/StandAloneEngine/SpatialQuickSortCollider.cpp']),
+ 	env.SharedLibrary('PersistentSAPCollider',['Engine/StandAloneEngine/PersistentSAPCollider.cpp']),
+ 	env.SharedLibrary('DistantPersistentSAPCollider',['Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp']),
+
+Modified: trunk/scripts/test-sphere-facet.py
+===================================================================
+--- trunk/scripts/test-sphere-facet.py	2009-01-21 10:33:46 UTC (rev 1631)
++++ trunk/scripts/test-sphere-facet.py	2009-01-23 09:05:03 UTC (rev 1632)
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ # &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+ #
+ # Test case for sphere-facet interaction preserving the original contact orientation.
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000610.html">[deprecated list] [Yade-dev] dynamic_cast from Engine* to	BroadInteractor* failed
+</A></li>
+	<LI>Next message: <A HREF="000609.html">[deprecated list] [Yade-dev] Python scripting and Yade
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#606">[ date ]</a>
+              <a href="thread.html#606">[ thread ]</a>
+              <a href="subject.html#606">[ subject ]</a>
+              <a href="author.html#606">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

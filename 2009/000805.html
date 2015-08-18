@@ -1,0 +1,178 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] contact logic (again)
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20contact%20logic%20%28again%29&In-Reply-To=%3C49ABF032.5090902%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000802.html">
+   <LINK REL="Next"  HREF="000806.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] contact logic (again)</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20contact%20logic%20%28again%29&In-Reply-To=%3C49ABF032.5090902%40hmg.inpg.fr%3E"
+       TITLE="[deprecated list] [Yade-dev] contact logic (again)">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Mon Mar  2 15:41:54 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000802.html">[deprecated list] [Yade-dev] contact logic (again)
+</A></li>
+        <LI>Next message: <A HREF="000806.html">[deprecated list] [Yade-dev] contact logic (again)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#805">[ date ]</a>
+              <a href="thread.html#805">[ thread ]</a>
+              <a href="subject.html#805">[ subject ]</a>
+              <a href="author.html#805">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i>
+</I>&gt;<i> Collider::handleExistingInteraction will be (not yet used) reponsible 
+</I>&gt;<i> for changing isReal, isNew flags and signalling that the interaction 
+</I>&gt;<i> should be deleted (if it returns false). I would like someone (Bruno?) 
+</I>&gt;<i> to review to code whether it is OK.
+</I>&gt;<i>
+</I>A quick review found nothing wrong. I was just a little surprised by the 
+fact interactions are erased in  2 different places (in the core of 
+&quot;action()&quot; and in &quot;updateOverlapingBBset&quot;). I don't think this is a 
+recent change though.
+
+&gt;<i> Another change I have in mind is removing haveDistantTransient; 
+</I>&gt;<i> marking real contacts to be deleted by the constitutive law incurs no 
+</I>&gt;<i> penalty, except for a very specific case where AABBs stop overlapping 
+</I>&gt;<i> at the same iteration (not later) that spheres geometrically stop 
+</I>&gt;<i> touching;
+</I>It can be removed IF all contact laws are setting isReal.
+This is not the case currently, e.g. _the basic ElasticContactLaw does 
+not set isReal_ (and will be break by this change currently).
+Removing this flag makes sense, but it is like setting it true by 
+default (it is currently false), so it could modify the behaviour of a 
+few existing classes besides ElasticContactLaw. Big &quot;warnings&quot; would 
+have to be sent to users.
+&gt;<i> this happens only if spheres would be aligned along an axis. In that 
+</I>&gt;<i> case, the &quot;penalty&quot; would be that the interaction would be marked 
+</I>&gt;<i> !isReal by InteractionGeometryMetaEngine and deleted at next iteration 
+</I>&gt;<i> by the collider, instead of being deleted by the collider right away.
+</I>&gt;<i>
+</I>A small mistake here (perhaps just a typo?).
+InteractionGeometryMetaEngine can in fact only set isReal=true (in case 
+of geometrical &quot;interaction&quot;, i.e. overlap), it cannot revert to 
+isReal=false. So, the interaction will be marked !isReal by the contact 
+law only, not the IGME. The IGME code is :
+
+/if (penetrationDepthSq&gt;0 || c-&gt;isReal){
+                if (isNew) {
+                    create and initialise the interaction geometry;
+                   isNew = false;
+        }
+        return true;
+    }
+    else return false;
+/
+(and then the returned value is used by the dispatcher to set isReal for 
+this interaction.)
+
+&gt;<i> Second potential problem with haveDistantTransient is that you can 
+</I>&gt;<i> have multiple constitutive laws, of which one will want to keep 
+</I>&gt;<i> distant interaction and the other would not (there are no 
+</I>&gt;<i> transient/persistent interactions anymore).
+</I>&gt;<i>
+</I>I don't really see the relation between this problem and the 
+haveDistantTransient flag.
+The correct behaviour would be that a contact is &quot;Real&quot; IF there is a 
+geometrical overlap OR at least one physical interaction exists.
+This is not implemented that way currently, since an interaction law can 
+set !isReal even if another type of interaction exists at the same time.
+If the interaction of type1 persists while the interaction of type 2 
+disapears, and if law2 is after law1 in metabody-&gt;engines, then the 
+second law2 will make the interaction deletable even if it should not.
+Perhaps it needs an additional flag &quot;isPhysical&quot;, which would be false 
+at the beggining of each timestep, and set equal to (isPhysical || 
+hasTypeX) in InteractionLawX.
+The collider would set isReal = isPhysical at the very begining of each 
+step.
+There is perhaps a smarter way to do this, since isPhysical would play 
+almost the same role as isReal (the only difference is isReal must not 
+be reset at each step).
+
+&gt;<i> Therefore it seems appropriate to require that constitutive laws 
+</I>&gt;<i> delete interactions.
+</I>&gt;<i>
+</I>Yes, with the condition above.
+
+&gt;<i> Last thing: there are colliders I suspect are not used (and 
+</I>&gt;<i> maintained): PersistentTriangulationCollider, SAPCollider, 
+</I>&gt;<i> DistantPersistentSAPCollider. Couldn't we remove those from the tree?
+</I>&gt;<i>
+</I>- PersistentTriangulationCollider : experimental stuff, it is slower 
+than the default collider but it works, and since some simulations are 
+(or will be) maintaining a triangulation (e.g. JF Jerier for the volumic 
+contact law or Emanuele Catalano in the near future), it is interesting 
+to use it for contact detection at the same time.
+
+- SAPCollider : I don't know this. A very old collider from early ages 
+of Yade IIRC. Can be removed safely.
+
+- DistantPersistentSAPCollider : the specific features of this one are 
+now included in PersistentSAPcollider (the &quot;if (haveDistantTransient) 
+{...}&quot; code that you want by default now). It can be safely removed, 
+except that it is still used in CohesiveFrictionalTriaxialTest. 
+Switching to the &quot;normal&quot; collider in this demo will be a good way to 
+check that everything works fine.
+
+Bruno
+
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Grenoble INP
+Laboratoire 3SR - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000802.html">[deprecated list] [Yade-dev] contact logic (again)
+</A></li>
+	<LI>Next message: <A HREF="000806.html">[deprecated list] [Yade-dev] contact logic (again)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#805">[ date ]</a>
+              <a href="thread.html#805">[ thread ]</a>
+              <a href="subject.html#805">[ subject ]</a>
+              <a href="author.html#805">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

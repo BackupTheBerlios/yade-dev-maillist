@@ -1,0 +1,167 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] svn1376 crash
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20svn1376%20crash&In-Reply-To=%3C200806061257.58316.dorofeenko%40icp.ac.ru%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000225.html">
+   <LINK REL="Next"  HREF="000227.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] svn1376 crash</H1>
+    <B>sega</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20svn1376%20crash&In-Reply-To=%3C200806061257.58316.dorofeenko%40icp.ac.ru%3E"
+       TITLE="[yade-dev] svn1376 crash">dorofeenko at icp.ac.ru
+       </A><BR>
+    <I>Fri Jun  6 10:57:57 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000225.html">[yade-dev] svn1372 crash
+</A></li>
+        <LI>Next message: <A HREF="000227.html">[yade-dev] svn1376 bug
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#226">[ date ]</a>
+              <a href="thread.html#226">[ thread ]</a>
+              <a href="subject.html#226">[ subject ]</a>
+              <a href="author.html#226">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE><A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at sega</A>:~/YADE/data&gt; yade-trunk STLImporterTest.py
+Constructing ClassFactory  (if multiple times - check '-rdynamic' flag!).
+Constructing SerializableSingleton  (if multiple times - check '-rdynamic' flag!).
+WARNING: cannot open file used for capillary law, in TriaxalTestWater
+Running script STLImporterTest.py
+__   __    ____          ____                      _
+\ \ / /_ _|  _ \  ___   / ___|___  _ __  ___  ___ | | ___
+ \ V / _` | | | |/ _ \ | |   / _ \| '_ \/ __|/ _ \| |/ _ \
+  | | (_| | |_| |  __/ | |__| (_) | | | \__ \ (_) | |  __/
+  |_|\__,_|____/ \___|  \____\___/|_| |_|___/\___/|_|\___|
+
+
+In [1]: Omega::instance().getSimulationFileName()=
+In [1]: SIGSEGV/SIGABRT handler called; gdb batch file is `/home/sega/.yade-trunk/gdb_crash_batch-pid20763'
+GNU gdb 6.5
+Copyright (C) 2006 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type &quot;show copying&quot; to see the conditions.
+There is absolutely no warranty for GDB.  Type &quot;show warranty&quot; for details.
+This GDB was configured as &quot;x86_64-suse-linux&quot;.
+Using host libthread_db library &quot;/lib64/libthread_db.so.1&quot;.
+[Thread debugging using libthread_db enabled]
+[New Thread 47835561507888 (LWP 20763)]
+[New Thread 1091017024 (LWP 20930)]
+[New Thread 1082149184 (LWP 20809)]
+0x00002b81915b9302 in __select_nocancel () from /lib64/libc.so.6
+No symbol &quot;info&quot; in current context.
+
+Thread 3 (Thread 1082149184 (LWP 20809)):
+#0  0x00002b81915b9302 in __select_nocancel () from /lib64/libc.so.6
+#1  0x00002aaad0b124c5 in initreadline () from /usr/lib64/python2.5/lib-dynload/readline.so
+#2  0x00002b818dcefb4f in PyOS_Readline () from /usr/lib64/libpython2.5.so.1.0
+#3  0x00002b818dd5bc74 in _PyBuiltin_Init () from /usr/lib64/libpython2.5.so.1.0
+#4  0x00002b818dd6556a in PyEval_EvalFrameEx () from /usr/lib64/libpython2.5.so.1.0
+#5  0x00002b818dd665ac in PyEval_EvalCodeEx () from /usr/lib64/libpython2.5.so.1.0
+#6  0x00002b818dd64cd4 in PyEval_EvalFrameEx () from /usr/lib64/libpython2.5.so.1.0
+#7  0x00002b818dd665ac in PyEval_EvalCodeEx () from /usr/lib64/libpython2.5.so.1.0
+#8  0x00002b818dd64cd4 in PyEval_EvalFrameEx () from /usr/lib64/libpython2.5.so.1.0
+#9  0x00002b818dd665ac in PyEval_EvalCodeEx () from /usr/lib64/libpython2.5.so.1.0
+#10 0x00002b818dd64cd4 in PyEval_EvalFrameEx () from /usr/lib64/libpython2.5.so.1.0
+#11 0x00002b818dd665ac in PyEval_EvalCodeEx () from /usr/lib64/libpython2.5.so.1.0
+#12 0x00002b818dd0ec48 in PyClassMethod_New () from /usr/lib64/libpython2.5.so.1.0
+#13 0x00002b818dcf1e13 in PyObject_Call () from /usr/lib64/libpython2.5.so.1.0
+#14 0x00002b818dcf8ecd in PyClass_IsSubclass () from /usr/lib64/libpython2.5.so.1.0
+#15 0x00002b818dcf1e13 in PyObject_Call () from /usr/lib64/libpython2.5.so.1.0
+#16 0x00002b818dcf993b in _PyInstance_Lookup () from /usr/lib64/libpython2.5.so.1.0
+#17 0x00002b818dcf1e13 in PyObject_Call () from /usr/lib64/libpython2.5.so.1.0
+#18 0x00002b818dd62463 in PyEval_EvalFrameEx () from /usr/lib64/libpython2.5.so.1.0
+#19 0x00002b818dd665ac in PyEval_EvalCodeEx () from /usr/lib64/libpython2.5.so.1.0
+#20 0x00002b818dd665f2 in PyEval_EvalCode () from /usr/lib64/libpython2.5.so.1.0
+#21 0x00002b818dd7f022 in Py_CompileString () from /usr/lib64/libpython2.5.so.1.0
+#22 0x00002b818dd7f0f6 in PyRun_FileExFlags () from /usr/lib64/libpython2.5.so.1.0
+#23 0x00002b818dd805b8 in PyRun_SimpleFileExFlags () from /usr/lib64/libpython2.5.so.1.0
+#24 0x00002aaab50667d5 in PythonUI::execScript (script=@0x40803fd0) at gui/py/PythonUI.cpp:42
+#25 0x00002aaab50676e8 in PythonUI::pythonSession () at gui/py/PythonUI.cpp:92
+#26 0x00002aaab494f841 in boost::detail::function::void_function_invoker0&lt;void (*)(), void&gt;::invoke (function_ptr=@0x408040a8) at /usr/local/inc
+lude/boost/function/function_template.hpp:114
+#27 0x00002b818e68e54e in boost::function0&lt;void, std::allocator&lt;boost::function_base&gt; &gt;::operator() () from /usr/local/lib64/libboost_thread-gcc
+41-mt-1_34_1.so.1.34.1
+#28 0x00002b818e68e202 in boost::thread_group::add_thread () from /usr/local/lib64/libboost_thread-gcc41-mt-1_34_1.so.1.34.1
+#29 0x00002b818e01309e in start_thread () from /lib64/libpthread.so.0
+#30 0x00002b81915bf4cd in clone () from /lib64/libc.so.6
+#31 0x0000000000000000 in ?? ()
+
+Thread 2 (Thread 1091017024 (LWP 20930)):
+#0  0x00002b8191590e1f in waitpid () from /lib64/libc.so.6
+#1  0x00002b8191539491 in do_system () from /lib64/libc.so.6
+#2  0x00002b8191539817 in system () from /lib64/libc.so.6
+#3  0x000000000056f82b in sigHandler (sig=11) at core/yade.cpp:58
+#4  &lt;signal handler called&gt;
+#5  0x00002b819030cdce in Wm3::Vector3&lt;double&gt;::Dot (this=0x0, rkV=@0x41078a00) at /home/sega/build/yade/build-trunk/include/yade-trunk/yade/lib
+-miniWm3/Wm3Vector3.inl:293
+#6  0x00002aaac419f3f9 in InteractingFacet2InteractingSphere4SpheresContactGeometry::go (this=0xa49210, cm1=@0x41078c80, cm2=@0x41078c90, se31=@           0xb4d1e0, se32=@0xbc2650, c=@0x41078d80) at pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp:49
+#7  0x00002aaac419f182 in InteractingFacet2InteractingSphere4SpheresContactGeometry::goReverse (this=0xa49210, cm1=@0x41078c90, cm2=@0x41078c80,            se31=@0xbc2650, se32=@0xb4d1e0, c=@0x41078d80) at pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp:87
+#8  0x00002aaaadc2745f in DynLibDispatcher&lt;Loki::Typelist&lt;InteractingGeometry, Loki::Typelist&lt;InteractingGeometry, Loki::NullType&gt; &gt;, Interactio           nGeometryEngineUnit, bool, Loki::Typelist&lt;boost::shared_ptr&lt;InteractingGeometry&gt; const&amp;, Loki::Typelist&lt;boost::shared_ptr&lt;InteractingGeometry&gt; c           onst&amp;, Loki::Typelist&lt;Se3&lt;double&gt; const&amp;, Loki::Typelist&lt;Se3&lt;double&gt; const&amp;, Loki::Typelist&lt;boost::shared_ptr&lt;Interaction&gt; const&amp;, Loki::NullTyp           e&gt; &gt; &gt; &gt; &gt;, false&gt;::InvocationTraits&lt;false, InteractingGeometry, InteractingGeometry, Se3&lt;double&gt; const&amp;, Se3&lt;double&gt; const&amp;, boost::shared_ptr&lt;           Interaction&gt; const&amp;, Loki::EmptyType, Loki::EmptyType, Loki::EmptyType, Loki::EmptyType, Loki::EmptyType, Loki::EmptyType, Loki::EmptyType, Loki           ::EmptyType, Loki::EmptyType, Loki::EmptyType&gt;::doDispatch (ex=@0xa472e0, base1=@0x41078c90, base2=@0x41078c80, p3=@0xbc2650, p4=@0xb4d1e0, p5=@           0x41078d80) at /home/sega/build/yade/build-trunk/include/yade-trunk/yade/lib-multimethods/DynLibDispatcher.hpp:678
+#9  0x00002aaaadc2a8c6 in DynLibDispatcher&lt;Loki::Typelist&lt;InteractingGeometry, Loki::Typelist&lt;InteractingGeometry, Loki::NullType&gt; &gt;, Interactio           nGeometryEngineUnit, bool, Loki::Typelist&lt;boost::shared_ptr&lt;InteractingGeometry&gt; const&amp;, Loki::Typelist&lt;boost::shared_ptr&lt;InteractingGeometry&gt; c           onst&amp;, Loki::Typelist&lt;Se3&lt;double&gt; const&amp;, Loki::Typelist&lt;Se3&lt;double&gt; const&amp;, Loki::Typelist&lt;boost::shared_ptr&lt;Interaction&gt; const&amp;, Loki::NullTyp           e&gt; &gt; &gt; &gt; &gt;, false&gt;::operator() (this=0xa49280, base1=@0xbace48, base2=@0xb4bc48, p3=@0xbc2650, p4=@0xb4d1e0, p5=@0x41078d80) at /home/sega/build           /yade/build-trunk/include/yade-trunk/yade/lib-multimethods/DynLibDispatcher.hpp:879
+#10 0x00002aaaadc1f64e in InteractionGeometryMetaEngine::action (this=0xa49240, ncb=0x94caf0) at pkg/common/Engine/MetaEngine/InteractionGeometr           yMetaEngine.cpp:50
+#11 0x00000000005105a3 in MetaBody::moveToNextTimeStep (this=0x94caf0) at core/MetaBody.cpp:81
+#12 0x00000000005664b9 in SimulationFlow::singleAction (this=0x80dd60) at core/SimulationFlow.cpp:17
+#13 0x0000000000568344 in ThreadWorker::callSingleAction (this=0x80dd60) at core/ThreadWorker.cpp:71
+#14 0x0000000000567a25 in ThreadRunner::call (this=0xa4d9b0) at core/ThreadRunner.cpp:42
+#15 0x0000000000567a89 in ThreadRunner::run (this=0xa4d9b0) at core/ThreadRunner.cpp:21
+#16 0x0000000000567f9d in boost::_mfi::mf0&lt;void, ThreadRunner&gt;::operator() (this=0x410790a8, p=0xa4d9b0) at /usr/local/include/boost/bind/mem_fn           _template.hpp:49
+#17 0x000000000056801e in boost::_bi::list1&lt;boost::_bi::value&lt;ThreadRunner*&gt; &gt;::operator()&lt;boost::_mfi::mf0&lt;void, ThreadRunner&gt;, boost::_bi::lis           t0&gt; (this=0x410790b8, f=@0x410790a8, a=@0x4107900f) at /usr/local/include/boost/bind.hpp:231
+#18 0x0000000000568061 in boost::_bi::bind_t&lt;void, boost::_mfi::mf0&lt;void, ThreadRunner&gt;, boost::_bi::list1&lt;boost::_bi::value&lt;ThreadRunner*&gt; &gt; &gt;:           :operator() (this=0x410790a8) at /usr/local/include/boost/bind/bind_template.hpp:20
+#19 0x0000000000568086 in boost::detail::function::void_function_obj_invoker0&lt;boost::_bi::bind_t&lt;void, boost::_mfi::mf0&lt;void, ThreadRunner&gt;, boo           st::_bi::list1&lt;boost::_bi::value&lt;ThreadRunner*&gt; &gt; &gt;, void&gt;::invoke (function_obj_ptr=@0x410790a8) at /usr/local/include/boost/function/function_           template.hpp:155
+#20 0x00002b818e68e54e in boost::function0&lt;void, std::allocator&lt;boost::function_base&gt; &gt;::operator() () from /usr/local/lib64/libboost_thread-gcc           41-mt-1_34_1.so.1.34.1
+#21 0x00002b818e68e202 in boost::thread_group::add_thread () from /usr/local/lib64/libboost_thread-gcc41-mt-1_34_1.so.1.34.1
+#22 0x00002b818e01309e in start_thread () from /lib64/libpthread.so.0
+#23 0x00002b81915bf4cd in clone () from /lib64/libc.so.6
+#24 0x0000000000000000 in ?? ()
+
+Thread 1 (Thread 47835561507888 (LWP 20763)):
+#0  0x00002b81915b9302 in __select_nocancel () from /lib64/libc.so.6
+#1  0x00002b818ef5424b in QEventLoop::processEvents () from /usr/lib64/libqt-mt.so.3
+#2  0x00002b818efb2963 in QEventLoop::enterLoop () from /usr/lib64/libqt-mt.so.3
+#3  0x00002b818efb2812 in QEventLoop::exec () from /usr/lib64/libqt-mt.so.3
+#4  0x00002aaab494ee3b in QtGUI::run (this=0x8d6b20, argc=2, argv=0x7fff1d010708) at gui/qt3/QtGUI.cpp:72
+#5  0x000000000056f2f0 in main (argc=2, argv=0x7fff1d010708) at core/yade.cpp:255
+#0  0x00002b81915b9302 in __select_nocancel () from /lib64/libc.so.6
+In [1]: Segmentation Fault
+
+ps. Previously it worked...
+-- 
+Best regards, Sergei D.
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000225.html">[yade-dev] svn1372 crash
+</A></li>
+	<LI>Next message: <A HREF="000227.html">[yade-dev] svn1376 bug
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#226">[ date ]</a>
+              <a href="thread.html#226">[ thread ]</a>
+              <a href="subject.html#226">[ subject ]</a>
+              <a href="author.html#226">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

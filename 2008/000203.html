@@ -1,0 +1,128 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] [Yade-commits] r1359 - in trunk: core gui/py lib/import pkg/common/DataClass/PhysicalParameters pkg/common/Engine/DeusExMachina pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20r1359%20-%20in%20trunk%3A%20core%20gui/py%0A%20lib/import%20pkg/common/DataClass/PhysicalParameters%0A%20pkg/common/Engine/DeusExMachina%20pkg/common/Engine/StandAloneEngine%0A%20pkg/dem/Engine/EngineUnit%20pkg/dem/Engine/StandAloneEngine%0A%20pkg/dem/RenderingEngine/GLDrawElasticContactInteraction&In-Reply-To=%3C4836F59B.9030402%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000200.html">
+   <LINK REL="Next"  HREF="000204.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py lib/import pkg/common/DataClass/PhysicalParameters pkg/common/Engine/DeusExMachina pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/RenderingEngine/GLDrawElasticContactInteraction</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20r1359%20-%20in%20trunk%3A%20core%20gui/py%0A%20lib/import%20pkg/common/DataClass/PhysicalParameters%0A%20pkg/common/Engine/DeusExMachina%20pkg/common/Engine/StandAloneEngine%0A%20pkg/dem/Engine/EngineUnit%20pkg/dem/Engine/StandAloneEngine%0A%20pkg/dem/RenderingEngine/GLDrawElasticContactInteraction&In-Reply-To=%3C4836F59B.9030402%40hmg.inpg.fr%3E"
+       TITLE="[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py lib/import pkg/common/DataClass/PhysicalParameters pkg/common/Engine/DeusExMachina pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/RenderingEngine/GLDrawElasticContactInteraction">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Fri May 23 18:49:31 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000200.html">[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py lib/import pkg/common/DataClass/PhysicalParameters pkg/common/Engine/DeusExMachina pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+        <LI>Next message: <A HREF="000204.html">[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py lib/import pkg/common/DataClass/PhysicalParameters pkg/common/Engine/DeusExMachina pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#203">[ date ]</a>
+              <a href="thread.html#203">[ thread ]</a>
+              <a href="subject.html#203">[ subject ]</a>
+              <a href="author.html#203">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>V&#225;clav S a &#233;crit :
+&gt;&gt;<i> 1. There is SpheresContactGeometry. Is it supposed to be used _only
+</I>&gt;&gt;<i> for contact_ interactions?
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> 2. There is DistantSpheresContactGeometry. Is it supposed to be used
+</I>&gt;&gt;<i> for _distant_ interactions?
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i>     
+</I>&gt;<i> No; the name is misleding;
+</I>&gt;<i> InteractingSphere2InteractingSphere4DistantSpheresContactGeometry
+</I>&gt;<i> creates SpheresContacatGeometry; contrary to IS2IS4SCG however, it will
+</I>&gt;<i> create SpheresContactGeometry even if penetrationDepth&lt;=0.
+</I>&gt;<i>
+</I>&gt;<i> [ I eventually want to replace IS2IS4DSCG by IS2IS4SCG with some flag
+</I>&gt;<i> that will permit distant interactions. There is no reason for such code
+</I>&gt;<i> duplication ]
+</I>&gt;<i>   
+</I>Please just forget those &quot;distant&quot; classes, normal classes have the same 
+features now.
+
+&gt;&gt;<i>     
+</I>&gt;<i> isReal is not clear at all and I had to read sources (at all the places
+</I>&gt;<i> where it is used) to get to know what it means. isReal for distant
+</I>&gt;<i> contact is false, but the contact is not &quot;unreal&quot; nonetheless. (yes,
+</I>&gt;<i> isNew is OK)
+</I>&gt;<i>   
+</I>Huh?!!! Sure of that?
+isReal for distant contacts should be true since only the contact law 
+will set it false.
+
+For me the meaning of isReal is clear : isReal = &quot;is there an interaction?&quot;.
+
+
+&gt;<i> Again, I suggest moving this discussion to the wiki page
+</I>&gt;<i> <A HREF="http://yade.wikia.com/wiki/Sanitizing_Contact_Logic">http://yade.wikia.com/wiki/Sanitizing_Contact_Logic</A> so that we have some
+</I>&gt;<i> starting point and can decide what and how will change.
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>Ok, moving to wiki :)
+
+B
+
+
+
+&gt;<i> Regards, V.
+</I>&gt;<i>
+</I>&gt;<i> _______________________________________________
+</I>&gt;<i> yade-dev mailing list
+</I>&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.berlios.de</A>
+</I>&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">https://lists.berlios.de/mailman/listinfo/yade-dev</A>
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Institut National Polytechnique de Grenoble
+Laboratoire 3S (Soils Solids Structures) - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000200.html">[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py lib/import pkg/common/DataClass/PhysicalParameters pkg/common/Engine/DeusExMachina pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+	<LI>Next message: <A HREF="000204.html">[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py lib/import pkg/common/DataClass/PhysicalParameters pkg/common/Engine/DeusExMachina pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#203">[ date ]</a>
+              <a href="thread.html#203">[ thread ]</a>
+              <a href="subject.html#203">[ subject ]</a>
+              <a href="author.html#203">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

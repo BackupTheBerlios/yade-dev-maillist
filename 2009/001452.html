@@ -1,0 +1,168 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkstrategy=monolithic	option
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5BBug%20415265%5D%20Re%3A%20Script%20works%20only%0A%09with%09linkstrategy%3Dmonolithic%09option&In-Reply-To=%3C930069bf0908180452g375e8a82ycdb33be91f66b61b%40mail.gmail.com%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001450.html">
+   <LINK REL="Next"  HREF="001453.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkstrategy=monolithic	option</H1>
+    <B>Anton Gladky</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5BBug%20415265%5D%20Re%3A%20Script%20works%20only%0A%09with%09linkstrategy%3Dmonolithic%09option&In-Reply-To=%3C930069bf0908180452g375e8a82ycdb33be91f66b61b%40mail.gmail.com%3E"
+       TITLE="[deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkstrategy=monolithic	option">gladky.anton at gmail.com
+       </A><BR>
+    <I>Tue Aug 18 13:52:25 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001450.html">[deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkstrategy=monolithic option
+</A></li>
+        <LI>Next message: <A HREF="001453.html">[deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkstrategy=monolithic	option
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1452">[ date ]</a>
+              <a href="thread.html#1452">[ thread ]</a>
+              <a href="subject.html#1452">[ subject ]</a>
+              <a href="author.html#1452">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Starting program: /home/gladk/dem/yade/new_build/build/bin/yade-new_build
+pr.py
+[Thread debugging using libthread_db enabled]
+warning: Lowest section in /usr/lib/libicudata.so.38 is .hash at
+0000000000000158
+[New Thread 0x7fc7be1ca7f0 (LWP 29612)]
+[New Thread 0x7fc786663950 (LWP 29615)]
+Python TCP server listening on localhost:9000, auth cookie is `cesasu'
+[New Thread 0x7fc77e88f950 (LWP 29616)]
+Running script pr.py
+/usr/lib/python2.6/dist-packages/pytz/__init__.py:32: UserWarning: Module
+pylab was already imported from /usr/lib/python2.6/dist-packages/pylab.py,
+but /usr/lib/python2.6/dist-packages is being added to sys.path
+  from pkg_resources import resource_stream
+/usr/lib/python2.6/dist-packages/pytz/__init__.py:32: UserWarning: Module
+matplotlib was already imported from
+/usr/lib/python2.6/dist-packages/matplotlib/__init__.py, but
+/usr/lib/python2.6/dist-packages is being added to sys.path
+  from pkg_resources import resource_stream
+[New Thread 0x7fc77b738950 (LWP 29617)]
+[New Thread 0x7fc779d5a950 (LWP 29618)]
+[New Thread 0x7fc779559950 (LWP 29619)]
+
+Program received signal SIGSEGV, Segmentation fault.
+[Switching to Thread 0x7fc779559950 (LWP 29619)]
+0x00007fc79ae6cd69 in InteractionDispatchers::action (
+    .omp_data_i=0x7fc779d59c80)
+    at pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp:107
+107
+I-&gt;functorCache.constLaw-&gt;go(I-&gt;interactionGeometry,I-&gt;interactionPhysics,I.get(),rootBody);
+(gdb) quit
+
+
+______________________________
+[ENG] Best Regards
+[GER] Mit freundlichen Gr&#252;&#223;en
+[RUS] &#1057; &#1085;&#1072;&#1080;&#1083;&#1091;&#1095;&#1096;&#1080;&#1084;&#1080; &#1087;&#1086;&#1078;&#1077;&#1083;&#1072;&#1085;&#1080;&#1103;&#1084;&#1080;
+[UKR] &#1047; &#1085;&#1072;&#1081;&#1082;&#1088;&#1072;&#1097;&#1080;&#1084;&#1080; &#1087;&#1086;&#1073;&#1072;&#1078;&#1072;&#1085;&#1085;&#1103;&#1084;&#1080;
+
+Anton Gladkyy
+
+
+2009/8/18 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+
+&gt;<i>
+</I>&gt;<i> $ gdb yade-trunk
+</I>&gt;<i> (gdb) run /tmp/pr.py
+</I>&gt;<i> [wait till it crashes]
+</I>&gt;<i> (gdb) thread apply all bt
+</I>&gt;<i> (gdb) quit
+</I>&gt;<i>
+</I>&gt;<i> --
+</I>&gt;<i> Script works only with linkstrategy=monolithic option
+</I>&gt;<i> <A HREF="https://bugs.launchpad.net/bugs/415265">https://bugs.launchpad.net/bugs/415265</A>
+</I>&gt;<i> You received this bug notification because you are a direct subscriber
+</I>&gt;<i> of the bug.
+</I>&gt;<i>
+</I>&gt;<i> Status in Yet Another Dynamic Engine: New
+</I>&gt;<i>
+</I>&gt;<i> Bug description:
+</I>&gt;<i> When I start the simulation with the attached script, I get:
+</I>&gt;<i>
+</I>&gt;<i> gdb 6.8-debian
+</I>&gt;<i> Copyright (C) 2008 Free Software Foundation, Inc.
+</I>&gt;<i> License GPLv3+: GNU GPL version 3 or later &lt;
+</I>&gt;<i> <A HREF="http://gnu.org/licenses/gpl.html">http://gnu.org/licenses/gpl.html</A>&gt;
+</I>&gt;<i> This is free software: you are free to change and redistribute it.
+</I>&gt;<i> There is NO WARRANTY, to the extent permitted by law.  Type &quot;show copying&quot;
+</I>&gt;<i> and &quot;show warranty&quot; for details.
+</I>&gt;<i> This GDB was configured as &quot;x86_64-linux-gnu&quot;.
+</I>&gt;<i> /home/gladk/.yade-current/gdb_crash_batch-pid13289:1: Error in sourced
+</I>&gt;<i> command file:
+</I>&gt;<i> ptrace: No such process.
+</I>&gt;<i> (gdb)
+</I>&gt;<i>
+</I>&gt;<i> But when I do the same on installation with linkstrategy=monolithic
+</I>&gt;<i> compilation option it works normally.
+</I>&gt;<i>
+</I>
+-- 
+Script works only with linkstrategy=monolithic option
+<A HREF="https://bugs.launchpad.net/bugs/415265">https://bugs.launchpad.net/bugs/415265</A>
+You received this bug notification because you are a member of Yade
+developers, which is subscribed to Yade.
+
+Status in Yet Another Dynamic Engine: New
+
+Bug description:
+When I start the simulation with the attached script, I get:
+
+gdb 6.8-debian
+Copyright (C) 2008 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later &lt;<A HREF="http://gnu.org/licenses/gpl.html">http://gnu.org/licenses/gpl.html</A>&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type &quot;show copying&quot;
+and &quot;show warranty&quot; for details.
+This GDB was configured as &quot;x86_64-linux-gnu&quot;.
+/home/gladk/.yade-current/gdb_crash_batch-pid13289:1: Error in sourced command file:
+ptrace: No such process.
+(gdb)
+
+But when I do the same on installation with linkstrategy=monolithic compilation option it works normally.
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001450.html">[deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkstrategy=monolithic option
+</A></li>
+	<LI>Next message: <A HREF="001453.html">[deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkstrategy=monolithic	option
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1452">[ date ]</a>
+              <a href="thread.html#1452">[ thread ]</a>
+              <a href="subject.html#1452">[ subject ]</a>
+              <a href="author.html#1452">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

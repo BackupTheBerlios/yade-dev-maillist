@@ -1,0 +1,711 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1573 - in trunk:	extra/triangulation	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1573%20-%20in%20trunk%3A%0A%09extra/triangulation%09pkg/dem/Engine/DeusExMachina%0A%09pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200811171541.mAHFfixL009826%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000514.html">
+   <LINK REL="Next"  HREF="000508.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1573 - in trunk:	extra/triangulation	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1573%20-%20in%20trunk%3A%0A%09extra/triangulation%09pkg/dem/Engine/DeusExMachina%0A%09pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200811171541.mAHFfixL009826%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1573 - in trunk:	extra/triangulation	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Mon Nov 17 16:41:44 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000514.html">[deprecated list] [Yade-dev] (x,y,z) convention
+</A></li>
+        <LI>Next message: <A HREF="000508.html">[deprecated list] [Yade-dev] [svn] r1574 - in trunk:	extra/triangulation	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#507">[ date ]</a>
+              <a href="thread.html#507">[ thread ]</a>
+              <a href="subject.html#507">[ subject ]</a>
+              <a href="author.html#507">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2008-11-17 16:41:43 +0100 (Mon, 17 Nov 2008)
+New Revision: 1573
+
+Modified:
+   trunk/extra/triangulation/Tesselation.cpp
+   trunk/extra/triangulation/TesselationWrapper.cpp
+   trunk/extra/triangulation/makefile
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.cpp
+Log:
+- Fix conflicts and prepare next implementation of isotropic compression
+
+
+
+
+Modified: trunk/extra/triangulation/Tesselation.cpp
+===================================================================
+--- trunk/extra/triangulation/Tesselation.cpp	2008-11-17 10:54:38 UTC (rev 1572)
++++ trunk/extra/triangulation/Tesselation.cpp	2008-11-17 15:41:43 UTC (rev 1573)
+@@ -1,13 +1,13 @@
+ #include &quot;Tesselation.h&quot;
+ #include &quot;CGAL/constructions/constructions_on_weighted_points_cartesian_3.h&quot;
+ //Tesselation TESSELATION = Tesselation();
+- 
+ 
++
+ using namespace std;
+-  
++
+ Tesselation::Tesselation ( void )
+ {
+-// 	std::cout &lt;&lt; &quot;Tesselation(void)&quot; &lt;&lt; std::endl;
++//  std::cout &lt;&lt; &quot;Tesselation(void)&quot; &lt;&lt; std::endl;
+ 	Tri = new RTriangulation;
+ 	Tes = Tri;
+ 	computed = false;
+@@ -22,7 +22,7 @@
+ Tesselation::Tesselation ( RTriangulation &amp;T )
+ 		: Tri ( &amp;T ), Tes ( &amp;T ), computed ( true )
+ {
+-// 	std::cout &lt;&lt; &quot;Tesselation(RTriangulation &amp;T)&quot; &lt;&lt; std::endl;
++//  std::cout &lt;&lt; &quot;Tesselation(RTriangulation &amp;T)&quot; &lt;&lt; std::endl;
+ 	Compute();
+ }
+ 
+@@ -42,20 +42,20 @@
+ 
+ // bool Tesselation::insert ( Real x, Real y, Real z, Real rad, unsigned int id, bool isFictious )
+ // {
+-// 	Vertex_handle Vh;
+-// 	Vh = Tri-&gt;insert ( Sphere ( Point ( x,y,z ),pow ( rad,2 ) ) );
+-// 	if ( Vh!=NULL )
+-// 	{
+-// 		Vh-&gt;info() = id;
+-// 		Vh-&gt;info().isFictious = isFictious;
+-// 		if ( !isFictious ) max_id = std::max ( max_id, id );
+-// 	}
+-// 	else return false;
+-// 	return true;
++//  Vertex_handle Vh;
++//  Vh = Tri-&gt;insert ( Sphere ( Point ( x,y,z ),pow ( rad,2 ) ) );
++//  if ( Vh!=NULL )
++//  {
++//   Vh-&gt;info() = id;
++//   Vh-&gt;info().isFictious = isFictious;
++//   if ( !isFictious ) max_id = std::max ( max_id, id );
++//  }
++//  else return false;
++//  return true;
+ // }
+ 
+ 
+-Vertex_handle Tesselation::insert(Real x, Real y, Real z, Real rad, unsigned int id, bool isFictious)
++Vertex_handle Tesselation::insert ( Real x, Real y, Real z, Real rad, unsigned int id, bool isFictious )
+ {
+ 
+ 	Vertex_handle Vh;
+@@ -66,12 +66,12 @@
+ 		Vh-&gt;info().isFictious = isFictious;
+ 		if ( !isFictious ) max_id = std::max ( max_id, id );
+ 	}
+- 	else cout &lt;&lt; id &lt;&lt;  &quot; : Vh==NULL!!&quot; &lt;&lt; endl;
++	else cout &lt;&lt; id &lt;&lt;  &quot; : Vh==NULL!!&quot; &lt;&lt; endl;
+ 	return Vh;
+ }
+ 
+ 
+-Vertex_handle Tesselation::move(Real x, Real y, Real z, Real rad, unsigned int id)
++Vertex_handle Tesselation::move ( Real x, Real y, Real z, Real rad, unsigned int id )
+ {
+ 	bool fictious = vertexHandles[id]-&gt;info().isFictious;
+ 	Vertex_handle Vh;
+@@ -80,13 +80,14 @@
+ 	{
+ 		vertexHandles[id] = Vh;
+ 		Vh-&gt;info() = id;
+-		Vh-&gt;info().isFictious = fictious;		
+-	} else cerr &lt;&lt; &quot;Vh==NULL&quot; &lt;&lt; &quot; id=&quot; &lt;&lt; id &lt;&lt; &quot; Point=&quot; &lt;&lt; Point ( x,y,z ) &lt;&lt; &quot; rad=&quot; &lt;&lt; rad &lt;&lt; endl;
++		Vh-&gt;info().isFictious = fictious;
++	}
++	else cerr &lt;&lt; &quot;Vh==NULL&quot; &lt;&lt; &quot; id=&quot; &lt;&lt; id &lt;&lt; &quot; Point=&quot; &lt;&lt; Point ( x,y,z ) &lt;&lt; &quot; rad=&quot; &lt;&lt; rad &lt;&lt; endl;
+ 	return Vh;
+ }
+- 
+ 
+ 
++
+ bool Tesselation::redirect ( void )
+ {
+ 	if ( !redirected )
+@@ -159,11 +160,8 @@
+ 
+ void Tesselation::Compute ()
+ {
+-&lt;&lt;&lt;&lt;&lt;&lt;&lt; .mine
+-// 	std::cout &lt;&lt; &quot;Tesselation::Compute ()&quot; &lt;&lt; std::endl;
+-=======
+-	std::cerr &lt;&lt; &quot;Tesselation::Compute ()&quot; &lt;&lt; std::endl;
+-&gt;&gt;&gt;&gt;&gt;&gt;&gt; .r1529
++
++//  std::cout &lt;&lt; &quot;Tesselation::Compute ()&quot; &lt;&lt; std::endl;
+ 	Finite_cells_iterator cell_end = Tri-&gt;finite_cells_end();
+ 
+ 	for ( Finite_cells_iterator cell = Tri-&gt;finite_cells_begin(); cell != cell_end; cell++ )
+@@ -185,11 +183,11 @@
+ 			S3.point().x(), S3.point().y(), S3.point().z(), S3.weight(),
+ 			x, y, z );
+ 		cell-&gt;info() =Point ( x,y,z );
+-		//cout &lt;&lt; &quot;voronoi cell : &quot; &lt;&lt;  cell-&gt;vertex(0)-&gt;info().id() &lt;&lt; &quot; &quot; 
+-		//		&lt;&lt;  cell-&gt;vertex(1)-&gt;info().id() &lt;&lt; &quot; &quot; 
+-		//		&lt;&lt;  cell-&gt;vertex(2)-&gt;info().id() &lt;&lt; &quot; &quot; 
+-		//		&lt;&lt;  cell-&gt;vertex(3)-&gt;info().id() &lt;&lt; &quot;(center : &quot; &lt;&lt; (Point) cell-&gt;info() &lt;&lt; &quot;)&quot; &lt;&lt; endl;
+-}
++		//cout &lt;&lt; &quot;voronoi cell : &quot; &lt;&lt;  cell-&gt;vertex(0)-&gt;info().id() &lt;&lt; &quot; &quot;
++		//  &lt;&lt;  cell-&gt;vertex(1)-&gt;info().id() &lt;&lt; &quot; &quot;
++		//  &lt;&lt;  cell-&gt;vertex(2)-&gt;info().id() &lt;&lt; &quot; &quot;
++		//  &lt;&lt;  cell-&gt;vertex(3)-&gt;info().id() &lt;&lt; &quot;(center : &quot; &lt;&lt; (Point) cell-&gt;info() &lt;&lt; &quot;)&quot; &lt;&lt; endl;
++	}
+ 
+ 
+ 	computed = true;
+@@ -400,30 +398,30 @@
+ 	}
+ 	cell0=cell2++;
+ 	Cell_circulator cell1=cell2++;
+-  //std::cout &lt;&lt; &quot;edge : &quot; &lt;&lt; ed_it-&gt;first-&gt;vertex ( ed_it-&gt;second )-&gt;info().id() &lt;&lt; &quot;-&quot; &lt;&lt; ed_it-&gt;first-&gt;vertex ( ed_it-&gt;third )-&gt;info().id() &lt;&lt; std::endl;
++	//std::cout &lt;&lt; &quot;edge : &quot; &lt;&lt; ed_it-&gt;first-&gt;vertex ( ed_it-&gt;second )-&gt;info().id() &lt;&lt; &quot;-&quot; &lt;&lt; ed_it-&gt;first-&gt;vertex ( ed_it-&gt;third )-&gt;info().id() &lt;&lt; std::endl;
+ 	bool isFictious1 = ( ed_it-&gt;first )-&gt;vertex ( ed_it-&gt;second )-&gt;info().isFictious;
+ 	bool isFictious2 = ( ed_it-&gt;first )-&gt;vertex ( ed_it-&gt;third )-&gt;info().isFictious;
+ 	Real r;
+-	
+-	//cout &lt;&lt; &quot;cell0 : &quot; &lt;&lt;  cell0-&gt;vertex(0)-&gt;info().id() &lt;&lt; &quot; &quot; 
+-	//			&lt;&lt;  cell0-&gt;vertex(1)-&gt;info().id() &lt;&lt; &quot; &quot; 
+-	//			&lt;&lt;  cell0-&gt;vertex(2)-&gt;info().id() &lt;&lt; &quot; &quot; 
+-	//			&lt;&lt;  cell0-&gt;vertex(3)-&gt;info().id() &lt;&lt; &quot;(center : &quot; &lt;&lt; (Point) cell0-&gt;info() &lt;&lt; &quot;)&quot; &lt;&lt;   endl;
+ 
++	//cout &lt;&lt; &quot;cell0 : &quot; &lt;&lt;  cell0-&gt;vertex(0)-&gt;info().id() &lt;&lt; &quot; &quot;
++	//   &lt;&lt;  cell0-&gt;vertex(1)-&gt;info().id() &lt;&lt; &quot; &quot;
++	//   &lt;&lt;  cell0-&gt;vertex(2)-&gt;info().id() &lt;&lt; &quot; &quot;
++	//   &lt;&lt;  cell0-&gt;vertex(3)-&gt;info().id() &lt;&lt; &quot;(center : &quot; &lt;&lt; (Point) cell0-&gt;info() &lt;&lt; &quot;)&quot; &lt;&lt;   endl;
++
+ 	while ( cell2!=cell0 )
+-	{		
++	{
+ 		if ( !Tri-&gt;is_infinite ( cell1 )  &amp;&amp; !Tri-&gt;is_infinite ( cell2 ) )
+ 		{
+-	//	cout &lt;&lt; &quot;cell1 : &quot; &lt;&lt;  cell1-&gt;vertex(0)-&gt;info().id() &lt;&lt; &quot; &quot; 
+-	//			&lt;&lt;  cell1-&gt;vertex(1)-&gt;info().id() &lt;&lt; &quot; &quot; 
+-	//			&lt;&lt;  cell1-&gt;vertex(2)-&gt;info().id() &lt;&lt; &quot; &quot; 
+-	//			&lt;&lt;  cell1-&gt;vertex(3)-&gt;info().id() &lt;&lt; &quot;(center : &quot; &lt;&lt; (Point) cell1-&gt;info() &lt;&lt; &quot;)&quot; &lt;&lt; endl;
+-	//	cout &lt;&lt; &quot;cell2 : &quot; &lt;&lt;  cell2-&gt;vertex(0)-&gt;info().id() &lt;&lt; &quot; &quot; 
+-	//			&lt;&lt;  cell2-&gt;vertex(1)-&gt;info().id() &lt;&lt; &quot; &quot; 
+-	//			&lt;&lt;  cell2-&gt;vertex(2)-&gt;info().id() &lt;&lt; &quot; &quot; 
+-	//			&lt;&lt;  cell2-&gt;vertex(3)-&gt;info().id() &lt;&lt; &quot;(center : &quot; &lt;&lt; (Point) cell2-&gt;info() &lt;&lt; &quot;)&quot; &lt;&lt; endl;
+-		
+-    //std::cout &lt;&lt; &quot;assign tetra : (&quot; &lt;&lt; ed_it-&gt;first-&gt;vertex ( ed_it-&gt;second )-&gt;point() &lt;&lt; &quot;),(&quot; &lt;&lt; cell0-&gt;info() &lt;&lt; &quot;),(&quot; &lt;&lt; cell1-&gt;info() &lt;&lt; &quot;),(&quot; &lt;&lt;cell2-&gt;info() &lt;&lt; &quot;)&quot; &lt;&lt; std::endl;
++			// cout &lt;&lt; &quot;cell1 : &quot; &lt;&lt;  cell1-&gt;vertex(0)-&gt;info().id() &lt;&lt; &quot; &quot;
++			//   &lt;&lt;  cell1-&gt;vertex(1)-&gt;info().id() &lt;&lt; &quot; &quot;
++			//   &lt;&lt;  cell1-&gt;vertex(2)-&gt;info().id() &lt;&lt; &quot; &quot;
++			//   &lt;&lt;  cell1-&gt;vertex(3)-&gt;info().id() &lt;&lt; &quot;(center : &quot; &lt;&lt; (Point) cell1-&gt;info() &lt;&lt; &quot;)&quot; &lt;&lt; endl;
++			// cout &lt;&lt; &quot;cell2 : &quot; &lt;&lt;  cell2-&gt;vertex(0)-&gt;info().id() &lt;&lt; &quot; &quot;
++			//   &lt;&lt;  cell2-&gt;vertex(1)-&gt;info().id() &lt;&lt; &quot; &quot;
++			//   &lt;&lt;  cell2-&gt;vertex(2)-&gt;info().id() &lt;&lt; &quot; &quot;
++			//   &lt;&lt;  cell2-&gt;vertex(3)-&gt;info().id() &lt;&lt; &quot;(center : &quot; &lt;&lt; (Point) cell2-&gt;info() &lt;&lt; &quot;)&quot; &lt;&lt; endl;
++
++			//std::cout &lt;&lt; &quot;assign tetra : (&quot; &lt;&lt; ed_it-&gt;first-&gt;vertex ( ed_it-&gt;second )-&gt;point() &lt;&lt; &quot;),(&quot; &lt;&lt; cell0-&gt;info() &lt;&lt; &quot;),(&quot; &lt;&lt; cell1-&gt;info() &lt;&lt; &quot;),(&quot; &lt;&lt;cell2-&gt;info() &lt;&lt; &quot;)&quot; &lt;&lt; std::endl;
+ 			if ( !isFictious1 )
+ 			{
+ 				r = std::abs ( ( Tetraedre ( ed_it-&gt;first-&gt;vertex ( ed_it-&gt;second )-&gt;point(), cell0-&gt;info(), cell1-&gt;info(), cell2-&gt;info() ) ).volume() );
+@@ -431,7 +429,7 @@
+ 				( ed_it-&gt;first )-&gt;vertex ( ed_it-&gt;second )-&gt;info().v() += r;
+ 				TotalFiniteVoronoiVolume+=r;
+ 			}
+-    //std::cout &lt;&lt; &quot;assign tetra : (&quot; &lt;&lt; ed_it-&gt;first-&gt;vertex ( ed_it-&gt;third )-&gt;point() &lt;&lt; &quot;),(&quot; &lt;&lt; cell0-&gt;info() &lt;&lt; &quot;),(&quot; &lt;&lt; cell1-&gt;info() &lt;&lt; &quot;),(&quot; &lt;&lt;cell2-&gt;info() &lt;&lt; &quot;)&quot; &lt;&lt; std::endl;
++			//std::cout &lt;&lt; &quot;assign tetra : (&quot; &lt;&lt; ed_it-&gt;first-&gt;vertex ( ed_it-&gt;third )-&gt;point() &lt;&lt; &quot;),(&quot; &lt;&lt; cell0-&gt;info() &lt;&lt; &quot;),(&quot; &lt;&lt; cell1-&gt;info() &lt;&lt; &quot;),(&quot; &lt;&lt;cell2-&gt;info() &lt;&lt; &quot;)&quot; &lt;&lt; std::endl;
+ 			if ( !isFictious2 )
+ 			{
+ 				r = std::abs ( ( Tetraedre ( ed_it-&gt;first-&gt;vertex ( ed_it-&gt;third )-&gt;point(), cell0-&gt;info(),  cell1-&gt;info(), cell2-&gt;info() ) ).volume() );
+@@ -474,11 +472,12 @@
+ 
+ 
+ 	redirect();
+-// 	cout &lt;&lt; &quot;TotalVolume : &quot; &lt;&lt; TotalFiniteVoronoiVolume &lt;&lt; endl;
++//  cout &lt;&lt; &quot;TotalVolume : &quot; &lt;&lt; TotalFiniteVoronoiVolume &lt;&lt; endl;
+ }
+ 
+ void Tesselation::ComputePorosity ( void )  //WARNING : This function will erase real volumes of cells
+-{      // and replace it with porosity
++{
++	// and replace it with porosity
+ 	ComputeVolumes();
+ 	//Real rr=0;
+ 	Finite_vertices_iterator vertices_end = Tri-&gt;finite_vertices_end ();
+
+Modified: trunk/extra/triangulation/TesselationWrapper.cpp
+===================================================================
+--- trunk/extra/triangulation/TesselationWrapper.cpp	2008-11-17 10:54:38 UTC (rev 1572)
++++ trunk/extra/triangulation/TesselationWrapper.cpp	2008-11-17 15:41:43 UTC (rev 1573)
+@@ -57,11 +57,9 @@
+ 	facet_it = Tes-&gt;Triangulation().finite_edges_end ();
+ 	
+  }
+-&lt;&lt;&lt;&lt;&lt;&lt;&lt; .mine
++
+  
+-=======
+  
+- 
+  void TesselationWrapper::clear2(void) //for testing purpose
+  {
+  	Tes-&gt;Clear();
+@@ -76,7 +74,7 @@
+  }
+  
+ 
+-&gt;&gt;&gt;&gt;&gt;&gt;&gt; .r1529
++
+ double TesselationWrapper::Volume( unsigned int id )
+ {
+ 	return Tes-&gt;Volume(id);
+
+Modified: trunk/extra/triangulation/makefile
+===================================================================
+--- trunk/extra/triangulation/makefile	2008-11-17 10:54:38 UTC (rev 1572)
++++ trunk/extra/triangulation/makefile	2008-11-17 15:41:43 UTC (rev 1573)
+@@ -83,18 +83,12 @@
+ libTesselationWrapper.a : 	TesselationWrapper$(OBJ_EXT) \
+ 				Tenseur3$(OBJ_EXT) \
+ 				Tesselation$(OBJ_EXT) \
+-&lt;&lt;&lt;&lt;&lt;&lt;&lt; .mine
+-				RegularTriangulation$(OBJ_EXT)
+-	ar cr 	libTesselationWrapper.a \
+-				TesselationWrapper$(OBJ_EXT) \
+-=======
+ 				RegularTriangulation$(OBJ_EXT) \
+ 				TriaxialState$(OBJ_EXT) \
+ 				KinematicLocalisationAnalyser$(OBJ_EXT)
+ 	 		ar cr	libTesselationWrapper.a \
+ 	 			TesselationWrapper$(OBJ_EXT) \
+ 				Tenseur3$(OBJ_EXT) \
+-&gt;&gt;&gt;&gt;&gt;&gt;&gt; .r1529
+ 				Tesselation$(OBJ_EXT) \
+ 				RegularTriangulation$(OBJ_EXT) \
+ 				TriaxialState$(OBJ_EXT) \
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-11-17 10:54:38 UTC (rev 1572)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp	2008-11-17 15:41:43 UTC (rev 1573)
+@@ -51,14 +51,14 @@
+ 	previousSigmaIso=sigma_iso;
+ 	frictionAngleDegree = -1;
+ 	epsilonMax = 0.5;
++&lt;&lt;&lt;&lt;&lt;&lt;&lt; .mine
+ 
+ 	isotropicCompaction=false;
+ 	spheresVolume=0;
+  	boxVolume=0;
+ 
+-	calculatedPorosity=1.1;	
++//	calculatedPorosity=1.1;	
+ 
+-
+ }
+ 
+ TriaxialCompressionEngine::~TriaxialCompressionEngine()
+@@ -184,11 +184,13 @@
+ 			doStateTransition (ncb, STATE_LIMBO );
+ 			}
+ 		}
+-		else if ( calculatedPorosity&lt;=fixedPorosity &amp;&amp; currentState==STATE_FIXED_POROSITY_COMPACTION )
++
++		else if ( porosity&lt;=fixedPorosity &amp;&amp; currentState==STATE_FIXED_POROSITY_COMPACTION )
+ 		{
+-		Omega::instance().stopSimulationLoop();
+-		return;
++			Omega::instance().stopSimulationLoop();
++			return;
+ 		}
++
+ #if 0
+ 		//This is a hack in order to allow subsequent run without activating compression - like for the YADE-COMSOL coupling
+ 		if ( !compressionActivated )
+@@ -222,21 +224,22 @@
+ 		LOG_INFO ( &quot;First run, will initialize!&quot; );
+ 		/* FIXME: are these three if's mutually exclusive and are partition of all possibilities? */
+ 		//sigma_iso was changed, we need to rerun compaction
++
+ 		if ( (sigmaIsoCompaction!=previousSigmaIso || currentState==STATE_UNINITIALIZED || currentState== STATE_LIMBO) &amp;&amp; currentState!=STATE_TRIAX_LOADING &amp;&amp; isotropicCompaction == false) doStateTransition (ncb, STATE_ISO_COMPACTION );
+ 		if ( previousState==STATE_LIMBO &amp;&amp; currentState==STATE_TRIAX_LOADING &amp;&amp; isotropicCompaction == false ) doStateTransition (ncb, STATE_TRIAX_LOADING );
+-		if ( fixedPorosity&lt;1 &amp;&amp; currentState==STATE_UNINITIALIZED &amp;&amp; isotropicCompaction!=false )
+-		{
+-			doStateTransition (ncb, STATE_FIXED_POROSITY_COMPACTION );
+-			FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *ncb-&gt;bodies){
+-				if(!b-&gt;isDynamic) continue;
+-				const shared_ptr&lt;Sphere&gt;&amp; sphere=YADE_PTR_CAST&lt;Sphere&gt; ( b-&gt;geometricalModel );
+-				spheresVolume += (4./3.)*Mathr::PI*pow( sphere-&gt;radius, 3 );
+-			}
+-			previousState=currentState;
+-			previousSigmaIso=sigma_iso;
+-			firstRun=false; // change this only _after_ state transitions
+-		}
++		//if ( fixedPorosity&lt;1 &amp;&amp; currentState==STATE_UNINITIALIZED &amp;&amp; isotropicCompaction!=false )
++		//{
++		//	doStateTransition (ncb, STATE_FIXED_POROSITY_COMPACTION );
++// 			FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *ncb-&gt;bodies){
++// 				if(!b-&gt;isDynamic) continue;
++// 				const shared_ptr&lt;Sphere&gt;&amp; sphere=YADE_PTR_CAST&lt;Sphere&gt; ( b-&gt;geometricalModel );
++// 				spheresVolume += (4./3.)*Mathr::PI*pow( sphere-&gt;radius, 3 );
++// 			}
++		previousState=currentState;
++		previousSigmaIso=sigma_iso;
++		firstRun=false; // change this only _after_ state transitions
+ 	}
++
+ 	if ( saveSimulation )
+ 	{
+ 		string fileName = &quot;./&quot;+ Key + &quot;_&quot; + Phase1End + &quot;_&quot; +
+@@ -288,6 +291,7 @@
+ 			Omega::instance().stopSimulationLoop();
+ 		}
+ 	}
++
+ 	if ( currentState==STATE_FIXED_POROSITY_COMPACTION )
+ 	{
+ 		if ( Omega::instance().getCurrentIteration() % 100 == 0 )
+@@ -311,13 +315,6 @@
+ 		p-&gt;se3.position += 0.5*translationSpeed*width*translationAxisx*dt;
+ 		p = static_cast&lt;PhysicalParameters*&gt; ( Body::byId ( wall_right_id )-&gt;physicalParameters.get() );
+ 		p-&gt;se3.position -= 0.5*translationSpeed*width*translationAxisx*dt;
+-
+-	
+-		boxVolume=height*width*depth;
+-		
+-		calculatedPorosity=1-spheresVolume/boxVolume;
+-
+-
+ 	}
+  
+ }
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2008-11-17 10:54:38 UTC (rev 1572)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2008-11-17 15:41:43 UTC (rev 1573)
+@@ -27,15 +27,17 @@
+ 	//StiffnessMatrixClassIndex = actionParameterStiffnessMatrix-&gt;getClassIndex();
+ 	shared_ptr&lt;Force&gt; tmpF(new Force);
+ 	ForceClassIndex=tmpF-&gt;getClassIndex();
+-
++	firstRun = true;
++	
+ 	previousStress = 0;
+ 	previousMultiplier = 1;
+-	
++		
+ 	stiffnessUpdateInterval =10;
+ 	radiusControlInterval =10;
+ 	computeStressStrainInterval = 10;
+ 	wallDamping = 0.25;
+ 	//force = Vector3r::ZERO;
++	stiffness.resize(6);
+ 	for (int i=0; i&lt;6; ++i)
+ 	{
+ 		wall_id[i] = 0;
+@@ -68,6 +70,9 @@
+ 	height = 0;
+ 	width = 0;
+ 	depth = 0;
++	spheresVolume=0;
++	boxVolume=0;
++	porosity=0;
+ 	height0 = 0;
+ 	width0 = 0;
+ 	depth0 = 0;
+@@ -93,7 +98,7 @@
+ 	
+ 	//REGISTER_ATTRIBUTE(UnbalancedForce);
+ 	
+-	//REGISTER_ATTRIBUTE(stiffness);
++	REGISTER_ATTRIBUTE(stiffness);
+  	REGISTER_ATTRIBUTE(wall_bottom_id);
+  	REGISTER_ATTRIBUTE(wall_top_id);
+  	REGISTER_ATTRIBUTE(wall_left_id);
+@@ -193,8 +198,11 @@
+ void TriaxialStressController::applyCondition(MetaBody* ncb)
+ {
+ 	//cerr &lt;&lt; &quot;TriaxialStressController::applyCondition&quot; &lt;&lt; endl;
+-		
++	
++	
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++	
++	
+ 
+ 	if(thickness&lt;=0) thickness=YADE_PTR_CAST&lt;InteractingBox&gt;(Body::byId(wall_bottom_id,ncb)-&gt;interactingGeometry)-&gt;extents.Y();
+ 
+@@ -208,8 +216,28 @@
+ 	height = p_top-&gt;se3.position.Y() - p_bottom-&gt;se3.position.Y() - thickness;
+ 	width = p_right-&gt;se3.position.X() - p_left-&gt;se3.position.X() - thickness;
+ 	depth = p_front-&gt;se3.position.Z() - p_back-&gt;se3.position.Z() - thickness;
++	
++	boxVolume = height * width * depth;
++	
++	if (firstRun) {
++		BodyContainer::iterator bi = ncb-&gt;bodies-&gt;begin();
++		BodyContainer::iterator biEnd = ncb-&gt;bodies-&gt;end();
++		spheresVolume = 0;
++		for ( ; bi!=biEnd; ++bi )
++		{
++			const shared_ptr&lt;Body&gt;&amp; b = *bi;
++			if ( b-&gt;isDynamic )
++			{
++				const shared_ptr&lt;Sphere&gt;&amp; sphere =
++						YADE_PTR_CAST&lt;Sphere&gt; ( b-&gt;geometricalModel );
++				spheresVolume += 1.3333333*Mathr::PI*pow ( sphere-&gt;radius, 3 );
++			}
++		}
++		
++		firstRun = false;	
++	}
++	//porosity = ( boxVolume - spheresVolume ) /boxVolume;
+ 
+-
+ 	position_top = p_top-&gt;se3.position.Y();
+ 	position_bottom = p_bottom-&gt;se3.position.Y();
+ 	position_right = p_right-&gt;se3.position.X();
+@@ -221,7 +249,7 @@
+ 
+ 	// must be done _after_ height, width, depth have been calculated
+ 	//Update stiffness only if it has been computed by StiffnessCounter (see &quot;stiffnessUpdateInterval&quot;)
+-	if (Omega::instance().getCurrentIteration() % stiffnessUpdateInterval == 0 || Omega::instance().getCurrentIteration()&lt;1000) updateStiffness(ncb);
++	if (Omega::instance().getCurrentIteration() % stiffnessUpdateInterval == 0 || Omega::instance().getCurrentIteration()&lt;100) updateStiffness(ncb);
+ 
+  
+ 		bool isARadiusControlIteration = (Omega::instance().getCurrentIteration() % radiusControlInterval == 0);
+@@ -233,9 +261,11 @@
+ 		Vector3r wallForce (0, sigma_iso*width*depth, 0);
+ 		if (wall_bottom_activated) controlExternalStress(wall_bottom, ncb, -wallForce, p_bottom, max_vel);
+ 		if (wall_top_activated) controlExternalStress(wall_top, ncb, wallForce, p_top, max_vel);
++		
+ 		wallForce = Vector3r(sigma_iso*height*depth, 0, 0);
+ 		if (wall_left_activated) controlExternalStress(wall_left, ncb, -wallForce, p_left, max_vel*width/height);
+ 		if (wall_right_activated) controlExternalStress(wall_right, ncb, wallForce, p_right, max_vel*width/height);
++		
+ 		wallForce = Vector3r(0, 0, sigma_iso*height*width);
+ 		if (wall_back_activated) controlExternalStress(wall_back, ncb, -wallForce, p_back, max_vel*depth/height);
+ 		if (wall_front_activated) controlExternalStress(wall_front, ncb, wallForce, p_front, max_vel*depth/height);
+@@ -316,39 +346,40 @@
+ 	meanStress/=6.;
+ }
+ 
+-void TriaxialStressController::controlInternalStress(MetaBody* ncb, Real multiplier)
++void TriaxialStressController::controlInternalStress ( MetaBody* ncb, Real multiplier )
+ {
+-   BodyContainer::iterator bi    = ncb-&gt;bodies-&gt;begin();
+-   BodyContainer::iterator biEnd = ncb-&gt;bodies-&gt;end();
+-   //cerr &lt;&lt; &quot;meanstress = &quot;radius = &quot; &lt;&lt; endl;
+-   //cerr &lt;&lt; &quot;bouclesurBodies&quot; &lt;&lt; endl;
+-   for (  ; bi!=biEnd ; ++bi )
+-   {
+-		if ((*bi)-&gt;isDynamic)
++	spheresVolume *= pow ( multiplier,3 );
++	BodyContainer::iterator bi    = ncb-&gt;bodies-&gt;begin();
++	BodyContainer::iterator biEnd = ncb-&gt;bodies-&gt;end();
++	//cerr &lt;&lt; &quot;meanstress = &quot;radius = &quot; &lt;&lt; endl;
++	//cerr &lt;&lt; &quot;bouclesurBodies&quot; &lt;&lt; endl;
++	for ( ; bi!=biEnd ; ++bi )
++	{
++		if ( ( *bi )-&gt;isDynamic )
+ 		{
+-			(static_cast&lt;InteractingSphere*&gt; ((*bi)-&gt;interactingGeometry.get()))-&gt;radius *= multiplier;
+-			(static_cast&lt;Sphere*&gt;((*bi)-&gt;geometricalModel.get()))-&gt;radius *= multiplier;
+-			(static_cast&lt;ParticleParameters*&gt;((*bi)-&gt;physicalParameters.get()))-&gt;mass *= pow(multiplier,3);
+-			(static_cast&lt;RigidBodyParameters*&gt;((*bi)-&gt;physicalParameters.get()))-&gt;inertia *= pow(multiplier,5);
+-			
++			( static_cast&lt;InteractingSphere*&gt; ( ( *bi )-&gt;interactingGeometry.get() ) )-&gt;radius *= multiplier;
++			( static_cast&lt;Sphere*&gt; ( ( *bi )-&gt;geometricalModel.get() ) )-&gt;radius *= multiplier;
++			( static_cast&lt;ParticleParameters*&gt; ( ( *bi )-&gt;physicalParameters.get() ) )-&gt;mass *= pow ( multiplier,3 );
++			( static_cast&lt;RigidBodyParameters*&gt; ( ( *bi )-&gt;physicalParameters.get() ) )-&gt;inertia *= pow ( multiplier,5 );
++
+ 		}
+ 	}
+ 	// &lt;&lt; &quot;bouclesurInteraction&quot; &lt;&lt; endl;
+ 	InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
+ 	InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
+-	for (  ; ii!=iiEnd ; ++ii )
++	for ( ; ii!=iiEnd ; ++ii )
+ 	{
+-		if ((*ii)-&gt;isReal)
++		if ( ( *ii )-&gt;isReal )
+ 		{
+-			SpheresContactGeometry* contact = static_cast&lt;SpheresContactGeometry*&gt; ((*ii)-&gt;interactionGeometry.get());
+-			//	     if ((*(ncb-&gt;bodies))[(*ii)-&gt;getId1()]-&gt;isDynamic)
+-			//		 contact-&gt;radius1 *= multiplier;
+-			//	     if ((*(ncb-&gt;bodies))[(*ii)-&gt;getId2()]-&gt;isDynamic)
+-			//		 contact-&gt;radius2 *= multiplier;
+-			if ((*(ncb-&gt;bodies))[(*ii)-&gt;getId1()]-&gt;isDynamic)
+-				contact-&gt;radius1 = static_cast&lt;InteractingSphere*&gt; ((*(ncb-&gt;bodies))[(*ii)-&gt;getId1()]-&gt;interactingGeometry.get())-&gt;radius;
+-			if ((*(ncb-&gt;bodies))[(*ii)-&gt;getId2()]-&gt;isDynamic)
+-				contact-&gt;radius2 = static_cast&lt;InteractingSphere*&gt; ((*(ncb-&gt;bodies))[(*ii)-&gt;getId2()]-&gt;interactingGeometry.get())-&gt;radius;
++			SpheresContactGeometry* contact = static_cast&lt;SpheresContactGeometry*&gt; ( ( *ii )-&gt;interactionGeometry.get() );
++			//      if ((*(ncb-&gt;bodies))[(*ii)-&gt;getId1()]-&gt;isDynamic)
++			//   contact-&gt;radius1 *= multiplier;
++			//      if ((*(ncb-&gt;bodies))[(*ii)-&gt;getId2()]-&gt;isDynamic)
++			//   contact-&gt;radius2 *= multiplier;
++			if ( ( * ( ncb-&gt;bodies ) ) [ ( *ii )-&gt;getId1() ]-&gt;isDynamic )
++				contact-&gt;radius1 = static_cast&lt;InteractingSphere*&gt; ( ( * ( ncb-&gt;bodies ) ) [ ( *ii )-&gt;getId1() ]-&gt;interactingGeometry.get() )-&gt;radius;
++			if ( ( * ( ncb-&gt;bodies ) ) [ ( *ii )-&gt;getId2() ]-&gt;isDynamic )
++				contact-&gt;radius2 = static_cast&lt;InteractingSphere*&gt; ( ( * ( ncb-&gt;bodies ) ) [ ( *ii )-&gt;getId2() ]-&gt;interactingGeometry.get() )-&gt;radius;
+ 		}
+ 	}
+ }
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.cpp	2008-11-17 10:54:38 UTC (rev 1572)
++++ trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.cpp	2008-11-17 15:41:43 UTC (rev 1573)
+@@ -19,13 +19,10 @@
+ 
+ 
+ #include &lt;yade/pkg-common/InteractingSphere.hpp&gt;
+-
+ #include &quot;VolumicContactLaw.hpp&quot;
+-
+ #include&lt;yade/extra/TesselationWrapper.h&gt;
++#include &lt;time.h&gt;
+ 
+- 
+-
+ VolumicContactLaw::VolumicContactLaw() : InteractionSolver() , actionForce(new Force) , actionMomentum(new Momentum)
+ {
+ 	sdecGroupMask=1;
+@@ -44,12 +41,79 @@
+ }
+ 
+ 
++
++void VolumicContactLaw::speedTest(MetaBody* ncb)
++{
++//BEGIN SPEED TEST
++	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++	TesselationWrapper T;
++	BodyContainer::iterator biBegin    = bodies-&gt;begin();
++	BodyContainer::iterator biEnd = bodies-&gt;end();
++	BodyContainer::iterator bi = biBegin;
++	for(  ; bi!=biEnd ; ++bi )
++	{
++		if ((*bi)-&gt;isDynamic) {//means &quot;is it a sphere (not a wall)&quot;
++			const InteractingSphere* s = YADE_CAST&lt;InteractingSphere*&gt;((*bi)-&gt;interactingGeometry.get());
++			const RigidBodyParameters* p = YADE_CAST&lt;RigidBodyParameters*&gt;((*bi)-&gt;physicalParameters.get());
++			T.checkMinMax(p-&gt;se3.position[0],p-&gt;se3.position[1],p-&gt;se3.position[2], s-&gt;radius);
++		}
++	}
++	
++	clock_t	T1 = clock();	
++	
++	for (int j=0; j&lt;30; j++)
++	{
++		T.clear2();
++		T.bounded = false;
++		for( bi = biBegin; bi!=biEnd ; ++bi )
++		{
++			if ((*bi)-&gt;isDynamic) {//means &quot;is it a sphere (not a wall)&quot;
++				const InteractingSphere* s = YADE_CAST&lt;InteractingSphere*&gt;((*bi)-&gt;interactingGeometry.get());
++				const RigidBodyParameters* p = YADE_CAST&lt;RigidBodyParameters*&gt;((*bi)-&gt;physicalParameters.get());
++				T.insert(p-&gt;se3.position[0],p-&gt;se3.position[1],p-&gt;se3.position[2], s-&gt;radius, (*bi)-&gt;getId());
++			}
++		}
++		//T.AddBoundingPlanes();	
++	}
++	
++	
++	cerr &lt;&lt; &quot;Bouding planes apres : time = &quot;&lt;&lt; difftime(clock(), T1)/ CLOCKS_PER_SEC &lt;&lt; endl;
++	T1 = clock();
++	
++	
++	for (int j=0; j&lt;30; j++)
++	{	
++		T.clear2();
++		T.bounded = false;
++		//T.AddBoundingPlanes();
++		for( bi = biBegin; bi!=biEnd ; ++bi )
++		{
++			if ((*bi)-&gt;isDynamic) {//means &quot;is it a sphere (not a wall)&quot;
++				const InteractingSphere* s = YADE_CAST&lt;InteractingSphere*&gt;((*bi)-&gt;interactingGeometry.get());
++				const RigidBodyParameters* p = YADE_CAST&lt;RigidBodyParameters*&gt;((*bi)-&gt;physicalParameters.get());
++				T.insert(p-&gt;se3.position[0],p-&gt;se3.position[1],p-&gt;se3.position[2], s-&gt;radius, (*bi)-&gt;getId());
++			}
++		
++		}
++	
++	}	
++	
++	cerr &lt;&lt; &quot;Bouding planes avant : time = &quot;&lt;&lt; difftime(clock(), T1)/ CLOCKS_PER_SEC &lt;&lt; endl;
++//END SPEED TEST
++
++
++
++
++}
++
++
+ void VolumicContactLaw::action(MetaBody* ncb)
+ {
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+ 
+ 	Real dt = Omega::instance().getTimeStep();
+ 
++	speedTest(ncb);	
+ 
+ 	//BEGIN VORONOI TESSELATION
+ 	TesselationWrapper T1;	
+@@ -139,7 +203,6 @@
+ 	    }
+ 	} 
+ 	//ENDOF VORONOI TESSELATION
+-	 
+ 			
+ /// Non Permanents Links												///
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000514.html">[deprecated list] [Yade-dev] (x,y,z) convention
+</A></li>
+	<LI>Next message: <A HREF="000508.html">[deprecated list] [Yade-dev] [svn] r1574 - in trunk:	extra/triangulation	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#507">[ date ]</a>
+              <a href="thread.html#507">[ thread ]</a>
+              <a href="subject.html#507">[ subject ]</a>
+              <a href="author.html#507">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

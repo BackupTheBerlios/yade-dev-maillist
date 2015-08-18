@@ -1,0 +1,144 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1839 - in trunk/pkg:	common/Engine/MetaEngine	dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1839%20-%20in%20trunk/pkg%3A%0A%09common/Engine/MetaEngine%09dem/Engine/StandAloneEngine&In-Reply-To=%3C200907040050.n640oMEr005798%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001136.html">
+   <LINK REL="Next"  HREF="001125.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1839 - in trunk/pkg:	common/Engine/MetaEngine	dem/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1839%20-%20in%20trunk/pkg%3A%0A%09common/Engine/MetaEngine%09dem/Engine/StandAloneEngine&In-Reply-To=%3C200907040050.n640oMEr005798%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1839 - in trunk/pkg:	common/Engine/MetaEngine	dem/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Jul  4 02:50:22 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001136.html">[deprecated list] [Yade-dev] [OT] Special serialization	treatment
+</A></li>
+        <LI>Next message: <A HREF="001125.html">[deprecated list] [Yade-dev] Distant interractions vs.	ElasticContactLaw
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1121">[ date ]</a>
+              <a href="thread.html#1121">[ thread ]</a>
+              <a href="subject.html#1121">[ subject ]</a>
+              <a href="author.html#1121">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-04 02:50:21 +0200 (Sat, 04 Jul 2009)
+New Revision: 1839
+
+Modified:
+   trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+Log:
+1. Fix STUPID (my fault, sorry!!) mistake in setting Interaction::iterMadeReal, which cause ElasticContactLaw to function wrong. It concerns a few other contact laws calling isFresh, which would return true as well. Sorry again.
+
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp	2009-07-03 08:41:08 UTC (rev 1838)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp	2009-07-04 00:50:21 UTC (rev 1839)
+@@ -71,9 +71,10 @@
+ 			assert(I-&gt;functorCache.phys);
+ 			I-&gt;functorCache.phys-&gt;go(b1-&gt;physicalParameters,b2-&gt;physicalParameters,I);
+ 			assert(I-&gt;interactionPhysics);
+-			I-&gt;iterMadeReal=rootBody-&gt;currentIteration; // mark the interaction as created right now
+ 
++			if(!wasReal) I-&gt;iterMadeReal=rootBody-&gt;currentIteration; // mark the interaction as created right now
+ 
++
+ 			// ConstitutiveLawDispatcher
+ 			// populating constLaw cache must be done after geom and physics dispatchers have been called, since otherwise the interaction
+ 			// would not have interactionGeometry and interactionPhysics yet.
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp	2009-07-03 08:41:08 UTC (rev 1838)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp	2009-07-04 00:50:21 UTC (rev 1839)
+@@ -35,9 +35,10 @@
+ 			if(interaction-&gt;interactionGeometry){
+ 				shared_ptr&lt;Body&gt;&amp; b1 = (*bodies)[interaction-&gt;getId1()];
+ 				shared_ptr&lt;Body&gt;&amp; b2 = (*bodies)[interaction-&gt;getId2()];
++				bool hadPhys=interaction-&gt;interactionPhysics;
+ 				operator()(b1-&gt;physicalParameters, b2-&gt;physicalParameters, interaction);
+ 				assert(interaction-&gt;interactionPhysics);
+-				interaction-&gt;iterMadeReal=ncb-&gt;currentIteration;
++				if(!hadPhys) interaction-&gt;iterMadeReal=ncb-&gt;currentIteration;
+ 			}
+ 		}
+ }
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2009-07-03 08:41:08 UTC (rev 1838)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2009-07-04 00:50:21 UTC (rev 1839)
+@@ -77,7 +77,8 @@
+ 
+ 			Vector3r&amp; shearForce 			= currentContactPhysics-&gt;shearForce;
+ 	
+-			if (contact-&gt;isFresh(ncb)) shearForce=Vector3r(0,0,0);
++			// no need for this, initialized to Vector3r::ZERO in NormalShearInteraction ctor
++			// if (contact-&gt;isFresh(ncb)) shearForce=Vector3r(0,0,0);
+ 					
+ 			Real un=currentContactGeometry-&gt;penetrationDepth;
+ 			TRVAR3(currentContactGeometry-&gt;penetrationDepth,de1-&gt;se3.position,de2-&gt;se3.position);
+@@ -93,6 +94,7 @@
+ 			#ifdef SCG_SHEAR
+ 				}
+ 			#endif
++
+ 			
+ 			// PFC3d SlipModel, is using friction angle. CoulombCriterion
+ 			Real maxFs = currentContactPhysics-&gt;normalForce.SquaredLength() * std::pow(currentContactPhysics-&gt;tangensOfFrictionAngle,2);
+@@ -105,7 +107,6 @@
+ 					if(useShear) currentContactGeometry-&gt;shear*=ratio;
+ 				#endif
+ 			}
+-			////////// PFC3d SlipModel
+ 	
+ 			applyForceAtContactPoint(-currentContactPhysics-&gt;normalForce-shearForce , currentContactGeometry-&gt;contactPoint , id1 , de1-&gt;se3.position , id2 , de2-&gt;se3.position , ncb);
+ 			currentContactPhysics-&gt;prevNormal = currentContactGeometry-&gt;normal;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001136.html">[deprecated list] [Yade-dev] [OT] Special serialization	treatment
+</A></li>
+	<LI>Next message: <A HREF="001125.html">[deprecated list] [Yade-dev] Distant interractions vs.	ElasticContactLaw
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1121">[ date ]</a>
+              <a href="thread.html#1121">[ thread ]</a>
+              <a href="subject.html#1121">[ subject ]</a>
+              <a href="author.html#1121">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

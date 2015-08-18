@@ -1,0 +1,254 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1779 -	trunk/pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1779%20-%0A%09trunk/pkg/dem/PreProcessor&In-Reply-To=%3C200905241847.n4OIlHXe024765%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000977.html">
+   <LINK REL="Next"  HREF="000980.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1779 -	trunk/pkg/dem/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1779%20-%0A%09trunk/pkg/dem/PreProcessor&In-Reply-To=%3C200905241847.n4OIlHXe024765%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1779 -	trunk/pkg/dem/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun May 24 20:47:17 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000977.html">[deprecated list] [Yade-dev] [svn] r1778 - in trunk: . core extra	gui gui/py gui/qt3	lib/factory pkg/dem	pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000980.html">[deprecated list] [Yade-dev] [svn] r1780 - in trunk:	.	pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#979">[ date ]</a>
+              <a href="thread.html#979">[ thread ]</a>
+              <a href="subject.html#979">[ subject ]</a>
+              <a href="author.html#979">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-05-24 20:47:16 +0200 (Sun, 24 May 2009)
+New Revision: 1779
+
+Added:
+   trunk/pkg/dem/PreProcessor/UniaxialStrainerGen.cpp
+   trunk/pkg/dem/PreProcessor/UniaxialStrainerGen.hpp
+Log:
+2 forgotten files (separated from UniaxialStrainer before)
+
+
+Added: trunk/pkg/dem/PreProcessor/UniaxialStrainerGen.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/UniaxialStrainerGen.cpp	2009-05-24 18:22:30 UTC (rev 1778)
++++ trunk/pkg/dem/PreProcessor/UniaxialStrainerGen.cpp	2009-05-24 18:47:16 UTC (rev 1779)
+@@ -0,0 +1,127 @@
++// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt; 
++
++#include&quot;UniaxialStrainerGen.hpp&quot;
++
++#include&lt;yade/pkg-dem/ConcretePM.hpp&gt;
++
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++#include&lt;yade/pkg-common/InteractionPhysicsEngineUnit.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionContainerReseter.hpp&gt;
++#include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
++#include&lt;yade/pkg-common/InteractingSphere2AABB.hpp&gt;
++#include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
++#include&lt;yade/pkg-common/MetaInteractingGeometry2AABB.hpp&gt;
++#include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
++#include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
++#include&lt;yade/pkg-common/ConstitutiveLawDispatcher.hpp&gt;
++#include&lt;yade/pkg-dem/NewtonsDampedLaw.hpp&gt;
++#include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
++#include&lt;yade/pkg-dem/Dem3DofGeom_SphereSphere.hpp&gt;
++
++CREATE_LOGGER(UniaxialStrainerGen);
++
++bool UniaxialStrainerGen::generate(){
++	message=&quot;&quot;;
++	rootBody=Shop::rootBody();
++	//Shop::rootBodyActors(rootBody);
++	createEngines();
++	shared_ptr&lt;UniaxialStrainer&gt; strainer(new UniaxialStrainer);
++	rootBody-&gt;engines.push_back(strainer); // updating params later
++	strainer-&gt;strainRate=strainRate;
++	strainer-&gt;axis=axis;
++	strainer-&gt;limitStrain=limitStrain;
++	
++	// load spheres
++	Vector3r minXYZ,maxXYZ;
++	typedef vector&lt;pair&lt;Vector3r,Real&gt; &gt; vecVecReal;
++
++	vecVecReal spheres;
++	if(spheresFile.empty()){ 
++		LOG_INFO(&quot;spheresFile empty, loading hardwired Shop::smallSdecXyzData (examples/small.sdec.xyz).&quot;);
++		spheres=Shop::loadSpheresSmallSdecXyz(minXYZ,maxXYZ);
++	}
++	else spheres=Shop::loadSpheresFromFile(spheresFile,minXYZ,maxXYZ);
++
++
++	TRVAR2(minXYZ,maxXYZ);
++	// get spheres that are &quot;close enough&quot; to the strained ends
++	for(vecVecReal::iterator I=spheres.begin(); I!=spheres.end(); I++){
++		Vector3r C=I-&gt;first;
++		Real r=I-&gt;second;
++		shared_ptr&lt;Body&gt; S=Shop::sphere(C,r);
++
++		// replace BodyMacroParameters by CpmMat
++		shared_ptr&lt;BodyMacroParameters&gt; bmp=YADE_PTR_CAST&lt;BodyMacroParameters&gt;(S-&gt;physicalParameters);
++		shared_ptr&lt;CpmMat&gt; bpp(new CpmMat);
++		#define _CP(attr) bpp-&gt;attr=bmp-&gt;attr;
++		_CP(acceleration); _CP(angularVelocity); _CP(blockedDOFs); _CP(frictionAngle); _CP(inertia); _CP(mass); _CP(poisson); _CP(refSe3); _CP(se3); _CP(young); _CP(velocity);
++		#undef _CP
++		S-&gt;physicalParameters=bpp;
++
++		body_id_t sId=rootBody-&gt;bodies-&gt;insert(S);
++
++		Real distFactor=1.2;
++		if (C[axis]-distFactor*r&lt;minXYZ[axis]) {
++			strainer-&gt;negIds.push_back(sId);
++			strainer-&gt;negCoords.push_back(C[axis]);
++			LOG_DEBUG(&quot;NEG inserted #&quot;&lt;&lt;sId&lt;&lt;&quot; with C[axis]=&quot;&lt;&lt;C[axis]);
++		}
++		if (C[axis]+distFactor*r&gt;maxXYZ[axis]) {
++			strainer-&gt;posIds.push_back(sId);
++			strainer-&gt;posCoords.push_back(C[axis]);
++			LOG_DEBUG(&quot;POS inserted #&quot;&lt;&lt;sId&lt;&lt;&quot; with C[axis]=&quot;&lt;&lt;C[axis]);
++		}
++	}
++
++	return true;
++}
++
++
++
++void UniaxialStrainerGen::createEngines(){
++	rootBody-&gt;initializers.clear();
++
++	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
++		boundingVolumeDispatcher-&gt;add(new InteractingSphere2AABB);
++		boundingVolumeDispatcher-&gt;add(new MetaInteractingGeometry2AABB);
++		rootBody-&gt;initializers.push_back(boundingVolumeDispatcher);
++
++	rootBody-&gt;engines.clear();
++
++	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
++	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
++
++	shared_ptr&lt;PersistentSAPCollider&gt; collider(new PersistentSAPCollider);
++		collider-&gt;haveDistantTransient=true;
++		rootBody-&gt;engines.push_back(collider);
++
++	shared_ptr&lt;InteractionGeometryMetaEngine&gt; igeomDispatcher(new InteractionGeometryMetaEngine);
++		igeomDispatcher-&gt;add(shared_ptr&lt;ef2_Sphere_Sphere_Dem3DofGeom&gt;(new ef2_Sphere_Sphere_Dem3DofGeom));
++		rootBody-&gt;engines.push_back(igeomDispatcher);
++
++	shared_ptr&lt;InteractionPhysicsMetaEngine&gt; iphysDispatcher(new InteractionPhysicsMetaEngine);
++		shared_ptr&lt;Ip2_CpmMat_CpmMat_CpmPhys&gt; bmc(new Ip2_CpmMat_CpmMat_CpmPhys);
++		bmc-&gt;cohesiveThresholdIter=cohesiveThresholdIter;
++		bmc-&gt;cohesiveThresholdIter=-1; bmc-&gt;G_over_E=1;bmc-&gt;sigmaT=3e9; bmc-&gt;neverDamage=true; bmc-&gt;epsCrackOnset=1e-4; bmc-&gt;relDuctility=5;
++		iphysDispatcher-&gt;add(bmc);
++	rootBody-&gt;engines.push_back(iphysDispatcher);
++
++	shared_ptr&lt;ConstitutiveLawDispatcher&gt; clDisp(new ConstitutiveLawDispatcher);
++		clDisp-&gt;add(shared_ptr&lt;ConstitutiveLaw&gt;(new Law2_Dem3DofGeom_CpmPhys_Cpm));
++	rootBody-&gt;engines.push_back(clDisp);
++
++	shared_ptr&lt;NewtonsDampedLaw&gt; newton(new NewtonsDampedLaw);
++		newton-&gt;damping=damping;
++	rootBody-&gt;engines.push_back(newton);
++
++	rootBody-&gt;engines.push_back(shared_ptr&lt;CpmPhysDamageColorizer&gt;(new CpmPhysDamageColorizer));
++
++}
++
++
++
++
+
+Added: trunk/pkg/dem/PreProcessor/UniaxialStrainerGen.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/UniaxialStrainerGen.hpp	2009-05-24 18:22:30 UTC (rev 1778)
++++ trunk/pkg/dem/PreProcessor/UniaxialStrainerGen.hpp	2009-05-24 18:47:16 UTC (rev 1779)
+@@ -0,0 +1,38 @@
++// 2008 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt; 
++
++#pragma once
++#include&lt;yade/extra/Shop.hpp&gt;
++#include&lt;yade/core/FileGenerator.hpp&gt;
++#include&lt;yade/pkg-dem/UniaxialStrainer.hpp&gt;
++
++/*
++	Class for demonstrating the use of UniaxialStrainer.
++	It is better to use UniaxialStrainer from python, since that way
++	stresses can be plot easily etc.
++*/
++class UniaxialStrainerGen: public FileGenerator {
++	private:
++		void createEngines();
++	public:
++		UniaxialStrainerGen(){ axis=1; limitStrain=0; damping=0.2;cohesiveThresholdIter=10;};
++		~UniaxialStrainerGen (){};
++		bool generate();
++		string spheresFile;
++		Real strainRate, limitStrain, damping;
++		int axis;
++		long cohesiveThresholdIter;
++	protected :
++		void registerAttributes(){
++			FileGenerator::registerAttributes();
++			REGISTER_ATTRIBUTE(spheresFile);
++			REGISTER_ATTRIBUTE(axis);
++			REGISTER_ATTRIBUTE(strainRate);
++			REGISTER_ATTRIBUTE(limitStrain);
++			REGISTER_ATTRIBUTE(damping);
++			REGISTER_ATTRIBUTE(cohesiveThresholdIter);
++		}
++	REGISTER_CLASS_AND_BASE(UniaxialStrainerGen,FileGenerator);
++	DECLARE_LOGGER;
++};
++REGISTER_SERIALIZABLE(UniaxialStrainerGen);
++
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000977.html">[deprecated list] [Yade-dev] [svn] r1778 - in trunk: . core extra	gui gui/py gui/qt3	lib/factory pkg/dem	pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000980.html">[deprecated list] [Yade-dev] [svn] r1780 - in trunk:	.	pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#979">[ date ]</a>
+              <a href="thread.html#979">[ thread ]</a>
+              <a href="subject.html#979">[ subject ]</a>
+              <a href="author.html#979">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

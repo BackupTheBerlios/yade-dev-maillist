@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1837 -	trunk/pkg/dem/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1837%20-%0A%09trunk/pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C4A4E45AB.6080403%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001114.html">
+   <LINK REL="Next"  HREF="001120.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1837 -	trunk/pkg/dem/Engine/DeusExMachina</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1837%20-%0A%09trunk/pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C4A4E45AB.6080403%40hmg.inpg.fr%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1837 -	trunk/pkg/dem/Engine/DeusExMachina">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Fri Jul  3 19:53:47 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001114.html">[deprecated list] [Yade-dev] [svn] r1837 -	trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+        <LI>Next message: <A HREF="001120.html">[deprecated list] [Yade-dev] [svn] r1837 -	trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1119">[ date ]</a>
+              <a href="thread.html#1119">[ thread ]</a>
+              <a href="subject.html#1119">[ subject ]</a>
+              <a href="author.html#1119">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Ah, you are right... I just copy/pasted that.
+Anyway, static_cast is just an information for the compiler, 
+corresponding to exactly 0 cpu time, isn't it?
+
+Bruno
+
+
+V&#225;clav &#352;milauer a &#233;crit :
+&gt;&gt;<i> +	PhysicalParameters* p_bottom = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_bottom_id]-&gt;physicalParameters.get());
+</I>&gt;&gt;<i> +	PhysicalParameters* p_top   =	 static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_top_id]-&gt;physicalParameters.get());
+</I>&gt;&gt;<i> +	PhysicalParameters* p_left  = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_left_id]-&gt;physicalParameters.get());
+</I>&gt;&gt;<i> +	PhysicalParameters* p_right = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_right_id]-&gt;physicalParameters.get());
+</I>&gt;&gt;<i> +	PhysicalParameters* p_front = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_front_id]-&gt;physicalParameters.get());
+</I>&gt;&gt;<i> +	PhysicalParameters* p_back  = static_cast&lt;PhysicalParameters*&gt;((*bodies)[wall_back_id]-&gt;physicalParameters.get());
+</I>&gt;&gt;<i>     
+</I>&gt;<i>
+</I>&gt;<i> I think you don't have to cast those, as physicalParameters are already
+</I>&gt;<i> of type shared_ptr&lt;PhysicalParameters&gt;. 
+</I>&gt;<i>
+</I>&gt;<i>  PhysicalParameters* p_bottom=(*bodies)[wall_bottom_id]-&gt;physicalParameters.get();
+</I>&gt;<i>
+</I>&gt;<i> should just work IMHO.
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i> _______________________________________________
+</I>&gt;<i> Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+</I>&gt;<i> Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+</I>&gt;<i> Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+</I>&gt;<i> More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Grenoble INP
+Laboratoire 3SR - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001114.html">[deprecated list] [Yade-dev] [svn] r1837 -	trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+	<LI>Next message: <A HREF="001120.html">[deprecated list] [Yade-dev] [svn] r1837 -	trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1119">[ date ]</a>
+              <a href="thread.html#1119">[ thread ]</a>
+              <a href="subject.html#1119">[ subject ]</a>
+              <a href="author.html#1119">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

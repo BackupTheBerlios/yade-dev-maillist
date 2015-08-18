@@ -1,0 +1,211 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1617 - in trunk:	gui/qt3	pkg/dem/Engine/DeusExMachina pkg/snow	pkg/snow/Engine	pkg/snow/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1617%20-%20in%20trunk%3A%0A%09gui/qt3%09pkg/dem/Engine/DeusExMachina%20pkg/snow%0A%09pkg/snow/Engine%09pkg/snow/PreProcessor&In-Reply-To=%3C200901091144.n09Bin4d023633%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000583.html">
+   <LINK REL="Next"  HREF="000585.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1617 - in trunk:	gui/qt3	pkg/dem/Engine/DeusExMachina pkg/snow	pkg/snow/Engine	pkg/snow/PreProcessor</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1617%20-%20in%20trunk%3A%0A%09gui/qt3%09pkg/dem/Engine/DeusExMachina%20pkg/snow%0A%09pkg/snow/Engine%09pkg/snow/PreProcessor&In-Reply-To=%3C200901091144.n09Bin4d023633%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1617 - in trunk:	gui/qt3	pkg/dem/Engine/DeusExMachina pkg/snow	pkg/snow/Engine	pkg/snow/PreProcessor">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Fri Jan  9 12:44:49 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000583.html">[deprecated list] [Yade-dev] New YaDe user
+</A></li>
+        <LI>Next message: <A HREF="000585.html">[deprecated list] [Yade-dev] [svn] r1618 - in trunk/pkg/snow:	DataClass Engine	PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#584">[ date ]</a>
+              <a href="thread.html#584">[ thread ]</a>
+              <a href="subject.html#584">[ subject ]</a>
+              <a href="author.html#584">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2009-01-09 12:44:44 +0100 (Fri, 09 Jan 2009)
+New Revision: 1617
+
+Modified:
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+   trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.cpp
+   trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.cpp
+   trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp
+   trunk/pkg/snow/SConscript
+Log:
+small snow update
+
+
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2009-01-08 15:58:45 UTC (rev 1616)
++++ trunk/gui/qt3/GLViewer.cpp	2009-01-09 11:44:44 UTC (rev 1617)
+@@ -534,6 +534,7 @@
+ 			y-=lineHt;
+ 		}
+ 		if(drawGridXYZ[0] || drawGridXYZ[1] || drawGridXYZ[2]){
++			glColor3v(Vector3r(1,1,0));
+ 			QGLViewer::drawText(x,y,std::string(&quot;grid: &quot;+boost::lexical_cast&lt;std::string&gt;(gridStep))+(grid_subdivision?(std::string(&quot; ,subdivision: &quot;+boost::lexical_cast&lt;std::string&gt;(gridStep*0.1))):(std::string(&quot;&quot;))));
+ 			y-=lineHt;
+ 		}
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2009-01-08 15:58:45 UTC (rev 1616)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2009-01-09 11:44:44 UTC (rev 1617)
+@@ -358,7 +358,8 @@
+ 		if ( ( *bi )-&gt;isDynamic )
+ 		{
+ 			( static_cast&lt;InteractingSphere*&gt; ( ( *bi )-&gt;interactingGeometry.get() ) )-&gt;radius *= multiplier;
+-			( static_cast&lt;Sphere*&gt; ( ( *bi )-&gt;geometricalModel.get() ) )-&gt;radius *= multiplier;
++			//( static_cast&lt;Sphere*&gt; ( ( *bi )-&gt;geometricalModel.get() ) )-&gt;radius *= multiplier;
++			Sphere* s = dynamic_cast&lt;Sphere*&gt; ( ( *bi )-&gt;geometricalModel.get() ); if(s) s-&gt;radius *= multiplier;
+ 			( static_cast&lt;ParticleParameters*&gt; ( ( *bi )-&gt;physicalParameters.get() ) )-&gt;mass *= pow ( multiplier,3 );
+ 			( static_cast&lt;RigidBodyParameters*&gt; ( ( *bi )-&gt;physicalParameters.get() ) )-&gt;inertia *= pow ( multiplier,5 );
+ 
+
+Modified: trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.cpp	2009-01-08 15:58:45 UTC (rev 1616)
++++ trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.cpp	2009-01-09 11:44:44 UTC (rev 1617)
+@@ -26,6 +26,7 @@
+ 							const shared_ptr&lt;Interaction&gt;&amp; c)
+ {
+ 	bool result = g.go(cm1,cm2,se32,se32,c);
++	std::cerr &lt;&lt; &quot;-------------------1a\n&quot;;
+ 	return result;
+ }
+ 
+@@ -36,6 +37,7 @@
+ 								const Se3r&amp; se32,
+ 								const shared_ptr&lt;Interaction&gt;&amp; c)
+ {
++	std::cerr &lt;&lt; &quot;-------------------2a\n&quot;;
+ 	return g.goReverse(cm1,cm2,se31,se32,c);
+ }
+ 
+
+Modified: trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.cpp	2009-01-08 15:58:45 UTC (rev 1616)
++++ trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.cpp	2009-01-09 11:44:44 UTC (rev 1617)
+@@ -16,7 +16,6 @@
+ #include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+ 
+ 
+-
+ bool Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry::go(
+ 		const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+ 		const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+@@ -25,6 +24,7 @@
+ 		const shared_ptr&lt;Interaction&gt;&amp; c)
+ {
+ 	bool result = g.go(cm1,cm2,se32,se32,c);
++	std::cerr &lt;&lt; &quot;-------------------1\n&quot;;
+ 	return result;
+ }
+ 
+@@ -36,6 +36,7 @@
+ 						const shared_ptr&lt;Interaction&gt;&amp; c)
+ {
+ 	bool result = g.goReverse(cm1,cm2,se32,se32,c);
++	std::cerr &lt;&lt; &quot;-------------------2\n&quot;;
+ 	return result;
+ }
+ 
+
+Modified: trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp
+===================================================================
+--- trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp	2009-01-08 15:58:45 UTC (rev 1616)
++++ trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp	2009-01-09 11:44:44 UTC (rev 1617)
+@@ -356,18 +356,14 @@
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;Momentum&quot;);
+ 	physicalActionInitializer-&gt;physicalActionNames.push_back(&quot;GlobalStiffness&quot;);
+ 	
+-	/* GRR
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+-	shared_ptr&lt;InteractionGeometryEngineUnit&gt; s1(new Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry);
+-	interactionGeometryDispatcher-&gt;add(s1);
+-	shared_ptr&lt;InteractionGeometryEngineUnit&gt; s2(new Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry);
+-	interactionGeometryDispatcher-&gt;add(s2);
+-	*/
+ 
+-	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
++	//shared_ptr&lt;InteractionGeometryEngineUnit&gt; s1(new Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry);  //GRR 
++	//shared_ptr&lt;InteractionGeometryEngineUnit&gt; s2(new Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry);//GRR 
+ 	shared_ptr&lt;InteractionGeometryEngineUnit&gt; s1(new InteractingSphere2InteractingSphere4SpheresContactGeometry);
+-	interactionGeometryDispatcher-&gt;add(s1);
+ 	shared_ptr&lt;InteractionGeometryEngineUnit&gt; s2(new InteractingBox2InteractingSphere4SpheresContactGeometry);
++	
++	interactionGeometryDispatcher-&gt;add(s1);
+ 	interactionGeometryDispatcher-&gt;add(s2);
+ 
+ 	shared_ptr&lt;CohesiveFrictionalRelationships&gt; cohesiveFrictionalRelationships = shared_ptr&lt;CohesiveFrictionalRelationships&gt; (new CohesiveFrictionalRelationships);
+@@ -537,8 +533,8 @@
+ 	shared_ptr&lt;BshSnowGrain&gt; gSnowGrain(grain);
+ 	
+ 
+-	//GRR shared_ptr&lt;BssSnowGrain&gt; iSphere(new BssSnowGrain(gSnowGrain.get(),one_voxel_in_meters_is));
+-	//GRR Real radius = iSphere-&gt;radius;
++	//shared_ptr&lt;BssSnowGrain&gt; iSphere(new BssSnowGrain(gSnowGrain.get(),one_voxel_in_meters_is));//GRR 
++	//Real radius = iSphere-&gt;radius;                                                              //GRR 
+ 	shared_ptr&lt;InteractingSphere&gt; iSphere(new InteractingSphere);
+ 	Real radius = (grain-&gt;start-grain-&gt;end).Length()*0.5;
+ 	
+
+Modified: trunk/pkg/snow/SConscript
+===================================================================
+--- trunk/pkg/snow/SConscript	2009-01-08 15:58:45 UTC (rev 1616)
++++ trunk/pkg/snow/SConscript	2009-01-09 11:44:44 UTC (rev 1617)
+@@ -1,3 +1,5 @@
++# vim: set filetype=python :
++
+ Import('*')
+ env.Install('$PREFIX/lib/yade$SUFFIX/pkg-snow',[
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000583.html">[deprecated list] [Yade-dev] New YaDe user
+</A></li>
+	<LI>Next message: <A HREF="000585.html">[deprecated list] [Yade-dev] [svn] r1618 - in trunk/pkg/snow:	DataClass Engine	PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#584">[ date ]</a>
+              <a href="thread.html#584">[ thread ]</a>
+              <a href="subject.html#584">[ subject ]</a>
+              <a href="author.html#584">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

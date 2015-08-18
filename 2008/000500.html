@@ -1,0 +1,180 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1569 - in trunk:	gui/py	pkg/common/RenderingEngine/GLDrawInteractingGeometry
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1569%20-%20in%20trunk%3A%0A%09gui/py%09pkg/common/RenderingEngine/GLDrawInteractingGeometry&In-Reply-To=%3C200811110806.mAB86BJT014024%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000499.html">
+   <LINK REL="Next"  HREF="000501.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1569 - in trunk:	gui/py	pkg/common/RenderingEngine/GLDrawInteractingGeometry</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1569%20-%20in%20trunk%3A%0A%09gui/py%09pkg/common/RenderingEngine/GLDrawInteractingGeometry&In-Reply-To=%3C200811110806.mAB86BJT014024%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1569 - in trunk:	gui/py	pkg/common/RenderingEngine/GLDrawInteractingGeometry">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Nov 11 09:06:11 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000499.html">[deprecated list] [Yade-dev] Damping at the contact level
+</A></li>
+        <LI>Next message: <A HREF="000501.html">[deprecated list] [Yade-dev] [svn] r1570 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#500">[ date ]</a>
+              <a href="thread.html#500">[ thread ]</a>
+              <a href="subject.html#500">[ subject ]</a>
+              <a href="author.html#500">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-11-11 09:06:10 +0100 (Tue, 11 Nov 2008)
+New Revision: 1569
+
+Modified:
+   trunk/gui/py/pyAttrUtils.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawBssSweptSphereLineSegment.cpp
+Log:
+1. Add INTEGER (besides FLOAT) to the list of wrapped c++ types in python. Fix type detection for long double
+2. Fix Real-&gt;double conversions in GLDrawBssSweptSphereLineSegment.cpp
+
+
+
+Modified: trunk/gui/py/pyAttrUtils.hpp
+===================================================================
+--- trunk/gui/py/pyAttrUtils.hpp	2008-11-10 21:33:00 UTC (rev 1568)
++++ trunk/gui/py/pyAttrUtils.hpp	2008-11-11 08:06:10 UTC (rev 1569)
+@@ -92,7 +92,7 @@
+ 		//! maps attribute name to its archive and vector of its types (given as ints, from the following enum)
+ 		DescriptorMap descriptors;
+ 		//! allowed types
+-		enum {BOOL,STRING,NUMBER, SEQ_NUMBER, SEQ_STRING, VEC_VEC }; // allowed types
++		enum {BOOL,STRING,FLOAT,INTEGER,SEQ_FLOAT, SEQ_STRING, VEC_VEC }; // allowed types
+ 		
+ 		AttrAccess(Serializable* _ser): ser(shared_ptr&lt;Serializable&gt;(_ser)){init();}
+ 		AttrAccess(shared_ptr&lt;Serializable&gt; _ser):ser(_ser){init();}
+@@ -108,10 +108,11 @@
+ 					desc.archive=*ai;
+ 					any instance=(*ai)-&gt;getAddress(); // gets pointer to the stored value
+ 					//cerr&lt;&lt;&quot;[&quot;&lt;&lt;(*ai)-&gt;getName()&lt;&lt;&quot;,&quot;&lt;&lt;instance.type().name()&lt;&lt;&quot;]&quot;;
+-					// 3 possibilities: one BOOL, one or more STRINGS, one or more NUMBERs (fallback if none matches)
++					// 3 possibilities: one BOOL, one or more STRINGS, one or more FLOATs (fallback if none matches)
+ 					if      (any_cast&lt;string*&gt;(&amp;instance)) { desc.type=AttrAccess::STRING; goto found; }
+ 					else if (any_cast&lt;bool*&gt;(&amp;instance)) { desc.type=AttrAccess::BOOL; goto found; }
+-					else if (any_cast&lt;Real*&gt;(&amp;instance) || any_cast&lt;int*&gt;(&amp;instance) || any_cast&lt;unsigned int*&gt;(&amp;instance) || any_cast&lt;long*&gt;(&amp;instance) || any_cast&lt;unsigned long*&gt;(&amp;instance)) { desc.type=AttrAccess::NUMBER; goto found;}
++					else if (any_cast&lt;Real*&gt;(&amp;instance) || any_cast&lt;long double*&gt;(&amp;instance) || any_cast&lt;double*&gt;(&amp;instance) || any_cast&lt;float*&gt;(&amp;instance)) { desc.type=AttrAccess::FLOAT; goto found;}
++					else if (any_cast&lt;int*&gt;(&amp;instance) || any_cast&lt;unsigned int*&gt;(&amp;instance) || any_cast&lt;long*&gt;(&amp;instance) || any_cast&lt;unsigned long*&gt;(&amp;instance)) {desc.type=AttrAccess::INTEGER; goto found; }
+ 					else if (any_cast&lt;vector&lt;string&gt;*&gt;(&amp;instance)) { desc.type=AttrAccess::SEQ_STRING; goto found; }
+ 				#if 0
+ 					else if (any_cast&lt;vector&lt;Vector3r&gt;*&gt;(&amp;instance)) { cerr&lt;&lt;&quot;WWWWWWWWWWWWW&quot;&lt;&lt;endl;}
+@@ -121,10 +122,10 @@
+ 					else if (any_cast&lt;vector&lt;Wm3::Vector3&lt;double&gt; &gt;*&gt;(&amp;instance)) {
+ 						desc.type=AttrAccess::VEC_VEC;
+ 						cerr&lt;&lt;&quot;Attribute &quot;&lt;&lt;(*ai)-&gt;getName()&lt;&lt;&quot; is a vector&lt;Vector3r&gt;&quot;;
+-					//else if (any_cast&lt;vector&lt;Real&gt;*&gt;(&amp;instance)) desc.type=AttrAccess::SEQ_NUMBER;
++					//else if (any_cast&lt;vector&lt;Real&gt;*&gt;(&amp;instance)) desc.type=AttrAccess::SEQ_FLOAT;
+ 					}
+ 				#endif
+-					desc.type=AttrAccess::SEQ_NUMBER;
++					desc.type=AttrAccess::SEQ_FLOAT;
+ 					found:
+ 						descriptors[(*ai)-&gt;getName()]=desc;
+ 				}
+@@ -145,7 +146,7 @@
+ 		string dumpAttr(string name){
+ 			string vals,types; AttrDesc desc=descriptors[name]; vector&lt;string&gt; values=getAttrStr(name);
+ 			for(size_t i=0; i&lt;values.size(); i++) vals+=(i&gt;0?&quot; &quot;:&quot;&quot;)+values[i];
+-			string typeDesc(desc.type==BOOL?&quot;BOOL&quot;:(desc.type==STRING?&quot;STRING&quot;:(desc.type==NUMBER?&quot;NUMBER&quot;:(desc.type==SEQ_NUMBER?&quot;SEQ_NUMBER&quot;:(desc.type==SEQ_STRING?&quot;SEQ_STRING&quot;:(desc.type==VEC_VEC?&quot;VEC_VEC&quot;:&quot;&lt;unknown&gt;&quot;))))));
++			string typeDesc(desc.type==BOOL?&quot;BOOL&quot;:(desc.type==STRING?&quot;STRING&quot;:(desc.type==FLOAT?&quot;FLOAT&quot;:(desc.type==INTEGER?&quot;INTEGER&quot;:(desc.type==SEQ_FLOAT?&quot;SEQ_FLOAT&quot;:(desc.type==SEQ_STRING?&quot;SEQ_STRING&quot;:(desc.type==VEC_VEC?&quot;VEC_VEC&quot;:&quot;&lt;unknown&gt;&quot;)))))));
+ 			return name+&quot; =\t&quot;+vals+&quot;\t (&quot;+typeDesc+&quot;)&quot;;
+ 		}
+ 		//! call dumpAttr for all attributes (used for debugging)
+@@ -168,10 +169,11 @@
+ 			LOG_DEBUG(&quot;Got raw attribute `&quot;&lt;&lt;key&lt;&lt;&quot;'&quot;);
+ 			switch(descriptors[key].type){
+ 				case BOOL: return python::object(lexical_cast&lt;bool&gt;(raw[0]));
+-				case NUMBER: return python::object(lexical_cast_maybeNanInf&lt;double&gt;(raw[0]));
++				case FLOAT: return python::object(lexical_cast_maybeNanInf&lt;double&gt;(raw[0]));
++				case INTEGER: return python::object(lexical_cast_maybeNanInf&lt;long&gt;(raw[0]));
+ 				case STRING: return python::object(raw[0]);
+ 				case SEQ_STRING: {python::list ret; for(size_t i=0; i&lt;raw.size(); i++) ret.append(python::object(raw[i])); return ret;}
+-				case SEQ_NUMBER: {python::list ret; for(size_t i=0; i&lt;raw.size(); i++){ ret.append(python::object(lexical_cast_maybeNanInf&lt;double&gt;(raw[i]))); LOG_TRACE(&quot;Appended &quot;&lt;&lt;raw[i]);} return ret; }
++				case SEQ_FLOAT: {python::list ret; for(size_t i=0; i&lt;raw.size(); i++){ ret.append(python::object(lexical_cast_maybeNanInf&lt;double&gt;(raw[i]))); LOG_TRACE(&quot;Appended &quot;&lt;&lt;raw[i]);} return ret; }
+ 				case VEC_VEC: {
+ 					python::list ret; for(size_t i=0; i&lt;raw.size(); i++){
+ 						/* raw[i] has the form &quot;{number number number}&quot; */
+@@ -190,7 +192,8 @@
+ 			#define SAFE_EXTRACT(from,to,type) python::extract&lt;type&gt; to(from); if(!to.check()) throw invalid_argument(string(&quot;Could not extract type &quot;)+#type);
+ 			switch(descriptors[key].type){
+ 				case BOOL: {SAFE_EXTRACT(val.ptr(),extr,bool); setAttrStr(key,extr()?&quot;1&quot;:&quot;0&quot;); break;}
+-				case NUMBER: {SAFE_EXTRACT(val.ptr(),extr,double); setAttrStr(key,lexical_cast&lt;string&gt;(extr())); break; }
++				case FLOAT: {SAFE_EXTRACT(val.ptr(),extr,double); setAttrStr(key,lexical_cast&lt;string&gt;(extr())); break; }
++				case INTEGER: {SAFE_EXTRACT(val.ptr(),extr,long); setAttrStr(key,lexical_cast&lt;string&gt;(extr())); break; }
+ 				case STRING: {SAFE_EXTRACT(val.ptr(),extr,string); setAttrStr(key,extr()); break;}
+ 				case SEQ_STRING:{
+ 					if(!PySequence_Check(val.ptr())) throw invalid_argument(&quot;String sequence argument required.&quot;);
+@@ -199,7 +202,7 @@
+ 					setAttrStr(key,strVal+&quot;]&quot;);
+ 				} 
+ 				break;
+-				case SEQ_NUMBER:{
++				case SEQ_FLOAT:{
+ 					if(!PySequence_Check(val.ptr())) throw invalid_argument(&quot;Number sequence argument required.&quot;);
+ 					string strVal(&quot;{&quot;);
+ 					for(int i=0; i&lt;PySequence_Size(val.ptr()); i++){SAFE_EXTRACT(PySequence_GetItem(val.ptr(),i),extr,double); strVal+=lexical_cast&lt;string&gt;(extr())+&quot; &quot;;}
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawBssSweptSphereLineSegment.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawBssSweptSphereLineSegment.cpp	2008-11-10 21:33:00 UTC (rev 1568)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawBssSweptSphereLineSegment.cpp	2008-11-11 08:06:10 UTC (rev 1569)
+@@ -59,9 +59,9 @@
+   
+   // It is not very elegant but it provides assistance
+   // TODO - write a gl-list that draw 2 halh spheres 
+-  glTranslate(-half_length, 0.0, 0.0);
++  glTranslate((double)(-half_length), 0.0, 0.0);
+   gluSphere(quadric, radius, 5, 5);
+-  glTranslate(2.0*half_length, 0.0, 0.0);
++  glTranslate((double)(2.0*half_length), 0.0, 0.0);
+   gluSphere(quadric, radius, 5, 5);
+ }
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000499.html">[deprecated list] [Yade-dev] Damping at the contact level
+</A></li>
+	<LI>Next message: <A HREF="000501.html">[deprecated list] [Yade-dev] [svn] r1570 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#500">[ date ]</a>
+              <a href="thread.html#500">[ thread ]</a>
+              <a href="subject.html#500">[ subject ]</a>
+              <a href="author.html#500">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

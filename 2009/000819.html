@@ -1,0 +1,170 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1713 - in trunk:	examples/collider-perf gui/py	pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1713%20-%20in%20trunk%3A%0A%09examples/collider-perf%20gui/py%09pkg/dem/PreProcessor&In-Reply-To=%3C200903082115.n28LFZwt024715%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000849.html">
+   <LINK REL="Next"  HREF="000820.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1713 - in trunk:	examples/collider-perf gui/py	pkg/dem/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1713%20-%20in%20trunk%3A%0A%09examples/collider-perf%20gui/py%09pkg/dem/PreProcessor&In-Reply-To=%3C200903082115.n28LFZwt024715%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1713 - in trunk:	examples/collider-perf gui/py	pkg/dem/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Mar  8 22:15:35 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000849.html">[deprecated list] [Yade-dev]   [robot] build failed (snow)
+</A></li>
+        <LI>Next message: <A HREF="000820.html">[deprecated list] [Yade-dev] [svn] r1714 -	trunk/examples/collider-perf
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#819">[ date ]</a>
+              <a href="thread.html#819">[ thread ]</a>
+              <a href="subject.html#819">[ subject ]</a>
+              <a href="author.html#819">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-03-08 22:15:35 +0100 (Sun, 08 Mar 2009)
+New Revision: 1713
+
+Modified:
+   trunk/examples/collider-perf/perf.py
+   trunk/gui/py/timing.py
+   trunk/gui/py/utils.py
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+Log:
+1. Fix crashed in TriaxialTest introduced by me a few days ago (referencing engine before being created)
+2. Add simple (working?) memory usage query to utils and collider perf test.
+
+
+Modified: trunk/examples/collider-perf/perf.py
+===================================================================
+--- trunk/examples/collider-perf/perf.py	2009-03-07 09:16:36 UTC (rev 1712)
++++ trunk/examples/collider-perf/perf.py	2009-03-08 21:15:35 UTC (rev 1713)
+@@ -1,5 +1,5 @@
+ 
+-utils.readParamsFromTable(nSpheres=1000,collider='PersistentSAPCollider',noTableOk=True)
++utils.readParamsFromTable(nSpheres=8000,collider='PersistentSAPCollider',noTableOk=True)
+ # name of file containing sphere packing with given number of spheres
+ spheresFile=&quot;packing-%dk.spheres&quot;%(nSpheres/1000)
+ 
+@@ -20,8 +20,10 @@
+ O.dt=utils.PWaveTimeStep()
+ utils.replaceCollider(StandAloneEngine(collider))
+ 
++mem0=utils.vmData()
+ O.step()
+ timing.stats()
++print 'Extra memory:',utils.vmData()-mem0,'kB'
+ timing.reset()
+ O.run(100,True)
+ timing.stats()
+
+Modified: trunk/gui/py/timing.py
+===================================================================
+--- trunk/gui/py/timing.py	2009-03-07 09:16:36 UTC (rev 1712)
++++ trunk/gui/py/timing.py	2009-03-08 21:15:35 UTC (rev 1713)
+@@ -57,12 +57,6 @@
+ 		print _formatLine('TOTAL',totalTime,-1,totalTime,level); lines+=1
+ 	return lines
+ 
+-#[label,absTime,relTime,[
+-#	[sub1label,sub1absTime,sub1RelTime], 
+-#	&#8230;]],
+-#label2,absTime2,relTime2,
+-#	]
+-
+ def stats():
+ 	print 'Name'.ljust(_statCols['label'])+' '+'Count'.rjust(_statCols['count'])+' '+'Time'.rjust(_statCols['time'])+' '+'Rel. time'.rjust(_statCols['relTime'])
+ 	print '-'*(sum([_statCols[k] for k in _statCols])+len(_statCols)-1)
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2009-03-07 09:16:36 UTC (rev 1712)
++++ trunk/gui/py/utils.py	2009-03-08 21:15:35 UTC (rev 1713)
+@@ -431,3 +431,13 @@
+ 			break
+ 	if colliderIdx&lt;0: raise RuntimeError(&quot;No Collider found within O.engines.&quot;)
+ 	O.engines=O.engines[:colliderIdx]+[colliderEngine]+O.engines[colliderIdx+1:]
++
++
++def procStatus(name):
++	import os
++	for l in open('/proc/%d/status'%os.getpid()):
++		if l.split(':')[0]==name: return l
++	raise &quot;No such line in /proc/[pid]/status: &quot;+name
++def vmData():
++	l=procStatus('VmData'); ll=l.split(); assert(ll[2]=='kB')
++	return int(ll[1])
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-03-07 09:16:36 UTC (rev 1712)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-03-08 21:15:35 UTC (rev 1713)
+@@ -62,7 +62,6 @@
+ 
+ #include&lt;yade/pkg-common/BodyRedirectionVector.hpp&gt;
+ #include&lt;yade/pkg-common/InteractionVecSet.hpp&gt;
+-#include&lt;yade/pkg-common/InteractionHashMap.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionVectorVector.hpp&gt;
+ 
+ #include&lt;yade/extra/Shop.hpp&gt;
+@@ -257,6 +256,8 @@
+ 	rootBody-&gt;physicalActions		= shared_ptr&lt;PhysicalActionContainer&gt;(new PhysicalActionVectorVector);
+ 	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+ 
++	createActors(rootBody);
++
+ 	shared_ptr&lt;Body&gt; body;
+ 
+ 
+@@ -402,7 +403,6 @@
+ 	}	
+ 
+ 	if(defaultDt&lt;0) defaultDt=Shop::PWaveTimeStep();
+-	createActors(rootBody);
+ 
+ 	return true;
+ }
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000849.html">[deprecated list] [Yade-dev]   [robot] build failed (snow)
+</A></li>
+	<LI>Next message: <A HREF="000820.html">[deprecated list] [Yade-dev] [svn] r1714 -	trunk/examples/collider-perf
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#819">[ date ]</a>
+              <a href="thread.html#819">[ thread ]</a>
+              <a href="subject.html#819">[ subject ]</a>
+              <a href="author.html#819">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

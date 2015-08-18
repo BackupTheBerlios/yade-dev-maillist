@@ -1,0 +1,174 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] contact logic (again)
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20contact%20logic%20%28again%29&In-Reply-To=%3C49AE9580.3000804%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000812.html">
+   <LINK REL="Next"  HREF="000814.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] contact logic (again)</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20contact%20logic%20%28again%29&In-Reply-To=%3C49AE9580.3000804%40hmg.inpg.fr%3E"
+       TITLE="[deprecated list] [Yade-dev] contact logic (again)">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Wed Mar  4 15:51:44 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000812.html">[deprecated list] [Yade-dev] contact logic (again)
+</A></li>
+        <LI>Next message: <A HREF="000814.html">[deprecated list] [Yade-dev] contact logic (again)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#813">[ date ]</a>
+              <a href="thread.html#813">[ thread ]</a>
+              <a href="subject.html#813">[ subject ]</a>
+              <a href="author.html#813">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Another attempt to summarize contact logic (to be added to the wiki when 
+we agree on one logic) :
+(Janek, please, have a look at the end of this message : question for you)
+______________________
+1. Collider :
+
+LOOP1 :
+    if (isReal) isNew=false else isNew=true;
+
+LOOP2 :
+    if (BBoverlap &amp;&amp; !found) insert;
+    else if (!overlap &amp;&amp; found &amp;&amp; !isReal) delete;
+
+2. Geometry Dispatcher
+
+This dispatcher is setting
+isReal = {
+    if (there is a geometrical interaction || isReal)
+        if (!interactionGeometry) intG = new();
+        if (isNew) initialise geometry;
+        update geometry; //(always)
+        return true;
+    else return false;
+}
+
+3. Physics dispatching
+
+if (isReal) {
+    if (!iPhysics) iPhysics = new();
+    if (isNew) initialise physics;
+    update physics;//(always)
+
+4. Constitutive law
+
+if (isReal || any other criterion)
+{
+    compute actions;
+    isReal = true;
+}
+else isReal = false;
+
+_______________________________
+                  
+
+This is the logic behind the &quot;haveDistant&quot; approach. It is still only 
+partly implemented currently.
+
+Pointing a few problems I just spotted :
+
+A. In ISphere2ISphere4Geometry.cpp, we have (correct) :
+
+if (penetrationDepthSq&gt;0 || c-&gt;isReal){
+        shared_ptr&lt;SpheresContactGeometry&gt; scm;
+        if(c-&gt;interactionGeometry) 
+scm=YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
+        else { scm=shared_ptr&lt;SpheresContactGeometry&gt;(new 
+SpheresContactGeometry()); c-&gt;interactionGeometry=scm; }
+
+
+but in IBox2ISphere4Geometry.cpp, we have (WRONG!) :
+
+shared_ptr&lt;SpheresContactGeometry&gt; scm;
+        if (c-&gt;isNew) scm = shared_ptr&lt;SpheresContactGeometry&gt;(new 
+SpheresContactGeometry());
+        else scm = 
+YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
+
+
+Here, isNew means &quot;has memory allocated&quot;, it should be replaced with 
+if(c-&gt;interactionGeometry).
+
+B. Currently, if &quot;haveDistant&quot; is activated, it seems isNew will not be 
+set true by the collider even if !isReal.
+This is surprising for me, and may be due to successive changes that I 
+didn't notice.
+
+Janek was using a &quot;wasReal&quot; bool before, to check if a contact was new 
+in the physical sense (touch/detach/touch using the same pointer - you 
+need to reset initialOrientation and such).
+
+The proper way to do this, with the logic above, is to test isNew, 
+provided isNew is set true when !isReal (be it in the collider or in the 
+constitutice law).
+
+The problem (and the question for Janek) : currently the snow 
+preprocessor is using DistantSAPCollider, which does not turn isNew true 
+when !isReal (the distant option in SAPCollider does not either, 
+consistantly), and the &quot;wasReal&quot; flag disappeared. So, how does it work 
+when the same pointer is used for two different (time wise) interactions?
+
+Bruno
+
+
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Grenoble INP
+Laboratoire 3SR - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000812.html">[deprecated list] [Yade-dev] contact logic (again)
+</A></li>
+	<LI>Next message: <A HREF="000814.html">[deprecated list] [Yade-dev] contact logic (again)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#813">[ date ]</a>
+              <a href="thread.html#813">[ thread ]</a>
+              <a href="subject.html#813">[ subject ]</a>
+              <a href="author.html#813">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

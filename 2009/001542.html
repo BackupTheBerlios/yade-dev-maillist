@@ -1,0 +1,122 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [Branch ~yade-dev/yade/trunk] Rev	1719:	ef2_Sphere_Sphere_Dem3Dof:	change meaning of	distanceFactor, see docs (if &lt; 0, equilibrium is sum...
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5BBranch%20%7Eyade-dev/yade/trunk%5D%20Rev%0A%091719%3A%09ef2_Sphere_Sphere_Dem3Dof%3A%09change%20meaning%20of%0A%09distanceFactor%2C%20see%20docs%20%28if%20%3C%200%2C%20equilibrium%20is%20sum...&In-Reply-To=%3C20090822182410.9072.88927.launchpad%40loganberry.canonical.com%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001541.html">
+   <LINK REL="Next"  HREF="001543.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [Branch ~yade-dev/yade/trunk] Rev	1719:	ef2_Sphere_Sphere_Dem3Dof:	change meaning of	distanceFactor, see docs (if &lt; 0, equilibrium is sum...</H1>
+    <B>noreply at launchpad.net</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5BBranch%20%7Eyade-dev/yade/trunk%5D%20Rev%0A%091719%3A%09ef2_Sphere_Sphere_Dem3Dof%3A%09change%20meaning%20of%0A%09distanceFactor%2C%20see%20docs%20%28if%20%3C%200%2C%20equilibrium%20is%20sum...&In-Reply-To=%3C20090822182410.9072.88927.launchpad%40loganberry.canonical.com%3E"
+       TITLE="[deprecated list] [Yade-dev] [Branch ~yade-dev/yade/trunk] Rev	1719:	ef2_Sphere_Sphere_Dem3Dof:	change meaning of	distanceFactor, see docs (if &lt; 0, equilibrium is sum...">noreply at launchpad.net
+       </A><BR>
+    <I>Sat Aug 22 20:24:10 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001541.html">[deprecated list] [Yade-dev] [Branch ~yade-dev/yade/trunk] Rev	1718: 1.	PeriIsoCompressor: add	keepProportions parameter (on	by	default), decrease global updates inte...
+</A></li>
+        <LI>Next message: <A HREF="001543.html">[deprecated list] [Yade-dev] scons.profile-default add to repository
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1542">[ date ]</a>
+              <a href="thread.html#1542">[ thread ]</a>
+              <a href="subject.html#1542">[ subject ]</a>
+              <a href="author.html#1542">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>------------------------------------------------------------
+revno: 1719
+committer: V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">vaclav at flux</A>&gt;
+branch nick: trunk
+timestamp: Sat 2009-08-22 20:21:25 +0200
+message:
+  ef2_Sphere_Sphere_Dem3Dof: change meaning of distanceFactor, see docs (if &lt; 0, equilibrium is sum of radii, otherwise the initial distance; defaults to -1). Renamed to distFactor, to break old code intentionally
+  InteractingSphere2AABB: allow negative aabbEnlargeFactor, which doesn't scale aabb at all (same as if it is 1.)
+  yade-multi: use the first non-blank line as column headings (not necessarily the first line of the file, as is used to be)
+  SpatialQuickSortCollider: fix clearing interaction with openMP
+  examples/concrete/uniaxial: move files around, add confinement and docs; remove examples/concrete/pack since not in the pack module (an example should be given, though)
+  examples/collider-perf: remove PersistentSAPCollider, add InsertionSortCollide with strides, but commented out since no effect at hthe beginning of simulation
+  PeriodicInsertionSortCollider: remove unnecessary (hopefully) condition that would abort in scripts/test/periodic-simple.py
+removed:
+  examples/concrete/pack/
+  examples/concrete/pack/mk-pack.py
+  examples/concrete/uniaxial/
+added:
+  examples/concrete/README
+renamed:
+  examples/concrete/uniaxial/rb.py =&gt; examples/concrete/uniax.py
+modified:
+  .bzrignore
+  core/InteractionContainer.cpp
+  core/InteractionContainer.hpp
+  examples/collider-perf/README
+  examples/collider-perf/mkGraph.py
+  examples/collider-perf/perf.py
+  examples/collider-perf/perf.table
+  examples/dynamic_simulation_tests/ringCundallDamping.py
+  examples/dynamic_simulation_tests/ringSimpleViscoelastic.py
+  extra/PeriodicInsertionSortCollider.cpp
+  gui/py/yade-multi
+  pkg/common/Engine/EngineUnit/InteractingSphere2AABB.cpp
+  pkg/common/Engine/EngineUnit/InteractingSphere2AABB.hpp
+  pkg/common/Engine/StandAloneEngine/SpatialQuickSortCollider.cpp
+  pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp
+  pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.hpp
+  py/utils.py
+  scripts/test/collider-stride-triax.py
+  examples/concrete/uniax.py
+
+
+--
+lp:yade
+<A HREF="https://code.launchpad.net/~yade-dev/yade/trunk">https://code.launchpad.net/~yade-dev/yade/trunk</A>
+
+Your team Yade developers is subscribed to branch lp:yade.
+To unsubscribe from this branch go to <A HREF="https://code.launchpad.net/~yade-dev/yade/trunk/+edit-subscription.">https://code.launchpad.net/~yade-dev/yade/trunk/+edit-subscription.</A>
+-------------- next part --------------
+A non-text attachment was scrubbed...
+Name: revision.diff
+Type: text/x-diff
+Size: 32610 bytes
+Desc: not available
+URL: &lt;<A HREF="https://lists.berlios.de/pipermail/yade-dev/attachments/20090822/3be46b8c/attachment.diff">https://lists.berlios.de/pipermail/yade-dev/attachments/20090822/3be46b8c/attachment.diff</A>&gt;
+-------------- next part --------------
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001541.html">[deprecated list] [Yade-dev] [Branch ~yade-dev/yade/trunk] Rev	1718: 1.	PeriIsoCompressor: add	keepProportions parameter (on	by	default), decrease global updates inte...
+</A></li>
+	<LI>Next message: <A HREF="001543.html">[deprecated list] [Yade-dev] scons.profile-default add to repository
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1542">[ date ]</a>
+              <a href="thread.html#1542">[ thread ]</a>
+              <a href="subject.html#1542">[ subject ]</a>
+              <a href="author.html#1542">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

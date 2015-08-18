@@ -1,0 +1,977 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] [Yade-commits] r1283 - in trunk: . core extra extra/clump gui gui/cmd lib/serialization pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/EngineUnit pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20r1283%20-%20in%20trunk%3A%20.%20core%20extra%0A%20extra/clump%20gui%20gui/cmd%20lib/serialization%0A%20pkg/common/DataClass/PhysicalParameters%09pkg/common/Engine/EngineUnit%0A%20pkg/common/Engine/StandAloneEngine%20pkg/dem/Engine/EngineUnit%20scripts&In-Reply-To=%3C47ED3E62.1040906%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000137.html">
+   <LINK REL="Next"  HREF="000139.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] [Yade-commits] r1283 - in trunk: . core extra extra/clump gui gui/cmd lib/serialization pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/EngineUnit pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit scripts</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20r1283%20-%20in%20trunk%3A%20.%20core%20extra%0A%20extra/clump%20gui%20gui/cmd%20lib/serialization%0A%20pkg/common/DataClass/PhysicalParameters%09pkg/common/Engine/EngineUnit%0A%20pkg/common/Engine/StandAloneEngine%20pkg/dem/Engine/EngineUnit%20scripts&In-Reply-To=%3C47ED3E62.1040906%40hmg.inpg.fr%3E"
+       TITLE="[yade-dev] [Yade-commits] r1283 - in trunk: . core extra extra/clump gui gui/cmd lib/serialization pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/EngineUnit pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit scripts">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Fri Mar 28 19:52:18 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000137.html">[yade-dev] using cerr in TriaxialTest
+</A></li>
+        <LI>Next message: <A HREF="000139.html">[yade-dev] [Yade-commits] r1283 - in trunk: . core extra extra/clump gui gui/cmd lib/serialization pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/EngineUnit pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#138">[ date ]</a>
+              <a href="thread.html#138">[ thread ]</a>
+              <a href="subject.html#138">[ subject ]</a>
+              <a href="author.html#138">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Compilation is broken for me after this commit, because I don't have 
+boost/foreach.hpp.
+It is a file from boost 1.34 and I can install only 1.33 on feisty.
+
+Bruno
+
+
+
+eudoxos at BerliOS a &#233;crit :
+&gt;<i> Author: eudoxos
+</I>&gt;<i> Date: 2008-03-22 09:40:15 +0100 (Sat, 22 Mar 2008)
+</I>&gt;<i> New Revision: 1283
+</I>&gt;<i>
+</I>&gt;<i> Added:
+</I>&gt;<i>    trunk/scripts/simple-scene.py
+</I>&gt;<i> Modified:
+</I>&gt;<i>    trunk/SConstruct
+</I>&gt;<i>    trunk/core/GeometricalModel.hpp
+</I>&gt;<i>    trunk/extra/Brefcom.hpp
+</I>&gt;<i>    trunk/extra/clump/Shop.cpp
+</I>&gt;<i>    trunk/gui/SConscript
+</I>&gt;<i>    trunk/gui/cmd/attrUtils.cpp
+</I>&gt;<i>    trunk/gui/cmd/yadeControl.cpp
+</I>&gt;<i>    trunk/lib/serialization/Serializable.hpp
+</I>&gt;<i>    trunk/pkg/common/DataClass/PhysicalParameters/ParticleParameters.cpp
+</I>&gt;<i>    trunk/pkg/common/Engine/EngineUnit/InteractingSphere2AABB.cpp
+</I>&gt;<i>    trunk/pkg/common/Engine/EngineUnit/InteractingSphere2AABB.hpp
+</I>&gt;<i>    trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+</I>&gt;<i>    trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.cpp
+</I>&gt;<i>    trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.hpp
+</I>&gt;<i>    trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+</I>&gt;<i>    trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp
+</I>&gt;<i> Log:
+</I>&gt;<i> 1. MAJOR improvements of the python wrappers (constructors take attributes etc.)
+</I>&gt;<i> 2. FIRST proof-of-implementation simulation completely created in python: scripts/simple-scene.py. This file will be commented abundantly shortly.
+</I>&gt;<i> 3. Add default values to some bool params so that there is no serializer error if they are uninitialized.
+</I>&gt;<i> 4. Add aabbEnlargeFactor to InteractingSphere2AABB?\194?\160(should be added to InteractingBox2AABB as well?) (not tested yet)
+</I>&gt;<i> 5. rename InteractionDetectionFactor to interactinDetectionFactor
+</I>&gt;<i> 6. Serialization now registers only attributes that have not yet been registered (there were problems with python because of that: at first save, attributes were duplicated and the xml file was less readble, although loadable)
+</I>&gt;<i> 7. Scan .tpp and .ipp for c++ tags as well
+</I>&gt;<i> 8. Some documentation.
+</I>&gt;<i>
+</I>&gt;<i> [scripts/default-test.py passes as normally]
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i> Modified: trunk/SConstruct
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/SConstruct	2008-03-20 20:14:47 UTC (rev 1282)
+</I>&gt;<i> +++ trunk/SConstruct	2008-03-22 08:40:15 UTC (rev 1283)
+</I>&gt;<i> @@ -161,7 +161,7 @@
+</I>&gt;<i>  		else: print &quot;Nothing to clean: %s.&quot;%buildDir
+</I>&gt;<i>  		sys.argv.remove('clean')
+</I>&gt;<i>  	if 'tags' in sys.argv:
+</I>&gt;<i> -		cmd=&quot;ctags -R --extra=+q --fields=+n --exclude='.*' --exclude=scons-local --exclude=include --exclude='*.so' --langmap=c++:+.inl&quot;
+</I>&gt;<i> +		cmd=&quot;ctags -R --extra=+q --fields=+n --exclude='.*' --exclude=scons-local --exclude=include --exclude='*.so' --langmap=c++:+.inl,c++:+.tpp,c++:+.ipp&quot;
+</I>&gt;<i>  		print cmd; os.system(cmd)
+</I>&gt;<i>  		sys.argv.remove('tags')
+</I>&gt;<i>  	if 'doc' in sys.argv:
+</I>&gt;<i>
+</I>&gt;<i> Modified: trunk/core/GeometricalModel.hpp
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/core/GeometricalModel.hpp	2008-03-20 20:14:47 UTC (rev 1282)
+</I>&gt;<i> +++ trunk/core/GeometricalModel.hpp	2008-03-22 08:40:15 UTC (rev 1283)
+</I>&gt;<i> @@ -26,6 +26,8 @@
+</I>&gt;<i>  
+</I>&gt;<i>  		Vector3r	diffuseColor;
+</I>&gt;<i>  
+</I>&gt;<i> +		GeometricalModel(): visible(true),wire(false),shadowCaster(false),diffuseColor(Vector3r(1,1,1)){}
+</I>&gt;<i> +
+</I>&gt;<i>  	protected : 
+</I>&gt;<i>  		void registerAttributes();
+</I>&gt;<i>  
+</I>&gt;<i>
+</I>&gt;<i> Modified: trunk/extra/Brefcom.hpp
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/extra/Brefcom.hpp	2008-03-20 20:14:47 UTC (rev 1282)
+</I>&gt;<i> +++ trunk/extra/Brefcom.hpp	2008-03-22 08:40:15 UTC (rev 1283)
+</I>&gt;<i> @@ -159,8 +159,8 @@
+</I>&gt;<i>  			Real E=Shop::getDefault&lt;double&gt;(&quot;phys_young&quot;);
+</I>&gt;<i>  			Real epsCrackOnset=sigmaC/E;
+</I>&gt;<i>  			calibratedEpsFracture=BrefcomLaw::calibrateEpsFracture(Gf,E,expBending,epsCrackOnset);
+</I>&gt;<i> -			assert(calibratedEpsFracture&gt;epsCrackOnset);
+</I>&gt;<i> -			LOG_DEBUG(&quot;calibratedEpsFracture=&quot;&lt;&lt;calibratedEpsFracture&lt;&lt;&quot; for Gf=&quot;&lt;&lt;Gf&lt;&lt;&quot;, expCrackOnset=&quot;&lt;&lt;epsCrackOnset&lt;&lt;&quot;, E=&quot;&lt;&lt;E&lt;&lt;&quot; and expBending=&quot;&lt;&lt;expBending);
+</I>&gt;<i> +			LOG_DEBUG(&quot;calibratedEpsFracture=&quot;&lt;&lt;calibratedEpsFracture);
+</I>&gt;<i> +			if(calibratedEpsFracture&gt;epsCrackOnset) LOG_WARN(&quot;calibratedEpsFracture=&quot;&lt;&lt;calibratedEpsFracture&lt;&lt;&quot; &lt; epsCrackOnset=&quot;&lt;&lt;epsCrackOnset&lt;&lt;&quot;, Gf=&quot;&lt;&lt;Gf&lt;&lt;&quot;, E=&quot;&lt;&lt;E&lt;&lt;&quot;, expBending=&quot;&lt;&lt;expBending);
+</I>&gt;<i>  		}
+</I>&gt;<i>  
+</I>&gt;<i>  		virtual void go(const shared_ptr&lt;PhysicalParameters&gt;&amp; pp1, const shared_ptr&lt;PhysicalParameters&gt;&amp; pp2, const shared_ptr&lt;Interaction&gt;&amp; interaction);
+</I>&gt;<i>
+</I>&gt;<i> Modified: trunk/extra/clump/Shop.cpp
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/extra/clump/Shop.cpp	2008-03-20 20:14:47 UTC (rev 1282)
+</I>&gt;<i> +++ trunk/extra/clump/Shop.cpp	2008-03-22 08:40:15 UTC (rev 1283)
+</I>&gt;<i> @@ -106,7 +106,7 @@
+</I>&gt;<i>  	setDefault&lt;int&gt;(&quot;body_sdecGroupMask&quot;,55);
+</I>&gt;<i>  	
+</I>&gt;<i>  	setDefault(&quot;phys_density&quot;,2e3);
+</I>&gt;<i> -	setDefault(&quot;phys_young&quot;,30e10);
+</I>&gt;<i> +	setDefault(&quot;phys_young&quot;,30e9);
+</I>&gt;<i>  	setDefault(&quot;phys_poisson&quot;,.3);
+</I>&gt;<i>  	setDefault(&quot;phys_frictionAngle&quot;,0.5236); //30&#730;
+</I>&gt;<i>  	setDefault(&quot;phys_se3_orientation&quot;,Quaternionr(Vector3r(0,0,1),0));
+</I>&gt;<i>
+</I>&gt;<i> Modified: trunk/gui/SConscript
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/gui/SConscript	2008-03-20 20:14:47 UTC (rev 1282)
+</I>&gt;<i> +++ trunk/gui/SConscript	2008-03-22 08:40:15 UTC (rev 1283)
+</I>&gt;<i> @@ -38,7 +38,14 @@
+</I>&gt;<i>  	env.Install('$PREFIX/lib/yade$SUFFIX/gui',[
+</I>&gt;<i>  		env.SharedLibrary('cmdGui',['cmd/cmdGui.cpp']),
+</I>&gt;<i>  		env.SharedLibrary('yadeControl',['cmd/yadeControl.cpp','cmd/GLViewer4.cpp'],SHLIBPREFIX='',
+</I>&gt;<i> -			LIBS=env['LIBS']+['yade-base','libboost_python','XMLFormatManager','yade-factory','yade-serialization',],
+</I>&gt;<i> +			LIBS=env['LIBS']+['yade-base','libboost_python','XMLFormatManager','yade-factory','yade-serialization','Shop',
+</I>&gt;<i> +				'BoundingVolumeMetaEngine',
+</I>&gt;<i> +				'GeometricalModelMetaEngine',
+</I>&gt;<i> +				'InteractingGeometryMetaEngine',
+</I>&gt;<i> +				'InteractionGeometryMetaEngine',
+</I>&gt;<i> +				'InteractionPhysicsMetaEngine',
+</I>&gt;<i> +				'PhysicalParametersMetaEngine',
+</I>&gt;<i> +			],
+</I>&gt;<i>  			# '$QGLVIEWER_LIB'
+</I>&gt;<i>  			#CPPPATH=env['CPPPATH']+['/usr/include/qt4','/usr/include/qt4/Qt','/usr/include/qt4/QtXml','/usr/include/qt4/QtOpenGL','/usr/include/qt4/QtCore','/usr/include/qt4/QtGui'],
+</I>&gt;<i>  			CPPDEFINES=env['CPPDEFINES']+['NO_PYGLVIEWER'],
+</I>&gt;<i>
+</I>&gt;<i> Modified: trunk/gui/cmd/attrUtils.cpp
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/gui/cmd/attrUtils.cpp	2008-03-20 20:14:47 UTC (rev 1282)
+</I>&gt;<i> +++ trunk/gui/cmd/attrUtils.cpp	2008-03-22 08:40:15 UTC (rev 1283)
+</I>&gt;<i> @@ -32,7 +32,7 @@
+</I>&gt;<i>   * This class exposes pySet, pyGet and pyKeys methods to python so that associated object supports python syntax for dictionary member access.
+</I>&gt;<i>   */
+</I>&gt;<i>  class AttrAccess{
+</I>&gt;<i> -	struct AttrDesc{vector&lt;int&gt; types; shared_ptr&lt;Archive&gt; archive;};
+</I>&gt;<i> +	struct AttrDesc{int type; shared_ptr&lt;Archive&gt; archive;};
+</I>&gt;<i>  	private:
+</I>&gt;<i>  		const shared_ptr&lt;Serializable&gt; ser;
+</I>&gt;<i>  		Serializable::Archives archives;
+</I>&gt;<i> @@ -42,7 +42,7 @@
+</I>&gt;<i>  		//! maps attribute name to its archive and vector of its types (given as ints, from the following enum)
+</I>&gt;<i>  		DescriptorMap descriptors;
+</I>&gt;<i>  		//! allowed types
+</I>&gt;<i> -		enum {BOOL,STRING,NUMBER}; // allowed types
+</I>&gt;<i> +		enum {BOOL,STRING,NUMBER, SEQ_NUMBER, SEQ_STRING }; // allowed types
+</I>&gt;<i>  		
+</I>&gt;<i>  		AttrAccess(Serializable* _ser): ser(shared_ptr&lt;Serializable&gt;(_ser)){init();}
+</I>&gt;<i>  		AttrAccess(shared_ptr&lt;Serializable&gt; _ser):ser(_ser){init();}
+</I>&gt;<i> @@ -55,14 +55,14 @@
+</I>&gt;<i>  				if((*ai)-&gt;isFundamental() &amp;&amp; (*ai)-&gt;getName()!=&quot;serializationDynlib&quot;){
+</I>&gt;<i>  					AttrDesc desc; 
+</I>&gt;<i>  					desc.archive=*ai;
+</I>&gt;<i> -					// serialize to get size
+</I>&gt;<i> -					stringstream stream; vector&lt;string&gt; values;
+</I>&gt;<i> -					(*ai)-&gt;serialize(stream,**ai,0); IOFormatManager::parseFundamental(stream.str(),values);
+</I>&gt;<i>  					any instance=(*ai)-&gt;getAddress(); // gets pointer to the stored value
+</I>&gt;<i>  					// 3 possibilities: one BOOL, one STRING, one or more NUMBERs
+</I>&gt;<i> -					if     (values.size()==1 &amp;&amp; any_cast&lt;bool*&gt;(&amp;instance))   desc.types.push_back(AttrAccess::BOOL);
+</I>&gt;<i> -					else if(values.size()==1 &amp;&amp; any_cast&lt;string*&gt;(&amp;instance)) desc.types.push_back(AttrAccess::STRING);
+</I>&gt;<i> -					else {for(size_t i=0; i&lt;values.size(); i++)               desc.types.push_back(AttrAccess::NUMBER);};
+</I>&gt;<i> +					if      (any_cast&lt;string*&gt;(&amp;instance)) desc.type=AttrAccess::STRING;
+</I>&gt;<i> +					else if (any_cast&lt;bool*&gt;(&amp;instance))   desc.type=AttrAccess::BOOL;
+</I>&gt;<i> +					else if (any_cast&lt;Real*&gt;(&amp;instance) || any_cast&lt;int*&gt;(&amp;instance) || any_cast&lt;unsigned int*&gt;(&amp;instance) || any_cast&lt;long*&gt;(&amp;instance) || any_cast&lt;unsigned long*&gt;(&amp;instance)) desc.type=AttrAccess::NUMBER;
+</I>&gt;<i> +					else if (any_cast&lt;vector&lt;string&gt;*&gt;(&amp;instance)) desc.type=AttrAccess::SEQ_STRING;
+</I>&gt;<i> +					//else if (any_cast&lt;vector&lt;Real&gt;*&gt;(&amp;instance)) desc.type=AttrAccess::SEQ_NUMBER;
+</I>&gt;<i> +					else desc.type=AttrAccess::SEQ_NUMBER;
+</I>&gt;<i>  					descriptors[(*ai)-&gt;getName()]=desc;
+</I>&gt;<i>  				}
+</I>&gt;<i>  			}
+</I>&gt;<i> @@ -81,8 +81,8 @@
+</I>&gt;<i>  		string dumpAttr(string name){
+</I>&gt;<i>  			string vals,types; AttrDesc desc=descriptors[name]; vector&lt;string&gt; values=getAttrStr(name);
+</I>&gt;<i>  			for(size_t i=0; i&lt;values.size(); i++) vals+=(i&gt;0?&quot; &quot;:&quot;&quot;)+values[i];
+</I>&gt;<i> -			for(size_t i=0; i&lt;desc.types.size(); i++) types+=string(i&gt;0?&quot; &quot;:&quot;&quot;)+(desc.types[i]==BOOL?&quot;BOOL&quot;:(desc.types[i]==STRING?&quot;STRING&quot;:&quot;NUMBER&quot;));
+</I>&gt;<i> -			return name+&quot; =\t&quot;+vals+&quot;\t (&quot;+types+&quot;)&quot;;
+</I>&gt;<i> +			string typeDesc(desc.type==BOOL?&quot;BOOL&quot;:(desc.type==STRING?&quot;STRING&quot;:(desc.type==NUMBER?&quot;NUMBER&quot;:(desc.type==SEQ_NUMBER?&quot;SEQ_NUMBER&quot;:(desc.type==SEQ_STRING?&quot;SEQ_STRING&quot;:&quot;&lt;unknown&gt;&quot;)))));
+</I>&gt;<i> +			return name+&quot; =\t&quot;+vals+&quot;\t (&quot;+typeDesc+&quot;)&quot;;
+</I>&gt;<i>  		}
+</I>&gt;<i>  		//! call dumpAttr for all attributes (used for debugging)
+</I>&gt;<i>  		string dumpAttrs(){ string ret; for(DescriptorMap::iterator I=descriptors.begin();I!=descriptors.end();I++) ret+=dumpAttr(I-&gt;first)+&quot;\n&quot;; return ret;}
+</I>&gt;<i> @@ -92,12 +92,6 @@
+</I>&gt;<i>  			stringstream voidStream;
+</I>&gt;<i>  			descriptors[name].archive-&gt;deserialize(voidStream,*(descriptors[name].archive),value);
+</I>&gt;<i>  		}
+</I>&gt;<i> -		//! set attribute from its (non-serialized) value, for all possible types
+</I>&gt;<i> -		void setAttr(string name, bool value){setAttrStr(name,value?&quot;1&quot;:&quot;0&quot;);}
+</I>&gt;<i> -		void setAttr(string name, string value){setAttrStr(name,value);}
+</I>&gt;<i> -		void setAttr(string name, double value){setAttrStr(name,lexical_cast&lt;string&gt;(value));}
+</I>&gt;<i> -		void setAttr(string name, vector&lt;double&gt; values){string val(&quot;{&quot;); for(size_t i=0; i&lt;values.size();i++) val+=(lexical_cast&lt;string&gt;(values[i]))+&quot; &quot;; setAttrStr(name,val+&quot;}&quot;); }
+</I>&gt;<i> -
+</I>&gt;<i>  		//! return python list of keys (attribute names)
+</I>&gt;<i>  		boost::python::list pyKeys(){boost::python::list ret; for(DescriptorMap::iterator I=descriptors.begin();I!=descriptors.end();I++)ret.append(I-&gt;first); return ret;}
+</I>&gt;<i>  
+</I>&gt;<i> @@ -106,34 +100,39 @@
+</I>&gt;<i>  			DescriptorMap::iterator I=descriptors.find(key);
+</I>&gt;<i>  			if(I==descriptors.end()) throw std::invalid_argument(string(&quot;Invalid key: `&quot;)+key+&quot;'.&quot;);
+</I>&gt;<i>  			vector&lt;string&gt; raw=getAttrStr(key);
+</I>&gt;<i> -			if(raw.size()==1){
+</I>&gt;<i> -				if(descriptors[key].types[0]==BOOL) return boost::python::object(lexical_cast&lt;bool&gt;(raw[0]));
+</I>&gt;<i> -				if(descriptors[key].types[0]==STRING) return boost::python::object(raw[0]);
+</I>&gt;<i> -				if(descriptors[key].types[0]==NUMBER) return boost::python::object(lexical_cast&lt;double&gt;(raw[0]));
+</I>&gt;<i> -			} else { // list of numbers
+</I>&gt;<i> -				/*list&lt;double&gt; ret;
+</I>&gt;<i> -				for(vector&lt;string&gt;::iterator I=raw.begin();I!=raw.end();I++)ret.push_back(lexical_cast&lt;double&gt;(*I));
+</I>&gt;<i> -				return boost::python::object&lt;list&lt;double&gt; &gt;(ret);*/
+</I>&gt;<i> -				boost::python::list ret;
+</I>&gt;<i> -				for(vector&lt;string&gt;::iterator I=raw.begin();I!=raw.end();I++)ret.append(lexical_cast&lt;double&gt;(*I));
+</I>&gt;<i> -				return ret;
+</I>&gt;<i> +			switch(descriptors[key].type){
+</I>&gt;<i> +				case BOOL: return python::object(lexical_cast&lt;bool&gt;(raw[0]));
+</I>&gt;<i> +				case NUMBER: return python::object(lexical_cast&lt;double&gt;(raw[0]));
+</I>&gt;<i> +				case STRING: return python::object(raw[0]);
+</I>&gt;<i> +				case SEQ_STRING: {python::list ret; for(size_t i=0; i&lt;raw.size(); i++) ret.append(python::object(raw[i])); return ret;}
+</I>&gt;<i> +				case SEQ_NUMBER: {python::list ret; for(size_t i=0; i&lt;raw.size(); i++) ret.append(python::object(lexical_cast&lt;double&gt;(raw[i]))); return ret; }
+</I>&gt;<i> +				default: throw runtime_error(&quot;Unhandled attribute type!&quot;);
+</I>&gt;<i>  			}
+</I>&gt;<i> -			return boost::python::object();
+</I>&gt;<i>  		}
+</I>&gt;<i>  		//! set attribute value from python object
+</I>&gt;<i>  		void pySet(std::string key, python::object val){
+</I>&gt;<i>  			DescriptorMap::iterator I=descriptors.find(key);
+</I>&gt;<i>  			if(I==descriptors.end()) throw std::invalid_argument(string(&quot;Invalid key: `&quot;)+key+&quot;'.&quot;);
+</I>&gt;<i> -			if(descriptors[key].types.size()==1){
+</I>&gt;<i> -				if(descriptors[key].types[0]==BOOL) { setAttr(key,python::extract&lt;bool&gt;(val)); return;}
+</I>&gt;<i> -				if(descriptors[key].types[0]==STRING){setAttr(key,python::extract&lt;string&gt;(val)); return;}
+</I>&gt;<i> -				if(descriptors[key].types[0]==NUMBER){setAttr(key,python::extract&lt;double&gt;(val)); return;}
+</I>&gt;<i> -			} else {
+</I>&gt;<i> -				if(PySequence_Check(val.ptr()) &amp;&amp; PySequence_Size(val.ptr())==(int)descriptors[key].types.size()){
+</I>&gt;<i> -					vector&lt;double&gt; cval;
+</I>&gt;<i> -					for(int i=0; i&lt;PySequence_Size(val.ptr()); i++) cval.push_back(python::extract&lt;double&gt;(PySequence_GetItem(val.ptr(),i)));
+</I>&gt;<i> -					setAttr(key,cval);
+</I>&gt;<i> -				} else {	throw std::invalid_argument(string(&quot;Value for `&quot;)+key+&quot;' not sequence or not of the expected length (&quot;+lexical_cast&lt;string&gt;(descriptors[key].types.size())+&quot;)&quot;); }
+</I>&gt;<i> +			#define SAFE_EXTRACT(from,to,type) python::extract&lt;type&gt; to(from); if(!to.check()) throw invalid_argument(string(&quot;Could not extract type &quot;)+#type);
+</I>&gt;<i> +			switch(descriptors[key].type){
+</I>&gt;<i> +				case BOOL: {SAFE_EXTRACT(val.ptr(),extr,bool); setAttrStr(key,extr()?&quot;1&quot;:&quot;0&quot;); break;}
+</I>&gt;<i> +				case NUMBER: {SAFE_EXTRACT(val.ptr(),extr,double); setAttrStr(key,lexical_cast&lt;string&gt;(extr())); break; }
+</I>&gt;<i> +				case STRING: {SAFE_EXTRACT(val.ptr(),extr,string); setAttrStr(key,extr()); break;}
+</I>&gt;<i> +				case SEQ_STRING:{
+</I>&gt;<i> +					if(!PySequence_Check(val.ptr())) throw invalid_argument(&quot;String sequence argument required.&quot;);
+</I>&gt;<i> +					string strVal(&quot;[&quot;);
+</I>&gt;<i> +					for(int i=0; i&lt;PySequence_Size(val.ptr()); i++){SAFE_EXTRACT(PySequence_GetItem(val.ptr(),i),extr,string); strVal+=extr()+&quot; &quot;;}
+</I>&gt;<i> +					setAttrStr(key,strVal+&quot;]&quot;);
+</I>&gt;<i> +				} 
+</I>&gt;<i> +				break;
+</I>&gt;<i> +				case SEQ_NUMBER:{
+</I>&gt;<i> +					if(!PySequence_Check(val.ptr())) throw invalid_argument(&quot;Number sequence argument required.&quot;);
+</I>&gt;<i> +					string strVal(&quot;{&quot;);
+</I>&gt;<i> +					for(int i=0; i&lt;PySequence_Size(val.ptr()); i++){SAFE_EXTRACT(PySequence_GetItem(val.ptr(),i),extr,double); strVal+=lexical_cast&lt;string&gt;(extr())+&quot; &quot;;}
+</I>&gt;<i> +					setAttrStr(key,strVal+&quot;}&quot;);
+</I>&gt;<i> +				}
+</I>&gt;<i> +				break;
+</I>&gt;<i> +				default: throw runtime_error(&quot;Invalid argument types!!&quot;);
+</I>&gt;<i>  			}
+</I>&gt;<i>  		}
+</I>&gt;<i>  };
+</I>&gt;<i>
+</I>&gt;<i> Modified: trunk/gui/cmd/yadeControl.cpp
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/gui/cmd/yadeControl.cpp	2008-03-20 20:14:47 UTC (rev 1282)
+</I>&gt;<i> +++ trunk/gui/cmd/yadeControl.cpp	2008-03-22 08:40:15 UTC (rev 1283)
+</I>&gt;<i> @@ -13,6 +13,7 @@
+</I>&gt;<i>  #include&lt;boost/any.hpp&gt;
+</I>&gt;<i>  #include&lt;boost/shared_ptr.hpp&gt;
+</I>&gt;<i>  #include&lt;boost/python.hpp&gt;
+</I>&gt;<i> +#include&lt;boost/foreach.hpp&gt;
+</I>&gt;<i>  // [boost1.34] #include&lt;boost/python/stl_iterator.hpp&gt;
+</I>&gt;<i>  
+</I>&gt;<i>  #include&lt;yade/lib-base/Logging.hpp&gt;
+</I>&gt;<i> @@ -22,12 +23,34 @@
+</I>&gt;<i>  
+</I>&gt;<i>  
+</I>&gt;<i>  #include&lt;yade/core/MetaDispatchingEngine.hpp&gt;
+</I>&gt;<i> +#include&lt;yade/core/MetaDispatchingEngine1D.hpp&gt;
+</I>&gt;<i> +#include&lt;yade/core/MetaDispatchingEngine2D.hpp&gt;
+</I>&gt;<i>  #include&lt;yade/core/StandAloneEngine.hpp&gt;
+</I>&gt;<i>  #include&lt;yade/core/DeusExMachina.hpp&gt;
+</I>&gt;<i>  #include&lt;yade/core/EngineUnit.hpp&gt;
+</I>&gt;<i>  #include&lt;yade/core/EngineUnit1D.hpp&gt;
+</I>&gt;<i>  #include&lt;yade/core/EngineUnit2D.hpp&gt;
+</I>&gt;<i>  
+</I>&gt;<i> +#include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
+</I>&gt;<i> +#include&lt;yade/pkg-common/GeometricalModelMetaEngine.hpp&gt;
+</I>&gt;<i> +#include&lt;yade/pkg-common/InteractingGeometryMetaEngine.hpp&gt;
+</I>&gt;<i> +#include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+</I>&gt;<i> +#include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+</I>&gt;<i> +#include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
+</I>&gt;<i> +#include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+</I>&gt;<i> +#include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+</I>&gt;<i> +
+</I>&gt;<i> +#include&lt;yade/pkg-common/BoundingVolumeEngineUnit.hpp&gt;
+</I>&gt;<i> +#include&lt;yade/pkg-common/GeometricalModelEngineUnit.hpp&gt;
+</I>&gt;<i> +#include&lt;yade/pkg-common/InteractingGeometryEngineUnit.hpp&gt;
+</I>&gt;<i> +#include&lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
+</I>&gt;<i> +#include&lt;yade/pkg-common/InteractionPhysicsEngineUnit.hpp&gt;
+</I>&gt;<i> +#include&lt;yade/pkg-common/PhysicalParametersEngineUnit.hpp&gt;
+</I>&gt;<i> +#include&lt;yade/pkg-common/PhysicalActionDamperUnit.hpp&gt;
+</I>&gt;<i> +#include&lt;yade/pkg-common/PhysicalActionApplierUnit.hpp&gt;
+</I>&gt;<i> +
+</I>&gt;<i> +#include&lt;yade/extra/Shop.hpp&gt;
+</I>&gt;<i> +
+</I>&gt;<i>  #ifdef USE_PYGLVIEWER
+</I>&gt;<i>  	#include&quot;GLViewer4.hpp&quot;
+</I>&gt;<i>  	#include&lt;Qt/qapplication.h&gt;
+</I>&gt;<i> @@ -43,16 +66,17 @@
+</I>&gt;<i>  
+</I>&gt;<i>  /*
+</I>&gt;<i>  TODO:
+</I>&gt;<i> -	1. InteractionContainer with iteration
+</I>&gt;<i> +	1. [DONE] InteractionContainer with iteration
+</I>&gt;<i>  	2. PhysicalActionContainer (constructor with actionName) with iteration
+</I>&gt;<i>  	3. from yadeControl import Omega as _Omega, inherit from that and add other convenience functions
+</I>&gt;<i>  */
+</I>&gt;<i>  
+</I>&gt;<i>  #define BASIC_PY_PROXY_HEAD(pyClass,yadeClass) \
+</I>&gt;<i>  class pyClass{shared_ptr&lt;AttrAccess&gt; accessor; \
+</I>&gt;<i> +	private: void init(string clss){ proxee=dynamic_pointer_cast&lt;yadeClass&gt;(ClassFactory::instance().createShared(clss.empty()? #yadeClass : clss)); if(!proxee) throw runtime_error(&quot;Invalid class `&quot;+clss+&quot;': either nonexistent, or unable to cast to `&quot;+#yadeClass+&quot;'&quot;); } \
+</I>&gt;<i>  	public: shared_ptr&lt;yadeClass&gt; proxee; \
+</I>&gt;<i>  		void ensureAcc(void){ if(!proxee) throw runtime_error(string(&quot;No proxied `&quot;)+#yadeClass+&quot;'.&quot;); if(!accessor) accessor=shared_ptr&lt;AttrAccess&gt;(new AttrAccess(proxee));} \
+</I>&gt;<i> -		pyClass(string clss=&quot;&quot;){proxee=dynamic_pointer_cast&lt;yadeClass&gt;(ClassFactory::instance().createShared(clss.empty()? #yadeClass : clss)); if(!proxee) throw runtime_error(&quot;Invalid class `&quot;+clss+&quot;': either nonexistent, or unable to cast to `&quot;+#yadeClass+&quot;'&quot;); } \
+</I>&gt;<i> +		pyClass(string clss=&quot;&quot;, python::dict attrs=python::dict()){ init(clss); python::list l=attrs.items(); int len=PySequence_Size(l.ptr()); for(int i=0; i&lt;len; i++){ python::extract&lt;python::tuple&gt; t(l[i]); python::extract&lt;string&gt; keyEx(t()[0]); if(!keyEx.check()) throw invalid_argument(&quot;Attribute keys must be strings.&quot;); wrappedPySet(keyEx(),t()[1]); } } \
+</I>&gt;<i>  		pyClass(const shared_ptr&lt;yadeClass&gt;&amp; _proxee): proxee(_proxee) {} \
+</I>&gt;<i>  		std::string pyStr(void){ ensureAcc(); return string(proxee-&gt;getClassName()==#yadeClass ? &quot;&lt;&quot;+proxee-&gt;getClassName()+&quot;&gt;&quot; : &quot;&lt;&quot;+proxee-&gt;getClassName()+&quot; &quot;+ #yadeClass +&quot;&gt;&quot;); } \
+</I>&gt;<i>  		string className(void){ ensureAcc(); return proxee-&gt;getClassName(); } \
+</I>&gt;<i> @@ -80,6 +104,8 @@
+</I>&gt;<i>  
+</I>&gt;<i>  
+</I>&gt;<i>  BASIC_PY_PROXY_HEAD(pyMetaEngine,MetaDispatchingEngine)
+</I>&gt;<i> +		// additional constructor
+</I>&gt;<i> +		pyMetaEngine(string clss, python::list functors){init(clss); functors_set(functors);}
+</I>&gt;<i>  		python::list functors_get(void){
+</I>&gt;<i>  			ensureAcc(); shared_ptr&lt;MetaDispatchingEngine&gt; me=dynamic_pointer_cast&lt;MetaDispatchingEngine&gt;(proxee); if(!me) throw runtime_error(&quot;Proxied class not a MetaDispatchingEngine (WTF?)&quot;); python::list ret;
+</I>&gt;<i>  			/* garbage design: functorArguments are instances of EngineUnits, but they may not be present; therefore, only use them if they exist; our pyMetaEngine, however, will always have both names and EnguneUnit objects in the same count */
+</I>&gt;<i> @@ -95,10 +121,27 @@
+</I>&gt;<i>  			}
+</I>&gt;<i>  			return ret;
+</I>&gt;<i>  		}
+</I>&gt;<i> -		void functors_set(python::object ftrs){
+</I>&gt;<i> +		void functors_set(python::list ftrs){
+</I>&gt;<i>  			ensureAcc(); shared_ptr&lt;MetaDispatchingEngine&gt; me=dynamic_pointer_cast&lt;MetaDispatchingEngine&gt;(proxee); if(!me) throw runtime_error(&quot;Proxied class not a MetaDispatchingEngine. (WTF?)&quot;);
+</I>&gt;<i>  			me-&gt;clear(); int len=PySequence_Size(ftrs.ptr()) /*[boost1.34] python::len(ftrs)*/;
+</I>&gt;<i> -			for(int i=0; i&lt;len; i++){ const pyEngineUnit&amp; eu=python::extract&lt;pyEngineUnit&gt;(PySequence_GetItem(ftrs.ptr(),i)); me-&gt;add(eu.proxee); }
+</I>&gt;<i> +			for(int i=0; i&lt;len; i++){
+</I>&gt;<i> +				python::extract&lt;pyEngineUnit&gt; euEx(ftrs[i]); if(!euEx.check()) throw invalid_argument(&quot;Unable to extract type EngineUnit from sequence.&quot;);
+</I>&gt;<i> +				bool ok=false;
+</I>&gt;<i> +				/* FIXME: casting engine unit to the right type via dynamic_cast doesn't work (always unusuccessful),
+</I>&gt;<i> +				 * do static_cast and if the EngineUnit is of wrong type, it will crash badly immediately. */
+</I>&gt;<i> +				#define TRY_ADD_FUNCTOR(P,Q) {shared_ptr&lt;P&gt; p(dynamic_pointer_cast&lt;P&gt;(me)); shared_ptr&lt;EngineUnit&gt; eu(euEx().proxee); if(p&amp;&amp;eu){p-&gt;add(static_pointer_cast&lt;Q&gt;(eu)); ok=true; }}
+</I>&gt;<i> +				// shared_ptr&lt;Q&gt; q(dynamic_pointer_cast&lt;Q&gt;(eu)); cerr&lt;&lt;#P&lt;&lt;&quot; &quot;&lt;&lt;#Q&lt;&lt;&quot;:&quot;&lt;&lt;(bool)p&lt;&lt;&quot; &quot;&lt;&lt;(bool)q&lt;&lt;endl;
+</I>&gt;<i> +				TRY_ADD_FUNCTOR(BoundingVolumeMetaEngine,BoundingVolumeEngineUnit);
+</I>&gt;<i> +				TRY_ADD_FUNCTOR(GeometricalModelMetaEngine,GeometricalModelEngineUnit);
+</I>&gt;<i> +				TRY_ADD_FUNCTOR(InteractingGeometryMetaEngine,InteractingGeometryEngineUnit);
+</I>&gt;<i> +				TRY_ADD_FUNCTOR(InteractionGeometryMetaEngine,InteractionGeometryEngineUnit);
+</I>&gt;<i> +				TRY_ADD_FUNCTOR(InteractionPhysicsMetaEngine,InteractionPhysicsEngineUnit);
+</I>&gt;<i> +				TRY_ADD_FUNCTOR(PhysicalParametersMetaEngine,PhysicalParametersEngineUnit);
+</I>&gt;<i> +				TRY_ADD_FUNCTOR(PhysicalActionDamper,PhysicalActionDamperUnit);
+</I>&gt;<i> +				TRY_ADD_FUNCTOR(PhysicalActionApplier,PhysicalActionApplierUnit);
+</I>&gt;<i> +				if(!ok) throw runtime_error(string(&quot;Unable to cast to suitable MetaEngine type when adding functor (MetaEngine: &quot;)+me-&gt;getClassName()+&quot;, functor: &quot;+euEx().proxee-&gt;getClassName()+&quot;)&quot;);
+</I>&gt;<i> +				#undef TRY_ADD_FUNCTOR
+</I>&gt;<i> +			}
+</I>&gt;<i>  		}
+</I>&gt;<i>  BASIC_PY_PROXY_TAIL;
+</I>&gt;<i>  
+</I>&gt;<i> @@ -129,8 +172,35 @@
+</I>&gt;<i>  		if(id&gt;=proxee-&gt;size()){ PyErr_SetString(PyExc_IndexError, &quot;Body id out of range.&quot;); python::throw_error_already_set(); /* make compiler happy; never reached */ return pyBody(); }
+</I>&gt;<i>  		else return pyBody(proxee-&gt;operator[](id));
+</I>&gt;<i>  	}
+</I>&gt;<i> +	body_id_t insert(pyBody b){return proxee-&gt;insert(b.proxee);}
+</I>&gt;<i> +	void clear(){proxee-&gt;clear();}
+</I>&gt;<i>  };
+</I>&gt;<i>  
+</I>&gt;<i> +class pyInteractionIterator{
+</I>&gt;<i> +	InteractionContainer::iterator I, Iend;
+</I>&gt;<i> +	public:
+</I>&gt;<i> +	pyInteractionIterator(const shared_ptr&lt;InteractionContainer&gt;&amp; ic){ I=ic-&gt;begin(); Iend=ic-&gt;end(); }
+</I>&gt;<i> +	pyInteractionIterator pyIter(){return *this;}
+</I>&gt;<i> +	pyInteraction pyNext(){ if(!(I!=Iend)){ PyErr_SetNone(PyExc_StopIteration); python::throw_error_already_set(); }
+</I>&gt;<i> +		InteractionContainer::iterator ret=I; ++I; return pyInteraction(*ret); }
+</I>&gt;<i> +};
+</I>&gt;<i> +
+</I>&gt;<i> +class pyInteractionContainer{
+</I>&gt;<i> +	public:
+</I>&gt;<i> +		const shared_ptr&lt;InteractionContainer&gt; proxee;
+</I>&gt;<i> +		pyInteractionContainer(const shared_ptr&lt;InteractionContainer&gt;&amp; _proxee): proxee(_proxee){}
+</I>&gt;<i> +		pyInteractionIterator pyIter(){return pyInteractionIterator(proxee);}
+</I>&gt;<i> +		pyInteraction pyGetitem(python::object id12){
+</I>&gt;<i> +			if(!PySequence_Check(id12.ptr())) throw invalid_argument(&quot;Key must be a tuple&quot;);
+</I>&gt;<i> +			if(PySequence_Size(id12.ptr())!=2) throw invalid_argument(&quot;Key must be a 2-tuple: id1,id2.&quot;);
+</I>&gt;<i> +			python::extract&lt;body_id_t&gt; id1_(PySequence_GetItem(id12.ptr(),0)), id2_(PySequence_GetItem(id12.ptr(),1));
+</I>&gt;<i> +			if(!id1_.check()) throw invalid_argument(&quot;Could not extract id1&quot;);
+</I>&gt;<i> +			if(!id2_.check()) throw invalid_argument(&quot;Could not extract id2&quot;);
+</I>&gt;<i> +			shared_ptr&lt;Interaction&gt; i=proxee-&gt;find(id1_(),id2_());
+</I>&gt;<i> +			if(i) return pyInteraction(i); else throw invalid_argument(&quot;No such interaction.&quot;);
+</I>&gt;<i> +		}
+</I>&gt;<i> +};
+</I>&gt;<i> +
+</I>&gt;<i>  BASIC_PY_PROXY_HEAD(pyFileGenerator,FileGenerator)
+</I>&gt;<i>  	bool generate(string outFile){ensureAcc(); proxee-&gt;setFileName(outFile); proxee-&gt;setSerializationLibrary(&quot;XMLFormatManager&quot;); bool ret=proxee-&gt;generateAndSave(); cerr&lt;&lt;(ret?&quot;SUCCESS:\n&quot;:&quot;FAILURE:\n&quot;)&lt;&lt;proxee-&gt;message&lt;&lt;endl; return ret; };
+</I>&gt;<i>  BASIC_PY_PROXY_TAIL;
+</I>&gt;<i> @@ -139,9 +209,10 @@
+</I>&gt;<i>  class pyOmega{
+</I>&gt;<i>  	#define OMEGA Omega::instance()
+</I>&gt;<i>  	private:
+</I>&gt;<i> +		// can be safely removed now, since pyOmega makes an empty rootBody in the constructor, if there is none
+</I>&gt;<i>  		void assertRootBody(){if(!OMEGA.getRootBody()) throw std::runtime_error(&quot;No root body.&quot;); }
+</I>&gt;<i>  	public:
+</I>&gt;<i> -	pyOmega(){};
+</I>&gt;<i> +	pyOmega(){ if(!OMEGA.getRootBody()){shared_ptr&lt;MetaBody&gt; mb=Shop::rootBody(); OMEGA.setRootBody(mb);} };
+</I>&gt;<i>  
+</I>&gt;<i>  	long iter(){ return OMEGA.getCurrentIteration();}
+</I>&gt;<i>  	double simulationTime(){return OMEGA.getSimulationTime();}
+</I>&gt;<i> @@ -187,29 +258,38 @@
+</I>&gt;<i>  		cerr&lt;&lt;&quot;SAVE!&quot;&lt;&lt;endl;
+</I>&gt;<i>  	}
+</I>&gt;<i>  
+</I>&gt;<i> -	python::list engines_get(void){
+</I>&gt;<i> -		assertRootBody(); python::list ret; const shared_ptr&lt;MetaBody&gt;&amp; rootBody=OMEGA.getRootBody();
+</I>&gt;<i> -		for(vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator I=rootBody-&gt;engines.begin(); I!=rootBody-&gt;engines.end(); ++I){
+</I>&gt;<i> -			#define APPEND_ENGINE_IF_POSSIBLE(engineType,pyEngineType) { shared_ptr&lt;engineType&gt; e=dynamic_pointer_cast&lt;engineType&gt;(*I); if(e) { ret.append(pyEngineType(e)); continue; } }
+</I>&gt;<i> +	python::list anyEngines_get(vector&lt;shared_ptr&lt;Engine&gt; &gt;&amp; engContainer){
+</I>&gt;<i> +		python::list ret; 
+</I>&gt;<i> +		//for(vector&lt;shared_ptr&lt;Engine&gt; &gt;::iterator I=engContainer.begin(); I!=engContainer.end(); ++I){
+</I>&gt;<i> +		BOOST_FOREACH(shared_ptr&lt;Engine&gt;&amp; eng, engContainer){
+</I>&gt;<i> +			#define APPEND_ENGINE_IF_POSSIBLE(engineType,pyEngineType) { shared_ptr&lt;engineType&gt; e=dynamic_pointer_cast&lt;engineType&gt;(eng); if(e) { ret.append(pyEngineType(e)); continue; } }
+</I>&gt;<i>  			APPEND_ENGINE_IF_POSSIBLE(MetaDispatchingEngine,pyMetaEngine); APPEND_ENGINE_IF_POSSIBLE(StandAloneEngine,pyStandAloneEngine); APPEND_ENGINE_IF_POSSIBLE(DeusExMachina,pyDeusExMachina);
+</I>&gt;<i> -			throw std::runtime_error(&quot;Unknown engine type: `&quot;+(*I)-&gt;getClassName()+&quot;' (only MetaDispatchingEngine, StandAloneEngine and DeusExMachina are supported)&quot;);
+</I>&gt;<i> +			throw std::runtime_error(&quot;Unknown engine type: `&quot;+eng-&gt;getClassName()+&quot;' (only MetaDispatchingEngine, StandAloneEngine and DeusExMachina are supported)&quot;);
+</I>&gt;<i>  		}
+</I>&gt;<i>  		return ret;
+</I>&gt;<i>  	}
+</I>&gt;<i>  
+</I>&gt;<i> -	void engines_set(python::object egs){
+</I>&gt;<i> -		assertRootBody(); int len=PySequence_Size(egs.ptr()) /*[boost1.34] python::len(egs)*/; const shared_ptr&lt;MetaBody&gt;&amp; rootBody=OMEGA.getRootBody(); rootBody-&gt;engines.clear();
+</I>&gt;<i> +	void anyEngines_set(vector&lt;shared_ptr&lt;Engine&gt; &gt;&amp; engContainer, python::object egs){
+</I>&gt;<i> +		assertRootBody(); int len=PySequence_Size(egs.ptr()) /*[boost1.34] python::len(egs)*/;
+</I>&gt;<i> +		//const shared_ptr&lt;MetaBody&gt;&amp; rootBody=OMEGA.getRootBody(); rootBody-&gt;engines.clear();
+</I>&gt;<i> +		engContainer.clear();
+</I>&gt;<i>  		for(int i=0; i&lt;len; i++){
+</I>&gt;<i> -			#define PUSH_BACK_ENGINE_IF_POSSIBLE(pyEngineType) if(python::extract&lt;pyEngineType&gt;(PySequence_GetItem(egs.ptr(),i)).check()){ pyEngineType e=python::extract&lt;pyEngineType&gt;(PySequence_GetItem(egs.ptr(),i)); rootBody-&gt;engines.push_back(e.proxee); /* cerr&lt;&lt;&quot;added &quot;&lt;&lt;e.pyStr()&lt;&lt;&quot;, a &quot;&lt;&lt;#pyEngineType&lt;&lt;endl; */ continue; }
+</I>&gt;<i> +			#define PUSH_BACK_ENGINE_IF_POSSIBLE(pyEngineType) if(python::extract&lt;pyEngineType&gt;(PySequence_GetItem(egs.ptr(),i)).check()){ pyEngineType e=python::extract&lt;pyEngineType&gt;(PySequence_GetItem(egs.ptr(),i)); engContainer.push_back(e.proxee); /* cerr&lt;&lt;&quot;added &quot;&lt;&lt;e.pyStr()&lt;&lt;&quot;, a &quot;&lt;&lt;#pyEngineType&lt;&lt;endl; */ continue; }
+</I>&gt;<i>  			PUSH_BACK_ENGINE_IF_POSSIBLE(pyStandAloneEngine); PUSH_BACK_ENGINE_IF_POSSIBLE(pyMetaEngine); PUSH_BACK_ENGINE_IF_POSSIBLE(pyDeusExMachina);
+</I>&gt;<i>  			throw std::runtime_error(&quot;Encountered unknown engine type (unable to extract from python object)&quot;);
+</I>&gt;<i>  		}
+</I>&gt;<i>  	}
+</I>&gt;<i> +	python::list engines_get(void){assertRootBody(); return anyEngines_get(OMEGA.getRootBody()-&gt;engines);}
+</I>&gt;<i> +	void engines_set(python::object egs){assertRootBody(); anyEngines_set(OMEGA.getRootBody()-&gt;engines,egs);}
+</I>&gt;<i> +	python::list initializers_get(void){assertRootBody(); return anyEngines_get(OMEGA.getRootBody()-&gt;initializers);}
+</I>&gt;<i> +	void initializers_set(python::object egs){assertRootBody(); anyEngines_set(OMEGA.getRootBody()-&gt;initializers,egs);}
+</I>&gt;<i>  
+</I>&gt;<i> +
+</I>&gt;<i>  	//void join(){cerr&lt;&lt;&quot;JOIN!&quot;&lt;&lt;endl; OMEGA.joinSimulationLoop(); /* FIXME: this is OK, but must create simulation loop again! */ }
+</I>&gt;<i>  	void wait(){ if(OMEGA.isRunning()){cerr&lt;&lt;&quot;WAIT!&quot;&lt;&lt;endl;} while(OMEGA.isRunning()) usleep(20000 /*20 ms*/); }
+</I>&gt;<i>  	
+</I>&gt;<i>  	pyBodyContainer bodies_get(void){assertRootBody(); return pyBodyContainer(OMEGA.getRootBody()-&gt;bodies); }
+</I>&gt;<i> +	pyInteractionContainer interactions_get(void){assertRootBody(); return pyInteractionContainer(OMEGA.getRootBody()-&gt;transientInteractions); }
+</I>&gt;<i>  
+</I>&gt;<i>  	boost::python::list listChildClasses(const string&amp; base){
+</I>&gt;<i>  		boost::python::list ret;
+</I>&gt;<i> @@ -340,13 +420,27 @@
+</I>&gt;<i>  		.def(&quot;step&quot;,&amp;pyOmega::step)
+</I>&gt;<i>  		.def(&quot;wait&quot;,&amp;pyOmega::wait)
+</I>&gt;<i>  		.add_property(&quot;engines&quot;,&amp;pyOmega::engines_get,&amp;pyOmega::engines_set)
+</I>&gt;<i> +		.add_property(&quot;initializers&quot;,&amp;pyOmega::initializers_get,&amp;pyOmega::initializers_set)
+</I>&gt;<i>  		.add_property(&quot;bodies&quot;,&amp;pyOmega::bodies_get)
+</I>&gt;<i> +		.add_property(&quot;interactions&quot;,&amp;pyOmega::interactions_get)
+</I>&gt;<i>  		.def(&quot;childClasses&quot;,&amp;pyOmega::listChildClasses)
+</I>&gt;<i>  		;
+</I>&gt;<i>  	
+</I>&gt;<i>  	boost::python::class_&lt;pyBodyContainer&gt;(&quot;BodyContainer&quot;,python::init&lt;pyBodyContainer&amp;&gt;())
+</I>&gt;<i> -		.def(&quot;__getitem__&quot;,&amp;pyBodyContainer::pyGetitem);
+</I>&gt;<i> +		.def(&quot;__getitem__&quot;,&amp;pyBodyContainer::pyGetitem)
+</I>&gt;<i> +		.def(&quot;append&quot;,&amp;pyBodyContainer::insert)
+</I>&gt;<i> +		.def(&quot;clear&quot;, &amp;pyBodyContainer::clear);
+</I>&gt;<i> +	boost::python::class_&lt;pyInteractionContainer&gt;(&quot;InteractionContainer&quot;,python::init&lt;pyInteractionContainer&amp;&gt;())
+</I>&gt;<i> +		.def(&quot;__iter__&quot;,&amp;pyInteractionContainer::pyIter)
+</I>&gt;<i> +		.def(&quot;__getitem__&quot;,&amp;pyInteractionContainer::pyGetitem);
+</I>&gt;<i> +	boost::python::class_&lt;pyInteractionIterator&gt;(&quot;InteractionIterator&quot;,python::init&lt;pyInteractionIterator&amp;&gt;())
+</I>&gt;<i> +		.def(&quot;__iter__&quot;,&amp;pyInteractionIterator::pyIter)
+</I>&gt;<i> +		.def(&quot;next&quot;,&amp;pyInteractionIterator::pyNext);
+</I>&gt;<i> +	
+</I>&gt;<i>  
+</I>&gt;<i> +//	boost::python::class_&lt;pyBodyContainer&gt;(&quot;BodyContainer&quot;,python::init&lt;pyBodyContainer&amp;&gt;())
+</I>&gt;<i> +//		.def(&quot;__getitem__&quot;,&amp;pyBodyContainer::pyGetitem);
+</I>&gt;<i> +
+</I>&gt;<i>  		#if 0
+</I>&gt;<i>  			.def(&quot;oneStep&quot;,&amp;oneStep)
+</I>&gt;<i>  			.def(&quot;newView&quot;, &amp;newView)
+</I>&gt;<i> @@ -358,24 +452,25 @@
+</I>&gt;<i>  #endif
+</I>&gt;<i>  
+</I>&gt;<i>  #define BASIC_PY_PROXY_WRAPPER(pyClass,pyName)  \
+</I>&gt;<i> -	boost::python::class_&lt;pyClass&gt;(pyName,python::init&lt;python::optional&lt;string&gt; &gt;()) \
+</I>&gt;<i> +	boost::python::class_&lt;pyClass&gt;(pyName,python::init&lt;python::optional&lt;string,python::dict&gt; &gt;()) \
+</I>&gt;<i>  	.ATTR_ACCESS_PY(pyClass) \
+</I>&gt;<i>  	.def(&quot;__str__&quot;,&amp;pyClass::pyStr).def(&quot;__repr__&quot;,&amp;pyClass::pyStr) \
+</I>&gt;<i>  	.add_property(&quot;name&quot;,&amp;pyClass::className)
+</I>&gt;<i>  
+</I>&gt;<i>  	BASIC_PY_PROXY_WRAPPER(pyStandAloneEngine,&quot;StandAloneEngine&quot;);
+</I>&gt;<i>  	BASIC_PY_PROXY_WRAPPER(pyMetaEngine,&quot;MetaEngine&quot;)
+</I>&gt;<i> -		.add_property(&quot;functors&quot;,&amp;pyMetaEngine::functors_get,&amp;pyMetaEngine::functors_set);
+</I>&gt;<i> +		.add_property(&quot;functors&quot;,&amp;pyMetaEngine::functors_get,&amp;pyMetaEngine::functors_set)
+</I>&gt;<i> +		.def(python::init&lt;string,python::list&gt;());
+</I>&gt;<i>  	BASIC_PY_PROXY_WRAPPER(pyDeusExMachina,&quot;DeusExMachina&quot;);
+</I>&gt;<i>  	BASIC_PY_PROXY_WRAPPER(pyEngineUnit,&quot;EngineUnit&quot;)
+</I>&gt;<i>  		.add_property(&quot;bases&quot;,&amp;pyEngineUnit::bases_get);
+</I>&gt;<i>  
+</I>&gt;<i> -	BASIC_PY_PROXY_WRAPPER(pyGeometricalModel,&quot;Shape&quot;);
+</I>&gt;<i> -	BASIC_PY_PROXY_WRAPPER(pyInteractingGeometry,&quot;Mold&quot;);
+</I>&gt;<i> -	BASIC_PY_PROXY_WRAPPER(pyPhysicalParameters,&quot;Phys&quot;);
+</I>&gt;<i> -	BASIC_PY_PROXY_WRAPPER(pyBoundingVolume,&quot;Bound&quot;);
+</I>&gt;<i> -	BASIC_PY_PROXY_WRAPPER(pyInteractionGeometry,&quot;InterGeom&quot;);
+</I>&gt;<i> -	BASIC_PY_PROXY_WRAPPER(pyInteractionPhysics,&quot;InterPhys&quot;);
+</I>&gt;<i> +	BASIC_PY_PROXY_WRAPPER(pyGeometricalModel,&quot;GeometricalModel&quot;);
+</I>&gt;<i> +	BASIC_PY_PROXY_WRAPPER(pyInteractingGeometry,&quot;InteractingGeometry&quot;);
+</I>&gt;<i> +	BASIC_PY_PROXY_WRAPPER(pyPhysicalParameters,&quot;PhysicalParameters&quot;);
+</I>&gt;<i> +	BASIC_PY_PROXY_WRAPPER(pyBoundingVolume,&quot;BoundingVolume&quot;);
+</I>&gt;<i> +	BASIC_PY_PROXY_WRAPPER(pyInteractionGeometry,&quot;InteractionGeometry&quot;);
+</I>&gt;<i> +	BASIC_PY_PROXY_WRAPPER(pyInteractionPhysics,&quot;InteractionPhysics&quot;);
+</I>&gt;<i>  
+</I>&gt;<i>  	BASIC_PY_PROXY_WRAPPER(pyBody,&quot;Body&quot;)
+</I>&gt;<i>  		.add_property(&quot;shape&quot;,&amp;pyBody::shape_get,&amp;pyBody::shape_set)
+</I>&gt;<i> @@ -389,7 +484,9 @@
+</I>&gt;<i>  
+</I>&gt;<i>  	BASIC_PY_PROXY_WRAPPER(pyInteraction,&quot;Interaction&quot;)
+</I>&gt;<i>  		.add_property(&quot;phys&quot;,&amp;pyInteraction::phys_get,&amp;pyInteraction::phys_set)
+</I>&gt;<i> -		.add_property(&quot;geom&quot;,&amp;pyInteraction::geom_get,&amp;pyInteraction::geom_set);
+</I>&gt;<i> +		.add_property(&quot;geom&quot;,&amp;pyInteraction::geom_get,&amp;pyInteraction::geom_set)
+</I>&gt;<i> +		.add_property(&quot;id1&quot;,&amp;pyInteraction::id1_get)
+</I>&gt;<i> +		.add_property(&quot;id2&quot;,&amp;pyInteraction::id2_get);
+</I>&gt;<i>  
+</I>&gt;<i>  	BASIC_PY_PROXY_WRAPPER(pyFileGenerator,&quot;Preprocessor&quot;)
+</I>&gt;<i>  		.def(&quot;generate&quot;,&amp;pyFileGenerator::generate);
+</I>&gt;<i>
+</I>&gt;<i> Modified: trunk/lib/serialization/Serializable.hpp
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/lib/serialization/Serializable.hpp	2008-03-20 20:14:47 UTC (rev 1282)
+</I>&gt;<i> +++ trunk/lib/serialization/Serializable.hpp	2008-03-22 08:40:15 UTC (rev 1283)
+</I>&gt;<i> @@ -12,6 +12,7 @@
+</I>&gt;<i>  #define SERIALIZABLE_HPP
+</I>&gt;<i>  
+</I>&gt;<i>  #include &lt;boost/any.hpp&gt;
+</I>&gt;<i> +#include &lt;boost/foreach.hpp&gt;
+</I>&gt;<i>  #include &lt;boost/shared_ptr.hpp&gt;
+</I>&gt;<i>  #include &lt;boost/type_traits.hpp&gt;
+</I>&gt;<i>  #include &lt;boost/lexical_cast.hpp&gt;
+</I>&gt;<i> @@ -71,6 +72,7 @@
+</I>&gt;<i>  		template &lt;typename Type&gt;
+</I>&gt;<i>  		void registerAttribute(const string&amp; name, Type&amp; attribute)
+</I>&gt;<i>  		{
+</I>&gt;<i> +			BOOST_FOREACH(shared_ptr&lt;Archive&gt; a,archives){if(a-&gt;getName()==name){ /* cerr&lt;&lt;&quot;Attribute &quot;&lt;&lt;name&lt;&lt;&quot; already registered.&quot;&lt;&lt;endl; */ return;}};
+</I>&gt;<i>  			shared_ptr&lt;Archive&gt; ac = Archive::create(name,attribute);
+</I>&gt;<i>  			archives.push_back(ac);
+</I>&gt;<i>  		}
+</I>&gt;<i>
+</I>&gt;<i> Modified: trunk/pkg/common/DataClass/PhysicalParameters/ParticleParameters.cpp
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/pkg/common/DataClass/PhysicalParameters/ParticleParameters.cpp	2008-03-20 20:14:47 UTC (rev 1282)
+</I>&gt;<i> +++ trunk/pkg/common/DataClass/PhysicalParameters/ParticleParameters.cpp	2008-03-22 08:40:15 UTC (rev 1283)
+</I>&gt;<i> @@ -15,6 +15,8 @@
+</I>&gt;<i>  {
+</I>&gt;<i>  	createIndex();
+</I>&gt;<i>  	acceleration = Vector3r(0,0,0);
+</I>&gt;<i> +	velocity = Vector3r(0,0,0);
+</I>&gt;<i> +	mass=0;
+</I>&gt;<i>  }
+</I>&gt;<i>  
+</I>&gt;<i>  ParticleParameters::~ParticleParameters()
+</I>&gt;<i>
+</I>&gt;<i> Modified: trunk/pkg/common/Engine/EngineUnit/InteractingSphere2AABB.cpp
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/pkg/common/Engine/EngineUnit/InteractingSphere2AABB.cpp	2008-03-20 20:14:47 UTC (rev 1282)
+</I>&gt;<i> +++ trunk/pkg/common/Engine/EngineUnit/InteractingSphere2AABB.cpp	2008-03-22 08:40:15 UTC (rev 1283)
+</I>&gt;<i> @@ -10,21 +10,14 @@
+</I>&gt;<i>  #include &quot;InteractingSphere.hpp&quot;
+</I>&gt;<i>  #include &quot;AABB.hpp&quot;
+</I>&gt;<i>  
+</I>&gt;<i> -void InteractingSphere2AABB::go(	  const shared_ptr&lt;InteractingGeometry&gt;&amp; cm
+</I>&gt;<i> -				, shared_ptr&lt;BoundingVolume&gt;&amp; bv
+</I>&gt;<i> -				, const Se3r&amp; se3
+</I>&gt;<i> -				, const Body*	)
+</I>&gt;<i> -{
+</I>&gt;<i> +void InteractingSphere2AABB::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm, shared_ptr&lt;BoundingVolume&gt;&amp; bv, const Se3r&amp; se3, const Body*){
+</I>&gt;<i>  	InteractingSphere* sphere = static_cast&lt;InteractingSphere*&gt;(cm.get());
+</I>&gt;<i>  	AABB* aabb = static_cast&lt;AABB*&gt;(bv.get());
+</I>&gt;<i> -	
+</I>&gt;<i>  	aabb-&gt;center = se3.position;
+</I>&gt;<i> -	
+</I>&gt;<i>  	aabb-&gt;halfSize = Vector3r(sphere-&gt;radius,sphere-&gt;radius,sphere-&gt;radius);
+</I>&gt;<i>  	
+</I>&gt;<i> -	aabb-&gt;min = aabb-&gt;center-aabb-&gt;halfSize;
+</I>&gt;<i> -	aabb-&gt;max = aabb-&gt;center+aabb-&gt;halfSize;	
+</I>&gt;<i> -
+</I>&gt;<i> +	aabb-&gt;min = aabb-&gt;center-aabb-&gt;halfSize*aabbEnlargeFactor;
+</I>&gt;<i> +	aabb-&gt;max = aabb-&gt;center+aabb-&gt;halfSize*aabbEnlargeFactor;	
+</I>&gt;<i>  }
+</I>&gt;<i>  	
+</I>&gt;<i>  YADE_PLUGIN();
+</I>&gt;<i>
+</I>&gt;<i> Modified: trunk/pkg/common/Engine/EngineUnit/InteractingSphere2AABB.hpp
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/pkg/common/Engine/EngineUnit/InteractingSphere2AABB.hpp	2008-03-20 20:14:47 UTC (rev 1282)
+</I>&gt;<i> +++ trunk/pkg/common/Engine/EngineUnit/InteractingSphere2AABB.hpp	2008-03-22 08:40:15 UTC (rev 1283)
+</I>&gt;<i> @@ -14,11 +14,11 @@
+</I>&gt;<i>  class InteractingSphere2AABB : public BoundingVolumeEngineUnit
+</I>&gt;<i>  {
+</I>&gt;<i>  	public :
+</I>&gt;<i> -		void go(	  const shared_ptr&lt;InteractingGeometry&gt;&amp; cm
+</I>&gt;<i> -				, shared_ptr&lt;BoundingVolume&gt;&amp; bv
+</I>&gt;<i> -				, const Se3r&amp; se3
+</I>&gt;<i> -				, const Body*	);
+</I>&gt;<i> +		InteractingSphere2AABB(): aabbEnlargeFactor(1.) {}
+</I>&gt;<i> +		void go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm, shared_ptr&lt;BoundingVolume&gt;&amp; bv, const Se3r&amp; se3, const Body*);
+</I>&gt;<i> +		double aabbEnlargeFactor;
+</I>&gt;<i>  	FUNCTOR2D(InteractingSphere,AABB);
+</I>&gt;<i> +	virtual void registerAttributes(){REGISTER_ATTRIBUTE(aabbEnlargeFactor);}
+</I>&gt;<i>  	REGISTER_CLASS_NAME(InteractingSphere2AABB);
+</I>&gt;<i>  	REGISTER_BASE_CLASS_NAME(BoundingVolumeEngineUnit);
+</I>&gt;<i>  };
+</I>&gt;<i>
+</I>&gt;<i> Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2008-03-20 20:14:47 UTC (rev 1282)
+</I>&gt;<i> +++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2008-03-22 08:40:15 UTC (rev 1283)
+</I>&gt;<i> @@ -20,11 +20,6 @@
+</I>&gt;<i>  	haveDistantTransient=false;
+</I>&gt;<i>  
+</I>&gt;<i>  	nbObjects=0;
+</I>&gt;<i> -	//xBounds.resize(2*maxObject);
+</I>&gt;<i> -	//yBounds.resize(2*maxObject);
+</I>&gt;<i> -	//zBounds.resize(2*maxObject);
+</I>&gt;<i> -	//minima = new Real[3*maxObject];
+</I>&gt;<i> -	//maxima = new Real[3*maxObject];
+</I>&gt;<i>  	xBounds.clear();
+</I>&gt;<i>  	yBounds.clear();
+</I>&gt;<i>  	zBounds.clear();
+</I>&gt;<i> @@ -67,8 +62,6 @@
+</I>&gt;<i>  			maxima[offset+0]=max[0]; maxima[offset+1]=max[1]; maxima[offset+2]=max[2];
+</I>&gt;<i>  		}
+</I>&gt;<i>  		else {
+</I>&gt;<i> -			// double nan=std::numeric_limits&lt;Real&gt;::quiet_NaN();
+</I>&gt;<i> -			// cerr&lt;&lt;&quot;Assigning nan's, not tested! (hangs during sort?)&quot;&lt;&lt;endl;
+</I>&gt;<i>  			/* assign the center of gravity as zero-volume bounding box;
+</I>&gt;<i>  			 * it should not create spurious interactions and
+</I>&gt;<i>  			 * is a better solution that putting nan's into minima and maxima which crashes on _some_ machines */
+</I>&gt;<i>
+</I>&gt;<i> Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.cpp
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.cpp	2008-03-20 20:14:47 UTC (rev 1282)
+</I>&gt;<i> +++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.cpp	2008-03-22 08:40:15 UTC (rev 1283)
+</I>&gt;<i> @@ -18,12 +18,12 @@
+</I>&gt;<i>  
+</I>&gt;<i>  InteractingSphere2InteractingSphere4DistantSpheresContactGeometry::InteractingSphere2InteractingSphere4DistantSpheresContactGeometry()
+</I>&gt;<i>  {
+</I>&gt;<i> -	InteractionDetectionFactor = 1;
+</I>&gt;<i> +	interactionDetectionFactor = 1;
+</I>&gt;<i>  }
+</I>&gt;<i>  
+</I>&gt;<i>  void InteractingSphere2InteractingSphere4DistantSpheresContactGeometry::registerAttributes()
+</I>&gt;<i>  {	
+</I>&gt;<i> -	REGISTER_ATTRIBUTE(InteractionDetectionFactor);
+</I>&gt;<i> +	REGISTER_ATTRIBUTE(interactionDetectionFactor);
+</I>&gt;<i>  }
+</I>&gt;<i>  
+</I>&gt;<i>  bool InteractingSphere2InteractingSphere4DistantSpheresContactGeometry::go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+</I>&gt;<i> @@ -36,7 +36,7 @@
+</I>&gt;<i>  	InteractingSphere* s2 = static_cast&lt;InteractingSphere*&gt;(cm2.get());
+</I>&gt;<i>  
+</I>&gt;<i>  	Vector3r normal = se32.position-se31.position;
+</I>&gt;<i> -	Real penetrationDepth = pow(InteractionDetectionFactor*(s1-&gt;radius+s2-&gt;radius), 2) - normal.SquaredLength();// Compute a wrong value just to check sign - faster than computing distances
+</I>&gt;<i> +	Real penetrationDepth = pow(interactionDetectionFactor*(s1-&gt;radius+s2-&gt;radius), 2) - normal.SquaredLength();// Compute a wrong value just to check sign - faster than computing distances
+</I>&gt;<i>  	//Real penetrationDepth = s1-&gt;radius+s2-&gt;radius-normal.Normalize();
+</I>&gt;<i>  
+</I>&gt;<i>  	shared_ptr&lt;SpheresContactGeometry&gt; scm;
+</I>&gt;<i>
+</I>&gt;<i> Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.hpp
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.hpp	2008-03-20 20:14:47 UTC (rev 1282)
+</I>&gt;<i> +++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4DistantSpheresContactGeometry.hpp	2008-03-22 08:40:15 UTC (rev 1283)
+</I>&gt;<i> @@ -31,7 +31,7 @@
+</I>&gt;<i>  					
+</I>&gt;<i>  		InteractingSphere2InteractingSphere4DistantSpheresContactGeometry();		
+</I>&gt;<i>  					
+</I>&gt;<i> -		double InteractionDetectionFactor;// InteractionGeometry will be computed when InteractionDetectionFactor*(rad1+rad2) &gt; distance 		
+</I>&gt;<i> +		double interactionDetectionFactor;// InteractionGeometry will be computed when interactionDetectionFactor*(rad1+rad2) &gt; distance 		
+</I>&gt;<i>  	
+</I>&gt;<i>  	FUNCTOR2D(InteractingSphere,InteractingSphere);
+</I>&gt;<i>  
+</I>&gt;<i>
+</I>&gt;<i> Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2008-03-20 20:14:47 UTC (rev 1282)
+</I>&gt;<i> +++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2008-03-22 08:40:15 UTC (rev 1283)
+</I>&gt;<i> @@ -18,12 +18,12 @@
+</I>&gt;<i>  
+</I>&gt;<i>  InteractingSphere2InteractingSphere4SpheresContactGeometry::InteractingSphere2InteractingSphere4SpheresContactGeometry()
+</I>&gt;<i>  {
+</I>&gt;<i> -	InteractionDetectionFactor = 1;
+</I>&gt;<i> +	interactionDetectionFactor = 1;
+</I>&gt;<i>  }
+</I>&gt;<i>  
+</I>&gt;<i>  void InteractingSphere2InteractingSphere4SpheresContactGeometry::registerAttributes()
+</I>&gt;<i>  {	
+</I>&gt;<i> -	REGISTER_ATTRIBUTE(InteractionDetectionFactor);
+</I>&gt;<i> +	REGISTER_ATTRIBUTE(interactionDetectionFactor);
+</I>&gt;<i>  }
+</I>&gt;<i>  
+</I>&gt;<i>  bool InteractingSphere2InteractingSphere4SpheresContactGeometry::go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+</I>&gt;<i> @@ -36,58 +36,44 @@
+</I>&gt;<i>  	InteractingSphere* s2 = static_cast&lt;InteractingSphere*&gt;(cm2.get());
+</I>&gt;<i>  
+</I>&gt;<i>  	Vector3r normal = se32.position-se31.position;
+</I>&gt;<i> -	Real penetrationDepth = pow(InteractionDetectionFactor*(s1-&gt;radius+s2-&gt;radius), 2) - normal.SquaredLength();// Compute a wrong value just to check sign - faster than computing distances
+</I>&gt;<i> +	Real penetrationDepth = pow(interactionDetectionFactor*(s1-&gt;radius+s2-&gt;radius), 2) - normal.SquaredLength();// Compute a wrong value just to check sign - faster than computing distances
+</I>&gt;<i>  	//Real penetrationDepth = s1-&gt;radius+s2-&gt;radius-normal.Normalize();
+</I>&gt;<i> -	if (penetrationDepth&gt;0 || c-&gt;isReal)
+</I>&gt;<i> -	{
+</I>&gt;<i> -
+</I>&gt;<i> -	shared_ptr&lt;SpheresContactGeometry&gt; scm;
+</I>&gt;<i> -	if (c-&gt;interactionGeometry)
+</I>&gt;<i> -	{
+</I>&gt;<i> -		//scm = YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
+</I>&gt;<i> -	//
+</I>&gt;<i> -	// WARNING! 
+</I>&gt;<i> -	//
+</I>&gt;<i> -	// FIXME - this must be dynamic cast until the contaners are rewritten to support multiple interactions types
+</I>&gt;<i> -	//         the problem is that scm can be either SDECLinkGeometry or SpheresContactGeometry and the only way CURRENTLY
+</I>&gt;<i> -	//         to check this is by dynamic cast. This has to be fixed.
+</I>&gt;<i> -	//
+</I>&gt;<i> -		scm = YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
+</I>&gt;<i> -		//scm = dynamic_cast&lt;SpheresContactGeometry*&gt;(c-&gt;interactionGeometry.get());
+</I>&gt;<i> -	// BEGIN .......  FIXME FIXME	- wrong hack, to make cohesion work.
+</I>&gt;<i> -// 		if(! scm) // this is not SpheresContactGeometry, so it is SDECLinkGeometry, dispatcher should do this job.
+</I>&gt;<i> -// 		{
+</I>&gt;<i> -// 			shared_ptr&lt;SDECLinkGeometry&gt; linkGeometry = dynamic_pointer_cast&lt;SDECLinkGeometry&gt;(c-&gt;interactionGeometry);
+</I>&gt;<i> -// //			cerr &lt;&lt; &quot;it is SpringGeometry ???: &quot; &lt;&lt; c-&gt;interactionGeometry-&gt;getClassName() &lt;&lt; endl;
+</I>&gt;<i> -// //			assert(linkGeometry);
+</I>&gt;<i> -// 			if(linkGeometry)
+</I>&gt;<i> -// 			{
+</I>&gt;<i> -// 				linkGeometry-&gt;normal 			= se32.position-se31.position;
+</I>&gt;<i> -// 				linkGeometry-&gt;normal.Normalize();
+</I>&gt;<i> -// 				return true;
+</I>&gt;<i> -// 			}
+</I>&gt;<i> -// 			else
+</I>&gt;<i> -// 				return false; // SpringGeometry !!!???????
+</I>&gt;<i> -// 		}
+</I>&gt;<i> -	// END
+</I>&gt;<i> -	}
+</I>&gt;<i> -	else
+</I>&gt;<i> -		scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
+</I>&gt;<i> -		
+</I>&gt;<i> -	
+</I>&gt;<i> +	if (penetrationDepth&gt;0 || c-&gt;isReal){
+</I>&gt;<i> +		shared_ptr&lt;SpheresContactGeometry&gt; scm;
+</I>&gt;<i> +		if (c-&gt;interactionGeometry){
+</I>&gt;<i> +			// WARNING! 
+</I>&gt;<i> +			// FIXME - this must be dynamic cast until the contaners are rewritten to support multiple interactions types
+</I>&gt;<i> +			//         the problem is that scm can be either SDECLinkGeometry or SpheresContactGeometry and the only way CURRENTLY
+</I>&gt;<i> +			//         to check this is by dynamic cast. This has to be fixed.
+</I>&gt;<i> +			scm = YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
+</I>&gt;<i> +			#if 0
+</I>&gt;<i> +				// BEGIN .......  FIXME FIXME	- wrong hack, to make cohesion work.
+</I>&gt;<i> +					if(! scm) // this is not SpheresContactGeometry, so it is SDECLinkGeometry, dispatcher should do this job.
+</I>&gt;<i> +					{
+</I>&gt;<i> +						shared_ptr&lt;SDECLinkGeometry&gt; linkGeometry = dynamic_pointer_cast&lt;SDECLinkGeometry&gt;(c-&gt;interactionGeometry);
+</I>&gt;<i> +							cerr &lt;&lt; &quot;it is SpringGeometry ???: &quot; &lt;&lt; c-&gt;interactionGeometry-&gt;getClassName() &lt;&lt; endl;
+</I>&gt;<i> +							assert(linkGeometry);
+</I>&gt;<i> +						if(linkGeometry)
+</I>&gt;<i> +						{
+</I>&gt;<i> +							linkGeometry-&gt;normal 			= se32.position-se31.position;
+</I>&gt;<i> +							linkGeometry-&gt;normal.Normalize();
+</I>&gt;<i> +							return true;
+</I>&gt;<i> +						}
+</I>&gt;<i> +						else
+</I>&gt;<i> +							return false; // SpringGeometry !!!???????
+</I>&gt;<i> +					}
+</I>&gt;<i> +					// END
+</I>&gt;<i> +			#endif
+</I>&gt;<i> +		} else scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
+</I>&gt;<i>  		penetrationDepth = s1-&gt;radius+s2-&gt;radius-normal.Normalize();
+</I>&gt;<i>  		scm-&gt;contactPoint = se31.position+(s1-&gt;radius-0.5*penetrationDepth)*normal;//0.5*(pt1+pt2);
+</I>&gt;<i>  		scm-&gt;normal = normal;
+</I>&gt;<i>  		scm-&gt;penetrationDepth = penetrationDepth;
+</I>&gt;<i>  		scm-&gt;radius1 = s1-&gt;radius;
+</I>&gt;<i>  		scm-&gt;radius2 = s2-&gt;radius;
+</I>&gt;<i> -				
+</I>&gt;<i> -		if (!c-&gt;interactionGeometry)
+</I>&gt;<i> -			c-&gt;interactionGeometry = scm;
+</I>&gt;<i> -	
+</I>&gt;<i> +		if (!c-&gt;interactionGeometry) c-&gt;interactionGeometry = scm;
+</I>&gt;<i>  		return true;
+</I>&gt;<i> -	}
+</I>&gt;<i> -	else return false;
+</I>&gt;<i> +	} else return false;
+</I>&gt;<i>  }
+</I>&gt;<i>  
+</I>&gt;<i>  
+</I>&gt;<i>
+</I>&gt;<i> Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp	2008-03-20 20:14:47 UTC (rev 1282)
+</I>&gt;<i> +++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp	2008-03-22 08:40:15 UTC (rev 1283)
+</I>&gt;<i> @@ -14,21 +14,18 @@
+</I>&gt;<i>  class InteractingSphere2InteractingSphere4SpheresContactGeometry : public InteractionGeometryEngineUnit
+</I>&gt;<i>  {
+</I>&gt;<i>  	public :
+</I>&gt;<i> -		virtual bool go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+</I>&gt;<i> -					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+</I>&gt;<i> -					const Se3r&amp; se31,
+</I>&gt;<i> -					const Se3r&amp; se32,
+</I>&gt;<i> -					const shared_ptr&lt;Interaction&gt;&amp; c);
+</I>&gt;<i> -		virtual bool goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+</I>&gt;<i> -					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+</I>&gt;<i> -					const Se3r&amp; se31,
+</I>&gt;<i> -					const Se3r&amp; se32,
+</I>&gt;<i> -					const shared_ptr&lt;Interaction&gt;&amp; c);
+</I>&gt;<i> +		virtual bool go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1, const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2, const Se3r&amp; se31, const Se3r&amp; se32, const shared_ptr&lt;Interaction&gt;&amp; c);
+</I>&gt;<i> +		virtual bool goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1, const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2, const Se3r&amp; se31, const Se3r&amp; se32, const shared_ptr&lt;Interaction&gt;&amp; c);
+</I>&gt;<i>  					
+</I>&gt;<i>  		InteractingSphere2InteractingSphere4SpheresContactGeometry();		
+</I>&gt;<i> -					
+</I>&gt;<i> -		double InteractionDetectionFactor;// InteractionGeometry will be computed when InteractionDetectionFactor*(rad1+rad2) &gt; distance 		
+</I>&gt;<i> -	
+</I>&gt;<i> +		
+</I>&gt;<i> +		/*! enlarge both radii by this factor (if &gt;1), to permit creation of distant interactions.
+</I>&gt;<i> +		 *
+</I>&gt;<i> +		 * InteractionGeometry will be computed when interactionDetectionFactor*(rad1+rad2) &gt; distance.
+</I>&gt;<i> +		 *
+</I>&gt;<i> +		 * @note This parameter is functionally coupled with InteractinSphere2AABB::aabbEnlargeFactor,
+</I>&gt;<i> +		 * which will create larger bounding boxes and should be of the same value. */
+</I>&gt;<i> +		double interactionDetectionFactor;
+</I>&gt;<i>  
+</I>&gt;<i>  	REGISTER_CLASS_NAME(InteractingSphere2InteractingSphere4SpheresContactGeometry);
+</I>&gt;<i>  	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
+</I>&gt;<i>
+</I>&gt;<i> Added: trunk/scripts/simple-scene.py
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/scripts/simple-scene.py	2008-03-20 20:14:47 UTC (rev 1282)
+</I>&gt;<i> +++ trunk/scripts/simple-scene.py	2008-03-22 08:40:15 UTC (rev 1283)
+</I>&gt;<i> @@ -0,0 +1,58 @@
+</I>&gt;<i> +# -*- encoding=utf-8 -*-
+</I>&gt;<i> +o=Omega() # this creates default rootBody as well
+</I>&gt;<i> +
+</I>&gt;<i> +# is used in both initializers and engines, assign to a temporary
+</I>&gt;<i> +aabbDisp=MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
+</I>&gt;<i> +
+</I>&gt;<i> +o.initializers=[
+</I>&gt;<i> +	StandAloneEngine('PhysicalActionContainerInitializer',{'physicalActionNames':['Force','Momentum','GlobalStiffness']}),
+</I>&gt;<i> +	aabbDisp]
+</I>&gt;<i> +
+</I>&gt;<i> +o.engines=[
+</I>&gt;<i> +	StandAloneEngine('PhysicalActionContainerReseter'),
+</I>&gt;<i> +	aabbDisp,
+</I>&gt;<i> +	StandAloneEngine('PersistentSAPCollider'),
+</I>&gt;<i> +	MetaEngine('InteractionGeometryMetaEngine',[
+</I>&gt;<i> +		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
+</I>&gt;<i> +		EngineUnit('InteractingBox2InteractingSphere4SpheresContactGeometry')
+</I>&gt;<i> +	]),
+</I>&gt;<i> +	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+</I>&gt;<i> +	StandAloneEngine('ElasticContactLaw'),
+</I>&gt;<i> +	StandAloneEngine('GlobalStiffnessCounter',{'interval':50}),
+</I>&gt;<i> +	StandAloneEngine('GlobalStiffnessTimeStepper',{'defaultDt':1e-4,'active':True,'timeStepUpdateInterval':50}),
+</I>&gt;<i> +	DeusExMachina('GravityEngine',{'gravity':[0,0,-9.81]}),
+</I>&gt;<i> +	MetaEngine('PhysicalActionDamper',[
+</I>&gt;<i> +		EngineUnit('CundallNonViscousForceDamping',{'damping':0.2}),
+</I>&gt;<i> +		EngineUnit('CundallNonViscousMomentumDamping',{'damping':0.2})
+</I>&gt;<i> +	]),
+</I>&gt;<i> +	MetaEngine('PhysicalActionApplier',[
+</I>&gt;<i> +		EngineUnit('NewtonsForceLaw'),
+</I>&gt;<i> +		EngineUnit('NewtonsMomentumLaw'),
+</I>&gt;<i> +	]),
+</I>&gt;<i> +	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogPositionIntegrator')]),
+</I>&gt;<i> +	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogOrientationIntegrator')]),
+</I>&gt;<i> +]
+</I>&gt;<i> +
+</I>&gt;<i> +s=Body()
+</I>&gt;<i> +s.shape=GeometricalModel('Sphere',{'radius':1,'diffuseColor':[0,1,0]})
+</I>&gt;<i> +s.mold=InteractingGeometry('InteractingSphere',{'radius':1,'diffuseColor':[1,0,0]})
+</I>&gt;<i> +s.phys=PhysicalParameters('BodyMacroParameters',{'se3':[0,0,2,1,0,0,0],'mass':1000,'inertia':[7e4,7e4,7e4],'young':3e9,'poisson':0.3})
+</I>&gt;<i> +s.bound=BoundingVolume('AABB',{'diffuseColor':[0,0,1]})
+</I>&gt;<i> +s['isDynamic']=True
+</I>&gt;<i> +
+</I>&gt;<i> +b=Body()
+</I>&gt;<i> +b.shape=GeometricalModel('Box',{'extents':[.5,.5,.5],'diffuseColor':[1,0,0]})
+</I>&gt;<i> +b.mold=InteractingGeometry('InteractingBox',{'extents':[.5,.5,.5],'diffuseColor':[0,1,0]})
+</I>&gt;<i> +b.phys=PhysicalParameters('BodyMacroParameters',{'se3':[0,0,0,1,0,0,0],'mass':2000,'inertia':[1e5,1e5,1e5],'young':3e9,'poisson':0.3})
+</I>&gt;<i> +b.bound=BoundingVolume('AABB',{'diffuseColor':[0,0,1]})
+</I>&gt;<i> +b['isDynamic']=False
+</I>&gt;<i> +
+</I>&gt;<i> +o.bodies.append(b)
+</I>&gt;<i> +o.bodies.append(s)
+</I>&gt;<i> +
+</I>&gt;<i> +o.save('/tmp/a.xml')
+</I>&gt;<i> +
+</I>&gt;<i> +# load that with the QtGUI
+</I>&gt;<i> +import os
+</I>&gt;<i> +os.system(yadeExecutable+' -N QtGUI -S /tmp/a.xml')
+</I>&gt;<i> +
+</I>&gt;<i>
+</I>&gt;<i> _______________________________________________
+</I>&gt;<i> Yade-commits mailing list
+</I>&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">Yade-commits at lists.berlios.de</A>
+</I>&gt;<i> <A HREF="https://lists.berlios.de/mailman/listinfo/yade-commits">https://lists.berlios.de/mailman/listinfo/yade-commits</A>
+</I>&gt;<i>   
+</I>
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Institut National Polytechnique de Grenoble
+Laboratoire 3S (Soils Solids Structures) - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000137.html">[yade-dev] using cerr in TriaxialTest
+</A></li>
+	<LI>Next message: <A HREF="000139.html">[yade-dev] [Yade-commits] r1283 - in trunk: . core extra extra/clump gui gui/cmd lib/serialization pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/EngineUnit pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#138">[ date ]</a>
+              <a href="thread.html#138">[ thread ]</a>
+              <a href="subject.html#138">[ subject ]</a>
+              <a href="author.html#138">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

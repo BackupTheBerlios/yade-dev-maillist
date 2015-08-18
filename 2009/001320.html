@@ -1,0 +1,262 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1909 - in trunk/pkg: fem snow
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1909%20-%20in%20trunk/pkg%3A%20fem%20snow&In-Reply-To=%3C200907311056.n6VAuZMX012591%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001319.html">
+   <LINK REL="Next"  HREF="001321.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1909 - in trunk/pkg: fem snow</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1909%20-%20in%20trunk/pkg%3A%20fem%20snow&In-Reply-To=%3C200907311056.n6VAuZMX012591%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1909 - in trunk/pkg: fem snow">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Jul 31 12:56:35 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001319.html">[deprecated list] [Yade-dev] [svn] r1908 - in trunk: core	gui/qt3	pkg/snow/RenderingEngine py/yadeWrapper scripts
+</A></li>
+        <LI>Next message: <A HREF="001321.html">[deprecated list] [Yade-dev] [svn] r1910 - in trunk:	gui/py	pkg/common/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1320">[ date ]</a>
+              <a href="thread.html#1320">[ thread ]</a>
+              <a href="subject.html#1320">[ subject ]</a>
+              <a href="author.html#1320">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-31 12:56:33 +0200 (Fri, 31 Jul 2009)
+New Revision: 1909
+
+Removed:
+   trunk/pkg/fem/SConscript
+   trunk/pkg/snow/SConscript
+Log:
+Remove leftover SConscripts.
+
+
+Deleted: trunk/pkg/fem/SConscript
+===================================================================
+--- trunk/pkg/fem/SConscript	2009-07-31 10:53:44 UTC (rev 1908)
++++ trunk/pkg/fem/SConscript	2009-07-31 10:56:33 UTC (rev 1909)
+@@ -1,12 +0,0 @@
+-Import('*')
+-env.Install('$PREFIX/lib/yade$SUFFIX/pkg-fem',[
+-	env.SharedLibrary('FEMSetGeometry',['DataClass/GeometricalModel/FEMSetGeometry.cpp']),env.SharedLibrary('FEMNodeData',['DataClass/PhysicalParameters/FEMNodeData.cpp'],LIBS=env['LIBS']+['ParticleParameters','AABB',]),
+-	env.SharedLibrary('FEMSetParameters',['DataClass/PhysicalParameters/FEMSetParameters.cpp'],LIBS=env['LIBS']+['AABB',]),
+-	env.SharedLibrary('FEMTetrahedronData',['DataClass/PhysicalParameters/FEMTetrahedronData.cpp'],LIBS=env['LIBS']+['FEMNodeData','RigidBodyParameters','AABB']),
+-	env.SharedLibrary('FEMSet2Tetrahedrons',['Engine/EngineUnit/FEMSet2Tetrahedrons.cpp'],LIBS=env['LIBS']+['FEMSetParameters','FEMTetrahedronData','ParticleParameters','GeometricalModelMetaEngine','Tetrahedron']),
+-	env.SharedLibrary('FEMSetTextLoader',['Engine/EngineUnit/FEMSetTextLoader.cpp'],LIBS=env['LIBS']+['FEMSetParameters','FEMTetrahedronData','PhysicalParametersMetaEngine','ParticleParameters','RigidBodyParameters','Sphere','Tetrahedron'],),
+-	env.SharedLibrary('FEMTetrahedronStiffness',['Engine/EngineUnit/FEMTetrahedronStiffness.cpp'],LIBS=env['LIBS']+['FEMSetParameters','FEMTetrahedronData','PhysicalParametersMetaEngine','ParticleParameters']),
+-	env.SharedLibrary('FEMLaw',['Engine/StandAloneEngine/FEMLaw.cpp'],LIBS=env['LIBS']+['FEMTetrahedronData','ParticleParameters']),
+-	env.SharedLibrary('FEMBeam',['PreProcessor/FEMBeam.cpp'],LIBS=env['LIBS']+['FEMTetrahedronData','FEMSetParameters','FEMLaw','FEMSetTextLoader','FEMTetrahedronStiffness','CundallNonViscousDamping','CundallNonViscousDamping','MetaInteractingGeometry','GravityEngines','PhysicalActionContainerReseter','InteractionGeometryMetaEngine','InteractionPhysicsMetaEngine','GeometricalModelMetaEngine','PhysicalActionApplier','PhysicalParametersMetaEngine','BoundingVolumeMetaEngine','AABB','Box','RigidBodyParameters','Sphere','Tetrahedron','TranslationEngine',],),
+-])
+-
+
+Deleted: trunk/pkg/snow/SConscript
+===================================================================
+--- trunk/pkg/snow/SConscript	2009-07-31 10:53:44 UTC (rev 1908)
++++ trunk/pkg/snow/SConscript	2009-07-31 10:56:33 UTC (rev 1909)
+@@ -1,160 +0,0 @@
+-# vim: set filetype=python :
+-
+-Import('*')
+-
+-if 'YADE_OPENGL' in env['CPPDEFINES']:
+-	env.Install('$PREFIX/lib/yade$SUFFIX/pkg-snow',[
+-		env.SharedLibrary('Ef1_IstSnowLayersContact_glDraw',
+-			['RenderingEngine/Ef1_IstSnowLayersContact_glDraw.cpp'],
+-			LIBS=env['LIBS']+['SpheresContactGeometry','ElasticContactInteraction','yade-opengl','IstSnowLayersContact',
+-			'BshSnowGrain','BssSnowGrain','$QGLVIEWER_LIB']),
+-		env.SharedLibrary('Ef1_BssSnowGrain_glDraw',['RenderingEngine/Ef1_BssSnowGrain_glDraw.cpp'],
+-			LIBS=env['LIBS']+['BshSnowGrain','yade-opengl','yade-base','BssSnowGrain','GLDrawInteractingSphere','$QGLVIEWER_LIB']),
+-		env.SharedLibrary('Ef1_BshSnowGrain_glDraw',['RenderingEngine/Ef1_BshSnowGrain_glDraw.cpp'],
+-			LIBS=env['LIBS']+['BshSnowGrain','yade-opengl','yade-base','$QGLVIEWER_LIB']),
+-		env.SharedLibrary('SnowVoxelsLoader',
+-			['PreProcessor/SnowVoxelsLoader.cpp',
+-			'PreProcessor/Voxel/DataSurface.cpp',
+-			'PreProcessor/Voxel/DataVoxel.cpp',
+-			'PreProcessor/Voxel/GrainSurface.cpp',
+-			'PreProcessor/Voxel/SafeVectors3.cpp',
+-			'PreProcessor/Voxel/VoxelEnvelope.cpp',
+-			'PreProcessor/Voxel/Config.cpp'],
+-			LIBS=env['LIBS']+['boost_serialization','boost_program_options']+['SDECLinkGeometry',
+-				'CohesiveFrictionalContactLaw',
+-				'AveragePositionRecorder',
+-				'BshSnowGrain',
+-				'BssSnowGrain',
+-				'VelocityRecorder',
+-				'Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact',
+-				'Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact',
+-				'Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry',
+-				'Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry',
+-				'ForceRecorder',
+-				'CohesiveFrictionalRelationships',
+-				'ElasticCriterionTimeStepper',
+-				'InteractingSphere',
+-				'InteractingBox',
+-				'InteractingSphere2InteractingSphere4SpheresContactGeometry',
+-				'InteractingBox2InteractingSphere4SpheresContactGeometry',
+-				'ElawSnowLayersDeformation',
+-				'CundallNonViscousDamping',
+-				'CundallNonViscousDamping',
+-				'MetaInteractingGeometry',
+-				'GravityEngines',
+-				'yade-serialization',
+-				'PhysicalActionContainerReseter',
+-				'InteractionGeometryMetaEngine',
+-				'InteractionPhysicsMetaEngine',
+-				'PhysicalActionApplier',
+-				'PhysicalParametersMetaEngine',
+-				'BoundingVolumeMetaEngine',
+-				'yade-multimethods',
+-				'Box',
+-				'Sphere',
+-				'AABB',
+-				'DistantPersistentSAPCollider',
+-				'MetaInteractingGeometry2AABB',
+-				'TriaxialStressController',
+-				'TriaxialCompressionEngine',
+-				'GlobalStiffnessTimeStepper',
+-				'yade-base',
+-				'Shop',
+-				'TriaxialStateRecorder',
+-				'PositionOrientationRecorder',
+-				'HydraulicForceEngine']),
+-	])
+-
+-
+-env.Install('$PREFIX/lib/yade$SUFFIX/pkg-snow',[
+-
+-
+-	env.SharedLibrary('IstSnowLayersContact',
+-		['DataClass/IstSnowLayersContact.cpp'],
+-		LIBS=env['LIBS']+['yade-serialization','yade-base','SpheresContactGeometry']),
+-
+-	env.SharedLibrary('Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact',
+-	['Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.cpp'],
+-		LIBS=env['LIBS']+['BshSnowGrain','yade-base',
+-		'BssSnowGrain','InteractingBox','IstSnowLayersContact',
+-		'Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact','Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry']),
+-	
+-	env.SharedLibrary('Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact',
+-	['Engine/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.cpp'],
+-		LIBS=env['LIBS']+['BshSnowGrain','yade-base','IstSnowLayersContact',
+-		'BssSnowGrain','InteractingSphere','Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry']),
+-
+-	env.SharedLibrary('Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry',
+-	['Engine/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.cpp'],
+-		LIBS=env['LIBS']+['BshSnowGrain','yade-base',
+-		'BssSnowGrain','InteractingBox','InteractingBox2InteractingSphere4SpheresContactGeometry']),
+-	
+-	env.SharedLibrary('Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry',
+-	['Engine/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.cpp'],
+-		LIBS=env['LIBS']+['BshSnowGrain','yade-base',
+-		'BssSnowGrain','InteractingSphere','InteractingSphere2InteractingSphere4SpheresContactGeometry']),
+-
+-	env.SharedLibrary('Ef2_BssSnowGrain_AABB_makeAABB',['Engine/Ef2_BssSnowGrain_AABB_makeAABB.cpp'],
+-		LIBS=env['LIBS']+['BoundingVolumeMetaEngine','InteractingSphere','BssSnowGrain','AABB']),
+-	
+-	env.SharedLibrary('BshSnowGrain',['DataClass/BshSnowGrain.cpp'],LIBS=['boost_serialization','yade-base']),
+-	env.SharedLibrary('BssSnowGrain',['DataClass/BssSnowGrain.cpp'],LIBS=['boost_serialization','yade-base','BshSnowGrain',
+-		'InteractingSphere']),
+-
+-	env.SharedLibrary('ElawSnowLayersDeformation',
+-		['Engine/ElawSnowLayersDeformation.cpp'],
+-		LIBS=env['LIBS']+['SDECLinkPhysics',
+-			'CohesiveFrictionalContactInteraction',
+-			'SDECLinkGeometry',
+-			'SpheresContactGeometry',
+-			'CohesiveFrictionalBodyParameters',
+-			'yade-serialization',
+-			'yade-base',
+-			'BssSnowGrain',
+-			'BshSnowGrain',
+-			'yade-multimethods',
+-			'Sphere',
+-			'RigidBodyParameters']),
+-
+-
+-	env.SharedLibrary('SnowCreepTest',
+-		['PreProcessor/SnowCreepTest.cpp'],
+-		LIBS=env['LIBS']+['SDECLinkGeometry',
+-			'CohesiveFrictionalContactLaw',
+-			'AveragePositionRecorder',
+-			'VelocityRecorder',
+-			'ForceRecorder',
+-			'CohesiveFrictionalRelationships',
+-			'ElasticCriterionTimeStepper',
+-			'InteractingSphere',
+-			'InteractingBox',
+-			'InteractingSphere2InteractingSphere4SpheresContactGeometry',
+-			'InteractingBox2InteractingSphere4SpheresContactGeometry',
+-			'CundallNonViscousDamping',
+-			'CundallNonViscousDamping',
+-			'MetaInteractingGeometry',
+-			'GravityEngines',
+-			'yade-serialization',
+-			'PhysicalActionContainerReseter',
+-			'InteractionGeometryMetaEngine',
+-			'InteractionPhysicsMetaEngine',
+-			'PhysicalActionApplier',
+-			'PhysicalParametersMetaEngine',
+-			'BoundingVolumeMetaEngine',
+-			'yade-multimethods',
+-			'Box',
+-			'Sphere',
+-			'ElawSnowLayersDeformation',
+-			'AABB',
+-			'DistantPersistentSAPCollider',
+-			'MetaInteractingGeometry2AABB',
+-			'TriaxialStressController',
+-			'TriaxialCompressionEngine',
+-			'GlobalStiffnessTimeStepper',
+-			'yade-base',
+-			'Shop',
+-			'TriaxialStateRecorder',
+-			'PositionOrientationRecorder',
+-			'HydraulicForceEngine'])
+-])
+-
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001319.html">[deprecated list] [Yade-dev] [svn] r1908 - in trunk: core	gui/qt3	pkg/snow/RenderingEngine py/yadeWrapper scripts
+</A></li>
+	<LI>Next message: <A HREF="001321.html">[deprecated list] [Yade-dev] [svn] r1910 - in trunk:	gui/py	pkg/common/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1320">[ date ]</a>
+              <a href="thread.html#1320">[ thread ]</a>
+              <a href="subject.html#1320">[ subject ]</a>
+              <a href="author.html#1320">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

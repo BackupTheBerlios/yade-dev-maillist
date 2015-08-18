@@ -1,0 +1,665 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1757 - in trunk:	extra	pkg/common/DataClass/InteractingGeometry	pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1757%20-%20in%20trunk%3A%0A%09extra%09pkg/common/DataClass/InteractingGeometry%0A%09pkg/dem%09pkg/dem/DataClass/InteractionGeometry%09pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%09scripts/test&In-Reply-To=%3C200904220657.n3M6vlNp011048%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000925.html">
+   <LINK REL="Next"  HREF="000927.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1757 - in trunk:	extra	pkg/common/DataClass/InteractingGeometry	pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1757%20-%20in%20trunk%3A%0A%09extra%09pkg/common/DataClass/InteractingGeometry%0A%09pkg/dem%09pkg/dem/DataClass/InteractionGeometry%09pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%09scripts/test&In-Reply-To=%3C200904220657.n3M6vlNp011048%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1757 - in trunk:	extra	pkg/common/DataClass/InteractingGeometry	pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Apr 22 08:57:47 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000925.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-11910/bin/yade-svn1756:	TriaxialTestWater, USCTGen
+</A></li>
+        <LI>Next message: <A HREF="000927.html">[deprecated list] [Yade-dev] r1757 - in trunk: extra pkg/common/DataClass/InteractingGeometry pkg/dem pkg/dem/DataClass/InteractionGeometry pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#926">[ date ]</a>
+              <a href="thread.html#926">[ thread ]</a>
+              <a href="subject.html#926">[ subject ]</a>
+              <a href="author.html#926">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-04-22 08:57:45 +0200 (Wed, 22 Apr 2009)
+New Revision: 1757
+
+Added:
+   trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.cpp
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/extra/SConscript
+   trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.cpp
+   trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.hpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_FacetSphere.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_FacetSphere.hpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.hpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.hpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.hpp
+   trunk/pkg/dem/SConscript
+   trunk/scripts/test/facet-topo.py
+Log:
+1. Finish implementation of Dof3DofGeom_FacetSphere (with plastic slip as well)
+2. Adapt Brefcom optionally to Dem3DofGeom
+3. Add d0fixup to SpheresContactGeometry to get correct normal strain in sphere-facet contact with fictive sphere
+(zero for sphere-sphere)
+4. Finish FacetTopologyAnalyzer; angle usage in Dem4DofGeom_FacetSphere not yet tested.
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-04-17 15:11:23 UTC (rev 1756)
++++ trunk/extra/Brefcom.cpp	2009-04-22 06:57:45 UTC (rev 1757)
+@@ -5,6 +5,7 @@
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/lib-QGLViewer/qglviewer.h&gt;
+ #include&lt;yade/lib-opengl/GLUtils.hpp&gt;
++#include&lt;yade/pkg-dem/DemXDofGeom.hpp&gt;
+ 
+ 
+ YADE_PLUGIN(&quot;BrefcomMakeContact&quot;,&quot;BrefcomContact&quot;,&quot;BrefcomLaw&quot;,&quot;GLDrawBrefcomContact&quot;,&quot;BrefcomDamageColorizer&quot;, &quot;BrefcomPhysParams&quot;, &quot;BrefcomGlobalCharacteristics&quot;, &quot;ef2_Spheres_Brefcom_BrefcomLaw&quot; /* ,&quot;BrefcomStiffnessComputer&quot;*/ );
+@@ -66,7 +67,11 @@
+ 
+ //! @todo Formulas in the following should be verified
+ void BrefcomMakeContact::go(const shared_ptr&lt;PhysicalParameters&gt;&amp; pp1, const shared_ptr&lt;PhysicalParameters&gt;&amp; pp2, const shared_ptr&lt;Interaction&gt;&amp; interaction){
+-	const shared_ptr&lt;SpheresContactGeometry&gt;&amp; contGeom=YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(interaction-&gt;interactionGeometry);
++	#ifdef BREFCOM_DEM3DOF
++		const Dem3DofGeom* contGeom=YADE_CAST&lt;Dem3DofGeom*&gt;(interaction-&gt;interactionGeometry.get());
++	#else
++		const SpheresContactGeometry* contGeom=YADE_CAST&lt;SpheresContactGeometry*&gt;(interaction-&gt;interactionGeometry.get());
++	#endif
+ 	assert(contGeom); // for now, don't handle anything other than SpheresContactGeometry
+ 
+ 	if(!interaction-&gt;isNew &amp;&amp; interaction-&gt;interactionPhysics){ /* relax */ } 
+@@ -78,7 +83,12 @@
+ 
+ 		Real E12=2*elast1-&gt;young*elast2-&gt;young/(elast1-&gt;young+elast2-&gt;young); // harmonic Young's modulus average
+ 		//Real nu12=2*elast1-&gt;poisson*elast2-&gt;poisson/(elast1-&gt;poisson+elast2-&gt;poisson); // dtto for Poisson ratio 
+-		Real S12=Mathr::PI*pow(min(contGeom-&gt;radius1,contGeom-&gt;radius2),2); // &quot;surface&quot; of interaction
++		#ifdef BREFCOM_DEM3DOF
++			Real minRad=(contGeom-&gt;refR1&lt;=0?contGeom-&gt;refR2:(contGeom-&gt;refR2&lt;=0?contGeom-&gt;refR1:min(contGeom-&gt;refR1,contGeom-&gt;refR2)));
++			Real S12=Mathr::PI*pow(minRad,2); // &quot;surface&quot; of interaction
++		#else
++			Real S12=Mathr::PI*pow(min(contGeom-&gt;radius1,contGeom-&gt;radius2),2); // &quot;surface&quot; of interaction
++		#endif
+ 		//Real E=(E12 /* was here for Kn:  *S12/d0  */)*((1+alpha)/(beta*(1+nu12)+gamma*(1-alpha*nu12)));
+ 		//Real E=E12; // apply alpha, beta, gamma: garbage values of E !?
+ 
+@@ -189,7 +199,12 @@
+ 
+ void ef2_Spheres_Brefcom_BrefcomLaw::go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody){
+ 	//timingDeltas-&gt;start();
+-	SpheresContactGeometry* contGeom=static_cast&lt;SpheresContactGeometry*&gt;(_geom.get());
++	#ifdef BREFCOM_DEM3DOF
++		Dem3DofGeom* contGeom=static_cast&lt;Dem3DofGeom*&gt;(_geom.get());
++	#else
++		SpheresContactGeometry* contGeom=static_cast&lt;SpheresContactGeometry*&gt;(_geom.get());
++		assert(contGeom-&gt;hasShear);
++	#endif
+ 	BrefcomContact* BC=static_cast&lt;BrefcomContact*&gt;(_phys.get());
+ 
+ 	/* kept fully damaged contacts; note that normally the contact is deleted _after_ the BREFCOM_MATERIAL_MODEL,
+@@ -206,11 +221,17 @@
+ 	#define NNAN(a) assert(!isnan(a));
+ 	#define NNANV(v) assert(!isnan(v[0])); assert(!isnan(v[1])); assert(!isnan(v[2]));
+ 
+-	assert(contGeom-&gt;hasShear);
+ 	//timingDeltas-&gt;checkpoint(&quot;setup&quot;);
+-	epsN=contGeom-&gt;epsN(); epsT=contGeom-&gt;epsT();
++	#ifdef BREFCOM_DEM3DOF
++		epsN=contGeom-&gt;strainN(); epsT=contGeom-&gt;strainT();
++	#else
++		epsN=contGeom-&gt;epsN(); epsT=contGeom-&gt;epsT();
++	#endif
+ 	if(isnan(epsN)){
+-		LOG_ERROR(&quot;d0=&quot;&lt;&lt;contGeom-&gt;d0&lt;&lt;&quot;, d1,d2=&quot;&lt;&lt;contGeom-&gt;d1&lt;&lt;&quot;,&quot;&lt;&lt;contGeom-&gt;d2&lt;&lt;&quot;; pos1,pos2=&quot;&lt;&lt;contGeom-&gt;pos1&lt;&lt;&quot;,&quot;&lt;&lt;contGeom-&gt;pos2);
++		#ifndef BREFCOM_DEM3DOF
++			LOG_ERROR(&quot;d0=&quot;&lt;&lt;contGeom-&gt;d0&lt;&lt;&quot;, d1,d2=&quot;&lt;&lt;contGeom-&gt;d1&lt;&lt;&quot;,&quot;&lt;&lt;contGeom-&gt;d2&lt;&lt;&quot;; pos1,pos2=&quot;&lt;&lt;contGeom-&gt;pos1&lt;&lt;&quot;,&quot;&lt;&lt;contGeom-&gt;pos2);
++		#endif
++		throw;
+ 	}
+ 	NNAN(epsN); NNANV(epsT);
+ 	// already in SpheresContactGeometry:
+@@ -237,7 +258,11 @@
+ 	Fn=sigmaN*crossSection; BC-&gt;normalForce=Fn*contGeom-&gt;normal;
+ 	Fs=sigmaT*crossSection; BC-&gt;shearForce=Fs;
+ 
+-	applyForceAtContactPoint(BC-&gt;normalForce+BC-&gt;shearForce, contGeom-&gt;contactPoint, I-&gt;getId1(), contGeom-&gt;pos1, I-&gt;getId2(), contGeom-&gt;pos2, rootBody);
++	#ifdef BREFCOM_DEM3DOF
++		applyForceAtContactPoint(BC-&gt;normalForce+BC-&gt;shearForce, contGeom-&gt;contactPoint, I-&gt;getId1(), contGeom-&gt;se31.position, I-&gt;getId2(), contGeom-&gt;se32.position, rootBody);
++	#else
++		applyForceAtContactPoint(BC-&gt;normalForce+BC-&gt;shearForce, contGeom-&gt;contactPoint, I-&gt;getId1(), contGeom-&gt;pos1, I-&gt;getId2(), contGeom-&gt;pos2, rootBody);
++	#endif
+ 	//timingDeltas-&gt;checkpoint(&quot;rest&quot;);
+ }
+ 
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2009-04-17 15:11:23 UTC (rev 1756)
++++ trunk/extra/Brefcom.hpp	2009-04-22 06:57:45 UTC (rev 1757)
+@@ -174,6 +174,8 @@
+ };
+ REGISTER_SERIALIZABLE(BrefcomPhysParams);
+ 
++//#define BREFCOM_DEM3DOF
++
+ class ef2_Spheres_Brefcom_BrefcomLaw: public ConstitutiveLaw{
+ 	public:
+ 	/*! Damage evolution law */
+@@ -184,7 +186,11 @@
+ 		bool logStrain;
+ 		ef2_Spheres_Brefcom_BrefcomLaw(): logStrain(false){ /*timingDeltas=shared_ptr&lt;TimingDeltas&gt;(new TimingDeltas);*/ }
+ 		void go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody);
+-	FUNCTOR2D(SpheresContactGeometry,BrefcomContact);
++	#ifdef BREFCOM_DEM3DOF
++		FUNCTOR2D(Dem3DofGeom,BrefcomContact);
++	#else
++		FUNCTOR2D(SpheresContactGeometry,BrefcomContact);
++	#endif
+ 	REGISTER_CLASS_AND_BASE(ef2_Spheres_Brefcom_BrefcomLaw,ConstitutiveLaw);
+ 	REGISTER_ATTRIBUTES(ConstitutiveLaw,(logStrain));
+ 	DECLARE_LOGGER;
+
+Modified: trunk/extra/SConscript
+===================================================================
+--- trunk/extra/SConscript	2009-04-17 15:11:23 UTC (rev 1756)
++++ trunk/extra/SConscript	2009-04-22 06:57:45 UTC (rev 1757)
+@@ -42,9 +42,9 @@
+ 
+ 	env.SharedLibrary('UniaxialStrainControlledTest',['usct/UniaxialStrainControlledTest.cpp'],LIBS=env['LIBS']+['Shop','GlobalStiffnessTimeStepper','Brefcom','PositionOrientationRecorder']),
+ 
+-	env.SharedLibrary('Brefcom',['Brefcom.cpp'],CXXFLAGS=env['CXXFLAGS']+brefcomInclude,LIBS=env['LIBS']+['Shop','InteractingSphere2InteractingSphere4SpheresContactGeometry']),
++	env.SharedLibrary('Brefcom',['Brefcom.cpp'],CXXFLAGS=env['CXXFLAGS']+brefcomInclude,LIBS=env['LIBS']+['Shop','InteractingSphere2InteractingSphere4SpheresContactGeometry','DemXDofGeom']),
+ 
+-	env.SharedLibrary('BrefcomTestGen',['BrefcomTestGen.cpp'],LIBS=env['LIBS']+['Shop','UniaxialStrainControlledTest','PositionOrientationRecorder']),
++	env.SharedLibrary('BrefcomTestGen',['BrefcomTestGen.cpp'],LIBS=env['LIBS']+['Shop','UniaxialStrainControlledTest','PositionOrientationRecorder','Brefcom']),
+ 
+ 	env.SharedLibrary('SimpleScene',['SimpleScene.cpp'],LIBS=env['LIBS']+['Shop','SimpleElasticRelationships']),
+ 
+
+Modified: trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.cpp
+===================================================================
+--- trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.cpp	2009-04-17 15:11:23 UTC (rev 1756)
++++ trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.cpp	2009-04-22 06:57:45 UTC (rev 1757)
+@@ -12,7 +12,7 @@
+ 	createIndex();
+ 	#ifdef FACET_TOPO
+ 		edgeAdjIds.resize(3,Body::ID_NONE);	
+-		edgeAdjAngle.resize(3,0);
++		edgeAdjHalfAngle.resize(3,0);
+ 	#endif
+ }
+ 
+@@ -26,7 +26,7 @@
+     REGISTER_ATTRIBUTE(vertices);
+ 	#ifdef FACET_TOPO
+ 		REGISTER_ATTRIBUTE(edgeAdjIds);
+-		REGISTER_ATTRIBUTE(edgeAdjAngle);
++		REGISTER_ATTRIBUTE(edgeAdjHalfAngle);
+ 	#endif
+ }
+ 
+
+Modified: trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.hpp	2009-04-17 15:11:23 UTC (rev 1756)
++++ trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.hpp	2009-04-22 06:57:45 UTC (rev 1757)
+@@ -41,8 +41,8 @@
+ 	#ifdef FACET_TOPO
+ 		//! facet id's that are adjacent to respective edges
+ 		vector&lt;body_id_t&gt; edgeAdjIds;
+-		//! angle between normals of this facet and the adjacent facet
+-		vector&lt;body_id_t&gt; edgeAdjAngle;
++		//! half angle between normals of this facet and the adjacent facet
++		vector&lt;Real&gt; edgeAdjHalfAngle;
+ 	#endif
+ 
+ 	protected:
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_FacetSphere.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_FacetSphere.cpp	2009-04-17 15:11:23 UTC (rev 1756)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_FacetSphere.cpp	2009-04-22 06:57:45 UTC (rev 1757)
+@@ -7,7 +7,6 @@
+ Dem3DofGeom_FacetSphere::~Dem3DofGeom_FacetSphere(){}
+ 
+ void Dem3DofGeom_FacetSphere::setTgPlanePts(const Vector3r&amp; p1new, const Vector3r&amp; p2new){
+-	//&#160;FIXME: not tested yet
+ 	TRVAR3(cp1pt,cp2rel,contPtInTgPlane2()-contPtInTgPlane1());	
+ 	cp1pt=se31.orientation.Conjugate()*(turnPlanePt(p1new,normal,se31.orientation*localFacetNormal)+contactPoint-se31.position);
+ 	cp2rel=se32.orientation.Conjugate()*Dem3DofGeom_SphereSphere::rollPlanePtToSphere(p2new,effR2,-normal);
+@@ -21,6 +20,19 @@
+ 	}
+ }
+ 
++Real Dem3DofGeom_FacetSphere::slipToDisplacementTMax(Real displacementTMax){
++	//FIXME: not yet tested
++	// negative or zero: reset shear
++	if(displacementTMax&lt;=0.){ setTgPlanePts(Vector3r(0,0,0),Vector3r(0,0,0)); return displacementTMax;}
++	// otherwise
++	Vector3r p1=contPtInTgPlane1(), p2=contPtInTgPlane2();
++	Real currDistSq=(p2-p1).SquaredLength();
++	if(currDistSq&lt;pow(displacementTMax,2)) return 0; // close enough, no slip needed
++	//Vector3r diff=.5*(sqrt(currDistSq)/displacementTMax-1)*(p2-p1); setTgPlanePts(p1+diff,p2-diff);
++	Real scale=displacementTMax/sqrt(currDistSq); setTgPlanePts(scale*p1,scale*p2);
++	return (displacementTMax/scale)*(1-scale);
++}
++
+ CREATE_LOGGER(ef2_Facet_Sphere_Dem3DofGeom);
+ bool ef2_Facet_Sphere_Dem3DofGeom::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1, const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2, const Se3r&amp; se31, const Se3r&amp; se32, const shared_ptr&lt;Interaction&gt;&amp; c){
+ 	InteractingFacet* facet=static_cast&lt;InteractingFacet*&gt;(cm1.get());
+@@ -49,12 +61,29 @@
+ 			normal.Normalize();
+ 		} else { // contact with the edge
+ 			contactPt+=edgeNormals[edgeMax]*(inCircleR-distMax);
++			bool noVertexContact=false;
+ 			//TRVAR3(edgeNormals[edgeMax],inCircleR,distMax);
+ 			// contact with vertex no. edgeMax
+-			if (contactPt.Dot(edgeNormals[(edgeMax-1)%3])&gt;inCircleR) contactPt=facet-&gt;vu[edgeMax]*(facet-&gt;vl[edgeMax]-sphereRReduced);
++			// FIXME: this is the original version, but why (edgeMax-1)%3? IN that case, edgeNormal to edgeMax would never be tried
++			//    if     (contactPt.Dot(edgeNormals[        (edgeMax-1)%3])&gt;inCircleR) contactPt=facet-&gt;vu[edgeMax]*(facet-&gt;vl[edgeMax]-sphereRReduced);
++			if     (contactPt.Dot(edgeNormals[        edgeMax      ])&gt;inCircleR) contactPt=facet-&gt;vu[edgeMax]*(facet-&gt;vl[edgeMax]-sphereRReduced);
+ 			// contact with vertex no. edgeMax+1
+ 			else if(contactPt.Dot(edgeNormals[edgeMax=(edgeMax+1)%3])&gt;inCircleR) contactPt=facet-&gt;vu[edgeMax]*(facet-&gt;vl[edgeMax]-sphereRReduced);
++			// contact with edge no. edgeMax
++			else noVertexContact=true;
+ 			normal=contactLine-contactPt;
++			#ifdef FACET_TOPO
++				if(noVertexContact &amp;&amp; facet-&gt;edgeAdjIds[edgeMax]!=Body::ID_NONE){
++					// find angle between our normal and the facet's normal (still local coords)
++					Quaternionr q; q.Align(facet-&gt;nf,normal); Vector3r axis; Real angle; q.ToAxisAngle(axis,angle);
++					assert(angle&gt;=0 &amp;&amp; angle&lt;=Mathr::PI);
++					if(edgeNormals[edgeMax].Dot(axis)&lt;0) angle*=-1.;
++					bool negFace=normal.Dot(facet-&gt;nf)&lt;0; // contact in on the negative facet's face
++					Real halfAngle=(negFace?-1.:1.)*facet-&gt;edgeAdjHalfAngle[edgeMax]; 
++					if(halfAngle&lt;0 &amp;&amp; angle&gt;halfAngle) return false; // on concave boundary, and if in the other facet's sector, no contact
++					// otherwise the contact will be created
++				}
++			#endif
+ 			//TRVAR4(contactLine,contactPt,normal,normal.Length());
+ 			//TRVAR3(se31.orientation*contactLine,se31.position+se31.orientation*contactPt,se31.orientation*normal);
+ 			penetrationDepth=sphereRadius-normal.Normalize();
+@@ -71,6 +100,7 @@
+ 		fs=shared_ptr&lt;Dem3DofGeom_FacetSphere&gt;(new Dem3DofGeom_FacetSphere());
+ 		c-&gt;interactionGeometry=fs;
+ 		fs-&gt;effR2=sphereRadius-penetrationDepth;
++		fs-&gt;refR1=-1; fs-&gt;refR2=sphereRadius;
+ 		fs-&gt;refLength=fs-&gt;effR2;
+ 		fs-&gt;cp1pt=contactPt; // facet-local intial contact point
+ 		fs-&gt;localFacetNormal=normal;
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_FacetSphere.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_FacetSphere.hpp	2009-04-17 15:11:23 UTC (rev 1756)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_FacetSphere.hpp	2009-04-22 06:57:45 UTC (rev 1757)
+@@ -16,7 +16,7 @@
+ 		/******* API ********/
+ 		virtual Real displacementN(){ return (se32.position-contactPoint).Length()-refLength;}
+ 		virtual Vector3r displacementT(){ relocateContactPoints(); return contPtInTgPlane2()-contPtInTgPlane1(); }
+-		virtual Real slipToDisplacementTMax(Real displacementTMax){ LOG_FATAL(&quot;Not implemented yet.&quot;); throw; }
++		virtual Real slipToDisplacementTMax(Real displacementTMax);
+ 		/***** end API ******/
+ 
+ 		void setTgPlanePts(const Vector3r&amp;, const Vector3r&amp;);
+@@ -26,13 +26,11 @@
+ 	Vector3r cp1pt;
+ 	//! orientation between +x and the reference contact point (on the sphere) in sphere-local coords
+ 	Quaternionr cp2rel;
+-	//! positions and orientations of both bodies; updated at every iteration
+-	Se3r se31, se32;
+ 	//! unit normal of the facet plane in facet-local coordinates
+ 	Vector3r localFacetNormal;
+ 	// effective radius of sphere
+ 	Real effR2;
+-	REGISTER_ATTRIBUTES(Dem3DofGeom,(cp1pt)(cp2rel)(se31)(se32)(localFacetNormal)(effR2) );
++	REGISTER_ATTRIBUTES(Dem3DofGeom,(cp1pt)(cp2rel)(localFacetNormal)(effR2) );
+ 	REGISTER_CLASS_AND_BASE(Dem3DofGeom_FacetSphere,Dem3DofGeom);
+ 	DECLARE_LOGGER;
+ 	friend class GLDraw_Dem3DofGeom_FacetSphere;
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp	2009-04-17 15:11:23 UTC (rev 1756)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp	2009-04-22 06:57:45 UTC (rev 1757)
+@@ -161,6 +161,7 @@
+ 		c-&gt;interactionGeometry=ss;
+ 		// constants
+ 		ss-&gt;refLength=dist;
++		ss-&gt;refR1=s1-&gt;radius; ss-&gt;refR2=s2-&gt;radius;
+ 		Real penetrationDepth=s1-&gt;radius+s2-&gt;radius-ss-&gt;refLength;
+ 		ss-&gt;effR1=s1-&gt;radius-.5*penetrationDepth; ss-&gt;effR2=s2-&gt;radius-.5*penetrationDepth;
+ 		// for bending only: ss-&gt;initRelOri12=se31.orientation.Conjugate()*se32.orientation;
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.hpp	2009-04-17 15:11:23 UTC (rev 1756)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.hpp	2009-04-22 06:57:45 UTC (rev 1757)
+@@ -13,8 +13,6 @@
+ 		void relocateContactPoints();
+ 		void relocateContactPoints(const Vector3r&amp; tgPlanePt1, const Vector3r&amp; tgPlanePt2);
+ 	public:
+-		//! Positions and orientations of both spheres; must be updated at every iteration by the geom functor
+-		Se3r se31, se32;
+ 		//! relative orientation of the contact point with regards to sphere-local +x axis (quasi-constant)
+ 		Quaternionr cp1rel, cp2rel;
+ 		//! shorthands
+@@ -37,7 +35,7 @@
+ 		Real slipToDisplacementTMax(Real displacementTMax);
+ 		/********* end API ***********/
+ 
+-	REGISTER_ATTRIBUTES(Dem3DofGeom,(se31)(se32)(effR1)(effR2)(cp1rel)(cp2rel));
++	REGISTER_ATTRIBUTES(Dem3DofGeom,(effR1)(effR2)(cp1rel)(cp2rel));
+ 	REGISTER_CLASS_AND_BASE(Dem3DofGeom_SphereSphere,Dem3DofGeom);
+ 	friend class GLDraw_Dem3DofGeom_SphereSphere;
+ 	friend class ef2_Sphere_Sphere_Dem3DofGeom;
+
+Added: trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.cpp	2009-04-17 15:11:23 UTC (rev 1756)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.cpp	2009-04-22 06:57:45 UTC (rev 1757)
+@@ -0,0 +1,3 @@
++#include&quot;DemXDofGeom.hpp&quot;
++YADE_PLUGIN(&quot;Dem3DofGeom&quot;);
++Real Dem3DofGeom::displacementN(){throw;}
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.hpp	2009-04-17 15:11:23 UTC (rev 1756)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.hpp	2009-04-22 06:57:45 UTC (rev 1757)
+@@ -15,11 +15,16 @@
+ 		Vector3r contactPoint;
+ 		//! make strain go to -&#8734; for length going to zero
+ 		bool logCompression;
++		//! se3 of both bodies (needed to compute torque from the contact, strains etc). Must be updated at every step.
++		Se3r se31, se32;
++		//! reference radii of particles (for initial contact stiffness computation)
++		Real refR1, refR2;
+ 
+ 		// API that needs to be implemented in derived classes
+-		virtual Real displacementN(){throw;}
++		virtual Real displacementN();
+ 		virtual Vector3r displacementT(){throw;}
+ 		virtual Real slipToDisplacementTMax(Real displacementTMax){throw;}; // plasticity
++		// reference radii, for contact stiffness computation; set to negative for nonsense values
+ 		// end API
+ 
+ 		Real strainN(){
+@@ -31,7 +36,7 @@
+ 		Real slipToStrainTMax(Real strainTMax){return slipToDisplacementTMax(strainTMax*refLength)/refLength;}
+ 
+ 		REGISTER_CLASS_AND_BASE(Dem3DofGeom,InteractionGeometry);
+-		REGISTER_ATTRIBUTES(InteractionGeometry,(refLength)(normal)(contactPoint));
++		REGISTER_ATTRIBUTES(InteractionGeometry,(refLength)(normal)(contactPoint)(se31)(se32)(refR1)(refR2));
+ };
+ REGISTER_SERIALIZABLE(Dem3DofGeom);
+ 
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2009-04-17 15:11:23 UTC (rev 1756)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2009-04-22 06:57:45 UTC (rev 1757)
+@@ -49,7 +49,8 @@
+ 		// interaction &quot;radii&quot; and total length; this is _really_ constant throughout the interaction life
+ 		// d1 is really distance from the sphere1 center to the contact plane, it may not correspond to the sphere radius!
+ 		// therefore, d1+d2=d0 (distance at which the contact was created)
+-		Real d1, d2, d0;
++		// d0fixup is added to d0 when computing normal strain; it should fix problems with sphere-facet interactions never getting enough compressed
++		Real d1, d2, d0, d0fixup;
+ 		// initial relative orientation, used for bending and torsion computation
+ 		Quaternionr initRelOri12;
+ 
+@@ -64,7 +65,7 @@
+ 		Vector3r contPt() const {return contactPoint; /*pos1+(d1/d0)*(pos2-pos1)*/}
+ 
+ 		Real displacementN() const {assert(hasShear); return (pos2-pos1).Length()-d0;}
+-		Real epsN() const {return displacementN()*(1./d0);}
++		Real epsN() const {return displacementN()*(1./(d0+d0fixup));}
+ 		Vector3r displacementT() { assert(hasShear);
+ 			// enabling automatic relocation decreases overall simulation speed by about 3%
+ 			// perhaps: bool largeStrains ... ?
+@@ -76,11 +77,11 @@
+ 				return contPtInTgPlane2()-contPtInTgPlane1();
+ 			#endif
+ 		}
+-		Vector3r epsT() {return displacementT()*(1./d0);}
++		Vector3r epsT() {return displacementT()*(1./(d0+d0fixup));}
+ 	
+ 		Real slipToDisplacementTMax(Real displacementTMax);
+ 		//! slip to epsTMax if current epsT is greater; return the relative slip magnitude
+-		Real slipToEpsTMax(Real epsTMax){ return (1/d0)*slipToDisplacementTMax(epsTMax*d0);}
++		Real slipToStrainTMax(Real epsTMax){ return (1/d0)*slipToDisplacementTMax(epsTMax*d0);}
+ 
+ 		void relocateContactPoints();
+ 		void relocateContactPoints(const Vector3r&amp; tgPlanePt1, const Vector3r&amp; tgPlanePt2);
+@@ -90,7 +91,7 @@
+ 
+ 		Vector3r relRotVector() const;
+ 
+-		SpheresContactGeometry():contactPoint(Vector3r::ZERO),radius1(0),radius2(0),facetContactFace(0.),hasShear(false),pos1(Vector3r::ZERO),pos2(Vector3r::ZERO),ori1(Quaternionr::IDENTITY),ori2(Quaternionr::IDENTITY),cp1rel(Quaternionr::IDENTITY),cp2rel(Quaternionr::IDENTITY),d1(0),d2(0),d0(0),initRelOri12(Quaternionr::IDENTITY){createIndex();
++		SpheresContactGeometry():contactPoint(Vector3r::ZERO),radius1(0),radius2(0),facetContactFace(0.),hasShear(false),pos1(Vector3r::ZERO),pos2(Vector3r::ZERO),ori1(Quaternionr::IDENTITY),ori2(Quaternionr::IDENTITY),cp1rel(Quaternionr::IDENTITY),cp2rel(Quaternionr::IDENTITY),d1(0),d2(0),d0(0),d0fixup(0),initRelOri12(Quaternionr::IDENTITY){createIndex();
+ 		#ifdef SCG_SHEAR
+ 			shear=Vector3r::ZERO; prevNormal=Vector3r::ZERO /*initialized to proper value by geom functor*/;
+ 		#endif	
+@@ -120,6 +121,7 @@
+ 			(d1)
+ 			(d2)
+ 			(d0)
++			(d0fixup)
+ 			(initRelOri12));
+ 	REGISTER_CLASS_AND_BASE(SpheresContactGeometry,InteractionGeometry);
+ 	REGISTER_CLASS_INDEX(SpheresContactGeometry,InteractionGeometry);
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2009-04-17 15:11:23 UTC (rev 1756)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2009-04-22 06:57:45 UTC (rev 1757)
+@@ -95,7 +95,6 @@
+ 
+ 	if (bm&lt;icr) // contact with facet's surface
+ 	{
+-		assert(contactFace!=0);
+ 		penetrationDepth = sphereRadius - L;
+ 		normal.Normalize();
+ 	}
+@@ -145,6 +144,7 @@
+ 			if(c-&gt;isNew){
+ 				scm-&gt;d0=scm-&gt;radius1+scm-&gt;radius2-penetrationDepth;
+ 				scm-&gt;d1=scm-&gt;radius1-.5*penetrationDepth; scm-&gt;d2=scm-&gt;radius2-.5*penetrationDepth;
++				scm-&gt;d0fixup=-scm-&gt;radius1-.5*penetrationDepth;
+ 				// quasi-constants
+ 				scm-&gt;cp1rel.Align(Vector3r::UNIT_X,se31.orientation.Conjugate()*normal);
+ 				scm-&gt;cp2rel.Align(Vector3r::UNIT_X,se32.orientation.Conjugate()*(-normal));
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp	2009-04-17 15:11:23 UTC (rev 1756)
++++ trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp	2009-04-22 06:57:45 UTC (rev 1757)
+@@ -40,7 +40,7 @@
+ 				abs(vi-&gt;pos[2]-vj-&gt;pos[2])&lt;=tolerance &amp;&amp;
+ 				(vi-&gt;pos-vj-&gt;pos).SquaredLength()&lt;=tolerance*tolerance){
+ 				// OK, these two vertices touch
+-				LOG_TRACE(&quot;Vertices &quot;&lt;&lt;vi-&gt;id&lt;&lt;&quot;/&quot;&lt;&lt;vi-&gt;vertexNo&lt;&lt;&quot; and &quot;&lt;&lt;vj-&gt;id&lt;&lt;&quot;/&quot;&lt;&lt;vj-&gt;vertexNo&lt;&lt;&quot; close enough.&quot;);
++				// LOG_TRACE(&quot;Vertices &quot;&lt;&lt;vi-&gt;id&lt;&lt;&quot;/&quot;&lt;&lt;vi-&gt;vertexNo&lt;&lt;&quot; and &quot;&lt;&lt;vj-&gt;id&lt;&lt;&quot;/&quot;&lt;&lt;vj-&gt;vertexNo&lt;&lt;&quot; close enough.&quot;);
+ 				// add vertex to the nextIndetical of the one that has lower index; the one that is added will have isLowestIndex=false
+ 				if(vi-&gt;index&lt;vj-&gt;index){ vi-&gt;nextIdentical.push_back(vj); vj-&gt;isLowestIndex=false; }
+ 				else{                    vj-&gt;nextIdentical.push_back(vi); vi-&gt;isLowestIndex=false; }
+@@ -81,11 +81,18 @@
+ 		}
+ 		topo1.push_back(t);
+ 	}
++	std::sort(topo1.begin(),topo1.end(),FacetTopology::MinVertexComparator());
+ 	size_t nTopo=topo1.size();
+ 	for(size_t i=0; i&lt;nTopo; i++){
+ 		size_t j=i;
++		const shared_ptr&lt;FacetTopology&gt;&amp; ti(topo1[i]);
++		long tiMaxVertex=ti-&gt;maxVertex();
+ 		while(++j&lt;nTopo){
+-			const shared_ptr&lt;FacetTopology&gt;&amp; ti(topo1[i]), &amp;tj(topo1[j]);
++			const shared_ptr&lt;FacetTopology&gt; &amp;tj(topo1[j]);
++			/* since facets are sorted by their min vertex id,
++				we know that it is safe to skip all the rest
++				as soon as max vertex of ti one is smaller than min vertex of tj, as i&lt;=j */
++			if(tj-&gt;minVertex()&gt;tiMaxVertex) break;
+ 			vector&lt;size_t&gt; vvv; // array of common vertices
+ 			for(size_t k=0; k&lt;3; k++){
+ 				if     (ti-&gt;vertices[k]==tj-&gt;vertices[0]) vvv.push_back(ti-&gt;vertices[k]);
+@@ -93,9 +100,9 @@
+ 				else if(ti-&gt;vertices[k]==tj-&gt;vertices[2]) vvv.push_back(ti-&gt;vertices[k]);
+ 			}
+ 			if(vvv.size()&lt;2) continue;
+-			assert(vvv.size()!=3); // same coords? nonsense
+-			assert(vvv.size()==2);
+-			vector&lt;int&gt; edge(2,0);
++			assert(vvv.size()!=3 /* same coords? nonsense*/ ); assert(vvv.size()==2);
++			// from here, we know ti and tj are adjacent
++			vector&lt;int&gt; edge(2,0); int &amp;ei(edge[0]),&amp;ej(edge[1]);
+ 			// identify what edge are we at, for both facets
+ 			for(int k=0; k&lt;2; k++){
+ 				for(edge[k]=0; edge[k]&lt;3; edge[k]++){
+@@ -109,10 +116,25 @@
+ 				}
+ 			}
+ 			// add adjacency information to the facet itself
+-			YADE_PTR_CAST&lt;InteractingFacet&gt;((*rb-&gt;bodies)[ti-&gt;id]-&gt;interactingGeometry)-&gt;edgeAdjIds[edge[0]]=tj-&gt;id;
+-			YADE_PTR_CAST&lt;InteractingFacet&gt;((*rb-&gt;bodies)[tj-&gt;id]-&gt;interactingGeometry)-&gt;edgeAdjIds[edge[1]]=ti-&gt;id;
++			InteractingFacet *f1=YADE_CAST&lt;InteractingFacet*&gt;((*rb-&gt;bodies)[ti-&gt;id]-&gt;interactingGeometry.get()), *f2=YADE_CAST&lt;InteractingFacet*&gt;((*rb-&gt;bodies)[tj-&gt;id]-&gt;interactingGeometry.get());
++			f1-&gt;edgeAdjIds[ei]=ti-&gt;id; f2-&gt;edgeAdjIds[ej]=tj-&gt;id;
++			// normals are in the sense of vertex rotation (right-hand rule); therefore, if vertices of the adjacent edge are opposite on each facet, normals are in the same direction
++			bool invNormals=(ti-&gt;vertices[ei]==tj-&gt;vertices[ej]);
++			assert(
++				( invNormals &amp;&amp; (ti-&gt;vertices[ ei     ]==tj-&gt;vertices[ej]) &amp;&amp; (ti-&gt;vertices[(ei+1)%3]==tj-&gt;vertices[(ej+1)%3]) ) ||
++				(!invNormals &amp;&amp; (ti-&gt;vertices[(ei+1)%3]==tj-&gt;vertices[ej]) &amp;&amp; (ti-&gt;vertices[ ei     ]==tj-&gt;vertices[(ej+1)%3]) ));
++			// angle between normals
++			PhysicalParameters *pp1=(*rb-&gt;bodies)[ti-&gt;id]-&gt;physicalParameters.get(), *pp2=(*rb-&gt;bodies)[tj-&gt;id]-&gt;physicalParameters.get();
++			Vector3r n1g=pp1-&gt;se3.orientation*f1-&gt;nf, n2g=pp2-&gt;se3.orientation*f2-&gt;nf;
++			//TRVAR2(n1g,n2g);
++			Vector3r contEdge1g=pp1-&gt;se3.orientation*(f1-&gt;vertices[(ei+1)%3]-f1-&gt;vertices[ei]); // vector of the edge of contact in global coords
++			Quaternionr q12; q12.Align(n1g,(invNormals?-1.:1.)*n2g); Real halfAngle; Vector3r axis; q12.ToAxisAngle(axis,halfAngle); halfAngle*=.5;
++			assert(halfAngle&gt;=0 &amp;&amp; halfAngle&lt;=Mathr::HALF_PI);
++			if(axis.Dot(contEdge1g)&lt;0 /* convex contact from the side of +n1 */ ) halfAngle*=-1.;
++			f1-&gt;edgeAdjHalfAngle[ei]=halfAngle;
++			f2-&gt;edgeAdjHalfAngle[ej]=(invNormals ? -halfAngle : halfAngle);
+ 			commonEdgesFound++;
+-			LOG_TRACE(&quot;Added adjacency information for #&quot;&lt;&lt;ti-&gt;id&lt;&lt;&quot;+#&quot;&lt;&lt;tj-&gt;id&lt;&lt;&quot; (common edges &quot;&lt;&lt;edge[0]&lt;&lt;&quot;+&quot;&lt;&lt;edge[1]&lt;&lt;&quot;)&quot;);
++			LOG_TRACE(&quot;Found adjacent #&quot;&lt;&lt;ti-&gt;id&lt;&lt;&quot;+#&quot;&lt;&lt;tj-&gt;id&lt;&lt;&quot;; common edges &quot;&lt;&lt;ei&lt;&lt;&quot;+&quot;&lt;&lt;ej&lt;&lt;&quot;, normals &quot;&lt;&lt;(invNormals?&quot;inversed&quot;:&quot;congruent&quot;)&lt;&lt;&quot;, halfAngle &quot;&lt;&lt;halfAngle&lt;&lt;&quot;)&quot;);
+ 		}
+ 	}
+ }
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.hpp	2009-04-17 15:11:23 UTC (rev 1756)
++++ trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.hpp	2009-04-22 06:57:45 UTC (rev 1757)
+@@ -39,6 +39,11 @@
+ 		long vertices[3];
+ 		//! facet id, for back reference
+ 		body_id_t id;
++		long minVertex(){return min(vertices[0],min(vertices[1],vertices[2]));}
++		long maxVertex(){return max(vertices[0],max(vertices[1],vertices[2]));}
++		struct MinVertexComparator{
++			bool operator()(const shared_ptr&lt;FacetTopology&gt;&amp; t1, const shared_ptr&lt;FacetTopology&gt;&amp; t2){ return t1-&gt;minVertex()&lt;t2-&gt;minVertex();}
++		};
+ 	};
+ 	public:
+ 		//! Axis along which to do the initial vertex sort
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2009-04-17 15:11:23 UTC (rev 1756)
++++ trunk/pkg/dem/SConscript	2009-04-22 06:57:45 UTC (rev 1757)
+@@ -26,10 +26,11 @@
+ 		])
+ 
+ env.Install('$PREFIX/lib/yade$SUFFIX/pkg-dem',[
++	
++	env.SharedLibrary('DemXDofGeom',['DataClass/InteractionGeometry/DemXDofGeom.cpp']),
++	env.SharedLibrary('Dem3DofGeom_SphereSphere',['DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp'],LIBS=env['LIBS']+['RigidBodyParameters','InteractingSphere','yade-opengl','DemXDofGeom']),
++	env.SharedLibrary('Dem3DofGeom_FacetSphere',['DataClass/InteractionGeometry/Dem3DofGeom_FacetSphere.cpp'],LIBS=env['LIBS']+['RigidBodyParameters','InteractingSphere','InteractingFacet','yade-opengl','Dem3DofGeom_SphereSphere','DemXDofGeom']),
+ 
+-	env.SharedLibrary('Dem3DofGeom_SphereSphere',['DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp'],LIBS=env['LIBS']+['RigidBodyParameters','InteractingSphere','yade-opengl']),
+-	env.SharedLibrary('Dem3DofGeom_FacetSphere',['DataClass/InteractionGeometry/Dem3DofGeom_FacetSphere.cpp'],LIBS=env['LIBS']+['RigidBodyParameters','InteractingSphere','InteractingFacet','yade-opengl','Dem3DofGeom_SphereSphere']),
+-
+ 	env.SharedLibrary('FacetTopologyAnalyzer',['Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp'],LIBS=env['LIBS']+['InteractingFacet']),
+ 
+ 
+
+Modified: trunk/scripts/test/facet-topo.py
+===================================================================
+--- trunk/scripts/test/facet-topo.py	2009-04-17 15:11:23 UTC (rev 1756)
++++ trunk/scripts/test/facet-topo.py	2009-04-22 06:57:45 UTC (rev 1757)
+@@ -1,5 +1,5 @@
+ import yade.log
+-#yade.log.setLevel('FacetTopologyAnalyzer',yade.log.TRACE)
++yade.log.setLevel('FacetTopologyAnalyzer',yade.log.TRACE)
+ 
+ # Note: FacetTopologyAnalyzer is normally run as an initializer;
+ # it is only for testing sake that it is in O.engines here.
+@@ -24,6 +24,17 @@
+ 	assert(topo['commonEdgesFound']==1)
+ if 1:
+ 	O.bodies.clear()
++	O.bodies.append([
++		utils.facet([(0,0,0),(1,0,0),(0,1,0)]),
++		utils.facet([(1,1,1),(1,0,0),(0,1,0)]),
++	])
++	O.step()
++	assert(O.bodies[0].phys['edgeAdjIds'][1]==1 and O.bodies[1].phys['edgeAdjIds'][0]==1)
++	assert(topo['commonEdgesFound']==1)
++	assert(abs(O.bodies[0].mold['edgeAdjHalfAngle'][1]-(-5*atan(2/sqrt(2))))&lt;1e-6)
++
++if 1:
++	O.bodies.clear()
+ 	r=.5 # radius of the sphere
+ 	nPoly=12; # try 128, it is still quite fast
+ 	def sphPt(i,j):
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000925.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-11910/bin/yade-svn1756:	TriaxialTestWater, USCTGen
+</A></li>
+	<LI>Next message: <A HREF="000927.html">[deprecated list] [Yade-dev] r1757 - in trunk: extra pkg/common/DataClass/InteractingGeometry pkg/dem pkg/dem/DataClass/InteractionGeometry pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#926">[ date ]</a>
+              <a href="thread.html#926">[ thread ]</a>
+              <a href="subject.html#926">[ subject ]</a>
+              <a href="author.html#926">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

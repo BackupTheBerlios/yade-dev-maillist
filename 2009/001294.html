@@ -1,0 +1,211 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1900 - in trunk: core gui/qt3	scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1900%20-%20in%20trunk%3A%20core%20gui/qt3%0A%09scripts&In-Reply-To=%3C200907290823.n6T8NU72004786%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001291.html">
+   <LINK REL="Next"  HREF="001295.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1900 - in trunk: core gui/qt3	scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1900%20-%20in%20trunk%3A%20core%20gui/qt3%0A%09scripts&In-Reply-To=%3C200907290823.n6T8NU72004786%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1900 - in trunk: core gui/qt3	scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul 29 10:23:30 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001291.html">[deprecated list] [Yade-dev] [svn] r1899 - in	trunk/pkg:	common/Engine/StandAloneEngine dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="001295.html">[deprecated list] [Yade-dev] BZR migration
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1294">[ date ]</a>
+              <a href="thread.html#1294">[ thread ]</a>
+              <a href="subject.html#1294">[ subject ]</a>
+              <a href="author.html#1294">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-29 10:23:29 +0200 (Wed, 29 Jul 2009)
+New Revision: 1900
+
+Modified:
+   trunk/core/yade.cpp
+   trunk/gui/qt3/SnapshotEngine.cpp
+   trunk/gui/qt3/SnapshotEngine.hpp
+   trunk/gui/qt3/qt.py
+   trunk/scripts/simple-scene-video.py
+Log:
+1. Fix SnapshotEngine and simple-scene-video.py to run. It doesn't work, though, because of the makeCurrent() failed error (probably getting snapshot from another thread...)
+
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2009-07-29 08:04:35 UTC (rev 1899)
++++ trunk/core/yade.cpp	2009-07-29 08:23:29 UTC (rev 1900)
+@@ -256,7 +256,9 @@
+ 	
+ 	LOG_INFO(&quot;Loading &quot;&lt;&lt;yadeConfigFile.string()); IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,yadeConfigFile.string(),&quot;preferences&quot;,Omega::instance().preferences);
+ 
+-	LOG_INFO(&quot;Loading plugins&quot;); Omega::instance().scanPlugins(string(PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/plugins&quot; ));
++	LOG_INFO(&quot;Loading plugins&quot;);
++		Omega::instance().scanPlugins(string(PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/plugins&quot; ));
++		Omega::instance().scanPlugins(string(PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/gui&quot; ));
+ 	Omega::instance().init();
+ 
+ 	Omega::instance().setSimulationFileName(simulationFileName); //init() resets to &quot;&quot;;
+
+Modified: trunk/gui/qt3/SnapshotEngine.cpp
+===================================================================
+--- trunk/gui/qt3/SnapshotEngine.cpp	2009-07-29 08:04:35 UTC (rev 1899)
++++ trunk/gui/qt3/SnapshotEngine.cpp	2009-07-29 08:23:29 UTC (rev 1900)
+@@ -2,6 +2,7 @@
+ #include&lt;sstream&gt;
+ #include&lt;iomanip&gt;
+ CREATE_LOGGER(SnapshotEngine);
++YADE_PLUGIN(&quot;SnapshotEngine&quot;);
+ void SnapshotEngine::action(MetaBody* rb){
+ 	shared_ptr&lt;GLViewer&gt; glv;
+ 	if(!YadeQtMainWindow::self || ((size_t)viewNo&gt;=YadeQtMainWindow::self-&gt;glViews.size()) || !(glv=YadeQtMainWindow::self-&gt;glViews[viewNo])){
+@@ -15,4 +16,3 @@
+ 	savedSnapshots.push_back(fss.str());
+ 	usleep((long)(msecSleep*1000));
+ }
+-
+
+Modified: trunk/gui/qt3/SnapshotEngine.hpp
+===================================================================
+--- trunk/gui/qt3/SnapshotEngine.hpp	2009-07-29 08:04:35 UTC (rev 1899)
++++ trunk/gui/qt3/SnapshotEngine.hpp	2009-07-29 08:23:29 UTC (rev 1900)
+@@ -1,5 +1,4 @@
+ #pragma once
+-#include&lt;yade/core/StandAloneEngine.hpp&gt;
+ #include&lt;yade/gui-qt3/GLViewer.hpp&gt;
+ #include&lt;yade/gui-qt3/YadeQtMainWindow.hpp&gt;
+ #include&lt;yade/pkg-common/PeriodicEngines.hpp&gt;
+
+Modified: trunk/gui/qt3/qt.py
+===================================================================
+--- trunk/gui/qt3/qt.py	2009-07-29 08:04:35 UTC (rev 1899)
++++ trunk/gui/qt3/qt.py	2009-07-29 08:23:29 UTC (rev 1900)
+@@ -22,19 +22,17 @@
+ 	See makePlayerVideo for more documentation.
+ 	&quot;&quot;&quot;
+ 	import os
+-	from yade import utils,wrapper
+-	o=wrapper.Omega()
+ 	# create primary view if none
+ 	if len(views())==0: View()
+ 	# remove existing SnaphotEngines
+-	se=wrapper.StandAloneEngine('SnapshotEngine',{'iterPeriod':iterPeriod,'realPeriod':realPeriod,'virtPeriod':virtPeriod,'fileBase':os.tmpnam(),'ignoreErrors':False,'viewNo':viewNo,'msecSleep':msecSleep})
+-	origEngines=o.engines; o.engines=[e for e in o.engines if e.name!='SnapshotEngine']+[se]
+-	o.run(); o.wait();
++	se=SnapshotEngine(iterPeriod=iterPeriod,realPeriod=realPeriod,virtPeriod=virtPeriod,fileBase=os.tmpnam(),ignoreErrors=False,viewNo=viewNo,msecSleep=msecSleep)
++	origEngines=O.engines; O.engines=[e for e in O.engines if e.name!='SnapshotEngine']+[se]
++	O.run(); O.wait();
+ 	wildcard=se['fileBase']+'%04d.png'
+ 	print &quot;Number of frames:&quot;,len(se['savedSnapshots'])
+ 	utils.encodeVideoFromFrames(wildcard,output,renameNotOverwrite=True,fps=fps)
+ 	for f in se['savedSnapshots']: os.remove(f)
+-	o.engines=origEngines
++	O.engines=origEngines
+ 
+ 
+ def makePlayerVideo(playerDb,out,viewerState=None,dispParamsNo=-1,stride=1,fps=24,postLoadHook=None,startWait=False):
+
+Modified: trunk/scripts/simple-scene-video.py
+===================================================================
+--- trunk/scripts/simple-scene-video.py	2009-07-29 08:04:35 UTC (rev 1899)
++++ trunk/scripts/simple-scene-video.py	2009-07-29 08:23:29 UTC (rev 1900)
+@@ -1,35 +1,26 @@
+ #!/usr/local/bin/yade-trunk -x
+ # -*- encoding=utf-8 -*-
+ 
+-o=Omega()
+-o.initializers=[
+-	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
+-	]
+-o.engines=[
+-	StandAloneEngine('PhysicalActionContainerReseter'),
+-	MetaEngine('BoundingVolumeMetaEngine',[
+-		EngineUnit('InteractingSphere2AABB'),
+-		EngineUnit('InteractingBox2AABB'),
+-		EngineUnit('MetaInteractingGeometry2AABB')
+-	]),
+-	StandAloneEngine('PersistentSAPCollider'),
+-	MetaEngine('InteractionGeometryMetaEngine',[
+-		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
+-		EngineUnit('InteractingBox2InteractingSphere4SpheresContactGeometry')
+-	]),
+-	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+-	StandAloneEngine('ElasticContactLaw'),
+-	DeusExMachina('GravityEngine',{'gravity':[0,0,-9.81]}),
++O.initializers=[BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingBox2AABB(),MetaInteractingGeometry2AABB()])]
++O.engines=[
++	BexResetter(),
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingBox2AABB(),MetaInteractingGeometry2AABB()]),
++	InsertionSortCollider(),
++	InteractionDispatchers(
++		[InteractingSphere2InteractingSphere4SpheresContactGeometry(),InteractingBox2InteractingSphere4SpheresContactGeometry()],
++		[SimpleElasticRelationships()],
++		[ef2_Spheres_Elastic_ElasticLaw()]
++	),
++	GravityEngine(gravity=(0,0,-9.81)),
+ 	NewtonsDampedLaw(damping=.2)
+ ]
+-from yade import utils
+-o.bodies.append(utils.box(center=[0,0,0],extents=[.5,.5,.5],dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=2400))
+-o.bodies.append(utils.sphere([0,0,2],1,color=[0,1,0],young=30e9,poisson=.3,density=2400))
+-o.dt=.4*utils.PWaveTimeStep()
+ 
++O.bodies.append(utils.box(center=[0,0,0],extents=[.5,.5,.5],dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=2400))
++O.bodies.append(utils.sphere([0,0,2],1,color=[0,1,0],young=30e9,poisson=.3,density=2400))
++O.dt=.4*utils.PWaveTimeStep()
+ 
+ from yade import qt
+-o.stopAtIter=15000
++O.stopAtIter=15000
+ qt.makeSimulationVideo('/tmp/aa.ogg',iterPeriod=100,fps=12)
+ 
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001291.html">[deprecated list] [Yade-dev] [svn] r1899 - in	trunk/pkg:	common/Engine/StandAloneEngine dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="001295.html">[deprecated list] [Yade-dev] BZR migration
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1294">[ date ]</a>
+              <a href="thread.html#1294">[ thread ]</a>
+              <a href="subject.html#1294">[ subject ]</a>
+              <a href="author.html#1294">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

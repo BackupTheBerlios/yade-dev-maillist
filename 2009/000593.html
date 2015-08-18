@@ -1,0 +1,244 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1624 - in trunk/pkg:	common/Engine/DeusExMachina	snow snow/DataClass snow/Engine	snow/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1624%20-%20in%20trunk/pkg%3A%0A%09common/Engine/DeusExMachina%09snow%20snow/DataClass%20snow/Engine%0A%09snow/PreProcessor&In-Reply-To=%3C200901140317.n0E3Hl6l010928%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000592.html">
+   <LINK REL="Next"  HREF="000594.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1624 - in trunk/pkg:	common/Engine/DeusExMachina	snow snow/DataClass snow/Engine	snow/PreProcessor</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1624%20-%20in%20trunk/pkg%3A%0A%09common/Engine/DeusExMachina%09snow%20snow/DataClass%20snow/Engine%0A%09snow/PreProcessor&In-Reply-To=%3C200901140317.n0E3Hl6l010928%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1624 - in trunk/pkg:	common/Engine/DeusExMachina	snow snow/DataClass snow/Engine	snow/PreProcessor">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Wed Jan 14 04:17:47 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000592.html">[deprecated list] [Yade-dev] IMPORTANT: to receive SVN commits!
+</A></li>
+        <LI>Next message: <A HREF="000594.html">[deprecated list] [Yade-dev] IMPORTANT: to receive SVN commits!
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#593">[ date ]</a>
+              <a href="thread.html#593">[ thread ]</a>
+              <a href="subject.html#593">[ subject ]</a>
+              <a href="author.html#593">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2009-01-14 04:17:46 +0100 (Wed, 14 Jan 2009)
+New Revision: 1624
+
+Added:
+   trunk/pkg/snow/Engine/Ef2_BssSnowGrain_AABB_makeAABB.cpp
+   trunk/pkg/snow/Engine/Ef2_BssSnowGrain_AABB_makeAABB.hpp
+Modified:
+   trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp
+   trunk/pkg/snow/DataClass/BshSnowGrain.cpp
+   trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp
+   trunk/pkg/snow/SConscript
+Log:
+1. small snow update
+2. fix compilation error by Vaclav (hey, you didn't compile again before commit! ;p )
+
+
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp	2009-01-13 16:00:41 UTC (rev 1623)
++++ trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp	2009-01-14 03:17:46 UTC (rev 1624)
+@@ -32,6 +32,7 @@
+ 	axis.Normalize();
+ 	Quaternionr q;
+ 	q.FromAxisAngle(axis,angularVelocity*dt);
++	shared_ptr&lt;BodyContainer&gt; bodies = rb-&gt;bodies;
+ 	FOREACH(body_id_t id,subscribedBodies){
+ 		assert(id&lt;bodies-&gt;size());
+ 		Body* b=Body::byId(id,rb).get();
+
+Modified: trunk/pkg/snow/DataClass/BshSnowGrain.cpp
+===================================================================
+--- trunk/pkg/snow/DataClass/BshSnowGrain.cpp	2009-01-13 16:00:41 UTC (rev 1623)
++++ trunk/pkg/snow/DataClass/BshSnowGrain.cpp	2009-01-14 03:17:46 UTC (rev 1624)
+@@ -15,7 +15,7 @@
+ 	REGISTER_ATTRIBUTE(color);
+ 	REGISTER_ATTRIBUTE(selection);
+ 	REGISTER_ATTRIBUTE(layer_distance);
+-	REGISTER_ATTRIBUTE(gr_gr);
++	REGISTER_ATTRIBUTE(gr_gr); // slices
+ }
+ 
+ BshSnowGrain::BshSnowGrain(const T_DATA&amp; dat,Vector3r c_ax,int SELECTION,Vector3r col, Real one_voxel_in_meters_is) : GeometricalModel()
+
+Added: trunk/pkg/snow/Engine/Ef2_BssSnowGrain_AABB_makeAABB.cpp
+===================================================================
+--- trunk/pkg/snow/Engine/Ef2_BssSnowGrain_AABB_makeAABB.cpp	2009-01-13 16:00:41 UTC (rev 1623)
++++ trunk/pkg/snow/Engine/Ef2_BssSnowGrain_AABB_makeAABB.cpp	2009-01-14 03:17:46 UTC (rev 1624)
+@@ -0,0 +1,66 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++ 
++#include&quot;Ef2_BssSnowGrain_AABB_makeAABB.hpp&quot;
++#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++#include&lt;yade/pkg-snow/BssSnowGrain.hpp&gt;
++#include&lt;yade/pkg-common/AABB.hpp&gt;
++
++void Ef2_BssSnowGrain_AABB_makeAABB::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm, shared_ptr&lt;BoundingVolume&gt;&amp; bv, const Se3r&amp; se3, const Body* b)
++{
++	BssSnowGrain* bss = static_cast&lt;BssSnowGrain*&gt;(cm.get());
++	AABB* aabb = static_cast&lt;AABB*&gt;(bv.get());
++
++/*
++	public:
++		Vector3r center,c_axis;
++		Vector3r start,end;
++		Vector3r color;
++		int selection;
++		std::vector&lt;std::vector&lt;Vector3r&gt; &gt; slices;
++		Real layer_distance;
++
++	m_copy.center   =grain-&gt;center;
++	m_copy.c_axis   =grain-&gt;c_axis;
++	m_copy.start    =grain-&gt;start;
++	m_copy.end      =grain-&gt;end;
++	m_copy.color    =grain-&gt;color;
++	m_copy.selection=grain-&gt;selection;
++	m_copy.slices   =grain-&gt;slices;
++	m_copy.layer_distance = grain-&gt;layer_distance;
++*/
++
++	Quaternionr q(b-&gt;physicalParameters-&gt;se3.orientation);
++
++	Vector3r min(q*(bss-&gt;m_copy.slices[0][0]));
++	Vector3r max(min);
++	BOOST_FOREACH(std::vector&lt;Vector3r&gt;&amp; vv, bss-&gt;m_copy.slices)
++	BOOST_FOREACH(Vector3r v, vv)
++	{
++	 	max = componentMaxVector(max,q*v);
++ 		min = componentMinVector(min,q*v);
++	}
++	
++	max += b-&gt;physicalParameters-&gt;se3.position;
++	min += b-&gt;physicalParameters-&gt;se3.position;
++
++	aabb-&gt;center = (max+min)*0.5;
++	aabb-&gt;halfSize = (max-min)*0.5;
++	
++	aabb-&gt;min = min;
++	aabb-&gt;max = max;
++/*
++	aabb-&gt;center = se3.position;
++	aabb-&gt;halfSize = 2.0*Vector3r(sphere-&gt;radius,sphere-&gt;radius,sphere-&gt;radius);
++	
++	aabb-&gt;min = aabb-&gt;center-aabb-&gt;halfSize;
++	aabb-&gt;max = aabb-&gt;center+aabb-&gt;halfSize;	
++*/
++}
++	
++YADE_PLUGIN();
+
+Added: trunk/pkg/snow/Engine/Ef2_BssSnowGrain_AABB_makeAABB.hpp
+===================================================================
+--- trunk/pkg/snow/Engine/Ef2_BssSnowGrain_AABB_makeAABB.hpp	2009-01-13 16:00:41 UTC (rev 1623)
++++ trunk/pkg/snow/Engine/Ef2_BssSnowGrain_AABB_makeAABB.hpp	2009-01-14 03:17:46 UTC (rev 1624)
+@@ -0,0 +1,25 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++ 
++#pragma once
++
++#include&lt;yade/pkg-common/BoundingVolumeEngineUnit.hpp&gt;
++
++class Ef2_BssSnowGrain_AABB_makeAABB : public BoundingVolumeEngineUnit
++{
++	public :
++		Ef2_BssSnowGrain_AABB_makeAABB() {};
++		void go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm, shared_ptr&lt;BoundingVolume&gt;&amp; bv, const Se3r&amp; se3, const Body*);
++
++	FUNCTOR2D(BssSnowGrain,AABB);
++	REGISTER_CLASS_NAME(Ef2_BssSnowGrain_AABB_makeAABB);
++	REGISTER_BASE_CLASS_NAME(BoundingVolumeEngineUnit);
++};
++
++REGISTER_SERIALIZABLE(Ef2_BssSnowGrain_AABB_makeAABB);
++
+
+Modified: trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp
+===================================================================
+--- trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp	2009-01-13 16:00:41 UTC (rev 1623)
++++ trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp	2009-01-14 03:17:46 UTC (rev 1624)
+@@ -375,7 +375,7 @@
+ 	interactionPhysicsDispatcher-&gt;add(cohesiveFrictionalRelationships);
+ 		
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+-	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;);
++	boundingVolumeDispatcher-&gt;add(&quot;Ef2_BssSnowGrain_AABB_makeAABB&quot;);
+ 	boundingVolumeDispatcher-&gt;add(&quot;InteractingBox2AABB&quot;);
+ 	boundingVolumeDispatcher-&gt;add(&quot;MetaInteractingGeometry2AABB&quot;);
+ 
+
+Modified: trunk/pkg/snow/SConscript
+===================================================================
+--- trunk/pkg/snow/SConscript	2009-01-13 16:00:41 UTC (rev 1623)
++++ trunk/pkg/snow/SConscript	2009-01-14 03:17:46 UTC (rev 1624)
+@@ -9,6 +9,9 @@
+ 		LIBS=env['LIBS']+['BshSnowGrain','yade-opengl','yade-base',
+ 		'BssSnowGrain','InteractingBox','InteractingBox2InteractingSphere4SpheresContactGeometry']),
+ 	
++	env.SharedLibrary('Ef2_BssSnowGrain_AABB_makeAABB',['Engine/Ef2_BssSnowGrain_AABB_makeAABB.cpp'],
++		LIBS=env['LIBS']+['BoundingVolumeMetaEngine','InteractingSphere','BssSnowGrain','AABB']),
++	
+ 	env.SharedLibrary('Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry',['Engine/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.cpp'],
+ 		LIBS=env['LIBS']+['BshSnowGrain','yade-opengl','yade-base',
+ 		'BssSnowGrain','InteractingSphere','InteractingSphere2InteractingSphere4SpheresContactGeometry']),
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000592.html">[deprecated list] [Yade-dev] IMPORTANT: to receive SVN commits!
+</A></li>
+	<LI>Next message: <A HREF="000594.html">[deprecated list] [Yade-dev] IMPORTANT: to receive SVN commits!
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#593">[ date ]</a>
+              <a href="thread.html#593">[ thread ]</a>
+              <a href="subject.html#593">[ subject ]</a>
+              <a href="author.html#593">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

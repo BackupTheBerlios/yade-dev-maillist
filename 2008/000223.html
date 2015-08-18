@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] svn1372 crash
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20svn1372%20crash&In-Reply-To=%3C4846379B.9030407%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000220.html">
+   <LINK REL="Next"  HREF="000224.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] svn1372 crash</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20svn1372%20crash&In-Reply-To=%3C4846379B.9030407%40arcig.cz%3E"
+       TITLE="[yade-dev] svn1372 crash">eudoxos at arcig.cz
+       </A><BR>
+    <I>Wed Jun  4 08:35:07 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000220.html">[yade-dev] svn1372 crash
+</A></li>
+        <LI>Next message: <A HREF="000224.html">[yade-dev] svn1372 crash
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#223">[ date ]</a>
+              <a href="thread.html#223">[ thread ]</a>
+              <a href="subject.html#223">[ subject ]</a>
+              <a href="author.html#223">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> Apparently Vaclav went crazy about changes in the core without a
+</I>&gt;<i> month-long discussion about his plans on the mailing list ;-P
+</I>&gt;<i>
+</I>&gt;<i> So now it's his job to fix this mess. 
+</I>&gt;<i>
+</I>&gt;<i> Vaclav, I think that the simplest option for you is to restore
+</I>&gt;<i> old Qt3GUI, and give another name to your brand-new experimental
+</I>&gt;<i> always-crashing PythonQt3GUI. (the names are up to you)
+</I>&gt;<i>   
+</I>It is not always-crashing, I think. I know there are glitches, but there
+are actually 3 things that happen, but are conceptually separate.
+
+1. decoupling simulation from the controller, that is, retain the
+controller functionality while allowing asynchronous changes of
+simulation parameters - from within the simulation, from console.
+
+2. making the qt3 gui more friendly (I think, at least - for example
+taking less space on the screen) and the code cleaner. Why have dynamic
+menus, if we really have just a few fixed set of things that you do? And
+so on. I know qt3 gui is deprecated etc, but so is yade serialization,
+so are old class names etc. And we still use them and will use them for
+some time.
+
+3. Running python console together with qt3; it doesn't affect QtGUI
+except for about 5 lines. This will not, obviously, happen if you
+compile without EMBED_PYTHON. Perhaps I should add an option? (so that
+the console is disabled by default and people don't blame python for
+crashes I caused by the two points above ;-) )
+
+I think the the ui is quite stabilized now (buzz me if not) and I am
+sorry for the difficult transition.
+
+Vaclav
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000220.html">[yade-dev] svn1372 crash
+</A></li>
+	<LI>Next message: <A HREF="000224.html">[yade-dev] svn1372 crash
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#223">[ date ]</a>
+              <a href="thread.html#223">[ thread ]</a>
+              <a href="subject.html#223">[ subject ]</a>
+              <a href="author.html#223">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

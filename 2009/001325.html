@@ -1,0 +1,967 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1913 - in trunk: . gui/py py	scripts scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1913%20-%20in%20trunk%3A%20.%20gui/py%20py%0A%09scripts%20scripts/test&In-Reply-To=%3C200908031853.n73IrUQH015037%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001336.html">
+   <LINK REL="Next"  HREF="001326.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1913 - in trunk: . gui/py py	scripts scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1913%20-%20in%20trunk%3A%20.%20gui/py%20py%0A%09scripts%20scripts/test&In-Reply-To=%3C200908031853.n73IrUQH015037%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1913 - in trunk: . gui/py py	scripts scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Aug  3 20:53:30 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001336.html">[deprecated list] [Yade-dev] [svn] r1912 - in trunk: . lib/factory pkg/dem/DataClass/InteractionGeometry
+</A></li>
+        <LI>Next message: <A HREF="001326.html">[deprecated list] [Yade-dev] [svn] r1914 - in trunk:	examples/concrete	examples/concrete/uniaxial py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1325">[ date ]</a>
+              <a href="thread.html#1325">[ thread ]</a>
+              <a href="subject.html#1325">[ subject ]</a>
+              <a href="author.html#1325">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-08-03 20:53:26 +0200 (Mon, 03 Aug 2009)
+New Revision: 1913
+
+Removed:
+   trunk/scripts/pch.py
+Modified:
+   trunk/SConstruct
+   trunk/gui/py/PythonUI_rc.py
+   trunk/py/plot.py
+   trunk/scripts/chain-distant-interactions.py
+   trunk/scripts/constitutive-law.py
+   trunk/scripts/cylindrical-layer-packing.py
+   trunk/scripts/exact-rot-facet.py
+   trunk/scripts/exact-rot.py
+   trunk/scripts/simple-scene-parallel.py
+   trunk/scripts/test-sphere-facet-corner.py
+   trunk/scripts/test-sphere-facet.py
+   trunk/scripts/test/Dem3DofGeom.py
+   trunk/scripts/test/facet-sphere.py
+   trunk/scripts/test/interpolating-force.py
+   trunk/scripts/test/shear.py
+Log:
+1. Generate proxy constructors to all classes deriving only from Serializable in python (like GLDrawBox and similar).
+2. Fix scripts to have the new syntax everywhere, since e.g. EngineUnit is just abstract class that cannot be instantiated from python.
+3. Add check fro valid data before saving plot to gnuplot; raise comprehensible exception if there is nothing to save.
+4. Remove leftover scripts/pch.py
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-08-03 15:25:05 UTC (rev 1912)
++++ trunk/SConstruct	2009-08-03 18:53:26 UTC (rev 1913)
+@@ -60,7 +60,6 @@
+ 	if os.path.exists(newDir):
+ 		Exit(os.execv(newPrefix+&quot;/scons.py&quot;,[newPrefix+'/scons.py']+sys.argv[1:]))
+ 
+-
+ ##########################################################################################
+ ############# OPTIONS ####################################################################
+ ##########################################################################################
+@@ -151,7 +150,6 @@
+ opts.Update(env)
+ opts.Save(optsFile,env)
+ 
+-
+ # do not propagate PATH from outside, to ensure identical builds on different machines
+ #env.Append(ENV={'PATH':['/usr/local/bin','/bin','/usr/bin']})
+ # ccache needs $HOME to be set; colorgcc needs $TERM; distcc wants DISTCC_HOSTS
+
+Modified: trunk/gui/py/PythonUI_rc.py
+===================================================================
+--- trunk/gui/py/PythonUI_rc.py	2009-08-03 15:25:05 UTC (rev 1912)
++++ trunk/gui/py/PythonUI_rc.py	2009-08-03 18:53:26 UTC (rev 1913)
+@@ -15,36 +15,34 @@
+ from yade import utils
+ __builtins__.O=Omega()
+ 
+-#try:
+-#	from miniWm3Wrap import Vector3_less__double__greater_ as Vector3r
+-#	from miniWm3Wrap import Vector2_less__double__greater_ as Vector2r
+-#	from miniWm3Wrap import Quaternion_less__double__greater_ as Quaternionr
+-#except ImportError: pass 
+-
+ ### direct object creation through automatic wrapper functions
+ def listChildClassesRecursive(base):
+-	ret=O.childClasses(base)
++	ret=set(O.childClasses(base)); ret2=set()
+ 	for bb in ret:
+-		ret2=listChildClassesRecursive(bb)
+-		if ret2: ret+=ret2
+-	return ret
++		ret2|=listChildClassesRecursive(bb)
++	return ret | ret2
+ # not sure whether __builtins__ is the right place?
+ _dd=__builtins__.__dict__
++_allClasses=set(listChildClassesRecursive('Serializable'))
++_proxiedClasses=set()
++_classTranslations={'FileGenerator':'Preprocessor'}
+ 
+-classTranslations={'FileGenerator':'Preprocessor'}
+ for root in [
+ 	'StandAloneEngine','DeusExMachina','GeometricalModel','InteractingGeometry','PhysicalParameters','BoundingVolume','InteractingGeometry','InteractionPhysics','FileGenerator',
+ 		# functors
+ 		'BoundingVolumeEngineUnit','GeometricalModelEngineUnit','InteractingGeometryEngineUnit','InteractionGeometryEngineUnit','InteractionPhysicsEngineUnit','PhysicalParametersEngineUnit','PhysicalActionDamperUnit','PhysicalActionApplierUnit','ConstitutiveLaw'
+ 	]:
+-	root2=root if (root not in classTranslations.keys()) else classTranslations[root]
++	root2=root if (root not in _classTranslations.keys()) else _classTranslations[root]
+ 	for p in listChildClassesRecursive(root):
+ 		#class argStorage:
+ 		#	def __init__(self,_root,_class): self._root,self._class=_root,_class
+ 		#	def __call__(self,*args): return yade.wrapper.__dict__[self._root](self._class,*args)
+ 		#if root=='MetaEngine': _dd[p]=argStorage(root2,p)
+ 		_dd[p]=lambda __r_=root2,__p_=p,**kw : yade.wrapper.__dict__[__r_](__p_,**kw) # eval(root2)(p,kw)
+-_dd['Generic']=yade.wrapper.__dict__[&quot;Serializable&quot;]
++		_proxiedClasses.add(p)
++#_dd['Generic']=yade.wrapper.Serializable
++for p in _allClasses-_proxiedClasses: # wrap classes that don't derive from any specific root class, just from Serializable
++	_dd[p]=lambda __p_=p,**kw: yade.wrapper.Serializable(__p_,**kw)
+ ### end wrappers
+ 
+ #### HANDLE RENAMED CLASSES ####
+@@ -70,7 +68,6 @@
+ 
+ 
+ 
+-
+ # python2.4 workaround (so that quit() works as it does in 2.5)
+ if not callable(__builtins__.quit):
+ 	def _quit(): import sys; sys.exit(0)
+
+Modified: trunk/py/plot.py
+===================================================================
+--- trunk/py/plot.py	2009-08-03 15:25:05 UTC (rev 1912)
++++ trunk/py/plot.py	2009-08-03 18:53:26 UTC (rev 1913)
+@@ -154,6 +154,7 @@
+ 		Returns name fo the gnuplot file created.
+ 	&quot;&quot;&quot;
+ 	import time,bz2
++	if len(data.keys())==0: raise RuntimeError(&quot;No data for plotting were saved.&quot;)
+ 	vars=data.keys(); vars.sort()
+ 	lData=len(data[vars[0]])
+ 	if timestamp: baseName+=time.strftime('_%Y%m%d_%H:%M')
+
+Modified: trunk/scripts/chain-distant-interactions.py
+===================================================================
+--- trunk/scripts/chain-distant-interactions.py	2009-08-03 15:25:05 UTC (rev 1912)
++++ trunk/scripts/chain-distant-interactions.py	2009-08-03 18:53:26 UTC (rev 1913)
+@@ -3,21 +3,21 @@
+ 
+ o=Omega()
+ o.initializers=[
+-	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
++	BoundingVolumeMetaEngine([
++		InteractingSphere2AABB(),InteractingBox2AABB(),MetaInteractingGeometry2AABB()
+ 	]
+ o.engines=[
+-	StandAloneEngine('PhysicalActionContainerReseter'),
+-	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('MetaInteractingGeometry2AABB')
+-	]),
+-	StandAloneEngine('PersistentSAPCollider',{'haveDistantTransient':True}),
+-	MetaEngine('InteractionGeometryMetaEngine',[EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry',{'hasShear':True}),]),
+-	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+-	StandAloneEngine('ElasticContactLaw2',{'isCohesive':True}),
+-	#DeusExMachina('MomentEngine',{'subscribedBodies':[1],'moment':[0,1000,0]}),
+-	DeusExMachina('GravityEngine',{'gravity':[0,0,-1e2]}),
+-	DeusExMachina('NewtonsDampedLaw',{'damping':0.2})
++	BexResetter(),
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingBox2AABB(),MetaInteractingGeometry2AABB()])
++	InsertionSortCollider(),
++	InteractionGeometryMetaEngine([InteractingSphere2InteractingSphere4SpheresContactGeometry(hasShear=True)]),
++	InteractionPhysicsMetaEngine([SimpleElasticRelationships()]),
++	ElasticContactLaw(isCohesive=True),
++	MomentEngine(subscribedBodies=[1],moment=(0,1000,0)),
++	GravityEngine(gravity=(0,0,1e-2)),
++	NewtonsDampedLaw(damping=0.2)
+ ]
+-o.miscParams=[Generic('GLDrawSphere',{'glutUse':True})]
++o.miscParams=[GLDrawSphere(glutUse=True)]
+ 
+ from yade import utils
+ from math import *
+
+Modified: trunk/scripts/constitutive-law.py
+===================================================================
+--- trunk/scripts/constitutive-law.py	2009-08-03 15:25:05 UTC (rev 1912)
++++ trunk/scripts/constitutive-law.py	2009-08-03 18:53:26 UTC (rev 1913)
+@@ -2,20 +2,19 @@
+ # -*- encoding=utf-8 -*-
+ 
+ O.initializers=[
+-	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingBox2AABB(),MetaInteractingGeometry2AABB()]),
+ 	]
+ O.engines=[
+-	StandAloneEngine('PhysicalActionContainerReseter'),
+-	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('MetaInteractingGeometry2AABB')
+-	]),
+-	StandAloneEngine('PersistentSAPCollider',{'haveDistantTransient':True}),
+-	MetaEngine('InteractionGeometryMetaEngine',[EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry',{'hasShear':True}),]),
+-	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+-	MetaEngine('ConstitutiveLawDispatcher',[EngineUnit('ef2_Spheres_NormalShear_ElasticFrictionalLaw')]),
+-	DeusExMachina('GravityEngine',{'gravity':[0,0,-1000]}),
+-	DeusExMachina('NewtonsDampedLaw',{'damping':0.2})
++	BexResetter(),
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingBox2AABB(),MetaInteractingGeometry2AABB()]),
++	InsertionSortCollider(),
++	InteractionGeometryMetaEngine([InteractingSphere2InteractingSphere4SpheresContactGeometry()]),
++	InteractionPhysicsMetaEngine([SimpleElasticRelationships()]),
++	ConstitutiveLawDispatcher([ef2_Spheres_Elastic_ElasticLaw()]),
++	GravityEngine(gravity=(0,0,-1000)),
++	NewtonsDampedLaw(damping=0.2)
+ ]
+-O.miscParams=[Generic('GLDrawSphere',{'glutUse':True})]
++O.miscParams=[GLDrawSphere(glutUse=True)]
+ 
+ for n in range(30):
+ 	O.bodies.append(utils.sphere([0,n,0],.50001,dynamic=(n&gt;0),color=[1-(n/20.),n/20.,0],young=30e9,poisson=.3,density=2400))
+@@ -35,7 +34,3 @@
+ except ImportError: pass
+ O.run(100,True)
+ 
+-#o.save('/tmp/a.xml.bz2')
+-#o.reload()
+-#o.run(50000,True)
+-#print o.iter/o.realtime
+
+Modified: trunk/scripts/cylindrical-layer-packing.py
+===================================================================
+--- trunk/scripts/cylindrical-layer-packing.py	2009-08-03 15:25:05 UTC (rev 1912)
++++ trunk/scripts/cylindrical-layer-packing.py	2009-08-03 18:53:26 UTC (rev 1913)
+@@ -6,53 +6,22 @@
+ o=Omega()
+ 
+ # we will use this in both initializers and engines, so we save it to a temp variable to save typing
+-aabbDispatcher=MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
++aabbDispatcher=BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingBox2AABB(),MetaInteractingGeometry2AABB()])
+ 
+ o.initializers=[aabbDispatcher]
+ 
+ o.engines=[
+-	StandAloneEngine('PhysicalActionContainerReseter'),
++	BexResetter(),
+ 	aabbDispatcher,
+-	StandAloneEngine('PersistentSAPCollider'),
+-	MetaEngine('InteractionGeometryMetaEngine',[
+-		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
+-		EngineUnit('InteractingBox2InteractingSphere4SpheresContactGeometry')
+-	]),
+-	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+-	StandAloneEngine('ElasticContactLaw'),
+-	StandAloneEngine('GlobalStiffnessCounter',{'interval':500}),
+-	StandAloneEngine('GlobalStiffnessTimeStepper',{'defaultDt':1e-4,'active':True,'timeStepUpdateInterval':500}),
+-	DeusExMachina('AxialGravityEngine',{'axisPoint':[0,0,0],'axisDirection':[1,0,0],'acceleration':10000}),
+-	MetaEngine('PhysicalActionDamper',[
+-		EngineUnit('CundallNonViscousForceDamping',{'damping':0.4}),
+-		EngineUnit('CundallNonViscousMomentumDamping',{'damping':0.4})
+-	]),
+-	MetaEngine('PhysicalActionApplier',[
+-		EngineUnit('NewtonsForceLaw'),
+-		EngineUnit('NewtonsMomentumLaw'),
+-	]),
+-	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogPositionIntegrator')]),
+-	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogOrientationIntegrator')]),
++	InsertionSortCollider(),
++	InteractionGeometryMetaEngine([InteractingSphere2InteractingSphere4SpheresContactGeometry(),InteractingBox2InteractingSphere4SpheresContactGeometry()]),
++	InteractionPhysicsMetaEngine([SimpleElasticRelationships()]),
++	ElasticContactLaw(),
++	GlobalStiffnessTimeStepper(defaultDt=1e-4,active=True,timeStepUpdateInterval=500),
++	AxialGravityEngine(axisPoint=(0,0,0),axisDirection=(1,0,0),acceleration=1e4),
++	NewtonsDampedLaw(damping=.4)
+ ]
+ 
+-#shorthand functions
+-def newSphere(center,radius):
+-	s=Body()
+-	s.shape=GeometricalModel('Sphere',{'radius':radius,'diffuseColor':[0,1,0]})
+-	s.mold=InteractingGeometry('InteractingSphere',{'radius':radius,'diffuseColor':[1,0,0]})
+-	s.phys=PhysicalParameters('BodyMacroParameters',{'se3':center+[1,0,0,0],'mass':1000,'inertia':[7e4,7e4,7e4],'young':3e9,'poisson':0.3})
+-	s.bound=BoundingVolume('AABB',{'diffuseColor':[0,0,1]})
+-	s['isDynamic']=True
+-	return s
+-
+-def newBox(center,extents):
+-	b=Body()
+-	b.shape=GeometricalModel('Box',{'extents':extents,'diffuseColor':[1,0,0]})
+-	b.mold=InteractingGeometry('InteractingBox',{'extents':extents,'diffuseColor':[0,1,0]})
+-	b.phys=PhysicalParameters('BodyMacroParameters',{'se3':[center[0],center[1],center[2],1,0,0,0],'mass':2000,'inertia':[1e5,1e5,1e5],'young':3e9,'poisson':0.3})
+-	b.bound=BoundingVolume('AABB',{'diffuseColor':[0,0,1]})
+-	return b
+-
+ rCenter=4
+ rBall=.2
+ wallThickness=2*rBall
+@@ -62,19 +31,18 @@
+ nMax=10
+ for n in range(nMax):
+ 	x=wallDist*(n/nMax-.5)
+-	sCent=newSphere([x,0,0],rCenter);
+-	o.bodies.append(sCent)
++	O.bodies.append(utils.sphere([x,0,0],rCenter))
+ 
+ #lateral walls, they have wallDist gap inbetween
+-wLat1=newBox([0+.5*wallDist+.5*wallThickness,0,0],[.5*wallThickness,wallSize,wallSize]); o.bodies.append(wLat1);
+-wLat2=newBox([0-.5*wallDist-.5*wallThickness,0,0],[.5*wallThickness,wallSize,wallSize]); o.bodies.append(wLat2);
++wLat1=utils.box([0+.5*wallDist+.5*wallThickness,0,0],[.5*wallThickness,wallSize,wallSize]); o.bodies.append(wLat1);
++wLat2=utils.box([0-.5*wallDist-.5*wallThickness,0,0],[.5*wallThickness,wallSize,wallSize]); o.bodies.append(wLat2);
+ 
+ #angle walls, they cross at the x-axis
+-wAng1=newBox([0,0,0],[.55*wallDist,.5*wallThickness,wallSize*sqrt(2)]); wAng1.phys['se3']=[0,0,0,1,0,0,pi/4]; o.bodies.append(wAng1); 
+-wAng2=newBox([0,0,0],[.55*wallDist,.5*wallThickness,wallSize*sqrt(2)]); wAng2.phys['se3']=[0,0,0,1,0,0,-pi/4]; o.bodies.append(wAng2)
++wAng1=utils.box([0,0,0],[.55*wallDist,.5*wallThickness,wallSize*sqrt(2)]); wAng1.phys.ori=Quaternion((1,0,0),pi/4); o.bodies.append(wAng1); 
++wAng2=utils.box([0,0,0],[.55*wallDist,.5*wallThickness,wallSize*sqrt(2)]); wAng2.phys.ori=Quaternion((1,0,0),-pi/4); o.bodies.append(wAng2)
+ 
+ #cap
+-wCap=newBox([0,0,wallSize],[.55*wallDist,wallSize,.5*wallThickness]); o.bodies.append(wCap)
++wCap=utils.box([0,0,wallSize],[.55*wallDist,wallSize,.5*wallThickness]); o.bodies.append(wCap)
+ 
+ # all bodies up to now are fixed and only wire is will be shown
+ for b in o.bodies:
+@@ -92,12 +60,7 @@
+ 		for iz in range(int(maxima[2])):
+ 			x,y,z=2.0*rBall*(ix-maxima[0]/2+.5),2.0*rBall*(iy-maxima[1]/2+.5),2.0*rBall*iz+2*rCenter
+ 			#print x,y,z,rBall
+-			s=newSphere([x,y,z],rBall)
+-			color=randomColor()
+-			s.shape['diffuseColor']=color
+-			s.mold['diffuseColor']=color
+-			s['isDynamic']=True
+-			o.bodies.append(s)
++			O.bodies.append(utils.sphere([x,y,z],rBall))
+ 
+ o.save('/tmp/a.xml')
+ 
+
+Modified: trunk/scripts/exact-rot-facet.py
+===================================================================
+--- trunk/scripts/exact-rot-facet.py	2009-08-03 15:25:05 UTC (rev 1912)
++++ trunk/scripts/exact-rot-facet.py	2009-08-03 18:53:26 UTC (rev 1913)
+@@ -5,38 +5,31 @@
+ ##
+ 
+ from math import *
+-o=Omega()
+-o.initializers=[
+-	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
++O.initializers=[
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingBox2AABB(),MetaInteractingGeometry2AABB(),InteractingFacet2AABB()])
+ 	]
+-o.engines=[
+-	StandAloneEngine('PhysicalActionContainerReseter'),
+-	MetaEngine('BoundingVolumeMetaEngine',[
+-		EngineUnit('InteractingSphere2AABB'),
+-		EngineUnit('InteractingBox2AABB'),
+-		EngineUnit('MetaInteractingGeometry2AABB')
++O.engines=[
++	BexResetter(),
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingBox2AABB(),MetaInteractingGeometry2AABB(),InteractingFacet2AABB()]),
++	InsertionSortCollider(),
++	InteractionGeometryMetaEngine([
++		InteractingSphere2InteractingSphere4SpheresContactGeometry(),
++		InteractingFacet2InteractingSphere4SpheresContactGeometry(),
+ 	]),
+-	StandAloneEngine('PersistentSAPCollider'),
+-	MetaEngine('InteractionGeometryMetaEngine',[
+-		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry',{'hasShear':True,'interactionDetectionFactor':1.4}),
+-		EngineUnit('InteractingFacet2InteractingSphere4SpheresContactGeometry',{'hasShear':True,'shrinkFactor':0.}),
+-	]),
+-	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+-	StandAloneEngine('ElasticContactLaw'),
+-	#DeusExMachina('GravityEngine',{'gravity':[0,0,-9.81]}),
+-	DeusExMachina('RotationEngine',{'subscribedBodies':[1],'rotationAxis':[1,0,0],'angularVelocity':.01}),
+-	#DeusExMachina('RotationEngine',{'subscribedBodies':[0],'rotationAxis':[1,1,1],'angularVelocity':-.02}),
+-	DeusExMachina(&quot;NewtonsDampedLaw&quot;,{'damping':0.2})
++	InteractionPhysicsMetaEngine([SimpleElasticRelationships()]),
++	ElasticContactLaw(),
++	RotationEngine(subscribedBodies=[1],rotationAxis=[1,0,0],angularVelocity=.01),
++	NewtonsDampedLaw(damping=0.2)
+ ]
+ from yade import utils
+ scale=.1
+-o.bodies.append(utils.facet([[scale,0,0],[-scale,-scale,0],[-scale,scale,0]],dynamic=False,color=[1,0,0],young=30e9,poisson=.3))
+-o.bodies.append(utils.sphere([0,0,.99*scale],1*scale,color=[0,1,0],young=30e9,poisson=.3,density=2400,wire=True,dynamic=False))
+-o.miscParams=[Generic('GLDrawSphere',{'glutUse':True})]
++O.bodies.append(utils.facet([[scale,0,0],[-scale,-scale,0],[-scale,scale,0]],dynamic=False,color=[1,0,0],young=30e9,poisson=.3))
++O.bodies.append(utils.sphere([0,0,.99*scale],1*scale,color=[0,1,0],young=30e9,poisson=.3,density=2400,wire=True,dynamic=False))
++O.miscParams=[GLDrawSphere(glutUse=True)]
+ 
+-o.dt=.8*utils.PWaveTimeStep()
++O.dt=.8*utils.PWaveTimeStep()
+ from yade import qt
+ renderer=qt.Renderer()
+ renderer['Interaction_geometry']=True
+ qt.Controller()
+-o.step(); o.step(); o.step()
++O.step(); O.step(); O.step()
+
+Modified: trunk/scripts/exact-rot.py
+===================================================================
+--- trunk/scripts/exact-rot.py	2009-08-03 15:25:05 UTC (rev 1912)
++++ trunk/scripts/exact-rot.py	2009-08-03 18:53:26 UTC (rev 1913)
+@@ -1,48 +1,34 @@
+ #!/usr/local/bin/yade-trunk -x
+ # -*- encoding=utf-8 -*-
+ from math import *
+-o=Omega()
+-o.initializers=[
+-	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
++O.initializers=[
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingBox2AABB(),MetaInteractingGeometry2AABB()]),
+ 	]
+-o.engines=[
+-	StandAloneEngine('PhysicalActionContainerReseter'),
+-	MetaEngine('BoundingVolumeMetaEngine',[
+-		EngineUnit('InteractingSphere2AABB'),
+-		EngineUnit('InteractingBox2AABB'),
+-		EngineUnit('MetaInteractingGeometry2AABB')
++O.engines=[
++	BexResetter(),
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingBox2AABB(),MetaInteractingGeometry2AABB()]),
++	InsertionSortCollider(),
++	InteractionGeometryMetaEngine([
++		InteractingSphere2InteractingSphere4SpheresContactGeometry(),
++		InteractingFacet2InteractingSphere4SpheresContactGeometry(),
+ 	]),
+-	StandAloneEngine('PersistentSAPCollider'),
+-	MetaEngine('InteractionGeometryMetaEngine',[
+-		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry',{'hasShear':True}),
+-		EngineUnit('InteractingBox2InteractingSphere4SpheresContactGeometry')
+-	]),
+-	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+-	StandAloneEngine('ElasticContactLaw'),
+-	DeusExMachina('GravityEngine',{'gravity':[0,0,-9.81]}),
+-	DeusExMachina('RotationEngine',{'subscribedBodies':[1],'rotationAxis':[1,0,0],'angularVelocity':.01}),
+-	DeusExMachina('RotationEngine',{'subscribedBodies':[0],'rotationAxis':[1,1,1],'angularVelocity':-.02}),
+-	MetaEngine('PhysicalActionDamper',[
+-		EngineUnit('CundallNonViscousForceDamping',{'damping':0.2}),
+-		EngineUnit('CundallNonViscousMomentumDamping',{'damping':0.2})
+-	]),
+-	MetaEngine('PhysicalActionApplier',[
+-		EngineUnit('NewtonsForceLaw'),
+-		EngineUnit('NewtonsMomentumLaw'),
+-	]),
+-	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogPositionIntegrator')]),
+-	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogOrientationIntegrator')]),
++	InteractionPhysicsMetaEngine([SimpleElasticRelationships()]),
++	ElasticContactLaw(),
++	GravityEngine(gravity=(0,0,-9.81)),
++	RotationEngine(subscribedBodies=[1],rotationAxis=(1,0,0),angularVelocity=.01),
++	RotationEngine(subscribedBodies=[0],rotationAxis=(1,1,1),angularVelocity=-.02),
++	NewtonsDampedLaw(damping=.2)
+ ]
+ from yade import utils
+-o.bodies.append(utils.sphere([0,0,0],1,dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=2400,wire=True))
+-o.bodies.append(utils.sphere([0,sqrt(2),sqrt(2)],1,color=[0,1,0],young=30e9,poisson=.3,density=2400,wire=True))
+-o.miscParams=[Generic('GLDrawSphere',{'glutUse':True})]
++O.bodies.append(utils.sphere([0,0,0],1,dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=2400,wire=True))
++O.bodies.append(utils.sphere([0,sqrt(2),sqrt(2)],1,color=[0,1,0],young=30e9,poisson=.3,density=2400,wire=True))
++O.miscParams=[GLDrawSphere(glutUse=True)]
+ 
+-o.dt=.8*utils.PWaveTimeStep()
+-#o.save('/tmp/a.xml.bz2');
++O.dt=.8*utils.PWaveTimeStep()
++O.saveTmp()
+ #o.run(100000); o.wait(); print o.iter/o.realtime,'iterations/sec'
+ from yade import qt
+ renderer=qt.Renderer()
+ renderer['Interaction_geometry']=True
+ qt.Controller()
+-o.step(); o.step(); o.step()
++O.step(); O.step(); O.step()
+
+Deleted: trunk/scripts/pch.py
+===================================================================
+--- trunk/scripts/pch.py	2009-08-03 15:25:05 UTC (rev 1912)
++++ trunk/scripts/pch.py	2009-08-03 18:53:26 UTC (rev 1913)
+@@ -1,103 +0,0 @@
+-#!/usr/bin/python
+-
+-from sys import *
+-import os,re
+-from string import *
+-
+-incDir='../build-trunk/include/yade-trunk/yade'
+-pchDir='./pch/'
+-srcRoot='./'
+-incModules={
+-	'lib-base':0, 'lib-computational-geometry':0, 'lib-factory':0, 'lib-loki':0, 'lib-miniWm3':0, 'lib-multimethods':0, 'lib-opengl':0, 'lib-serialization':0, 'lib-serialization-bin':0, 'lib-serialization-qt':0, 'lib-serialization-xml':0,
+-	'core':1,
+-	'pkg-common':2,
+-	'pkg-dem':3,
+-	'pkg-realtime-rigidbody':3,
+-	'pkg-lattice':3,
+-	'pkg-mass-spring':3,
+-	'pkg-fem':3,
+-	'pkg-snow':3,
+-	'gui-cmd':3,
+-	'gui-qt3':3, 
+-	'extra':4}
+-
+-from os.path import sep
+-import shutil
+-
+-inclusionGuards={'GLEngineEditor.hpp': 'GL_ENGINE_EDITOR_HPP', 'InteractionPhysicsEngineUnit.hpp': 'INTERACTIONPHYSICS_ENGINEUNIT_HPP', 'SpheresContactGeometry.hpp': 'SPHERESCONTACTGEOMETRY_HPP', 'GLWindowsManager.hpp': 'GLWINDOWSMANAGER_HPP', 'QtSimulationPlayer.hpp': 'QTSIMULATIONPLAYER_HPP', 'NewtonsMomentumLaw.hpp': 'NEWTONSMOMENTUMLAW_HPP', 'PhysicalParameters.hpp': 'PHYSICALPARAMETERS_HPP', 'ParticleParameters.hpp': 'PARTICLEPARAMETERS_HPP', 'HangingCloth.hpp': 'HANGINGCLOTH_HPP', 'GLDrawInteractionGeometryFunctor.hpp': 'GLDRAW_INTERACTION_GEOMETRY_FUNCTOR_HPP', 'GeometricalModel.hpp': 'GEOMETRICALMODEL_HPP', 'SDECImpactTest.hpp': 'SDECIMPORT_HPP', 'Funnel.hpp': 'FUNNEL_HPP', 'PhysicalActionContainerIteratorPointer.hpp': 'PHYSICALACTIONCONTAINERITERATORPOINTER_HPP', 'ClosestFeatures.hpp': 'CLOSESTSFEATURES_HPP', 'CapillaryStressRecorder.hpp': 'CAPILLARY_STRESS_RECORDER_HPP', 'InteractionGeometryEngineUnit.hpp': 'INTERACTIONGEOMETRYFUNCTOR_HPP', 'Functor.hpp': 'FUNCTOR!
+ _INC_', 'BINFormatManager.hpp': 'BINFORMATMANAGER_HPP', 'SDECMovingWall.hpp': 'SDEC_MOVING_WALL_HPP', 'Collider.hpp': 'BROADINTERACTOR_HPP', 'InteractingBox.hpp': 'INTERACTION_BOX_HPP', 'BodyContainerIterator.hpp': 'BODYCONTAINERITERATOR_HPP', 'InteractionGeometry.hpp': 'INTERACTIONGEOMETRY_HPP', 'LineSegment.hpp': 'LINE_SEGMENT_HPP', 'GLDrawShadowVolumeFunctor.hpp': 'GLDRAWSHADOWVOLUMEFUNCTOR_HPP', 'ClassFactory.hpp': 'CLASSFACTORY_HPP', 'GLDrawLatticeBeamState.hpp': 'GLDRAW_LATTICE_BEAM_STATE_HPP', 'TypeManip.hpp': 'TYPEMANIP_INC_', 'OpenGLRenderingEngine.hpp': 'OPENGLRENDERINGENGINE_HPP', 'Sphere.hpp': 'SPHERE_HPP', 'TranslationEngine.hpp': 'TRANSLATOR_HPP', 'Tetrahedron.hpp': 'TETRAHEDRON_HPP', 'GLDrawSimpleElasticInteraction.hpp': 'GLDRAW_SIMPLE_ELASTIC_INTERACTION_HPP', 'AveragePositionRecorder.hpp': 'AVERAGE_POSISTION_RECORDER_HPP', 'EmptyType.hpp': 'EMPTYTYPE_INC_', 'BoxStack.hpp': 'BOXSTACK_HPP', 'QtSphericalDEM.hpp': 'QTSPHERICALDEM_HPP', 'CohesiveFrictionalContac!
+ tLaw.hpp': 'COHESIVE_FRICTIONAL_CONTACT_LAW_HPP', 'QtMetaDispa!
+ tchingEn
+gineProperties.hpp': 'QTMETADISPATCHINGENGINEPROPERTIES_HPP', 'CapillaryRecorder.hpp': 'CAPILLARY_RECORDER_HPP', 'GLDrawBoxShadowVolume.hpp': 'GLDRAWBOXSHADOWVOLUME_HPP', 'FundamentalHandler.tpp': '__FUNDAMENTALHANDLER_H__', 'ElasticBodySimpleRelationship.hpp': 'ELASTICBODYSIMPLERELATIONSHIP_HPP', 'GeometricalModelEngineUnit.hpp': 'GEOMETRICAL_MODEL_ENGINE_UNIT_HPP', 'MovingSupport.hpp': 'NO_SHEAR_PLANE', 'QtGUIGenerator.hpp': 'QTGUIGENERATOR_HPP', 'LatticeLaw.hpp': 'LATTICELAW_HPP', 'Archive.hpp': 'ARCHIVECONTENT_HPP', 'InteractionGeometryMetaEngine.hpp': 'INTERACTION_GEOMETRY_METAENGINE_HPP', 'GLSimulationPlayerViewer.hpp': 'SIMULATIONVIEWER_HPP', 'DataRecorder.hpp': 'DATARECORDER_HPP', 'SphericalDEMSimulator.hpp': 'SPHERICALDEMSIMULATOR_HPP', 'Preferences.hpp': 'PREFERENCES_HPP', 'PersistentAloneSAPCollider.hpp': 'PERSISTENTSAPCOLLIDER_HPP', 'GLDrawInteractingMyTetrahedron.hpp': 'GLDRAWINTERACTINGMYTETRAHEDRON_HPP', 'MacroMicroElasticRelationshipsWater.hpp': 'SDECLINEARCO!
+ NTACTMODEL_HPP', 'ElasticCohesiveLaw.hpp': 'ELASTICCOHESIVELAW_HPP', 'MyTetrahedronLaw.hpp': 'MYTETRAHEDRONLAW_HPP', 'IOManagerExceptions.hpp': 'IOMANAGEREXCEPTIONS_HPP', 'Engine.hpp': 'ENGINE_HPP', 'QtFileGenerator.hpp': 'QTFILEGENERATOR_HPP', 'PositionOrientationRecorder.hpp': 'POSITIONORIENTATIONRECORDER_HPP', 'StandAloneSimulator.hpp': 'STANDALONESIMULATOR_HPP', 'SimulationFlow.hpp': 'SIMULATION_FLOW_HPP', 'TriaxialStateRecorder.hpp': 'TRIAXIAL_STATE_RECORDER_HPP', 'Indexable.hpp': 'INDEXABLE_HPP', 'FEMTetrahedronData.hpp': 'LATTICEBEAMPARAMETERS_HPP', 'FunctorWrapper.hpp': 'DYNLIB_LAUNCHER_HPP', 'MetaDispatchingEngine.hpp': 'METADISPATCHINGENGINE_HPP', 'ThreadWorker.hpp': 'THREAD_WORKER_HPP', 'CundallNonViscousMomentumDamping.hpp': 'ACTION_MOMENTUM_DAMPING_HPP', 'GLDrawBox.hpp': 'GLDRAWBOX_HPP', 'SimpleElasticInteraction.hpp': 'SIMPLEELASTICINTERACTION_HPP', 'QtGUIPreferences.hpp': 'QTGUIPREFERENCES_HPP', 'InteractionContainerIteratorPointer.hpp': 'INTERACTIONCONTAINER!
+ ITERATORPOINTER_HPP', 'BodyRedirectionVectorIterator.hpp': 'BO!
+ DYREDIRE
+CTIONVECTORITERATOR_HPP', 'MultiTypeHandler.tpp': '__MULTITYPEHANDLER_H__', 'FEMLaw.hpp': 'FEMLAW_HPP', 'MetaInteractingGeometry.hpp': 'METAINTERACTINGGEOMETRY_HPP', 'InteractingGeometry.hpp': 'INTERACTING_GEOMETRY_HPP', 'GLDrawBoundingSphere.hpp': 'GLDRAWBOUNDINGSPHERE_HPP', 'PhysicalActionApplierUnit.hpp': 'PHYSICALACTIONAPPLIERUNIT_HPP', 'TetraTestGen.hpp': 'TETRATESTGEN_HPP', 'GLDrawStateFunctor.hpp': 'GLDRAW_STATE_FUNCTOR_HPP', 'TriaxialTest.hpp': 'SDECIMPORT_HPP', 'GLViewer.hpp': 'GLVIEWER_HPP', 'yadeWm3Extra.hpp': 'YADE_GEOM_UTILS_HPP', 'InteractionHashMapIterator.hpp': 'INTERACTIONHASHMAPITERATOR_HPP', 'InteractionPhysics.hpp': 'INTERACTIONPHYSICS_HPP', 'CohesiveTriaxialTest.hpp': 'COHESIVE_TRIAXIAL_TEST_HPP', 'VelocityRecorder.hpp': 'VELOCITY_RECORDER_HPP', 'TetrahedronsTest.hpp': 'TETRAHEDRONSTEST_HPP', 'SerializableTypes.hpp': '__SERIALIZABLETYPES_HPP__', 'GLDrawRigidBodyState.hpp': 'GLDRAWRIGIDBODYSTATE_HPP', 'SerializationExceptions.hpp': 'SERIALIZATIONEXCEPTION!
+ S_HPP', 'GLDrawInteractingSphere.hpp': '__GLDRAWINTERACTIONSPHERE_HPP__', 'RotatingBox.hpp': 'ROTATINGBOX_HPP', 'GLDrawMetaInteractingGeometry.hpp': 'GLDRAWCOLLISIONGEOMETRYSET_HPP', 'NullGUI.hpp': 'NULLGUI_HPP', 'TypeTraits.hpp': 'TYPETRAITS_INC_', 'BodyRedirectionVector.hpp': 'BODYREDIRECTIONVECTOR_HPP', 'InteractingGeometryEngineUnit.hpp': 'INTERACTING_GEOMETRY_ENGINE_UNIT_HPP', 'FileDialog.hpp': 'FILEDIALOG_HPP', 'SDECSpheresPlane.hpp': 'SDEC_SPHERES_PLANE_HPP', 'Clump.hpp': 'CLUMP_HPP', 'PythonRecorder.hpp': 'PYTHON_RECORDER_HPP', 'FEMSetTextLoader.hpp': 'FEM_SET_TEXT_LOADER_HPP', 'DisplacementEngine.hpp': 'DISPLACEMENTENGINE_HPP', 'CapillaryCohesiveLaw.hpp': 'CAPILLARY_COHESIVE_LAW_HPP', 'SerializableSingleton.hpp': 'SERIALIZABLESINGLETON_HPP', 'WallStressRecorder.hpp': 'WALL_STRESS_RECORDER_HPP', 'CohesiveFrictionalContactInteraction.hpp': 'COHESIVE_FRICTIONAL_CONTACT_PARAMETERS_HPP', 'GlobalStiffnessCounter.hpp': 'GLOBALSTIFFNESSCOUNTER_HPP', 'GLDrawInteractingGeome!
+ tryFunctor.hpp': 'GLDRAWINTERACTIONGEOMETRYFUNCTOR_HPP', 'Simu!
+ lationCo
+ntrollerUpdater.hpp': 'SIMULATIONCONTROLLERUPDATER_HPP', 'SimulationController.hpp': 'SIMULATIONCONTROLLER_HPP', 'SphericalDEM.hpp': 'SPHERICALDEM_HPP', 'Quadrilateral.hpp': 'QUADRILATERAL_HPP', 'yadeExceptions.hpp': 'YADE_EXCEPTIONS_HPP', 'GLDrawParticleState.hpp': 'GLDRAWPARTICLESTATE_HPP', 'TriaxialStressController.hpp': 'TRIAXIAL_STRESS_CONTROLLER_HPP', 'SDECLinkPhysics.hpp': 'SDECLINKPHYSICS_HPP', 'DistantPersistentSAPCollider.hpp': '__DISTANTPERSISTENTSAPCOLLIDER_HPP__', 'InteractingSphere.hpp': 'INTERACTIONSPHERE_HPP', 'SpringPhysics.hpp': 'SPRINGPHYSICS_HPP', 'Contact.hpp': 'CONTACT_HPP', 'PhysicalActionDamper.hpp': 'PHYSICALACTIONDAMPER_HPP', 'KnownFundamentalsHandler.tpp': 'KNOWNFUNDAMENTALSHANDLER_HPP', 'GLDrawGeometricalModelFunctor.hpp': 'GLDRAWGEOMETRICALMODELFUNCTOR_HPP', 'CapillaryPressureEngine.hpp': 'CAPILLARY_PRESSURE_ENGINE_HPP', 'NullType.hpp': 'NULLTYPE_INC_', 'PhysicalAction.hpp': 'PHYSICALACTION_HPP', 'Tetra.hpp': 'TETRA_HPP', 'GLDrawInteractionPhysic!
+ sFunctor.hpp': 'GLDRAW_INTERACTION_PHYSICS_FUNCTOR_HPP', 'PersistentSAPCollider.hpp': '__PERSISTENTSAPCOLLIDER_HPP__', 'GeometricalModelMetaEngine.hpp': 'GEOMETRICAL_MODEL_DISPATCHER_HPP', 'RenderingEngine.hpp': 'RENDERINGENGINE_HPP', 'Factorable.hpp': 'FACTORABLE_HPP', 'IOFormatManager.tpp': 'IOMANAGER_TPP', 'OpenGLWrapper.hpp': 'OPENGLWRAPPER_HPP', 'ElasticBodyParameters.hpp': 'ELASTICBODYPARAMETERS_HPP', 'GLDrawLatticeSetGeometry.hpp': 'GLDRAW_LATTICE_SET_GEOMETRY_HPP', 'InteractionContainerIterator.hpp': 'INTERACTIONCONTAINERITERATOR_HPP', 'QtGUI.hpp': 'QTGUI_HPP', 'MetaEngine.hpp': 'METAENGINE_HPP', 'InteractionOfMyTetrahedron.hpp': 'INTERACTIONOFMYTETRAHEDRON_HPP', 'AABB.hpp': 'AABB_HPP', 'BoundingVolume.hpp': 'BOUNDINGVOLUME_HPP', 'InteractionVecSetIterator.hpp': 'INTERACTIONVECSETITERATOR_HPP', 'PhysicalActionVectorVectorIterator.hpp': 'PHYSICALACTIONVECTORVECTORITERATOR_HPP', 'MacroMicroElasticRelationships.hpp': 'SDECLINEARCONTACTMODEL_HPP', 'GLDrawQuadrilateral.h!
+ pp': 'GLDRAW_QUADRILATERAL_HPP', 'DynLibManager.hpp': 'DYNLIBM!
+ ANAGER_H
+PP', 'BodyAssocVector.hpp': 'BODYASSOCVEC_HPP', 'Typelist.hpp': 'TYPELIST_INC_', 'PointerHandler.tpp': '__POINTERHANDLER_H__', 'GLDrawLatticeInteractingGeometry.hpp': 'GLDRAW_LATTICE_INTERACTING_GEOMETRY_HPP', 'Box.hpp': 'BOX_HPP', 'ResultantForceEngine.hpp': 'RESULTANT_FORCE_ENGINE_HPP', 'XMLFormatManager.hpp': 'XMLFORMATMANAGER_HPP', 'GLDrawSDECLinkGeometry.hpp': 'GLDRAW_SPHERES_LINK_CONTACT_GEOMETRY_HPP', 'InteractionVecSet.hpp': 'INTERACTIONVECSET_HPP', 'FrontEnd.hpp': 'FRONTEND_HPP', 'ArchiveTypes.hpp': '__ARCHIVESTYPES_HPP__', 'Logging.hpp': 'LOGGING_HPP', 'MetaBody.hpp': 'METABODY_HPP', 'BodyContainerIteratorPointer.hpp': 'BODYCONTAINERITERATORPOINTER_HPP', 'ContactStressRecorder.hpp': 'CONTACT_STRESS_RECORDER_HPP', 'IOFormatManager.hpp': 'IOFORMATMANAGER_HPP', 'FrictionLessElasticContactLaw.hpp': 'FRICTIONLESSELASTICCONTACTLAW_HPP', 'ForceEngine.hpp': 'FORCE_ENGINE_HPP', 'GLDrawSphereShadowVolume.hpp': 'GLDRAWSPHERESHADOWVOLUME_HPP', 'BodyMacroParameters.hpp': 'BODYM!
+ ACROPARAMETERS_HPP', 'GLWindow.hpp': 'GLWINDOW_HPP', 'PhysicalActionContainer.hpp': 'PHYSICALACTIONCONTAINER_HPP', 'RigidBodyParameters.hpp': 'RIGIDBODYPARAMETERS_HPP', 'GeometricalModelForceColorizer.hpp': 'GEOMETRICAL_MODEL_FORCE_COLORIZER_HPP', 'BodyAssocVectorIterator.hpp': 'BODYASSOCVECTORITERATOR', 'SpringGeometry.hpp': 'SPRINGGEOMETRY_HPP', 'ElasticContactLaw.hpp': 'ELASTIC_CONTACT_LAW_HPP', 'SDECLinkGeometry.hpp': 'SDECLINKGEOMETRY_HPP', 'GLDrawSphere.hpp': 'GLDRAWSPHERE_HPP', 'PhysicalActionApplier.hpp': 'PHYSICALACTIONAPPLIER_HPP', 'PhysicalActionContainerIterator.hpp': 'PHYSICALACTIONCONTAINERITERATOR_HPP', 'CohesiveFrictionalBodyParameters.hpp': 'COHESIVEFRICTIONALBODYPARAMETERS_HPP', 'GLDrawInteractingBox.hpp': 'GLDRAWINTERACTIONBOX_HPP', 'InteractionSolver.hpp': 'INTERACTIONSOLVER_HPP', 'GlobalStiffnessTimeStepper.hpp': 'STIFFNESS_MATRIX_TIME_STEPPER_HPP', 'InteractionContainer.hpp': 'INTERACTIONCONTAINER_HPP', 'Body.hpp': 'BODY_HPP', 'GLDrawClosestFeatures.hp!
+ p': 'GLDRAW_CLOSEST_FEATURES_HPP', 'FpsTracker.hpp': 'FPSTRACK!
+ ER_HPP',
+ 'ElasticContactInteraction.hpp': 'ELASTIC_CONTACT_PARAMETERS_HPP', 'ThreePointBending.hpp': 'LINKEDSPHERES_HPP', 'NonLocalInitializer.hpp': 'NONLOCALINITIALIZER_HPP', 'ContainerHandler.tpp': '__CONTAINERHANDLER_H__', 'GLDrawAABB.hpp': 'GLDRAWAABB_HPP', 'XMLSaxParser.hpp': 'XMLSAXPARSER_HPP', 'TimeStepper.hpp': 'TIMESTEPPER_HPP', 'MassSpringLaw.hpp': 'MASSSPRINGLAW_HPP', 'EngineUnit.hpp': 'ENGINEUNIT_HPP', 'ModifiedTriaxialTest.hpp': 'SDECIMPORT_HPP', 'QtEngineEditor.hpp': 'QTENGINEEDITOR_HPP', 'BoundingVolumeEngineUnit.hpp': 'BOUNDINGVOLUMEFACTORY_HPP', 'GlobalStiffness.hpp': 'GLOBALSTIFFNESSMATRIX_HPP', 'MultiMethodsExceptions.hpp': 'MULTIMETHODSEXCEPTIONS_HPP', 'Momentum.hpp': 'MOMENTUM_HPP', 'PhysicalActionVectorVector.hpp': 'PHYSICALACTIONVECTORVECTOR_HPP', 'QtCodeGenerator.hpp': 'QTCODEGENERATOR_HPP', 'GLTextLabel.hpp': 'GLTEXTLABEL_HPP', 'YadeQtMainWindow.hpp': 'YADEQTMAINWINDOW_HPP', 'NonLocalDependency.hpp': 'NONLOCALDEPENDENCY_HPP', 'Force.hpp': 'ACTIONFORCE_HPP', !
+ 'ParticleSetParameters.hpp': 'PARTICLESETPARAMETERS_HPP', 'TriaxialCompressionEngine.hpp': 'TRIAXIALCOMPRESSIONENGINE_HPP', 'CundallNonViscousForceDamping.hpp': 'ACTION_FORCE_DAMPING_HPP', 'DynLibDispatcher.hpp': 'DYNLIB_DISPATCHER_HPP', 'FileGenerator.hpp': 'FILEGENERATOR_HPP', 'Omega.hpp': 'OMEGA_HPP', 'SimpleElasticRelationships.hpp': 'SIMPLECONTACTMODEL_HPP', 'RotationEngine.hpp': 'ROTATIONENGINE_HPP', 'InteractingMyTetrahedron.hpp': 'INTERACTING_MY_TETRAHEDRON_HPP', 'GLDrawLineSegment.hpp': 'GLDRAW_LINE_SEGMENT_HPP', 'cmdGui.hpp': 'CMDGUI_HPP', 'LatticeBeamAngularSpring.hpp': 'LATTICEBEAMANGULARSPRING_HPP', 'ForceRecorder.hpp': 'FORCE_RECORDER_HPP', 'QtPreferencesEditor.hpp': 'QTPREFERENCESEDITOR_HPP', 'GLDrawSpheresContactGeometry.hpp': 'GLDRAW_SPHERES_CONTACT_GEOMETRY_HPP', 'LatticeInteractingGeometry.hpp': 'LATTICE_INTERACTINGGEOMETRY_HPP', 'StandAloneEngine.hpp': 'STANDALONEENGINE_HPP', 'GLDrawBoundingVolumeFunctor.hpp': 'GLDRAWBOUNDINGVOLUMEFUNCTOR_HPP', 'NewtonsF!
+ orceLaw.hpp': 'NEWTONSFORCELAW_HPP', 'BoundingSphere.hpp': 'BO!
+ UNDINGSP
+HERE_HPP', 'MeasurePoisson.hpp': 'POISSON_RECORDER_HPP', 'DeusExMachina.hpp': 'KINEMATICENGINE_HPP', 'CapillaryParameters.hpp': 'CAPILLARY_PARAMETERS_HPP', 'AssocVector.hpp': 'ASSOCVECTOR_INC_', 'PhysicalActionDamperUnit.hpp': 'PHYSICALACTIONDAMPERUNIT_HPP', 'Interaction.hpp': 'INTERACTION_HPP', 'CohesiveFrictionalRelationships.hpp': 'COHESIVEFRICTIONALCONTACTMODEL_HPP', 'BoundingVolumeMetaEngine.hpp': 'BOUNDINGVOLUMEUPDATOR_HPP', 'InteractionHashMap.hpp': 'INTERACTIONHASHMAP_HPP', 'SDECLinkedSpheres.hpp': 'LINKEDSPHERES_HPP', 'BodyContainer.hpp': 'BODYCONTAINER_HPP', 'ElasticCriterionTimeStepper.hpp': 'ELASTIC_CRITERION_TIME_STEPPER_HPP'}
+-
+-# must modify these by hand
+-skipEndifs={'Omega.hpp':1,'yadeWm3Extra.hpp':2,'Logging.hpp':1,'DynLibManager.hpp':1,'TypeManip.hpp':1,'PythonRecorder.hpp':1}
+-
+-
+-def grepInc(path,f,module):
+-	fullF=path+sep+f
+-	print fullF
+-	if 1:
+-		bcUp='/tmp/'+f+'~~'
+-		shutil.move(fullF,bcUp);
+-		f2=open(fullF,'w')
+-	else: bcUp=fullF
+-	if inclusionGuards.has_key(f): guard=inclusionGuards[f]
+-	else: guard=None
+-	toSkip=0
+-	if f in skipEndifs.keys(): toSkip=skipEndifs[f]
+-	ifndefLevel=0
+-	seenIncMod=[]
+-	for l in open(bcUp):
+-		m=re.match('^#include&lt;yade/([^/]*)/(.*)&gt;.*$',l)
+-		if m:
+-			incMod=m.group(1)
+-			assert(incMod in incModules.keys())
+-			assert(incModules[incMod]&lt;=incModules[module])
+-			if incMod!=module:
+-				if incMod not in seenIncMod:
+-					l='#include&lt;yade/'+incMod+'.hh&gt;\n'
+-					seenIncMod.append(incMod)
+-				else: l=''
+-		if guard:
+-			m=re.match('^#ifndef\s+'+guard+'\s*$',l)
+-			if m:
+-				l='#pragma once\n'; ifndefLevel+=1
+-			m=re.match('^#define\s+'+guard+'\s*$',l)
+-			if m: l=''
+-			m=re.match('^#endif.*$',l)
+-			if m:
+-				if toSkip&gt;0: toSkip-=1
+-				else:
+-					l=''; ifndefLevel-=1
+-		f2.write(l);
+-	assert(ifndefLevel==0)
+-	f2.close()
+-
+-		#if m and guard==None:
+-		#	guard=m.group(1)
+-		#	#print f,guard
+-		#m=re.match('^#define ([A-Z_]*)$',l)
+-		#if m and guard!=None:
+-		#	guardDefined=True
+-		#m=re.match('#endif.*',l)
+-		#if m and guard!=None and guardDefined:
+-		#	inclusionGuards[f]=guard
+-
+-moduleHeaders={}
+-for root, dirs, files in os.walk(srcRoot,topdown=True):
+-	for d in ('.svn'): ## skip all files that are not part of sources in the proper sense!
+-		try: dirs.remove(d)
+-		except ValueError: pass
+-	for f in files:
+-		if f.split('.')[-1] in ('hpp','inl','ipp','tpp','h','mcr','cpp','cc','C'):
+-			m=re.match('^.*?'+sep+'((extra|core)|((gui|lib|pkg)'+sep+'.*?))(|'+sep+'.*)$',root)
+-			module=m.group(1).replace(sep,'-')
+-			# add headers to encompassing header file
+-			if f.split('.')[-1] in ('hpp','h'):
+-				if moduleHeaders.has_key(module): moduleHeaders[module].append(f)
+-				else: moduleHeaders[module]=[f]
+-			assert(module in incModules.keys())
+-			grepInc(root,f,module)
+-
+-for module in moduleHeaders.keys():
+-	f=open(pchDir+sep+module+'.hh','w')
+-	for hh in moduleHeaders[module]:
+-		f.write('#include&lt;yade/'+module+'/'+hh+'&gt;\n')
+-
+
+Modified: trunk/scripts/simple-scene-parallel.py
+===================================================================
+--- trunk/scripts/simple-scene-parallel.py	2009-08-03 15:25:05 UTC (rev 1912)
++++ trunk/scripts/simple-scene-parallel.py	2009-08-03 18:53:26 UTC (rev 1913)
+@@ -1,11 +1,13 @@
+ # -*- encoding=utf-8 -*-
+ 
+-o=Omega()
++#
++# FIXME: ParallelEngine is not currently wrapped in python
++#
+ 
+-o.initializers=[
+-	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
++O.initializers=[
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingBox2AABB(),MetaInteractingGeometry2AABB()]),
+ 	]
+-o.engines=[
++O.engines=[
+ 	# physical actions will not be needed until the contact law comes in;
+ 	# therefore it can run in parallel with the AABB engines and collider;
+ 	# but since collider depends on AABBs, they will run sequentially, one after another
+@@ -23,25 +25,24 @@
+ 	#  implementation of openMP in gcc: <A HREF="http://gcc.gnu.org/projects/gomp/">http://gcc.gnu.org/projects/gomp/</A>
+ 	#
+ 	ParallelEngine([
+-		StandAloneEngine('PhysicalActionContainerReseter'),
++		BexResetter(),
+ 		[
+-			MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')]),
+-			StandAloneEngine('PersistentSAPCollider'),
++			BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingBox2AABB(),MetaInteractingGeometry2AABB()]),
++			InsertionSortCollider(),
+ 		]
+ 	]),
+-	# interaction physics depends on interaction geometry
+-	MetaEngine('InteractionGeometryMetaEngine',[EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),EngineUnit('InteractingBox2InteractingSphere4SpheresContactGeometry')]),
+-	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
++	InteractionGeometryMetaEngine([InteractingSphere2InteractingSphere4SpheresContactGeometry(),InteractingBox2InteractingSphere4SpheresContactGeometry()]),
++	InteractionPhysicsMetaEngine([SimpleElasticRelationships()]),
+ 	# the rest must also be run sequentially
+ 	# (contact law as well as gravity modify physical actions, which are, once computed, used in the integrator)
+-	StandAloneEngine('ElasticContactLaw'),
+-	DeusExMachina('GravityEngine',{'gravity':[0,0,-9.81]}),
++	ElasticContactLaw(),
++	GravityEngine(gravity=(0,0,-9.81)),
+ 	NewtonsDampedLaw(damping=.2)
+ ]
+ 
+ from yade import utils
+-o.bodies.append(utils.box(center=[0,0,0],extents=[.5,.5,.5],dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=2400))
+-o.bodies.append(utils.sphere([0,0,2],1,color=[0,1,0],young=30e9,poisson=.3,density=2400))
+-o.dt=.5*utils.PWaveTimeStep()
++O.bodies.append(utils.box(center=[0,0,0],extents=[.5,.5,.5],dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=2400))
++O.bodies.append(utils.sphere([0,0,2],1,color=[0,1,0],young=30e9,poisson=.3,density=2400))
++O.dt=.5*utils.PWaveTimeStep()
+ 
+ #o.run(100000); o.wait(); print o.iter/o.realtime,&quot;iterations/sec&quot;
+
+Modified: trunk/scripts/test/Dem3DofGeom.py
+===================================================================
+--- trunk/scripts/test/Dem3DofGeom.py	2009-08-03 15:25:05 UTC (rev 1912)
++++ trunk/scripts/test/Dem3DofGeom.py	2009-08-03 18:53:26 UTC (rev 1913)
+@@ -5,24 +5,24 @@
+ 	utils.sphere([-1,0,2],1,dynamic=True,color=(1,0,0),wire=True),
+ ])
+ O.engines=[
+-	MetaEngine('BoundingVolumeMetaEngine',[
+-		EngineUnit('InteractingSphere2AABB'),
+-		EngineUnit('InteractingFacet2AABB'),
++	BoundingVolumeMetaEngine([
++		InteractingSphere2AABB(),
++		InteractingFacet2AABB()
+ 	]),
+-	StandAloneEngine('PersistentSAPCollider'),
+-	MetaEngine('InteractionGeometryMetaEngine',[
+-		EngineUnit('ef2_Sphere_Sphere_Dem3DofGeom'),
+-		EngineUnit('ef2_Facet_Sphere_Dem3DofGeom')
++	PersistentSAPCollider(),
++	InteractionGeometryMetaEngine([
++		ef2_Sphere_Sphere_Dem3DofGeom(),
++		ef2_Facet_Sphere_Dem3DofGeom()
+ 	]),
+-	#DeusExMachina('GravityEngine',{'gravity':[0,0,-10]}),
+-	DeusExMachina('RotationEngine',{'rotationAxis':[0,1,0],'angularVelocity':10,'subscribedBodies':[1]}),
+-	DeusExMachina('TranslationEngine',{'translationAxis':[1,0,0],'velocity':10,'subscribedBodies':[1]}),
+-	#DeusExMachina('NewtonsDampedLaw')
++	#GravityEngine(gravity=(0,0,-10))
++	RotationEngine(rotationAxis=[0,1,0],angularVelocity=10,subscribedBodies=[1]),
++	TranslationEngine(translationAxis=[1,0,0],velocity=10,subscribedBodies=[1]),
++	#NewtonsDampedLaw()
+ ]
+ O.miscParams=[
+-	Generic('GLDraw_Dem3DofGeom_SphereSphere',{'normal':True,'rolledPoints':True,'unrolledPoints':True,'shear':True,'shearLabel':True}),
+-	Generic('GLDraw_Dem3DofGeom_FacetSphere',{'normal':False,'rolledPoints':True,'unrolledPoints':True,'shear':True,'shearLabel':True}),
+-	Generic('GLDrawSphere',{'glutUse':True})
++	GLDraw_Dem3DofGeom_SphereSphere(normal=True,rolledPoints=True,unrolledPoints=True,shear=True,shearLabel=True),
++	GLDraw_Dem3DofGeom_FacetSphere(normal=False,rolledPoints=True,unrolledPoints=True,shear=True,shearLabel=True),
++	GLDrawSphere(glutUse=True)
+ ]
+ 
+ try:
+
+Modified: trunk/scripts/test/facet-sphere.py
+===================================================================
+--- trunk/scripts/test/facet-sphere.py	2009-08-03 15:25:05 UTC (rev 1912)
++++ trunk/scripts/test/facet-sphere.py	2009-08-03 18:53:26 UTC (rev 1913)
+@@ -22,7 +22,7 @@
+ for i in range(0,100):
+ 	O.bodies.append(utils.sphere([random.gauss(0,1),random.gauss(0,1),random.uniform(1,2)],random.uniform(.02,.05),velocity=[random.gauss(0,.1),random.gauss(0,.1),random.gauss(0,.1)]))
+ 
+-O.miscParams=[Generic('GLDrawSphere',glutUse=True)]
++O.miscParams=[GLDrawSphere(glutUse=True)]
+ O.dt=1e-4
+ O.saveTmp('init')
+ 
+
+Modified: trunk/scripts/test/interpolating-force.py
+===================================================================
+--- trunk/scripts/test/interpolating-force.py	2009-08-03 15:25:05 UTC (rev 1912)
++++ trunk/scripts/test/interpolating-force.py	2009-08-03 18:53:26 UTC (rev 1913)
+@@ -1,5 +1,5 @@
++# encoding: utf-8
+ # 2009 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+-# encoding: utf-8
+ 
+ # script showing how to use InterpolatingDirectedForceEngine,
+ # simply pushing one free sphere agains a fixed one with varying force
+@@ -15,13 +15,13 @@
+ magnitudes=[.5*maxMag*(sin(t*(freq*2*pi))+1) for t in times] # generate points on sine wave over 1 period, but shifted up to be &#8712;(0,2)
+ 
+ O.engines=[
+-	StandAloneEngine('PhysicalActionContainerReseter'),
+-	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),]),
+-	StandAloneEngine('PersistentSAPCollider'),
++	BexResetter(),
++	BoundingVolumeMetaEngine([InteractingSphere2AABB()]),
++	InsertionSortCollider(),
+ 	InteractionDispatchers(
+-		[EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry')],
+-		[EngineUnit('SimpleElasticRelationships')],
+-		[EngineUnit('ef2_Spheres_Elastic_ElasticLaw'),]
++		[InteractingSphere2InteractingSphere4SpheresContactGeometry()],
++		[SimpleElasticRelationships()],
++		[ef2_Spheres_Elastic_ElasticLaw()]
+ 	),
+ 	# subscribedBodies: what bodies is force applied to
+ 	# direction: direction of the force (normalized automatically), constant
+@@ -29,11 +29,11 @@
+ 	# times: time points at which magnitudes are defined
+ 	# wrap: continue from t0 once t_last is reached
+ 	# label: automatically defines python variable of that name pointing to this engine
+-	DeusExMachina('InterpolatingDirectedForceEngine',{'subscribedBodies':[1],'direction':[0,0,-1],'magnitudes':magnitudes,'times':times,'wrap':True,'label':'forcer'}),
++	InterpolatingDirectedForceEngine(subscribedBodies=[1],direction=[0,0,-1],magnitudes=magnitudes,times=times,wrap=True,label='forcer'),
+ 	# without damping, the interaction never stabilizes and oscillates wildly&#8230; try it
+-	DeusExMachina('NewtonsDampedLaw',{'damping':0.01}),
++	NewtonsDampedLaw(damping=0.01),
+ 	# collect some data to plot periodically (every 50 steps)
+-	StandAloneEngine('PeriodicPythonRunner',{'iterPeriod':50,'command':'myAddPlotData()','label':'plotDataCollector'})
++	PeriodicPythonRunner(iterPeriod=50,command='myAddPlotData()',label='plotDataCollector')
+ ]
+ 
+ O.bodies.append([
+@@ -49,7 +49,7 @@
+ def myAddPlotData():
+ 	yp.addData({'t':O.time,'F_applied':forcer['force'],'supportReaction':O.actions.f(0)[2]})
+ 
+-O.saveTmp('init')
++O.saveTmp()
+ 
+ # try open 3d view, if not running in pure console mode
+ try:
+
+Modified: trunk/scripts/test/shear.py
+===================================================================
+--- trunk/scripts/test/shear.py	2009-08-03 15:25:05 UTC (rev 1912)
++++ trunk/scripts/test/shear.py	2009-08-03 18:53:26 UTC (rev 1913)
+@@ -17,7 +17,7 @@
+ 	PeriodicPythonRunner(iterPeriod=10000,command='interInfo()'),
+ ]
+ O.miscParams=[
+-	Generic('GLDrawSphere',{'glutUse':True})
++	GLDrawSphere(glutUse=True)
+ ]
+ 
+ O.dt=1e-8
+
+Modified: trunk/scripts/test-sphere-facet-corner.py
+===================================================================
+--- trunk/scripts/test-sphere-facet-corner.py	2009-08-03 15:25:05 UTC (rev 1912)
++++ trunk/scripts/test-sphere-facet-corner.py	2009-08-03 18:53:26 UTC (rev 1913)
+@@ -2,46 +2,36 @@
+ 
+ from yade import utils
+ 
+-## Omega
+-o=Omega() 
+-
+ ## PhysicalParameters 
+ Young = 7e6
+ Poisson = 0.2
+ Density=2700
+ 
+-o.bodies.append([
++O.bodies.append([
+         utils.sphere([0,0,0.6],0.25,young=Young,poisson=Poisson,density=Density),
+         utils.facet([[-0.707,-0.707,0.1],[0,1.414,0],[1.414,0,0]],dynamic=False,color=[1,0,0],young=Young,poisson=Poisson),
+         utils.facet([[0,1.414,0],[1.414,0,0],[0.707,0.707,-2.0]],dynamic=False,color=[1,0,0],young=Young,poisson=Poisson)])
+ 
+ ## Initializers 
+-o.initializers=[
+-	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingFacet2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
++O.initializers=[
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingFacet2AABB(),MetaInteractingGeometry2AABB()])
+ 	]
+ 
+ ## Engines 
+-o.engines=[
+-	StandAloneEngine('PhysicalActionContainerReseter'),
+-	MetaEngine('BoundingVolumeMetaEngine',[
+-		EngineUnit('InteractingSphere2AABB'),
+-		EngineUnit('InteractingFacet2AABB'),
+-		EngineUnit('MetaInteractingGeometry2AABB')
+-	]),
+-	StandAloneEngine('PersistentSAPCollider'),
+-	MetaEngine('InteractionGeometryMetaEngine',[
+-		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
+-		EngineUnit('InteractingFacet2InteractingSphere4SpheresContactGeometry')
+-	]),
+-	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('MacroMicroElasticRelationships')]),
+-	StandAloneEngine('ElasticContactLaw'),
+-    DeusExMachina('GravityEngine',{'gravity':[0,0,-10]}),
+-	DeusExMachina('NewtonsDampedLaw',{'damping':0.3}),
++O.engines=[
++	BexResetter(),
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingFacet2AABB(),MetaInteractingGeometry2AABB()]),
++	InsertionSortCollider(),
++	InteractionGeometryMetaEngine([InteractingSphere2InteractingSphere4SpheresContactGeometry(),InteractingFacet2InteractingSphere4SpheresContactGeometry()]),
++	InteractionPhysicsMetaEngine([MacroMicroElasticRelationships()]),
++	ElasticContactLaw(),
++	GravityEngine(gravity=(0,0,-10)),
++	NewtonsDampedLaw(damping=.3)
+ ]
+ 
+ ## Timestep 
+-o.dt=5e-6
+-o.saveTmp('init')
++O.dt=5e-6
++O.saveTmp()
+ 
+ try:
+ 	from yade import qt
+
+Modified: trunk/scripts/test-sphere-facet.py
+===================================================================
+--- trunk/scripts/test-sphere-facet.py	2009-08-03 15:25:05 UTC (rev 1912)
++++ trunk/scripts/test-sphere-facet.py	2009-08-03 18:53:26 UTC (rev 1913)
+@@ -18,40 +18,28 @@
+ #
+ 
+ O.initializers=[
+-	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingFacet2AABB(),MetaInteractingGeometry2AABB()]),
+ 	]
+ O.engines=[
+-	StandAloneEngine('PhysicalActionContainerReseter'),
+-	MetaEngine('BoundingVolumeMetaEngine',[
+-		EngineUnit('InteractingSphere2AABB'),
+-		EngineUnit('InteractingBox2AABB'),
+-		EngineUnit('MetaInteractingGeometry2AABB')
+-	]),
+-	StandAloneEngine('PersistentSAPCollider',{'haveDistantTransient':True}),
+-#	MetaEngine('InteractionGeometryMetaEngine',[
+-#		#EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry',{'hasShear':True,'interactionDetectionFactor':1.4}),
+-#		#EngineUnit('InteractingFacet2InteractingSphere4SpheresContactGeometry',{'hasShear':True}),
+-#		ef2_Facet_Sphere_Dem3DofGeom(),
+-#	]),
+-#	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+-#	#StandAloneEngine('ElasticContactLaw'),
+-#	ConstitutiveLawDispatcher([Law2_Dem3Dof_Elastic_Elastic()]),
++	BexResetter(),
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingFacet2AABB(),MetaInteractingGeometry2AABB()]),
++	InsertionSortCollider(),
+ 	InteractionDispatchers(
+ 		[ef2_Facet_Sphere_Dem3DofGeom()],
+ 		[SimpleElasticRelationships()],
+ 		[Law2_Dem3Dof_Elastic_Elastic()],
+ 	),
+-	DeusExMachina('GravityEngine',{'gravity':[0,0,-sign*500],'label':'gravitator'}),
+-	DeusExMachina(&quot;NewtonsDampedLaw&quot;,{'damping':0.8}),
+-	StandAloneEngine('PeriodicPythonRunner',{'iterPeriod':4000,'command':'setGravity()'}),
++	GravityEngine(gravity=(0,0,-10),label='gravitator'),
++	NewtonsDampedLaw(damping=.3),
++	PeriodicPythonRunner(iterPeriod=4000,command='setGravity()'),
+ 	]
+ O.bodies.append([
+ 	utils.facet([[-1,-1,0],[1,-1,0],[0,1,0]],dynamic=False,color=[1,0,0],young=1e3),
+ 	utils.sphere([0,0,sign*.49999],radius=.5,young=1e3,wire=True,density=1),
+ ])
+-O.miscParams=[Generic('GLDrawSphere',{'glutUse':True})]
++O.miscParams=[GLDrawSphere(glutUse=True)]
+ O.timingEnabled=True
+-O.saveTmp('init')
++O.saveTmp()
+ O.dt=1e-4
+ 
+ def setGravity():
+@@ -75,6 +63,6 @@
+ 	O.run(100000,True)
+ 	timing.stats()
+ 	timing.reset()
+-	O.loadTmp('init')
++	O.loadTmp()
+ 	O.run(100000,True)
+ 	timing.stats()
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001336.html">[deprecated list] [Yade-dev] [svn] r1912 - in trunk: . lib/factory pkg/dem/DataClass/InteractionGeometry
+</A></li>
+	<LI>Next message: <A HREF="001326.html">[deprecated list] [Yade-dev] [svn] r1914 - in trunk:	examples/concrete	examples/concrete/uniaxial py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1325">[ date ]</a>
+              <a href="thread.html#1325">[ thread ]</a>
+              <a href="subject.html#1325">[ subject ]</a>
+              <a href="author.html#1325">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

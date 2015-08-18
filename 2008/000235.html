@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] Intergator and clumps
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Intergator%20and%20clumps&In-Reply-To=%3C484FAF4F.90101%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000232.html">
+   <LINK REL="Next"  HREF="000236.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] Intergator and clumps</H1>
+    <B>chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Intergator%20and%20clumps&In-Reply-To=%3C484FAF4F.90101%40hmg.inpg.fr%3E"
+       TITLE="[yade-dev] Intergator and clumps">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Wed Jun 11 12:56:15 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000232.html">[yade-dev] MomentumLaw
+</A></li>
+        <LI>Next message: <A HREF="000236.html">[yade-dev] Intergator and clumps
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#235">[ date ]</a>
+              <a href="thread.html#235">[ thread ]</a>
+              <a href="subject.html#235">[ subject ]</a>
+              <a href="author.html#235">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+This is mainly for Va&#231;lav.
+
+I have two worries with the current code for clumps in NewtonsDampedLaw.
+
+1/ Forces are damped based on the motion of each body. As a consequence, 
+different contact forces on the same clump will be damped independently. 
+Its a bit like damping separately each individual force applied on a 
+standalone body. The very bad effect of this is that a body at static 
+equilibrium can be moved out of equilibrium by damping effect (i.e. the 
+exact opposite of what damping is supposed to do...).
+The correct way to damp is to damp the resultant force/moment on a clump 
+based on the motion of the clump.
+
+2/ From what I see in the code, if a clump has bodies &quot;i&quot; and &quot;j&quot;, I 
+fear the integration loop could make something like (depending on the 
+ordering of bodies):
+ 
+on body i : clump-&gt;acceleration += i-&gt;force/clump-&gt;mass
+on clump : clump-&gt;velocity += clump-&gt;acceleration*dt
+on body j : clump-&gt;acceleration += j-&gt;force/clump-&gt;mass
+
+so that forces on clump member j are ignored in the motion of the clump...
+
+Is there something to prevent that? Are clumps always at the end of the 
+loop?
+
+
+Bruno
+ 
+
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000232.html">[yade-dev] MomentumLaw
+</A></li>
+	<LI>Next message: <A HREF="000236.html">[yade-dev] Intergator and clumps
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#235">[ date ]</a>
+              <a href="thread.html#235">[ thread ]</a>
+              <a href="subject.html#235">[ subject ]</a>
+              <a href="author.html#235">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

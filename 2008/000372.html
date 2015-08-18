@@ -1,0 +1,108 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [yade-dev] run faster by +16% with	r1402
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Byade-dev%5D%20run%20faster%20by%20%2B16%25%20with%0A%09r1402&In-Reply-To=%3C48D8987E.9090000%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000370.html">
+   <LINK REL="Next"  HREF="000264.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [yade-dev] run faster by +16% with	r1402</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Byade-dev%5D%20run%20faster%20by%20%2B16%25%20with%0A%09r1402&In-Reply-To=%3C48D8987E.9090000%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev] [yade-dev] run faster by +16% with	r1402">eudoxos at arcig.cz
+       </A><BR>
+    <I>Tue Sep 23 09:19:26 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000370.html">[deprecated list] [Yade-dev] [yade-dev] run faster by +16% with	r1402
+</A></li>
+        <LI>Next message: <A HREF="000264.html">[yade-dev] QGLViewer linked with Qt4
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#372">[ date ]</a>
+              <a href="thread.html#372">[ thread ]</a>
+              <a href="subject.html#372">[ subject ]</a>
+              <a href="author.html#372">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>sega napsal(a):
+&gt;<i> Hi, All.
+</I>&gt;<i>
+</I>&gt;<i> I had run a simulation of 90000 spheres and got 
+</I>&gt;<i> about 0.44 iter/sec with ParallelEngine (used as in scripts/simple-scene-parallel.py),
+</I>&gt;<i> and about 0.35 iter/sec without ParallelEngine
+</I>&gt;<i> on a notebook with Intel(R) Core(TM)2 Duo CPU T8100 @ 2.10GHz and 2GB RAM.
+</I>&gt;<i>   
+</I>Cool!! I thought that it would be an improvement with large simulations,
+but couldn't prove that. Can you - please - collect speeds etc that you
+get underway? Those are things that could be very useful; you can put
+your findings on the wiki, create a page for parallel computation.
+&gt;<i> So, parallelization is effective, but I need more speed!! And I want to use openmp for in-engine cycles 
+</I>&gt;<i> (for GravityEngine, BoundingBoxMetaEngine, ect.) and to run yade on a cluster. 
+</I>&gt;<i> This topic had been discussed here earlier. 
+</I>&gt;<i> Tell me please, how much work has been done in that direction and how much successes in it?
+</I>&gt;<i> Is there a 'reefs' or 'nota benes'? 
+</I>&gt;<i>   
+</I>* Don't use parallelization for small simulations, they will be slower.
+
+* Openmp needs random-access elements. Therefore, currently there is no
+way to parallelize loops over interactions, only over bodies; that's a pity.
+&gt;<i> I see commented line /pragma omp paraller for/ in BoundignVolumeMetaEngine.cpp. Why it is commented?
+</I>&gt;<i>   
+</I>It turned out that for smaller simulations, the overhead of creating
+parallel section is bigger that the time it saved on the computation.
+Therefore, I commented that out, since it would penalize typical users
+(including me). I would be very interested to hear about your findings.
+
+It would be interesting to compare speed of running yade with
+OMP_NUM_THREADS=1 and all those engines (gravity etc) marked as /pragma
+omp parallel for/ and without that. They would run in single thread in
+every case, but if the overhead of openmp would be negligible, that
+could be added by default and the number of threads set by a
+command-line switch at runtime (omp_set_num_threads).
+&gt;<i> Janek,  you  use yade on cluster, seems. Tell me please, you use trunk version or modified it specially for cluster?
+</I>&gt;<i>   
+</I>AFAIK they use cluster to run multiple simulations at once.
+
+Best, Vaclav
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000370.html">[deprecated list] [Yade-dev] [yade-dev] run faster by +16% with	r1402
+</A></li>
+	<LI>Next message: <A HREF="000264.html">[yade-dev] QGLViewer linked with Qt4
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#372">[ date ]</a>
+              <a href="thread.html#372">[ thread ]</a>
+              <a href="subject.html#372">[ subject ]</a>
+              <a href="author.html#372">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

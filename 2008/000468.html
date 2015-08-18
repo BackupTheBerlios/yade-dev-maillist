@@ -1,0 +1,318 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1559 - in trunk: . gui/py	lib/smoothing
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1559%20-%20in%20trunk%3A%20.%20gui/py%0A%09lib/smoothing&In-Reply-To=%3C200810262147.m9QLljLH022453%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000467.html">
+   <LINK REL="Next"  HREF="000482.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1559 - in trunk: . gui/py	lib/smoothing</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1559%20-%20in%20trunk%3A%20.%20gui/py%0A%09lib/smoothing&In-Reply-To=%3C200810262147.m9QLljLH022453%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1559 - in trunk: . gui/py	lib/smoothing">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Oct 26 22:47:45 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000467.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-26020/bin/yade-svn1558:	DirectShearCis, FEMBeam,	HydraulicTest, SDECImpactTest, STLImporterTest, SimpleShear,	TriaxialTest, USCTGen
+</A></li>
+        <LI>Next message: <A HREF="000482.html">[deprecated list] [Yade-dev] Mandatory engines
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#468">[ date ]</a>
+              <a href="thread.html#468">[ thread ]</a>
+              <a href="subject.html#468">[ subject ]</a>
+              <a href="author.html#468">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-10-26 22:47:44 +0100 (Sun, 26 Oct 2008)
+New Revision: 1559
+
+Modified:
+   trunk/SConstruct
+   trunk/gui/py/_utils.cpp
+   trunk/lib/smoothing/WeightedAverage2d.cpp
+   trunk/lib/smoothing/WeightedAverage2d.hpp
+Log:
+!! IMPORTANT !! Introduced new dependency on &quot;python-numpy&quot; package
+(numpy/ndarrayobject.h header), which is now checked for by scons.
+Tell me if this is not OK!
+
+1. Fix many things in the weighted average smoother, add polygon clipping.
+2. Add utils.pointInsidePolygon to rapidly compue what it says; this is what
+needs numpy.
+
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2008-10-25 19:03:17 UTC (rev 1558)
++++ trunk/SConstruct	2008-10-26 21:47:44 UTC (rev 1559)
+@@ -324,9 +324,10 @@
+ 		if not ok: featureNotOK('log4cxx')
+ 		env.Append(CPPDEFINES=['LOG4CXX'])
+ 	if 'python' in env['features']:
+-		ok=(conf.CheckPython() and conf.CheckIPython() # not needed now: and conf.CheckScientificPython()
+-			and (conf.CheckLibWithHeader('boost_python-mt','boost/python.hpp','c++','boost::python::scope();',autoadd=1)
+-				or conf.CheckLibWithHeader('boost_python','boost/python.hpp','c++','boost::python::scope();',autoadd=1)))
++		ok=(conf.CheckPython()
++			and conf.CheckIPython() # not needed now: and conf.CheckScientificPython()
++			and CheckLib_maybeMT(conf,'boost_python','boost/python.hpp','c++','boost::python::scope();')
++			and conf.CheckCXXHeader(['Python.h','numpy/ndarrayobject.h'],'&lt;&gt;'))
+ 		if not ok: featureNotOK('python')
+ 		env.Append(CPPDEFINES=['EMBED_PYTHON'])
+ 	if env['useMiniWm3']: env.Append(LIBS='miniWm3',CPPDEFINES=['MINIWM3'])
+
+Modified: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2008-10-25 19:03:17 UTC (rev 1558)
++++ trunk/gui/py/_utils.cpp	2008-10-26 21:47:44 UTC (rev 1559)
+@@ -6,6 +6,11 @@
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/pkg-common/NormalShearInteractions.hpp&gt;
+ #include&lt;cmath&gt;
++
++#include&lt;numpy/ndarrayobject.h&gt;
++
++
++
+ using namespace boost::python;
+ 
+ #ifdef LOG4CXX
+@@ -199,6 +204,39 @@
+ 	return ret;
+ }
+ 
++/* Tell us whether a point lies in polygon given by array of points.
++ *  @param xy is the point that is being tested
++ *  @param vertices is Numeric.array (or list or tuple) of vertices of the polygon.
++ *         Every row of the array is x and y coordinate, numer of rows is &gt;= 3 (triangle).
++ *
++ * Copying the algorithm from <A HREF="http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html">http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html</A>
++ * is gratefully acknowledged:
++ *
++ * License to Use:
++ * Copyright (c) 1970-2003, Wm. Randolph Franklin
++ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
++ *   1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimers.
++ *   2. Redistributions in binary form must reproduce the above copyright notice in the documentation and/or other materials provided with the distribution.
++ *   3. The name of W. Randolph Franklin may not be used to endorse or promote products derived from this Software without specific prior written permission. 
++ * THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
++ *
++ * <A HREF="http://numpy.scipy.org/numpydoc/numpy-13.html">http://numpy.scipy.org/numpydoc/numpy-13.html</A> told me how to use Numeric.array from c
++ */
++bool pointInsidePolygon(python::tuple xy, python::object vertices){
++	Real testx=python::extract&lt;double&gt;(xy[0])(),testy=python::extract&lt;double&gt;(xy[1])();
++	char** vertData; int rows, cols; PyArrayObject* vert=(PyArrayObject*)vertices.ptr();
++	int result=PyArray_As2D((PyObject**)&amp;vert /* is replaced */ ,&amp;vertData,&amp;rows,&amp;cols,PyArray_DOUBLE);
++	if(result!=0) throw invalid_argument(&quot;Unable to cast vertices to 2d array&quot;);
++	if(cols!=2 || rows&lt;3) throw invalid_argument(&quot;Vertices must have 2 columns (x and y) and at least 3 rows.&quot;);
++	int i /*current node*/, j/*previous node*/; bool inside=false;
++	for(i=0,j=rows-1; i&lt;rows; j=i++){
++		double vx_i=*(double*)(vert-&gt;data+i*vert-&gt;strides[0]), vy_i=*(double*)(vert-&gt;data+i*vert-&gt;strides[0]+vert-&gt;strides[1]), vx_j=*(double*)(vert-&gt;data+j*vert-&gt;strides[0]), vy_j=*(double*)(vert-&gt;data+j*vert-&gt;strides[0]+vert-&gt;strides[1]);
++		if (((vy_i&gt;testy)!=(vy_j&gt;testy)) &amp;&amp; (testx &lt; (vx_j-vx_i) * (testy-vy_i) / (vy_j-vy_i) + vx_i) ) inside=!inside;
++	}
++	Py_DECREF(vert);
++	return inside;
++}
++
+ /* Project 3d point into 2d using spiral projection along given axis;
+  * the returned tuple is
+  * 	
+@@ -218,7 +256,6 @@
+ 	Real hRef=dH_dTheta*(theta-theta0);
+ 	long period;
+ 	Real h=Shop::periodicWrap(pt[axis],hRef-.5*Mathr::PI*dH_dTheta,hRef+.5*Mathr::PI*dH_dTheta,&amp;period);
+-	if(abs(h-hRef)&gt;0.005) cerr&lt;&lt;&quot;@@@ &quot;&lt;&lt;h-hRef&lt;&lt;&quot; &quot;&lt;&lt;h&lt;&lt;&quot; &quot;&lt;&lt;hRef&lt;&lt;&quot; &quot;&lt;&lt;pt[axis]&lt;&lt;&quot; (&quot;&lt;&lt;hRef-.5*Mathr::PI*dH_dTheta&lt;&lt;&quot;,&quot;&lt;&lt;hRef+.5*Mathr::PI*dH_dTheta&lt;&lt;&quot;) &quot;&lt;&lt;theta&lt;&lt;&quot; &quot;&lt;&lt;endl;
+ 	return python::make_tuple(python::make_tuple(r,h-hRef),theta);
+ }
+ BOOST_PYTHON_FUNCTION_OVERLOADS(spiralProject_overloads,spiralProject,2,4);
+@@ -229,6 +266,9 @@
+ BOOST_PYTHON_FUNCTION_OVERLOADS(unbalancedForce_overloads,Shop::unbalancedForce,0,1);
+ 
+ BOOST_PYTHON_MODULE(_utils){
++	// <A HREF="http://numpy.scipy.org/numpydoc/numpy-13.html">http://numpy.scipy.org/numpydoc/numpy-13.html</A> mentions this must be done in module init, otherwise we will crash
++	import_array();
++
+ 	def(&quot;PWaveTimeStep&quot;,PWaveTimeStep);
+ 	def(&quot;aabbExtrema&quot;,aabbExtrema,aabbExtrema_overloads(args(&quot;cutoff&quot;,&quot;centers&quot;)));
+ 	def(&quot;negPosExtremeIds&quot;,negPosExtremeIds,negPosExtremeIds_overloads(args(&quot;axis&quot;,&quot;distFactor&quot;)));
+@@ -243,6 +283,7 @@
+ 	def(&quot;sumBexMoments&quot;,sumBexMoments);
+ 	def(&quot;createInteraction&quot;,Shop__createExplicitInteraction);
+ 	def(&quot;spiralProject&quot;,spiralProject,spiralProject_overloads(args(&quot;axis&quot;,&quot;theta0&quot;)));
++	def(&quot;pointInsidePolygon&quot;,pointInsidePolygon);
+ }
+ 
+ 
+
+Modified: trunk/lib/smoothing/WeightedAverage2d.cpp
+===================================================================
+--- trunk/lib/smoothing/WeightedAverage2d.cpp	2008-10-25 19:03:17 UTC (rev 1558)
++++ trunk/lib/smoothing/WeightedAverage2d.cpp	2008-10-26 21:47:44 UTC (rev 1559)
+@@ -1,5 +1,19 @@
+ #include&quot;WeightedAverage2d.hpp&quot;
+ 
++/* Tell whether point is inside polygon
++ *
++ * See _utils.cpp: pointInsidePolygon for docs and license.
++ */
++bool pyGaussAverage::pointInsidePolygon(const Vector2r&amp; pt, const vector&lt;Vector2r&gt;&amp; vertices){
++	int i /*current node*/, j/*previous node*/; bool inside=false; int rows=(int)vertices.size();
++	const Real&amp; testx=pt[0],testy=pt[1];
++	for(i=0,j=rows-1; i&lt;rows; j=i++){
++		const Real&amp; vx_i=vertices[i][0], vy_i=vertices[i][1], vx_j=vertices[j][0], vy_j=vertices[j][1];
++		if (((vy_i&gt;testy)!=(vy_j&gt;testy)) &amp;&amp; (testx &lt; (vx_j-vx_i) * (testy-vy_i) / (vy_j-vy_i) + vx_i) ) inside=!inside;
++	}
++	return inside;
++}
++
+ BOOST_PYTHON_MODULE(WeightedAverage2d)
+ {
+ 	boost::python::class_&lt;pyGaussAverage&gt;(&quot;GaussAverage&quot;,python::init&lt;python::tuple,python::tuple,python::tuple,Real&gt;())
+@@ -7,6 +21,7 @@
+ 		.def(&quot;avg&quot;,&amp;pyGaussAverage::avg)
+ 		.add_property(&quot;stDev&quot;,&amp;pyGaussAverage::stDev_get,&amp;pyGaussAverage::stDev_set)
+ 		.add_property(&quot;relThreshold&quot;,&amp;pyGaussAverage::relThreshold_get,&amp;pyGaussAverage::relThreshold_set)
++		.add_property(&quot;clips&quot;,&amp;pyGaussAverage::clips_get,&amp;pyGaussAverage::clips_set)
+ 	;
+ };
+ 
+
+Modified: trunk/lib/smoothing/WeightedAverage2d.hpp
+===================================================================
+--- trunk/lib/smoothing/WeightedAverage2d.hpp	2008-10-25 19:03:17 UTC (rev 1558)
++++ trunk/lib/smoothing/WeightedAverage2d.hpp	2008-10-26 21:47:44 UTC (rev 1559)
+@@ -119,23 +119,23 @@
+ 	virtual Real getWeight(const Vector2r&amp; meanPt, const T&amp; e){	
+ 		Vector2r pos=getPosition(e);
+ 		Real rSq=pow(meanPt[0]-pos[0],2)+pow(meanPt[1]-pos[1],2);
+-		if(rSq&gt;relThreshold*stDev) return 0.;
+-		return (1./sqrt(2*M_PI*stDev))*exp(-rSq/(2*stDev));
++		if(rSq&gt;relThreshold*stDev*stDev) return 0.;
++		return (1./sqrt(2*M_PI*stDev*stDev))*exp(-rSq/(2*stDev*stDev));
+ 	}
+ 	virtual vector&lt;Vector2i&gt; filterCells(const Vector2r&amp; refPt){return WeightedAverage&lt;T,Tvalue&gt;::grid-&gt;circleFilter(refPt,stDev*relThreshold);}
+ };
+ 
+-/* Class for doing template specialization of gaussian kernel average  on SGKA_dataPt and for testing */
+-struct dataPt{
++/* Class for doing template specialization of gaussian kernel average on SGKA_Scalar2d and for testing */
++struct Scalar2d{
+ 	Vector2r pos;
+-	int val;
++	Real val;
+ };
+ 
+ /* Final specialization; it only needs to define getValue and getPosition -- these functions contain knowledge about the element class itself */
+-struct SGKA_dataPt: public SymmGaussianKernelAverage&lt;dataPt,Real&gt;{
+-	SGKA_dataPt(const shared_ptr&lt;GridContainer&lt;dataPt&gt; &gt;&amp; _grid, Real _stDev, Real _relThreshold=3): SymmGaussianKernelAverage&lt;dataPt,Real&gt;(_grid,_stDev,_relThreshold){}
+-	virtual Real getValue(const dataPt&amp; dp){return (Real)dp.val;}
+-	virtual Vector2r getPosition(const dataPt&amp; dp){return dp.pos;}
++struct SGKA_Scalar2d: public SymmGaussianKernelAverage&lt;Scalar2d,Real&gt;{
++	SGKA_Scalar2d(const shared_ptr&lt;GridContainer&lt;Scalar2d&gt; &gt;&amp; _grid, Real _stDev, Real _relThreshold=3): SymmGaussianKernelAverage&lt;Scalar2d,Real&gt;(_grid,_stDev,_relThreshold){}
++	virtual Real getValue(const Scalar2d&amp; dp){return (Real)dp.val;}
++	virtual Vector2r getPosition(const Scalar2d&amp; dp){return dp.pos;}
+ };
+ 
+ /* simplified interface for python:
+@@ -148,19 +148,50 @@
+  *
+  * */
+ class pyGaussAverage{
+-	//struct dataPt{Vector2r pos; Real val;};
++	//struct Scalar2d{Vector2r pos; Real val;};
+ 	Vector2r tuple2vec2r(const python::tuple&amp; t){return Vector2r(python::extract&lt;Real&gt;(t[0])(),python::extract&lt;Real&gt;(t[1])());}
+ 	Vector2i tuple2vec2i(const python::tuple&amp; t){return Vector2i(python::extract&lt;int&gt;(t[0])(),python::extract&lt;int&gt;(t[1])());}
+-	shared_ptr&lt;SGKA_dataPt&gt; sgka;
++	shared_ptr&lt;SGKA_Scalar2d&gt; sgka;
++	struct Poly2d{vector&lt;Vector2r&gt; vertices; bool inclusive;};
++	vector&lt;Poly2d&gt; clips;
+ 	public:
+ 	pyGaussAverage(python::tuple lo, python::tuple hi, python::tuple nCells, Real stDev){
+-		shared_ptr&lt;GridContainer&lt;dataPt&gt; &gt; g(new GridContainer&lt;dataPt&gt;(tuple2vec2r(lo),tuple2vec2r(hi),tuple2vec2i(nCells)));
+-		sgka=shared_ptr&lt;SGKA_dataPt&gt;(new SGKA_dataPt(g,stDev));
++		shared_ptr&lt;GridContainer&lt;Scalar2d&gt; &gt; g(new GridContainer&lt;Scalar2d&gt;(tuple2vec2r(lo),tuple2vec2r(hi),tuple2vec2i(nCells)));
++		sgka=shared_ptr&lt;SGKA_Scalar2d&gt;(new SGKA_Scalar2d(g,stDev));
+ 	}
+-	void addPt(Real val, python::tuple pos){dataPt d; d.pos=tuple2vec2r(pos); d.val=val; sgka-&gt;grid-&gt;add(d,d.pos); }
+-	Real avg(python::tuple pt){return sgka-&gt;computeAverage(tuple2vec2r(pt));}
+-
++	bool pointInsidePolygon(const Vector2r&amp;,const vector&lt;Vector2r&gt;&amp;);
++	bool ptIsClipped(const Vector2r&amp; pt){
++		FOREACH(const Poly2d&amp; poly, clips){
++			bool inside=pointInsidePolygon(pt,poly.vertices);
++			if((inside &amp;&amp; !poly.inclusive) || (!inside &amp;&amp; poly.inclusive)) return true;
++		}
++		return false;
++	}
++	bool addPt(Real val, python::tuple pos){Scalar2d d; d.pos=tuple2vec2r(pos); if(ptIsClipped(d.pos)) return false; d.val=val; sgka-&gt;grid-&gt;add(d,d.pos); return true; } 
++	Real avg(python::tuple _pt){Vector2r pt=tuple2vec2r(_pt); if(ptIsClipped(pt)) return std::numeric_limits&lt;Real&gt;::quiet_NaN(); return sgka-&gt;computeAverage(pt);}
+ 	Real stDev_get(){return sgka-&gt;stDev;} void stDev_set(Real s){sgka-&gt;stDev=s;}
+ 	Real relThreshold_get(){return sgka-&gt;relThreshold;} void relThreshold_set(Real rt){sgka-&gt;relThreshold=rt;}
++	python::list clips_get(){
++		python::list ret;
++		FOREACH(const Poly2d&amp; poly, clips){
++			python::list vertices;
++			FOREACH(const Vector2r&amp; v, poly.vertices) vertices.append(python::make_tuple(v[0],v[1]));
++			ret.append(python::make_tuple(vertices,poly.inclusive));
++		}
++		return ret;
++	}
++	void clips_set(python::list l){
++		/* [ ( [(x1,y1),(x2,y2),&#8230;], true), &#8230; ] */
++		clips.clear();
++		for(int i=0; i&lt;python::len(l); i++){
++			python::tuple polyDesc=python::extract&lt;python::tuple&gt;(l[i])();
++			python::list coords=python::extract&lt;python::list&gt;(polyDesc[0]);
++			Poly2d poly; poly.inclusive=python::extract&lt;bool&gt;(polyDesc[1]);
++			for(int j=0; j&lt;python::len(coords); j++){
++				poly.vertices.push_back(tuple2vec2r(python::extract&lt;python::tuple&gt;(coords[j])));
++			}
++			clips.push_back(poly);
++		}
++	}
+ };
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000467.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-26020/bin/yade-svn1558:	DirectShearCis, FEMBeam,	HydraulicTest, SDECImpactTest, STLImporterTest, SimpleShear,	TriaxialTest, USCTGen
+</A></li>
+	<LI>Next message: <A HREF="000482.html">[deprecated list] [Yade-dev] Mandatory engines
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#468">[ date ]</a>
+              <a href="thread.html#468">[ thread ]</a>
+              <a href="subject.html#468">[ subject ]</a>
+              <a href="author.html#468">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

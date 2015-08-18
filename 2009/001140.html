@@ -1,0 +1,388 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1843 - trunk/core
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1843%20-%20trunk/core&In-Reply-To=%3C200907071427.n67ER07B005854%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001139.html">
+   <LINK REL="Next"  HREF="001141.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1843 - trunk/core</H1>
+    <B>richefeu at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1843%20-%20trunk/core&In-Reply-To=%3C200907071427.n67ER07B005854%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1843 - trunk/core">richefeu at mail.berlios.de
+       </A><BR>
+    <I>Tue Jul  7 16:27:00 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001139.html">[deprecated list] [Yade-dev] [svn] r1841 - in trunk: . gui gui/py	lib lib/py	pkg/common pkg/common/Engine/StandAloneEngine	pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor py	py/miniWm3Wrap py/yadeWrapper scripts/test
+</A></li>
+        <LI>Next message: <A HREF="001141.html">[deprecated list] [Yade-dev] [svn] r1843 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1140">[ date ]</a>
+              <a href="thread.html#1140">[ thread ]</a>
+              <a href="subject.html#1140">[ subject ]</a>
+              <a href="author.html#1140">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: richefeu
+Date: 2009-07-07 16:26:59 +0200 (Tue, 07 Jul 2009)
+New Revision: 1843
+
+Modified:
+   trunk/core/GroupRelationData.cpp
+   trunk/core/GroupRelationData.hpp
+   trunk/core/MetaBody.hpp
+Log:
+Add GroupRelationData serialization (not used yet in *Relationships classes)
+This class serves to manage parameters between bodies depending on their groupMasks.
+Here is an example of 'command stream' in xml file to set the parameters:
+&lt;grpRelationData _className_=&quot;GroupRelationData&quot;  commands_=&quot;[ngrp 2 parameter kn setall kn 1e6]&quot; /&gt;
+
+It means that there are 2 groupMasks (0 and 1 by default). The parameter 'kn' is created and
+its value is 1e6 between 0-0, 0-1, 1-0 and 1-1 body groupMasks. For other 'commands' see the sources.
+(PS. scons will rebuild a lot of thinks due  to the modification of MetaBody. Sorry for that).
+
+
+
+
+Modified: trunk/core/GroupRelationData.cpp
+===================================================================
+--- trunk/core/GroupRelationData.cpp	2009-07-07 13:01:34 UTC (rev 1842)
++++ trunk/core/GroupRelationData.cpp	2009-07-07 14:26:59 UTC (rev 1843)
+@@ -10,17 +10,18 @@
+ 
+ GroupRelationData::GroupRelationData() : ngrp_(2), npar_(0)
+ { 
+-        initActivator(); 
++  isActivated_ = false;
+ }
+ 
+ GroupRelationData::GroupRelationData(unsigned int ngrp) : ngrp_(ngrp), npar_(0)
+ { 
+-	initActivator();
++  isActivated_ = false;
+ }
+ 
+ GroupRelationData::~GroupRelationData() 
+ {
+   // Free memory for the action table
++/*
+   if (act_ != 0)
+     {
+     for(unsigned int i=0 ; i&lt;ngrp_ ; ++i)
+@@ -30,7 +31,8 @@
+     delete [] act_;
+     act_ = 0;
+     }
+-  
++  */
++
+   // Free memory for each parameter table
+   for(unsigned int p=0 ; p&lt;npar_ ; ++p)
+     {
+@@ -46,6 +48,14 @@
+     }
+ }
+ 
++// void GroupRelationData::activate()
++// {
++//   istringstream istr;
++//   istr.str(commands_);
++//   read(istr);
++// }
++
++/*
+ bool GroupRelationData::act(unsigned int g1, unsigned int g2) const
+ {
+   if (g1 &lt; ngrp_ &amp;&amp; g2 &lt; ngrp_)
+@@ -77,6 +87,7 @@
+   else
+     cerr &lt;&lt; &quot;@GroupRelationData::deactivate, bad groupMask number&quot; &lt;&lt; endl;
+ }
++*/
+ 
+ bool GroupRelationData::exists(string name)
+ {
+@@ -186,6 +197,7 @@
+   lpar_.push_back(p);
+ }
+ 
++/*
+ void GroupRelationData::initActivator()
+ {
+   act_ = new bool * [ngrp_];
+@@ -199,11 +211,9 @@
+     for (unsigned int j = 0 ; j &lt; ngrp_ ; ++j)
+       act_[i][j] = true;
+ }
++*/
+ 
+ 
+-// The methods read and write are not used in YADE...
+-
+-/*
+ void GroupRelationData::read(istream &amp; is)
+ {
+   string token;
+@@ -215,14 +225,7 @@
+       {
+       is &gt;&gt; ngrp_;
+       if (ngrp_ == 0) cerr &lt;&lt; &quot;GroupRelationData::read, ngrp can not be 0&quot; &lt;&lt; endl;
+-      else initActivator();
+       }
+-    else if (token == &quot;noact&quot;)
+-      { 
+-      unsigned int i,j; 
+-      is &gt;&gt; i ; is &gt;&gt; j;
+-      deactivate(i,j);
+-      }
+     else if (token == &quot;parameter&quot;)
+       { 
+       if (ngrp_ == 0) cerr &lt;&lt; &quot;GroupRelationData::read, ngrp can not be 0&quot; &lt;&lt; endl;
+@@ -256,20 +259,15 @@
+     
+     is &gt;&gt; token;
+     }
++
++    if (ngrp_ &gt; 0) isActivated_ = true;
+ }
+ 
++/*
+ void GroupRelationData::write(ostream &amp; os)
+ {
+   os &lt;&lt; &quot;ngrp &quot; &lt;&lt; ngrp_ &lt;&lt; endl;
+-  
+-  for (unsigned int g1=0;g1&lt;ngrp_;++g1)
+-    {
+-    for (unsigned int g2=0;g2&lt;ngrp_;++g2)  
+-      {
+-      if (!act_[g1][g2]) os &lt;&lt; &quot;noact &quot; &lt;&lt; g1 &lt;&lt; &quot; &quot; &lt;&lt; g2 &lt;&lt; endl;
+-      }
+-    }
+-  
++
+   mapIdParam::iterator imap = idParam_.begin();
+   string parName;
+   while (imap != idParam_.end())
+@@ -295,3 +293,33 @@
+   
+ }
+ */
++
++void GroupRelationData::preProcessAttributes(bool deserializing)
++{
++  if(deserializing)
++  {
++    //
++  }
++}
++
++
++void GroupRelationData::postProcessAttributes(bool deserializing)
++{
++  if(deserializing)
++  {
++    string cmdstring = &quot;&quot;;
++    for (unsigned int i = 0 ; i&lt; commands_.size() ; ++i)
++      cmdstring = cmdstring + commands_[i] + &quot; &quot;;
++
++    istringstream istr;
++    istr.str(cmdstring);
++    
++    cout &lt;&lt; istr.str() &lt;&lt; endl;
++
++    read(istr);
++  }
++}
++
++
++
++
+
+Modified: trunk/core/GroupRelationData.hpp
+===================================================================
+--- trunk/core/GroupRelationData.hpp	2009-07-07 13:01:34 UTC (rev 1842)
++++ trunk/core/GroupRelationData.hpp	2009-07-07 14:26:59 UTC (rev 1843)
+@@ -8,31 +8,20 @@
+ 
+ #pragma once
+ 
++#include&lt;yade/lib-serialization/Serializable.hpp&gt;
++
+ #include &lt;iostream&gt;
++#include &lt;sstream&gt;
+ #include &lt;string&gt;
+ #include &lt;map&gt;
+ #include &lt;vector&gt;
+ 
+ using namespace std;
+ 
+-//! \brief  Define the visibility and the parameters between groups of elements
++//! \brief  Define the parameters between groupMasks
+ //! \author V. Richefeu
+ 
+-// Note that the parameters of this class cannot be serialized yet
+ 
+-
+-// bool **act_
+-// |
+-// +------------------------------------+
+-// |     |   1     2     4        ...   |  &lt;---- groupMasks
+-// | 1   |   YES   YES   YES      ...   |
+-// | 2   |         NO    YES      ...   |
+-// | 4   |  (SYM.)       YES      ...   |
+-// | ... |                        ...   |
+-// +------------------------------------+
+-//   ^groupMasks 
+-
+-
+ //  vector &lt;double **&gt; lpar_
+ //  |
+ //  |   +------------------------------------+
+@@ -54,21 +43,21 @@
+ //  |     ^groupMasks 
+ //  ...
+ 
+-class GroupRelationData
++class GroupRelationData : public Serializable
+ {
+   typedef map&lt;string ,unsigned int &gt; mapIdParam;
+ 
+ private:
+ 
+-  unsigned int ngrp_;                   // Number of groups
++  unsigned int ngrp_;                   // Number of groupMasks
+   unsigned int npar_;                   // Number of parameters
+ 
+   map &lt;string ,unsigned int &gt; idParam_; // Hash table for parameter identifiers
+-  bool ** act_;                         // Table of visibility 
+   vector &lt;double **&gt; lpar_;             // Table of parameter values
+-// FIXME - the following should be better in particular for serialization (?)
+-// vector&lt;vector&lt;bool&gt; &gt; act_;
+-// vector&lt;vector&lt;vector&lt;double&gt; &gt; &gt; lpar_;
++
++  bool isActivated_;
++  //string commands_;
++  vector&lt;string&gt; commands_;
+     
+ public:
+   
+@@ -76,21 +65,8 @@
+   GroupRelationData(unsigned int ngrp); 
+   ~GroupRelationData();
+   
+-  //! Return true if the body with groupMask g1 'see' the body with groupMask g2
+-  //! \param g1  First groupMask
+-  //! \param g2  Second groupMask  
+-  bool act(unsigned int g1, unsigned int g2) const;
++  //void activate();
+ 
+-  //! Activate the visibility of the bodies with groupMasks g1 and g2
+-  //! \param g1  First groupMask
+-  //! \param g2  Second groupMask  
+-  void activate(unsigned int g1, unsigned int g2);
+-  
+-  //! Deactivate the visibility of the groups with groupMasks g1 and g2
+-  //! \param g1  First groupMask
+-  //! \param g2  Second groupMask
+-  void deactivate(unsigned int g1, unsigned int g2);
+-  
+   //! Return true if the parameter exist
+   //! \param name  Parameter name 
+   bool exists(string name);
+@@ -121,15 +97,15 @@
+   //! Add a new parameter
+   void addParameter(string name);
+   
+-  //! 
+-  void initActivator();
+-  
+-// Was used in the code gdm-tk, but not usefull in YADE
+-/*
+   void read(istream &amp; is);  
+   void write(ostream &amp; os);
+-*/
+-  
+ 
++  REGISTER_ATTRIBUTES(/*no base*/,(commands_));
++  REGISTER_CLASS_AND_BASE(GroupRelationData,Serializable);
++ 
++  protected : virtual void preProcessAttributes  (bool deserializing);
++  public    : virtual void postProcessAttributes (bool deserializing);
+ };
++REGISTER_SERIALIZABLE(GroupRelationData);
+ 
++
+
+Modified: trunk/core/MetaBody.hpp
+===================================================================
+--- trunk/core/MetaBody.hpp	2009-07-07 13:01:34 UTC (rev 1842)
++++ trunk/core/MetaBody.hpp	2009-07-07 14:26:59 UTC (rev 1843)
+@@ -15,7 +15,7 @@
+ #include&quot;Engine.hpp&quot;
+ #include&quot;DisplayParameters.hpp&quot;
+ #include&quot;BexContainer.hpp&quot;
+-//#include&quot;groupRelationData.hpp&quot;
++#include&quot;GroupRelationData.hpp&quot;
+ 
+ class MetaBody : public Body
+ {
+@@ -37,7 +37,7 @@
+ 		//! &quot;hash maps&quot; of display parameters
+ 		vector&lt;shared_ptr&lt;DisplayParameters&gt; &gt; dispParams;
+ 
+-		//shared_ptr&lt;GroupRelationData&gt;           grpRelationData;
++		shared_ptr&lt;GroupRelationData&gt;           grpRelationData;
+ 
+ 		MetaBody();
+ 
+@@ -59,6 +59,7 @@
+ 		virtual void postProcessAttributes(bool deserializing);
+ 	REGISTER_ATTRIBUTES(Body,
+ 		(tags)
++		(grpRelationData)
+ 		(engines)
+ 		(initializers)
+ 		(bodies)
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001139.html">[deprecated list] [Yade-dev] [svn] r1841 - in trunk: . gui gui/py	lib lib/py	pkg/common pkg/common/Engine/StandAloneEngine	pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor py	py/miniWm3Wrap py/yadeWrapper scripts/test
+</A></li>
+	<LI>Next message: <A HREF="001141.html">[deprecated list] [Yade-dev] [svn] r1843 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1140">[ date ]</a>
+              <a href="thread.html#1140">[ thread ]</a>
+              <a href="subject.html#1140">[ subject ]</a>
+              <a href="author.html#1140">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

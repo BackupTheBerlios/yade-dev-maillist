@@ -1,0 +1,249 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1749 - in trunk: gui/py	pkg/dem	pkg/dem/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1749%20-%20in%20trunk%3A%20gui/py%0A%09pkg/dem%09pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200904062140.n36LeVxI028374%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000909.html">
+   <LINK REL="Next"  HREF="000911.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1749 - in trunk: gui/py	pkg/dem	pkg/dem/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1749%20-%20in%20trunk%3A%20gui/py%0A%09pkg/dem%09pkg/dem/Engine/StandAloneEngine&In-Reply-To=%3C200904062140.n36LeVxI028374%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1749 - in trunk: gui/py	pkg/dem	pkg/dem/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Apr  6 23:40:31 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000909.html">[deprecated list] [Yade-dev] [svn] r1748 - trunk/extra/mgpost/src
+</A></li>
+        <LI>Next message: <A HREF="000911.html">[deprecated list] [Yade-dev] [svn] r1750 - in trunk:	lib/QGLViewer/VRender	pkg/common/DataClass/InteractingGeometry	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine	scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#910">[ date ]</a>
+              <a href="thread.html#910">[ thread ]</a>
+              <a href="subject.html#910">[ subject ]</a>
+              <a href="author.html#910">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-04-06 23:40:30 +0200 (Mon, 06 Apr 2009)
+New Revision: 1749
+
+Added:
+   trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.hpp
+Modified:
+   trunk/gui/py/_utils.cpp
+   trunk/pkg/dem/SConscript
+Log:
+1. Add working version of facet adjacency finder (to get their mutual angle at edge)
+
+
+
+Modified: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2009-04-06 15:45:13 UTC (rev 1748)
++++ trunk/gui/py/_utils.cpp	2009-04-06 21:40:30 UTC (rev 1749)
+@@ -176,8 +176,7 @@
+     return d;
+ }
+ 
+-
+-/* Sum moments acting on bodies within mask.
++/*!Sum moments acting on given bodies
+  *
+  * @param mask is Body::groupMask that must match for a body to be taken in account.
+  * @param axis is the direction of axis with respect to which the moment is calculated.
+@@ -187,13 +186,13 @@
+  * is position relative to axisPt; moment from moment is m; such moment per body is
+  * projected onto axis.
+  */
+-Real sumBexTorques(int mask, python::tuple _axis, python::tuple _axisPt){
++Real sumBexTorques(python::tuple ids, python::tuple _axis, python::tuple _axisPt){
+ 	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
+ 	rb-&gt;bex.sync();
+ 	Real ret=0;
+-	Vector3r axis=tuple2vec(_axis), axisPt=tuple2vec(_axisPt);
+-	FOREACH(const shared_ptr&lt;Body&gt; b, *rb-&gt;bodies){
+-		if(!b-&gt;maskOk(mask)) continue;
++	Vector3r axis=tuple2vec(_axis), axisPt=tuple2vec(_axisPt); size_t len=python::len(ids);
++	for(size_t i=0; i&lt;len; i++){
++		const Body* b=(*rb-&gt;bodies)[python::extract&lt;int&gt;(ids[i])].get();
+ 		const Vector3r&amp; m=rb-&gt;bex.getTorque(b-&gt;getId());
+ 		const Vector3r&amp; f=rb-&gt;bex.getForce(b-&gt;getId());
+ 		Vector3r r=b-&gt;physicalParameters-&gt;se3.position-axisPt;
+@@ -207,14 +206,14 @@
+  * @param direction direction in which forces are summed
+  *
+  */
+-Real sumBexForces(int mask, python::tuple _direction){
++Real sumBexForces(python::tuple ids, python::tuple _direction){
+ 	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
+ 	rb-&gt;bex.sync();
+ 	Real ret=0;
+-	Vector3r direction=tuple2vec(_direction);
+-	FOREACH(const shared_ptr&lt;Body&gt; b, *rb-&gt;bodies){
+-		if(!b-&gt;maskOk(mask)) continue;
+-		const Vector3r&amp; f=rb-&gt;bex.getForce(b-&gt;getId());
++	Vector3r direction=tuple2vec(_direction); size_t len=python::len(ids);
++	for(size_t i=0; i&lt;len; i++){
++		body_id_t id=python::extract&lt;int&gt;(ids[i]);
++		const Vector3r&amp; f=rb-&gt;bex.getForce(id);
+ 		ret+=direction.Dot(f);
+ 	}
+ 	return ret;
+
+Added: trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp	2009-04-06 15:45:13 UTC (rev 1748)
++++ trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp	2009-04-06 21:40:30 UTC (rev 1749)
+@@ -0,0 +1,42 @@
++#include&quot;FacetTopologyAnalyzer.hpp&quot;
++#include&lt;yade/pkg-common/InteractingFacet.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/core/Body.hpp&gt;
++void FacetTopologyAnalyzer::action(MetaBody* rb){
++	LOG_DEBUG(&quot;Projection axis for analysis is &quot;&lt;&lt;projectionAxis);
++	vector&lt;shared_ptr&lt;VertexData&gt; &gt; vv;
++	// minimum facet edge length (tolerance scale)
++	Real minSqLen=0;
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rb-&gt;bodies){
++		shared_ptr&lt;InteractingFacet&gt; f=dynamic_pointer_cast&lt;InteractingFacet&gt;(b-&gt;interactingGeometry);
++		if(!f) continue;
++		const Vector3r&amp; pos=b-&gt;physicalParameters-&gt;se3.position;
++		for(size_t i=0; i&lt;3; i++){
++			vv.push_back(shared_ptr&lt;VertexData&gt;(new VertexData(b-&gt;getId(),i,f-&gt;vertices[i]+pos,(f-&gt;vertices[i]+pos).Dot(projectionAxis))));
++			minSqLen=min(minSqLen,(f-&gt;vertices[i]-f-&gt;vertices[(i+1)%3]).SquaredLength());
++		}
++	}
++	LOG_DEBUG(&quot;Added data for &quot;&lt;&lt;vv.size()&lt;&lt;&quot; vertices (&quot;&lt;&lt;vv.size()/3.&lt;&lt;&quot; facets).&quot;);
++	Real tolerance=sqrt(minSqLen)*relTolerance;
++	LOG_DEBUG(&quot;Absolute tolerance is &quot;&lt;&lt;tolerance);
++	sort(vv.begin(),vv.end(),VertexComparator());
++	size_t nVertices=vv.size(), j;
++	for(size_t i=0; i&lt;nVertices; i++){
++		j=i;
++		while(++j&lt;nVertices &amp;&amp; (vv[j]-&gt;coord-vv[i]-&gt;coord)&lt;tolerance){
++			shared_ptr&lt;VertexData&gt; &amp;vi=vv[i], &amp;vj=vv[j];
++			if(abs(vi-&gt;pos[0]-vj-&gt;pos[0])&lt;tolerance &amp;&amp;
++				abs(vi-&gt;pos[1]-vj-&gt;pos[1])&lt;tolerance &amp;&amp;
++				abs(vi-&gt;pos[2]-vj-&gt;pos[2])&lt;tolerance &amp;&amp;
++				(vi-&gt;pos-vj-&gt;pos).SquaredLength()&lt;tolerance*tolerance){
++				// OK, these two vertices touch
++				LOG_DEBUG(&quot;Vertices &quot;&lt;&lt;vi-&gt;id&lt;&lt;&quot;/&quot;&lt;&lt;vi-&gt;vertexNo&lt;&lt;&quot; and &quot;&lt;&lt;vj-&gt;id&lt;&lt;&quot;/&quot;&lt;&lt;vj-&gt;vertexNo&lt;&lt;&quot; close enough.&quot;);
++				// add vertex to the nextIndetical of the one that has lower index; the one that is added will have isLowestIndex=false
++				if(vi-&gt;index&lt;vj-&gt;index){ vi-&gt;nextIdentical.push_back(vj); vj-&gt;isLowestIndex=false; }
++				else{                    vj-&gt;nextIdentical.push_back(vi); vi-&gt;isLowestIndex=false; }
++			}
++		}
++	}
++	/* TODO: create vertex clusters of touching vertices; find what facets they belong to; find whether facets that touch have common edges; compute mutual angle between faces on edge and save that to InteractingFacet */
++}
++
+
+Added: trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.hpp	2009-04-06 15:45:13 UTC (rev 1748)
++++ trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.hpp	2009-04-06 21:40:30 UTC (rev 1749)
+@@ -0,0 +1,46 @@
++// 2009 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++#pragma once
++#include&lt;yade/core/StandAloneEngine.hpp&gt;
++/*! Initializer for filling adjacency geometry data for facets.
++ *
++ * Common vertices and common edges are identified and mutual angle between facet faces
++ * is written to InteractingFacet instances.
++ * If facets don't move with respect to each other, this must be done only at the beginning.
++ */
++class FacetTopologyAnalyzer: public StandAloneEngine{
++	struct VertexData{
++		VertexData(body_id_t _id, int _vertexNo, Vector3r _pos, Real _coord): id(_id), vertexNo(_vertexNo), coord(_coord), pos(_pos){index=3*id+vertexNo; isLowestIndex=true;}
++		//! Facet (body id) that we represent
++		body_id_t id;
++		//! vertex number within this Facet
++		int vertexNo;
++		//! projected coordinate along projectionAxis
++		Real coord;
++		//! global coordinates
++		Vector3r pos;
++		//! index of this vertex (canonical ordering)
++		size_t index;
++		//! is this vertex the first one in the &quot;identity&quot; graph?
++		bool isLowestIndex;
++		//! vertices that are &quot;identical&quot; with this one, but have higer indices
++		vector&lt;shared_ptr&lt;VertexData&gt; &gt; nextIdentical;
++	};
++	struct VertexComparator{
++		bool operator()(const shared_ptr&lt;VertexData&gt;&amp; v1, const shared_ptr&lt;VertexData&gt;&amp; v2){return v1-&gt;coord&lt;v2-&gt;coord;}
++	};
++
++	public:
++		//! Axis along which to do the initial vertex sort
++		Vector3r projectionAxis;
++		//! maximum distance of &quot;identical&quot; vertices, relative to maximum facet size
++		Real relTolerance;
++	void action(MetaBody*); 
++	FacetTopologyAnalyzer(): projectionAxis(Vector3r::UNIT_X), relTolerance(1e-4) {}
++	DECLARE_LOGGER;
++	REGISTER_CLASS_AND_BASE(FacetTopologyAnalyzer,StandAloneEngine);
++	REGISTER_ATTRIBUTES(StandAloneEngine, /* none */);
++};
++REGISTER_SERIALIZABLE(FacetTopologyAnalyzer);
++
++
++
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2009-04-06 15:45:13 UTC (rev 1748)
++++ trunk/pkg/dem/SConscript	2009-04-06 21:40:30 UTC (rev 1749)
+@@ -30,7 +30,9 @@
+ 	env.SharedLibrary('Dem3DofGeom_SphereSphere',['DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp'],LIBS=env['LIBS']+['RigidBodyParameters','InteractingSphere','yade-opengl']),
+ 	env.SharedLibrary('Dem3DofGeom_FacetSphere',['DataClass/InteractionGeometry/Dem3DofGeom_FacetSphere.cpp'],LIBS=env['LIBS']+['RigidBodyParameters','InteractingSphere','InteractingFacet','yade-opengl','Dem3DofGeom_SphereSphere']),
+ 
++	env.SharedLibrary('FacetTopologyAnalyzer',['Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp'],LIBS=env['LIBS']+['InteractingFacet']),
+ 
++
+ 	env.SharedLibrary('SQLiteRecorder',
+ 		['Engine/StandAloneEngine/SQLiteRecorder.cpp'],
+ 		LIBS=env['LIBS']+['sqlite3x']),
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000909.html">[deprecated list] [Yade-dev] [svn] r1748 - trunk/extra/mgpost/src
+</A></li>
+	<LI>Next message: <A HREF="000911.html">[deprecated list] [Yade-dev] [svn] r1750 - in trunk:	lib/QGLViewer/VRender	pkg/common/DataClass/InteractingGeometry	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine	scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#910">[ date ]</a>
+              <a href="thread.html#910">[ thread ]</a>
+              <a href="subject.html#910">[ subject ]</a>
+              <a href="author.html#910">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

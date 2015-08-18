@@ -1,0 +1,561 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1736 - in trunk: core	examples	examples/triax-perf extra	pkg/common/Engine/MetaEngine	pkg/dem pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor	pkg/fem/Engine/StandAloneEngine	pkg/mass-spring/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1736%20-%20in%20trunk%3A%20core%0A%09examples%09examples/triax-perf%20extra%0A%09pkg/common/Engine/MetaEngine%09pkg/dem%20pkg/dem/Engine/StandAloneEngine%0A%09pkg/dem/PreProcessor%09pkg/fem/Engine/StandAloneEngine%09pkg/mass-spring/Engine/StandAloneEngine&In-Reply-To=%3C200903291517.n2TFHXJX007504%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000896.html">
+   <LINK REL="Next"  HREF="000898.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1736 - in trunk: core	examples	examples/triax-perf extra	pkg/common/Engine/MetaEngine	pkg/dem pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor	pkg/fem/Engine/StandAloneEngine	pkg/mass-spring/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1736%20-%20in%20trunk%3A%20core%0A%09examples%09examples/triax-perf%20extra%0A%09pkg/common/Engine/MetaEngine%09pkg/dem%20pkg/dem/Engine/StandAloneEngine%0A%09pkg/dem/PreProcessor%09pkg/fem/Engine/StandAloneEngine%09pkg/mass-spring/Engine/StandAloneEngine&In-Reply-To=%3C200903291517.n2TFHXJX007504%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1736 - in trunk: core	examples	examples/triax-perf extra	pkg/common/Engine/MetaEngine	pkg/dem pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor	pkg/fem/Engine/StandAloneEngine	pkg/mass-spring/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Mar 29 17:17:33 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000896.html">[deprecated list] [Yade-dev] removing PhysicalAction
+</A></li>
+        <LI>Next message: <A HREF="000898.html">[deprecated list] [Yade-dev] removing	PhysicalActionContainerReseter?
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#897">[ date ]</a>
+              <a href="thread.html#897">[ thread ]</a>
+              <a href="subject.html#897">[ subject ]</a>
+              <a href="author.html#897">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-03-29 17:17:31 +0200 (Sun, 29 Mar 2009)
+New Revision: 1736
+
+Added:
+   trunk/examples/triax-perf/
+   trunk/examples/triax-perf/triax-perf.py
+   trunk/examples/triax-perf/triax-perf.table
+Modified:
+   trunk/core/yade.cpp
+   trunk/extra/Brefcom.cpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+   trunk/pkg/dem/SConscript
+   trunk/pkg/fem/Engine/StandAloneEngine/FEMLaw.cpp
+   trunk/pkg/mass-spring/Engine/StandAloneEngine/MassSpringLaw.cpp
+Log:
+1. Create ef2_Spheres_Elastic_ElasticLaw that has the ElasticContactLaw algorithm
+2. ElasticContactLaw now merely calls ef2_Spheres_Elastic_ElasticLaw.
+3. TriaxialTest::parallel controls whether to use InteractionDispatchers or not.
+4. Added examples/triax-perf to show the impact of that. Also see <A HREF="http://yade.wikia.com/wiki/Triaxial_Test_Parallel">http://yade.wikia.com/wiki/Triaxial_Test_Parallel</A>
+5. Fix a few compilation issues.
+6. Flush stdout before exiting from main, so that in case of crash upon exit (log4cxx?) we have all messages output.
+
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2009-03-29 10:34:26 UTC (rev 1735)
++++ trunk/core/yade.cpp	2009-03-29 15:17:31 UTC (rev 1736)
+@@ -303,6 +303,7 @@
+ 	#endif
+ 
+ 	LOG_INFO(&quot;Yade: normal exit.&quot;);
++	fflush(stdout); // in case of crash at exit, logs will not disappear
+ 	return ok;
+ }
+ 
+
+Added: trunk/examples/triax-perf/triax-perf.py
+===================================================================
+--- trunk/examples/triax-perf/triax-perf.py	2009-03-29 10:34:26 UTC (rev 1735)
++++ trunk/examples/triax-perf/triax-perf.py	2009-03-29 15:17:31 UTC (rev 1736)
+@@ -0,0 +1,23 @@
++# Performance test for running
++#
++#  1. Regular TriaxialTest with 3 independent dispatchers (geom, phys, constitutive law)
++#  2. TriaxialTest with InteractionDispatchers (common loop and functor cache)
++#
++# Run the test like this:
++#
++#  yade-trunk-opt-multi -j1 triax-perf.table triax-perf.py
++#
++# The -j1 ensures that only 1 job will run at time
++# (even if other cores are free, access to memory is limiting if running multiple jobs at time)
++#
++# You have to collect the results by hand from log files.
++#
++utils.readParamsFromTable(parallel=False,noTableOk=True)
++p=Preprocessor('TriaxialTest',{'numberOfGrains':8000,'parallel':parallel}).load()
++O.run(10,True) # filter out initialization
++O.timingEnabled=True
++O.run(1000,True)
++from yade import timing
++timing.stats()
++print 'BexContainer synced %d times'%(O.bexSyncCount)
++
+
+Added: trunk/examples/triax-perf/triax-perf.table
+===================================================================
+--- trunk/examples/triax-perf/triax-perf.table	2009-03-29 10:34:26 UTC (rev 1735)
++++ trunk/examples/triax-perf/triax-perf.table	2009-03-29 15:17:31 UTC (rev 1736)
+@@ -0,0 +1,11 @@
++!OMP_NUM_THREADS parallel description
++1 False ser1
++2 False ser2
++3 False ser3
++4 False ser4
++5 False ser5
++1 True par1
++2 True par2
++3 True par3
++4 True par4
++5 True par5
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-03-29 10:34:26 UTC (rev 1735)
++++ trunk/extra/Brefcom.cpp	2009-03-29 15:17:31 UTC (rev 1736)
+@@ -233,8 +233,7 @@
+ }
+ 
+ 
+-void BrefcomLaw::action(MetaBody* _rootBody){
+-	rootBody=_rootBody;
++void BrefcomLaw::action(MetaBody* rootBody){
+ 	if(!functor) functor=shared_ptr&lt;ef2_Spheres_Brefcom_BrefcomLaw&gt;(new ef2_Spheres_Brefcom_BrefcomLaw);
+ 	functor-&gt;logStrain=logStrain;
+ 	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rootBody-&gt;interactions){
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp	2009-03-29 10:34:26 UTC (rev 1735)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp	2009-03-29 15:17:31 UTC (rev 1736)
+@@ -20,31 +20,36 @@
+ 		FOREACH(shared_ptr&lt;Interaction&gt; I, *rootBody-&gt;interactions){
+ 	#endif
+ 		#ifdef DISPATCH_CACHE
+-			shared_ptr&lt;Body&gt;&amp; b1=(*rootBody-&gt;bodies)[I-&gt;getId1()];
+-			shared_ptr&lt;Body&gt;&amp; b2=(*rootBody-&gt;bodies)[I-&gt;getId2()];
++			const shared_ptr&lt;Body&gt;&amp; b1_=Body::byId(I-&gt;getId1(),rootBody);
++			const shared_ptr&lt;Body&gt;&amp; b2_=Body::byId(I-&gt;getId2(),rootBody);
++
+ 			// we know there is no geometry functor already, take the short path
+ 			if(!I-&gt;functorCache.geomExists) { I-&gt;isReal=false; continue; }
+ 			// no interaction geometry for either of bodies; no interaction possible
+-			if(!b1-&gt;interactingGeometry || !b2-&gt;interactingGeometry) { I-&gt;isReal=false; continue; }
++			if(!b1_-&gt;interactingGeometry || !b2_-&gt;interactingGeometry) { I-&gt;isReal=false; continue; }
+ 
++			bool swap=false;
+ 			// InteractionGeometryMetaEngine
+ 			if(!I-&gt;functorCache.geom || !I-&gt;functorCache.phys){
+-				bool swap=false;
+-				I-&gt;functorCache.geom=geomDispatcher-&gt;getFunctor2D(b1-&gt;interactingGeometry,b2-&gt;interactingGeometry,swap);
++				I-&gt;functorCache.geom=geomDispatcher-&gt;getFunctor2D(b1_-&gt;interactingGeometry,b2_-&gt;interactingGeometry,swap);
+ 				// returns NULL ptr if no functor exists; remember that and shortcut
+ 				if(!I-&gt;functorCache.geom) { I-&gt;functorCache.geomExists=false; continue; }
+-				// arguments for the geom functor are in the reverse order (dispatcher would normally call goReverse).
+-				// we don't remember the fact that is reverse, so we swap bodies within the interaction
+-				// and can call go in all cases
+-				if(swap) { I-&gt;swapOrder(); b1=(*rootBody-&gt;bodies)[I-&gt;getId1()]; b2=(*rootBody-&gt;bodies)[I-&gt;getId2()]; }
+ 			}
++			// arguments for the geom functor are in the reverse order (dispatcher would normally call goReverse).
++			// we don't remember the fact that is reverse, so we swap bodies within the interaction
++			// and can call go in all cases
++			if(swap){I-&gt;swapOrder();}
++			// body pointers must be updated, in case we swapped
++			const shared_ptr&lt;Body&gt;&amp; b1=Body::byId(I-&gt;getId1());
++			const shared_ptr&lt;Body&gt;&amp; b2=Body::byId(I-&gt;getId2());
++
+ 			assert(I-&gt;functorCache.geom);
+ 			I-&gt;isReal=I-&gt;functorCache.geom-&gt;go(b1-&gt;interactingGeometry,b2-&gt;interactingGeometry,b1-&gt;physicalParameters-&gt;se3, b2-&gt;physicalParameters-&gt;se3,I);
+ 			if(!I-&gt;isReal) continue;
+ 
+ 			// InteractionPhysicsMetaEngine
+ 			if(!I-&gt;functorCache.phys){
+-				bool swap=false; I-&gt;functorCache.phys=physDispatcher-&gt;getFunctor2D(b1-&gt;physicalParameters,b2-&gt;physicalParameters,swap);
++				I-&gt;functorCache.phys=physDispatcher-&gt;getFunctor2D(b1-&gt;physicalParameters,b2-&gt;physicalParameters,swap);
+ 				assert(!swap); // InteractionPhysicsEngineUnits are symmetric
+ 			}
+ 			assert(I-&gt;functorCache.phys);
+@@ -54,7 +59,7 @@
+ 			// populating constLaw cache must be done after geom and physics dispatchers have been called, since otherwise the interaction
+ 			// would not have interactionGeometry and interactionPhysics yet.
+ 			if(!I-&gt;functorCache.constLaw){
+-				bool swap=false; I-&gt;functorCache.constLaw=constLawDispatcher-&gt;getFunctor2D(I-&gt;interactionGeometry,I-&gt;interactionPhysics,swap);
++				I-&gt;functorCache.constLaw=constLawDispatcher-&gt;getFunctor2D(I-&gt;interactionGeometry,I-&gt;interactionPhysics,swap);
+ 				assert(!swap); // reverse call would make no sense, as the arguments are of different types
+ 			}
+ 		  	assert(I-&gt;functorCache.constLaw);
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2009-03-29 10:34:26 UTC (rev 1735)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2009-03-29 15:17:31 UTC (rev 1736)
+@@ -19,6 +19,8 @@
+ 
+ #include&lt;yade/extra/Shop.hpp&gt;
+ 
++YADE_PLUGIN(&quot;ElasticContactLaw2&quot;,&quot;ef2_Spheres_Elastic_ElasticLaw&quot;,&quot;ElasticContactLaw&quot;);
++
+ ElasticContactLaw2::ElasticContactLaw2(){
+ 	Shop::Bex::initCache();
+ 	isCohesive=true;
+@@ -58,12 +60,18 @@
+ 
+ 
+ 
+-ElasticContactLaw::ElasticContactLaw() : InteractionSolver() , actionForce(new Force) , actionMomentum(new Momentum)
++
++ElasticContactLaw::ElasticContactLaw() : InteractionSolver()
++#ifndef BEX_CONTAINER
++	, actionForce(new Force) , actionMomentum(new Momentum)
++#endif
+ {
+ 	sdecGroupMask=1;
+ 	momentRotationLaw = true;
+-	actionForceIndex = actionForce-&gt;getClassIndex();
+-	actionMomentumIndex = actionMomentum-&gt;getClassIndex();
++	#ifndef BEX_CONTAINER
++		actionForceIndex = actionForce-&gt;getClassIndex();
++		actionMomentumIndex = actionMomentum-&gt;getClassIndex();
++	#endif
+ 	#ifdef SCG_SHEAR
+ 		useShear=false;
+ 	#endif
+@@ -81,34 +89,37 @@
+ }
+ 
+ 
+-void ElasticContactLaw::action(MetaBody* ncb)
++void ElasticContactLaw::action(MetaBody* rootBody)
+ {
+-	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++	if(!functor) functor=shared_ptr&lt;ef2_Spheres_Elastic_ElasticLaw&gt;(new ef2_Spheres_Elastic_ElasticLaw);
++	functor-&gt;momentRotationLaw=momentRotationLaw;
++	functor-&gt;sdecGroupMask=sdecGroupMask;
++	#ifdef SCG_SHEAR
++		functor-&gt;useShear=useShear;
++	#endif
++	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *rootBody-&gt;interactions){
++		if(!I-&gt;isReal) continue;
++		#ifdef YADE_DEBUG
++			// these checks would be redundant in the functor (ConstitutiveLawDispatcher does that already)
++			if(!dynamic_cast&lt;SpheresContactGeometry*&gt;(I-&gt;interactionGeometry.get()) || !dynamic_cast&lt;ElasticContactInteraction*&gt;(I-&gt;interactionPhysics.get())) continue;	
++		#endif
++		functor-&gt;go(I-&gt;interactionGeometry, I-&gt;interactionPhysics, I.get(), rootBody);
++	}
++}
+ 
++void ef2_Spheres_Elastic_ElasticLaw::go(shared_ptr&lt;InteractionGeometry&gt;&amp; ig, shared_ptr&lt;InteractionPhysics&gt;&amp; ip, Interaction* contact, MetaBody* ncb){
+ 	Real dt = Omega::instance().getTimeStep();
+ 
+-/// Non Permanents Links												///
+-
+-	InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
+-	InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
+-	for(  ; ii!=iiEnd ; ++ii )
+-	{
+-		if ((*ii)-&gt;isReal)
+-		{
+-			const shared_ptr&lt;Interaction&gt;&amp; contact = *ii;
+-			int id1 = contact-&gt;getId1();
+-			int id2 = contact-&gt;getId2();
+-			
+-			if( !( (*bodies)[id1]-&gt;getGroupMask() &amp; (*bodies)[id2]-&gt;getGroupMask() &amp; sdecGroupMask) ) continue;
+-
+-			SpheresContactGeometry*    currentContactGeometry= YADE_CAST&lt;SpheresContactGeometry*&gt;(contact-&gt;interactionGeometry.get());
+-			ElasticContactInteraction* currentContactPhysics = YADE_CAST&lt;ElasticContactInteraction*&gt; (contact-&gt;interactionPhysics.get());
+-			if((!currentContactGeometry)||(!currentContactPhysics)) continue;
++			int id1 = contact-&gt;getId1(), id2 = contact-&gt;getId2();
++			// FIXME: mask handling should move to ConstitutiveLaw itself, outside the functors
++			if( !(Body::byId(id1,ncb)-&gt;getGroupMask() &amp; Body::byId(id2,ncb)-&gt;getGroupMask() &amp; sdecGroupMask) ) return;
++			SpheresContactGeometry*    currentContactGeometry= static_cast&lt;SpheresContactGeometry*&gt;(ig.get());
++			ElasticContactInteraction* currentContactPhysics = static_cast&lt;ElasticContactInteraction*&gt;(ip.get());
+ 			// delete interaction where spheres don't touch
+-			if(currentContactGeometry-&gt;penetrationDepth&lt;0){ (*ii)-&gt;isReal=false; continue; }
++			if(currentContactGeometry-&gt;penetrationDepth&lt;0){ contact-&gt;isReal=false; return; }
+ 	
+-			BodyMacroParameters* de1 				= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
+-			BodyMacroParameters* de2 				= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id2]-&gt;physicalParameters.get());
++			BodyMacroParameters* de1 				= YADE_CAST&lt;BodyMacroParameters*&gt;(Body::byId(id1,ncb)-&gt;physicalParameters.get());
++			BodyMacroParameters* de2 				= YADE_CAST&lt;BodyMacroParameters*&gt;(Body::byId(id1,ncb)-&gt;physicalParameters.get());
+ 
+ 			Vector3r&amp; shearForce 			= currentContactPhysics-&gt;shearForce;
+ 	
+@@ -117,7 +128,6 @@
+ 			Real un=currentContactGeometry-&gt;penetrationDepth;
+ 			currentContactPhysics-&gt;normalForce=currentContactPhysics-&gt;kn*std::max(un,(Real) 0)*currentContactGeometry-&gt;normal;
+ 	
+-			// the same as under #else, but refactored
+ 			#ifdef SCG_SHEAR
+ 				if(useShear){
+ 					currentContactGeometry-&gt;updateShear(de1,de2,dt);
+@@ -156,11 +166,6 @@
+ 				static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id1 , actionMomentumIndex ).get() )-&gt;momentum -= _c1x.Cross(f);
+ 				static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id2 , actionMomentumIndex ).get() )-&gt;momentum += _c2x.Cross(f);
+ 			#endif
+-			
+ 			currentContactPhysics-&gt;prevNormal = currentContactGeometry-&gt;normal;
+-		}
+-	}
+ }
+ 
+-
+-YADE_PLUGIN();
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp	2009-03-29 10:34:26 UTC (rev 1735)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.hpp	2009-03-29 15:17:31 UTC (rev 1736)
+@@ -13,6 +13,7 @@
+ 
+ // only to see whether SCG_SHEAR is defined, may be removed in the future
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-common/ConstitutiveLaw.hpp&gt;
+ 
+ #include &lt;set&gt;
+ #include &lt;boost/tuple/tuple.hpp&gt;
+@@ -36,14 +37,40 @@
+ };
+ REGISTER_SERIALIZABLE(ElasticContactLaw2);
+ 
++class ef2_Spheres_Elastic_ElasticLaw: public ConstitutiveLaw{
++	public:
++	virtual void go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody);
++	int sdecGroupMask;
++	bool momentRotationLaw;
++	#ifdef SCG_SHEAR
++		bool useShear;
++	#endif
++	ef2_Spheres_Elastic_ElasticLaw(): sdecGroupMask(1), momentRotationLaw(true)
++		#ifdef SCG_SHEAR
++			, useShear(false)
++		#endif
++		{}
++	FUNCTOR2D(SpheresContactGeometry,ElasticContactInteraction);
++	REGISTER_CLASS_AND_BASE(ef2_Spheres_Elastic_ElasticLaw,ConstitutiveLaw);
++	REGISTER_ATTRIBUTES(ConstitutiveLaw,(sdecGroupMask)(momentRotationLaw)
++		#ifdef SCG_SHEAR
++			(useShear)
++		#endif
++	);
++};
++REGISTER_SERIALIZABLE(ef2_Spheres_Elastic_ElasticLaw);
++
+ class ElasticContactLaw : public InteractionSolver
+ {
+ /// Attributes
+ 	private :
++	#ifndef BEX_CONTAINER
+ 		shared_ptr&lt;PhysicalAction&gt; actionForce;
+ 		shared_ptr&lt;PhysicalAction&gt; actionMomentum;
+ 		int actionForceIndex;
+ 		int actionMomentumIndex;
++		NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
++	#endif
+ 		
+ 	public :
+ 		int sdecGroupMask;
+@@ -55,10 +82,11 @@
+ 		ElasticContactLaw();
+ 		void action(MetaBody*);
+ 
++		shared_ptr&lt;ef2_Spheres_Elastic_ElasticLaw&gt; functor;
++
+ 	protected :
+ 		void registerAttributes();
+ 
+-	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
+ 	REGISTER_CLASS_NAME(ElasticContactLaw);
+ 	REGISTER_BASE_CLASS_NAME(InteractionSolver);
+ };
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-03-29 10:34:26 UTC (rev 1735)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-03-29 15:17:31 UTC (rev 1736)
+@@ -64,8 +64,11 @@
+ #include&lt;yade/pkg-common/InteractionVecSet.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionVectorVector.hpp&gt;
+ 
++#include&lt;yade/pkg-common/InteractionDispatchers.hpp&gt;
++
+ #include&lt;yade/extra/Shop.hpp&gt;
+ 
++
+ #include &lt;boost/filesystem/convenience.hpp&gt;
+ #include &lt;boost/lexical_cast.hpp&gt;
+ #include &lt;boost/numeric/conversion/bounds.hpp&gt;
+@@ -162,6 +165,10 @@
+ 	
+ 	isotropicCompaction=false;
+ 	fixedPorosity = 1;
++	
++	#ifdef BEX_CONTAINER
++		parallel=false;
++	#endif
+ 
+ 	
+ 	
+@@ -232,8 +239,9 @@
+ 	REGISTER_ATTRIBUTE(isotropicCompaction);
+ 	REGISTER_ATTRIBUTE(fixedPorosity);
+ 	REGISTER_ATTRIBUTE(fixedBoxDims);
+-
+-
++	#ifdef BEX_CONTAINER
++		REGISTER_ATTRIBUTE(parallel);
++	#endif
+ }
+ 
+ 
+@@ -253,7 +261,7 @@
+ 
+ 	//rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
+ 
+-	rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
++	//rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+ 
+ 	createActors(rootBody);
+ 
+@@ -637,9 +645,34 @@
+ //	rootBody-&gt;engines.push_back(sdecTimeStepper);	
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
+-	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+-	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+-	rootBody-&gt;engines.push_back(elasticContactLaw);
++	#ifdef BEX_CONTAINER
++	if(parallel){
++		#if 1
++			shared_ptr&lt;InteractionDispatchers&gt; ids(new InteractionDispatchers);
++				ids-&gt;geomDispatcher=interactionGeometryDispatcher;
++				ids-&gt;physDispatcher=interactionPhysicsDispatcher;
++				ids-&gt;constLawDispatcher=shared_ptr&lt;ConstitutiveLawDispatcher&gt;(new ConstitutiveLawDispatcher);
++				shared_ptr&lt;ef2_Spheres_Elastic_ElasticLaw&gt; see(new ef2_Spheres_Elastic_ElasticLaw);
++					see-&gt;sdecGroupMask=elasticContactLaw-&gt;sdecGroupMask;
++				ids-&gt;constLawDispatcher-&gt;add(see);
++			rootBody-&gt;engines.push_back(ids);
++		#else
++			rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
++			rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
++			shared_ptr&lt;ConstitutiveLawDispatcher&gt; cld(new ConstitutiveLawDispatcher);
++				shared_ptr&lt;ef2_Spheres_Elastic_ElasticLaw&gt; see(new ef2_Spheres_Elastic_ElasticLaw);
++					see-&gt;sdecGroupMask=elasticContactLaw-&gt;sdecGroupMask;
++				cld-&gt;add(see);
++			rootBody-&gt;engines.push_back(cld);
++		#endif
++	} else {
++	#endif
++		rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
++		rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
++		rootBody-&gt;engines.push_back(elasticContactLaw);
++	#ifdef BEX_CONTAINER
++	}
++	#endif
+ 	
+ 	//rootBody-&gt;engines.push_back(stiffnesscounter);
+ 	//rootBody-&gt;engines.push_back(stiffnessMatrixTimeStepper);
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2009-03-29 10:34:26 UTC (rev 1735)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2009-03-29 15:17:31 UTC (rev 1736)
+@@ -106,6 +106,11 @@
+ 				//!flag to choose an isotropic compaction until a fixed porosity choosing a same translation speed for the six walls
+ 				,isotropicCompaction;
+ 
++		#ifdef BEX_CONTAINER
++			//! Generate parallel simulation, if it is supported
++			bool parallel;
++		#endif
++
+ 		int		 recordIntervalIter
+ 				,timeStepUpdateInterval
+ 				,timeStepOutputInterval
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2009-03-29 10:34:26 UTC (rev 1735)
++++ trunk/pkg/dem/SConscript	2009-03-29 15:17:31 UTC (rev 1736)
+@@ -736,6 +736,8 @@
+ 			'TriaxialStateRecorder',
+ 			'PositionOrientationRecorder',
+ 			'Shop',
++			'ConstitutiveLawDispatcher',
++			'InteractionDispatchers',
+ 			'NewtonsDampedLaw']),
+ 			
+ 	env.SharedLibrary('CohesiveTriaxialTest',
+
+Modified: trunk/pkg/fem/Engine/StandAloneEngine/FEMLaw.cpp
+===================================================================
+--- trunk/pkg/fem/Engine/StandAloneEngine/FEMLaw.cpp	2009-03-29 10:34:26 UTC (rev 1735)
++++ trunk/pkg/fem/Engine/StandAloneEngine/FEMLaw.cpp	2009-03-29 15:17:31 UTC (rev 1736)
+@@ -78,7 +78,7 @@
+ 			#ifdef BEX_CONTAINER
+ 				fem-&gt;bex.addForce(femTet-&gt;ids[i],force);
+ 			#else
+-				static_cast&lt;Force*&gt;( physicalActions-&gt;find( femTet-&gt;ids[i] , actionForce -&gt;getClassIndex() ).get() )-&gt;force  += force;
++				static_cast&lt;Force*&gt;(fem-&gt;physicalActions-&gt;find( femTet-&gt;ids[i] , actionForce -&gt;getClassIndex() ).get() )-&gt;force  += force;
+ 			#endif
+ 					
+ 		}
+
+Modified: trunk/pkg/mass-spring/Engine/StandAloneEngine/MassSpringLaw.cpp
+===================================================================
+--- trunk/pkg/mass-spring/Engine/StandAloneEngine/MassSpringLaw.cpp	2009-03-29 10:34:26 UTC (rev 1735)
++++ trunk/pkg/mass-spring/Engine/StandAloneEngine/MassSpringLaw.cpp	2009-03-29 15:17:31 UTC (rev 1736)
+@@ -72,8 +72,8 @@
+ 				massSpring-&gt;bex.addForce(id1,-f3);
+ 				massSpring-&gt;bex.addForce(id2, f3);
+ 			#else
+-				static_cast&lt;Force*&gt;   ( physicalActions-&gt;find( id1 , actionForce-&gt;getClassIndex() ).get() )-&gt;force    -= f3;
+-				static_cast&lt;Force*&gt;   ( physicalActions-&gt;find( id2 , actionForce-&gt;getClassIndex() ).get() )-&gt;force    += f3;
++				static_cast&lt;Force*&gt;   ( massSpring-&gt;physicalActions-&gt;find( id1 , actionForce-&gt;getClassIndex() ).get() )-&gt;force    -= f3;
++				static_cast&lt;Force*&gt;   ( massSpring-&gt;physicalActions-&gt;find( id2 , actionForce-&gt;getClassIndex() ).get() )-&gt;force    += f3;
+ 			#endif
+ 		}
+ 	}
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000896.html">[deprecated list] [Yade-dev] removing PhysicalAction
+</A></li>
+	<LI>Next message: <A HREF="000898.html">[deprecated list] [Yade-dev] removing	PhysicalActionContainerReseter?
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#897">[ date ]</a>
+              <a href="thread.html#897">[ thread ]</a>
+              <a href="subject.html#897">[ subject ]</a>
+              <a href="author.html#897">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1620 - trunk/core
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1620%20-%20trunk/core&In-Reply-To=%3C200901100811.n0A8BsaM005951%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000586.html">
+   <LINK REL="Next"  HREF="000588.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1620 - trunk/core</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1620%20-%20trunk/core&In-Reply-To=%3C200901100811.n0A8BsaM005951%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1620 - trunk/core">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Jan 10 09:11:54 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000586.html">[deprecated list] [Yade-dev] [svn] r1619 - trunk/extra/SpherePadder
+</A></li>
+        <LI>Next message: <A HREF="000588.html">[deprecated list] [Yade-dev] [svn] r1621 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#587">[ date ]</a>
+              <a href="thread.html#587">[ thread ]</a>
+              <a href="subject.html#587">[ subject ]</a>
+              <a href="author.html#587">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-01-10 09:11:53 +0100 (Sat, 10 Jan 2009)
+New Revision: 1620
+
+Modified:
+   trunk/core/yade.cpp
+Log:
+(code cleanup, no functional changes)
+
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2009-01-09 14:44:43 UTC (rev 1619)
++++ trunk/core/yade.cpp	2009-01-10 08:11:53 UTC (rev 1620)
+@@ -46,26 +46,28 @@
+ 
+ void
+ sigHandler(int sig){
++	switch(sig){
+ 	#ifdef EMBED_PYTHON
+-		if(sig==SIGINT){
++		case SIGINT:
+ 			LOG_DEBUG(&quot;Finalizing Python...&quot;);
+ 			Py_Finalize();
+ 			// <A HREF="http://www.cons.org/cracauer/sigint.html">http://www.cons.org/cracauer/sigint.html</A>
+ 			signal(SIGINT,SIG_DFL); // reset to default
+ 			kill(getpid(),SIGINT); // kill ourselves, this time without Python
+-		}
++			break;
+ 	#endif
+ 	#ifdef YADE_DEBUG
+-		if(sig==SIGABRT || sig==SIGSEGV){
++		case SIGABRT:
++		case SIGSEGV:
+ 			signal(SIGSEGV,SIG_DFL); signal(SIGABRT,SIG_DFL); // prevent loops - default handlers
+ 			cerr&lt;&lt;&quot;SIGSEGV/SIGABRT handler called; gdb batch file is `&quot;&lt;&lt;Omega::instance().gdbCrashBatch&lt;&lt;&quot;'&quot;&lt;&lt;endl;
+ 			if(!dontUseGdb)
+ 				std::system((string(&quot;gdb -x &quot;)+Omega::instance().gdbCrashBatch).c_str());
+ 			unlink(Omega::instance().gdbCrashBatch.c_str()); // delete the crash batch file
+ 			raise(sig); // reemit signal after exiting gdb
+-		}
++			break;
+ 	#endif
+-	if(sig==SIGHUP){
++	case SIGHUP:
+ 		signal(SIGHUP,SIG_DFL);
+ 		LOG_INFO(&quot;Received SIGHUP.&quot;);
+ 		if(Omega::instance().getRootBody()){
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000586.html">[deprecated list] [Yade-dev] [svn] r1619 - trunk/extra/SpherePadder
+</A></li>
+	<LI>Next message: <A HREF="000588.html">[deprecated list] [Yade-dev] [svn] r1621 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#587">[ date ]</a>
+              <a href="thread.html#587">[ thread ]</a>
+              <a href="subject.html#587">[ subject ]</a>
+              <a href="author.html#587">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

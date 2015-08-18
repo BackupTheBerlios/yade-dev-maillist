@@ -1,0 +1,654 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1662 - in	trunk:	examples/dynamic_simulation_tests gui/qt3	pkg/dem	pkg/dem/Engine/EngineUnit
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1662%20-%20in%0A%09trunk%3A%09examples/dynamic_simulation_tests%20gui/qt3%0A%09pkg/dem%09pkg/dem/Engine/EngineUnit&In-Reply-To=%3C200902092050.n19KokiY020666%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000670.html">
+   <LINK REL="Next"  HREF="000674.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1662 - in	trunk:	examples/dynamic_simulation_tests gui/qt3	pkg/dem	pkg/dem/Engine/EngineUnit</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1662%20-%20in%0A%09trunk%3A%09examples/dynamic_simulation_tests%20gui/qt3%0A%09pkg/dem%09pkg/dem/Engine/EngineUnit&In-Reply-To=%3C200902092050.n19KokiY020666%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1662 - in	trunk:	examples/dynamic_simulation_tests gui/qt3	pkg/dem	pkg/dem/Engine/EngineUnit">sega at mail.berlios.de
+       </A><BR>
+    <I>Mon Feb  9 21:50:46 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000670.html">[deprecated list] [Yade-dev] [svn] r1661 - in trunk/pkg/dem:	.	DataClass/InteractionPhysics	Engine/EngineUnit	Engine/StandAloneEngine	RenderingEngine	RenderingEngine/GLDrawSimpleViscoelasticInteraction	RenderingEngine/GLDrawViscoelasticInteraction
+</A></li>
+        <LI>Next message: <A HREF="000674.html">[deprecated list] [Yade-dev] [svn] r1664 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#671">[ date ]</a>
+              <a href="thread.html#671">[ thread ]</a>
+              <a href="subject.html#671">[ subject ]</a>
+              <a href="author.html#671">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2009-02-09 21:50:44 +0100 (Mon, 09 Feb 2009)
+New Revision: 1662
+
+Added:
+   trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp
+   trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.hpp
+Modified:
+   trunk/examples/dynamic_simulation_tests/ringSimpleViscoelastic.py
+   trunk/gui/qt3/QtGeneratedSimulationPlayer.ui
+   trunk/gui/qt3/QtSimulationPlayer.cpp
+   trunk/gui/qt3/QtSimulationPlayer.hpp
+   trunk/pkg/dem/SConscript
+Log:
+1. Convert SimpleViscoelasticContactLaw to ConstitutiveLaw engine unit (Spheres_Viscoelastic_SimpleViscoelasticContactLaw).
+2. SimulatonPlayer have now Display tab as one in SimulationController.
+
+
+
+Modified: trunk/examples/dynamic_simulation_tests/ringSimpleViscoelastic.py
+===================================================================
+--- trunk/examples/dynamic_simulation_tests/ringSimpleViscoelastic.py	2009-02-09 17:03:36 UTC (rev 1661)
++++ trunk/examples/dynamic_simulation_tests/ringSimpleViscoelastic.py	2009-02-09 20:50:44 UTC (rev 1662)
+@@ -28,10 +28,7 @@
+ 					z = cylinderOrigin[2]+h*2*sphereRadius
+ 					s=utils.sphere_v2([x,y*cos(cylinderSlope)+z*sin(cylinderSlope),z*cos(cylinderSlope)-y*sin(cylinderSlope)],sphereRadius,density=Density,physicalParameters=[&quot;SimpleViscoelasticBodyParameters&quot;,{'frictionAngle':frictionAngle}])
+ 					p=utils.getViscoelasticFromSpheresInteraction(s.phys['mass'],tc,en,es)
+-					s.phys['kn']=p['kn']
+-					s.phys['cn']=p['cn']
+-					s.phys['ks']=p['ks']
+-					s.phys['cs']=p['cs']
++					s.phys['kn'],s.phys['cn'],s.phys['ks'],s.phys['cs']=p['kn'],p['cn'],p['ks'],p['cs']
+ 					o.bodies.append(s)
+ 					spheresCount+=1
+ 	return spheresCount
+@@ -52,19 +49,29 @@
+ 
+ ## Engines 
+ o.engines=[
++
+ 	StandAloneEngine('PhysicalActionContainerReseter'),
++
+ 	MetaEngine('BoundingVolumeMetaEngine',[
+ 		EngineUnit('InteractingSphere2AABB'),
+ 		EngineUnit('InteractingFacet2AABB'),
+ 		EngineUnit('MetaInteractingGeometry2AABB')
+ 	]),
++
+ 	StandAloneEngine('PersistentSAPCollider'),
++
+ 	MetaEngine('InteractionGeometryMetaEngine',[
+ 		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
+ 		EngineUnit('InteractingFacet2InteractingSphere4SpheresContactGeometry')
+ 	]),
++
+ 	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleViscoelasticRelationships')]),
+-	StandAloneEngine('SimpleViscoelasticContactLaw'),
++
++    ## Constitutive law
++	MetaEngine('ConstitutiveLawDispatcher',[EngineUnit('Spheres_Viscoelastic_SimpleViscoelasticContactLaw')]),
++    ## or InteractionSolver 
++	#StandAloneEngine('SimpleViscoelasticContactLaw'),
++
+ 	DeusExMachina('GravityEngine',{'gravity':[0,-9.81,0]}),
+ 
+ 	## Cundall damping must been disabled!
+@@ -80,7 +87,7 @@
+     if b.shape.name=='Sphere':
+         b.phys['blockedDOFs']=4 # blocked movement along Z
+ 
+-o.dt=2e-5
++o.dt=0.2*tc
+ 
+ o.saveTmp('init');
+ 
+
+Modified: trunk/gui/qt3/QtGeneratedSimulationPlayer.ui
+===================================================================
+--- trunk/gui/qt3/QtGeneratedSimulationPlayer.ui	2009-02-09 17:03:36 UTC (rev 1661)
++++ trunk/gui/qt3/QtGeneratedSimulationPlayer.ui	2009-02-09 20:50:44 UTC (rev 1662)
+@@ -8,8 +8,8 @@
+         &lt;rect&gt;
+             &lt;x&gt;0&lt;/x&gt;
+             &lt;y&gt;0&lt;/y&gt;
+-            &lt;width&gt;306&lt;/width&gt;
+-            &lt;height&gt;271&lt;/height&gt;
++            &lt;width&gt;362&lt;/width&gt;
++            &lt;height&gt;430&lt;/height&gt;
+         &lt;/rect&gt;
+     &lt;/property&gt;
+     &lt;property name=&quot;sizePolicy&quot;&gt;
+@@ -43,69 +43,15 @@
+             &lt;property name=&quot;frameShadow&quot;&gt;
+                 &lt;enum&gt;Raised&lt;/enum&gt;
+             &lt;/property&gt;
+-            &lt;grid&gt;
++            &lt;vbox&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+                     &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                 &lt;/property&gt;
+                 &lt;property name=&quot;spacing&quot;&gt;
+                     &lt;number&gt;0&lt;/number&gt;
+                 &lt;/property&gt;
+-                &lt;widget class=&quot;QLayoutWidget&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
++                &lt;widget class=&quot;QTabWidget&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;layout5&lt;/cstring&gt;
+-                    &lt;/property&gt;
+-                    &lt;grid&gt;
+-                        &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;unnamed&lt;/cstring&gt;
+-                        &lt;/property&gt;
+-                        &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;3&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;pbReset&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;&lt;/string&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;pixmap&quot;&gt;
+-                                &lt;pixmap&gt;image0&lt;/pixmap&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                        &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;2&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;pbPause&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;&lt;/string&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;pixmap&quot;&gt;
+-                                &lt;pixmap&gt;image1&lt;/pixmap&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                        &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;1&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;pbStep&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;&lt;/string&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;pixmap&quot;&gt;
+-                                &lt;pixmap&gt;image2&lt;/pixmap&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                        &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;pbPlay&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;&lt;/string&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;pixmap&quot;&gt;
+-                                &lt;pixmap&gt;image3&lt;/pixmap&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                    &lt;/grid&gt;
+-                &lt;/widget&gt;
+-                &lt;widget class=&quot;QTabWidget&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
+-                    &lt;property name=&quot;name&quot;&gt;
+                         &lt;cstring&gt;tabWidget5&lt;/cstring&gt;
+                     &lt;/property&gt;
+                     &lt;property name=&quot;margin&quot;&gt;
+@@ -194,7 +140,7 @@
+                                                             &lt;string&gt;&lt;/string&gt;
+                                                         &lt;/property&gt;
+                                                         &lt;property name=&quot;pixmap&quot;&gt;
+-                                                            &lt;pixmap&gt;image4&lt;/pixmap&gt;
++                                                            &lt;pixmap&gt;image0&lt;/pixmap&gt;
+                                                         &lt;/property&gt;
+                                                     &lt;/widget&gt;
+                                                     &lt;widget class=&quot;QLineEdit&quot; row=&quot;0&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
+@@ -314,7 +260,7 @@
+                                                             &lt;string&gt;&lt;/string&gt;
+                                                         &lt;/property&gt;
+                                                         &lt;property name=&quot;pixmap&quot;&gt;
+-                                                            &lt;pixmap&gt;image4&lt;/pixmap&gt;
++                                                            &lt;pixmap&gt;image0&lt;/pixmap&gt;
+                                                         &lt;/property&gt;
+                                                     &lt;/widget&gt;
+                                                 &lt;/grid&gt;
+@@ -509,7 +455,7 @@
+                                                     &lt;string&gt;&lt;/string&gt;
+                                                 &lt;/property&gt;
+                                                 &lt;property name=&quot;pixmap&quot;&gt;
+-                                                    &lt;pixmap&gt;image4&lt;/pixmap&gt;
++                                                    &lt;pixmap&gt;image0&lt;/pixmap&gt;
+                                                 &lt;/property&gt;
+                                             &lt;/widget&gt;
+                                             &lt;widget class=&quot;QLineEdit&quot; row=&quot;1&quot; column=&quot;1&quot; rowspan=&quot;1&quot; colspan=&quot;2&quot;&gt;
+@@ -650,7 +596,7 @@
+                                                     &lt;string&gt;&lt;/string&gt;
+                                                 &lt;/property&gt;
+                                                 &lt;property name=&quot;pixmap&quot;&gt;
+-                                                    &lt;pixmap&gt;image0&lt;/pixmap&gt;
++                                                    &lt;pixmap&gt;image1&lt;/pixmap&gt;
+                                                 &lt;/property&gt;
+                                             &lt;/widget&gt;
+                                         &lt;/hbox&gt;
+@@ -681,24 +627,40 @@
+                             &lt;cstring&gt;TabPage&lt;/cstring&gt;
+                         &lt;/property&gt;
+                         &lt;attribute name=&quot;title&quot;&gt;
+-                            &lt;string&gt;View&lt;/string&gt;
++                            &lt;string&gt;Display&lt;/string&gt;
+                         &lt;/attribute&gt;
+-                        &lt;widget class=&quot;QCheckBox&quot;&gt;
++                        &lt;vbox&gt;
+                             &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;cbBodyWire&lt;/cstring&gt;
++                                &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                             &lt;/property&gt;
+-                            &lt;property name=&quot;geometry&quot;&gt;
+-                                &lt;rect&gt;
+-                                    &lt;x&gt;10&lt;/x&gt;
+-                                    &lt;y&gt;10&lt;/y&gt;
+-                                    &lt;width&gt;229&lt;/width&gt;
+-                                    &lt;height&gt;20&lt;/height&gt;
+-                                &lt;/rect&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;Body wire&lt;/string&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
++                            &lt;widget class=&quot;QFrame&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;scrollViewOutsideFrame&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;sizePolicy&quot;&gt;
++                                    &lt;sizepolicy&gt;
++                                        &lt;hsizetype&gt;1&lt;/hsizetype&gt;
++                                        &lt;vsizetype&gt;3&lt;/vsizetype&gt;
++                                        &lt;horstretch&gt;0&lt;/horstretch&gt;
++                                        &lt;verstretch&gt;5&lt;/verstretch&gt;
++                                    &lt;/sizepolicy&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;frameShape&quot;&gt;
++                                    &lt;enum&gt;NoFrame&lt;/enum&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;frameShadow&quot;&gt;
++                                    &lt;enum&gt;Raised&lt;/enum&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                            &lt;widget class=&quot;QPushButton&quot;&gt;
++                                &lt;property name=&quot;name&quot;&gt;
++                                    &lt;cstring&gt;pbApply&lt;/cstring&gt;
++                                &lt;/property&gt;
++                                &lt;property name=&quot;text&quot;&gt;
++                                    &lt;string&gt;Apply&lt;/string&gt;
++                                &lt;/property&gt;
++                            &lt;/widget&gt;
++                        &lt;/vbox&gt;
+                     &lt;/widget&gt;
+                     &lt;widget class=&quot;QWidget&quot;&gt;
+                         &lt;property name=&quot;name&quot;&gt;
+@@ -754,25 +716,79 @@
+                         &lt;/grid&gt;
+                     &lt;/widget&gt;
+                 &lt;/widget&gt;
+-            &lt;/grid&gt;
++                &lt;widget class=&quot;QLayoutWidget&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;layout5&lt;/cstring&gt;
++                    &lt;/property&gt;
++                    &lt;grid&gt;
++                        &lt;property name=&quot;name&quot;&gt;
++                            &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                        &lt;/property&gt;
++                        &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;3&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;pbReset&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;&lt;/string&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;pixmap&quot;&gt;
++                                &lt;pixmap&gt;image1&lt;/pixmap&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;2&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;pbPause&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;&lt;/string&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;pixmap&quot;&gt;
++                                &lt;pixmap&gt;image2&lt;/pixmap&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;1&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;pbStep&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;&lt;/string&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;pixmap&quot;&gt;
++                                &lt;pixmap&gt;image3&lt;/pixmap&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                        &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
++                            &lt;property name=&quot;name&quot;&gt;
++                                &lt;cstring&gt;pbPlay&lt;/cstring&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;text&quot;&gt;
++                                &lt;string&gt;&lt;/string&gt;
++                            &lt;/property&gt;
++                            &lt;property name=&quot;pixmap&quot;&gt;
++                                &lt;pixmap&gt;image4&lt;/pixmap&gt;
++                            &lt;/property&gt;
++                        &lt;/widget&gt;
++                    &lt;/grid&gt;
++                &lt;/widget&gt;
++            &lt;/vbox&gt;
+         &lt;/widget&gt;
+     &lt;/grid&gt;
+ &lt;/widget&gt;
+ &lt;images&gt;
+     &lt;image name=&quot;image0&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;305&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000f849444154388db5943b12823010863f1f95158de839b0f5021ec00bd8702b8f2117e0326ab38d54385a844748086c66f49f49917d7c2cc966412501e4a38b85a536b081abc01350c9405e0dc882cd831701600daca6539340ae57a9a44d2533c069b9bf7f77f605706e96ad83922fb5a9b25bb9e5a3b7ab2559183880c6744b7bcbf201b945248eaafdf2c6b25d7f05b555fe03fafc07741b8790fdf092c7a1c7c8c2bcf8165a59b64b24d48eb739737d1a92e44e5ee6064cbc2815b06e3dcea4f19e6181e9db12d3155bcc195e80d330b49f5a2e34c51f2a1aed207904a01d5c314f017843b2768d810191ac31e3ad1af75319bf0f04f8024c83732f0a67978c0000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;892&quot;&gt;89504e470d0a1a0a0000000d4948445200000018000000180806000000e0773df800000343494441544889ed95cf6f146518c73f5d5a8b96a5ab6de84230b6b02858b134023d28743de8414d6a8c7f01ff801aaf24c24d2f0ac6709693f1a0f5e4c5c42e8907f560a736c4d616322dd275b7753bdb617766f6fdf17898e9b26db798102f263ec924cfccfbe4f3fd3ecffb2403ffc743c408f00e3099493fbafefc338704986a53370e7c909c6dd6f46e2fea68c92780cfcf9d3e92397f26c7f8991ce363c748a552bcffe1249f5e2f5c023ce0cdde7d7bf3e74e1fe5a5178ef0daf967393cd0cbb52f7ee0e2d56f2f0197771398aafc319b4ffbdfd3914a01202288152a5e8deb5fff8888f0e2e810c3b92cc65a8cb1186dd0da50a9d6197dfb6307186d15e86c7df1aa1efb3ac03434d65aac8d018fa4e0c25b679b40dfafa38dc1688bd686a8a1d0da72b03f7daab8e64f259dbe0b2cb50a384b6595ef4f871863304630d6a055ecb01d501bc37a790d43378ff53dc5b5cfae706ae444fe9bafbee4bd8b571de072ab80e7380ec363d0084394d2281d0b6c07d6ea0d0e0c8d923994e3f8cbc364d25d1094e347cde3955c0077fb880a9ee761f61cc6f7570942454369362a1eb55a83fd0347c9648f317af669b2d9be045882!
+ fa34d40191982250f8690ea0b0e30e5cd7258a0ee0fb012b772b3c79f2154e8e3d4736fb440c0bca102d4269710b50442059082b961b3fcf7bc0d27601d7755d3a7bdee0aefb1df90b1f9131b720b809c5c4e12633015a2b8858ac3548b214337377009c765bb404201d5d74f6f493e98e60b5747f5d45106b6390c430b1a6b96db1806171b9d81ccf8e1101186bd9d3bd1fa915b15a379dd90420d292b7f9eefcb6bc85b745c07166101106064fa0c27be830481c9b16973be156ee9f19ad77efa05aad22081beb1542df60a260db185af264f69bc2c618b4d6fcba50dcbd03e2dd1ddcdb9326dc28b5779d8063a0a1d1d0440d451429eefc59e5e6ad32c08ddd054406b343c78956969b176713874a1b948a6161a49873d798febd84b350667671955aa80ac0950775c0bd0d9f747f1f4150472b4d4369c22886ce2dad313d5f6266a1cceced55af1628279977a1d5f503051e3f98a3abd3e216ffe297f9620c5c2c737ba5ead502b5092b0033ed80ff149f4c4cbc2eafe6c704580726897f3e230f03db2dc6ff6de07f3bfe067d9f88db21915f870000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image1&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;113&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000003849444154388d633c76ec1803b50113d54da495a12cd804adacb4fe23f38f1dbbc6488c1c0c0c1def8f1a3a6ae8a8a123d350c6915df203007bf20ccfb0566fcb0000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;305&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000f849444154388db5943b12823010863f1f95158de839b0f5021ec00bd8702b8f2117e0326ab38d54385a844748086c66f49f49917d7c2cc966412501e4a38b85a536b081abc01350c9405e0dc882cd831701600daca6539340ae57a9a44d2533c069b9bf7f77f605706e96ad83922fb5a9b25bb9e5a3b7ab2559183880c6744b7bcbf201b945248eaafdf2c6b25d7f05b555fe03fafc07741b8790fdf092c7a1c7c8c2bcf8165a59b64b24d48eb739737d1a92e44e5ee6064cbc2815b06e3dcea4f19e6181e9db12d3155bcc195e80d330b49f5a2e34c51f2a1aed207904a01d5c314f017843b2768d810191ac31e3ad1af75319bf0f04f8024c83732f0a67978c0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image2&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;255&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000c649444154388db594d90a83400c458f0bd28542feff9ffa2f81822fadda87d176d4319d14bd20e38470b22a1c2fbd8ce7109e8fbdf050caf9555ad07bc2cf051d9db50679cdb30310176cd298690a98d2e4a37506340b5847bebdd5e7320f0840b778b7a0b99265f02ee9b68e660d4acb34683d4cb3e10b3569b30e7c073e80abfced72819ea86a0fd49014c0754f68153e6f79ec053d8743dad8e818943c41e3fb1e7b3a0b60fe13fe819e4037d62bc8b3a7004d6883adcc4cf516cedf4007942ad3ef38bd01af6e31af98932e9f0000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;113&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000003849444154388d633c76ec1803b50113d54da495a12cd804adacb4fe23f38f1dbbc6488c1c0c0c1def8f1a3a6ae8a8a123d350c6915df203007bf20ccfb0566fcb0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image3&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;160&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000006749444154388dadccd10d80300c03d1947118a1fbcb23b00e2c4013dbc9fd9ef4168098eecae6def73b8eba70893a3085aa308d2ab084b2b08c32b08556b08d66700b3dc16d1478d628fa07b6d01368a31968a11528a30c28a12c48a30a48a12a58a20e1811f101d3512a7c38fee1ac0000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;255&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a596000000c649444154388db594d90a83400c458f0bd28542feff9ffa2f81822fadda87d176d4319d14bd20e38470b22a1c2fbd8ce7109e8fbdf050caf9555ad07bc2cf051d9db50679cdb30310176cd298690a98d2e4a37506340b5847bebdd5e7320f0840b778b7a0b99265f02ee9b68e660d4acb34683d4cb3e10b3569b30e7c073e80abfced72819ea86a0fd49014c0754f68153e6f79ec053d8743dad8e818943c41e3fb1e7b3a0b60fe13fe819e4037d62bc8b3a7004d6883adcc4cf516cedf4007942ad3ef38bd01af6e31af98932e9f0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+     &lt;image name=&quot;image4&quot;&gt;
+-        &lt;data format=&quot;PNG&quot; length=&quot;892&quot;&gt;89504e470d0a1a0a0000000d4948445200000018000000180806000000e0773df800000343494441544889ed95cf6f146518c73f5d5a8b96a5ab6de84230b6b02858b134023d28743de8414d6a8c7f01ff801aaf24c24d2f0ac6709693f1a0f5e4c5c42e8907f560a736c4d616322dd275b7753bdb617766f6fdf17898e9b26db798102f263ec924cfccfbe4f3fd3ecffb2403ffc743c408f00e3099493fbafefc338704986a53370e7c909c6dd6f46e2fea68c92780cfcf9d3e92397f26c7f8991ce363c748a552bcffe1249f5e2f5c023ce0cdde7d7bf3e74e1fe5a5178ef0daf967393cd0cbb52f7ee0e2d56f2f0197771398aafc319b4ffbdfd3914a01202288152a5e8deb5fff8888f0e2e810c3b92cc65a8cb1186dd0da50a9d6197dfb6307186d15e86c7df1aa1efb3ac03434d65aac8d018fa4e0c25b679b40dfafa38dc1688bd686a8a1d0da72b03f7daab8e64f259dbe0b2cb50a384b6595ef4f871863304630d6a055ecb01d501bc37a790d43378ff53dc5b5cfae706ae444fe9bafbee4bd8b571de072ab80e7380ec363d0084394d2281d0b6c07d6ea0d0e0c8d923994e3f8cbc364d25d1094e347cde3955c0077fb880a9ee761f61cc6f7570942454369362a1eb55a83fd0347c9648f317af669b2d9be045882!
+ fa34d40191982250f8690ea0b0e30e5cd7258a0ee0fb012b772b3c79f2154e8e3d4736fb440c0bca102d4269710b50442059082b961b3fcf7bc0d27601d7755d3a7bdee0aefb1df90b1f9131b720b809c5c4e12633015a2b8858ac3548b214337377009c765bb404201d5d74f6f493e98e60b5747f5d45106b6390c430b1a6b96db1806171b9d81ccf8e1101186bd9d3bd1fa915b15a379dd90420d292b7f9eefcb6bc85b745c07166101106064fa0c27be830481c9b16973be156ee9f19ad77efa05aad22081beb1542df60a260db185af264f69bc2c618b4d6fcba50dcbd03e2dd1ddcdb9326dc28b5779d8063a0a1d1d0440d451429eefc59e5e6ad32c08ddd054406b343c78956969b176713874a1b948a6161a49873d798febd84b350667671955aa80ac0950775c0bd0d9f747f1f4150472b4d4369c22886ce2dad313d5f6266a1cceced55af1628279977a1d5f503051e3f98a3abd3e216ffe297f9620c5c2c737ba5ead502b5092b0033ed80ff149f4c4cbc2eafe6c704580726897f3e230f03db2dc6ff6de07f3bfe067d9f88db21915f870000000049454e44ae426082&lt;/data&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;160&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000006749444154388dadccd10d80300c03d1947118a1fbcb23b00e2c4013dbc9fd9ef4168098eecae6def73b8eba70893a3085aa308d2ab084b2b08c32b08556b08d66700b3dc16d1478d628fa07b6d01368a31968a11528a30c28a12c48a30a48a12a58a20e1811f101d3512a7c38fee1ac0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
+ &lt;/images&gt;
+ &lt;connections&gt;
+@@ -837,16 +853,16 @@
+         &lt;slot&gt;pbInputDirectoryClicked()&lt;/slot&gt;
+     &lt;/connection&gt;
+     &lt;connection&gt;
+-        &lt;sender&gt;cbBodyWire&lt;/sender&gt;
+-        &lt;signal&gt;toggled(bool)&lt;/signal&gt;
++        &lt;sender&gt;pbRefreshFilters&lt;/sender&gt;
++        &lt;signal&gt;clicked()&lt;/signal&gt;
+         &lt;receiver&gt;QtGeneratedSimulationPlayer&lt;/receiver&gt;
+-        &lt;slot&gt;cbBodyWireToggled(bool)&lt;/slot&gt;
++        &lt;slot&gt;pbRefreshFiltersClicked()&lt;/slot&gt;
+     &lt;/connection&gt;
+     &lt;connection&gt;
+-        &lt;sender&gt;pbRefreshFilters&lt;/sender&gt;
++        &lt;sender&gt;pbApply&lt;/sender&gt;
+         &lt;signal&gt;clicked()&lt;/signal&gt;
+         &lt;receiver&gt;QtGeneratedSimulationPlayer&lt;/receiver&gt;
+-        &lt;slot&gt;pbRefreshFiltersClicked()&lt;/slot&gt;
++        &lt;slot&gt;pbApplyClicked()&lt;/slot&gt;
+     &lt;/connection&gt;
+ &lt;/connections&gt;
+ &lt;signals&gt;
+@@ -865,6 +881,7 @@
+     &lt;slot&gt;cbAllowFiltrationToggled(bool)&lt;/slot&gt;
+     &lt;slot&gt;cbBodyWireToggled(bool)&lt;/slot&gt;
+     &lt;slot&gt;pbRefreshFiltersClicked()&lt;/slot&gt;
++    &lt;slot&gt;pbApplyClicked()&lt;/slot&gt;
+ &lt;/slots&gt;
+ &lt;layoutdefaults spacing=&quot;6&quot; margin=&quot;11&quot;/&gt;
+ &lt;/UI&gt;
+
+Modified: trunk/gui/qt3/QtSimulationPlayer.cpp
+===================================================================
+--- trunk/gui/qt3/QtSimulationPlayer.cpp	2009-02-09 17:03:36 UTC (rev 1661)
++++ trunk/gui/qt3/QtSimulationPlayer.cpp	2009-02-09 20:50:44 UTC (rev 1662)
+@@ -33,6 +33,22 @@
+ 	glSimulationPlayerViewer-&gt;simPlayer=this;
+ 	leInputConfigFile-&gt;setText(Omega::instance().getSimulationFileName());
+ 	enableControls(false);
++
++	scrollViewFrame = new QFrame();	
++	scrollViewLayout = new QVBoxLayout( scrollViewOutsideFrame, 0, 0, &quot;scrollViewLayout&quot;); 
++	scrollView = new QScrollView( scrollViewOutsideFrame, &quot;scrollView&quot; );
++	scrollView-&gt;setVScrollBarMode(QScrollView::Auto);
++	scrollView-&gt;setHScrollBarMode(QScrollView::Auto);
++	scrollViewLayout-&gt;addWidget(scrollView);
++	scrollView-&gt;show();
++	guiGen.setResizeHeight(true);
++	guiGen.setResizeWidth(true);
++	guiGen.setShift(10,30);
++	guiGen.setShowButtons(false);
++	QSize s = scrollView-&gt;size();
++	scrollViewFrame-&gt;resize(s.width(),s.height());
++	guiGen.buildGUI(YadeQtMainWindow::self-&gt;renderer,scrollViewFrame);
++	scrollView-&gt;addChild(scrollViewFrame);
+ }
+ QtSimulationPlayer::~QtSimulationPlayer(){
+ 	if(glSimulationPlayerViewer) delete glSimulationPlayerViewer;
+@@ -44,9 +60,13 @@
+ void QtSimulationPlayer::cbSaveSnapShotsToggled(bool b){	glSimulationPlayerViewer-&gt;saveSnapShots=b;}
+ void QtSimulationPlayer::cbAllowFiltrationToggled(bool b){	FilterEngine::isFiltrationActivated=b; }
+ void QtSimulationPlayer::pbRefreshFiltersClicked(){	glSimulationPlayerViewer-&gt;refreshFilters(); }
+-void QtSimulationPlayer::cbBodyWireToggled(bool b){	glSimulationPlayerViewer-&gt;bodyWire(b); }
+ void QtSimulationPlayer::closeEvent(QCloseEvent *e){ QtGeneratedSimulationPlayer::closeEvent(e); emit closeSignal(); }
+ 
++void QtSimulationPlayer::pbApplyClicked()
++{
++	guiGen.deserialize(YadeQtMainWindow::self-&gt;renderer);
++	YadeQtMainWindow::self-&gt;redrawAll(true);
++}
+ 
+ void QtSimulationPlayer::pbInputConfigFileClicked(){
+ 	string selectedFilter;
+
+Modified: trunk/gui/qt3/QtSimulationPlayer.hpp
+===================================================================
+--- trunk/gui/qt3/QtSimulationPlayer.hpp	2009-02-09 17:03:36 UTC (rev 1661)
++++ trunk/gui/qt3/QtSimulationPlayer.hpp	2009-02-09 20:50:44 UTC (rev 1662)
+@@ -10,7 +10,11 @@
+ 
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/lib-factory/Factorable.hpp&gt;
++#include&lt;yade/lib-serialization-qt/QtGUIGenerator.hpp&gt;
+ #include &lt;QtGeneratedSimulationPlayer.h&gt;
++#include&lt;qlayout.h&gt;
++#include&lt;qframe.h&gt;
++#include&lt;qscrollview.h&gt;
+ 
+ class GLSimulationPlayerViewer;
+ 
+@@ -27,6 +31,11 @@
+ 	private:
+ 		void setParameters();
+ 
++		QScrollView * scrollView;
++		QFrame * scrollViewFrame;
++		QVBoxLayout* scrollViewLayout;
++		QtGUIGenerator guiGen;	
++
+ 	public slots:
+ 		virtual void pbInputDirectoryClicked();
+ 		virtual void pbLoadClicked();
+@@ -39,12 +48,12 @@
+ 		virtual void pbPauseClicked();
+ 		virtual void pbStepClicked();
+ 		virtual void pbResetClicked();
++
++		virtual void pbApplyClicked();
+ 		
+ 		virtual void cbAllowFiltrationToggled(bool b);
+         virtual void pbRefreshFiltersClicked();
+ 		
+-		virtual void cbBodyWireToggled(bool b);
+- 	
+ 	protected:
+ 		void closeEvent(QCloseEvent *);
+ 		virtual void keyPressEvent(QKeyEvent *);
+
+Added: trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp	2009-02-09 17:03:36 UTC (rev 1661)
++++ trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp	2009-02-09 20:50:44 UTC (rev 1662)
+@@ -0,0 +1,74 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Sergei Dorofeenko                               *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&quot;Spheres_Viscoelastic_SimpleViscoelasticContactLaw.hpp&quot;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/ViscoelasticInteraction.hpp&gt;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++YADE_PLUGIN(&quot;Spheres_Viscoelastic_SimpleViscoelasticContactLaw&quot;);
++
++void Spheres_Viscoelastic_SimpleViscoelasticContactLaw::go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody){
++
++	SpheresContactGeometry* geom=static_cast&lt;SpheresContactGeometry*&gt;(_geom.get());
++	ViscoelasticInteraction* phys=static_cast&lt;ViscoelasticInteraction*&gt;(_phys.get());
++
++	int id1 = I-&gt;getId1();
++	int id2 = I-&gt;getId2();
++	
++	shared_ptr&lt;BodyContainer&gt;&amp; bodies = rootBody-&gt;bodies;
++
++	RigidBodyParameters* de1 = YADE_CAST&lt;RigidBodyParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
++	RigidBodyParameters* de2 = YADE_CAST&lt;RigidBodyParameters*&gt;((*bodies)[id2]-&gt;physicalParameters.get());
++
++	bool isDynamic1 = (*bodies)[id1]-&gt;isDynamic;
++	bool isDynamic2 = (*bodies)[id2]-&gt;isDynamic;
++
++	Vector3r&amp; shearForce 			= phys-&gt;shearForce;
++	if (I-&gt;isNew) shearForce=Vector3r(0,0,0);
++
++	Real dt = Omega::instance().getTimeStep();
++
++	Vector3r axis = phys-&gt;prevNormal.Cross(geom-&gt;normal);
++	shearForce -= shearForce.Cross(axis);
++	Vector3r summaryAngularVelocity(0,0,0);
++	if (isDynamic1) summaryAngularVelocity += de1-&gt;angularVelocity;
++	if (isDynamic2) summaryAngularVelocity += de2-&gt;angularVelocity;
++	Real angle = dt*0.5*geom-&gt;normal.Dot(summaryAngularVelocity);
++	axis = angle*geom-&gt;normal;
++	shearForce -= shearForce.Cross(axis);
++
++	Vector3r x				= geom-&gt;contactPoint;
++	Vector3r c1x				= (x - de1-&gt;se3.position);
++	Vector3r c2x				= (x - de2-&gt;se3.position);
++	 /// The following definition of c1x and c2x is to avoid &quot;granular ratcheting&quot; 
++	///  (see F. ALONSO-MARROQUIN, R. GARCIA-ROJO, H.J. HERRMANN, 
++	///   &quot;Micro-mechanical investigation of granular ratcheting, in Cyclic Behaviour of Soils and Liquefaction Phenomena&quot;,
++	///   ed. T. Triantafyllidis (Balklema, London, 2004), p. 3-10 - and a lot more papers from the same authors)
++			Vector3r _c1x_	= (isDynamic1) ? geom-&gt;radius1*geom-&gt;normal : x - de1-&gt;zeroPoint;
++			Vector3r _c2x_	= (isDynamic2) ? -geom-&gt;radius2*geom-&gt;normal : x - de2-&gt;zeroPoint;
++	Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.Cross(_c2x_)) - (de1-&gt;velocity+de1-&gt;angularVelocity.Cross(_c1x_));
++	Real     normalVelocity			= geom-&gt;normal.Dot(relativeVelocity);
++	Vector3r shearVelocity			= relativeVelocity-normalVelocity*geom-&gt;normal;
++	shearForce 			       -= (phys-&gt;ks*dt+phys-&gt;cs)*shearVelocity;
++
++	phys-&gt;normalForce = ( phys-&gt;kn * std::max(geom-&gt;penetrationDepth,(Real) 0) - phys-&gt;cn * normalVelocity ) * geom-&gt;normal;
++	phys-&gt;prevNormal = geom-&gt;normal;
++
++	Real maxFs = phys-&gt;normalForce.SquaredLength() * std::pow(phys-&gt;tangensOfFrictionAngle,2);
++	if( shearForce.SquaredLength() &gt; maxFs )
++	{
++		maxFs = Mathr::Sqrt(maxFs) / shearForce.Length();
++		shearForce *= maxFs;
++	}
++
++	Vector3r f				= phys-&gt;normalForce + shearForce;
++	bodyForce (id1,rootBody) -= f;
++	bodyForce (id2,rootBody) += f;
++	bodyTorque(id1,rootBody) -= c1x.Cross(f);
++	bodyTorque(id2,rootBody) += c2x.Cross(f);
++}
+
+Added: trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.hpp	2009-02-09 17:03:36 UTC (rev 1661)
++++ trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.hpp	2009-02-09 20:50:44 UTC (rev 1662)
+@@ -0,0 +1,24 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Sergei Dorofeenko                               *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#pragma once
++
++#include&lt;yade/pkg-common/ConstitutiveLaw.hpp&gt;
++
++/// This class provides linear viscoelastic contact model
++class Spheres_Viscoelastic_SimpleViscoelasticContactLaw : public ConstitutiveLaw
++{
++	public :
++		virtual void go(shared_ptr&lt;InteractionGeometry&gt;&amp;, shared_ptr&lt;InteractionPhysics&gt;&amp;, Interaction*, MetaBody*);
++		NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
++		FUNCTOR2D(SpheresContactGeometry,ViscoelasticInteraction);
++		REGISTER_CLASS_AND_BASE(Spheres_Viscoelastic_SimpleViscoelasticContactLaw,ConstitutiveLaw);
++};
++REGISTER_SERIALIZABLE(Spheres_Viscoelastic_SimpleViscoelasticContactLaw);
++
++
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2009-02-09 17:03:36 UTC (rev 1661)
++++ trunk/pkg/dem/SConscript	2009-02-09 20:50:44 UTC (rev 1662)
+@@ -1196,6 +1196,10 @@
+ 	env.SharedLibrary('ef2_Spheres_NormalShear_ElasticFrictionalLaw',
+ 		['Engine/EngineUnit/ef2_Spheres_NormalShear_ElasticFrictionalLaw.cpp'],
+ 		LIBS=env['LIBS']+['ConstitutiveLawDispatcher','NormalShearInteractions','SpheresContactGeometry']),
++
++	env.SharedLibrary('Spheres_Viscoelastic_SimpleViscoelasticContactLaw',
++		['Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp'],
++		LIBS=env['LIBS']+['ConstitutiveLawDispatcher','ViscoelasticInteraction','SpheresContactGeometry','RigidBodyParameters']),
+ 				
+ 	#env.SharedLibrary('MicroMacroAnalyser',
+ 		#['Engine/StandAloneEngine/MicroMacroAnalyser.cpp'],
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000670.html">[deprecated list] [Yade-dev] [svn] r1661 - in trunk/pkg/dem:	.	DataClass/InteractionPhysics	Engine/EngineUnit	Engine/StandAloneEngine	RenderingEngine	RenderingEngine/GLDrawSimpleViscoelasticInteraction	RenderingEngine/GLDrawViscoelasticInteraction
+</A></li>
+	<LI>Next message: <A HREF="000674.html">[deprecated list] [Yade-dev] [svn] r1664 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#671">[ date ]</a>
+              <a href="thread.html#671">[ thread ]</a>
+              <a href="subject.html#671">[ subject ]</a>
+              <a href="author.html#671">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

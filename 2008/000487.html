@@ -1,0 +1,424 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1565 - in trunk: gui/py	lib/serialization	pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1565%20-%20in%20trunk%3A%20gui/py%0A%09lib/serialization%09pkg/dem/PreProcessor&In-Reply-To=%3C200810291929.m9TJTL8j021378%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000497.html">
+   <LINK REL="Next"  HREF="000488.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1565 - in trunk: gui/py	lib/serialization	pkg/dem/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1565%20-%20in%20trunk%3A%20gui/py%0A%09lib/serialization%09pkg/dem/PreProcessor&In-Reply-To=%3C200810291929.m9TJTL8j021378%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1565 - in trunk: gui/py	lib/serialization	pkg/dem/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Oct 29 20:29:21 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000497.html">[deprecated list] [Yade-dev] Incomprehensible crash
+</A></li>
+        <LI>Next message: <A HREF="000488.html">[deprecated list] [Yade-dev] recent changes in	TriaxialCompressionEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#487">[ date ]</a>
+              <a href="thread.html#487">[ thread ]</a>
+              <a href="subject.html#487">[ subject ]</a>
+              <a href="author.html#487">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-10-29 20:29:18 +0100 (Wed, 29 Oct 2008)
+New Revision: 1565
+
+Modified:
+   trunk/gui/py/pyAttrUtils.hpp
+   trunk/lib/serialization/FundamentalHandler.tpp
+   trunk/lib/serialization/KnownFundamentalsHandler.tpp
+   trunk/pkg/dem/PreProcessor/MembraneTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+Log:
+1. Make our intelligence-challenged deserializer finally gracefully handle nan, inf, -inf (arbitrary lower-upper case).
+2. Fix crash in MembraneTest (leftover in the commit from testing, oh well)
+3. Add TriaxialTest::fixedBoxDims to not scale selected box dimensions if sphere mean radius is given (example underway).
+
+
+
+Modified: trunk/gui/py/pyAttrUtils.hpp
+===================================================================
+--- trunk/gui/py/pyAttrUtils.hpp	2008-10-29 10:31:21 UTC (rev 1564)
++++ trunk/gui/py/pyAttrUtils.hpp	2008-10-29 19:29:18 UTC (rev 1565)
+@@ -4,6 +4,7 @@
+ #include&lt;map&gt;
+ #include&lt;vector&gt;
+ #include&lt;boost/shared_ptr.hpp&gt;
++#include&lt;yade/lib-serialization/Archive.hpp&gt;
+ #include&lt;yade/lib-serialization-xml/XMLFormatManager.hpp&gt;
+ #include&lt;boost/python.hpp&gt;
+ 
+@@ -159,6 +160,7 @@
+ 		//! return python list of keys (attribute names)
+ 		boost::python::list pyKeys(){boost::python::list ret; for(DescriptorMap::iterator I=descriptors.begin();I!=descriptors.end();I++)ret.append(I-&gt;first); return ret;}
+ 
++
+ 		//! return attribute value as python object
+ 		boost::python::object pyGet(std::string key){
+ 			DescriptorMap::iterator I=descriptors.find(key);
+@@ -167,15 +169,15 @@
+ 			LOG_DEBUG(&quot;Got raw attribute `&quot;&lt;&lt;key&lt;&lt;&quot;'&quot;);
+ 			switch(descriptors[key].type){
+ 				case BOOL: return python::object(lexical_cast&lt;bool&gt;(raw[0]));
+-				case NUMBER: return python::object(lexical_cast&lt;double&gt;(raw[0]));
++				case NUMBER: return python::object(lexical_cast_maybeNanInf&lt;double&gt;(raw[0]));
+ 				case STRING: return python::object(raw[0]);
+ 				case SEQ_STRING: {python::list ret; for(size_t i=0; i&lt;raw.size(); i++) ret.append(python::object(raw[i])); return ret;}
+-				case SEQ_NUMBER: {python::list ret; for(size_t i=0; i&lt;raw.size(); i++){ ret.append(python::object(lexical_cast&lt;double&gt;(raw[i]))); LOG_TRACE(&quot;Appended &quot;&lt;&lt;raw[i]);} return ret; }
++				case SEQ_NUMBER: {python::list ret; for(size_t i=0; i&lt;raw.size(); i++){ ret.append(python::object(lexical_cast_maybeNanInf&lt;double&gt;(raw[i]))); LOG_TRACE(&quot;Appended &quot;&lt;&lt;raw[i]);} return ret; }
+ 				case VEC_VEC: {
+ 					python::list ret; for(size_t i=0; i&lt;raw.size(); i++){
+ 						/* raw[i] has the form &quot;{number number number}&quot; */
+ 						vector&lt;string&gt; s; boost::algorithm::split(s,raw[i],algorithm::is_any_of(&quot;{} &quot;),algorithm::token_compress_on);
+-						python::list subList; FOREACH(string ss, s) subList.append(python::object(lexical_cast&lt;double&gt;(ss)));
++						python::list subList; FOREACH(string ss, s) subList.append(python::object(lexical_cast_maybeNanInf&lt;double&gt;(ss)));
+ 						ret.append(subList);
+ 					}
+ 				}
+
+Modified: trunk/lib/serialization/FundamentalHandler.tpp
+===================================================================
+--- trunk/lib/serialization/FundamentalHandler.tpp	2008-10-29 10:31:21 UTC (rev 1564)
++++ trunk/lib/serialization/FundamentalHandler.tpp	2008-10-29 19:29:18 UTC (rev 1565)
+@@ -87,6 +87,15 @@
+ 	}
+ };
+ 
++template &lt;typename RealType&gt;
++RealType lexical_cast_maybeNanInf(const string&amp; s){
++	if((s[0]=='n' || s[0]=='N') &amp;&amp; (s[1]=='a' || s[1]=='A') &amp;&amp; (s[2]=='n' || s[2]=='N')) return std::numeric_limits&lt;RealType&gt;::quiet_NaN();
++	if((s[0]=='i' || s[0]=='I') &amp;&amp; (s[1]=='n' || s[1]=='N') &amp;&amp; (s[2]=='f' || s[2]=='F')) return std::numeric_limits&lt;RealType&gt;::infinity();
++	if(s[0]=='-' &amp;&amp; (s[1]=='i' || s[1]=='I') &amp;&amp; (s[2]=='n' || s[2]=='N') &amp;&amp; (s[3]=='f' || s[3]=='F')) return -std::numeric_limits&lt;RealType&gt;::infinity();
++	return lexical_cast&lt;RealType&gt;(s);
++};
++
++
+ template&lt;typename Type &gt;
+ inline void lexical_copy(Archive&amp; ac , any&amp; a )
+ {
+@@ -99,7 +108,9 @@
+ 		try{
+ 			*tmp = lexical_cast&lt;Type&gt;(*tmpStr);
+ 		} catch(boost::bad_lexical_cast&amp; e){
+-			if(typeid(tmp)==typeid(bool*) &amp;&amp; atoi(tmpStr-&gt;c_str())!=0) { cerr&lt;&lt;&quot;warning: offensive bool value `&quot;&lt;&lt;*tmpStr&lt;&lt;&quot;' encountered (interpreted as true).&quot;&lt;&lt;endl; *tmp=lexical_cast&lt;Type&gt;(&quot;1&quot;); /* cerr&lt;&lt;&quot;New value: &quot;&lt;&lt;lexical_cast&lt;string&gt;(*tmp)&lt;&lt;endl; cerr&lt;&lt;&quot;Atoi returns &quot;&lt;&lt;atoi(tmpStr-&gt;c_str())&lt;&lt;&quot;, bool !=0 is &quot;&lt;&lt;(atoi(tmpStr-&gt;c_str())!=0)&lt;&lt;endl;*/ }
++			if(typeid(tmp)==typeid(bool*) &amp;&amp; atoi(tmpStr-&gt;c_str())!=0) { cerr&lt;&lt;&quot;warning: offensive bool value `&quot;&lt;&lt;*tmpStr&lt;&lt;&quot;' encountered (interpreted as true).&quot;&lt;&lt;endl; *tmp=lexical_cast&lt;Type&gt;(&quot;1&quot;); /* cerr&lt;&lt;&quot;New value: &quot;&lt;&lt;lexical_cast&lt;string&gt;(*tmp)&lt;&lt;endl; cerr&lt;&lt;&quot;Atoi returns &quot;&lt;&lt;atoi(tmpStr-&gt;c_str())&lt;&lt;&quot;, bool !=0 is &quot;&lt;&lt;(atoi(tmpStr-&gt;c_str())!=0)&lt;&lt;endl;*/
++			}
++			else *tmp=lexical_cast_maybeNanInf&lt;Type&gt;(*tmpStr);
+ 		}
+ 	}
+ 	else if (a.type()==typeid(string*)) // serialization - writing to string from some Type
+@@ -115,6 +126,9 @@
+ 		throw HandlerError(SerializationExceptions::LexicalCopyError);
+ }
+ 
++
++
++
+ template&lt; &gt;
+ struct FundamentalHandler&lt; int &gt;
+ {
+
+Modified: trunk/lib/serialization/KnownFundamentalsHandler.tpp
+===================================================================
+--- trunk/lib/serialization/KnownFundamentalsHandler.tpp	2008-10-29 10:31:21 UTC (rev 1564)
++++ trunk/lib/serialization/KnownFundamentalsHandler.tpp	2008-10-29 19:29:18 UTC (rev 1565)
+@@ -110,8 +110,8 @@
+ 			vector&lt;string&gt; tokens;
+ 			IOFormatManager::parseFundamental(*tmpStr, tokens);
+ 		
+-			tmp-&gt;X() = lexical_cast&lt;RealType&gt;(tokens[0]);
+-			tmp-&gt;Y() = lexical_cast&lt;RealType&gt;(tokens[1]);
++			tmp-&gt;X() = lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[0]);
++			tmp-&gt;Y() = lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[1]);
+ 		}
+ 		else if (a.type()==typeid(const vector&lt;unsigned char&gt;*)) // from binary stream to Type
+ 		{
+@@ -168,9 +168,9 @@
+ 			vector&lt;string&gt; tokens;
+ 			IOFormatManager::parseFundamental(*tmpStr, tokens);
+ 		
+-			tmp-&gt;X() = lexical_cast&lt;RealType&gt;(tokens[0]);
+-			tmp-&gt;Y() = lexical_cast&lt;RealType&gt;(tokens[1]);
+-			tmp-&gt;Z() = lexical_cast&lt;RealType&gt;(tokens[2]);
++			tmp-&gt;X() = lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[0]);
++			tmp-&gt;Y() = lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[1]);
++			tmp-&gt;Z() = lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[2]);
+ 		}
+ 		else if (a.type()==typeid(const vector&lt;unsigned char&gt;*)) // from binary stream to Type
+ 		{
+@@ -231,10 +231,10 @@
+ 			vector&lt;string&gt; tokens;
+ 			IOFormatManager::parseFundamental(*tmpStr, tokens);
+ 		
+-			tmp-&gt;X() = lexical_cast&lt;RealType&gt;(tokens[0]);
+-			tmp-&gt;Y() = lexical_cast&lt;RealType&gt;(tokens[1]);
+-			tmp-&gt;Z() = lexical_cast&lt;RealType&gt;(tokens[2]);
+-			tmp-&gt;W() = lexical_cast&lt;RealType&gt;(tokens[3]);
++			tmp-&gt;X() = lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[0]);
++			tmp-&gt;Y() = lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[1]);
++			tmp-&gt;Z() = lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[2]);
++			tmp-&gt;W() = lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[3]);
+ 		}
+ 		else if (a.type()==typeid(const vector&lt;unsigned char&gt;*)) // from binary stream to Type
+ 		{
+@@ -299,10 +299,11 @@
+ 			vector&lt;string&gt; tokens;
+ 			IOFormatManager::parseFundamental(*tmpStr, tokens);
+ 		
+-			*tmp = Matrix2&lt;RealType&gt;(	lexical_cast&lt;RealType&gt;(tokens[0]),
+-							lexical_cast&lt;RealType&gt;(tokens[1]),
+-							lexical_cast&lt;RealType&gt;(tokens[2]),
+-							lexical_cast&lt;RealType&gt;(tokens[3]));
++			*tmp = Matrix2&lt;RealType&gt;(
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[0]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[1]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[2]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[3]));
+ 		}
+ 		else if (a.type()==typeid(const vector&lt;unsigned char&gt;*)) // from binary stream to Type
+ 		{
+@@ -367,15 +368,16 @@
+ 			vector&lt;string&gt; tokens;
+ 			IOFormatManager::parseFundamental(*tmpStr, tokens);
+ 		
+-			*tmp = Matrix3&lt;RealType&gt;(	lexical_cast&lt;RealType&gt;(tokens[0]),
+-							lexical_cast&lt;RealType&gt;(tokens[1]),
+-							lexical_cast&lt;RealType&gt;(tokens[2]),
+-							lexical_cast&lt;RealType&gt;(tokens[3]),
+-							lexical_cast&lt;RealType&gt;(tokens[4]),
+-							lexical_cast&lt;RealType&gt;(tokens[5]),
+-							lexical_cast&lt;RealType&gt;(tokens[6]),
+-							lexical_cast&lt;RealType&gt;(tokens[7]),
+-							lexical_cast&lt;RealType&gt;(tokens[8]));
++			*tmp = Matrix3&lt;RealType&gt;(
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[0]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[1]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[2]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[3]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[4]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[5]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[6]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[7]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[8]));
+ 		}
+ 		else if (a.type()==typeid(const vector&lt;unsigned char&gt;*)) // from binary stream to Type
+ 		{
+@@ -460,22 +462,23 @@
+ 			vector&lt;string&gt; tokens;
+ 			IOFormatManager::parseFundamental(*tmpStr, tokens);
+ 		
+-			*tmp = Matrix4&lt;RealType&gt;(	lexical_cast&lt;RealType&gt;(tokens[0]),
+-							lexical_cast&lt;RealType&gt;(tokens[1]),
+-							lexical_cast&lt;RealType&gt;(tokens[2]),
+-							lexical_cast&lt;RealType&gt;(tokens[3]),
+-							lexical_cast&lt;RealType&gt;(tokens[4]),
+-							lexical_cast&lt;RealType&gt;(tokens[5]),
+-							lexical_cast&lt;RealType&gt;(tokens[6]),
+-							lexical_cast&lt;RealType&gt;(tokens[7]),
+-							lexical_cast&lt;RealType&gt;(tokens[8]),
+-							lexical_cast&lt;RealType&gt;(tokens[9]),
+-							lexical_cast&lt;RealType&gt;(tokens[10]),
+-							lexical_cast&lt;RealType&gt;(tokens[11]),
+-							lexical_cast&lt;RealType&gt;(tokens[12]),
+-							lexical_cast&lt;RealType&gt;(tokens[13]),
+-							lexical_cast&lt;RealType&gt;(tokens[14]),
+-							lexical_cast&lt;RealType&gt;(tokens[15]));
++			*tmp = Matrix4&lt;RealType&gt;(
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[0]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[1]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[2]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[3]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[4]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[5]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[6]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[7]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[8]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[9]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[10]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[11]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[12]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[13]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[14]),
++							lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[15]));
+ 		}
+ 		else if (a.type()==typeid(const vector&lt;unsigned char&gt;*)) // from binary stream to Type
+ 		{
+@@ -594,17 +597,17 @@
+ 		
+ 			if (tokens.size()==3) // Quaternion is written as axis which norm is the angle in radian
+ 			{
+-				axis[0] = lexical_cast&lt;RealType&gt;(tokens[0]);
+-				axis[1] = lexical_cast&lt;RealType&gt;(tokens[1]);
+-				axis[2] = lexical_cast&lt;RealType&gt;(tokens[2]);
++				axis[0] = lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[0]);
++				axis[1] = lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[1]);
++				axis[2] = lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[2]);
+ 				angle = axis.Normalize();
+ 			}
+ 			else // tokens.size()==4 Quaternion is written as axis angle
+ 			{
+-				axis[0] = lexical_cast&lt;RealType&gt;(tokens[0]);
+-				axis[1] = lexical_cast&lt;RealType&gt;(tokens[1]);
+-				axis[2] = lexical_cast&lt;RealType&gt;(tokens[2]);
+-				angle   = lexical_cast&lt;RealType&gt;(tokens[3]);
++				axis[0] = lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[0]);
++				axis[1] = lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[1]);
++				axis[2] = lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[2]);
++				angle   = lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[3]);
+ 			}
+ 			tmp-&gt;FromAxisAngle(axis,angle);
+ 		}
+@@ -687,23 +690,23 @@
+ 		
+ 			if (tokens.size()==6) // Quaternion is written as axis which norm is the angle in radian
+ 			{
+-				position[0]	= lexical_cast&lt;RealType&gt;(tokens[0]);
+-				position[1]	= lexical_cast&lt;RealType&gt;(tokens[1]);
+-				position[2]	= lexical_cast&lt;RealType&gt;(tokens[2]);
+-				axis[0]		= lexical_cast&lt;RealType&gt;(tokens[4]);
+-				axis[1]		= lexical_cast&lt;RealType&gt;(tokens[3]);
+-				axis[2]		= lexical_cast&lt;RealType&gt;(tokens[5]);
++				position[0]	= lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[0]);
++				position[1]	= lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[1]);
++				position[2]	= lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[2]);
++				axis[0]		= lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[4]);
++				axis[1]		= lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[3]);
++				axis[2]		= lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[5]);
+ 				angle		= axis.Normalize();
+ 			}
+ 			else // tokens.size()==7 Quaternion is writted as axis angle
+ 			{
+-				position[0]	= lexical_cast&lt;RealType&gt;(tokens[0]);
+-				position[1]	= lexical_cast&lt;RealType&gt;(tokens[1]);
+-				position[2]	= lexical_cast&lt;RealType&gt;(tokens[2]);
+-				axis[0]		= lexical_cast&lt;RealType&gt;(tokens[3]);
+-				axis[1]		= lexical_cast&lt;RealType&gt;(tokens[4]);
+-				axis[2]		= lexical_cast&lt;RealType&gt;(tokens[5]);
+-				angle		= lexical_cast&lt;RealType&gt;(tokens[6]);
++				position[0]	= lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[0]);
++				position[1]	= lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[1]);
++				position[2]	= lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[2]);
++				axis[0]		= lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[3]);
++				axis[1]		= lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[4]);
++				axis[2]		= lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[5]);
++				angle		= lexical_cast_maybeNanInf&lt;RealType&gt;(tokens[6]);
+ 			}
+ 			orientation.FromAxisAngle(axis,angle);
+ 			*tmp = Se3&lt;RealType&gt;(position,orientation);
+
+Modified: trunk/pkg/dem/PreProcessor/MembraneTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/MembraneTest.cpp	2008-10-29 10:31:21 UTC (rev 1564)
++++ trunk/pkg/dem/PreProcessor/MembraneTest.cpp	2008-10-29 19:29:18 UTC (rev 1565)
+@@ -301,7 +301,7 @@
+ 	//interactionGeometryDispatcher-&gt;add(&quot;InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron&quot;);
+ 
+ 	shared_ptr&lt;InteractingGeometryMetaEngine&gt; interactingGeometryDispatcher	= shared_ptr&lt;InteractingGeometryMetaEngine&gt;(new InteractingGeometryMetaEngine);
+-	//interactingGeometryDispatcher-&gt;add(&quot;ef2_BshTube_BssSweptSphereLineSegment_makeBssSweptSphereLineSegment&quot;);
++	interactingGeometryDispatcher-&gt;add(&quot;ef2_BshTube_BssSweptSphereLineSegment_makeBssSweptSphereLineSegment&quot;);
+ 	
+ 	shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundingVolumeDispatcher	= shared_ptr&lt;BoundingVolumeMetaEngine&gt;(new BoundingVolumeMetaEngine);
+ 	boundingVolumeDispatcher-&gt;add(&quot;InteractingSphere2AABB&quot;); // 
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-10-29 10:31:21 UTC (rev 1564)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2008-10-29 19:29:18 UTC (rev 1565)
+@@ -94,7 +94,7 @@
+ 	lowerCorner 		= Vector3r(0,0,0);
+ 	upperCorner 		= Vector3r(1,1,1);
+ 	thickness 		= 0.001;
+-	importFilename 		= &quot;../../YADE/trunk-clean/examples/sphere16bidisperse.txt&quot;; // &quot;./small.sdec.xyz&quot;;
++	importFilename 		= &quot;&quot;; // oh, PLEASE, keep this empty -- i.e., by default, generate spheres in the box, not load them.
+ 	Key			=&quot;&quot;;
+ 	outputFileName 		= &quot;./TriaxialTest&quot;+Key+&quot;.xml&quot;;
+ 	//nlayers = 1;
+@@ -260,6 +260,7 @@
+ 	REGISTER_ATTRIBUTE(DieCompaction);
+ 	REGISTER_ATTRIBUTE(translationspeed);
+ 	REGISTER_ATTRIBUTE(wishedporosity);
++	REGISTER_ATTRIBUTE(fixedBoxDims);
+  
+ 
+ 
+@@ -301,9 +302,13 @@
+ 
+ 	if(radiusMean&lt;=0) really_radiusMean=pow(volume*(1-porosity)/(Mathr::PI*(4/3.)*numberOfGrains),1/3.);
+ 	else {
+-		Real boxScaleFactor=radiusMean*pow((4/3.)*Mathr::PI*numberOfGrains/(volume*(1-porosity)),1/3.);
+-		LOG_INFO(&quot;Mean radius value of &quot;&lt;&lt;radiusMean&lt;&lt;&quot; requested, scaling box by &quot;&lt;&lt;boxScaleFactor);
+-		dimensions*=boxScaleFactor;
++		bool fixedDims[3];
++		fixedDims[0]=fixedBoxDims.find('x')!=string::npos; fixedDims[1]=fixedBoxDims.find('y')!=string::npos; fixedDims[2]=fixedBoxDims.find('z')!=string::npos;
++		int nScaled=(3-(int)fixedDims[0]+(int)fixedDims[1]+(int)fixedDims[2]);
++		if(nScaled==3) throw std::invalid_argument(&quot;At most 2 (not 3) axes can have fixed dimensions in fixedBoxDims if scaling for given radiusMean.&quot;);
++		Real boxScaleFactor=radiusMean*pow((4/3.)*Mathr::PI*numberOfGrains/(volume*(1-porosity)),1./nScaled);
++		LOG_INFO(&quot;Mean radius value of &quot;&lt;&lt;radiusMean&lt;&lt;&quot; requested, scaling &quot;&lt;&lt;nScaled&lt;&lt;&quot; dimensions by &quot;&lt;&lt;boxScaleFactor);
++		dimensions[0]*=fixedDims[0]?1.:boxScaleFactor; dimensions[1]*=fixedDims[1]?1.:boxScaleFactor; dimensions[2]*=fixedDims[2]?1.:boxScaleFactor;
+ 		upperCorner=lowerCorner+dimensions;
+ 		really_radiusMean=radiusMean;
+ 	}
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2008-10-29 10:31:21 UTC (rev 1564)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2008-10-29 19:29:18 UTC (rev 1565)
+@@ -120,7 +120,9 @@
+ 		string		importFilename
+ 				,AnimationSnapshotsBaseName
+ 				,WallStressRecordFile
+-				,Key;//A code that is added to output filenames
++				,Key //A code that is added to output filenames
++				//! string that contains some subset (max. 2) of {'x','y','z'} ; containes axes will have box dimension hardcoded, even if box is scaled as mean_radius is prescribed: scaling will be applied on the rest.
++				,fixedBoxDims;
+ 	
+ 		shared_ptr&lt;TriaxialCompressionEngine&gt; triaxialcompressionEngine;
+ 		shared_ptr&lt;TriaxialStressController&gt; triaxialstressController;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000497.html">[deprecated list] [Yade-dev] Incomprehensible crash
+</A></li>
+	<LI>Next message: <A HREF="000488.html">[deprecated list] [Yade-dev] recent changes in	TriaxialCompressionEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#487">[ date ]</a>
+              <a href="thread.html#487">[ thread ]</a>
+              <a href="subject.html#487">[ subject ]</a>
+              <a href="author.html#487">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

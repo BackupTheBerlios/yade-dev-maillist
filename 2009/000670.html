@@ -1,0 +1,592 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1661 - in trunk/pkg/dem:	.	DataClass/InteractionPhysics	Engine/EngineUnit	Engine/StandAloneEngine	RenderingEngine	RenderingEngine/GLDrawSimpleViscoelasticInteraction	RenderingEngine/GLDrawViscoelasticInteraction
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1661%20-%20in%20trunk/pkg/dem%3A%0A%09.%09DataClass/InteractionPhysics%0A%09Engine/EngineUnit%09Engine/StandAloneEngine%0A%09RenderingEngine%09RenderingEngine/GLDrawSimpleViscoelasticInteraction%09RenderingEngine/GLDrawViscoelasticInteraction&In-Reply-To=%3C200902091703.n19H3bP0008185%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000699.html">
+   <LINK REL="Next"  HREF="000671.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1661 - in trunk/pkg/dem:	.	DataClass/InteractionPhysics	Engine/EngineUnit	Engine/StandAloneEngine	RenderingEngine	RenderingEngine/GLDrawSimpleViscoelasticInteraction	RenderingEngine/GLDrawViscoelasticInteraction</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1661%20-%20in%20trunk/pkg/dem%3A%0A%09.%09DataClass/InteractionPhysics%0A%09Engine/EngineUnit%09Engine/StandAloneEngine%0A%09RenderingEngine%09RenderingEngine/GLDrawSimpleViscoelasticInteraction%09RenderingEngine/GLDrawViscoelasticInteraction&In-Reply-To=%3C200902091703.n19H3bP0008185%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1661 - in trunk/pkg/dem:	.	DataClass/InteractionPhysics	Engine/EngineUnit	Engine/StandAloneEngine	RenderingEngine	RenderingEngine/GLDrawSimpleViscoelasticInteraction	RenderingEngine/GLDrawViscoelasticInteraction">sega at mail.berlios.de
+       </A><BR>
+    <I>Mon Feb  9 18:03:37 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000699.html">[deprecated list] [Yade-dev] ConstitutiveLawDispatcher (speed)
+</A></li>
+        <LI>Next message: <A HREF="000671.html">[deprecated list] [Yade-dev] [svn] r1662 - in	trunk:	examples/dynamic_simulation_tests gui/qt3	pkg/dem	pkg/dem/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#670">[ date ]</a>
+              <a href="thread.html#670">[ thread ]</a>
+              <a href="subject.html#670">[ subject ]</a>
+              <a href="author.html#670">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2009-02-09 18:03:36 +0100 (Mon, 09 Feb 2009)
+New Revision: 1661
+
+Added:
+   trunk/pkg/dem/DataClass/InteractionPhysics/ViscoelasticInteraction.cpp
+   trunk/pkg/dem/DataClass/InteractionPhysics/ViscoelasticInteraction.hpp
+   trunk/pkg/dem/RenderingEngine/GLDrawViscoelasticInteraction/
+   trunk/pkg/dem/RenderingEngine/GLDrawViscoelasticInteraction/GLDrawViscoelasticInteraction.cpp
+   trunk/pkg/dem/RenderingEngine/GLDrawViscoelasticInteraction/GLDrawViscoelasticInteraction.hpp
+Removed:
+   trunk/pkg/dem/DataClass/InteractionPhysics/SimpleViscoelasticInteraction.cpp
+   trunk/pkg/dem/DataClass/InteractionPhysics/SimpleViscoelasticInteraction.hpp
+   trunk/pkg/dem/RenderingEngine/GLDrawSimpleViscoelasticInteraction/GLDrawSimpleViscoelasticInteraction.cpp
+   trunk/pkg/dem/RenderingEngine/GLDrawSimpleViscoelasticInteraction/GLDrawSimpleViscoelasticInteraction.hpp
+Modified:
+   trunk/pkg/dem/Engine/EngineUnit/SimpleViscoelasticRelationships.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticContactLaw.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticSpheresInteractionRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticSpheresInteractionRecorder.hpp
+   trunk/pkg/dem/SConscript
+Log:
+Class SimpleViscoelasticInteraction is renamed to ViscoelasticInteraction and is inherited from ElasticContactInteraction now.
+
+
+Deleted: trunk/pkg/dem/DataClass/InteractionPhysics/SimpleViscoelasticInteraction.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionPhysics/SimpleViscoelasticInteraction.cpp	2009-02-08 22:57:07 UTC (rev 1660)
++++ trunk/pkg/dem/DataClass/InteractionPhysics/SimpleViscoelasticInteraction.cpp	2009-02-09 17:03:36 UTC (rev 1661)
+@@ -1,32 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2008 by Dorofeenko Sergei                               *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>						 *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include &quot;SimpleViscoelasticInteraction.hpp&quot;
+-
+-
+-SimpleViscoelasticInteraction::SimpleViscoelasticInteraction()
+-{
+-	createIndex();
+-}
+-
+-SimpleViscoelasticInteraction::~SimpleViscoelasticInteraction()
+-{
+-}
+-
+-void SimpleViscoelasticInteraction::registerAttributes()
+-{
+-	REGISTER_ATTRIBUTE(kn);
+-	REGISTER_ATTRIBUTE(ks);
+-	REGISTER_ATTRIBUTE(cn);
+-	REGISTER_ATTRIBUTE(cs);
+-	REGISTER_ATTRIBUTE(tangensOfFrictionAngle);
+-	REGISTER_ATTRIBUTE(prevNormal);
+-	REGISTER_ATTRIBUTE(normalForce);
+-	REGISTER_ATTRIBUTE(shearForce);
+-}
+-YADE_PLUGIN();
+
+Deleted: trunk/pkg/dem/DataClass/InteractionPhysics/SimpleViscoelasticInteraction.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionPhysics/SimpleViscoelasticInteraction.hpp	2009-02-08 22:57:07 UTC (rev 1660)
++++ trunk/pkg/dem/DataClass/InteractionPhysics/SimpleViscoelasticInteraction.hpp	2009-02-09 17:03:36 UTC (rev 1661)
+@@ -1,48 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2008 by Sergei Dorofeenko                               *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>						 *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#pragma once
+-
+-#include&lt;yade/core/InteractionPhysics.hpp&gt;
+-
+-class SimpleViscoelasticInteraction : public InteractionPhysics
+-{
+-	public :
+-	    
+-	    /// Normal interaction elastic constants.
+-	    Real kn;
+-	    /// Normal interaction viscous constants.
+-	    Real cn;
+-	    /// Shear interaction elastic constants.
+-	    Real ks;
+-	    /// Shear interaction viscous constants.
+-	    Real cs;
+-	    /// Coulomb friction
+-	    Real tangensOfFrictionAngle;
+-	    /// Unit normal of the contact plane
+-	    Vector3r prevNormal;
+-	    /// Normal force
+-	    Vector3r normalForce;
+-	    /// Incremental shear force
+-	    Vector3r shearForce;
+-	
+-		SimpleViscoelasticInteraction();
+-		virtual ~SimpleViscoelasticInteraction();
+-	protected :
+-		virtual void registerAttributes();
+-
+-	REGISTER_CLASS_NAME(SimpleViscoelasticInteraction);
+-	REGISTER_BASE_CLASS_NAME(InteractionPhysics);
+-
+-	REGISTER_CLASS_INDEX(SimpleViscoelasticInteraction,InteractionPhysics);
+-
+-};
+-
+-REGISTER_SERIALIZABLE(SimpleViscoelasticInteraction);
+-
+-
+
+Copied: trunk/pkg/dem/DataClass/InteractionPhysics/ViscoelasticInteraction.cpp (from rev 1660, trunk/pkg/dem/DataClass/InteractionPhysics/SimpleViscoelasticInteraction.cpp)
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionPhysics/SimpleViscoelasticInteraction.cpp	2009-02-08 22:57:07 UTC (rev 1660)
++++ trunk/pkg/dem/DataClass/InteractionPhysics/ViscoelasticInteraction.cpp	2009-02-09 17:03:36 UTC (rev 1661)
+@@ -0,0 +1,26 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Dorofeenko Sergei                               *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>						 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;ViscoelasticInteraction.hpp&quot;
++
++
++ViscoelasticInteraction::ViscoelasticInteraction()
++{
++	createIndex();
++}
++
++ViscoelasticInteraction::~ViscoelasticInteraction()
++{
++}
++
++void ViscoelasticInteraction::registerAttributes()
++{
++	REGISTER_ATTRIBUTE(cn);
++	REGISTER_ATTRIBUTE(cs);
++}
++YADE_PLUGIN();
+
+
+Property changes on: trunk/pkg/dem/DataClass/InteractionPhysics/ViscoelasticInteraction.cpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/pkg/dem/DataClass/InteractionPhysics/ViscoelasticInteraction.hpp (from rev 1660, trunk/pkg/dem/DataClass/InteractionPhysics/SimpleViscoelasticInteraction.hpp)
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionPhysics/SimpleViscoelasticInteraction.hpp	2009-02-08 22:57:07 UTC (rev 1660)
++++ trunk/pkg/dem/DataClass/InteractionPhysics/ViscoelasticInteraction.hpp	2009-02-09 17:03:36 UTC (rev 1661)
+@@ -0,0 +1,36 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Sergei Dorofeenko                               *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>						 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#pragma once
++
++#include&lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
++
++class ViscoelasticInteraction : public ElasticContactInteraction
++{
++	public :
++	    
++	    /// Normal viscous 
++	    Real cn;
++	    /// Shear viscous 
++	    Real cs;
++	
++		ViscoelasticInteraction();
++		virtual ~ViscoelasticInteraction();
++	protected :
++		virtual void registerAttributes();
++
++	REGISTER_CLASS_NAME(ViscoelasticInteraction);
++	REGISTER_BASE_CLASS_NAME(InteractionPhysics);
++
++	REGISTER_CLASS_INDEX(ViscoelasticInteraction,InteractionPhysics);
++
++};
++
++REGISTER_SERIALIZABLE(ViscoelasticInteraction);
++
++
+
+
+Property changes on: trunk/pkg/dem/DataClass/InteractionPhysics/ViscoelasticInteraction.hpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/SimpleViscoelasticRelationships.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/SimpleViscoelasticRelationships.cpp	2009-02-08 22:57:07 UTC (rev 1660)
++++ trunk/pkg/dem/Engine/EngineUnit/SimpleViscoelasticRelationships.cpp	2009-02-09 17:03:36 UTC (rev 1661)
+@@ -8,7 +8,7 @@
+ 
+ #include&quot;SimpleViscoelasticRelationships.hpp&quot;
+ #include&lt;yade/pkg-dem/SimpleViscoelasticBodyParameters.hpp&gt;
+-#include&lt;yade/pkg-dem/SimpleViscoelasticInteraction.hpp&gt;
++#include&lt;yade/pkg-dem/ViscoelasticInteraction.hpp&gt;
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+@@ -33,8 +33,8 @@
+     SimpleViscoelasticBodyParameters* sdec1 = static_cast&lt;SimpleViscoelasticBodyParameters*&gt;(b1.get());
+     SimpleViscoelasticBodyParameters* sdec2 = static_cast&lt;SimpleViscoelasticBodyParameters*&gt;(b2.get());
+ 
+-    interaction-&gt;interactionPhysics = shared_ptr&lt;SimpleViscoelasticInteraction&gt;(new SimpleViscoelasticInteraction());
+-    SimpleViscoelasticInteraction* contactPhysics = YADE_CAST&lt;SimpleViscoelasticInteraction*&gt;(interaction-&gt;interactionPhysics.get());
++    interaction-&gt;interactionPhysics = shared_ptr&lt;ViscoelasticInteraction&gt;(new ViscoelasticInteraction());
++    ViscoelasticInteraction* contactPhysics = YADE_CAST&lt;ViscoelasticInteraction*&gt;(interaction-&gt;interactionPhysics.get());
+ 
+     contactPhysics-&gt;kn = sdec1-&gt;kn * sdec2-&gt;kn / (sdec1-&gt;kn + sdec2-&gt;kn);
+     contactPhysics-&gt;ks = sdec1-&gt;ks * sdec2-&gt;ks / (sdec1-&gt;ks + sdec2-&gt;ks);
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticContactLaw.cpp	2009-02-08 22:57:07 UTC (rev 1660)
++++ trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticContactLaw.cpp	2009-02-09 17:03:36 UTC (rev 1661)
+@@ -11,7 +11,7 @@
+ 
+ #include&quot;SimpleViscoelasticContactLaw.hpp&quot;
+ #include&lt;yade/pkg-dem/SimpleViscoelasticBodyParameters.hpp&gt;
+-#include&lt;yade/pkg-dem/SimpleViscoelasticInteraction.hpp&gt;
++#include&lt;yade/pkg-dem/ViscoelasticInteraction.hpp&gt;
+ #include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+@@ -58,7 +58,7 @@
+ 			//if( !( (*bodies)[id1]-&gt;getGroupMask() &amp; (*bodies)[id2]-&gt;getGroupMask() &amp; sdecGroupMask) ) continue;
+ 
+ 			SpheresContactGeometry*    currentContactGeometry= YADE_CAST&lt;SpheresContactGeometry*&gt;(contact-&gt;interactionGeometry.get());
+-			SimpleViscoelasticInteraction* currentContactPhysics = YADE_CAST&lt;SimpleViscoelasticInteraction*&gt; (contact-&gt;interactionPhysics.get());
++			ViscoelasticInteraction* currentContactPhysics = YADE_CAST&lt;ViscoelasticInteraction*&gt; (contact-&gt;interactionPhysics.get());
+ 			if((!currentContactGeometry)||(!currentContactPhysics)) continue;
+ 	
+ 			SimpleViscoelasticBodyParameters* de1 				= YADE_CAST&lt;SimpleViscoelasticBodyParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticSpheresInteractionRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticSpheresInteractionRecorder.cpp	2009-02-08 22:57:07 UTC (rev 1660)
++++ trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticSpheresInteractionRecorder.cpp	2009-02-09 17:03:36 UTC (rev 1661)
+@@ -10,7 +10,7 @@
+ #include &lt;yade/core/MetaBody.hpp&gt;
+ #include &lt;boost/lexical_cast.hpp&gt;
+ 
+-SimpleViscoelasticSpheresInteractionRecorder::SimpleViscoelasticSpheresInteractionRecorder (): DataRecorder(), interactionSphere(new SpheresContactGeometry), viscoelasticInteraction(new SimpleViscoelasticInteraction)
++SimpleViscoelasticSpheresInteractionRecorder::SimpleViscoelasticSpheresInteractionRecorder (): DataRecorder(), interactionSphere(new SpheresContactGeometry), viscoelasticInteraction(new ViscoelasticInteraction)
+ {
+ 	outputBase = &quot;contacts&quot;;
+ 	interval=50;
+@@ -58,7 +58,7 @@
+ 	if ( i-&gt;interactionPhysics-&gt;getClassIndex() != viscoelasticInteraction-&gt;getClassIndex() ) continue;
+ 
+ 	const SpheresContactGeometry* s = static_cast&lt;SpheresContactGeometry*&gt;(i-&gt;interactionGeometry.get());
+-	const SimpleViscoelasticInteraction* p = static_cast&lt;SimpleViscoelasticInteraction*&gt;(i-&gt;interactionPhysics.get());
++	const ViscoelasticInteraction* p = static_cast&lt;ViscoelasticInteraction*&gt;(i-&gt;interactionPhysics.get());
+ 
+ 	std::string outputFile = outputBase+lexical_cast&lt;string&gt;(i-&gt;getId1())+&quot;-&quot;+lexical_cast&lt;string&gt;(i-&gt;getId2())+&quot;.dat&quot;;
+ 	
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticSpheresInteractionRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticSpheresInteractionRecorder.hpp	2009-02-08 22:57:07 UTC (rev 1660)
++++ trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticSpheresInteractionRecorder.hpp	2009-02-09 17:03:36 UTC (rev 1661)
+@@ -9,16 +9,16 @@
+ 
+ #include &lt;yade/core/DataRecorder.hpp&gt;
+ #include &lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+-#include &lt;yade/pkg-dem/SimpleViscoelasticInteraction.hpp&gt;
++#include &lt;yade/pkg-dem/ViscoelasticInteraction.hpp&gt;
+ #include &lt;set&gt;
+ 
+-/// Save SpheresContactGeometry and SimpleViscoelasticInteraction of the
++/// Save SpheresContactGeometry and ViscoelasticInteraction of the
+ /// interaction between the body Id1 and the body Id2 into the file
+ /// outputBaseId1-Id2.
+ class SimpleViscoelasticSpheresInteractionRecorder : public DataRecorder {
+ private: 
+     shared_ptr&lt;SpheresContactGeometry&gt; interactionSphere;
+-    shared_ptr&lt;SimpleViscoelasticInteraction&gt; viscoelasticInteraction;
++    shared_ptr&lt;ViscoelasticInteraction&gt; viscoelasticInteraction;
+     set&lt;pair&lt;int,int&gt; &gt; interaction_ids;
+ 
+ public :
+
+Deleted: trunk/pkg/dem/RenderingEngine/GLDrawSimpleViscoelasticInteraction/GLDrawSimpleViscoelasticInteraction.cpp
+===================================================================
+--- trunk/pkg/dem/RenderingEngine/GLDrawSimpleViscoelasticInteraction/GLDrawSimpleViscoelasticInteraction.cpp	2009-02-08 22:57:07 UTC (rev 1660)
++++ trunk/pkg/dem/RenderingEngine/GLDrawSimpleViscoelasticInteraction/GLDrawSimpleViscoelasticInteraction.cpp	2009-02-09 17:03:36 UTC (rev 1661)
+@@ -1,38 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2006 by Sergei Dorofeenko				 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include &quot;GLDrawSimpleViscoelasticInteraction.hpp&quot;
+-#include &lt;yade/pkg-dem/SimpleViscoelasticInteraction.hpp&gt;
+-#include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+-
+-
+-void GLDrawSimpleViscoelasticInteraction::go(
+-		const shared_ptr&lt;InteractionPhysics&gt;&amp; ip,
+-		const shared_ptr&lt;Interaction&gt;&amp;,
+-		const shared_ptr&lt;Body&gt;&amp; b1,
+-		const shared_ptr&lt;Body&gt;&amp; b2,
+-		bool wireFrame)
+-{
+-	SimpleViscoelasticInteraction* p = static_cast&lt;SimpleViscoelasticInteraction*&gt;(ip.get());
+-	Vector3r mid = 0.5*(b1-&gt;physicalParameters-&gt;se3.position+b2-&gt;physicalParameters-&gt;se3.position);
+-	glTranslatev(mid);
+-	glColor3(1.0,0.0,0.0);
+-	
+-	glPushMatrix();
+-	glRasterPos2i(0,0);
+-	std::string str;
+-	str = std::string(&quot;  kn=&quot;) + boost::lexical_cast&lt;std::string&gt;((float)(p-&gt;kn))
+-	    + std::string(&quot;  cn=&quot;) + boost::lexical_cast&lt;std::string&gt;((float)(p-&gt;cn))
+-	    + std::string(&quot;  ks=&quot;) + boost::lexical_cast&lt;std::string&gt;((float)(p-&gt;ks))
+-	    + std::string(&quot;  cs=&quot;) + boost::lexical_cast&lt;std::string&gt;((float)(p-&gt;cs));
+-	for(unsigned int i=0;i&lt;str.length();i++)
+-		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, str[i]);
+-	glPopMatrix();
+-}
+-
+-YADE_PLUGIN();
+
+Deleted: trunk/pkg/dem/RenderingEngine/GLDrawSimpleViscoelasticInteraction/GLDrawSimpleViscoelasticInteraction.hpp
+===================================================================
+--- trunk/pkg/dem/RenderingEngine/GLDrawSimpleViscoelasticInteraction/GLDrawSimpleViscoelasticInteraction.hpp	2009-02-08 22:57:07 UTC (rev 1660)
++++ trunk/pkg/dem/RenderingEngine/GLDrawSimpleViscoelasticInteraction/GLDrawSimpleViscoelasticInteraction.hpp	2009-02-09 17:03:36 UTC (rev 1661)
+@@ -1,25 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2006 by Sergei Dorofeenko				 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#pragma once
+-
+-#include &lt;yade/pkg-common/GLDrawFunctors.hpp&gt;
+-
+-class GLDrawSimpleViscoelasticInteraction : public GLDrawInteractionPhysicsFunctor
+-{
+-	public :
+-		virtual void go(const shared_ptr&lt;InteractionPhysics&gt;&amp;,const shared_ptr&lt;Interaction&gt;&amp;,const shared_ptr&lt;Body&gt;&amp;,const shared_ptr&lt;Body&gt;&amp;,bool wireFrame);
+-
+-	RENDERS(SimpleViscoelasticInteraction);
+-	REGISTER_CLASS_NAME(GLDrawSimpleViscoelasticInteraction);
+-	REGISTER_BASE_CLASS_NAME(GLDrawInteractionPhysicsFunctor);
+-};
+-
+-REGISTER_SERIALIZABLE(GLDrawSimpleViscoelasticInteraction);
+-
+-
+
+Copied: trunk/pkg/dem/RenderingEngine/GLDrawViscoelasticInteraction/GLDrawViscoelasticInteraction.cpp (from rev 1660, trunk/pkg/dem/RenderingEngine/GLDrawSimpleViscoelasticInteraction/GLDrawSimpleViscoelasticInteraction.cpp)
+===================================================================
+--- trunk/pkg/dem/RenderingEngine/GLDrawSimpleViscoelasticInteraction/GLDrawSimpleViscoelasticInteraction.cpp	2009-02-08 22:57:07 UTC (rev 1660)
++++ trunk/pkg/dem/RenderingEngine/GLDrawViscoelasticInteraction/GLDrawViscoelasticInteraction.cpp	2009-02-09 17:03:36 UTC (rev 1661)
+@@ -0,0 +1,38 @@
++/*************************************************************************
++*  Copyright (C) 2006 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;GLDrawViscoelasticInteraction.hpp&quot;
++#include &lt;yade/pkg-dem/ViscoelasticInteraction.hpp&gt;
++#include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
++
++
++void GLDrawViscoelasticInteraction::go(
++		const shared_ptr&lt;InteractionPhysics&gt;&amp; ip,
++		const shared_ptr&lt;Interaction&gt;&amp;,
++		const shared_ptr&lt;Body&gt;&amp; b1,
++		const shared_ptr&lt;Body&gt;&amp; b2,
++		bool wireFrame)
++{
++	ViscoelasticInteraction* p = static_cast&lt;ViscoelasticInteraction*&gt;(ip.get());
++	Vector3r mid = 0.5*(b1-&gt;physicalParameters-&gt;se3.position+b2-&gt;physicalParameters-&gt;se3.position);
++	glTranslatev(mid);
++	glColor3(1.0,0.0,0.0);
++	
++	glPushMatrix();
++	glRasterPos2i(0,0);
++	std::string str;
++	str = std::string(&quot;  kn=&quot;) + boost::lexical_cast&lt;std::string&gt;((float)(p-&gt;kn))
++	    + std::string(&quot;  cn=&quot;) + boost::lexical_cast&lt;std::string&gt;((float)(p-&gt;cn))
++	    + std::string(&quot;  ks=&quot;) + boost::lexical_cast&lt;std::string&gt;((float)(p-&gt;ks))
++	    + std::string(&quot;  cs=&quot;) + boost::lexical_cast&lt;std::string&gt;((float)(p-&gt;cs));
++	for(unsigned int i=0;i&lt;str.length();i++)
++		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, str[i]);
++	glPopMatrix();
++}
++
++YADE_PLUGIN();
+
+
+Property changes on: trunk/pkg/dem/RenderingEngine/GLDrawViscoelasticInteraction/GLDrawViscoelasticInteraction.cpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/pkg/dem/RenderingEngine/GLDrawViscoelasticInteraction/GLDrawViscoelasticInteraction.hpp (from rev 1660, trunk/pkg/dem/RenderingEngine/GLDrawSimpleViscoelasticInteraction/GLDrawSimpleViscoelasticInteraction.hpp)
+===================================================================
+--- trunk/pkg/dem/RenderingEngine/GLDrawSimpleViscoelasticInteraction/GLDrawSimpleViscoelasticInteraction.hpp	2009-02-08 22:57:07 UTC (rev 1660)
++++ trunk/pkg/dem/RenderingEngine/GLDrawViscoelasticInteraction/GLDrawViscoelasticInteraction.hpp	2009-02-09 17:03:36 UTC (rev 1661)
+@@ -0,0 +1,25 @@
++/*************************************************************************
++*  Copyright (C) 2006 by Sergei Dorofeenko				 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#pragma once
++
++#include &lt;yade/pkg-common/GLDrawFunctors.hpp&gt;
++
++class GLDrawViscoelasticInteraction : public GLDrawInteractionPhysicsFunctor
++{
++	public :
++		virtual void go(const shared_ptr&lt;InteractionPhysics&gt;&amp;,const shared_ptr&lt;Interaction&gt;&amp;,const shared_ptr&lt;Body&gt;&amp;,const shared_ptr&lt;Body&gt;&amp;,bool wireFrame);
++
++	RENDERS(ViscoelasticInteraction);
++	REGISTER_CLASS_NAME(GLDrawViscoelasticInteraction);
++	REGISTER_BASE_CLASS_NAME(GLDrawInteractionPhysicsFunctor);
++};
++
++REGISTER_SERIALIZABLE(GLDrawViscoelasticInteraction);
++
++
+
+
+Property changes on: trunk/pkg/dem/RenderingEngine/GLDrawViscoelasticInteraction/GLDrawViscoelasticInteraction.hpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2009-02-08 22:57:07 UTC (rev 1660)
++++ trunk/pkg/dem/SConscript	2009-02-09 17:03:36 UTC (rev 1661)
+@@ -698,7 +698,7 @@
+ 			'SimpleViscoelasticRelationships',
+ 			'SimpleViscoelasticContactLaw',
+ 			'SimpleViscoelasticBodyParameters',
+-			'SimpleViscoelasticInteraction',
++			'ViscoelasticInteraction',
+                         'PhysicalActionVectorVector',
+                         'InteractionVecSet',
+                         'BodyRedirectionVector',
+@@ -1082,23 +1082,24 @@
+ 		,['DataClass/PhysicalParameters/SimpleViscoelasticBodyParameters.cpp']
+ 		,LIBS=env['LIBS']+['RigidBodyParameters'])
+ 
+-	,env.SharedLibrary('SimpleViscoelasticInteraction'
+-		,['DataClass/InteractionPhysics/SimpleViscoelasticInteraction.cpp'])
++	,env.SharedLibrary('ViscoelasticInteraction'
++		,['DataClass/InteractionPhysics/ViscoelasticInteraction.cpp']
++	    ,LIBS=env['LIBS']+['ElasticContactInteraction'])
+     
+-	,env.SharedLibrary('GLDrawSimpleViscoelasticInteraction'
+-	    ,['RenderingEngine/GLDrawSimpleViscoelasticInteraction/GLDrawSimpleViscoelasticInteraction.cpp']
+-	    ,LIBS=env['LIBS']+['yade-opengl','SimpleViscoelasticInteraction'])
++	,env.SharedLibrary('GLDrawViscoelasticInteraction'
++	    ,['RenderingEngine/GLDrawViscoelasticInteraction/GLDrawViscoelasticInteraction.cpp']
++	    ,LIBS=env['LIBS']+['yade-opengl','ViscoelasticInteraction'])
+ 
+ 	,env.SharedLibrary('SimpleViscoelasticRelationships'
+ 		,['Engine/EngineUnit/SimpleViscoelasticRelationships.cpp']
+ 		,LIBS=env['LIBS']+['SimpleViscoelasticBodyParameters'
+-		    ,'SimpleViscoelasticInteraction'
++		    ,'ViscoelasticInteraction'
+ 		    ,'SpheresContactGeometry'
+ 		    ])
+ 
+ 	,env.SharedLibrary('SimpleViscoelasticContactLaw'
+ 		,['Engine/StandAloneEngine/SimpleViscoelasticContactLaw.cpp']
+-		,LIBS=env['LIBS']+['SimpleViscoelasticInteraction'
++		,LIBS=env['LIBS']+['ViscoelasticInteraction'
+ 		    ,'SimpleViscoelasticBodyParameters'
+ 		    ,'SpheresContactGeometry'
+ 		    ,'Force'
+@@ -1124,7 +1125,7 @@
+ 
+ 	,env.SharedLibrary('SimpleViscoelasticSpheresInteractionRecorder'
+ 	    ,['Engine/StandAloneEngine/SimpleViscoelasticSpheresInteractionRecorder.cpp']
+-	    ,LIBS=env['LIBS']+['SpheresContactGeometry','SimpleViscoelasticInteraction'])
++	    ,LIBS=env['LIBS']+['SpheresContactGeometry','ViscoelasticInteraction'])
+ 
+ 	,env.SharedLibrary('RigidBodyRecorder'
+ 	,['Engine/StandAloneEngine/RigidBodyRecorder.cpp']
+@@ -1139,7 +1140,7 @@
+ 			    ,'SimpleViscoelasticRelationships'
+ 			    ,'SimpleViscoelasticContactLaw'
+ 			    ,'SimpleViscoelasticBodyParameters'
+-			    ,'SimpleViscoelasticInteraction'
++			    ,'ViscoelasticInteraction'
+ 			    ,'SimpleViscoelasticSpheresInteractionRecorder'
+ 			    ,'GravityEngines'
+ 			    ,'BodyRedirectionVector'
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000699.html">[deprecated list] [Yade-dev] ConstitutiveLawDispatcher (speed)
+</A></li>
+	<LI>Next message: <A HREF="000671.html">[deprecated list] [Yade-dev] [svn] r1662 - in	trunk:	examples/dynamic_simulation_tests gui/qt3	pkg/dem	pkg/dem/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#670">[ date ]</a>
+              <a href="thread.html#670">[ thread ]</a>
+              <a href="subject.html#670">[ subject ]</a>
+              <a href="author.html#670">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

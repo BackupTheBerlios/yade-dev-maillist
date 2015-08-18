@@ -1,0 +1,437 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1700 - in trunk: examples	examples/collider-perf	gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1700%20-%20in%20trunk%3A%20examples%0A%09examples/collider-perf%09gui/py&In-Reply-To=%3C200902281906.n1SJ6w8x010312%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000785.html">
+   <LINK REL="Next"  HREF="000787.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1700 - in trunk: examples	examples/collider-perf	gui/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1700%20-%20in%20trunk%3A%20examples%0A%09examples/collider-perf%09gui/py&In-Reply-To=%3C200902281906.n1SJ6w8x010312%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1700 - in trunk: examples	examples/collider-perf	gui/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Feb 28 20:06:58 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000785.html">[deprecated list] [Yade-dev] [svn] r1699 - in trunk: extra/clump	gui/py	pkg/common/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000787.html">[deprecated list] [Yade-dev] collider benchmark errors
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#786">[ date ]</a>
+              <a href="thread.html#786">[ thread ]</a>
+              <a href="subject.html#786">[ subject ]</a>
+              <a href="author.html#786">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-02-28 20:06:57 +0100 (Sat, 28 Feb 2009)
+New Revision: 1700
+
+Added:
+   trunk/examples/collider-perf/
+   trunk/examples/collider-perf/README
+   trunk/examples/collider-perf/perf.py
+   trunk/examples/collider-perf/perf.table
+Modified:
+   trunk/gui/py/utils.py
+   trunk/gui/py/yade-multi
+   trunk/gui/py/yadeControl.cpp
+Log:
+1. Make the yade-multi scheduler multithread-aware.
+2. Add the collider performance test as example
+3. added utils.replaceCollider(anotherCollider) for convenience
+4. added Omega().isChildClassOf(classNameChild,classNameParent)
+
+
+Added: trunk/examples/collider-perf/README
+===================================================================
+--- trunk/examples/collider-perf/README	2009-02-28 10:26:47 UTC (rev 1699)
++++ trunk/examples/collider-perf/README	2009-02-28 19:06:57 UTC (rev 1700)
+@@ -0,0 +1,21 @@
++This example tests performance of PersistentSAPCollider and SpatialQuickSortCollider
++and was basis for <A HREF="http://yade.wikia.com/wiki/Colliders_performace">http://yade.wikia.com/wiki/Colliders_performace</A> .
++
++To run the test, say:
++
++ yade-trunk-multi perf.table perf.py
++
++and wait. If you feel brave enough, uncomment lines with many spheres in perf.table. 
++They take very long time (128k spheres with SAP collider over 3 hours)
++
++
++1. File with nSpheres spheres (loose packing) is generated first, it if doesn't exist yet.
++   This can take a few minutes, but is done only the first time for the particular sphere
++	number.
++2. First iteration on the scene (TriaxialTest and the selected collider) with timings is
++   done and timing.stats() printed (appears in the log file).
++3. Another 100 iterations are measured with siming.stats(), after which the test exits.
++
++To get the results, grep the resulting log files, named like perf.64k.log (64k spheres with
++PersistentSAPCollider), perf.32k.q.log (32k spheres, SpatialQuickSortCollider) etc.
++
+
+Added: trunk/examples/collider-perf/perf.py
+===================================================================
+--- trunk/examples/collider-perf/perf.py	2009-02-28 10:26:47 UTC (rev 1699)
++++ trunk/examples/collider-perf/perf.py	2009-02-28 19:06:57 UTC (rev 1700)
+@@ -0,0 +1,27 @@
++
++utils.readParamsFromTable(nSpheres=1000,collider='PersistentSAPCollider',noTableOk=True)
++# name of file containing sphere packing with given number of spheres
++spheresFile=&quot;packing-%dk.spheres&quot;%(nSpheres/1000)
++
++import os
++if not os.path.exists(spheresFile):
++	print &quot;Generating packing&quot;
++	p=Preprocessor('TriaxialTest',{'numberOfGrains':nSpheres,'radiusMean':1e-3,'lowerCorner':[0,0,0],'upperCorner':[1,1,1]})
++	p.load()
++	utils.spheresToFile(spheresFile)
++	O.reset()
++	print &quot;Packing %s done&quot;%spheresFile
++else: print &quot;Packing found (%s), using it.&quot;%spheresFile
++
++from yade import timing
++O.timingEnabled=True
++
++p=Preprocessor('TriaxialTest',{'importFilename':spheresFile}).load()
++utils.replaceCollider(StandAloneEngine(collider))
++
++O.step()
++timing.stats()
++timing.reset()
++O.run(100,True)
++timing.stats()
++quit()
+
+Added: trunk/examples/collider-perf/perf.table
+===================================================================
+--- trunk/examples/collider-perf/perf.table	2009-02-28 10:26:47 UTC (rev 1699)
++++ trunk/examples/collider-perf/perf.table	2009-02-28 19:06:57 UTC (rev 1700)
+@@ -0,0 +1,51 @@
++description nSpheres collider
++#128k 128000 'PersistentSAPCollider'
++#96k 96000 'PersistentSAPCollider'
++#64k 64000 'PersistentSAPCollider'
++#56k 56000 'PersistentSAPCollider'
++#48k 48000 'PersistentSAPCollider'
++#40k 40000 'PersistentSAPCollider'
++36k 36000 'PersistentSAPCollider'
++32k 32000 'PersistentSAPCollider'
++28k 28000 'PersistentSAPCollider'
++24k 24000 'PersistentSAPCollider'
++20k 20000 'PersistentSAPCollider'
++18k 18000 'PersistentSAPCollider'
++16k 16000 'PersistentSAPCollider'
++14k 14000 'PersistentSAPCollider'
++12k 12000 'PersistentSAPCollider'
++10k 10000 'PersistentSAPCollider'
++9k 9000 'PersistentSAPCollider'
++8k 8000 'PersistentSAPCollider'
++7k 7000 'PersistentSAPCollider'
++6k 6000 'PersistentSAPCollider'
++5k 5000 'PersistentSAPCollider'
++4k 4000 'PersistentSAPCollider'
++3k 3000 'PersistentSAPCollider'
++2k 2000 'PersistentSAPCollider'
++1k 1000 'PersistentSAPCollider'
++128k.q 128000 'SpatialQuickSortCollider'
++96k.q 96000 'SpatialQuickSortCollider'
++64k.q 64000 'SpatialQuickSortCollider'
++56k.q 56000 'SpatialQuickSortCollider'
++48k.q 48000 'SpatialQuickSortCollider'
++40k.q 40000 'SpatialQuickSortCollider'
++36k.q 36000 'SpatialQuickSortCollider'
++32k.q 32000 'SpatialQuickSortCollider'
++28k.q 28000 'SpatialQuickSortCollider'
++24k.q 24000 'SpatialQuickSortCollider'
++20k.q 20000 'SpatialQuickSortCollider'
++18k.q 18000 'SpatialQuickSortCollider'
++16k.q 16000 'SpatialQuickSortCollider'
++14k.q 14000 'SpatialQuickSortCollider'
++12k.q 12000 'SpatialQuickSortCollider'
++10k.q 10000 'SpatialQuickSortCollider'
++9k.q 9000 'SpatialQuickSortCollider'
++8k.q 8000 'SpatialQuickSortCollider'
++7k.q 7000 'SpatialQuickSortCollider'
++6k.q 6000 'SpatialQuickSortCollider'
++5k.q 5000 'SpatialQuickSortCollider'
++4k.q 4000 'SpatialQuickSortCollider'
++3k.q 3000 'SpatialQuickSortCollider'
++2k.q 2000 'SpatialQuickSortCollider'
++1k.q 1000 'SpatialQuickSortCollider'
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2009-02-28 10:26:47 UTC (rev 1699)
++++ trunk/gui/py/utils.py	2009-02-28 19:06:57 UTC (rev 1700)
+@@ -354,10 +354,12 @@
+ 		for i in range(len(names)):
+ 			if names[i]=='description': o.tags['description']=values[i]
+ 			else:
+-				if names[i] not in kw.keys() and (not unknownOk or names[i][0]=='!'): raise NameError(&quot;Parameter `%s' has no default value assigned&quot;%names[i])
+-				if names[i] in kw.keys(): kw.pop(names[i])
+-				eq=&quot;%s=%s&quot;%(names[i],repr(values[i]))
+-				exec('__builtin__.%s=%s'%(names[i],values[i])); tagsParams+=['%s=%s'%(names[i],values[i])]; dictParams[names[i]]=values[i]
++				print 'Parameter name:',names[i],names[i][0]
++				if names[i] not in kw.keys():
++					if (not unknownOk) and names[i][0]!='!': raise NameError(&quot;Parameter `%s' has no default value assigned&quot;%names[i])
++				else: kw.pop(names[i])
++				if names[i][0]!='!':
++					exec('__builtin__.%s=%s'%(names[i],values[i])); tagsParams+=['%s=%s'%(names[i],values[i])]; dictParams[names[i]]=values[i]
+ 	defaults=[]
+ 	for k in kw.keys():
+ 		exec(&quot;__builtin__.%s=%s&quot;%(k,repr(kw[k])))
+@@ -420,3 +422,13 @@
+     f = DeusExMachina('PythonRunnerFilter',{'command':command,'isFilterActivated':isFilterActivated})
+     O.engines+=[f]
+     return f
++
++def replaceCollider(colliderEngine):
++	&quot;&quot;&quot;Replaces collider (BroadInteractor) engine with the engine supplied. Raises error if no collider is in engines.&quot;&quot;&quot;
++	colliderIdx=-1
++	for i,e in enumerate(O.engines):
++		if O.isChildClassOf(e.name,&quot;BroadInteractor&quot;):
++			colliderIdx=i
++			break
++	if colliderIdx&lt;0: raise RuntimeError(&quot;No BroadInteractor found within O.engines.&quot;)
++	O.engines=O.engines[:colliderIdx]+[colliderEngine]+O.engines[colliderIdx+1:]
+
+Modified: trunk/gui/py/yade-multi
+===================================================================
+--- trunk/gui/py/yade-multi	2009-02-28 10:26:47 UTC (rev 1699)
++++ trunk/gui/py/yade-multi	2009-02-28 19:06:57 UTC (rev 1700)
+@@ -6,9 +6,11 @@
+ import os, sys, thread, time
+ 
+ class JobInfo():
+-	def __init__(self,num,id,command,log):
++	def __init__(self,num,id,command,log,nSlots):
+ 		self.started,self.finished,self.duration,self.exitStatus=None,None,None,None
+-		self.command=command; self.num=num; self.log=log; self.id=id
++		self.command=command; self.num=num; self.log=log; self.id=id; self.nSlots=nSlots
++		self.status='PENDING'
++		self.threadNum=None
+ 	def saveInfo(self):
+ 		log=file(self.log,'a')
+ 		log.write(&quot;&quot;&quot;
+@@ -22,85 +24,40 @@
+ &quot;&quot;&quot;%(self.id,self.exitStatus,'OK' if self.exitStatus==0 else 'FAILED',self.duration,self.command,time.asctime(time.localtime(self.started)),time.asctime(time.localtime(self.finished))));
+ 		log.close()
+ 
+-#
+-# _MANY_ thanks to Mark Pettit for concurrent jobs handling!
+-# <A HREF="http://code.activestate.com/recipes/534160/">http://code.activestate.com/recipes/534160/</A>
+-#
+ 
+ 
+-def __concurrent_batch(cmd,thread_num,completion_status_dict,exit_code_dict):
+-	&quot;&quot;&quot;Helper routine for 'concurrent_batches.&quot;&quot;&quot;
+-	job=jobs[thread_num]
++def runJob(job):
++	job.status='RUNNING'
+ 	job.started=time.time();
+-	print '#%d started on %s'%(thread_num,time.asctime())
+-	exit_code_dict[thread_num] = os.system(cmd)
+-	completion_status_dict[thread_num] = 1  # for sum() routine
+-	job.finished=time.time(); dt=job.finished-job.started;
+-	job.exitStatus=exit_code_dict[thread_num]
++	print '#%d (%s%s) started on %s'%(job.num,job.id,'' if job.nSlots==1 else '/%d'%job.nSlots,time.asctime())
++	job.exitStatus=os.system(job.command)
++	job.finished=time.time()
++	dt=job.finished-job.started;
+ 	job.duration='%02d:%02d:%02d'%(dt//3600,(dt%3600)//60,(dt%60))
+ 	strStatus='done   ' if job.exitStatus==0 else 'FAILED '
+-	print &quot;#%d %s (exit status %d), duration %s, log %s&quot;%(thread_num,strStatus,exit_code_dict[thread_num],job.duration,job.log)
++	job.status='DONE'
++	print &quot;#%d (%s%s) %s (exit status %d), duration %s, log %s&quot;%(job.num,job.id,'' if job.nSlots==1 else '/%d'%job.nSlots,strStatus,job.exitStatus,job.duration,job.log)
+ 	job.saveInfo()
++	
++def runJobs(jobs,numSlots):
++	running,pending=0,len(jobs)
++	inf=1000000
++	while (running&gt;0) or (pending&gt;0):
++		pending,running,done=sum([j.nSlots for j in jobs if j.status=='PENDING']),sum([j.nSlots for j in jobs if j.status=='RUNNING']),sum([j.nSlots for j in jobs if j.status=='DONE'])
++		#print [j.status for j in jobs]
++		freeSlots=numSlots-running
++		minRequire=min([inf]+[j.nSlots for j in jobs if j.status=='PENDING'])
++		if minRequire==inf: minRequire=0
++		#print pending,'pending;',running,'running;',done,'done;',freeSlots,'free;',minRequire,'min'
++		if minRequire&gt;freeSlots and running==0:
++			freeSlots=minRequire
++		for j in [j for j in jobs if j.status=='PENDING']:
++			if j.nSlots&lt;=freeSlots:
++				thread.start_new_thread(runJob,(j,))
++				break
++		time.sleep(.5)
+ 
+-def concurrent_batches(batchlist,maxjobs=0,maxtime=0):
+-	&quot;&quot;&quot;Run a list of batch commands simultaneously.
+ 
+-	'batchlist' is a list of strings suitable for submitting under os.system().
+-	Each job will run in a separate thread, with the thread ending when the
+-	subprocess ends.
+-	'maxjobs' will, if greater then zero, be the maximum number of simultaneous
+-	jobs which can concurrently run.  This would be used to limit the number of
+-	processes where too many could flood a system, causing performance issues.
+-	'maxtime', when greater than zero, be the maximum amount of time (seconds)
+-	that we will wait for processes to complete.  After that, we will return,
+-	but no jobs will be killed.  In other words, the jobs still running will
+-	continue to run, and hopefully finish in the course of time.
+-
+-	example: concurrent_batches((&quot;gzip abc&quot;,&quot;gzip def&quot;,&quot;gzip xyz&quot;))
+-
+-	returns: a dictionary of exit status codes, but only when ALL jobs are
+-			 complete, or the maximum time has been exceeded.
+-			 Note that if returning due to exceeding time, the dictionary will
+-			 continue to be updated by the threads as they complete.
+-			 The key of the dictionary is the thread number, which matches the
+-			 index of the list of batch commands.  The value is the result of
+-			 the os.system call.
+-
+-	gotcha:  If both the maxjobs and maxtime is set, there is a possibility that
+-			 not all jobs will be submitted.  The only way to detect this will be
+-			 by checking for the absence of the KEY in the returned dictionary.
+-	&quot;&quot;&quot;
+-
+-	if not batchlist: return {}
+-	completion_status_dict, exit_code_dict = {}, {}
+-	num_jobs = len(batchlist)
+-	start_time = time.time()
+-	for thread_num, cmd in enumerate(batchlist):
+-		exit_code_dict[thread_num] = None
+-		completion_status_dict[thread_num] = 0 # for sum() routine
+-		thread.start_new_thread(__concurrent_batch,
+-			  (cmd,thread_num,completion_status_dict,exit_code_dict))
+-		while True:
+-			completed = sum(completion_status_dict.values())
+-			if num_jobs == completed:
+-				return exit_code_dict	  # all done
+-			running = thread_num - completed + 1
+-			if maxtime &gt; 0:
+-				if time.time() - start_time &gt; maxtime:
+-					return exit_code_dict
+-			if not maxjobs:
+-				if thread_num &lt; num_jobs-1:  # have we submitted all jobs ?
+-					break				  #  no, so break to for cmd loop
+-				else:
+-					time.sleep(.2)		 #  yes, so wait until jobs are complete
+-					continue
+-			if running &lt; maxjobs and thread_num &lt; num_jobs-1:
+-				break	# for next for loop
+-			time.sleep(.2)
+-#
+-# now begins the yade code
+-#
+-
+ import sys,re,optparse
+ def getNumCores(): return len([l for l in open('/proc/cpuinfo','r') if l.find('processor')==0])
+ 
+@@ -151,16 +108,16 @@
+ 		elif l==1: print &quot;WARNING: skipping line 1 that should contain variable labels&quot;
+ 		else: useLines+=[l]
+ else: useLines=availableLines
+-print &quot;Will use lines &quot;,', '.join([str(i) for i in useLines])+'.'
+-# find column where description is
+ try:
+ 	idColumn=headings.index('description')
+ 	idStrings={}
+ 	for i in useLines: idStrings[i]=values[i][idColumn] # textual descripion of respective lines 
+-	print idStrings
++	print &quot;Will use lines &quot;,', '.join([str(i)+' (%s)'%idStrings[i] for i in useLines])+'.'
++	#print idStrings
+ except ValueError:
+ 	idColumn=None
+ 	idStrings=None
++	print &quot;Will use lines &quot;,', '.join([str(i) for i in useLines])+'.'
+ 
+ 
+ jobs=[]
+@@ -169,14 +126,18 @@
+ 	if idStrings: logFile=logFile.replace('@',idStrings[l])
+ 	else: logFile=logFile.replace('@',str(l))
+ 	envVars=[]
++	nSlots=1
+ 	for col,head in enumerate(headings):
+ 		if head=='!EXEC': executable=values[l][col]
++		if head=='!OMP_NUM_THREADS': nSlots=int(values[l][col])
+ 		if head[0]=='!': envVars+=['%s=%s'%(head[1:],values[l][col])]
+-	jobs.append(JobInfo(i,idStrings[l] if idStrings else '#'+str(i),'PARAM_TABLE=%s:%d %s nice -n %d %s -N PythonUI -- -n -x %s &gt; %s 2&gt;&amp;1'%(table,l,' '.join(envVars),nice,executable,simul,logFile),logFile))
++	if nSlots&gt;maxJobs: print 'WARNING: job #%d wants %d slots but only %d are available'%(i,nSlots,maxJobs)
++	jobs.append(JobInfo(i,idStrings[l] if idStrings else '#'+str(i),'PARAM_TABLE=%s:%d %s nice -n %d %s -N PythonUI -- -n -x %s &gt; %s 2&gt;&amp;1'%(table,l,' '.join(envVars),nice,executable,simul,logFile),logFile,nSlots))
+ 
+ print &quot;Job summary:&quot;
+ for job in jobs:
+-	print '   #%d (%s):'%(job.num,job.id),job.command
++	print '   #%d (%s%s):'%(job.num,job.id,'' if job.nSlots==1 else '/%d'%job.nSlots),job.command
++
+ # OK, go now
+-concurrent_batches([job.command for job in jobs],maxjobs=maxJobs)
++runJobs(jobs,maxJobs)
+ print 'All jobs finished, bye.'
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2009-02-28 10:26:47 UTC (rev 1699)
++++ trunk/gui/py/yadeControl.cpp	2009-02-28 19:06:57 UTC (rev 1700)
+@@ -584,6 +584,10 @@
+ 		return ret;
+ 	}
+ 
++	bool isChildClassOf(const string&amp; child, const string&amp; base){
++		return (Omega::instance().isInheritingFrom(child,base));
++	}
++
+ 	pyTags tags_get(void){assertRootBody(); return pyTags(OMEGA.getRootBody());}
+ 
+ 	void interactionContainer_set(string clss){
+@@ -663,6 +667,7 @@
+ 		.add_property(&quot;actions&quot;,&amp;pyOmega::actions_get)
+ 		.add_property(&quot;tags&quot;,&amp;pyOmega::tags_get)
+ 		.def(&quot;childClasses&quot;,&amp;pyOmega::listChildClasses)
++		.def(&quot;isChildClassOf&quot;,&amp;pyOmega::isChildClassOf)
+ 		.add_property(&quot;bodyContainer&quot;,&amp;pyOmega::bodyContainer_get,&amp;pyOmega::bodyContainer_set)
+ 		.add_property(&quot;interactionContainer&quot;,&amp;pyOmega::interactionContainer_get,&amp;pyOmega::interactionContainer_set)
+ 		.add_property(&quot;actionContainer&quot;,&amp;pyOmega::physicalActionContainer_get,&amp;pyOmega::physicalActionContainer_set)
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000785.html">[deprecated list] [Yade-dev] [svn] r1699 - in trunk: extra/clump	gui/py	pkg/common/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000787.html">[deprecated list] [Yade-dev] collider benchmark errors
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#786">[ date ]</a>
+              <a href="thread.html#786">[ thread ]</a>
+              <a href="subject.html#786">[ subject ]</a>
+              <a href="author.html#786">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

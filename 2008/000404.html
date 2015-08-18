@@ -1,0 +1,579 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1530 - in trunk: core gui	gui/py gui/qt3 scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1530%20-%20in%20trunk%3A%20core%20gui%0A%09gui/py%20gui/qt3%20scripts&In-Reply-To=%3C200809281237.m8SCbWDE004931%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000406.html">
+   <LINK REL="Next"  HREF="000407.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1530 - in trunk: core gui	gui/py gui/qt3 scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1530%20-%20in%20trunk%3A%20core%20gui%0A%09gui/py%20gui/qt3%20scripts&In-Reply-To=%3C200809281237.m8SCbWDE004931%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1530 - in trunk: core gui	gui/py gui/qt3 scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Sep 28 14:37:32 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000406.html">[deprecated list] [Yade-dev] Xserver hard freeze on intel GPU
+</A></li>
+        <LI>Next message: <A HREF="000407.html">[deprecated list] [Yade-dev] HEAD compilation error.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#404">[ date ]</a>
+              <a href="thread.html#404">[ thread ]</a>
+              <a href="subject.html#404">[ subject ]</a>
+              <a href="author.html#404">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-09-28 14:37:30 +0200 (Sun, 28 Sep 2008)
+New Revision: 1530
+
+Added:
+   trunk/scripts/simple-scene-video.py
+Modified:
+   trunk/core/Omega.cpp
+   trunk/core/Omega.hpp
+   trunk/gui/SConscript
+   trunk/gui/py/utils.py
+   trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+   trunk/gui/qt3/GLSimulationPlayerViewer.hpp
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/GLViewer.hpp
+   trunk/gui/qt3/QtGUI-python.cpp
+   trunk/gui/qt3/YadeQtMainWindow.hpp
+   trunk/gui/qt3/qt.py
+   trunk/scripts/simple-scene-player.py
+Log:
+1. 3d view now has by default a OSD with iteration number, simulation time and virtual time. This can be toggled (all combinations) by pressing 'D' (which used to mean toggling d+ynamic flag...?) and set also from python with GLView.timeMask='rvi' (Real,Virtual,Iteration) and so on.
+2. Simulation player displays real time and wall clock loaded from db (insted of bogus values of system clock when the player is being run)
+3. new periodic SnapshotEngine that takes snapshots of any GL view to numbered PNG files.
+4. new function qt.makeSimulationVideo that makes video _while running the simulation_.
+5. qt.createVideo renamed to qt.makePlayerVideo
+6. Added Omega method to query computation duration.
+7. An example of using qt.makeSimulationVideo is in new file scripts/simple-scene-video.py
+
+
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2008-09-26 09:42:13 UTC (rev 1529)
++++ trunk/core/Omega.cpp	2008-09-28 12:37:30 UTC (rev 1530)
+@@ -56,6 +56,7 @@
+ ptime Omega::getMsStartingSimulationTime(){return msStartingSimulationTime;}
+ time_duration Omega::getSimulationPauseDuration(){return simulationPauseDuration;}
+ Real Omega::getComputationTime(){ return (microsec_clock::local_time()-msStartingSimulationTime-simulationPauseDuration).total_milliseconds()/1e3; }
++time_duration Omega::getComputationDuration(){return microsec_clock::local_time()-msStartingSimulationTime-simulationPauseDuration;}
+ 
+ 
+ void Omega::reset(){
+
+Modified: trunk/core/Omega.hpp
+===================================================================
+--- trunk/core/Omega.hpp	2008-09-26 09:42:13 UTC (rev 1529)
++++ trunk/core/Omega.hpp	2008-09-28 12:37:30 UTC (rev 1530)
+@@ -148,6 +148,7 @@
+ 		
+ 		Real		getSimulationTime();
+ 		Real 		getComputationTime();
++		time_duration getComputationDuration();
+ 		void		incrementSimulationTime();
+ 		
+ 		void init();
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2008-09-26 09:42:13 UTC (rev 1529)
++++ trunk/gui/SConscript	2008-09-28 12:37:30 UTC (rev 1530)
+@@ -24,7 +24,7 @@
+ 				'qt3/QtGeneratedSimulationPlayer.ui',
+ 				'qt3/QtSimulationPlayer.cpp',
+ 				],
+-			LIBS=env['LIBS']+['yade-base',
++			LIBS=env['LIBS']+linkPythonUI+[
+ 				'yade-opengl',
+ 				'yade-serialization',
+ 				'XMLFormatManager',
+@@ -34,8 +34,10 @@
+ 				'PositionOrientationRecorder',
+ 				'sqlite3x',
+ 				'FilterEngine',
+-				'$QGLVIEWER_LIB']+linkPythonUI,
+-			CPPPATH=env['CPPPATH']+['qt3']),
++				'$QGLVIEWER_LIB'],
++			CPPPATH=env['CPPPATH']+['qt3']
++		),
++		env.SharedLibrary('SnapshotEngine',['qt3/SnapshotEngine.cpp'],LIBS=env['LIBS']+['QtGUI'],CPPPATH=env['CPPPATH']+['qt3']),
+ 	])
+ 
+ if 'EMBED_PYTHON' in env['CPPDEFINES']:
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2008-09-26 09:42:13 UTC (rev 1529)
++++ trunk/gui/py/utils.py	2008-09-28 12:37:30 UTC (rev 1530)
+@@ -198,3 +198,21 @@
+ 			o.bodies[i].mold.postProcessAttributes()
+ 		return imp.number_of_facets
+ 
++def encodeVideoFromFrames(wildcard,out,renameNotOverwrite=True,fps=24):
++	import pygst,sys,gobject,os
++	pygst.require(&quot;0.10&quot;)
++	import gst
++	if renameNotOverwrite and os.path.exists(out):
++		i=0;
++		while(os.path.exists(out+&quot;~%d&quot;%i)): i+=1
++		os.rename(out,out+&quot;~%d&quot;%i); print &quot;Output file `%s' already existed, old file renamed to `%s'&quot;%(out,out+&quot;~%d&quot;%i)
++	print &quot;Encoding video from %s to %s&quot;%(wildcard,out)
++	pipeline=gst.parse_launch('multifilesrc location=&quot;%s&quot; index=0 caps=&quot;image/png,framerate=\(fraction\)%d/1&quot; ! pngdec ! ffmpegcolorspace ! theoraenc sharpness=2 quality=32 ! oggmux ! filesink location=&quot;%s&quot;'%(wildcard,fps,out))
++	bus=pipeline.get_bus()
++	bus.add_signal_watch()
++	mainloop=gobject.MainLoop();
++	bus.connect(&quot;message::eos&quot;,lambda bus,msg: mainloop.quit())
++	pipeline.set_state(gst.STATE_PLAYING)
++	mainloop.run()
++	pipeline.set_state(gst.STATE_NULL); pipeline.get_state()
++
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-09-26 09:42:13 UTC (rev 1529)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2008-09-28 12:37:30 UTC (rev 1530)
+@@ -18,6 +18,7 @@
+ #include&lt;boost/iostreams/filter/bzip2.hpp&gt;
+ #include&lt;boost/iostreams/device/file.hpp&gt;
+ #include&lt;boost/algorithm/string.hpp&gt;
++#include&lt;boost/date_time/posix_time/posix_time.hpp&gt;
+ 
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ #include&lt;yade/pkg-common/FilterEngine.hpp&gt;
+@@ -257,11 +258,23 @@
+ 			if(col_rgb_b&gt;=0) b-&gt;geometricalModel-&gt;diffuseColor[2]=reader.getdouble(col_rgb_b);
+ 		}
+ 		Omega::instance().setCurrentIteration(con-&gt;executeint(&quot;select iter from 'records' where bodyTable='&quot;+tableName+&quot;';&quot;));
++		Omega::instance().getRootBody()-&gt;simulationTime=con-&gt;executedouble(&quot;select virtTime from 'records' where bodyTable='&quot;+tableName+&quot;';&quot;);
++		realTime=con-&gt;executedouble(&quot;select realTime from 'records' where bodyTable='&quot;+tableName+&quot;';&quot;);
++		wallClock=con-&gt;executedouble(&quot;select wallClock from 'records' where bodyTable='&quot;+tableName+&quot;';&quot;);
+ 	}
+ 	FOREACH(const shared_ptr&lt;FilterEngine&gt;&amp; e, filters) { if(e-&gt;isActivated()) e-&gt;action(Omega::instance().getRootBody().get()); }
+ 	return true;
+ }
+ 
++string GLSimulationPlayerViewer::getRealTimeString(){
++	ostringstream oss;
++	posix_time::time_duration rt(0,0,(long)realTime,0);
++	oss&lt;&lt;posix_time::to_simple_string(rt)&lt;&lt;&quot;.&quot;&lt;&lt;(long)(realTime*10)%10;
++	posix_time::ptime when=posix_time::from_time_t(wallClock);
++	oss&lt;&lt;&quot; (&quot;&lt;&lt;posix_time::to_simple_string(when)&lt;&lt;&quot;)&quot;;
++	return oss.str();
++}
++
+ void GLSimulationPlayerViewer::bodyWire(bool wire)
+ {
+ //	FOREACH(shared_ptr&lt;Body&gt; b, *Omega::instance().getRootBody()-&gt;bodies)
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.hpp	2008-09-26 09:42:13 UTC (rev 1529)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.hpp	2008-09-28 12:37:30 UTC (rev 1530)
+@@ -28,6 +28,9 @@
+ 		void tryFillingOutputPattern();	
+ 		bool useSQLite;
+ 		shared_ptr&lt;sqlite3x::sqlite3_connection&gt; con;
++		//!  read from db, used in getRealTimeString() called in GLViewer::postDraw
++		Real wallClock, realTime;
++		virtual string getRealTimeString();
+ 	public:
+ 		list&lt;string&gt; snapshots;
+ 		QtSimulationPlayer* simPlayer;
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-09-26 09:42:13 UTC (rev 1529)
++++ trunk/gui/qt3/GLViewer.cpp	2008-09-28 12:37:30 UTC (rev 1530)
+@@ -27,6 +27,7 @@
+ 	renderer=_renderer;
+ 	drawGridXYZ[0]=drawGridXYZ[1]=drawGridXYZ[2]=false;
+ 	drawScale=true;
++	timeDispMask=TIME_REAL|TIME_VIRT|TIME_ITER;
+ 	viewId = id;
+ 	cut_plane = 0;
+ 	cut_plane_delta = -2;
+@@ -48,7 +49,7 @@
+ 
+ 	setKeyDescription(Qt::Key_C,&quot;Set scene center to the selected body (if any)&quot;);
+ 	setKeyDescription(Qt::Key_C &amp; Qt::ALT,&quot;Set scene center to median body position&quot;);
+-	setKeyDescription(Qt::Key_D,&quot;Toggle Body::isDynamic on selection&quot;);
++	setKeyDescription(Qt::Key_D,&quot;Toggle time display mask&quot;);
+ 	setKeyDescription(Qt::Key_G,&quot;Toggle grid&quot;);
+ 	setKeyDescription(Qt::Key_X,&quot;Toggle YZ grid (or: align manipulated clip plane normal with +X)&quot;);
+ 	setKeyDescription(Qt::Key_Y,&quot;Toggle XZ grid (or: align manipulated clip plane normal with +Y)&quot;);
+@@ -206,7 +207,8 @@
+ 	/* letters alphabetically */
+ 	else if(e-&gt;key()==Qt::Key_C &amp;&amp; selectedName() &gt;= 0 &amp;&amp; (*(Omega::instance().getRootBody()-&gt;bodies)).exists(selectedName())) setSceneCenter(manipulatedFrame()-&gt;position());
+ 	else if(e-&gt;key()==Qt::Key_C &amp;&amp; (e-&gt;state() &amp; AltButton)){ displayMessage(&quot;Median centering&quot;); centerMedianQuartile(); }
+-	else if(e-&gt;key()==Qt::Key_D) wasDynamic=true;
++	//else if(e-&gt;key()==Qt::Key_D) wasDynamic=true;
++	else if(e-&gt;key()==Qt::Key_D) {timeDispMask+=1; if(timeDispMask&gt;(TIME_REAL|TIME_VIRT|TIME_ITER))timeDispMask=0; }
+ 	else if(e-&gt;key()==Qt::Key_G) {bool anyDrawn=drawGridXYZ[0]||drawGridXYZ[1]||drawGridXYZ[2]; for(int i=0; i&lt;3; i++)drawGridXYZ[i]=!anyDrawn; }
+ 	else if (e-&gt;key()==Qt::Key_M &amp;&amp; selectedName() &gt;= 0){
+ 		if(!(isMoving=!isMoving)){displayMessage(&quot;Moving done.&quot;); mouseMovesCamera();}
+@@ -490,9 +492,52 @@
+ 		glPopMatrix();
+ 	}
+ 
++	#define _W3 setw(3)&lt;&lt;setfill('0')
++	#define _W2 setw(2)&lt;&lt;setfill('0')
++	if(timeDispMask!=0){
++		const int lineHt=12;
++		unsigned x=10,y=height()-20;
++		glColor3v(Vector3r(1,1,1));
++		if(timeDispMask &amp; GLViewer::TIME_VIRT){
++			ostringstream oss;
++			Real t=Omega::instance().getSimulationTime();
++			unsigned min=((unsigned)t/60),sec=(((unsigned)t)%60),msec=((unsigned)(1e3*t))%1000,usec=((unsigned long)(1e6*t))%1000,nsec=((unsigned long)(1e9*t))%1000;
++			if(min&gt;0) oss&lt;&lt;_W2&lt;&lt;min&lt;&lt;&quot;:&quot;&lt;&lt;_W2&lt;&lt;sec&lt;&lt;&quot;.&quot;&lt;&lt;_W3&lt;&lt;msec&lt;&lt;&quot;m&quot;&lt;&lt;_W3&lt;&lt;usec&lt;&lt;&quot;u&quot;&lt;&lt;_W3&lt;&lt;nsec&lt;&lt;&quot;n&quot;;
++			else if (sec&gt;0) oss&lt;&lt;_W2&lt;&lt;sec&lt;&lt;&quot;.&quot;&lt;&lt;_W3&lt;&lt;msec&lt;&lt;&quot;m&quot;&lt;&lt;_W3&lt;&lt;usec&lt;&lt;&quot;u&quot;&lt;&lt;_W3&lt;&lt;nsec&lt;&lt;&quot;n&quot;;
++			else if (msec&gt;0) oss&lt;&lt;_W3&lt;&lt;msec&lt;&lt;&quot;m&quot;&lt;&lt;_W3&lt;&lt;usec&lt;&lt;&quot;u&quot;&lt;&lt;_W3&lt;&lt;nsec&lt;&lt;&quot;n&quot;;
++			else if (usec&gt;0) oss&lt;&lt;_W3&lt;&lt;usec&lt;&lt;&quot;u&quot;&lt;&lt;_W3&lt;&lt;nsec&lt;&lt;&quot;n&quot;;
++			else oss&lt;&lt;_W3&lt;&lt;nsec&lt;&lt;&quot;ns&quot;;
++			QGLViewer::drawText(x,y,oss.str());
++			y-=lineHt;
++		}
++		glColor3v(Vector3r(0,.5,.5));
++		if(timeDispMask &amp; GLViewer::TIME_REAL){
++			QGLViewer::drawText(x,y,getRealTimeString() /* virtual, since player gets that from db */);
++			y-=lineHt;
++		}
++		if(timeDispMask &amp; GLViewer::TIME_ITER){
++			ostringstream oss;
++			oss&lt;&lt;&quot;#&quot;&lt;&lt;Omega::instance().getCurrentIteration()&lt;&lt;&quot;\n&quot;;
++			QGLViewer::drawText(x,y,oss.str());
++			y-=lineHt;
++		}
++	}
+ 	QGLViewer::postDraw();
+ }
+ 
++string GLViewer::getRealTimeString(){
++	ostringstream oss;
++	time_duration t=Omega::instance().getComputationDuration();
++	unsigned d=t.hours()/24,h=t.hours()%24,m=t.minutes(),s=t.seconds();
++	oss&lt;&lt;&quot;wall &quot;;
++	if(d&gt;0) oss&lt;&lt;d&lt;&lt;&quot;days &quot;&lt;&lt;_W2&lt;&lt;h&lt;&lt;&quot;:&quot;&lt;&lt;_W2&lt;&lt;m&lt;&lt;&quot;:&quot;&lt;&lt;_W2&lt;&lt;s;
++	else if(h&gt;0) oss&lt;&lt;_W2&lt;&lt;h&lt;&lt;&quot;:&quot;&lt;&lt;_W2&lt;&lt;m&lt;&lt;&quot;:&quot;&lt;&lt;_W2&lt;&lt;s;
++	else oss&lt;&lt;_W2&lt;&lt;m&lt;&lt;&quot;:&quot;&lt;&lt;_W2&lt;&lt;s;
++	return oss.str();
++}
++#undef _W2
++#undef _W3
++
+ void GLViewer::closeEvent(QCloseEvent *e){
+ 	//emit closeSignal(viewId);
+ 	YadeQtMainWindow::self-&gt;closeView(this);
+@@ -549,8 +594,10 @@
+ 	QDomElement de=document.createElement(&quot;gridXYZ&quot;);
+ 	string val; if(drawGridXYZ[0])val+=&quot;x&quot;; if(drawGridXYZ[1])val+=&quot;y&quot;; if(drawGridXYZ[2])val+=&quot;z&quot;;
+ 	de.setAttribute(&quot;normals&quot;,val);
++	QDomElement de2=document.createElement(&quot;timeDisplay&quot;); de2.setAttribute(&quot;mask&quot;,timeDispMask);
+ 	QDomElement res=QGLViewer::domElement(name,document);
+ 	res.appendChild(de);
++	res.appendChild(de2);
+ 	return res;
+ }
+ 
+@@ -559,13 +606,12 @@
+ 	QGLViewer::initFromDOMElement(element);
+ 	QDomElement child=element.firstChild().toElement();
+ 	while (!child.isNull()){
+-		if (child.tagName()==&quot;gridXYZ&quot;){
+-			if (child.hasAttribute(&quot;normals&quot;)){
+-				string val=child.attribute(&quot;normals&quot;).lower();
+-				drawGridXYZ[0]=false; drawGridXYZ[1]=false; drawGridXYZ[2]=false;
+-				if(val.find(&quot;x&quot;)!=string::npos)drawGridXYZ[0]=true; if(val.find(&quot;y&quot;)!=string::npos)drawGridXYZ[1]=true; if(val.find(&quot;z&quot;)!=string::npos)drawGridXYZ[2]=true;
+-			}
++		if (child.tagName()==&quot;gridXYZ&quot; &amp;&amp; child.hasAttribute(&quot;normals&quot;)){
++			string val=child.attribute(&quot;normals&quot;).lower();
++			drawGridXYZ[0]=false; drawGridXYZ[1]=false; drawGridXYZ[2]=false;
++			if(val.find(&quot;x&quot;)!=string::npos)drawGridXYZ[0]=true; if(val.find(&quot;y&quot;)!=string::npos)drawGridXYZ[1]=true; if(val.find(&quot;z&quot;)!=string::npos)drawGridXYZ[2]=true;
+ 		}
++		if(child.tagName()==&quot;timeDisplay&quot; &amp;&amp; child.hasAttribute(&quot;mask&quot;)) timeDispMask=atoi(child.attribute(&quot;mask&quot;).ascii());
+ 		child = child.nextSibling().toElement();
+ 	}
+ }
+
+Modified: trunk/gui/qt3/GLViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.hpp	2008-09-26 09:42:13 UTC (rev 1529)
++++ trunk/gui/qt3/GLViewer.hpp	2008-09-28 12:37:30 UTC (rev 1530)
+@@ -55,6 +55,8 @@
+ 		void centerMedianQuartile();
+ 		bool 			drawGridXYZ[3];
+ 		bool 			drawScale;
++		int timeDispMask;
++		enum{TIME_REAL=1,TIME_VIRT=2,TIME_ITER=4};
+ 
+ 		GLViewer (int id, shared_ptr&lt;OpenGLRenderingEngine&gt; _renderer, QWidget * parent=0, QGLWidget * shareWidget=0);
+ 		virtual ~GLViewer (){};
+@@ -91,6 +93,8 @@
+ 	protected :
+ 		virtual void keyPressEvent(QKeyEvent *e);
+ 		virtual void postDraw();
++		// overridden in the player that doesn't get time from system clock but from the db
++		virtual string getRealTimeString();
+ 		virtual void closeEvent(QCloseEvent *e);
+ 		virtual void postSelection(const QPoint&amp; point);
+ 		virtual void endSelection(const QPoint &amp;point);
+
+Modified: trunk/gui/qt3/QtGUI-python.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI-python.cpp	2008-09-26 09:42:13 UTC (rev 1529)
++++ trunk/gui/qt3/QtGUI-python.cpp	2008-09-28 12:37:30 UTC (rev 1530)
+@@ -138,6 +138,8 @@
+ 		string pyStr(){return string(&quot;&lt;GLViewer for view #&quot;)+lexical_cast&lt;string&gt;(ensuredMainWindow()-&gt;viewNo(glv))+&quot;&gt;&quot;;}
+ 		void saveDisplayParameters(size_t n){glv-&gt;saveDisplayParameters(n);}
+ 		void useDisplayParameters(size_t n){glv-&gt;useDisplayParameters(n);}
++		string get_timeDisp(){const int&amp; m(glv-&gt;timeDispMask); string ret; if(m&amp;GLViewer::TIME_REAL) ret+='r'; if(m&amp;GLViewer::TIME_VIRT) ret+=&quot;v&quot;; if(m&amp;GLViewer::TIME_ITER) ret+=&quot;i&quot;; return ret;}
++		void set_timeDisp(string s){int&amp; m(glv-&gt;timeDispMask); m=0; FOREACH(char c, s){switch(c){case 'r': m|=GLViewer::TIME_REAL; break; case 'v': m|=GLViewer::TIME_VIRT; break; case 'i': m|=GLViewer::TIME_ITER; break; default: throw invalid_argument(string(&quot;Invalid flag for timeDisp: `&quot;)+c+&quot;'&quot;);}}}
+ };
+ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(pyGLViewer_center_overloads,center,0,1);
+ 
+@@ -178,6 +180,7 @@
+ 		.add_property(&quot;sceneRadius&quot;,&amp;pyGLViewer::get_sceneRadius,&amp;pyGLViewer::set_sceneRadius)
+ 		.add_property(&quot;ortho&quot;,&amp;pyGLViewer::get_orthographic,&amp;pyGLViewer::set_orthographic)
+ 		.add_property(&quot;screenSize&quot;,&amp;pyGLViewer::get_screenSize,&amp;pyGLViewer::set_screenSize)
++		.add_property(&quot;timeDisp&quot;,&amp;pyGLViewer::get_timeDisp,&amp;pyGLViewer::set_timeDisp)
+ 		.def(&quot;fitAABB&quot;,&amp;pyGLViewer::fitAABB)
+ 		.def(&quot;fitSphere&quot;,&amp;pyGLViewer::fitSphere)
+ 		.def(&quot;showEntireScene&quot;,&amp;pyGLViewer::showEntireScene)
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.hpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.hpp	2008-09-26 09:42:13 UTC (rev 1529)
++++ trunk/gui/qt3/YadeQtMainWindow.hpp	2008-09-28 12:37:30 UTC (rev 1530)
+@@ -12,10 +12,10 @@
+ #include&lt;qpushbutton.h&gt;
+ #include&lt;yade/lib-base/Logging.hpp&gt;
+ #include&quot;YadeQtGeneratedMainWindow.h&quot;
+-#include&quot;SimulationController.hpp&quot;
+-#include&quot;QtFileGenerator.hpp&quot;
+-#include&quot;QtSimulationPlayer.hpp&quot;
+-#include&quot;QtGUIPreferences.hpp&quot;
++#include&lt;yade/gui-qt3/SimulationController.hpp&gt;
++#include&lt;yade/gui-qt3/QtFileGenerator.hpp&gt;
++#include&lt;yade/gui-qt3/QtSimulationPlayer.hpp&gt;
++#include&lt;yade/gui-qt3/QtGUIPreferences.hpp&gt;
+ 
+ class YadeQtMainWindow : public YadeQtGeneratedMainWindow
+ {
+
+Modified: trunk/gui/qt3/qt.py
+===================================================================
+--- trunk/gui/qt3/qt.py	2008-09-26 09:42:13 UTC (rev 1529)
++++ trunk/gui/qt3/qt.py	2008-09-28 12:37:30 UTC (rev 1530)
+@@ -1,8 +1,42 @@
++# import module parts in c++ 
+ from _qt import *
++
+ if not isActive():
+ 	raise ImportError(&quot;The Qt gui is not being used (run with -N QtGUI).&quot;)
+ 
+-def createVideo(playerDb,out,viewerState=None,dispParamsNo=-1,stride=1,fps=24,postLoadHook=None):
++
++
++def makeSimulationVideo(output,realPeriod=1,virtPeriod=0,iterPeriod=0,viewNo=0,fps=24):
++	&quot;&quot;&quot;Create video by running simulation. SnapshotEngine is added (and removed once done), temporary
++	files are deleted. The video is theora-encoded in the ogg container. Periodicity is controlled
++	in the same way as for PeriodicEngine (SnapshotEngine is a PeriodicEngine and realPeriod, virtPeriod 
++	and iterPeriod are passed to the new SnapshotEngine).
++
++	viewNo is 0-based GL view number. 0 is the primary view and will be created if it doesn't exist.
++	It is an error if viewNo&gt;0 and the view doesn't exist.
++
++	The simulation will run until it stops by itself. Either set Omega().stopAtIteration or have an engine
++	that will call Omega().pause() at some point.
++
++	See makePlayerVideo for more documentation.
++	&quot;&quot;&quot;
++	import os
++	from yade import utils,wrapper
++	o=wrapper.Omega()
++	# create primary view if none
++	if len(views())==0: View()
++	# remove existing SnaphotEngines
++	se=wrapper.StandAloneEngine('SnapshotEngine',{'iterPeriod':iterPeriod,'realPeriod':realPeriod,'virtPeriod':virtPeriod,'fileBase':os.tmpnam(),'ignoreErrors':False,'viewNo':viewNo})
++	origEngines=o.engines; o.engines=[e for e in o.engines if e.name!='SnapshotEngine']+[se]
++	o.run(); o.wait();
++	wildcard=se['fileBase']+'%04d.png'
++	print &quot;Number of frames:&quot;,len(se['savedSnapshots'])
++	utils.encodeVideoFromFrames(wildcard,output,renameNotOverwrite=True,fps=fps)
++	for f in se['savedSnapshots']: os.remove(f)
++	o.engines=origEngines
++
++
++def makePlayerVideo(playerDb,out,viewerState=None,dispParamsNo=-1,stride=1,fps=24,postLoadHook=None):
+ 	&quot;&quot;&quot;Create video by replaying a simulation. Snapshots are taken to temporary files,
+ 	encoded to a .ogg stream (theora codec); temps are deleted at the end.
+ 
+@@ -16,10 +50,8 @@
+ 
+ 	Necessary packages: python-gst0.10 gstreamer0.10-plugins-good python-gobject
+ 	&quot;&quot;&quot;
+-	import pygst,sys,gobject,os
+-	pygst.require(&quot;0.10&quot;)
+-	import gst
+-	from yade import qt
++	import sys,os
++	from yade import qt,utils
+ 	# postLoadHook and viewerState have &quot;&quot; instead of None in the c++ interface
+ 	wildcard,snaps=qt.runPlayerSession(
+ 		playerDb,
+@@ -28,19 +60,7 @@
+ 		dispParamsNo=dispParamsNo,
+ 		stride=stride,
+ 		postLoadHook=(postLoadHook if postLoadHook else ''))
+-	if(os.path.exists(out)):
+-		i=0;
+-		while(os.path.exists(out+&quot;~%d&quot;%i)): i+=1
+-		os.rename(out,out+&quot;~%d&quot;%i); print &quot;Output file `%s' already existed, old file renamed to `%s'&quot;%(out,out+&quot;~%d&quot;%i)
+-	print &quot;Encoding video from %s (%d files total) to %s&quot;%(wildcard,len(snaps),out)
+-	pipeline=gst.parse_launch('multifilesrc location=&quot;%s&quot; index=0 caps=&quot;image/png,framerate=\(fraction\)%d/1&quot; ! pngdec ! ffmpegcolorspace ! theoraenc sharpness=2 quality=32 ! oggmux ! filesink location=&quot;%s&quot;'%(wildcard,fps,out))
+-	bus=pipeline.get_bus()
+-	bus.add_signal_watch()
+-	mainloop=gobject.MainLoop();
+-	bus.connect(&quot;message::eos&quot;,lambda bus,msg: mainloop.quit())
+-	pipeline.set_state(gst.STATE_PLAYING)
+-	mainloop.run()
+-	pipeline.set_state(gst.STATE_NULL); pipeline.get_state()
++	utils.encodeVideoFromFrames(wildcard,out,renameNotOverwrite=True,fps=fps)
+ 	print &quot;Cleaning snapshot files.&quot;
+ 	for f in snaps: os.remove(f)
+ 
+
+Modified: trunk/scripts/simple-scene-player.py
+===================================================================
+--- trunk/scripts/simple-scene-player.py	2008-09-26 09:42:13 UTC (rev 1529)
++++ trunk/scripts/simple-scene-player.py	2008-09-28 12:37:30 UTC (rev 1530)
+@@ -21,18 +21,9 @@
+ 	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+ 	StandAloneEngine('ElasticContactLaw'),
+ 	DeusExMachina('GravityEngine',{'gravity':[0,0,-9.81]}),
+-	MetaEngine('PhysicalActionDamper',[
+-		EngineUnit('CundallNonViscousForceDamping',{'damping':0.2}),
+-		EngineUnit('CundallNonViscousMomentumDamping',{'damping':0.2})
+-	]),
+-	MetaEngine('PhysicalActionApplier',[
+-		EngineUnit('NewtonsForceLaw'),
+-		EngineUnit('NewtonsMomentumLaw'),
+-	]),
+-	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogPositionIntegrator')]),
+-	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogOrientationIntegrator')]),
++	DeusExMachina('NewtonsDampedLaw',{'damping':0.2})
+ 	###
+-	### NOTE&#160;these extra engines.
++	### NOTE&#160;this extra engine.
+ 	###
+ 	StandAloneEngine('SQLiteRecorder',{'recorders':['se3','rgb'],'dbFile':'/tmp/player.sqlite','iterPeriod':50})
+ ]
+@@ -47,8 +38,8 @@
+ def setWire():
+ 	o=Omega()
+ 	for b in o.bodies: b.shape['wire']=True
+-# you must have saved the viewer state by using Alt-S in the view...
++# you could have saved the viewer state by using Alt-S in the view...
+ from yade import qt
+-qt.createVideo('/tmp/player.sqlite','/tmp/player.ogg','/tmp/qglviewerState.xml',stride=10,fps=12,postLoadHook='setWire()')
++qt.makePlayerVideo('/tmp/player.sqlite','/tmp/player.ogg','/tmp/qglviewerState.xml',stride=10,fps=12,postLoadHook='setWire()')
+ 
+ quit()
+
+Added: trunk/scripts/simple-scene-video.py
+===================================================================
+--- trunk/scripts/simple-scene-video.py	2008-09-26 09:42:13 UTC (rev 1529)
++++ trunk/scripts/simple-scene-video.py	2008-09-28 12:37:30 UTC (rev 1530)
+@@ -0,0 +1,39 @@
++#!/usr/local/bin/yade-trunk -x
++# -*- encoding=utf-8 -*-
++
++o=Omega()
++o.initializers=[
++	StandAloneEngine('PhysicalActionContainerInitializer'),
++	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
++	]
++o.engines=[
++	StandAloneEngine('PhysicalActionContainerReseter'),
++	MetaEngine('BoundingVolumeMetaEngine',[
++		EngineUnit('InteractingSphere2AABB'),
++		EngineUnit('InteractingBox2AABB'),
++		EngineUnit('MetaInteractingGeometry2AABB')
++	]),
++	StandAloneEngine('PersistentSAPCollider'),
++	MetaEngine('InteractionGeometryMetaEngine',[
++		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
++		EngineUnit('InteractingBox2InteractingSphere4SpheresContactGeometry')
++	]),
++	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
++	StandAloneEngine('ElasticContactLaw'),
++	DeusExMachina('GravityEngine',{'gravity':[0,0,-9.81]}),
++	DeusExMachina('NewtonsDampedLaw',{'damping':0.2})
++]
++from yade import utils
++o.bodies.append(utils.box(center=[0,0,0],extents=[.5,.5,.5],dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=2400))
++o.bodies.append(utils.sphere([0,0,2],1,color=[0,1,0],young=30e9,poisson=.3,density=2400))
++o.dt=.4*utils.PWaveTimeStep()
++
++
++from yade import qt
++o.stopAtIter=15000
++qt.makeSimulationVideo('/tmp/aa.ogg',iterPeriod=100,fps=12)
++
++
++
++
++
+
+
+Property changes on: trunk/scripts/simple-scene-video.py
+___________________________________________________________________
+Name: svn:executable
+   + *
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000406.html">[deprecated list] [Yade-dev] Xserver hard freeze on intel GPU
+</A></li>
+	<LI>Next message: <A HREF="000407.html">[deprecated list] [Yade-dev] HEAD compilation error.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#404">[ date ]</a>
+              <a href="thread.html#404">[ thread ]</a>
+              <a href="subject.html#404">[ subject ]</a>
+              <a href="author.html#404">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,316 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkstrategy=monolithic	option
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5BBug%20415265%5D%20Re%3A%20Script%20works%20only%0A%09with%09linkstrategy%3Dmonolithic%09option&In-Reply-To=%3C930069bf0908180453w76646e3ai9e026e6acdc024d3%40mail.gmail.com%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001452.html">
+   <LINK REL="Next"  HREF="001454.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkstrategy=monolithic	option</H1>
+    <B>Anton Gladky</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5BBug%20415265%5D%20Re%3A%20Script%20works%20only%0A%09with%09linkstrategy%3Dmonolithic%09option&In-Reply-To=%3C930069bf0908180453w76646e3ai9e026e6acdc024d3%40mail.gmail.com%3E"
+       TITLE="[deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkstrategy=monolithic	option">gladky.anton at gmail.com
+       </A><BR>
+    <I>Tue Aug 18 13:53:34 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001452.html">[deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkstrategy=monolithic	option
+</A></li>
+        <LI>Next message: <A HREF="001454.html">[deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkstrategy=monolithic option
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1453">[ date ]</a>
+              <a href="thread.html#1453">[ thread ]</a>
+              <a href="subject.html#1453">[ subject ]</a>
+              <a href="author.html#1453">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>thread apply all bt
+
+Thread 6 (Thread 0x7f6e43771950 (LWP 29629)):
+#0  0x00007f6e650e4d69 in InteractionDispatchers::action
+(.omp_data_i=0x7f6e43f71c80) at
+pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp:107
+#1  0x00007f6e84a67c85 in ?? () from /usr/lib/libgomp.so.1
+#2  0x00007f6e87caa3ba in start_thread () from /lib/libpthread.so.0
+#3  0x00007f6e834f8fcd in clone () from /lib/libc.so.6
+#4  0x0000000000000000 in ?? ()
+
+Thread 5 (Thread 0x7f6e43f72950 (LWP 29628)):
+#0  0x00007f6e84a68b57 in ?? () from /usr/lib/libgomp.so.1
+#1  0x00007f6e84a68041 in ?? () from /usr/lib/libgomp.so.1
+#2  0x00007f6e650e5485 in InteractionDispatchers::action (this=0x30ac990,
+rootBody=&lt;value optimized out&gt;) at
+pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp:107
+#3  0x00000000004657da in MetaBody::moveToNextTimeStep (this=0x1b20c10) at
+/home/gladk/dem/yade/new_build/trunk/core/MetaBody.cpp:93
+#4  0x000000000046d4ba in SimulationFlow::singleAction (this=0x18b7230) at
+/home/gladk/dem/yade/new_build/trunk/core/SimulationFlow.cpp:18
+#5  0x00000000004647dc in ThreadRunner::call (this=&lt;value optimized out&gt;) at
+/home/gladk/dem/yade/new_build/trunk/core/ThreadWorker.cpp:71
+#6  0x0000000000464888 in ThreadRunner::run (this=0x1c4d630) at
+/home/gladk/dem/yade/new_build/trunk/core/ThreadRunner.cpp:23
+#7  0x00007f6e87a9f4de in boost::function0&lt;void,
+std::allocator&lt;boost::function_base&gt; &gt;::operator() () from
+/usr/lib/libboost_thread-gcc42-mt-1_34_1.so.1.34.1
+#8  0x00007f6e87a9f162 in ?? () from
+/usr/lib/libboost_thread-gcc42-mt-1_34_1.so.1.34.1
+#9  0x00007f6e87caa3ba in start_thread () from /lib/libpthread.so.0
+#10 0x00007f6e834f8fcd in clone () from /lib/libc.so.6
+#11 0x0000000000000000 in ?? ()
+
+Thread 4 (Thread 0x7f6e45901950 (LWP 29627)):
+#0  0x00007f6e834f1742 in select () from /lib/libc.so.6
+#1  0x00007f6e45be4504 in ?? () from /usr/lib/libtcl8.5.so.0
+#2  0x00007f6e87caa3ba in start_thread () from /lib/libpthread.so.0
+#3  0x00007f6e834f8fcd in clone () from /lib/libc.so.6
+#4  0x0000000000000000 in ?? ()
+
+Thread 3 (Thread 0x7f6e48a58950 (LWP 29626)):
+#0  0x00007f6e834f1742 in select () from /lib/libc.so.6
+#1  0x00007f6e88006618 in ?? () from /usr/lib/libpython2.6.so.1.0
+#2  0x00007f6e87fb3dbe in PyEval_EvalFrameEx () from
+/usr/lib/libpython2.6.so.1.0
+#3  0x00007f6e87fb59a9 in PyEval_EvalCodeEx () from
+/usr/lib/libpython2.6.so.1.0
+#4  0x00007f6e87f3ba3d in ?? () from /usr/lib/libpython2.6.so.1.0
+#5  0x00007f6e87f0cc48 in PyObject_Call () from /usr/lib/libpython2.6.so.1.0
+#6  0x00007f6e87f1d3c0 in ?? () from /usr/lib/libpython2.6.so.1.0
+#7  0x00007f6e87f0cc48 in PyObject_Call () from /usr/lib/libpython2.6.so.1.0
+#8  0x00007f6e87fae7c6 in PyEval_CallObjectWithKeywords () from
+/usr/lib/libpython2.6.so.1.0
+#9  0x00007f6e87fe5dfd in ?? () from /usr/lib/libpython2.6.so.1.0
+#10 0x00007f6e87caa3ba in start_thread () from /lib/libpthread.so.0
+#11 0x00007f6e834f8fcd in clone () from /lib/libc.so.6
+#12 0x0000000000000000 in ?? ()
+
+---Type &lt;return&gt; to continue, or q &lt;return&gt; to quit---
+Thread 2 (Thread 0x7f6e508db950 (LWP 29625)):
+#0  0x00007f6e87cb17e1 in nanosleep () from /lib/libpthread.so.0
+#1  0x00007f6e4baaf1f3 in pyOmega::step (this=0x1d77930) at
+py/yadeWrapper/yadeWrapper.cpp:314
+#2  0x00007f6e4ba7fbb0 in
+boost::python::objects::caller_py_function_impl&lt;boost::python::detail::caller&lt;void
+(pyOmega::*)(), boost::python::default_call_policies,
+boost::mpl::vector2&lt;void, pyOmega&amp;&gt; &gt; &gt;::operator() (this=0x1bd4880,
+args=&lt;value optimized out&gt;, kw=&lt;value optimized out&gt;) at
+/usr/include/boost/python/detail/invoke.hpp:94
+#3  0x00007f6e84ea142a in boost::python::objects::function::call () from
+/usr/lib/libboost_python-gcc42-mt-1_34_1-py26.so.1.34.1
+#4  0x00007f6e84ea1798 in ?? () from
+/usr/lib/libboost_python-gcc42-mt-1_34_1-py26.so.1.34.1
+#5  0x00007f6e87a9f4de in boost::function0&lt;void,
+std::allocator&lt;boost::function_base&gt; &gt;::operator() () from
+/usr/lib/libboost_thread-gcc42-mt-1_34_1.so.1.34.1
+#6  0x00007f6e84ea8c08 in boost::python::handle_exception_impl () from
+/usr/lib/libboost_python-gcc42-mt-1_34_1-py26.so.1.34.1
+#7  0x00007f6e84e9eefe in ?? () from
+/usr/lib/libboost_python-gcc42-mt-1_34_1-py26.so.1.34.1
+#8  0x00007f6e87f0cc48 in PyObject_Call () from /usr/lib/libpython2.6.so.1.0
+#9  0x00007f6e87fb250f in PyEval_EvalFrameEx () from
+/usr/lib/libpython2.6.so.1.0
+#10 0x00007f6e87fb59a9 in PyEval_EvalCodeEx () from
+/usr/lib/libpython2.6.so.1.0
+#11 0x00007f6e87fb5ac2 in PyEval_EvalCode () from
+/usr/lib/libpython2.6.so.1.0
+#12 0x00007f6e87fd677a in PyRun_FileExFlags () from
+/usr/lib/libpython2.6.so.1.0
+#13 0x00007f6e87fad712 in ?? () from /usr/lib/libpython2.6.so.1.0
+#14 0x00007f6e87fb3dbe in PyEval_EvalFrameEx () from
+/usr/lib/libpython2.6.so.1.0
+#15 0x00007f6e87fb59a9 in PyEval_EvalCodeEx () from
+/usr/lib/libpython2.6.so.1.0
+#16 0x00007f6e87fb5ac2 in PyEval_EvalCode () from
+/usr/lib/libpython2.6.so.1.0
+#17 0x00007f6e87fd677a in PyRun_FileExFlags () from
+/usr/lib/libpython2.6.so.1.0
+#18 0x00007f6e87fd6a6d in PyRun_SimpleFileExFlags () from
+/usr/lib/libpython2.6.so.1.0
+#19 0x00007f6e51c65deb in PythonUI::execScript (script=
+        {static npos = 18446744073709551615, _M_dataplus =
+{&lt;std::allocator&lt;char&gt;&gt; = {&lt;__gnu_cxx::new_allocator&lt;char&gt;&gt; = {&lt;No data
+fields&gt;}, &lt;No data fields&gt;}, _M_p = 0x7f6e508dadd0 &quot;\230k&#65533;\001&quot;}}) at
+gui/py/PythonUI.cpp:46
+#20 0x00007f6e51c67673 in PythonUI::pythonSession () at
+gui/py/PythonUI.cpp:99
+#21 0x00007f6e87a9f4de in boost::function0&lt;void,
+std::allocator&lt;boost::function_base&gt; &gt;::operator() () from
+/usr/lib/libboost_thread-gcc42-mt-1_34_1.so.1.34.1
+#22 0x00007f6e87a9f162 in ?? () from
+/usr/lib/libboost_thread-gcc42-mt-1_34_1.so.1.34.1
+#23 0x00007f6e87caa3ba in start_thread () from /lib/libpthread.so.0
+#24 0x00007f6e834f8fcd in clone () from /lib/libc.so.6
+#25 0x0000000000000000 in ?? ()
+
+Thread 1 (Thread 0x7f6e884427f0 (LWP 29621)):
+#0  0x00007f6e834f1742 in select () from /lib/libc.so.6
+#1  0x00007f6e85b73add in QEventLoop::processEvents () from
+/usr/lib/libqt-mt.so.3
+#2  0x00007f6e85bd9ec1 in QEventLoop::enterLoop () from
+/usr/lib/libqt-mt.so.3
+#3  0x00007f6e85bd9d82 in QEventLoop::exec () from /usr/lib/libqt-mt.so.3
+#4  0x00007f6e51f7225c in QtGUI::run (this=0x18ba7d0, argc=2,
+argv=0x7fff905889a8) at gui/qt3/QtGUI.cpp:79
+#5  0x0000000000477463 in main (argc=2, argv=0x7fff905889a8) at
+/home/gladk/dem/yade/new_build/trunk/core/yade.cpp:304
+0x00007f6e650e4d69    107
+I-&gt;functorCache.constLaw-&gt;go(I-&gt;interactionGeometry,I-&gt;interactionPhysics,I.get(),rootBody);
+
+
+
+
+______________________________
+[ENG] Best Regards
+[GER] Mit freundlichen Gr&#252;&#223;en
+[RUS] &#1057; &#1085;&#1072;&#1080;&#1083;&#1091;&#1095;&#1096;&#1080;&#1084;&#1080; &#1087;&#1086;&#1078;&#1077;&#1083;&#1072;&#1085;&#1080;&#1103;&#1084;&#1080;
+[UKR] &#1047; &#1085;&#1072;&#1081;&#1082;&#1088;&#1072;&#1097;&#1080;&#1084;&#1080; &#1087;&#1086;&#1073;&#1072;&#1078;&#1072;&#1085;&#1085;&#1103;&#1084;&#1080;
+
+Anton Gladkyy
+
+
+2009/8/18 Anton Gladky &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">gladky.anton at gmail.com</A>&gt;
+
+&gt;<i> Starting program: /home/gladk/dem/yade/new_build/build/bin/yade-new_build
+</I>&gt;<i> pr.py
+</I>&gt;<i> [Thread debugging using libthread_db enabled]
+</I>&gt;<i> warning: Lowest section in /usr/lib/libicudata.so.38 is .hash at
+</I>&gt;<i> 0000000000000158
+</I>&gt;<i> [New Thread 0x7fc7be1ca7f0 (LWP 29612)]
+</I>&gt;<i> [New Thread 0x7fc786663950 (LWP 29615)]
+</I>&gt;<i> Python TCP server listening on localhost:9000, auth cookie is `cesasu'
+</I>&gt;<i> [New Thread 0x7fc77e88f950 (LWP 29616)]
+</I>&gt;<i> Running script pr.py
+</I>&gt;<i> /usr/lib/python2.6/dist-packages/pytz/__init__.py:32: UserWarning: Module
+</I>&gt;<i> pylab was already imported from /usr/lib/python2.6/dist-packages/pylab.py,
+</I>&gt;<i> but /usr/lib/python2.6/dist-packages is being added to sys.path
+</I>&gt;<i>   from pkg_resources import resource_stream
+</I>&gt;<i> /usr/lib/python2.6/dist-packages/pytz/__init__.py:32: UserWarning: Module
+</I>&gt;<i> matplotlib was already imported from
+</I>&gt;<i> /usr/lib/python2.6/dist-packages/matplotlib/__init__.py, but
+</I>&gt;<i> /usr/lib/python2.6/dist-packages is being added to sys.path
+</I>&gt;<i>   from pkg_resources import resource_stream
+</I>&gt;<i> [New Thread 0x7fc77b738950 (LWP 29617)]
+</I>&gt;<i> [New Thread 0x7fc779d5a950 (LWP 29618)]
+</I>&gt;<i> [New Thread 0x7fc779559950 (LWP 29619)]
+</I>&gt;<i>
+</I>&gt;<i> Program received signal SIGSEGV, Segmentation fault.
+</I>&gt;<i> [Switching to Thread 0x7fc779559950 (LWP 29619)]
+</I>&gt;<i> 0x00007fc79ae6cd69 in InteractionDispatchers::action (
+</I>&gt;<i>     .omp_data_i=0x7fc779d59c80)
+</I>&gt;<i>     at pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp:107
+</I>&gt;<i> 107
+</I>&gt;<i> I-&gt;functorCache.constLaw-&gt;go(I-&gt;interactionGeometry,I-&gt;interactionPhysics,I.get(),rootBody);
+</I>&gt;<i> (gdb) quit
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i> ______________________________
+</I>&gt;<i> [ENG] Best Regards
+</I>&gt;<i> [GER] Mit freundlichen Gr&#252;&#223;en
+</I>&gt;<i> [RUS] &#1057; &#1085;&#1072;&#1080;&#1083;&#1091;&#1095;&#1096;&#1080;&#1084;&#1080; &#1087;&#1086;&#1078;&#1077;&#1083;&#1072;&#1085;&#1080;&#1103;&#1084;&#1080;
+</I>&gt;<i> [UKR] &#1047; &#1085;&#1072;&#1081;&#1082;&#1088;&#1072;&#1097;&#1080;&#1084;&#1080; &#1087;&#1086;&#1073;&#1072;&#1078;&#1072;&#1085;&#1085;&#1103;&#1084;&#1080;
+</I>&gt;<i>
+</I>&gt;<i> Anton Gladkyy
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i> 2009/8/18 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+</I>&gt;<i>
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> $ gdb yade-trunk
+</I>&gt;&gt;<i> (gdb) run /tmp/pr.py
+</I>&gt;&gt;<i> [wait till it crashes]
+</I>&gt;&gt;<i> (gdb) thread apply all bt
+</I>&gt;&gt;<i> (gdb) quit
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> --
+</I>&gt;&gt;<i> Script works only with linkstrategy=monolithic option
+</I>&gt;&gt;<i> <A HREF="https://bugs.launchpad.net/bugs/415265">https://bugs.launchpad.net/bugs/415265</A>
+</I>&gt;&gt;<i> You received this bug notification because you are a direct subscriber
+</I>&gt;&gt;<i> of the bug.
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> Status in Yet Another Dynamic Engine: New
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> Bug description:
+</I>&gt;&gt;<i> When I start the simulation with the attached script, I get:
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> gdb 6.8-debian
+</I>&gt;&gt;<i> Copyright (C) 2008 Free Software Foundation, Inc.
+</I>&gt;&gt;<i> License GPLv3+: GNU GPL version 3 or later &lt;
+</I>&gt;&gt;<i> <A HREF="http://gnu.org/licenses/gpl.html">http://gnu.org/licenses/gpl.html</A>&gt;
+</I>&gt;&gt;<i> This is free software: you are free to change and redistribute it.
+</I>&gt;&gt;<i> There is NO WARRANTY, to the extent permitted by law.  Type &quot;show copying&quot;
+</I>&gt;&gt;<i> and &quot;show warranty&quot; for details.
+</I>&gt;&gt;<i> This GDB was configured as &quot;x86_64-linux-gnu&quot;.
+</I>&gt;&gt;<i> /home/gladk/.yade-current/gdb_crash_batch-pid13289:1: Error in sourced
+</I>&gt;&gt;<i> command file:
+</I>&gt;&gt;<i> ptrace: No such process.
+</I>&gt;&gt;<i> (gdb)
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i> But when I do the same on installation with linkstrategy=monolithic
+</I>&gt;&gt;<i> compilation option it works normally.
+</I>&gt;&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i>
+</I>
+-- 
+Script works only with linkstrategy=monolithic option
+<A HREF="https://bugs.launchpad.net/bugs/415265">https://bugs.launchpad.net/bugs/415265</A>
+You received this bug notification because you are a member of Yade
+developers, which is subscribed to Yade.
+
+Status in Yet Another Dynamic Engine: New
+
+Bug description:
+When I start the simulation with the attached script, I get:
+
+gdb 6.8-debian
+Copyright (C) 2008 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later &lt;<A HREF="http://gnu.org/licenses/gpl.html">http://gnu.org/licenses/gpl.html</A>&gt;
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.  Type &quot;show copying&quot;
+and &quot;show warranty&quot; for details.
+This GDB was configured as &quot;x86_64-linux-gnu&quot;.
+/home/gladk/.yade-current/gdb_crash_batch-pid13289:1: Error in sourced command file:
+ptrace: No such process.
+(gdb)
+
+But when I do the same on installation with linkstrategy=monolithic compilation option it works normally.
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001452.html">[deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkstrategy=monolithic	option
+</A></li>
+	<LI>Next message: <A HREF="001454.html">[deprecated list] [Yade-dev] [Bug 415265] Re: Script works only	with	linkstrategy=monolithic option
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1453">[ date ]</a>
+              <a href="thread.html#1453">[ thread ]</a>
+              <a href="subject.html#1453">[ subject ]</a>
+              <a href="author.html#1453">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

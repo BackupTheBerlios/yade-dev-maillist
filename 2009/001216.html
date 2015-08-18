@@ -1,0 +1,447 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1868 - in trunk:	core	pkg/common/Engine/StandAloneEngine pkg/dem/PreProcessor	py	scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1868%20-%20in%20trunk%3A%0A%09core%09pkg/common/Engine/StandAloneEngine%20pkg/dem/PreProcessor%0A%09py%09scripts/test&In-Reply-To=%3C200907151610.n6FGAI1G008971%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001215.html">
+   <LINK REL="Next"  HREF="001223.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1868 - in trunk:	core	pkg/common/Engine/StandAloneEngine pkg/dem/PreProcessor	py	scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1868%20-%20in%20trunk%3A%0A%09core%09pkg/common/Engine/StandAloneEngine%20pkg/dem/PreProcessor%0A%09py%09scripts/test&In-Reply-To=%3C200907151610.n6FGAI1G008971%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1868 - in trunk:	core	pkg/common/Engine/StandAloneEngine pkg/dem/PreProcessor	py	scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul 15 18:10:18 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001215.html">[deprecated list] [Yade-dev] yade crash launching xml
+</A></li>
+        <LI>Next message: <A HREF="001223.html">[deprecated list] [Yade-dev] [svn] r1868 - in trunk:	core	pkg/common/Engine/StandAloneEngine pkg/dem/PreProcessor	py	scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1216">[ date ]</a>
+              <a href="thread.html#1216">[ thread ]</a>
+              <a href="subject.html#1216">[ subject ]</a>
+              <a href="author.html#1216">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-15 18:10:16 +0200 (Wed, 15 Jul 2009)
+New Revision: 1868
+
+Added:
+   trunk/py/_packObb.cpp
+Modified:
+   trunk/core/Omega.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/py/SConscript
+   trunk/py/_packPredicates.cpp
+   trunk/py/_packSpheres.cpp
+   trunk/py/pack.py
+   trunk/scripts/test/gts-triax-pack.py
+Log:
+1. Add sweepLength to TriaxialTest if fast==true
+2. Remove euclid from the pack module, since we use wrapped wm3 now.
+3. Add _packObb.cpp to compute minimal oriented bounding box on cloud of points
+4. inGtsSurface predicate with triaxialPack will work on the minimum OBB
+5. Add check for engine to prevent crash as per <A HREF="https://bugs.launchpad.net/yade/+bug/399810">https://bugs.launchpad.net/yade/+bug/399810</A>
+6. Enhance the pack.inSpace predicate to work as expected. Custom center can be given to the ctor
+
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2009-07-15 08:57:09 UTC (rev 1867)
++++ trunk/core/Omega.cpp	2009-07-15 16:10:16 UTC (rev 1868)
+@@ -288,7 +288,7 @@
+ bool Omega::containTimeStepper(){
+ 	if(!rootBody) return false;
+ 	FOREACH(const shared_ptr&lt;Engine&gt;&amp; e, rootBody-&gt;engines){
+-		if (isInheritingFrom(e-&gt;getClassName(),&quot;TimeStepper&quot;)) return true;
++		if (e &amp;&amp; isInheritingFrom(e-&gt;getClassName(),&quot;TimeStepper&quot;)) return true;
+ 	}
+ 	return false;
+ }
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp	2009-07-15 08:57:09 UTC (rev 1867)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp	2009-07-15 16:10:16 UTC (rev 1868)
+@@ -49,6 +49,7 @@
+ 		// if False, no type of striding is used
+ 		// if True, then either sweepLength XOR nBins is set
+ 		bool strideActive;
++		public:
+ 		/// Absolute length that will be added to bounding boxes at each side; it should be something like 1/5 of typical grain radius
+ 		/// this value is used to adapt stride; if too large, stride will be big, but the ratio of potential-only interactions will be very big, 
+ 		/// thus slowing down collider &amp; interaction loops significantly (remember: O(addLength^3))
+@@ -63,6 +64,7 @@
+ 		// parameters to be passed to VelocityBins, if nBins&gt;0
+ 		int nBins; Real binCoeff, binOverlap;
+ 	#endif
++	private:
+ 	//! storage for bounds
+ 	std::vector&lt;Bound&gt; XX,YY,ZZ;
+ 	//! storage for bb maxima and minima
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-07-15 08:57:09 UTC (rev 1867)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-07-15 16:10:16 UTC (rev 1868)
+@@ -626,8 +626,10 @@
+ 	rootBody-&gt;engines.clear();
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);
+-	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new InsertionSortCollider));
++	shared_ptr&lt;InsertionSortCollider&gt; collider(new InsertionSortCollider);
++	rootBody-&gt;engines.push_back(collider);
+ 	if(fast){
++		collider-&gt;sweepLength=.05*radiusMean;
+ 		shared_ptr&lt;InteractionDispatchers&gt; ids(new InteractionDispatchers);
+ 			ids-&gt;geomDispatcher=interactionGeometryDispatcher;
+ 			ids-&gt;physDispatcher=interactionPhysicsDispatcher;
+
+Modified: trunk/py/SConscript
+===================================================================
+--- trunk/py/SConscript	2009-07-15 08:57:09 UTC (rev 1867)
++++ trunk/py/SConscript	2009-07-15 16:10:16 UTC (rev 1868)
+@@ -17,6 +17,7 @@
+ 			RPATH=env['RPATH']+(['$runtimePREFIX/lib/yade$SUFFIX/py/gts'] if 'GTS' in env['features'] else []),	
+ 			),
+ 		env.SharedLibrary('_packSpheres',['_packSpheres.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['Shop']),
++		env.SharedLibrary('_packObb',['_packObb.cpp'],SHLIBPREFIX=''),
+ 		env.File('utils.py'),
+ 		env.File('eudoxos.py'),
+ 		env.File('plot.py'),
+
+Added: trunk/py/_packObb.cpp
+===================================================================
+--- trunk/py/_packObb.cpp	2009-07-15 08:57:09 UTC (rev 1867)
++++ trunk/py/_packObb.cpp	2009-07-15 16:10:16 UTC (rev 1868)
+@@ -0,0 +1,76 @@
++// many thanks to <A HREF="http://codesuppository.blogspot.com/2006_06_01_archive.html">http://codesuppository.blogspot.com/2006_06_01_archive.html</A>
++// the code written after <A HREF="http://www.amillionpixels.us/bestfitobb.cpp">http://www.amillionpixels.us/bestfitobb.cpp</A>
++// which is MIT-licensed
++
++#include&lt;boost/python.hpp&gt;
++#include&lt;boost/foreach.hpp&gt;
++#include&lt;yade/extra/boost_python_len.hpp&gt;
++#include&lt;yade/lib-base/Logging.hpp&gt;
++#include&lt;yade/lib-base/yadeWm3.hpp&gt;
++#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++#include&lt;vector&gt;
++#include&lt;stdexcept&gt;
++using namespace boost;
++#ifndef FOREACH
++	#define FOREACH BOOST_FOREACH
++#endif
++
++// compute minimum bounding for a cloud of points
++
++// returns volume
++Real computeOBB(const std::vector&lt;Vector3r&gt;&amp; pts, const Matrix3r&amp; rot, Vector3r&amp; center, Vector3r&amp; halfSize){
++	const Real inf=std::numeric_limits&lt;Real&gt;::infinity();
++	Vector3r mn(inf,inf,inf), mx(-inf,-inf,-inf);
++	FOREACH(const Vector3r&amp; pt, pts){
++		Vector3r ptT=rot*pt;
++		mn=componentMinVector(mn,ptT); mx=componentMaxVector(mx,ptT);
++	}
++	halfSize=.5*(mx-mn);
++	center=.5*(mn+mx);
++	return 8*halfSize[0]*halfSize[1]*halfSize[2];
++}
++
++void bestFitOBB(const std::vector&lt;Vector3r&gt;&amp; pts, Vector3r&amp; center, Vector3r&amp; halfSize, Quaternionr&amp; rot){
++	Vector3r angle0(Vector3r::ZERO), angle(Vector3r::ZERO);
++	Vector3r center0; Vector3r halfSize0;
++	Real bestVolume=std::numeric_limits&lt;Real&gt;::infinity();
++	Real sweep=Mathr::PI/4; Real steps=7.;
++	while(sweep&gt;=Mathr::PI/180.){
++		bool found=false;
++		Real stepSize=sweep/steps;
++		for(Real x=angle0[0]-sweep; x&lt;=angle0[0]+sweep; x+=stepSize){
++			for(Real y=angle0[1]-sweep; y&lt;angle0[1]+sweep; y+=stepSize){
++				for(Real z=angle0[2]-sweep; z&lt;angle0[2]+sweep; z+=stepSize){
++					Matrix3r rot0; rot0.FromEulerAnglesXYZ(x,y,z);
++					Real volume=computeOBB(pts,rot0,center0,halfSize0);
++					if(volume&lt;bestVolume){
++						bestVolume=volume;
++						angle=angle0;
++						// set return values, in case this will be really the best fit
++						rot.FromRotationMatrix(rot0); rot=rot.Conjugate(); center=center0; halfSize=halfSize0;
++						found=true;
++					}
++				}
++			}
++		}
++		if(found){
++			angle0=angle;
++			sweep*=.5;
++		} else return;
++	}
++}
++
++python::tuple bestFitOBB_py(const python::tuple&amp; _pts){
++	int l=python::len(_pts);
++	if(l&lt;=1) throw std::runtime_error(&quot;Cloud must have at least 2 points.&quot;);
++	std::vector&lt;Vector3r&gt; pts; pts.resize(l);
++	for(int i=0; i&lt;l; i++) pts[i]=python::extract&lt;Vector3r&gt;(_pts[i]);
++	Quaternionr rot; Vector3r halfSize, center;
++	bestFitOBB(pts,center,halfSize,rot);
++	return python::make_tuple(center,halfSize,rot);
++}
++
++BOOST_PYTHON_MODULE(_packObb){
++	python::def(&quot;cloudBestFitOBB&quot;,bestFitOBB_py,&quot;Return (Vector3 center, Vector3 halfSize, Quaternion orientation) of\nbest-fit oriented bounding-box for given tuple of points\n(uses brute-force velome minimization, do not use for very large clouds).&quot;);
++};
++
+
+Modified: trunk/py/_packPredicates.cpp
+===================================================================
+--- trunk/py/_packPredicates.cpp	2009-07-15 08:57:09 UTC (rev 1867)
++++ trunk/py/_packPredicates.cpp	2009-07-15 16:10:16 UTC (rev 1868)
+@@ -314,6 +314,7 @@
+ 		}
+ 		return ptCheck(pt) &amp;&amp; ptCheck(pt-Vector3r(pad,0,0)) &amp;&amp; ptCheck(pt+Vector3r(pad,0,0)) &amp;&amp; ptCheck(pt-Vector3r(0,pad,0))&amp;&amp; ptCheck(pt+Vector3r(0,pad,0)) &amp;&amp; ptCheck(pt-Vector3r(0,0,pad))&amp;&amp; ptCheck(pt+Vector3r(0,0,pad));
+ 	}
++	python::object surface() const {return pySurf;}
+ };
+ 
+ #endif
+@@ -342,7 +343,8 @@
+ 	python::class_&lt;inEllipsoid,python::bases&lt;Predicate&gt; &gt;(&quot;inEllipsoid&quot;,&quot;Ellipsoid predicate&quot;,python::init&lt;const Vector3r&amp;,const Vector3r&amp;&gt;(python::args(&quot;centerPoint&quot;,&quot;abc&quot;),&quot;Ctor taking center of the ellipsoid (3-tuple) and its 3 radii (3-tuple).&quot;));
+ 	python::class_&lt;notInNotch,python::bases&lt;Predicate&gt; &gt;(&quot;notInNotch&quot;,&quot;Outside of infinite, rectangle-shaped notch predicate&quot;,python::init&lt;const Vector3r&amp;,const Vector3r&amp;,const Vector3r&amp;,Real&gt;(python::args(&quot;centerPoint&quot;,&quot;edge&quot;,&quot;normal&quot;,&quot;aperture&quot;),&quot;Ctor taking point in the symmetry plane, vector pointing along the edge, plane normal and aperture size.\nThe side inside the notch is edge&#215;normal.\nNormal is made perpendicular to the edge.\nAll vectors are normalized at construction time.&quot;)); 
+ 	#ifdef YADE_GTS
+-		python::class_&lt;inGtsSurface,python::bases&lt;Predicate&gt; &gt;(&quot;inGtsSurface&quot;,&quot;GTS surface predicate&quot;,python::init&lt;python::object,python::optional&lt;bool&gt; &gt;(python::args(&quot;surface&quot;,&quot;noPad&quot;),&quot;Ctor taking a gts.Surface() instance, which must not be modified during instance lifetime.\nThe optional noPad can disable padding (if set to True), which speeds up calls several times.\nNote: padding checks inclusion of 6 points along +- cardinal directions in the pad distance from given point, which is not exact.&quot;));
++		python::class_&lt;inGtsSurface,python::bases&lt;Predicate&gt; &gt;(&quot;inGtsSurface&quot;,&quot;GTS surface predicate&quot;,python::init&lt;python::object,python::optional&lt;bool&gt; &gt;(python::args(&quot;surface&quot;,&quot;noPad&quot;),&quot;Ctor taking a gts.Surface() instance, which must not be modified during instance lifetime.\nThe optional noPad can disable padding (if set to True), which speeds up calls several times.\nNote: padding checks inclusion of 6 points along +- cardinal directions in the pad distance from given point, which is not exact.&quot;))
++			.add_property(&quot;surf&quot;,&amp;inGtsSurface::surface,&quot;The associated gts.Surface object.&quot;);
+ 	#endif
+ }
+ 
+
+Modified: trunk/py/_packSpheres.cpp
+===================================================================
+--- trunk/py/_packSpheres.cpp	2009-07-15 08:57:09 UTC (rev 1867)
++++ trunk/py/_packSpheres.cpp	2009-07-15 16:10:16 UTC (rev 1868)
+@@ -36,6 +36,7 @@
+ 	// I/O
+ 	void fromList(const python::list&amp; l);
+ 	python::list toList() const;
++	python::list toList_pointsAsTuples() const;
+ 	void fromFile(const string file);
+ 	void toFile(const string file) const;
+ 	void fromSimulation();
+@@ -77,13 +78,23 @@
+ 	size_t len=python::len(l);
+ 	for(size_t i=0; i&lt;len; i++){
+ 		const python::tuple&amp; t=python::extract&lt;python::tuple&gt;(l[i]);
+-		const python::tuple&amp; t1=python::extract&lt;python::tuple&gt;(t[0]);
+-		pack.push_back(Sph(tuple2vec(t1),python::extract&lt;double&gt;(t[1])));
++		python::extract&lt;python::tuple&gt; tup(t[0]);
++		if(tup.check()) { pack.push_back(Sph(tuple2vec(tup()),python::extract&lt;double&gt;(t[1]))); continue;}
++		python::extract&lt;Vector3r&gt; vec(t[0]);
++		if(vec.check()) { pack.push_back(Sph(vec(),python::extract&lt;double&gt;(t[1]))); continue; }
++		PyErr_SetString(PyExc_TypeError, &quot;List elements must be (tuple or Vector3, float)!&quot;);
++		python::throw_error_already_set();
+ 	}
+ };
+ 
+ python::list SpherePack::toList() const {
+ 	python::list ret;
++	FOREACH(const Sph&amp; s, pack) ret.append(python::make_tuple(s.c,s.r));
++	return ret;
++};
++
++python::list SpherePack::toList_pointsAsTuples() const {
++	python::list ret;
+ 	FOREACH(const Sph&amp; s, pack) ret.append(python::make_tuple(vec2tuple(s.c),s.r));
+ 	return ret;
+ };
+@@ -120,6 +131,7 @@
+ 	python::class_&lt;SpherePack&gt;(&quot;SpherePack&quot;,&quot;Set of spheres as centers and radii&quot;,python::init&lt;python::optional&lt;python::list&gt; &gt;(python::args(&quot;list&quot;),&quot;Empty constructor, optionally taking list [ ((cx,cy,cz),r), &#8230; ] for initial data.&quot; ))
+ 		.def(&quot;add&quot;,&amp;SpherePack::add,&quot;Add single sphere to packing, given center as 3-tuple and radius&quot;)
+ 		.def(&quot;toList&quot;,&amp;SpherePack::toList,&quot;Return packing data as python list.&quot;)
++		.def(&quot;toList_pointsAsTuples&quot;,&amp;SpherePack::toList_pointsAsTuples,&quot;Return packing data as python list, but using only pure-python data types (3-tuples instead of Vector3) (for pickling with cPickle)&quot;)
+ 		.def(&quot;fromList&quot;,&amp;SpherePack::fromList,&quot;Make packing from given list, same format as for constructor. Discards current data.&quot;)
+ 		.def(&quot;load&quot;,&amp;SpherePack::fromFile,&quot;Load packing from external text file (current data will be discarded).&quot;)
+ 		.def(&quot;save&quot;,&amp;SpherePack::toFile,&quot;Save packing to external text file (will be overwritten).&quot;)
+
+Modified: trunk/py/pack.py
+===================================================================
+--- trunk/py/pack.py	2009-07-15 08:57:09 UTC (rev 1867)
++++ trunk/py/pack.py	2009-07-15 16:10:16 UTC (rev 1868)
+@@ -14,6 +14,7 @@
+ from _packPredicates import *
+ # import SpherePack
+ from _packSpheres import *
++from _packObb import *
+ 
+ from miniWm3Wrap import *
+ 
+@@ -61,9 +62,13 @@
+ 
+ class inSpace(Predicate):
+ 	&quot;&quot;&quot;Predicate returning True for any points, with infinite bounding box.&quot;&quot;&quot;
++	def __init__(self, _center=Vector3.ZERO): self._center=_center
+ 	def aabb(self):
+-		inf=float('inf'); return [-inf,-inf,-inf],[inf,inf,inf]
+-	def __call__(self,pt): return True
++		inf=float('inf'); return Vector3(-inf,-inf,-inf),Vector3(inf,inf,inf)
++	def center(self): return self._center
++	def dim(self):
++		inf=float('inf'); return Vector3(inf,inf,inf)
++	def __call__(self,pt,pad): return True
+ 
+ #####
+ ## surface construction and manipulation
+@@ -121,16 +126,21 @@
+ 	if threshold&gt;0: surf.cleanup(threshold)
+ 	return surf
+ 
+-import euclid
++def gtsSurfaceBestFitOBB(surf):
++	&quot;&quot;&quot;Return (Vector3 center, Vector3 halfSize, Quaternion orientation) describing
++	best-fit oriented bounding box (OBB) for the given surface. See cloudBestFitOBB
++	for details.&quot;&quot;&quot;
++	pts=[Vector3(v.x,v.y,v.z) for v in surf.vertices()]
++	return cloudBestFitOBB(tuple(pts))
+ 
+-def revolutionSurfaceMeridians(sects,angles,origin=euclid.Vector3(0,0,0),orientation=euclid.Quaternion()):
++def revolutionSurfaceMeridians(sects,angles,origin=Vector3.ZERO,orientation=Quaternion.IDENTITY):
+ 	&quot;&quot;&quot;Revolution surface given sequences of 2d points and sequence of corresponding angles,
+ 	returning sequences of 3d points representing meridian sections of the revolution surface.
+ 	The 2d sections are turned around z-axis, but they can be transformed
+ 	using the origin and orientation arguments to give arbitrary orientation.&quot;&quot;&quot;
+ 	import math
+ 	def toGlobal(x,y,z):
+-		return tuple(origin+orientation*(euclid.Vector3(x,y,z)))
++		return tuple(origin+orientation*(Vector3(x,y,z)))
+ 	return [[toGlobal(x2d*math.cos(angles[i]),x2d*math.sin(angles[i]),y2d) for x2d,y2d in sects[i]] for i in range(0,len(sects))]
+ 
+ ########
+@@ -180,7 +190,7 @@
+ 		if predicate(s[0],s[1]): ret+=[utils.sphere(s[0],radius=s[1],**kw)]
+ 	return ret
+ 
+-def triaxialPack(predicate,radius,dim=None,cropLayers=0,radiusStDev=0.,assumedFinalDensity=.6,memoizeDb=None,**kw):
++def triaxialPack(predicate,radius,dim=None,cropLayers=0,radiusStDev=0.,assumedFinalDensity=.6,memoizeDb=None,useOBB=True,**kw):
+ 	&quot;&quot;&quot;Generator of triaxial packing, using TriaxialTest. Radius is radius of spheres, radiusStDev is its standard deviation.
+ 	By default, all spheres are of the same radius. cropLayers is how many layers of spheres will be added to the computed
+ 	dimension of the box so that there no (or not so much, at least) boundary effects at the boundaries of the predicate.
+@@ -192,14 +202,24 @@
+ 	the remaining ones, the one with the least spheres will be loaded and returned. If no suitable packing is found, it
+ 	is generated as usually, but saved into the database for later use.
+ 
++	useOBB is effective only if a inGtsSurface predicate is given. If true (default), oriented bounding box will be
++	computed first; it can reduce substantially number of spheres for the triaxial compression (like 10&#215; depending on
++	how much asymmetric the body is), see scripts/test/gts-triax-pack-obb.py.
++
+ 	O.switchWorld() magic is used to have clean simulation for TriaxialTest without deleting the original simulation.
+ 	This function therefore should never run in parallel with some code accessing your simulation.
+ 	&quot;&quot;&quot;
+ 	import sqlite3, os.path, cPickle, time, sys
+ 	from yade import log
+ 	from math import pi
+-	if not dim: dim=predicate.dim()
+-	if max(dim)==float('inf'): raise RuntimeError(&quot;Infinite predicate and no dimension of packing requested.&quot;)
++	if type(predicate)==inGtsSurface and useOBB:
++		center,dim,orientation=gtsSurfaceBestFitOBB(predicate.surf)
++		dim*=2 # gtsSurfaceBestFitOBB returns halfSize
++	else:
++		if not dim: dim=predicate.dim()
++		if max(dim)==float('inf'): raise RuntimeError(&quot;Infinite predicate and no dimension of packing requested.&quot;)
++		center=predicate.center()
++		orientation=None
+ 	fullDim=tuple([dim[i]+4*cropLayers*radius for i in 0,1,2])
+ 	if(memoizeDb and os.path.exists(memoizeDb)):
+ 		# find suitable packing and return it directly
+@@ -213,8 +233,10 @@
+ 			print &quot;Found suitable packing in database (radius=%g&#177;%g,N=%g,dim=%g&#215;%g&#215;%g,scale=%g), created %s&quot;%(R,rDev,NN,X,Y,Z,scale,time.asctime(time.gmtime(timestamp)))
+ 			c.execute('select pack from packings where timestamp=?',(timestamp,))
+ 			sp=SpherePack(cPickle.loads(str(c.fetchone()[0])))
+-			sp.scale(scale)
++			sp.scale(scale);
++			if orientation: sp.rotate(*orientation.ToAxisAngle())
+ 			return filterSpherePack(predicate,sp,**kw)
++			#return filterSpherePack(inSpace(predicate.center()),sp,**kw)
+ 		print &quot;No suitable packing in database found, running triaxial&quot;
+ 		sys.stdout.flush()
+ 	V=(4/3)*pi*radius**3; N=assumedFinalDensity*fullDim[0]*fullDim[1]*fullDim[2]/V;
+@@ -256,11 +278,12 @@
+ 			c=conn.cursor()
+ 			c.execute('create table packings (radius real, radiusStDev real, dimx real, dimy real, dimz real, N integer, timestamp real, pack blob)')
+ 		c=conn.cursor()
+-		packBlob=buffer(cPickle.dumps(sp.toList(),cPickle.HIGHEST_PROTOCOL))
++		packBlob=buffer(cPickle.dumps(sp.toList_pointsAsTuples(),cPickle.HIGHEST_PROTOCOL))
+ 		c.execute('insert into packings values (?,?,?,?,?,?,?,?)',(radius,radiusStDev,fullDim[0],fullDim[1],fullDim[2],len(sp),time.time(),packBlob,))
+ 		c.close()
+ 		conn.commit()
+ 		print &quot;Packing saved to the database&quot;,memoizeDb
++	if orientation: sp.rotate(*orientation.ToAxisAngle())
+ 	return filterSpherePack(predicate,sp,**kw)
+ 
+ 
+
+Modified: trunk/scripts/test/gts-triax-pack.py
+===================================================================
+--- trunk/scripts/test/gts-triax-pack.py	2009-07-15 08:57:09 UTC (rev 1867)
++++ trunk/scripts/test/gts-triax-pack.py	2009-07-15 16:10:16 UTC (rev 1868)
+@@ -17,8 +17,7 @@
+ # without these transformation, it would look a little simpler:
+ # 	pts=pack.revolutionSurfaceMeridians([[(pt[0],pt[1]+2e-3*theta) for pt in poly] for theta in thetas],thetas
+ #
+-import euclid
+-pts=pack.revolutionSurfaceMeridians([[(pt[0],pt[1]+2e-3*theta) for pt in poly] for theta in thetas],thetas,origin=euclid.Vector3(0,0,.1),orientation=euclid.Quaternion().new_rotate_axis(pi/4,euclid.Vector3(1,1,0)))
++pts=pack.revolutionSurfaceMeridians([[(pt[0],pt[1]+2e-3*theta) for pt in poly] for theta in thetas],thetas,origin=Vector3(0,0,.1),orientation=Quaternion((1,1,0),pi/4))
+ # connect meridians to make surfaces
+ # caps will close it at the beginning and the end
+ # threshold will merge points closer than 1e-4; this is important: we want it to be closed for filling
+@@ -32,7 +31,7 @@
+ # parameters (or parameters that can be scaled to the same one),
+ # it will load the packing instead of running the triaxial compaction again.
+ # Try running for the second time to see the speed difference!
+-O.bodies.append(pack.triaxialPack(pack.inGtsSurface(surf),radius=15e-4,radiusStDev=1e-4,memoizeDb='/tmp/gts-triax-packings.sqlite'))
++O.bodies.append(pack.triaxialPack(pack.inGtsSurface(surf),radius=1e-4,radiusStDev=1e-4,memoizeDb='/tmp/gts-triax-packings.sqlite'))
+ # We could also fill the horse with triaxial packing, but have nice approximation, the triaxial would run terribly long,
+ # since horse discard most volume of its bounding box
+ # Here, we would use a very crude one, however
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001215.html">[deprecated list] [Yade-dev] yade crash launching xml
+</A></li>
+	<LI>Next message: <A HREF="001223.html">[deprecated list] [Yade-dev] [svn] r1868 - in trunk:	core	pkg/common/Engine/StandAloneEngine pkg/dem/PreProcessor	py	scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1216">[ date ]</a>
+              <a href="thread.html#1216">[ thread ]</a>
+              <a href="subject.html#1216">[ subject ]</a>
+              <a href="author.html#1216">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

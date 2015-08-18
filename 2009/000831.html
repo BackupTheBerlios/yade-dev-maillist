@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] Shear force computation
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Shear%20force%20computation&In-Reply-To=%3C49B67FFC.70407%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000827.html">
+   <LINK REL="Next"  HREF="000832.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] Shear force computation</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Shear%20force%20computation&In-Reply-To=%3C49B67FFC.70407%40hmg.inpg.fr%3E"
+       TITLE="[deprecated list] [Yade-dev] Shear force computation">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Tue Mar 10 15:58:04 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000827.html">[deprecated list] [Yade-dev] Shear force computation
+</A></li>
+        <LI>Next message: <A HREF="000832.html">[deprecated list] [Yade-dev] Shear force computation
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#831">[ date ]</a>
+              <a href="thread.html#831">[ thread ]</a>
+              <a href="subject.html#831">[ subject ]</a>
+              <a href="author.html#831">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>V&#225;clav &#352;milauer a &#233;crit :
+&gt;<i> Hi,
+</I>&gt;<i>
+</I>&gt;<i> I added SpheresContactGeometry::updateShearForce (in r1715) which 
+</I>&gt;<i> should avoid having the same algorithm copied&amp;pasted 9 times in 
+</I>&gt;<i> various constitutive laws (copied&amp;pasted, cleaned up a bit).
+</I>Good idea.
+A bit surprising that the shear force is updated here though. Its sounds 
+like the constitutive law has been moved into a data class.
+Perhaps ::updateShearDisp would be enough, then let the constitutive law 
+multiply it by ks, or some more complex maths?
+
+&gt;<i>
+</I>&gt;<i> ElasticContactLaw optionally uses that (under #if 0 / #else / #endif), 
+</I>&gt;<i> I got _exactly_ same sphere positions after 1000 steps of TriaxialTest 
+</I>&gt;<i> with the same initial packging, so it is (most probably) right.
+</I>&gt;<i>
+</I>Be sure that you didn't test this on fritctionless spheres, then ok. :)
+
+&gt;<i> I will be glad if someone could review the code, notably if it is 
+</I>&gt;<i> appropriate to have zeroPoint in this general piece of code or if it 
+</I>&gt;<i> would be better better to keep that separate, and how to handle 
+</I>&gt;<i> non-dynamic bodies. These are 2 points that are not same across the 
+</I>&gt;<i> copies of the same original code.
+</I>&gt;<i>
+</I>I would remove the zero point (I'm just discorvering it btw).
+And I would not make a difference at all between dynamic and !dynamic 
+bodies.
+
+This is a fundamental question, and I perhaps don't fully agree with 
+some current trends regarding this.
+I'll suggest something in a next mail.
+
+Bruno
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Grenoble INP
+Laboratoire 3SR - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000827.html">[deprecated list] [Yade-dev] Shear force computation
+</A></li>
+	<LI>Next message: <A HREF="000832.html">[deprecated list] [Yade-dev] Shear force computation
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#831">[ date ]</a>
+              <a href="thread.html#831">[ thread ]</a>
+              <a href="subject.html#831">[ subject ]</a>
+              <a href="author.html#831">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

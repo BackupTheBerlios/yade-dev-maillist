@@ -1,0 +1,147 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] Note on optimized compilation / optimized coding / profiling results
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Note%20on%20optimized%20compilation%20/%20optimized%20coding%20/%0A%20profiling%20results&In-Reply-To=%3C47C3382A.6090503%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000064.html">
+   <LINK REL="Next"  HREF="000066.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] Note on optimized compilation / optimized coding / profiling results</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Note%20on%20optimized%20compilation%20/%20optimized%20coding%20/%0A%20profiling%20results&In-Reply-To=%3C47C3382A.6090503%40arcig.cz%3E"
+       TITLE="[yade-dev] Note on optimized compilation / optimized coding / profiling results">eudoxos at arcig.cz
+       </A><BR>
+    <I>Mon Feb 25 22:50:34 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000064.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+        <LI>Next message: <A HREF="000066.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#65">[ date ]</a>
+              <a href="thread.html#65">[ thread ]</a>
+              <a href="subject.html#65">[ subject ]</a>
+              <a href="author.html#65">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>&gt;<i>
+</I>&gt;<i> The damping dispatcher takes 89% of cpu time to do 
+</I>&gt;<i> something else, namely :
+</I>&gt;<i> - LocateMultivirtualFunctor : 50%
+</I>Good to know. If Janek listens: wouldn't it be much faster to have an 1D
+or 2D array, sized maxClassIndex (&#215; maxClassIndex), that would be used
+for lookup? Just pointer arithmetics. This array could even be shared
+for different dispatchers, since no pair of classes can (probably) be
+used in different dispatchers, right?
+
+Another way would be to have boost::ublas::compressed_matrix for the 2D
+case, if 2D array of some 10000 elements is too much (OK, if we have
+1000 classes once, that would mean 1e6 which is not nice). Should be
+reasonably fast as well. No 3D functors, though ;-).
+
+Will play with that if I find some time. That would sound like big speed
+improvement (there is quite a few dispatchers in the simulation, if they
+take 30% of time, that means 15% for dispatching... wow.
+
+I thought originally this stuff was part of Loki and was well optimized.
+
+&gt;<i> A simple example :
+</I>&gt;<i>
+</I>&gt;<i> shared_ptr&lt;PhysicalAction&gt;&amp; PhysicalActionVectorVector::find(unsigned 
+</I>&gt;<i> int id , int actionIndex )
+</I>&gt;<i> {
+</I>&gt;<i>     if( current_size &lt;= id ) // this is very rarely executed, only at 
+</I>&gt;<i> beginning.
+</I>&gt;<i>     // somebody is accesing out of bounds, make sure he will find, what 
+</I>&gt;<i> he needs - a resetted PhysicalAction of his type
+</I>&gt;<i>     {
+</I>&gt;<i>         ....
+</I>&gt;<i>     }
+</I>&gt;<i>     usedIds[id] = true;
+</I>&gt;<i>     return physicalActions[id][actionIndex];
+</I>&gt;<i> }
+</I>&gt;<i>
+</I>&gt;<i> 1. There is this test at the begining, that is useless all the time 
+</I>&gt;<i> except at iteration 1.
+</I>&gt;<i> 2. there is this usedIds[id] affectation (same remark again, only 
+</I>&gt;<i> modified at iteration 1).
+</I>&gt;<i> 3. Then return a reference to a shared pointer (while shared_ptr 
+</I>&gt;<i> operations are slower than normal).
+</I>&gt;<i>   
+</I>You're right, I thought that 1. and 2. was the business of ::prepare,
+which is called from PhysicalActionContainerInitializer. It should be
+the user's responsibility to use valid indices, right?
+
+UsedIds, that's a different story; it says what index contains a
+non-null action so that we can iterate over non-null actions. But this
+flag could be put into the action instance itself. Then
+physicalActions[id][actionIndex] could be used directly.
+&gt;<i> Of course, this function &quot;find&quot; is used many many times. Result 3.81% of 
+</I>&gt;<i> total CPU time just for it, while we could just use 
+</I>&gt;<i> physicalActions[id][actionIndex] instead of find(), and reduce that time 
+</I>&gt;<i> a lot. But of course physicalActions is private...
+</I>&gt;<i>   
+</I>Just change that in the header and make it public, no problem. If the
+&quot;user&quot; screws stuff, it it his problem, not mine. I think Olivier liked
+having lot of stuff private, but then we have overheads for for
+accessors. Sadly, c++ has no way to say: this member is public for
+reading and private for writing, which could help in many cases.
+&gt;<i> Janek : I know that containers will be changed anyway, and that is why I 
+</I>&gt;<i> think this is the right moment to cry about speed. :)
+</I>&gt;<i> Users don't care about Godwin's law, they need SPEED!!!
+</I>&gt;<i>   
+</I>Cosurgi, should I fiddle with PhysicalActionContainer or is it going to
+be changed anyway?
+&gt;<i> Yes, I thought to that too, but I was not expert enough to be sure. 
+</I>&gt;<i> Can't the compiler check that nothing will be affected in some situations?
+</I>&gt;<i>   
+</I>It can in some, but I don't know in which ones. Putting const everywhere
+also checks that there are no side-effects of the method on its
+instance, for example.
+
+Another thing is that many methods should be inlined, but grepping
+through headers reveals that only very small subset is: for the most
+part, the openGl wrapper. Inlining functions is turned on by the -O3
+flag to g++, so we don't gain nothing here probably. But gcc manpage
+says for -finline-limit: &quot; This option is particularly useful for
+programs that use inlining heavily such as those based on recursive
+templates with C++.&quot; which is just our case.
+
+And by the way, I just found out that assert(...) is not compiled-out in
+optimized builds of scons, since we don't define NDEBUG. Will be fixed
+in next commit. No big deal ;-)
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000064.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+	<LI>Next message: <A HREF="000066.html">[yade-dev] Note on optimized compilation / optimized coding / profiling results
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#65">[ date ]</a>
+              <a href="thread.html#65">[ thread ]</a>
+              <a href="subject.html#65">[ subject ]</a>
+              <a href="author.html#65">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

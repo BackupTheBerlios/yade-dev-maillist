@@ -1,0 +1,324 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1542 - in trunk:	gui/qt3/pictures	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/common/RenderingEngine/GLDrawInteractingGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1542%20-%20in%20trunk%3A%0A%09gui/qt3/pictures%09pkg/common/RenderingEngine/GLDrawGeometricalModel%09pkg/common/RenderingEngine/GLDrawInteractingGeometry%09pkg/dem/Engine/EngineUnit%09pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction&In-Reply-To=%3C200810111423.m9BENsvc032695%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000439.html">
+   <LINK REL="Next"  HREF="000441.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1542 - in trunk:	gui/qt3/pictures	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/common/RenderingEngine/GLDrawInteractingGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1542%20-%20in%20trunk%3A%0A%09gui/qt3/pictures%09pkg/common/RenderingEngine/GLDrawGeometricalModel%09pkg/common/RenderingEngine/GLDrawInteractingGeometry%09pkg/dem/Engine/EngineUnit%09pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction&In-Reply-To=%3C200810111423.m9BENsvc032695%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1542 - in trunk:	gui/qt3/pictures	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/common/RenderingEngine/GLDrawInteractingGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Sat Oct 11 16:23:54 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000439.html">[deprecated list] [Yade-dev] [svn] r1541 - in trunk/gui: . py
+</A></li>
+        <LI>Next message: <A HREF="000441.html">[deprecated list] [Yade-dev] r1542 static variables
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#440">[ date ]</a>
+              <a href="thread.html#440">[ thread ]</a>
+              <a href="subject.html#440">[ subject ]</a>
+              <a href="author.html#440">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2008-10-11 16:23:53 +0200 (Sat, 11 Oct 2008)
+New Revision: 1542
+
+Added:
+   trunk/gui/qt3/pictures/XYZ.png
+   trunk/gui/qt3/pictures/YZX.png
+   trunk/gui/qt3/pictures/ZXY.png
+Modified:
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2AABB.cpp
+   trunk/pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction/GLDrawCohesiveFrictionalContactInteraction.cpp
+Log:
+Fixed OpenGL problems with displaying spheres, which
+ - never occurred on my desktop
+ - I've seen them sometimes on other peoples computers, but never could reproduce them
+ - but finally have appeared on my laptop.
+
+Everyone: those static variables in GL*Sphere* classes have to be static, don't change that.
+
+Vaclav - go ahead and uncomment back your code in there. I just commented it,
+because I wasn't sure what was causing the bug. After it's fixed I'm sure it
+wasn't your code, but some odd harware, graphics card stuff.
+
+Small fixes in InteractingMyTetrahedron (btw, who broke that? it was working,
+perhaps I should browse SVN history to find out ;)
+
+
+
+Added: trunk/gui/qt3/pictures/XYZ.png
+===================================================================
+(Binary files differ)
+
+
+Property changes on: trunk/gui/qt3/pictures/XYZ.png
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+Added: trunk/gui/qt3/pictures/YZX.png
+===================================================================
+(Binary files differ)
+
+
+Property changes on: trunk/gui/qt3/pictures/YZX.png
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+Added: trunk/gui/qt3/pictures/ZXY.png
+===================================================================
+(Binary files differ)
+
+
+Property changes on: trunk/gui/qt3/pictures/ZXY.png
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp	2008-10-11 13:28:17 UTC (rev 1541)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp	2008-10-11 14:23:53 UTC (rev 1542)
+@@ -21,16 +21,23 @@
+ //      glPopMatrix();
+ //}
+ 
++int GLDrawSphere::glSphereList=-1;
++int GLDrawSphere::glWiredSphereList=-1;
++
++vector&lt;Vector3r&gt; GLDrawSphere::vertices;
++vector&lt;Vector3r&gt; GLDrawSphere::faces;
++bool GLDrawSphere::first = true;
++
+ bool GLDrawSphere::glutUse=false;
+ bool GLDrawSphere::glutNormalize=true;
+ int  GLDrawSphere::glutSlices=12;
+ int  GLDrawSphere::glutStacks=6;
+ 
+-GLDrawSphere::GLDrawSphere() : first(true), glWiredSphereList(-1), glSphereList(-1){};
++GLDrawSphere::GLDrawSphere(){first=true;};
+ 
+ void GLDrawSphere::go(const shared_ptr&lt;GeometricalModel&gt;&amp; gm, const shared_ptr&lt;PhysicalParameters&gt;&amp; ph,bool wire)
+ {
+-	if(glutUse){
++	/*if(glutUse){
+ 		Real r= (static_cast&lt;Sphere*&gt;(gm.get()))-&gt;radius;
+ 		glMaterialv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, Vector3f(gm-&gt;diffuseColor[0],gm-&gt;diffuseColor[1],gm-&gt;diffuseColor[2]));
+ 		glColor3v(gm-&gt;diffuseColor);
+@@ -39,8 +46,9 @@
+ 			else glutSolidSphere(r,glutSlices,glutStacks);
+ 		if(glutNormalize) glPopAttrib();
+ 		return;
+-	}
++	}*/
+ 
++	//first = true;
+ 	if (first)
+ 	{
+ 		Real X = 0.525731112119133606;
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp	2008-10-11 13:28:17 UTC (rev 1541)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp	2008-10-11 14:23:53 UTC (rev 1542)
+@@ -14,11 +14,11 @@
+ class GLDrawSphere : public GLDrawGeometricalModelFunctor
+ {
+ 	private :
+-		bool first;
+-		vector&lt;Vector3r&gt; vertices;
+-		vector&lt;Vector3r&gt; faces;
+-		int glWiredSphereList;
+-		int glSphereList;
++		static bool first;
++		static vector&lt;Vector3r&gt; vertices;
++		static vector&lt;Vector3r&gt; faces;
++		static int glWiredSphereList;
++		static int glSphereList;
+ 		void subdivideTriangle(Vector3r&amp; v1,Vector3r&amp; v2,Vector3r&amp; v3, int depth);
+ 		void drawSphere(int depth);
+ 		void drawCircle(bool filled);
+@@ -29,6 +29,9 @@
+ 	public :
+ 		GLDrawSphere();
+ 		virtual void go(const shared_ptr&lt;GeometricalModel&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool);
++/// Serialization
++	protected :
++		virtual void postProcessAttributes(bool deserializing){if(deserializing){first=true;};};
+ 		virtual void registerAttributes(){REGISTER_ATTRIBUTE(glutUse); REGISTER_ATTRIBUTE(glutNormalize); REGISTER_ATTRIBUTE(glutSlices); REGISTER_ATTRIBUTE(glutStacks); }
+ 		
+ 	RENDERS(Sphere);
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.cpp	2008-10-11 13:28:17 UTC (rev 1541)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.cpp	2008-10-11 14:23:53 UTC (rev 1542)
+@@ -17,10 +17,13 @@
+ vector&lt;Vector3r&gt; GLDrawInteractingSphere::vertices;
+ vector&lt;Vector3r&gt; GLDrawInteractingSphere::faces;
+ 
++bool GLDrawInteractingSphere::first = true;
+ 
++GLDrawInteractingSphere::GLDrawInteractingSphere(){first=true;};
++
+ void GLDrawInteractingSphere::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm, const shared_ptr&lt;PhysicalParameters&gt;&amp; ,bool)
+ {
+-	static bool first=true;
++	//first=true;
+ 	
+ 	if (first)
+ 	{
+@@ -153,3 +156,4 @@
+ }
+ 
+ YADE_PLUGIN();
++
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.hpp	2008-10-11 13:28:17 UTC (rev 1541)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.hpp	2008-10-11 14:23:53 UTC (rev 1542)
+@@ -14,6 +14,7 @@
+ class GLDrawInteractingSphere : public GLDrawInteractingGeometryFunctor
+ {	
+ 	private :
++		static bool first;
+ 		static vector&lt;Vector3r&gt; vertices;
+ 		static vector&lt;Vector3r&gt; faces;
+ 		static int glWiredSphereList;
+@@ -22,7 +23,11 @@
+ 		void drawSphere(int depth);
+ 	
+ 	public :
++		GLDrawInteractingSphere();
+ 		virtual void go(const shared_ptr&lt;InteractingGeometry&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool);
++/// Serialization
++	protected :
++		virtual void postProcessAttributes(bool deserializing){if(deserializing){first=true;};};
+ 
+ 	RENDERS(InteractingSphere);
+ 	REGISTER_CLASS_NAME(GLDrawInteractingSphere);
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2AABB.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2AABB.cpp	2008-10-11 13:28:17 UTC (rev 1541)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2AABB.cpp	2008-10-11 14:23:53 UTC (rev 1542)
+@@ -20,18 +20,18 @@
+ 	AABB* aabb = static_cast&lt;AABB*&gt;(bv.get());
+ 
+ 	// create a bounding volume from four spheres ( InteractingMyTetrahedron )
+-	Vector3r min = Vector3r(0,0,0);
++	Vector3r min = Vector3r(1,1,1)*100000;
+ 	min = componentMinVector(min,se3.orientation*myTet-&gt;c1 - Vector3r(myTet-&gt;r1,myTet-&gt;r1,myTet-&gt;r1));
+ 	min = componentMinVector(min,se3.orientation*myTet-&gt;c2 - Vector3r(myTet-&gt;r2,myTet-&gt;r2,myTet-&gt;r2));
+ 	min = componentMinVector(min,se3.orientation*myTet-&gt;c3 - Vector3r(myTet-&gt;r3,myTet-&gt;r3,myTet-&gt;r3));
+ 	min = componentMinVector(min,se3.orientation*myTet-&gt;c4 - Vector3r(myTet-&gt;r4,myTet-&gt;r4,myTet-&gt;r4));
+ 	min += se3.position;
+ 
+-	Vector3r max = Vector3r(0,0,0);
+-	max = componentMaxVector(min,se3.orientation*myTet-&gt;c1 + Vector3r(myTet-&gt;r1,myTet-&gt;r1,myTet-&gt;r1));
+-	max = componentMaxVector(min,se3.orientation*myTet-&gt;c2 + Vector3r(myTet-&gt;r2,myTet-&gt;r2,myTet-&gt;r2));
+-	max = componentMaxVector(min,se3.orientation*myTet-&gt;c3 + Vector3r(myTet-&gt;r3,myTet-&gt;r3,myTet-&gt;r3));
+-	max = componentMaxVector(min,se3.orientation*myTet-&gt;c4 + Vector3r(myTet-&gt;r4,myTet-&gt;r4,myTet-&gt;r4));
++	Vector3r max = Vector3r(1,1,1)*(-100000);
++	max = componentMaxVector(max,se3.orientation*myTet-&gt;c1 + Vector3r(myTet-&gt;r1,myTet-&gt;r1,myTet-&gt;r1));
++	max = componentMaxVector(max,se3.orientation*myTet-&gt;c2 + Vector3r(myTet-&gt;r2,myTet-&gt;r2,myTet-&gt;r2));
++	max = componentMaxVector(max,se3.orientation*myTet-&gt;c3 + Vector3r(myTet-&gt;r3,myTet-&gt;r3,myTet-&gt;r3));
++	max = componentMaxVector(max,se3.orientation*myTet-&gt;c4 + Vector3r(myTet-&gt;r4,myTet-&gt;r4,myTet-&gt;r4));
+ 	max += se3.position;
+ 
+ 	// AABB
+
+Modified: trunk/pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction/GLDrawCohesiveFrictionalContactInteraction.cpp
+===================================================================
+--- trunk/pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction/GLDrawCohesiveFrictionalContactInteraction.cpp	2008-10-11 13:28:17 UTC (rev 1541)
++++ trunk/pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction/GLDrawCohesiveFrictionalContactInteraction.cpp	2008-10-11 14:23:53 UTC (rev 1542)
+@@ -74,6 +74,7 @@
+ 	const Real size,
+ 	const Vector3r color)
+ {
++	glPushMatrix();
+ 	Vector3r axis;Real angle;
+ 	Quaternionr delta(q);
+ 	delta.ToAxisAngle(axis,angle);
+@@ -84,6 +85,7 @@
+ 	Vector3r m(pos+ret*size);
+ 	drawArrow(pos, m ,color);
+ 	drawFlatText(m,txt);
++	glPopMatrix();
+ 	return ret;
+ }
+ 
+@@ -94,7 +96,7 @@
+ 		const shared_ptr&lt;Body&gt;&amp; b2,
+ 		bool wireFrame)
+ {
+-//	if(!i-&gt;isReal) return;
++	if(!i-&gt;isReal) return;
+ 	isReal=i-&gt;isReal;
+ 
+ 	CohesiveFrictionalContactInteraction*    ph = static_cast&lt;CohesiveFrictionalContactInteraction*&gt;(ih.get());
+@@ -162,8 +164,8 @@
+ //	drawArrow(middle+M2*size, middle+(M2-M1)*size ,Vector3r(1.0,0.4,0.4));
+ 
+ 
+-	drawArrow(middle, middle+ph-&gt;shearForce*size/4000.0 ,Vector3r(isReal?1:0.4,0,isReal?1:0.4));
+-	drawFlatText(     middle+ph-&gt;shearForce*size/4000.0 ,std::string(&quot; Fs&quot;));
++	drawArrow(middle, middle+ph-&gt;shearForce*size/4000000.0 ,Vector3r(isReal?1:0.4,0,isReal?1:0.4));
++	drawFlatText(     middle+ph-&gt;shearForce*size/4000000.0 ,std::string(&quot; Fs&quot;));
+ 
+ // draw normal
+ 	drawArrow(middle, middle+sc-&gt;normal*size*0.9 ,Vector3r(0,isReal?1:0.4,0));
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000439.html">[deprecated list] [Yade-dev] [svn] r1541 - in trunk/gui: . py
+</A></li>
+	<LI>Next message: <A HREF="000441.html">[deprecated list] [Yade-dev] r1542 static variables
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#440">[ date ]</a>
+              <a href="thread.html#440">[ thread ]</a>
+              <a href="subject.html#440">[ subject ]</a>
+              <a href="author.html#440">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

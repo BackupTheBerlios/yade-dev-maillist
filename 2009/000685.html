@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Question%20about%20parameters%20in%0A%09SpheresContactGeometry&In-Reply-To=%3C49969290.2000409%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000681.html">
+   <LINK REL="Next"  HREF="000697.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Question%20about%20parameters%20in%0A%09SpheresContactGeometry&In-Reply-To=%3C49969290.2000409%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry">eudoxos at arcig.cz
+       </A><BR>
+    <I>Sat Feb 14 10:44:48 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000681.html">[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry
+</A></li>
+        <LI>Next message: <A HREF="000697.html">[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#685">[ date ]</a>
+              <a href="thread.html#685">[ thread ]</a>
+              <a href="subject.html#685">[ subject ]</a>
+              <a href="author.html#685">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> * TODO: add torsion code, that will (if a flag is on) compute torsion
+</I>&gt;<i> angle on the contact axis.
+</I>&gt;<i> *
+</I>&gt;<i> * TODO: add bending code, that will compute bending angle of the
+</I>&gt;<i> contact axis
+</I>&gt;<i>
+</I>&gt;<i> The code for this is in CohesiveFrictionalContactLaw already, its been
+</I>&gt;<i> developped by Cosurgi.
+</I>Hi, it is probably question directed at me. Torsion, bending, but also
+shear code is implemented as incremental computation from angular
+velocities etc. I don't use torsion and bending, but for the shear part,
+I never got the incremental algo to match with what small-strain FEM
+code computes for strains (production code, therefore assumed to be
+correct).
+
+Besides that, implementing geometry algorithms inside constitutive laws
+is conceptually flawed, for 2 reasons.
+
+1. Constitutive law should operate just on interaction geometry and
+interaction physics. If it accesses rootBody-&gt;bodies, it is a design
+problem.
+
+2. Strains are the same accross multiple constituive laws, since it
+really is a geometrical property. It makes no sense to cut&amp;paste code
+all the time; the code for shear strain is repeated at least 5x
+throughout different classes, even with the same comments, and maybe
+same bugs. (Otherwise if I needed torsion in different constitutive law,
+I would have to copy&amp;paste code from CohesiveFrictionalContactLaw??)
+
+(well, let me add 3. Constitutive law should just map strains to
+stresses. It is not constitutive law's business to compute strains. You
+can have a look at ef2_Spheres_NormalShear_ElasticFrictionalLaw, this is
+what I think constitutive law should look like: get strains, compute
+stresses, apply forces. Finito.)
+
+What makes you think that contact of 2 spheres is describable just by
+penetrationDepth and radii? That would be _normal_ contact. For shear,
+bending and torsion, it gets more complicated, and that's what all the
+cp1rel, cp2rel (and unrollSpherePtToPlane, for that matter, which
+computes the shear from the data) are for.
+
+The &quot;abusive storage&quot; members were not added by me, except
+facetContactFace (abusive, because only used for sphere-facet contact).
+What I agree with is that hasNormalViscosity, NormalViscosity and
+NormalRelativeViscosity are clearly physical quantitites that should be
+in interaction physics.
+
+About my future plans: define abstract classes Dem3DofContactGeometry
+(better name?; for classes normal and shear) and Dem6DofContactGeometry
+(for classes with normal, shear, bending and torsion strains) with
+virtual methods to get e.g. epsN(), epsT(), regardless of whether it is
+Sphere-Facet of Sphere-Sphere contact. Mapping sphere-facet to
+SpheresContactGeometry has not much physical meaning and will not work
+for more complex things like transferring plastic strain when going over
+facet boundary to its neighbor.
+
+Then SpheresContactGeometry inherits from Dem3DofContactGeometry, I will
+create (maybe) also SphereFacetContactGeometry etc, but the constitutive
+law will operate on Dem3DofContactGeometry and will not care, whether
+the underlying contact is sphere-sphere, sphere-facet (or sphere-box,
+whatever).
+
+Hope that I was clear and that there will be some discussion about this.
+
+Vaclav
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000681.html">[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry
+</A></li>
+	<LI>Next message: <A HREF="000697.html">[deprecated list] [Yade-dev] Question about parameters in	SpheresContactGeometry
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#685">[ date ]</a>
+              <a href="thread.html#685">[ thread ]</a>
+              <a href="subject.html#685">[ subject ]</a>
+              <a href="author.html#685">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

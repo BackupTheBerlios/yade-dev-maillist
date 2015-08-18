@@ -1,0 +1,246 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1644 - in trunk: core	gui/qt3	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/common/RenderingEngine/GLDrawInteractingGeometry	pkg/common/RenderingEngine/OpenGLRenderingEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1644%20-%20in%20trunk%3A%20core%0A%09gui/qt3%09pkg/common/RenderingEngine/GLDrawGeometricalModel%09pkg/common/RenderingEngine/GLDrawInteractingGeometry%09pkg/common/RenderingEngine/OpenGLRenderingEngine&In-Reply-To=%3C200901270058.n0R0wTHB011455%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000631.html">
+   <LINK REL="Next"  HREF="000630.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1644 - in trunk: core	gui/qt3	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/common/RenderingEngine/GLDrawInteractingGeometry	pkg/common/RenderingEngine/OpenGLRenderingEngine</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1644%20-%20in%20trunk%3A%20core%0A%09gui/qt3%09pkg/common/RenderingEngine/GLDrawGeometricalModel%09pkg/common/RenderingEngine/GLDrawInteractingGeometry%09pkg/common/RenderingEngine/OpenGLRenderingEngine&In-Reply-To=%3C200901270058.n0R0wTHB011455%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1644 - in trunk: core	gui/qt3	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/common/RenderingEngine/GLDrawInteractingGeometry	pkg/common/RenderingEngine/OpenGLRenderingEngine">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Tue Jan 27 01:58:29 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000631.html">[deprecated list] [Yade-dev] r1643 - in trunk/pkg/snow: . DataClass Engine PreProcessor RenderingEngine
+</A></li>
+        <LI>Next message: <A HREF="000630.html">[deprecated list] [Yade-dev] [svn] r1645 - in trunk/pkg/snow: .	RenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#628">[ date ]</a>
+              <a href="thread.html#628">[ thread ]</a>
+              <a href="subject.html#628">[ subject ]</a>
+              <a href="author.html#628">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2009-01-27 01:58:28 +0100 (Tue, 27 Jan 2009)
+New Revision: 1644
+
+Modified:
+   trunk/core/RenderingEngine.hpp
+   trunk/gui/qt3/YadeQtMainWindow.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.hpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/GLDrawFunctors.hpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+Log:
+maybe spheres won't disappear anymore?
+
+
+
+Modified: trunk/core/RenderingEngine.hpp
+===================================================================
+--- trunk/core/RenderingEngine.hpp	2009-01-26 03:34:03 UTC (rev 1643)
++++ trunk/core/RenderingEngine.hpp	2009-01-27 00:58:28 UTC (rev 1644)
+@@ -21,6 +21,7 @@
+ 		virtual void render(const shared_ptr&lt;MetaBody&gt;&amp; , const int selection = -1) {throw;};
+ 		virtual void renderWithNames(const shared_ptr&lt;MetaBody&gt;&amp; ) {throw;};
+ 		virtual void init() {throw;};
++		virtual void initgl() {};
+ 
+ 	REGISTER_CLASS_AND_BASE(RenderingEngine,Serializable);
+ };
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.cpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.cpp	2009-01-26 03:34:03 UTC (rev 1643)
++++ trunk/gui/qt3/YadeQtMainWindow.cpp	2009-01-27 00:58:28 UTC (rev 1644)
+@@ -155,6 +155,8 @@
+ 	glv-&gt;camera()-&gt;setViewDirection(qglviewer::Vec(-1,-1,-1));
+ 	lookDown(glv);
+ 	glViews.push_back(glv);
++	if(isFirst)
++		renderer-&gt;initgl();
+ 	//connect( glv, SIGNAL(closeSignal(int)), this, SLOT( closeGLViewEvent(int) ) );
+ }
+ 
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp	2009-01-26 03:34:03 UTC (rev 1643)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp	2009-01-27 00:58:28 UTC (rev 1644)
+@@ -34,7 +34,7 @@
+ int  GLDrawSphere::glutStacks=6;
+ 
+ GLDrawSphere::GLDrawSphere(){first=true;};
+-
++		
+ void GLDrawSphere::go(const shared_ptr&lt;GeometricalModel&gt;&amp; gm, const shared_ptr&lt;PhysicalParameters&gt;&amp; ph,bool wire)
+ {
+ 	if(glutUse){
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp	2009-01-26 03:34:03 UTC (rev 1643)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.hpp	2009-01-27 00:58:28 UTC (rev 1644)
+@@ -29,6 +29,7 @@
+ 	public :
+ 		GLDrawSphere();
+ 		virtual void go(const shared_ptr&lt;GeometricalModel&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool);
++		virtual void initgl(){first=true;};
+ /// Serialization
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing){if(deserializing){first=true;};};
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.hpp	2009-01-26 03:34:03 UTC (rev 1643)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingSphere.hpp	2009-01-27 00:58:28 UTC (rev 1644)
+@@ -25,6 +25,7 @@
+ 	public :
+ 		GLDrawInteractingSphere();
+ 		virtual void go(const shared_ptr&lt;InteractingGeometry&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool);
++		virtual void initgl(){first=true;};
+ /// Serialization
+ 	protected :
+ 		virtual void postProcessAttributes(bool deserializing){if(deserializing){first=true;};};
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/GLDrawFunctors.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/GLDrawFunctors.hpp	2009-01-26 03:34:03 UTC (rev 1643)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/GLDrawFunctors.hpp	2009-01-27 00:58:28 UTC (rev 1644)
+@@ -20,6 +20,7 @@
+ 	public:
+ 		virtual ~GLDrawBoundingVolumeFunctor() {};
+ 		virtual string renders() const { std::cerr&lt;&lt;&quot;Unregistered gldraw class.\n&quot;; throw; };
++		virtual void initgl(){/*WARNING: it must deal with static members, because it is called from another instance!*/};
+ 	REGISTER_CLASS_NAME(GLDrawBoundingVolumeFunctor);
+ 	REGISTER_BASE_CLASS_NAME(EngineUnit1D);
+ };
+@@ -29,6 +30,7 @@
+ 	public: 
+ 		virtual ~GLDrawGeometricalModelFunctor() {};
+ 		virtual string renders() const { std::cerr&lt;&lt;&quot;Unregistered gldraw class.\n&quot;; throw; };
++		virtual void initgl(){/*WARNING: it must deal with static members, because it is called from another instance!*/};
+ 	REGISTER_CLASS_NAME(GLDrawGeometricalModelFunctor);
+ 	REGISTER_BASE_CLASS_NAME(EngineUnit1D);
+ };
+@@ -39,6 +41,7 @@
+ 	public:
+ 		virtual ~GLDrawInteractingGeometryFunctor() {};
+ 		virtual string renders() const { std::cerr&lt;&lt;&quot;Unregistered gldraw class.\n&quot;; throw; };
++		virtual void initgl(){/*WARNING: it must deal with static members, because it is called from another instance!*/};
+ 	REGISTER_CLASS_NAME(GLDrawInteractingGeometryFunctor);
+ 	REGISTER_BASE_CLASS_NAME(EngineUnit1D);
+ };
+@@ -48,6 +51,7 @@
+ 	public: 
+ 		virtual ~GLDrawInteractionGeometryFunctor() {};
+ 		virtual string renders() const { std::cerr&lt;&lt;&quot;Unregistered gldraw class.\n&quot;; throw; };
++		virtual void initgl(){/*WARNING: it must deal with static members, because it is called from another instance!*/};
+ 	REGISTER_CLASS_NAME(GLDrawInteractionGeometryFunctor);
+ 	REGISTER_BASE_CLASS_NAME(EngineUnit1D);
+ };
+@@ -57,6 +61,7 @@
+ 	public: 
+ 		virtual ~GLDrawInteractionPhysicsFunctor() {};
+ 		virtual string renders() const { std::cerr&lt;&lt;&quot;Unregistered gldraw class.\n&quot;; throw; };
++		virtual void initgl(){/*WARNING: it must deal with static members, because it is called from another instance!*/};
+ 	REGISTER_CLASS_NAME(GLDrawInteractionPhysicsFunctor);
+ 	REGISTER_BASE_CLASS_NAME(EngineUnit1D);
+ };
+@@ -74,6 +79,7 @@
+ 	public : 
+ 		virtual ~GLDrawStateFunctor() {};
+ 		virtual string renders() const { std::cerr&lt;&lt;&quot;Unregistered gldraw class.\n&quot;; throw; };
++		virtual void initgl(){/*WARNING: it must deal with static members, because it is called from another instance!*/};
+ 	REGISTER_CLASS_NAME(GLDrawStateFunctor);
+ 	REGISTER_BASE_CLASS_NAME(EngineUnit1D);
+ };
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2009-01-26 03:34:03 UTC (rev 1643)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.cpp	2009-01-27 00:58:28 UTC (rev 1644)
+@@ -58,6 +58,22 @@
+ 	glutInitDone=true;
+ }
+ 
++void OpenGLRenderingEngine::initgl(){
++	LOG_INFO(&quot;(re)initializing GL for gldraw methods.\n&quot;);
++	BOOST_FOREACH(vector&lt;string&gt;&amp; s,stateFunctorNames)
++		(static_pointer_cast&lt;GLDrawStateFunctor&gt;(ClassFactory::instance().createShared(s[1])))-&gt;initgl();
++	BOOST_FOREACH(vector&lt;string&gt;&amp; s,boundingVolumeFunctorNames)
++		(static_pointer_cast&lt;GLDrawBoundingVolumeFunctor&gt;(ClassFactory::instance().createShared(s[1])))-&gt;initgl();
++	BOOST_FOREACH(vector&lt;string&gt;&amp; s,interactingGeometryFunctorNames)
++		(static_pointer_cast&lt;GLDrawInteractingGeometryFunctor&gt;(ClassFactory::instance().createShared(s[1])))-&gt;initgl();
++	BOOST_FOREACH(vector&lt;string&gt;&amp; s,geometricalModelFunctorNames)
++		(static_pointer_cast&lt;GLDrawGeometricalModelFunctor&gt;(ClassFactory::instance().createShared(s[1])))-&gt;initgl();
++	BOOST_FOREACH(vector&lt;string&gt;&amp; s,interactionGeometryFunctorNames)
++		(static_pointer_cast&lt;GLDrawInteractionGeometryFunctor&gt;(ClassFactory::instance().createShared(s[1])))-&gt;initgl();
++	BOOST_FOREACH(vector&lt;string&gt;&amp; s,interactionPhysicsFunctorNames)
++		(static_pointer_cast&lt;GLDrawInteractionPhysicsFunctor&gt;(ClassFactory::instance().createShared(s[1])))-&gt;initgl();
++}
++
+ void OpenGLRenderingEngine::renderWithNames(const shared_ptr&lt;MetaBody&gt;&amp; rootBody){
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
+ 		if(!b-&gt;geometricalModel) continue;
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2009-01-26 03:34:03 UTC (rev 1643)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2009-01-27 00:58:28 UTC (rev 1644)
+@@ -66,6 +66,7 @@
+ 		virtual ~OpenGLRenderingEngine();
+ 	
+ 		void init();
++		void initgl();
+ 		void render(const shared_ptr&lt;MetaBody&gt;&amp; body, body_id_t selection = body_id_t(-1));
+ 		virtual void renderWithNames(const shared_ptr&lt;MetaBody&gt;&amp; );
+ 	
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000631.html">[deprecated list] [Yade-dev] r1643 - in trunk/pkg/snow: . DataClass Engine PreProcessor RenderingEngine
+</A></li>
+	<LI>Next message: <A HREF="000630.html">[deprecated list] [Yade-dev] [svn] r1645 - in trunk/pkg/snow: .	RenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#628">[ date ]</a>
+              <a href="thread.html#628">[ thread ]</a>
+              <a href="subject.html#628">[ subject ]</a>
+              <a href="author.html#628">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

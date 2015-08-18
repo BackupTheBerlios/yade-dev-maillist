@@ -1,0 +1,337 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1798 - in trunk: gui/py gui/qt3	lib	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1798%20-%20in%20trunk%3A%20gui/py%20gui/qt3%0A%09lib%09pkg/common/Engine/StandAloneEngine%20pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200906151539.n5FFdwCG027552%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001023.html">
+   <LINK REL="Next"  HREF="001025.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1798 - in trunk: gui/py gui/qt3	lib	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/DeusExMachina</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1798%20-%20in%20trunk%3A%20gui/py%20gui/qt3%0A%09lib%09pkg/common/Engine/StandAloneEngine%20pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200906151539.n5FFdwCG027552%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1798 - in trunk: gui/py gui/qt3	lib	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/DeusExMachina">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Jun 15 17:39:58 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001023.html">[deprecated list] [Yade-dev] [svn] r1797 - in trunk/pkg/dem:	.	Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="001025.html">[deprecated list] [Yade-dev] [svn] r1799 - in trunk: core	lib/smoothing pkg/dem
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1024">[ date ]</a>
+              <a href="thread.html#1024">[ thread ]</a>
+              <a href="subject.html#1024">[ subject ]</a>
+              <a href="author.html#1024">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-06-15 17:39:57 +0200 (Mon, 15 Jun 2009)
+New Revision: 1798
+
+Modified:
+   trunk/gui/py/linterpolation.py
+   trunk/gui/qt3/SimulationController.cpp
+   trunk/gui/qt3/SimulationController.hpp
+   trunk/lib/SConscript
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+Log:
+1. Fix (hopefully) clump damping
+2. Remove unused code from InsertionSortCollider
+3. Make SimulationController NOT change timestep (rounding) by just opening it (!!)
+4. Fix paths in PythonUI and lib/SConscript for $PREFIX/yade$SUFFIX/py/yade instead of $PREFIX/yade$SUFFIX/gui/yade
+
+
+
+Modified: trunk/gui/py/linterpolation.py
+===================================================================
+--- trunk/gui/py/linterpolation.py	2009-06-15 13:43:29 UTC (rev 1797)
++++ trunk/gui/py/linterpolation.py	2009-06-15 15:39:57 UTC (rev 1798)
+@@ -73,6 +73,8 @@
+ 	periodIntegral=integral(x,y)
+ 	numPeriods=floor(integralValue/periodIntegral)
+ 	xFrac=xFractionalFromIntegral(integralValue-numPeriods*periodIntegral,x,y)
++	#print '### wanted _%g; period=%g; periodIntegral=_%g (numPeriods=%g); rests _%g (xFrac=%g)'%(integralValue,period,periodIntegral,numPeriods,integralValue-numPeriods*periodIntegral,xFrac)
++	#print '### returning %g*%g+%g=%g'%(period,numPeriods,xFrac,period*numPeriods+xFrac)
+ 	return period*numPeriods+xFrac
+ 
+ def sanitizeInterpolation(x,y,x0,x1):
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2009-06-15 13:43:29 UTC (rev 1797)
++++ trunk/gui/qt3/SimulationController.cpp	2009-06-15 15:39:57 UTC (rev 1798)
+@@ -86,6 +86,12 @@
+ 		loadSimulationFromFileName(Omega::instance().getSimulationFileName());
+ 	}
+ 	else{ LOG_DEBUG(&quot;Not loading simulation in ctor&quot;); }
++
++	int mantissa, exponent;
++	dtIntegerMantissaExponent(mantissa,exponent);
++	sb10PowerSecond-&gt;setValue(exponent);
++	sbSecond-&gt;setValue(mantissa);
++
+ 	// run timer ANY TIME (simulation may be started asynchronously)
+ 	updateTimerId=startTimer(refreshTime);
+ 
+@@ -352,31 +358,27 @@
+ 	switch (i)
+ 	{
+ 		case 0 : {//Use timeStepper
+-			//changeSkipTimeStepper = true;
+-			//skipTimeStepper = false;
+ 			wasUsingTimeStepper=true;
+-			//boost::mutex::scoped_lock lock(timeMutex);
+ 			Omega::instance().skipTimeStepper(false);
+ 			break;
+ 			}
+ 		case 1 : // Try RealTime -- deprecated
+-			//changeSkipTimeStepper = true;
+-			//skipTimeStepper = true;
+-			//wasUsingTimeStepper=false;
+ 			throw logic_error(&quot;RealTime timestep is deprecated and you couldn't click on it!&quot;);
+ 			break;
+ 		case 2 : {// use fixed time Step
+-			//changeSkipTimeStepper = true;
+-			//skipTimeStepper = true;
+-			//boost::mutex::scoped_lock lock(timeMutex);
+ 			changeTimeStep = true;
+ 			wasUsingTimeStepper=false;
+ 			Omega::instance().skipTimeStepper(true);
+ 			if(sbSecond-&gt;value()==0){ sbSecond-&gt;setValue(9); sb10PowerSecond-&gt;setValue(sb10PowerSecond-&gt;value()-1); }
+ 			if(sbSecond-&gt;value()==10){ sbSecond-&gt;setValue(1); sb10PowerSecond-&gt;setValue(sb10PowerSecond-&gt;value()+1); }
+-			Real second = (Real)(sbSecond-&gt;value());
+-			Real powerSecond = (Real)(sb10PowerSecond-&gt;value());
+-			Omega::instance().setTimeStep(second*Mathr::Pow(10,powerSecond));
++			int second=(sbSecond-&gt;value()), powerSecond = (sb10PowerSecond-&gt;value());
++			int exp10,mantissa; dtIntegerMantissaExponent(mantissa,exp10);
++			// only change timestep if the current timestep would have different representation in this integral thing
++			// important so that merely opening the controller doesn't round the existing timestep
++			if((mantissa!=second) || (exp10!=powerSecond)){
++				LOG_DEBUG(&quot;Change timestep: current &quot;&lt;&lt;mantissa&lt;&lt;&quot;^&quot;&lt;&lt;exp10&lt;&lt;&quot;; gui &quot;&lt;&lt;second&lt;&lt;&quot;^&quot;&lt;&lt;powerSecond);
++				Omega::instance().setTimeStep((Real)second*Mathr::Pow(10.,(Real)powerSecond));
++			}
+ 			break;
+ 		}
+ 		default: break;
+@@ -512,10 +514,13 @@
+ 	if(rbFixed-&gt;isChecked()==usesTimeStepper){ LOG_DEBUG(&quot;Checking rbFixed&quot;); rbFixed-&gt;setChecked(!usesTimeStepper); }
+ 	if(rbTimeStepper-&gt;isChecked()!=usesTimeStepper){ LOG_DEBUG(&quot;Checking rbTimeStepper&quot;); rbTimeStepper-&gt;setChecked(usesTimeStepper); }
+ 
+-	Real dt=Omega::instance().getTimeStep();
+-	int exp10=floor(log10(dt));
+-	sb10PowerSecond-&gt;setValue(exp10);
+-	sbSecond-&gt;setValue((int)(.1+dt/(pow((float)10,exp10)))); // .1: rounding issues
++	int exp10,mantissa; dtIntegerMantissaExponent(mantissa,exp10);
++	sb10PowerSecond-&gt;setValue(exp10); sbSecond-&gt;setValue(mantissa);
+ 
+ }
+ 
++void SimulationController::dtIntegerMantissaExponent(int&amp; mantissa, int&amp; exponent){
++	Real dt=Omega::instance().getTimeStep();
++	exponent=floor(log10(dt));
++	mantissa=((int)(.1+dt/(pow((float)10,exponent)))); // .1: rounding issues
++}
+
+Modified: trunk/gui/qt3/SimulationController.hpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.hpp	2009-06-15 13:43:29 UTC (rev 1797)
++++ trunk/gui/qt3/SimulationController.hpp	2009-06-15 15:39:57 UTC (rev 1798)
+@@ -52,6 +52,8 @@
+ 		QFrame * scrollViewFrame;
+ 		QVBoxLayout* scrollViewLayout;
+ 		void addNewView();
++		void dtIntegerMantissaExponent(int&amp; mantissa, int&amp; exponent);
++
+ 	
+ 	public : 
+ 		void loadSimulationFromFileName(const std::string&amp; fileName,bool center=true);
+
+Modified: trunk/lib/SConscript
+===================================================================
+--- trunk/lib/SConscript	2009-06-15 13:43:29 UTC (rev 1797)
++++ trunk/lib/SConscript	2009-06-15 15:39:57 UTC (rev 1798)
+@@ -2,7 +2,7 @@
+ Import('*')
+ 
+ if 'EMBED_PYTHON' in env['CPPDEFINES']:
+-	env.Install('$PREFIX/lib/yade$SUFFIX/gui/yade',[
++	env.Install('$PREFIX/lib/yade$SUFFIX/py/yade',[
+ 		env.SharedLibrary('WeightedAverage2d',['smoothing/WeightedAverage2d.cpp'],SHLIBPREFIX='',
+ 		LIBS=env['LIBS']+['yade-base'])
+ 	])
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-06-15 13:43:29 UTC (rev 1797)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-06-15 15:39:57 UTC (rev 1798)
+@@ -111,20 +111,6 @@
+ 
+ 	// process interactions that the constitutive law asked to be erased
+ 	interactions-&gt;erasePending(*this);
+-	#if 0
+-	FOREACH(const InteractionContainer::bodyIdPair&amp; p, interactions-&gt;pendingErase){
+-		// remove those that do not overlap spatially anymore
+-		if(!spatialOverlap(p[0],p[1])){ interactions-&gt;erase(p[0],p[1]); LOG_TRACE(&quot;Deleted interaction #&quot;&lt;&lt;p[0]&lt;&lt;&quot;+#&quot;&lt;&lt;p[1]); }
+-		else
+-		{
+-			const shared_ptr&lt;Interaction&gt;&amp; I=interactions-&gt;find(p[0],p[1]);
+-			if(!I){ LOG_FATAL(&quot;Requested deletion of a non-existent interaction #&quot;&lt;&lt;p[0]&lt;&lt;&quot;+#&quot;&lt;&lt;p[1]&lt;&lt;&quot;?!&quot;); throw; }
+-			I-&gt;reset();
+-		}
+-	}
+-	interactions-&gt;pendingErase.clear();
+-	#endif
+-	
+ 
+ 	// sort
+ 		if(!doInitSort &amp;&amp; !sortThenCollide){
+@@ -134,6 +120,7 @@
+ 		else {
+ 			if(doInitSort){
+ 				// the initial sort is in independent in 3 dimensions, may be run in parallel
++				// it seems that there is no time gain running this in parallel, though
+ 				#pragma omp parallel sections
+ 				{
+ 					#pragma omp section
+@@ -159,7 +146,7 @@
+ 				// go up until we meet the upper bound
+ 				for(size_t j=i+1; V[j].id!=iid; j++){
+ 					const body_id_t&amp; jid=V[j].id;
+-					/// FIXME: not sure why this doesn't work. If this condition is commented out, we have exact same interactions as from SpatialQuickSort. Otherwise some interactions are missing!
++					/// Not sure why this doesn't work. If this condition is commented out, we have exact same interactions as from SpatialQuickSort. Otherwise some interactions are missing!
+ 					// skip bodies with smaller (arbitrary, could be greater as well) id, since they will detect us when their turn comes
+ 					// if(jid&lt;iid) { /* LOG_TRACE(&quot;Skip #&quot;&lt;&lt;V[j].id&lt;&lt;(V[j].flags.isMin?&quot;(min)&quot;:&quot;(max)&quot;)&lt;&lt;&quot; with &quot;&lt;&lt;iid&lt;&lt;&quot; (smaller id)&quot;); */ continue; }
+ 					/* abuse the same function here; since it does spatial overlap check first, it is OK to use it */
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-06-15 13:43:29 UTC (rev 1797)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-06-15 15:39:57 UTC (rev 1798)
+@@ -26,20 +26,27 @@
+ 	damping = 0.2;
+ }
+ 
++void NewtonsDampedLaw::cundallDamp(const Real&amp; dt, const Vector3r&amp; f, const Vector3r&amp; velocity, Vector3r&amp; acceleration, const Vector3r&amp; m, const Vector3r&amp; angularVelocity, Vector3r&amp; angularAcceleration){
++	for(int i=0; i&lt;3; i++){
++		angularAcceleration[i]*= 1 - damping*Mathr::Sign ( m[i]*(angularVelocity[i] + (Real) 0.5 *dt*angularAcceleration[i]) );
++		acceleration       [i]*= 1 - damping*Mathr::Sign ( f[i]*(velocity       [i] + (Real) 0.5 *dt*acceleration       [i]) );
++	}
++}
++
+ void NewtonsDampedLaw::applyCondition ( MetaBody * ncb )
+ {
+ 	ncb-&gt;bex.sync();
++	Real dt=Omega::instance().getTimeStep();
++
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *ncb-&gt;bodies){
+ 		// clump members are non-dynamic; they skip the rest of loop once their forces are properly taken into account, however
+ 		if (!b-&gt;isDynamic &amp;&amp; !b-&gt;isClumpMember()) continue;
+ 		
+ 		RigidBodyParameters* rb = YADE_CAST&lt;RigidBodyParameters*&gt;(b-&gt;physicalParameters.get());
+-		body_id_t id = b-&gt;getId();
++		const body_id_t&amp; id=b-&gt;getId();
+ 		const Vector3r&amp; m=ncb-&gt;bex.getTorque(id);
+ 		const Vector3r&amp; f=ncb-&gt;bex.getForce(id);
+ 
+-		Real dt = Omega::instance().getTimeStep();
+-
+ 		//Newtons mometum law :
+ 		if (b-&gt;isStandalone()){
+ 			rb-&gt;angularAcceleration=diagDiv(m,rb-&gt;inertia);
+@@ -53,27 +60,23 @@
+ 		else {
+ 			assert(b-&gt;isClumpMember());
+ 			assert(b-&gt;clumpId&gt;b-&gt;id);
+-			const shared_ptr&lt;Body&gt;&amp; clump ( Body::byId ( b-&gt;clumpId ) );
++			const shared_ptr&lt;Body&gt;&amp; clump=Body::byId(b-&gt;clumpId,ncb);
+ 			RigidBodyParameters* clumpRBP=YADE_CAST&lt;RigidBodyParameters*&gt; ( clump-&gt;physicalParameters.get() );
+-			/* angularAcceleration is reset by ClumpMemberMover engine */
+-			clumpRBP-&gt;angularAcceleration+=diagDiv ( m,clumpRBP-&gt;inertia );
+-			clumpRBP-&gt;acceleration+=f/clumpRBP-&gt;mass;
+-			clumpRBP-&gt;angularAcceleration+=diagDiv ( ( rb-&gt;se3.position-clumpRBP-&gt;se3.position ).Cross ( f ),clumpRBP-&gt;inertia ); //acceleration from torque generated by the force WRT particle centroid on the clump centroid
++			Vector3r diffClumpAccel=f/clumpRBP-&gt;mass;
++			// angular acceleration from: normal torque + torque generated by the force WRT particle centroid on the clump centroid
++			Vector3r diffClumpAngularAccel=diagDiv(m,clumpRBP-&gt;inertia)+diagDiv((rb-&gt;se3.position-clumpRBP-&gt;se3.position).Cross(f),clumpRBP-&gt;inertia); 
++			// damp increment of accels on the clump, using velocities of the clump MEMBER
++			cundallDamp(dt,f,rb-&gt;velocity,diffClumpAccel,m,rb-&gt;angularVelocity,diffClumpAngularAccel);
++			// clumpRBP-&gt;{acceleration,angularAcceleration} are reset byt Clump::moveMembers, it is ok to just increment here
++			clumpRBP-&gt;acceleration+=diffClumpAccel;
++			clumpRBP-&gt;angularAcceleration+=diffClumpAngularAccel;
+ 			continue;
+ 		}
+ 
++		assert(!b-&gt;isClumpMember());
++		// damping: applied to non-clumps only, as clumps members were already damped above
++		if(!b-&gt;isClump()) cundallDamp(dt,f,rb-&gt;velocity,rb-&gt;acceleration,m,rb-&gt;angularVelocity,rb-&gt;angularAcceleration);
+ 
+-		// damping: applied to both clumps and non-clumps
+-		// FIXME: clumps with just 1 body are not dumped? See sphere jumping forever in scripts/test/clump.py
+-		//   other clumps seem to be damped in some strange way (again, see the same script).
+-		//   The damping also looks different from ClumpTestGen, which uses separate engines instead of NewtonsDampedLaw
+-		for ( int i=0; i&lt;3; ++i ) {
+-			//Damping moments
+-			rb-&gt;angularAcceleration[i] *= 1 - damping*Mathr::Sign ( m[i]*(rb-&gt;angularVelocity[i] + (Real) 0.5 *dt*rb-&gt;angularAcceleration[i]) );
+-			//Damping force :
+-			rb-&gt;acceleration[i] *= 1 - damping*Mathr::Sign ( f[i]*(rb-&gt;velocity[i] + (Real) 0.5 *dt*rb-&gt;acceleration[i]) );
+-		}
+-
+ 		// blocking DOFs
+ 		if(rb-&gt;blockedDOFs==0){ /* same as: rb-&gt;blockedDOFs==PhysicalParameters::DOF_NONE */
+ 			rb-&gt;angularVelocity=rb-&gt;angularVelocity+dt*rb-&gt;angularAcceleration;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2009-06-15 13:43:29 UTC (rev 1797)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2009-06-15 15:39:57 UTC (rev 1798)
+@@ -35,6 +35,7 @@
+ 
+ class NewtonsDampedLaw : public DeusExMachina
+ {
++	inline void cundallDamp(const Real&amp; dt, const Vector3r&amp; f, const Vector3r&amp; velocity, Vector3r&amp; acceleration, const Vector3r&amp; m, const Vector3r&amp; angularVelocity, Vector3r&amp; angularAcceleration);
+ 	public :
+ 		///damping coefficient for Cundall's non viscous damping
+ 		Real damping;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001023.html">[deprecated list] [Yade-dev] [svn] r1797 - in trunk/pkg/dem:	.	Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="001025.html">[deprecated list] [Yade-dev] [svn] r1799 - in trunk: core	lib/smoothing pkg/dem
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1024">[ date ]</a>
+              <a href="thread.html#1024">[ thread ]</a>
+              <a href="subject.html#1024">[ subject ]</a>
+              <a href="author.html#1024">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

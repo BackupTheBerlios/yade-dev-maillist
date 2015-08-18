@@ -1,0 +1,303 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1699 - in trunk: extra/clump	gui/py	pkg/common/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1699%20-%20in%20trunk%3A%20extra/clump%0A%09gui/py%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200902281026.n1SAQmIh004046%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000825.html">
+   <LINK REL="Next"  HREF="000786.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1699 - in trunk: extra/clump	gui/py	pkg/common/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1699%20-%20in%20trunk%3A%20extra/clump%0A%09gui/py%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200902281026.n1SAQmIh004046%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1699 - in trunk: extra/clump	gui/py	pkg/common/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Feb 28 11:26:48 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000825.html">[deprecated list] [Yade-dev] updated collider benchmark results
+</A></li>
+        <LI>Next message: <A HREF="000786.html">[deprecated list] [Yade-dev] [svn] r1700 - in trunk: examples	examples/collider-perf	gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#785">[ date ]</a>
+              <a href="thread.html#785">[ thread ]</a>
+              <a href="subject.html#785">[ subject ]</a>
+              <a href="author.html#785">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-02-28 11:26:47 +0100 (Sat, 28 Feb 2009)
+New Revision: 1699
+
+Modified:
+   trunk/extra/clump/Shop.cpp
+   trunk/gui/py/timing.py
+   trunk/gui/py/utils.py
+   trunk/gui/py/yade-multi
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+Log:
+1. Make Shop load 4/5/6 columns text files for spheres (and skip 5-cols)
+2. Change evaluation of args in readParamsFromTable to be able to pass strings better (single quotes) and consistently
+3. Parameters passed as env. vars by yade-multi are prefixed with !
+4. fix typo in timing for resetting timers.
+
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2009-02-26 17:27:54 UTC (rev 1698)
++++ trunk/extra/clump/Shop.cpp	2009-02-28 10:26:47 UTC (rev 1699)
+@@ -4,6 +4,7 @@
+ #include&lt;limits&gt;
+ 
+ #include&lt;boost/filesystem/convenience.hpp&gt;
++#include&lt;boost/tokenizer.hpp&gt;
+ 
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
+@@ -474,21 +475,29 @@
+ 	vector&lt;pair&lt;Vector3r,Real&gt; &gt; spheres;
+ 	ifstream sphereFile(fname.c_str());
+ 	if(!sphereFile.good()) throw std::runtime_error(&quot;File with spheres `&quot;+fname+&quot;' couldn't be opened.&quot;);
+-	int tmp1,tmp2;
+ 	Vector3r C;
+-	Real r;
+-	while(!sphereFile.eof()){
+-		sphereFile&gt;&gt;C[0]; sphereFile&gt;&gt;C[1]; sphereFile&gt;&gt;C[2];
+-		sphereFile&gt;&gt;r;
+-		// TRVAR3(spheres.size(),C,r);
+-		sphereFile&gt;&gt;tmp1;
+-		if(r==1) continue; // arrrgh, boxes have 5 record/line, spheres have 6; 4th number for box is 1 and we assume there is no sphere with radius 1; Wenjie, I'm gonna tell you one day how smart this format is.
+-		if(sphereFile.eof()) continue; // prevents trailing newlines from copying last sphere as well
+-		sphereFile&gt;&gt;tmp2; // read the 6th (unused) number for spheres
++	Real r=0;
++	string line;
++	size_t lineNo=0;
++	while(std::getline(sphereFile, line, '\n')){
++		lineNo++;
++		boost::tokenizer&lt;boost::char_separator&lt;char&gt; &gt; toks(line,boost::char_separator&lt;char&gt;(&quot; \t&quot;));
++		int i=0;
++		FOREACH(const string&amp; s, toks){
++			if(i&lt;3) C[i]=lexical_cast&lt;Real&gt;(s);
++			if(i==4) r=lexical_cast&lt;Real&gt;(s);
++			i++;
++		}
++		if(i==0) continue; // empty line, skipped (can be the last one)
++		// Wenjie's format: 5 per line are boxes, which should be skipped
++		if(i==5) continue;
++		if((i!=4) and (i!=6)) {
++			LOG_ERROR(&quot;Line &quot;+lexical_cast&lt;string&gt;(lineNo)+&quot; in the spheres file &quot;+fname+&quot; has &quot;+lexical_cast&lt;string&gt;(i)+&quot; columns instead of 0,4,5 or 6.&quot;);
++			LOG_ERROR(&quot;The result may be garbage!&quot;);
++		}
+ 		for(int j=0; j&lt;3; j++) { minXYZ[j]=(spheres.size()&gt;0?min(C[j]-r,minXYZ[j]):C[j]-r); maxXYZ[j]=(spheres.size()&gt;0?max(C[j]+r,maxXYZ[j]):C[j]+r);}
+ 		spheres.push_back(pair&lt;Vector3r,Real&gt;(C,r));
+ 	}
+-	//TRVAR2(minXYZ,maxXYZ);
+ 	return spheres;
+ }
+ 
+
+Modified: trunk/gui/py/timing.py
+===================================================================
+--- trunk/gui/py/timing.py	2009-02-26 17:27:54 UTC (rev 1698)
++++ trunk/gui/py/timing.py	2009-02-28 10:26:47 UTC (rev 1699)
+@@ -9,7 +9,7 @@
+ 	e.execTime,e.execCount=0,0
+ 
+ def reset():
+-	for e in O.engines(): _resetEngine(e)
++	for e in O.engines: _resetEngine(e)
+ 
+ _statCols={'label':40,'count':20,'time':20,'relTime':20}
+ _maxLev=3
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2009-02-26 17:27:54 UTC (rev 1698)
++++ trunk/gui/py/utils.py	2009-02-28 10:26:47 UTC (rev 1699)
+@@ -354,13 +354,13 @@
+ 		for i in range(len(names)):
+ 			if names[i]=='description': o.tags['description']=values[i]
+ 			else:
+-				if names[i] not in kw.keys() and not unknownOk: raise NameError(&quot;Parameter `%s' has no default value assigned&quot;%names[i])
++				if names[i] not in kw.keys() and (not unknownOk or names[i][0]=='!'): raise NameError(&quot;Parameter `%s' has no default value assigned&quot;%names[i])
+ 				if names[i] in kw.keys(): kw.pop(names[i])
+-				eq=&quot;%s=%s&quot;%(names[i],values[i])
++				eq=&quot;%s=%s&quot;%(names[i],repr(values[i]))
+ 				exec('__builtin__.%s=%s'%(names[i],values[i])); tagsParams+=['%s=%s'%(names[i],values[i])]; dictParams[names[i]]=values[i]
+ 	defaults=[]
+ 	for k in kw.keys():
+-		exec(&quot;__builtin__.%s=%s&quot;%(k,kw[k]))
++		exec(&quot;__builtin__.%s=%s&quot;%(k,repr(kw[k])))
+ 		defaults+=[&quot;%s=%s&quot;%(k,kw[k])]; dictDefaults[k]=kw[k]
+ 	o.tags['defaultParams']=&quot;,&quot;.join(defaults)
+ 	o.tags['params']=&quot;,&quot;.join(tagsParams)
+
+Modified: trunk/gui/py/yade-multi
+===================================================================
+--- trunk/gui/py/yade-multi	2009-02-26 17:27:54 UTC (rev 1698)
++++ trunk/gui/py/yade-multi	2009-02-28 10:26:47 UTC (rev 1699)
+@@ -125,7 +125,6 @@
+ 
+ ll=['']+open(table,'r').readlines()
+ availableLines=[i for i in range(len(ll)) if not re.match(r'^\s*(#.*)?$',ll[i][:-1]) and i&gt;1]
+-print availableLines
+ 
+ # read actual data
+ values={}
+@@ -171,7 +170,8 @@
+ 	else: logFile=logFile.replace('@',str(l))
+ 	envVars=[]
+ 	for col,head in enumerate(headings):
+-		if re.match('^[A-Z_]+[A-Z0-9_]+',head): envVars+=['%s=%s'%(head,values[l][col])]
++		if head=='!EXEC': executable=values[l][col]
++		if head[0]=='!': envVars+=['%s=%s'%(head[1:],values[l][col])]
+ 	jobs.append(JobInfo(i,idStrings[l] if idStrings else '#'+str(i),'PARAM_TABLE=%s:%d %s nice -n %d %s -N PythonUI -- -n -x %s &gt; %s 2&gt;&amp;1'%(table,l,' '.join(envVars),nice,executable,simul,logFile),logFile))
+ 
+ print &quot;Job summary:&quot;
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-02-26 17:27:54 UTC (rev 1698)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-02-28 10:26:47 UTC (rev 1699)
+@@ -26,6 +26,8 @@
+ 	zBounds.clear();
+ 	minima.clear();
+ 	maxima.clear();
++
++	//timingDeltas=shared_ptr&lt;TimingDeltas&gt;(new TimingDeltas);
+ }
+ 
+ PersistentSAPCollider::~PersistentSAPCollider()
+@@ -38,6 +40,8 @@
+ 	rootBody=ncb;
+ 	shared_ptr&lt;BodyContainer&gt; bodies=ncb-&gt;bodies;
+ 	transientInteractions=ncb-&gt;transientInteractions;
++
++//	timingDeltas-&gt;start();
+ 	
+ 	if (2*bodies-&gt;size()!=xBounds.size()){
+ 		xBounds.resize(2*bodies-&gt;size());
+@@ -47,6 +51,8 @@
+ 		maxima.resize(3*bodies-&gt;size());
+ 	}
+ 
++//	timingDeltas-&gt;checkpoint(&quot;resizeArrays&quot;);
++
+ 	// Updates the minima and maxima arrays according to the new center and radius of the spheres
+ 	int offset;
+ 	Vector3r min,max;
+@@ -70,6 +76,9 @@
+ 			maxima[offset+0]=pos[0]; maxima[offset+1]=pos[1]; maxima[offset+2]=pos[2];
+ 		}
+ 	}
++
++//	timingDeltas-&gt;checkpoint(&quot;minMaxUpdate&quot;);
++
+ 	typedef pair&lt;body_id_t,body_id_t&gt; bodyIdPair;
+ 	list&lt;bodyIdPair&gt; toBeDeleted;
+ 	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I,*ncb-&gt;transientInteractions){
+@@ -87,8 +96,13 @@
+ 		//if(!I-&gt;isReal){LOG_DEBUG(&quot;Interaction #&quot;&lt;&lt;I-&gt;getId1()&lt;&lt;&quot;=#&quot;&lt;&lt;I-&gt;getId2()&lt;&lt;&quot; is not real.&quot;);}
+ 	}
+ 	FOREACH(const bodyIdPair&amp; p, toBeDeleted){ transientInteractions-&gt;erase(p.first,p.second); }
++
++//	timingDeltas-&gt;checkpoint(&quot;deleteInvalid&quot;);
+ 	
+ 	updateIds(bodies-&gt;size());
++
++//	timingDeltas-&gt;checkpoint(&quot;updateIds&quot;);
++
+ 	nbObjects=bodies-&gt;size();
+ 
+ 	// permutation sort of the AABBBounds along the 3 axis performed in a independant manner
+@@ -101,6 +115,8 @@
+ 	//#pragma omp section
+ 		sortBounds(zBounds, nbObjects);
+ 	}
++
++//	timingDeltas-&gt;checkpoint(&quot;sortBounds&quot;);
+ }
+ 
+ bool PersistentSAPCollider::probeBoundingVolume(const BoundingVolume&amp; bv)
+@@ -132,6 +148,8 @@
+ 		int begin=0, end=nbElements;
+ 		if (nbElements&gt;nbObjects) begin=nbObjects;
+ 
++		//timingDeltas-&gt;start();
++
+ 		// initialization if the xBounds, yBounds, zBounds
+ 		for(int i=begin;i&lt;end;i++){
+ 			xBounds[2*i]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,1));
+@@ -142,6 +160,8 @@
+ 			zBounds[2*i+1]	= shared_ptr&lt;AABBBound&gt;(new AABBBound(i,0));
+ 		}
+ 
++		//timingDeltas-&gt;checkpoint(&quot;init&quot;);
++
+ 		// initialization if the field &quot;value&quot; of the xBounds, yBounds, zBounds arrays
+ 		updateBounds(nbElements);
+ 
+@@ -149,16 +169,22 @@
+ 		// The first time these arrays are not sorted so it is faster to use such a sort instead
+ 		// of the permutation we are going to use next
+ 		std::sort(xBounds.begin(),xBounds.begin()+2*nbElements,AABBBoundComparator());
++		//timingDeltas-&gt;checkpoint(&quot;sortX&quot;);
+ 		std::sort(yBounds.begin(),yBounds.begin()+2*nbElements,AABBBoundComparator());
++		//timingDeltas-&gt;checkpoint(&quot;sortY&quot;);
+ 		std::sort(zBounds.begin(),zBounds.begin()+2*nbElements,AABBBoundComparator());
++		//timingDeltas-&gt;checkpoint(&quot;sortZ&quot;);
+ 
+ 		// initialize the overlappingBB collection
+ 		//for(unsigned int j=0;j&lt;nbElements;j++)
+ 		//	overlappingBB[j].clear(); //attention memoire
+ 
+ 		findOverlappingBB(xBounds, nbElements);
++		//timingDeltas-&gt;checkpoint(&quot;findX&quot;);
+ 		findOverlappingBB(yBounds, nbElements);
++		//timingDeltas-&gt;checkpoint(&quot;findY&quot;);
+ 		findOverlappingBB(zBounds, nbElements);
++		//timingDeltas-&gt;checkpoint(&quot;findZ&quot;);
+ 	}
+ 	else updateBounds(nbElements);
+ }
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000825.html">[deprecated list] [Yade-dev] updated collider benchmark results
+</A></li>
+	<LI>Next message: <A HREF="000786.html">[deprecated list] [Yade-dev] [svn] r1700 - in trunk: examples	examples/collider-perf	gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#785">[ date ]</a>
+              <a href="thread.html#785">[ thread ]</a>
+              <a href="subject.html#785">[ subject ]</a>
+              <a href="author.html#785">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,684 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1690 - in trunk:	core/containers extra gui gui/py	pkg/common	pkg/common/Engine/MetaEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1690%20-%20in%20trunk%3A%0A%09core/containers%20extra%20gui%20gui/py%09pkg/common%0A%09pkg/common/Engine/MetaEngine&In-Reply-To=%3C200902251425.n1PEPuwk030282%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000773.html">
+   <LINK REL="Next"  HREF="000761.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1690 - in trunk:	core/containers extra gui gui/py	pkg/common	pkg/common/Engine/MetaEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1690%20-%20in%20trunk%3A%0A%09core/containers%20extra%20gui%20gui/py%09pkg/common%0A%09pkg/common/Engine/MetaEngine&In-Reply-To=%3C200902251425.n1PEPuwk030282%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1690 - in trunk:	core/containers extra gui gui/py	pkg/common	pkg/common/Engine/MetaEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Feb 25 15:25:56 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000773.html">[deprecated list] [Yade-dev] 3 x speedups with new containers	and openMP!
+</A></li>
+        <LI>Next message: <A HREF="000761.html">[deprecated list] [Yade-dev] r1690 - in trunk:
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#760">[ date ]</a>
+              <a href="thread.html#760">[ thread ]</a>
+              <a href="subject.html#760">[ subject ]</a>
+              <a href="author.html#760">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-02-25 15:25:55 +0100 (Wed, 25 Feb 2009)
+New Revision: 1690
+
+Added:
+   trunk/core/containers/InteractionHashMap.cpp
+   trunk/core/containers/InteractionHashMap.hpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.hpp
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/gui/SConscript
+   trunk/gui/py/timing.py
+   trunk/gui/py/utils.py
+   trunk/gui/py/yade-multi
+   trunk/gui/py/yadeControl.cpp
+   trunk/pkg/common/SConscript
+Log:
+1. New InteractionDispatchers class that has one common loop for InteractionGeometryMetaEngine, InteractionPhysicsMetaEngine and ConstitutiveLawDispatcher. It can be used from python like this:
+  
+ O.engines=[..., InteractionDispatchers([EngineUnit('geomFunctor1'),EngineUnit('geomFunctor2')],[EngineUnit('physFunctor1'),...],[EngineUnit('ConstitutiveLaw1'),...])
+
+Gives about 5% of speedups, but not yet measured exactly.
+
+2. Fix InteractionHashMap. I forgot to svn add... Sorry
+3. Fix all other compilation problems with/without NO_BEX, with/without openmp (hopefully.
+4. yade-multi now passes parameters that are all uppercase (with numbers and underscores) as env. vars to the process (think OMP_NUM_THREADS).
+
+
+Added: trunk/core/containers/InteractionHashMap.cpp
+===================================================================
+--- trunk/core/containers/InteractionHashMap.cpp	2009-02-24 13:13:14 UTC (rev 1689)
++++ trunk/core/containers/InteractionHashMap.cpp	2009-02-25 14:25:55 UTC (rev 1690)
+@@ -0,0 +1,169 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Olivier Galizzi                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;InteractionHashMap.hpp&quot;
++
++InteractionHashMapIterator::InteractionHashMapIterator() : InteractionContainerIterator()
++{
++
++}
++
++
++InteractionHashMapIterator::~InteractionHashMapIterator()
++{
++
++}
++
++
++bool InteractionHashMapIterator::isDifferent(const InteractionContainerIterator&amp; i)
++{
++	return (hmii != static_cast&lt;const InteractionHashMapIterator&amp;&gt;(i).hmii );
++}
++
++
++void InteractionHashMapIterator::increment()
++{
++	++hmii;
++}
++
++
++void InteractionHashMapIterator::affect(const InteractionContainerIterator&amp; i)
++{
++	hmii = static_cast&lt;const InteractionHashMapIterator&amp;&gt;(i).hmii;
++}
++
++
++shared_ptr&lt;Interaction&gt; InteractionHashMapIterator::getValue()
++{
++	return (*hmii).second;
++}
++
++
++shared_ptr&lt;InteractionContainerIterator&gt; InteractionHashMapIterator::createPtr()
++{
++	return shared_ptr&lt;InteractionContainerIterator&gt;(new InteractionHashMapIterator());
++}
++
++
++/***********************************************************************/
++/***********************************************************************/
++/***********************************************************************/
++/***********************************************************************/
++
++InteractionHashMap::InteractionHashMap()
++{
++	clear();
++}
++
++
++InteractionHashMap::~InteractionHashMap()
++{
++}
++
++
++bool InteractionHashMap::insert(shared_ptr&lt;Interaction&gt;&amp; i)
++{
++	boost::mutex::scoped_lock lock(drawloopmutex);
++
++	body_id_t id1 = i-&gt;getId1();
++	body_id_t id2 = i-&gt;getId2();
++	if (id1&gt;id2)
++		swap(id1,id2);
++
++	return interactions.insert( IHashMap::value_type( pair&lt;body_id_t,body_id_t&gt;(id1,id2) , i )).second;
++}
++
++
++bool InteractionHashMap::insert(body_id_t id1,body_id_t id2)
++{
++	shared_ptr&lt;Interaction&gt; i(new Interaction(id1,id2) );
++	return insert(i);	
++}
++
++
++void InteractionHashMap::clear()
++{
++	boost::mutex::scoped_lock lock(drawloopmutex);
++
++	interactions.clear();
++}
++
++
++bool InteractionHashMap::erase(body_id_t id1,body_id_t id2)
++{
++	boost::mutex::scoped_lock lock(drawloopmutex);
++
++	if (id1&gt;id2)
++		swap(id1,id2);
++
++	unsigned int oldSize = interactions.size();
++	pair&lt;body_id_t,body_id_t&gt; p(id1,id2);
++	unsigned int size = interactions.erase(p);
++
++	return size!=oldSize;
++
++}
++
++
++const shared_ptr&lt;Interaction&gt;&amp; InteractionHashMap::find(body_id_t id1,body_id_t id2)
++{
++	if (id1&gt;id2)
++		swap(id1,id2);
++
++	IHashMap::iterator hmii = interactions.find(pair&lt;body_id_t,body_id_t&gt;(id1,id2));
++	if (hmii!=interactions.end())
++		return (*hmii).second;
++	else
++	{
++		empty = shared_ptr&lt;Interaction&gt;(); 
++		return empty;
++	}
++}
++
++
++InteractionContainer::iterator InteractionHashMap::begin()
++{
++	shared_ptr&lt;InteractionHashMapIterator&gt; it(new InteractionHashMapIterator());
++	it-&gt;hmii   = interactions.begin();
++
++	return InteractionContainer::iterator(it);
++}
++
++
++InteractionContainer::iterator InteractionHashMap::end()
++{
++	shared_ptr&lt;InteractionHashMapIterator&gt; it(new InteractionHashMapIterator());
++	it-&gt;hmii   = interactions.end();
++
++	return InteractionContainer::iterator(it);
++}
++
++
++// void InteractionHashMap::eraseCurrentAndGotoNextPotential()
++// {
++// 	if (notAtEnd())
++// 	{
++// 		IHashMap::iterator tmpHmii=hmii;
++// 		++hmii;
++// 		interactions.erase(tmpHmii);
++// 	}
++// }
++// 
++// void InteractionHashMap::eraseCurrentAndGotoNext()
++// {
++// 	IHashMap::iterator tmpHmii=hmii;	
++// 	while (notAtEnd() &amp;&amp; !((*hmii).second-&gt;isReal))
++// 		++hmii;	
++// 	interactions.erase(tmpHmii);
++// }
++
++unsigned int InteractionHashMap::size()
++{
++	return interactions.size();
++}
++YADE_PLUGIN();
+
+Added: trunk/core/containers/InteractionHashMap.hpp
+===================================================================
+--- trunk/core/containers/InteractionHashMap.hpp	2009-02-24 13:13:14 UTC (rev 1689)
++++ trunk/core/containers/InteractionHashMap.hpp	2009-02-25 14:25:55 UTC (rev 1690)
+@@ -0,0 +1,83 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Olivier Galizzi                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#pragma once
++
++#include&lt;yade/core/InteractionContainer.hpp&gt;
++#include&lt;yade/core/Interaction.hpp&gt;
++#include&lt;ext/hash_map&gt;
++#include&lt;vector&gt;
++#include&quot;InteractionHashMap.hpp&quot;
++
++using namespace std;
++using namespace __gnu_cxx;
++
++
++
++
++struct eqPair
++{
++	bool operator()(const pair&lt;body_id_t,body_id_t&gt;&amp; p1, const pair&lt;body_id_t,body_id_t&gt;&amp; p2) const
++	{
++		return (p1.first==p2.first &amp;&amp; p1.second==p2.second);
++	}
++};
++
++struct hashPair
++{
++	unsigned int operator()(const pair&lt;body_id_t,body_id_t&gt;&amp; p) const
++	{
++		return ((unsigned int)p.first+(unsigned int)p.second)%182501621;
++	}
++};
++
++typedef hash_map&lt;pair&lt;body_id_t,body_id_t&gt;, shared_ptr&lt;Interaction&gt;, hashPair, eqPair &gt; IHashMap;
++
++class InteractionHashMap : public InteractionContainer
++{
++	private :
++		IHashMap interactions;
++		shared_ptr&lt;Interaction&gt; empty;
++
++	public :
++		InteractionHashMap();
++		virtual ~InteractionHashMap();
++
++		virtual bool insert(body_id_t id1,body_id_t id2);
++		virtual bool insert(shared_ptr&lt;Interaction&gt;&amp; i);
++		virtual void clear();
++		virtual bool erase(body_id_t id1,body_id_t id2);
++		virtual const shared_ptr&lt;Interaction&gt;&amp; find(body_id_t id1,body_id_t id2);
++	
++		virtual InteractionContainer::iterator begin();
++	        virtual InteractionContainer::iterator end();
++	
++		virtual unsigned int size();
++
++	REGISTER_CLASS_NAME(InteractionHashMap);
++	REGISTER_BASE_CLASS_NAME(InteractionContainer);
++};
++
++class InteractionHashMapIterator : public InteractionContainerIterator 
++{
++	public :
++		IHashMap::iterator hmii;
++
++		InteractionHashMapIterator();
++		~InteractionHashMapIterator();
++
++		virtual bool isDifferent(const InteractionContainerIterator&amp; i);
++		virtual void affect(const InteractionContainerIterator&amp; i);
++		virtual void increment();
++		virtual shared_ptr&lt;Interaction&gt; getValue();
++		virtual shared_ptr&lt;InteractionContainerIterator&gt; createPtr();
++
++};
++
++REGISTER_SERIALIZABLE(InteractionHashMap);
++
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-02-24 13:13:14 UTC (rev 1689)
++++ trunk/extra/Brefcom.cpp	2009-02-25 14:25:55 UTC (rev 1690)
+@@ -13,7 +13,7 @@
+ 
+ void BrefcomGlobalCharacteristics::compute(MetaBody* rb, bool useMaxForce){
+ 	//Shop::Bex::initCache();
+-	#if BEX_CONTAINER
++	#ifdef BEX_CONTAINER
+ 		rb-&gt;bex.sync();
+ 	#else
+ 		throw runtime_error(&quot;Brefcom can run only with BexContainer&quot;);
+@@ -159,9 +159,13 @@
+ 	/* const Real&amp; transStrainCoeff(BC-&gt;transStrainCoeff); const Real&amp; epsTrans(BC-&gt;epsTrans); const Real&amp; xiShear(BC-&gt;xiShear); */
+ 	Real&amp; omega(BC-&gt;omega); Real&amp; sigmaN(BC-&gt;sigmaN);  Vector3r&amp; sigmaT(BC-&gt;sigmaT); Real&amp; Fn(BC-&gt;Fn); Vector3r&amp; Fs(BC-&gt;Fs); // for python access
+ 
++	#define NNAN(a) assert(!isnan(a));
++	#define NNANV(v) assert(!isnan(v[0])); assert(!isnan(v[1])); assert(!isnan(v[2]));
++
+ 	assert(contGeom-&gt;hasShear);
+ 	//timingDeltas-&gt;checkpoint(&quot;setup&quot;);
+ 	epsN=contGeom-&gt;epsN(); epsT=contGeom-&gt;epsT();
++	NNAN(epsN); NNANV(epsT);
+ 	// already in SpheresContactGeometry:
+ 	// contGeom-&gt;relocateContactPoints(); // allow very large mutual rotations
+ 	if(logStrain &amp;&amp; epsN&lt;0){ Real epsN0=epsN; epsN=log(epsN0+1); epsT*=epsN/epsN0; }
+@@ -181,8 +185,6 @@
+ 		LOG_DEBUG(&quot;Contact #&quot;&lt;&lt;I-&gt;getId1()&lt;&lt;&quot;=#&quot;&lt;&lt;I-&gt;getId2()&lt;&lt;&quot; is damaged over thershold (&quot;&lt;&lt;omega&lt;&lt;&quot;&gt;&quot;&lt;&lt;omegaThreshold&lt;&lt;&quot;) and has been deleted (isReal=&quot;&lt;&lt;I-&gt;isReal&lt;&lt;&quot;)&quot;);
+ 		return;
+ 	}
+-	#define NNAN(a) assert(!isnan(a));
+-	#define NNANV(v) assert(!isnan(v[0])); assert(!isnan(v[1])); assert(!isnan(v[2]));
+ 	// store Fn (and Fs?), for use with GlobalStiffnessCounter?
+ 	NNAN(sigmaN); NNANV(sigmaT); NNAN(crossSection);
+ 
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2009-02-24 13:13:14 UTC (rev 1689)
++++ trunk/gui/SConscript	2009-02-25 14:25:55 UTC (rev 1690)
+@@ -65,6 +65,7 @@
+ 				'InteractionPhysicsMetaEngine',
+ 				'PhysicalParametersMetaEngine',
+ 				'ConstitutiveLawDispatcher',
++				'InteractionDispatchers',
+ 				'STLImporter',
+ 				'ParallelEngine'
+ 			],
+
+Modified: trunk/gui/py/timing.py
+===================================================================
+--- trunk/gui/py/timing.py	2009-02-24 13:13:14 UTC (rev 1689)
++++ trunk/gui/py/timing.py	2009-02-25 14:25:55 UTC (rev 1690)
+@@ -19,9 +19,9 @@
+ 	raw=[]
+ 	raw.append(label)
+ 	raw.append(str(count) if count&gt;=0 else '')
+-	raw.append((str(time/1000)+u'&#956;s') if time&gt;=0 else '')
++	raw.append((str(time/1000)+u'us') if time&gt;=0 else '')
+ 	raw.append(('%6.2f%%'%(time*100./totalTime)) if totalTime&gt;0 else '')
+-	return ' '.join([
++	return u' '.join([
+ 		(sp+raw[0]).ljust(_statCols['label']),
+ 		(raw[1]+negSp).rjust(_statCols['count']),
+ 		(raw[2]+negSp).rjust(_statCols['time']),
+@@ -40,7 +40,7 @@
+ def _engines_stats(engines,totalTime,level):
+ 	lines=0; hereLines=0
+ 	for e in engines:
+-		if e.__class__.__name__!='EngineUnit': print _formatLine('&quot;'+e['label']+'&quot;' if e['label'] else e.name,e.execTime,e.execCount,totalTime,level); lines+=1; hereLines+=1
++		if e.__class__.__name__!='EngineUnit': print _formatLine(u'&quot;'+e['label']+'&quot;' if e['label'] else e.name,e.execTime,e.execCount,totalTime,level); lines+=1; hereLines+=1
+ 		if e.timingDeltas: 
+ 			if e.__class__.__name__=='EngineUnit':
+ 				print _formatLine(e.name,-1,-1,-1,level); lines+=1; hereLines+=1
+@@ -48,6 +48,10 @@
+ 			else: execTime=e.execTime
+ 			lines+=_delta_stats(e.timingDeltas,execTime,level+1)
+ 		if e.__class__.__name__=='MetaEngine': lines+=_engines_stats(e.functors,e.execTime,level+1)
++		if e.__class__.__name__=='InteractionDispatcher':
++			lines+=_engines_stats(e.geomDispatcher.functors,e.execTime,level+1)
++			lines+=_engines_stats(e.physDispatcher.functors,e.execTime,level+1)
++			lines+=_engines_stats(e.constLawDispatcher.functors,e.execTime,level+1)
+ 		elif e.__class__.__name__=='ParallelEngine': lines+=_engines_stats(e.slave,e.execTime,level+1)
+ 	if hereLines&gt;1:
+ 		print _formatLine('TOTAL',totalTime,-1,totalTime,level); lines+=1
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2009-02-24 13:13:14 UTC (rev 1689)
++++ trunk/gui/py/utils.py	2009-02-25 14:25:55 UTC (rev 1690)
+@@ -306,7 +306,7 @@
+ 	mainloop.run()
+ 	pipeline.set_state(gst.STATE_NULL); pipeline.get_state()
+ 
+-def readParamsFromTable(tableFileLine=None,noTableOk=False,**kw):
++def readParamsFromTable(tableFileLine=None,noTableOk=False,unknownOk=False,**kw):
+ 	&quot;&quot;&quot;
+ 	Read parameters from a file and assign them to __builtin__ variables.
+ 
+@@ -346,8 +346,8 @@
+ 		for i in range(len(names)):
+ 			if names[i]=='description': o.tags['description']=values[i]
+ 			else:
+-				if names[i] not in kw.keys(): raise NameError(&quot;Parameter `%s' has no default value assigned&quot;%names[i])
+-				kw.pop(names[i])
++				if names[i] not in kw.keys() and not unknownOk: raise NameError(&quot;Parameter `%s' has no default value assigned&quot;%names[i])
++				if names[i] in kw.keys(): kw.pop(names[i])
+ 				eq=&quot;%s=%s&quot;%(names[i],values[i])
+ 				exec('__builtin__.%s=%s'%(names[i],values[i])); tagsParams+=['%s=%s'%(names[i],values[i])]; dictParams[names[i]]=values[i]
+ 	defaults=[]
+
+Modified: trunk/gui/py/yade-multi
+===================================================================
+--- trunk/gui/py/yade-multi	2009-02-24 13:13:14 UTC (rev 1689)
++++ trunk/gui/py/yade-multi	2009-02-25 14:25:55 UTC (rev 1690)
+@@ -106,7 +106,7 @@
+ 
+ parser=optparse.OptionParser(usage='%prog [options] TABLE SIMULATION.py\n\n  %prog runs yade simulation multiple times with different parameters.\n  See <A HREF="http://yade.wikia.com/wiki/ScriptParametricStudy">http://yade.wikia.com/wiki/ScriptParametricStudy</A> for details.')
+ parser.add_option('-j',dest='maxJobs',type='int',help=&quot;Maximum number of simultaneous jobs to run (default: number of cores, i.e. %d)&quot;%getNumCores(),metavar='NUM',default=getNumCores())
+-parser.add_option('--log',dest='logFormat',help='Format of log files -- must contain a % or @, which will be replaced by line number or by description column respectively (default: SIMULATION.%.log)',metavar='FORMAT')
++parser.add_option('--log',dest='logFormat',help='Format of log files -- must contain a % or @, which will be replaced by line number or by description column respectively (default: <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">SIMULATION. at .log</A>)',metavar='FORMAT')
+ parser.add_option('-l','--lines',dest='lineList',help='Lines of TABLE to use, in the format 2,3-5,8,11-13 (default: all available lines in TABLE)',metavar='LIST')
+ parser.add_option('--nice',dest='nice',type='int',help='Nice value of spawned jobs (default: 10)',default=10)
+ parser.add_option('--executable',dest='executable',help='Name of the program to run (default: %s)'%sys.argv[0][:-6],default=sys.argv[0][:-6],metavar='FILE') ## strip the '-multi' extension
+@@ -118,14 +118,24 @@
+ 	parser.print_help()
+ 	sys.exit(1)
+ table,simul=args[0:2]
+-if not logFormat: logFormat=(simul[:-3] if simul[-3:]=='.py' else simul)+&quot;.%.log&quot;
++if not logFormat: logFormat=(simul[:-3] if simul[-3:]=='.py' else simul)+&quot;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">. at .log</A>&quot;
+ if (not '%' in logFormat) and ('@' not in logFormat): raise StandardError(&quot;Log string must contain at least one of `%', `@'&quot;)
+ 
+ print &quot;Will run `%s' on `%s' with nice value %d, output redirected to `%s', %d jobs at a time.&quot;%(executable,simul,nice,logFormat,maxJobs)
+ 
+ ll=['']+open(table,'r').readlines()
+ availableLines=[i for i in range(len(ll)) if not re.match(r'^\s*(#.*)?$',ll[i][:-1]) and i&gt;1]
++print availableLines
+ 
++# read actual data
++values={}
++headings=ll[1].split()
++for l in availableLines:
++	val={}
++	for i in range(len(headings)):
++		val[i]=ll[l].split()[i]
++	values[l]=val
++
+ print &quot;Will use table `%s', with available lines&quot;%(table),', '.join([str(i) for i in availableLines])+'.'
+ 
+ if lineList:
+@@ -145,9 +155,9 @@
+ print &quot;Will use lines &quot;,', '.join([str(i) for i in useLines])+'.'
+ # find column where description is
+ try:
+-	idColumn=ll[1].split().index('description')
++	idColumn=headings.index('description')
+ 	idStrings={}
+-	for i in useLines: idStrings[i]=ll[i].split()[idColumn] # textual descripion of respective lines 
++	for i in useLines: idStrings[i]=values[i][idColumn] # textual descripion of respective lines 
+ 	print idStrings
+ except ValueError:
+ 	idColumn=None
+@@ -158,7 +168,11 @@
+ for i,l in enumerate(useLines):
+ 	logFile=logFormat.replace('%',str(l))
+ 	if idStrings: logFile=logFile.replace('@',idStrings[l])
+-	jobs.append(JobInfo(i,idStrings[l] if idStrings else '#'+str(i),'PARAM_TABLE=%s:%d nice -n %d %s -N PythonUI -- -n -x %s &gt; %s 2&gt;&amp;1'%(table,l,nice,executable,simul,logFile),logFile))
++	else: logFile=logFile.replace('@',str(l))
++	envVars=[]
++	for col,head in enumerate(headings):
++		if re.match('^[A-Z_]+[A-Z0-9_]+',head): envVars+=['%s=%s'%(head,values[l][col])]
++	jobs.append(JobInfo(i,idStrings[l] if idStrings else '#'+str(i),'PARAM_TABLE=%s:%d %s nice -n %d %s -N PythonUI -- -n -x %s &gt; %s 2&gt;&amp;1'%(table,l,' '.join(envVars),nice,executable,simul,logFile),logFile))
+ 
+ print &quot;Job summary:&quot;
+ for job in jobs:
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2009-02-24 13:13:14 UTC (rev 1689)
++++ trunk/gui/py/yadeControl.cpp	2009-02-25 14:25:55 UTC (rev 1690)
+@@ -43,6 +43,7 @@
+ #include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/ConstitutiveLawDispatcher.hpp&gt;
++#include&lt;yade/pkg-common/InteractionDispatchers.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionDamper.hpp&gt;
+ #include&lt;yade/pkg-common/PhysicalActionApplier.hpp&gt;
+ #include&lt;yade/pkg-common/MetaInteractingGeometry.hpp&gt;
+@@ -228,7 +229,6 @@
+ 	python::object timingDeltas_get(){return proxee-&gt;timingDeltas?python::object(pyTimingDeltas(proxee-&gt;timingDeltas)):python::object();}
+ BASIC_PY_PROXY_TAIL;
+ 
+-
+ BASIC_PY_PROXY_HEAD(pyMetaEngine,MetaEngine)
+ 		// additional constructor
+ 		pyMetaEngine(string clss, python::list functors){init(clss); functors_set(functors);}
+@@ -273,11 +273,24 @@
+ 	PY_PROXY_TIMING
+ BASIC_PY_PROXY_TAIL;
+ 
++BASIC_PY_PROXY_HEAD(pyInteractionDispatchers,InteractionDispatchers)
++	pyInteractionDispatchers(python::list geomFunctors, python::list physFunctors, python::list constLawFunctors){
++		init(&quot;InteractionDispatchers&quot;);
++		pyMetaEngine(proxee-&gt;geomDispatcher).functors_set(geomFunctors);
++		pyMetaEngine(proxee-&gt;physDispatcher).functors_set(physFunctors);
++		pyMetaEngine(proxee-&gt;constLawDispatcher).functors_set(constLawFunctors);
++	}
++	pyMetaEngine geomDispatcher_get(void){ return pyMetaEngine(proxee-&gt;geomDispatcher);}
++	pyMetaEngine physDispatcher_get(void){ return pyMetaEngine(proxee-&gt;physDispatcher);}
++	pyMetaEngine constLawDispatcher_get(void){ return pyMetaEngine(proxee-&gt;constLawDispatcher);}
++	PY_PROXY_TIMING
++BASIC_PY_PROXY_TAIL;
++
+ python::list anyEngines_get(const vector&lt;shared_ptr&lt;Engine&gt; &gt;&amp; engContainer){
+ 	python::list ret; 
+ 	FOREACH(const shared_ptr&lt;Engine&gt;&amp; eng, engContainer){
+ 		#define APPEND_ENGINE_IF_POSSIBLE(engineType,pyEngineType) { shared_ptr&lt;engineType&gt; e=dynamic_pointer_cast&lt;engineType&gt;(eng); if(e) { ret.append(pyEngineType(e)); continue; } }
+-		APPEND_ENGINE_IF_POSSIBLE(MetaEngine,pyMetaEngine); APPEND_ENGINE_IF_POSSIBLE(StandAloneEngine,pyStandAloneEngine); APPEND_ENGINE_IF_POSSIBLE(DeusExMachina,pyDeusExMachina); APPEND_ENGINE_IF_POSSIBLE(ParallelEngine,pyParallelEngine); 
++		APPEND_ENGINE_IF_POSSIBLE(InteractionDispatchers,pyInteractionDispatchers); APPEND_ENGINE_IF_POSSIBLE(MetaEngine,pyMetaEngine); APPEND_ENGINE_IF_POSSIBLE(StandAloneEngine,pyStandAloneEngine); APPEND_ENGINE_IF_POSSIBLE(DeusExMachina,pyDeusExMachina); APPEND_ENGINE_IF_POSSIBLE(ParallelEngine,pyParallelEngine); 
+ 		throw std::runtime_error(&quot;Unknown engine type: `&quot;+eng-&gt;getClassName()+&quot;' (only MetaEngine, StandAloneEngine, DeusExMachina and ParallelEngine are supported)&quot;);
+ 	}
+ 	return ret;
+@@ -289,7 +302,7 @@
+ 	engContainer.clear();
+ 	for(int i=0; i&lt;len; i++){
+ 		#define PUSH_BACK_ENGINE_IF_POSSIBLE(pyEngineType) if(python::extract&lt;pyEngineType&gt;(PySequence_GetItem(egs.ptr(),i)).check()){ pyEngineType e=python::extract&lt;pyEngineType&gt;(PySequence_GetItem(egs.ptr(),i)); engContainer.push_back(e.proxee); /* cerr&lt;&lt;&quot;added &quot;&lt;&lt;e.pyStr()&lt;&lt;&quot;, a &quot;&lt;&lt;#pyEngineType&lt;&lt;endl; */ continue; }
+-		PUSH_BACK_ENGINE_IF_POSSIBLE(pyStandAloneEngine); PUSH_BACK_ENGINE_IF_POSSIBLE(pyMetaEngine); PUSH_BACK_ENGINE_IF_POSSIBLE(pyDeusExMachina); PUSH_BACK_ENGINE_IF_POSSIBLE(pyParallelEngine);
++		PUSH_BACK_ENGINE_IF_POSSIBLE(pyStandAloneEngine); PUSH_BACK_ENGINE_IF_POSSIBLE(pyMetaEngine); PUSH_BACK_ENGINE_IF_POSSIBLE(pyDeusExMachina); PUSH_BACK_ENGINE_IF_POSSIBLE(pyParallelEngine); PUSH_BACK_ENGINE_IF_POSSIBLE(pyInteractionDispatchers);
+ 		throw std::runtime_error(&quot;Encountered unknown engine type (unable to extract from python object)&quot;);
+ 	}
+ }
+@@ -707,6 +720,12 @@
+ 		.def(python::init&lt;python::list&gt;());
+ 	BASIC_PY_PROXY_WRAPPER(pyDeusExMachina,&quot;DeusExMachina&quot;)
+ 		TIMING_PROPS(pyDeusExMachina);
++	BASIC_PY_PROXY_WRAPPER(pyInteractionDispatchers,&quot;InteractionDispatchers&quot;)
++		.def(python::init&lt;python::list,python::list,python::list&gt;())
++		.add_property(&quot;geomDispatcher&quot;,&amp;pyInteractionDispatchers::geomDispatcher_get)
++		.add_property(&quot;physDispatcher&quot;,&amp;pyInteractionDispatchers::physDispatcher_get)
++		.add_property(&quot;constLawDispatcher&quot;,&amp;pyInteractionDispatchers::constLawDispatcher_get)
++		TIMING_PROPS(pyInteractionDispatchers);
+ 	BASIC_PY_PROXY_WRAPPER(pyEngineUnit,&quot;EngineUnit&quot;)
+ 		.add_property(&quot;timingDeltas&quot;,&amp;pyEngineUnit::timingDeltas_get)
+ 		.add_property(&quot;bases&quot;,&amp;pyEngineUnit::bases_get);
+
+Added: trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp	2009-02-24 13:13:14 UTC (rev 1689)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp	2009-02-25 14:25:55 UTC (rev 1690)
+@@ -0,0 +1,32 @@
++#include&quot;InteractionDispatchers.hpp&quot;
++
++YADE_PLUGIN(&quot;InteractionDispatchers&quot;);
++
++InteractionDispatchers::InteractionDispatchers(){
++	geomDispatcher=shared_ptr&lt;InteractionGeometryMetaEngine&gt;(new InteractionGeometryMetaEngine);
++	physDispatcher=shared_ptr&lt;InteractionPhysicsMetaEngine&gt;(new InteractionPhysicsMetaEngine);
++	constLawDispatcher=shared_ptr&lt;ConstitutiveLawDispatcher&gt;(new ConstitutiveLawDispatcher);
++}
++
++void InteractionDispatchers::action(MetaBody* rootBody){
++	#ifdef YADE_OPENMP
++		const long size=rootBody-&gt;interactions-&gt;size();
++		#pragma omp parallel for
++		for(long i=0; i&lt;size; i++){
++			const shared_ptr&lt;Interaction&gt;&amp; I=(*rootBody-&gt;interactions)[i];
++	#else
++		FOREACH(shared_ptr&lt;Interaction&gt; I, *rootBody-&gt;interactions){
++	#endif
++			// InteractionGeometryMetaEngine
++			const shared_ptr&lt;Body&gt;&amp; b1=Body::byId(I-&gt;getId1(),rootBody);
++			const shared_ptr&lt;Body&gt;&amp; b2=Body::byId(I-&gt;getId2(),rootBody);
++			I-&gt;isReal =
++				b1-&gt;interactingGeometry &amp;&amp; b2-&gt;interactingGeometry &amp;&amp; // some bodies do not have interactingGeometry
++				geomDispatcher-&gt;operator()(b1-&gt;interactingGeometry, b2-&gt;interactingGeometry, b1-&gt;physicalParameters-&gt;se3, b2-&gt;physicalParameters-&gt;se3,I);
++			if(!I-&gt;isReal) continue;
++			// InteractionPhysicsMetaEngine
++			physDispatcher-&gt;operator()(b1-&gt;physicalParameters, b2-&gt;physicalParameters,I);
++			// ConstitutiveLawDispatcher
++			constLawDispatcher-&gt;operator()(I-&gt;interactionGeometry,I-&gt;interactionPhysics,I.get(),rootBody);
++		}
++}
+
+Added: trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.hpp	2009-02-24 13:13:14 UTC (rev 1689)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.hpp	2009-02-25 14:25:55 UTC (rev 1690)
+@@ -0,0 +1,22 @@
++// 2009 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++#pragma once
++#include&lt;yade/core/StandAloneEngine.hpp&gt;
++#include&lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/InteractionPhysicsMetaEngine.hpp&gt;
++#include&lt;yade/pkg-common/ConstitutiveLawDispatcher.hpp&gt;
++
++class InteractionDispatchers: public StandAloneEngine {
++	public:
++		InteractionDispatchers();
++		virtual void action(MetaBody*);
++		shared_ptr&lt;InteractionGeometryMetaEngine&gt; geomDispatcher;
++		shared_ptr&lt;InteractionPhysicsMetaEngine&gt; physDispatcher;
++		shared_ptr&lt;ConstitutiveLawDispatcher&gt; constLawDispatcher;
++		REGISTER_CLASS_AND_BASE(InteractionDispatchers,StandAloneEngine);
++		REGISTER_ATTRIBUTES(StandAloneEngine,
++			(geomDispatcher)
++			(physDispatcher)
++			(constLawDispatcher)
++		);
++};
++REGISTER_SERIALIZABLE(InteractionDispatchers);
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2009-02-24 13:13:14 UTC (rev 1689)
++++ trunk/pkg/common/SConscript	2009-02-25 14:25:55 UTC (rev 1690)
+@@ -104,6 +104,7 @@
+ 	env.SharedLibrary('PhysicalActionApplier',['Engine/MetaEngine/PhysicalActionApplier.cpp']),
+ 	env.SharedLibrary('PhysicalActionDamper',['Engine/MetaEngine/PhysicalActionDamper.cpp']),
+ 	env.SharedLibrary('ConstitutiveLawDispatcher',['Engine/MetaEngine/ConstitutiveLawDispatcher.cpp'],LIBS=env['LIBS']+['Force','Momentum']),
++	env.SharedLibrary('InteractionDispatchers',['Engine/MetaEngine/InteractionDispatchers.cpp'],LIBS=env['LIBS']+['InteractionGeometryMetaEngine','InteractionPhysicsMetaEngine','ConstitutiveLawDispatcher']),
+ 	env.SharedLibrary('InteractingBox2AABB',['Engine/EngineUnit/InteractingBox2AABB.cpp'],
+ 		LIBS=env['LIBS']+['BoundingVolumeMetaEngine','InteractingBox','AABB','Box',]),
+ 	env.SharedLibrary('MetaInteractingGeometry2AABB',['Engine/EngineUnit/MetaInteractingGeometry2AABB.cpp'],
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000773.html">[deprecated list] [Yade-dev] 3 x speedups with new containers	and openMP!
+</A></li>
+	<LI>Next message: <A HREF="000761.html">[deprecated list] [Yade-dev] r1690 - in trunk:
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#760">[ date ]</a>
+              <a href="thread.html#760">[ thread ]</a>
+              <a href="subject.html#760">[ subject ]</a>
+              <a href="author.html#760">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,162 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1940 - in trunk:	lib/multimethods	pkg/dem/DataClass/InteractionGeometry pkg/dem/meta
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1940%20-%20in%20trunk%3A%0A%09lib/multimethods%09pkg/dem/DataClass/InteractionGeometry%20pkg/dem/meta&In-Reply-To=%3C200908130901.n7D91ifK029421%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001407.html">
+   <LINK REL="Next"  HREF="001386.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1940 - in trunk:	lib/multimethods	pkg/dem/DataClass/InteractionGeometry pkg/dem/meta</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1940%20-%20in%20trunk%3A%0A%09lib/multimethods%09pkg/dem/DataClass/InteractionGeometry%20pkg/dem/meta&In-Reply-To=%3C200908130901.n7D91ifK029421%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1940 - in trunk:	lib/multimethods	pkg/dem/DataClass/InteractionGeometry pkg/dem/meta">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Aug 13 11:01:44 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001407.html">[deprecated list] [Yade-dev] Again explosion
+</A></li>
+        <LI>Next message: <A HREF="001386.html">[deprecated list] [Yade-dev] removing GeometricalModel?
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1381">[ date ]</a>
+              <a href="thread.html#1381">[ thread ]</a>
+              <a href="subject.html#1381">[ subject ]</a>
+              <a href="author.html#1381">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-08-13 11:01:41 +0200 (Thu, 13 Aug 2009)
+New Revision: 1940
+
+Modified:
+   trunk/lib/multimethods/DynLibDispatcher.hpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.hpp
+   trunk/pkg/dem/meta/ConcretePM.hpp
+   trunk/pkg/dem/meta/RockPM.hpp
+Log:
+1. Fix assertion is 2d dispatch code, add indices to RpmPhys, RpmMat, CpmPhys, CpmMat (would break dispatching if using more classes derived from the same base in the dispatch matrix)
+
+
+Modified: trunk/lib/multimethods/DynLibDispatcher.hpp
+===================================================================
+--- trunk/lib/multimethods/DynLibDispatcher.hpp	2009-08-12 21:12:21 UTC (rev 1939)
++++ trunk/lib/multimethods/DynLibDispatcher.hpp	2009-08-13 09:01:41 UTC (rev 1940)
+@@ -462,8 +462,12 @@
+ 			index2 = base2-&gt;getClassIndex();
+ 			assert( index1 &gt;= 0 ); 
+ 			assert( index2 &gt;= 0 ); 
++			#if 0 
++				if((unsigned)index1&gt;=callBacks.size()) cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; FATAL: Index out of range for class &quot;&lt;&lt;base1-&gt;getClassName()&lt;&lt;&quot; (index==&quot;&lt;&lt;index1&lt;&lt;&quot;, callBacks.size()==&quot;&lt;&lt;callBacks.size()&lt;&lt;endl;
++				if((unsigned)index2&gt;=callBacks[index2].size()) cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot; FATAL: Index out of range for class &quot;&lt;&lt;base2-&gt;getClassName()&lt;&lt;&quot; (index==&quot;&lt;&lt;index2&lt;&lt;&quot;, callBacks[index1].size()==&quot;&lt;&lt;callBacks[index1].size()&lt;&lt;endl;
++			#endif
+ 			assert((unsigned int)( index1 ) &lt; callBacks.size());
+-			assert((unsigned int)( index2 ) &lt; callBacks.size());
++			assert((unsigned int)( index2 ) &lt; callBacks[index1].size());
+ 				
+ 			if(callBacks[index1][index2])
+ 				return true;
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.hpp	2009-08-12 21:12:21 UTC (rev 1939)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.hpp	2009-08-13 09:01:41 UTC (rev 1940)
+@@ -32,7 +32,7 @@
+ 		//! reference radii of particles (for initial contact stiffness computation)
+ 		Real &amp;refR1, &amp;refR2;
+ 
+-		Dem3DofGeom(): normal(GenericSpheresContact::normal), refR1(GenericSpheresContact::refR1), refR2(GenericSpheresContact::refR2) {}
++		Dem3DofGeom(): normal(GenericSpheresContact::normal), refR1(GenericSpheresContact::refR1), refR2(GenericSpheresContact::refR2) { createIndex(); }
+ 
+ 		// API that needs to be implemented in derived classes
+ 		virtual Real displacementN();
+@@ -50,6 +50,7 @@
+ 		Real slipToStrainTMax(Real strainTMax){return slipToDisplacementTMax(strainTMax*refLength)/refLength;}
+ 
+ 		REGISTER_CLASS_AND_BASE(Dem3DofGeom,InteractionGeometry);
++		REGISTER_CLASS_INDEX(Dem3DofGeom,InteractionGeometry);
+ 		REGISTER_ATTRIBUTES(InteractionGeometry,(refLength)(normal)(contactPoint)(se31)(se32)(refR1)(refR2));
+ };
+ REGISTER_SERIALIZABLE(Dem3DofGeom);
+
+Modified: trunk/pkg/dem/meta/ConcretePM.hpp
+===================================================================
+--- trunk/pkg/dem/meta/ConcretePM.hpp	2009-08-12 21:12:21 UTC (rev 1939)
++++ trunk/pkg/dem/meta/ConcretePM.hpp	2009-08-13 09:01:41 UTC (rev 1940)
+@@ -72,6 +72,7 @@
+ 		CpmMat(): epsVolumetric(0.), numBrokenCohesive(0), numContacts(0), normDmg(0.), epsPlBroken(0.), normEpsPl(0.) {createIndex();};
+ 		REGISTER_ATTRIBUTES(BodyMacroParameters, (epsVolumetric) (numBrokenCohesive) (numContacts) (normDmg) (epsPlBroken) (normEpsPl));
+ 		REGISTER_CLASS_AND_BASE(CpmMat,BodyMacroParameters);
++		REGISTER_CLASS_INDEX(CpmMat,BodyMacroParameters);
+ };
+ REGISTER_SERIALIZABLE(CpmMat);
+ 
+@@ -185,6 +186,7 @@
+ 		);
+ 	REGISTER_CLASS_AND_BASE(CpmPhys,NormalShearInteraction);
+ 	DECLARE_LOGGER;
++	REGISTER_CLASS_INDEX(CpmPhys,NormalShearInteraction);
+ };
+ REGISTER_SERIALIZABLE(CpmPhys);
+ 
+
+Modified: trunk/pkg/dem/meta/RockPM.hpp
+===================================================================
+--- trunk/pkg/dem/meta/RockPM.hpp	2009-08-12 21:12:21 UTC (rev 1939)
++++ trunk/pkg/dem/meta/RockPM.hpp	2009-08-13 09:01:41 UTC (rev 1940)
+@@ -65,6 +65,7 @@
+ 			(Brittleness)
+ 			(G_over_E));
+ 		REGISTER_CLASS_AND_BASE(RpmMat,BodyMacroParameters);
++		REGISTER_CLASS_INDEX(RpmMat,BodyMacroParameters);
+ };
+ REGISTER_SERIALIZABLE(RpmMat);
+ 
+@@ -119,5 +120,6 @@
+ 			(lengthMaxTension)
+ 		);
+ 	REGISTER_CLASS_AND_BASE(RpmPhys,NormalShearInteraction);
++	REGISTER_CLASS_INDEX(RpmPhys,NormalShearInteraction);
+ };
+ REGISTER_SERIALIZABLE(RpmPhys);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001407.html">[deprecated list] [Yade-dev] Again explosion
+</A></li>
+	<LI>Next message: <A HREF="001386.html">[deprecated list] [Yade-dev] removing GeometricalModel?
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1381">[ date ]</a>
+              <a href="thread.html#1381">[ thread ]</a>
+              <a href="subject.html#1381">[ subject ]</a>
+              <a href="author.html#1381">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

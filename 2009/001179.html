@@ -1,0 +1,540 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1854 - in trunk: core	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina	py/yadeWrapper scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1854%20-%20in%20trunk%3A%20core%0A%09pkg/common/Engine/MetaEngine%09pkg/common/Engine/StandAloneEngine%09pkg/dem/Engine/DeusExMachina%0A%09py/yadeWrapper%20scripts/test&In-Reply-To=%3C200907111352.n6BDqRAj017519%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001177.html">
+   <LINK REL="Next"  HREF="001180.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1854 - in trunk: core	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina	py/yadeWrapper scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1854%20-%20in%20trunk%3A%20core%0A%09pkg/common/Engine/MetaEngine%09pkg/common/Engine/StandAloneEngine%09pkg/dem/Engine/DeusExMachina%0A%09py/yadeWrapper%20scripts/test&In-Reply-To=%3C200907111352.n6BDqRAj017519%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1854 - in trunk: core	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina	py/yadeWrapper scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Jul 11 15:52:27 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001177.html">[deprecated list] [Yade-dev] [svn] r1853 - in trunk: pkg/common	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/DeusExMachina scripts/test
+</A></li>
+        <LI>Next message: <A HREF="001180.html">[deprecated list] [Yade-dev] [robot] SVN checkout failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1179">[ date ]</a>
+              <a href="thread.html#1179">[ thread ]</a>
+              <a href="subject.html#1179">[ subject ]</a>
+              <a href="author.html#1179">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-11 15:52:26 +0200 (Sat, 11 Jul 2009)
+New Revision: 1854
+
+Modified:
+   trunk/core/Interaction.hpp
+   trunk/core/InteractionContainer.cpp
+   trunk/core/InteractionContainer.hpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+   trunk/py/yadeWrapper/yadeWrapper.cpp
+   trunk/scripts/test/collider-stride-triax.py
+   trunk/scripts/test/compare-identical.py
+   trunk/scripts/test/regular-sphere-pack.py
+Log:
+1. Handle clumps in a better way in NewtonsDampedLaw (only if asked by the clump itself) -- future parallelization work. (related to bug #398086)
+2. InsertionSortCollider now knows when to run based on maximum distance the fastest body could have travelled. (It is actually the physical meaning of sweepDistance). Handle varying maxVelocitySq in a constitent way.
+3. Add InteractionContainer::serializeSorted to sort interactions by id1 and id2 before serializing (useful for comparing XML files). Added Interaction::operator&lt; to compare 2 interactions in that way.
+4. Fix openMP strategy in InteractionDispatchers to &quot;guided&quot; (as per <A HREF="https://blueprints.launchpad.net/yade/+spec/omp-schedule-strategy">https://blueprints.launchpad.net/yade/+spec/omp-schedule-strategy</A>)
+
+
+
+Modified: trunk/core/Interaction.hpp
+===================================================================
+--- trunk/core/Interaction.hpp	2009-07-10 19:16:01 UTC (rev 1853)
++++ trunk/core/Interaction.hpp	2009-07-11 13:52:26 UTC (rev 1854)
+@@ -44,12 +44,14 @@
+ 		Interaction ();
+ 		Interaction(body_id_t newId1,body_id_t newId2);
+ 
+-		body_id_t getId1() {return id1;};
+-		body_id_t getId2() {return id2;};
++		const body_id_t&amp; getId1() const {return id1;};
++		const body_id_t&amp; getId2() const {return id2;};
+ 
+ 		//! swaps order of bodies within the interaction
+ 		void swapOrder();
+ 
++		bool operator&lt;(const Interaction&amp; other) const { return getId1()&lt;other.getId1() || (getId1()==other.getId1() &amp;&amp; getId2()&lt;other.getId2()); }
++
+ 		//! cache functors that are called for this interaction. Currently used by InteractionDispatchers.
+ 		struct {
+ 			// Whether geometry dispatcher exists at all; this is different from !geom, since that can mean we haven't populated the cache yet.
+
+Modified: trunk/core/InteractionContainer.cpp
+===================================================================
+--- trunk/core/InteractionContainer.cpp	2009-07-10 19:16:01 UTC (rev 1853)
++++ trunk/core/InteractionContainer.cpp	2009-07-11 13:52:26 UTC (rev 1854)
+@@ -24,6 +24,12 @@
+ }
+ 
+ 
++struct compPtrInteraction{
++	bool operator() (const shared_ptr&lt;Interaction&gt;&amp; i1, const shared_ptr&lt;Interaction&gt;&amp; i2) const {
++		return (*i1)&lt;(*i2);
++	}
++};
++
+ void InteractionContainer::preProcessAttributes(bool deserializing)
+ {
+ 	if(deserializing)
+@@ -37,6 +43,7 @@
+ 		InteractionContainer::iterator iEnd = this-&gt;end();
+ 		for( ; i!=iEnd ; ++i )
+ 			interaction.push_back(*i);
++		if(serializeSorted) std::sort(interaction.begin(),interaction.end(),compPtrInteraction());
+ 	}
+ }
+ 
+
+Modified: trunk/core/InteractionContainer.hpp
+===================================================================
+--- trunk/core/InteractionContainer.hpp	2009-07-10 19:16:01 UTC (rev 1853)
++++ trunk/core/InteractionContainer.hpp	2009-07-11 13:52:26 UTC (rev 1854)
+@@ -86,7 +86,7 @@
+ 	public :
+ 		boost::mutex	drawloopmutex;
+ 
+-		InteractionContainer() { };
++		InteractionContainer(): serializeSorted(false) { };
+ 		virtual ~InteractionContainer() {};
+ 
+ 		virtual bool insert(body_id_t /*id1*/,body_id_t /*id2*/)				{throw;};
+@@ -104,6 +104,9 @@
+ 		virtual shared_ptr&lt;Interaction&gt;&amp; operator[] (unsigned int) {throw;};
+ 		virtual const shared_ptr&lt;Interaction&gt;&amp; operator[] (unsigned int) const {throw;};
+ 
++		// sort interactions before serializations; useful if comparing XML files from different runs (false by default)
++		bool serializeSorted;
++
+ 		// std::pair is not handled by yade::serialization, use vector&lt;body_id_t&gt; instead
+ 		typedef Vector2&lt;body_id_t&gt; bodyIdPair;
+ 		//! Ask for erasing the interaction given (from the constitutive law); this resets the interaction (to the initial=potential state)
+@@ -147,7 +150,7 @@
+ 	protected :
+ 		virtual void preProcessAttributes(bool deserializing);
+ 		virtual void postProcessAttributes(bool deserializing);
+-	REGISTER_ATTRIBUTES(/*no base*/,(interaction)(pendingErase));
++	REGISTER_ATTRIBUTES(/*no base*/,(interaction)(pendingErase)(serializeSorted));
+ 	REGISTER_CLASS_AND_BASE(InteractionContainer,Serializable);
+ };
+ 
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp	2009-07-10 19:16:01 UTC (rev 1853)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionDispatchers.cpp	2009-07-11 13:52:26 UTC (rev 1854)
+@@ -22,7 +22,7 @@
+ 	}
+ 	#ifdef YADE_OPENMP
+ 		const long size=rootBody-&gt;interactions-&gt;size();
+-		#pragma omp parallel for
++		#pragma omp parallel for schedule(guided)
+ 		for(long i=0; i&lt;size; i++){
+ 			const shared_ptr&lt;Interaction&gt;&amp; I=(*rootBody-&gt;interactions)[i];
+ 	#else
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-07-10 19:16:01 UTC (rev 1853)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-07-11 13:52:26 UTC (rev 1854)
+@@ -65,25 +65,16 @@
+ 	bool InsertionSortCollider::isActivated(MetaBody* rb){
+ 		// activated if number of bodies changes (hence need to refresh collision information)
+ 		// or the time of scheduled run already came, or we were never scheduled yet
+-		if(stride&lt;=1) return true;
+ 		if(sweepLength&lt;=0) return true;
+-		if(!newton) return true; // we wouldn't be able to find the max velocity
+-		bool ret=rb-&gt;simulationTime&gt;=scheduledRun ||
+-			// if the max velocity is bigger than the one that we used for bb computation last time
+-			// and the distance bodies would travel with this bigger velocity since last run (rb-&gt;simulationTime-lastRun)
+-			// would be the same or greater than the one that would be traveled with the original velocity
+-			// over the stride time (scheduledRun-lastRun)
+-			(newton-&gt;maxVelocitySq&lt;0) || // no valid data about max velocity, run always
+-			(sweepVelocity==0 &amp;&amp; newton-&gt;maxVelocitySq&gt;0) || 
+-			(sweepVelocity&lt;sqrt(newton-&gt;maxVelocitySq) &amp;&amp; rb-&gt;simulationTime-lastRun&gt;=(sweepVelocity/sqrt(newton-&gt;maxVelocitySq)/* we know maxVelocitySq&gt;0 from the first condition */)*(scheduledRun-lastRun)) ||
+-			// number of bodies changed
+-			XX.size()!=2*rb-&gt;bodies-&gt;size() ||
+-			// we've never run yet (this should never happen as per if(!newton) above)
+-			scheduledRun&lt;0;
++		if(!newton || newton-&gt;maxVelocitySq&lt;0 || sweepVelocity&lt;0) return true; // we wouldn't be able to find the max velocity, or it has not been computed yet, or there were no data available last time
++		if(XX.size()!=2*rb-&gt;bodies-&gt;size()) return true;
++		if(fastestBodyMaxDist&lt;0){fastestBodyMaxDist=0; return true;}
++		fastestBodyMaxDist+=sqrt(newton-&gt;maxVelocitySq)*rb-&gt;dt;
++		if(fastestBodyMaxDist&gt;=sweepLength) return true;
+ 		// we wouldn't run in this step; in that case, just delete pending interactions
+ 		// this is done in ::action normally, but it would make the call counters not reflect the stride
+-		if(!ret) rb-&gt;interactions-&gt;erasePending(*this);
+-		return ret;
++		rb-&gt;interactions-&gt;erasePending(*this);
++		return false;
+ 	}
+ #endif
+ 
+@@ -146,21 +137,17 @@
+ 						stride=max(1,int((sweepLength/sweepVelocity)/rb-&gt;dt));
+ 						boundDispatcher-&gt;sweepDist=rb-&gt;dt*(stride-1)*sweepVelocity;
+ 					} else { // no motion
+-						stride=1000; // shouldn't this be some saner value? Infinity? How to decide?
+ 						boundDispatcher-&gt;sweepDist=0; // nothing moves, no need to make bboxes larger
+ 					}
+-					scheduledRun=rb-&gt;simulationTime+rb-&gt;dt*(stride-.5); // -.5 to avoid rounding issues
+-				} else { /* no valid data yet, run next time again */ boundDispatcher-&gt;sweepDist=0; stride=1; scheduledRun=rb-&gt;simulationTime+rb-&gt;dt; }
++				} else { /* no valid data yet, run next time again */ boundDispatcher-&gt;sweepDist=0; sweepVelocity=-1; stride=1; }
+ 				LOG_DEBUG(rb-&gt;simulationTime&lt;&lt;&quot;s: stride adapted to &quot;&lt;&lt;stride&lt;&lt;&quot;; sweepVelocity=&quot;&lt;&lt;sweepVelocity&lt;&lt;&quot;, maxVelocity=&quot;&lt;&lt;sqrt(newton-&gt;maxVelocitySq)&lt;&lt;&quot;, sweepDist=&quot;&lt;&lt;boundDispatcher-&gt;sweepDist);
+-				newton-&gt;maxVelocitySq=-1; // reset to invalid value again
+-			} else { scheduledRun=-1; boundDispatcher-&gt;sweepTime=-1; boundDispatcher-&gt;sweepDist=0; }
++				fastestBodyMaxDist=0; // reset
++			} else { boundDispatcher-&gt;sweepTime=-1; boundDispatcher-&gt;sweepDist=0; }
+ 			boundDispatcher-&gt;action(rb);
+ 		#endif
+ 
+ 	ISC_CHECKPOINT(&quot;bound&quot;);
+ 
+-
+-
+ 	// copy bounds along given axis into our arrays
+ 		for(size_t i=0; i&lt;2*nBodies; i++){
+ 			const body_id_t&amp; idXX=XX[i].id; const body_id_t&amp; idYY=YY[i].id; const body_id_t&amp; idZZ=ZZ[i].id;
+@@ -191,10 +178,14 @@
+ 			if(doInitSort){
+ 				// the initial sort is in independent in 3 dimensions, may be run in parallel
+ 				// it seems that there is no time gain running this in parallel, though
++				#pragma omp parallel sections
+ 				{
+-						std::sort(XX.begin(),XX.end());
+-						std::sort(YY.begin(),YY.end());
+-						std::sort(ZZ.begin(),ZZ.end());
++					#pragma omp section
++						{ std::sort(XX.begin(),XX.end()); }
++					#pragma omp section
++						{ std::sort(YY.begin(),YY.end()); }
++					#pragma omp section
++						{ std::sort(ZZ.begin(),ZZ.end()); }
+ 				}
+ 			} else { // sortThenCollide
+ 				insertionSort(XX,interactions,rb,false); insertionSort(YY,interactions,rb,false); insertionSort(ZZ,interactions,rb,false);
+@@ -214,7 +205,7 @@
+ 					const body_id_t&amp; jid=V[j].id;
+ 					/// Not sure why this doesn't work. If this condition is commented out, we have exact same interactions as from SpatialQuickSort. Otherwise some interactions are missing!
+ 					// skip bodies with smaller (arbitrary, could be greater as well) id, since they will detect us when their turn comes
+-					// if(jid&lt;iid) { /* LOG_TRACE(&quot;Skip #&quot;&lt;&lt;V[j].id&lt;&lt;(V[j].flags.isMin?&quot;(min)&quot;:&quot;(max)&quot;)&lt;&lt;&quot; with &quot;&lt;&lt;iid&lt;&lt;&quot; (smaller id)&quot;); */ continue; }
++					//if(jid&lt;iid) { /* LOG_TRACE(&quot;Skip #&quot;&lt;&lt;V[j].id&lt;&lt;(V[j].flags.isMin?&quot;(min)&quot;:&quot;(max)&quot;)&lt;&lt;&quot; with &quot;&lt;&lt;iid&lt;&lt;&quot; (smaller id)&quot;); */ continue; }
+ 					/* abuse the same function here; since it does spatial overlap check first, it is OK to use it */
+ 					handleBoundInversion(iid,jid,interactions,rb);
+ 					// now we are at the last element, but we still have not met the upper bound of V[i].id
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp	2009-07-10 19:16:01 UTC (rev 1853)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp	2009-07-11 13:52:26 UTC (rev 1854)
+@@ -46,12 +46,8 @@
+ 		shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundDispatcher;
+ 		// we need this to find out about current maxVelocitySq
+ 		shared_ptr&lt;NewtonsDampedLaw&gt; newton;
+-		// interval at which we will run; if 0, we run always (as usual).
++		// interval at which we will run (informative only, is updated automatically)
+ 		int stride;
+-		//! virtual time when we were run last time
+-		Real lastRun;
+-		//! virtual time when we have to run the next time
+-		Real scheduledRun; 
+ 		/// Absolute length that will be added to bounding boxes at each side; it should be something like 1/5 of typical grain radius
+ 		/// this value is used to adapt stride; if too large, stride will be big, but the ratio of potential-only interactions will be very big, 
+ 		/// thus slowing down collider &amp; interaction loops significantly (remember: O(addLength^3))
+@@ -63,6 +59,8 @@
+ 		/// Has no influence on sweepLength, only on the computed stride.
+ 		/// Default 1.05
+ 		Real sweepFactor;
++		//! maximum distance that the fastest body could have travelled since the last run; if &gt;= sweepLength, we could get out of bboxes and will trigger full run
++		Real fastestBodyMaxDist;
+ 	#endif
+ 	//! storage for bounds
+ 	std::vector&lt;Bound&gt; XX,YY,ZZ;
+@@ -92,7 +90,7 @@
+ 
+ 	InsertionSortCollider():
+ 	#ifdef COLLIDE_STRIDED
+-		stride(0), lastRun(-1), scheduledRun(-1), sweepLength(-1), sweepVelocity(-1), sweepFactor(1.05),
++		stride(0), sweepLength(-1), sweepVelocity(-1), sweepFactor(1.05), fastestBodyMaxDist(-1),
+ 	#endif
+ 		sortAxis(0), sortThenCollide(false){
+ 			#ifdef ISC_TIMING
+@@ -103,7 +101,7 @@
+ 	REGISTER_CLASS_AND_BASE(InsertionSortCollider,Collider);
+ 	REGISTER_ATTRIBUTES(Collider,(sortAxis)(sortThenCollide)
+ 		#ifdef COLLIDE_STRIDED
+-			(stride)(lastRun)(scheduledRun)(sweepLength)(sweepFactor)(sweepVelocity)
++			(stride)(sweepLength)(sweepFactor)(sweepVelocity)(fastestBodyMaxDist)
+ 		#endif
+ 	);
+ 	DECLARE_LOGGER;
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-07-10 19:16:01 UTC (rev 1853)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-07-11 13:52:26 UTC (rev 1854)
+@@ -21,6 +21,22 @@
+ 	}
+ }
+ 
++void NewtonsDampedLaw::handleClumpMember(MetaBody* ncb, const body_id_t memberId, RigidBodyParameters* clumpRBP){
++	const shared_ptr&lt;Body&gt;&amp; b=Body::byId(memberId,ncb);
++	assert(b-&gt;isClumpMember());
++	RigidBodyParameters* rb=YADE_CAST&lt;RigidBodyParameters*&gt;(b-&gt;physicalParameters.get());
++	const Vector3r&amp; m=ncb-&gt;bex.getTorque(memberId); const Vector3r&amp; f=ncb-&gt;bex.getForce(memberId);
++	Vector3r diffClumpAccel=f/clumpRBP-&gt;mass;
++	// angular acceleration from: normal torque + torque generated by the force WRT particle centroid on the clump centroid
++	Vector3r diffClumpAngularAccel=diagDiv(m,clumpRBP-&gt;inertia)+diagDiv((rb-&gt;se3.position-clumpRBP-&gt;se3.position).Cross(f),clumpRBP-&gt;inertia); 
++	// damp increment of accels on the clump, using velocities of the clump MEMBER
++	cundallDamp(ncb-&gt;dt,f,rb-&gt;velocity,diffClumpAccel,m,rb-&gt;angularVelocity,diffClumpAngularAccel);
++	// clumpRBP-&gt;{acceleration,angularAcceleration} are reset byt Clump::moveMembers, it is ok to just increment here
++	clumpRBP-&gt;acceleration+=diffClumpAccel;
++	clumpRBP-&gt;angularAcceleration+=diffClumpAngularAccel;
++	maxVelocitySq=max(maxVelocitySq,rb-&gt;velocity.SquaredLength());
++}
++
+ void NewtonsDampedLaw::applyCondition ( MetaBody * ncb )
+ {
+ 	ncb-&gt;bex.sync();
+@@ -29,44 +45,28 @@
+ 
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *ncb-&gt;bodies){
+ 		// clump members are non-dynamic; they skip the rest of loop once their forces are properly taken into account, however
+-		if (!b-&gt;isDynamic &amp;&amp; !b-&gt;isClumpMember()) continue;
+-		
++		if (!b-&gt;isDynamic || b-&gt;isClumpMember()) continue;
+ 		RigidBodyParameters* rb = YADE_CAST&lt;RigidBodyParameters*&gt;(b-&gt;physicalParameters.get());
+ 		const body_id_t&amp; id=b-&gt;getId();
+-		const Vector3r&amp; m=ncb-&gt;bex.getTorque(id);
+-		const Vector3r&amp; f=ncb-&gt;bex.getForce(id);
++		const Vector3r&amp; m=ncb-&gt;bex.getTorque(id); const Vector3r&amp; f=ncb-&gt;bex.getForce(id);
+ 
+-		//Newtons mometum law :
+ 		if (b-&gt;isStandalone()){
+-			rb-&gt;angularAcceleration=diagDiv(m,rb-&gt;inertia);
+ 			rb-&gt;acceleration=f/rb-&gt;mass;
++			rb-&gt;angularAcceleration=diagDiv(m,rb-&gt;inertia);
++			cundallDamp(dt,f,rb-&gt;velocity,rb-&gt;acceleration,m,rb-&gt;angularVelocity,rb-&gt;angularAcceleration);
+ 		}
+ 		else if (b-&gt;isClump()){
+-			// at this point, forces from clump members are already summed up, this is just for forces applied to clump proper, if there are such (does it have some physical meaning?)
+-			rb-&gt;angularAcceleration+=diagDiv(m,rb-&gt;inertia);
+-			rb-&gt;acceleration+=f/rb-&gt;mass; // accel for clump will be reset in Clump::moveMembers, called from the clump itself
++			rb-&gt;acceleration=rb-&gt;angularAcceleration=Vector3r::ZERO; // to make sure; should be reset in Clump::moveMembers
++			FOREACH(Clump::memberMap::value_type mm, static_cast&lt;Clump*&gt;(b.get())-&gt;members){
++				handleClumpMember(ncb,mm.first,rb);
++			}
++			// at this point, forces from clump members are already summed up, this is just for forces applied to clump proper, if there are such
++			Vector3r dLinAccel=f/rb-&gt;mass, dAngAccel=diagDiv(m,rb-&gt;inertia);
++			cundallDamp(dt,f,rb-&gt;velocity,dLinAccel,m,rb-&gt;angularVelocity,dAngAccel);
++			rb-&gt;acceleration+=dLinAccel;
++			rb-&gt;angularAcceleration+=dAngAccel;
+ 		}
+-		else {
+-			assert(b-&gt;isClumpMember());
+-			assert(b-&gt;clumpId&gt;b-&gt;id);
+-			const shared_ptr&lt;Body&gt;&amp; clump=Body::byId(b-&gt;clumpId,ncb);
+-			RigidBodyParameters* clumpRBP=YADE_CAST&lt;RigidBodyParameters*&gt; ( clump-&gt;physicalParameters.get() );
+-			Vector3r diffClumpAccel=f/clumpRBP-&gt;mass;
+-			// angular acceleration from: normal torque + torque generated by the force WRT particle centroid on the clump centroid
+-			Vector3r diffClumpAngularAccel=diagDiv(m,clumpRBP-&gt;inertia)+diagDiv((rb-&gt;se3.position-clumpRBP-&gt;se3.position).Cross(f),clumpRBP-&gt;inertia); 
+-			// damp increment of accels on the clump, using velocities of the clump MEMBER
+-			cundallDamp(dt,f,rb-&gt;velocity,diffClumpAccel,m,rb-&gt;angularVelocity,diffClumpAngularAccel);
+-			// clumpRBP-&gt;{acceleration,angularAcceleration} are reset byt Clump::moveMembers, it is ok to just increment here
+-			clumpRBP-&gt;acceleration+=diffClumpAccel;
+-			clumpRBP-&gt;angularAcceleration+=diffClumpAngularAccel;
+-			maxVelocitySq=max(maxVelocitySq,rb-&gt;velocity.SquaredLength());
+-			continue;
+-		}
+ 
+-		assert(!b-&gt;isClumpMember());
+-		// damping: applied to non-clumps only, as clumps members were already damped above
+-		if(!b-&gt;isClump()) cundallDamp(dt,f,rb-&gt;velocity,rb-&gt;acceleration,m,rb-&gt;angularVelocity,rb-&gt;angularAcceleration);
+-
+ 		maxVelocitySq=max(maxVelocitySq,rb-&gt;velocity.SquaredLength());
+ 
+ 		// blocking DOFs
+@@ -96,14 +96,3 @@
+ 	}
+ }
+ 
+-/*
+-:09:37] eudoxos2: enum {LOOP1,LOOP2,END}
+-[16:09:37] eudoxos2: for(int state=LOOP1; state!=END; state++){
+-[16:09:37] eudoxos2: 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, rootBody-&gt;bodies){
+-[16:09:38] eudoxos2: 		if(b-&gt;isClumpMember() &amp;&amp; LOOP1){ [[apply that on b-&gt;clumpId]]  }
+-[16:09:38] eudoxos2: 		if((b-&gt;isStandalone &amp;&amp; LOOP1) || (b-&gt;isClump &amp;&amp; LOOP2){ [[damping, newton, integrate]]; b-&gt;moveClumpMembers(); }
+-[16:09:40] eudoxos2: 		}
+-[16:09:42] eudoxos2: 	}
+-[16:09:44] eudoxos2: }*/
+-
+-
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2009-07-10 19:16:01 UTC (rev 1853)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2009-07-11 13:52:26 UTC (rev 1854)
+@@ -31,10 +31,12 @@
+ NOTE: Cundall damping affected dynamic simulation! See examples/dynamic_simulation_tests
+  
+  */
++class RigidBodyParameters;
+ 
+-
+ class NewtonsDampedLaw : public DeusExMachina{
+ 	inline void cundallDamp(const Real&amp; dt, const Vector3r&amp; f, const Vector3r&amp; velocity, Vector3r&amp; acceleration, const Vector3r&amp; m, const Vector3r&amp; angularVelocity, Vector3r&amp; angularAcceleration);
++	void handleClumpMember(MetaBody* ncb, const body_id_t memberId, RigidBodyParameters* clumpRBP);
++
+ 	public:
+ 		///damping coefficient for Cundall's non viscous damping
+ 		Real damping;
+
+Modified: trunk/py/yadeWrapper/yadeWrapper.cpp
+===================================================================
+--- trunk/py/yadeWrapper/yadeWrapper.cpp	2009-07-10 19:16:01 UTC (rev 1853)
++++ trunk/py/yadeWrapper/yadeWrapper.cpp	2009-07-11 13:52:26 UTC (rev 1854)
+@@ -422,6 +422,8 @@
+ 		python::list withBody(long id){ python::list ret; FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *proxee){ if(I-&gt;isReal() &amp;&amp; (I-&gt;getId1()==id || I-&gt;getId2()==id)) ret.append(pyInteraction(I));} return ret;}
+ 		python::list withBodyAll(long id){ python::list ret; FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *proxee){ if(I-&gt;getId1()==id || I-&gt;getId2()==id) ret.append(pyInteraction(I));} return ret; }
+ 		long countReal(){ long ret=0; FOREACH(const shared_ptr&lt;Interaction&gt;&amp; I, *proxee){ if(I-&gt;isReal()) ret++; } return ret; }
++		bool serializeSorted_get(){return proxee-&gt;serializeSorted;}
++		void serializeSorted_set(bool ss){proxee-&gt;serializeSorted=ss;}
+ };
+ 
+ Vector3r tuple2vec(const python::tuple&amp; t){return Vector3r(python::extract&lt;double&gt;(t[0])(),python::extract&lt;double&gt;(t[1])(),python::extract&lt;double&gt;(t[2])());}
+@@ -763,6 +765,7 @@
+ 		.def(&quot;nth&quot;,&amp;pyInteractionContainer::pyNth)
+ 		.def(&quot;withBody&quot;,&amp;pyInteractionContainer::withBody)
+ 		.def(&quot;withBodyAll&quot;,&amp;pyInteractionContainer::withBodyAll)
++		.add_property(&quot;serializeSorted&quot;,&amp;pyInteractionContainer::serializeSorted_get,&amp;pyInteractionContainer::serializeSorted_set)
+ 		.def(&quot;nth&quot;,&amp;pyInteractionContainer::pyNth)
+ 		.def(&quot;clear&quot;,&amp;pyInteractionContainer::clear);
+ 	boost::python::class_&lt;pyInteractionIterator&gt;(&quot;InteractionIterator&quot;,python::init&lt;pyInteractionIterator&amp;&gt;())
+
+Modified: trunk/scripts/test/collider-stride-triax.py
+===================================================================
+--- trunk/scripts/test/collider-stride-triax.py	2009-07-10 19:16:01 UTC (rev 1853)
++++ trunk/scripts/test/collider-stride-triax.py	2009-07-11 13:52:26 UTC (rev 1854)
+@@ -4,18 +4,20 @@
+ import os.path
+ loadFrom='/tmp/triax.xml'
+ if not os.path.exists(loadFrom):
+-	TriaxialTest(numberOfGrains=8000,fast=True,noFiles=True).generate(loadFrom)
++	TriaxialTest(numberOfGrains=8000,fast=True,noFiles=True).load()
++	#O.run(500)
++	O.save(loadFrom)
+ O.load(loadFrom)
+ log.setLevel('TriaxialCompressionEngine',log.WARN) # shut up
+-log.setLevel('InsertionSortCollider',log.DEBUG) # shut up
++log.setLevel('InsertionSortCollider',log.DEBUG)
+ 
+ collider=utils.typedEngine('InsertionSortCollider')
+ newton=utils.typedEngine('NewtonsDampedLaw')
+ 
+ # use striding; say &quot;if 0:&quot; to disable striding and compare to regular runs
+-if 1:
++if 0:
+ 	# length by which bboxes will be made larger
+-	collider['sweepLength']=.05*O.bodies[100].shape['radius']
++	collider['sweepLength']=0.05*O.bodies[100].shape['radius']
+ 
+ O.step() # filter out initialization
+ O.timingEnabled=True
+@@ -29,6 +31,14 @@
+ 	print 'Number of interactions: %d (real ratio: %g)'%(len(O.interactions),float(O.interactions.countReal())/len(O.interactions))
+ 	print '======================================================='
+ 	timing.reset()
++	# plot velocity histogram
++	if 0:
++		import pylab
++		pylab.hist([sqrt(sum([v**2 for v in b.phys['velocity']])) for b in O.bodies])
++		pylab.title('step %d; max speed %g'%(O.iter,sqrt(newton['maxVelocitySq'])))
++		pylab.grid()
++		pylab.savefig('%s-%05d.png'%(loadFrom,O.iter),dpi=40)
++		pylab.cla()
+ 
+ print 'Total time: %g s'%(totalTime/1e9)
+-quit()
++#quit()
+
+Modified: trunk/scripts/test/compare-identical.py
+===================================================================
+--- trunk/scripts/test/compare-identical.py	2009-07-10 19:16:01 UTC (rev 1853)
++++ trunk/scripts/test/compare-identical.py	2009-07-11 13:52:26 UTC (rev 1854)
+@@ -30,7 +30,8 @@
+ if O.numThreads&gt;1:
+ 	print &quot;WARNING: You should run single-threaded with OMP_NUM_THREADS=1; interaction order will be probably different otherwise!&quot;
+ 
+-O.load(initFile); O.switchWorld(); O.load(initFile); O.switchWorld()
++for world in 0,1:
++	O.load(initFile); O.interactions.serializeSorted=True; O.switchWorld();
+ from hashlib import md5; import difflib,sys
+ print &quot;Identical at steps &quot;,
+ for i in xrange(0,stopIter/nSteps):
+
+Modified: trunk/scripts/test/regular-sphere-pack.py
+===================================================================
+--- trunk/scripts/test/regular-sphere-pack.py	2009-07-10 19:16:01 UTC (rev 1853)
++++ trunk/scripts/test/regular-sphere-pack.py	2009-07-11 13:52:26 UTC (rev 1854)
+@@ -16,7 +16,7 @@
+ 
+ rad,gap=.15,.02
+ rho=1e3
+-kw={'density':rho}
++kw={'density':rho,'frictionAngle':.1}
+ 
+ O.bodies.append(
+ 	pack.regularHexa(
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001177.html">[deprecated list] [Yade-dev] [svn] r1853 - in trunk: pkg/common	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/DeusExMachina scripts/test
+</A></li>
+	<LI>Next message: <A HREF="001180.html">[deprecated list] [Yade-dev] [robot] SVN checkout failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1179">[ date ]</a>
+              <a href="thread.html#1179">[ thread ]</a>
+              <a href="subject.html#1179">[ subject ]</a>
+              <a href="author.html#1179">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

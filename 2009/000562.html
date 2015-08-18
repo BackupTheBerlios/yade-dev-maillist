@@ -1,0 +1,208 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1604 - in trunk: core	extra/clump gui/py	pkg/common	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1604%20-%20in%20trunk%3A%20core%0A%09extra/clump%20gui/py%09pkg/common%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine%09pkg/dem/DataClass/InteractionGeometry%0A%09pkg/dem/Engine/EngineUnit&In-Reply-To=%3C200901042015.n04KFKmc017659%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000633.html">
+   <LINK REL="Next"  HREF="000564.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1604 - in trunk: core	extra/clump gui/py	pkg/common	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1604%20-%20in%20trunk%3A%20core%0A%09extra/clump%20gui/py%09pkg/common%0A%09pkg/common/RenderingEngine/OpenGLRenderingEngine%09pkg/dem/DataClass/InteractionGeometry%0A%09pkg/dem/Engine/EngineUnit&In-Reply-To=%3C200901042015.n04KFKmc017659%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1604 - in trunk: core	extra/clump gui/py	pkg/common	pkg/common/RenderingEngine/OpenGLRenderingEngine	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Jan  4 21:15:20 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000633.html">[deprecated list] [Yade-dev] commit 1583, 3d view,	serialization.
+</A></li>
+        <LI>Next message: <A HREF="000564.html">[deprecated list] [Yade-dev] [svn] r1605 - in	trunk/pkg/dem:	DataClass/InteractionPhysics Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#562">[ date ]</a>
+              <a href="thread.html#562">[ thread ]</a>
+              <a href="subject.html#562">[ subject ]</a>
+              <a href="author.html#562">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-01-04 21:15:19 +0100 (Sun, 04 Jan 2009)
+New Revision: 1604
+
+Modified:
+   trunk/core/StandAloneEngine.hpp
+   trunk/extra/clump/Shop.cpp
+   trunk/gui/py/eudoxos.py
+   trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+   trunk/pkg/common/SConscript
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+Log:
+1. Fix a bug in rotation ode in SpheresContactGeometry. Now the code gives the same results as almost-for-sure-correct FEM code regarding strain computation.
+2. Add label attribute to StandAloneEngine (inherits from Engine)
+
+
+
+Modified: trunk/core/StandAloneEngine.hpp
+===================================================================
+--- trunk/core/StandAloneEngine.hpp	2009-01-04 14:32:53 UTC (rev 1603)
++++ trunk/core/StandAloneEngine.hpp	2009-01-04 20:15:19 UTC (rev 1604)
+@@ -16,11 +16,9 @@
+ 	public :
+ 		StandAloneEngine() {};
+ 		virtual ~StandAloneEngine() {};
+-
+-	REGISTER_CLASS_NAME(StandAloneEngine);	
+-	REGISTER_BASE_CLASS_NAME(Engine);
++	REGISTER_ATTRIBUTES(Engine,/* no own attributes*/);
++	REGISTER_CLASS_AND_BASE(StandAloneEngine,Engine);
+ };
+-
+ REGISTER_SERIALIZABLE(StandAloneEngine);
+ 
+ #endif // STANDALONEENGINE_HPP
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2009-01-04 14:32:53 UTC (rev 1603)
++++ trunk/extra/clump/Shop.cpp	2009-01-04 20:15:19 UTC (rev 1604)
+@@ -141,7 +141,6 @@
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rb-&gt;bodies){
+ 		if(!b-&gt;isDynamic) continue;
+ 		shared_ptr&lt;RigidBodyParameters&gt; rbp=YADE_PTR_CAST&lt;RigidBodyParameters&gt;(b-&gt;physicalParameters); assert(rbp);
+-		Matrix3r inertiaMatrix(rbp-&gt;inertia[0],rbp-&gt;inertia[1],rbp-&gt;inertia[2]);
+ 		// &#189;(mv&#178;+&#969;I&#969;)
+ 		ret+=.5*(rbp-&gt;mass*rbp-&gt;velocity.SquaredLength()+rbp-&gt;angularVelocity.Dot(diagMult(rbp-&gt;inertia,rbp-&gt;angularVelocity)));
+ 	}
+
+Modified: trunk/gui/py/eudoxos.py
+===================================================================
+--- trunk/gui/py/eudoxos.py	2009-01-04 14:32:53 UTC (rev 1603)
++++ trunk/gui/py/eudoxos.py	2009-01-04 20:15:19 UTC (rev 1604)
+@@ -107,11 +107,20 @@
+ 	f.write(&quot;ndofman %d nelem %d ncrosssect 1 nmat 1 nbc %d nic 0 nltf 1 nbarrier 0\n&quot;%(len(O.bodies),len(inters),len(O.bodies)*6))
+ 	bcMax=0; bcMap={}
+ 	for b in O.bodies:
++		mf=' '.join([str(a) for a in list(O.actions.f(b.id))+list(O.actions.m(b.id))])
++		f.write(&quot;## #%d: forces %s\n&quot;%(b.id+1,mf))
+ 		f.write(&quot;Particle %d coords 3 %.15e %.15e %.15e rad %g&quot;%(b.id+1,b.phys['se3'][0],b.phys['se3'][1],b.phys['se3'][2],b.shape['radius']))
+ 		bcMap[b.id]=tuple([bcMax+i for i in [1,2,3,4,5,6]])
+ 		bcMax+=6
+ 		f.write(' bc '+' '.join([str(i) for i in bcMap[b.id]])+'\n')
+ 	for j,i in enumerate(inters):
++		epsTNorm=sqrt(sum([e**2 for e in i.phys['epsT']]))
++		epsT='epsT [ %g %g %g ] %g'%(i.phys['epsT'][0],i.phys['epsT'][1],i.phys['epsT'][2],epsTNorm)
++		en=i.phys['epsN']; n=i.geom['normal']
++		epsN='epsN [ %g %g %g ] %g'%(en*n[0],en*n[1],en*n[2],en)
++		Fn='Fn [ %g %g %g ] %g'%(i.phys['normalForce'][0],i.phys['normalForce'][1],i.phys['normalForce'][2],i.phys['Fn'])
++		Fs='Fs [ %lf %lf %lf ] %lf'%(i.phys['shearForce'][0],i.phys['shearForce'][1],i.phys['shearForce'][2],sqrt(sum([fs**2 for fs in i.phys['shearForce']])))
++		f.write('## #%d #%d: %s %s %s %s\n'%(i.id1+1,i.id2+1,epsN,epsT,Fn,Fs))
+ 		f.write('CohSur3d %d nodes 2 %d %d mat 1 crossSect 1 area %g\n'%(j+1,i.id1+1,i.id2+1,i.phys['crossSection']))
+ 	# crosssection
+ 	f.write(&quot;SimpleCS 1 thick 1.0 width 1.0\n&quot;)
+@@ -122,7 +131,7 @@
+ 	for b in O.bodies:
+ 		displ=b.phys.displ; rot=b.phys.rot
+ 		dofs=[displ[0],displ[1],displ[2],rot[0],rot[1],rot[2]]
+-		f.write('# body #%d\n'%b.id)
++		f.write('# particle %d\n'%b.id)
+ 		for dof in range(6):
+ 			f.write('BoundaryCondition %d loadTimeFunction 1 prescribedvalue %.15e\n'%(bcMap[b.id][dof],dofs[dof]))
+ 	#f.write('PiecewiseLinFunction 1 npoints 3 t 3 0. 10. 1000.  f(t) 3 0. 10. 1000.\n')
+
+Modified: trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2009-01-04 14:32:53 UTC (rev 1603)
++++ trunk/pkg/common/RenderingEngine/OpenGLRenderingEngine/OpenGLRenderingEngine.hpp	2009-01-04 20:15:19 UTC (rev 1604)
+@@ -20,6 +20,7 @@
+ 		vector&lt;Se3r&gt; clipPlaneSe3;
+ 		vector&lt;int&gt; clipPlaneActive; // should be bool, but serialization doesn't handle vector&lt;bool&gt;
+ 		const int clipPlaneNum;
++		//vector&lt;body_id_t&gt; bodiesByDepth; // camera::cameraCoordinatesOf[2]
+ 		bool scaleDisplacements,scaleRotations;
+ 		Vector3r displacementScale; Real rotationScale;
+ 
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2009-01-04 14:32:53 UTC (rev 1603)
++++ trunk/pkg/common/SConscript	2009-01-04 20:15:19 UTC (rev 1604)
+@@ -142,6 +142,10 @@
+ 		LIBS=env['LIBS']+['ElasticBodyParameters','RigidBodyParameters','ParticleParameters','InteractionPhysicsMetaEngine','NormalShearInteractions']),
+ 	env.SharedLibrary('NormalShearInteractions',['DataClass/InteractionPhysics/NormalShearInteractions.cpp']),
+ 
++	#env.SharedLibrary('VelocityDamping',
++	#	['Engine/EngineUnit/VelocityDamping.cpp'],
++	#	LIBS=env['LIBS']+['Force','Momentum','RigidBodyParameters']),
++
+ 	#env.SharedLibrary('PersistentTriangulationCollider',
+ 	#	['Engine/StandAloneEngine/PersistentTriangulationCollider.cpp'],
+ 	#	LIBPATH=env['LIBPATH']+['/home/bruno/micromacro/KdevMicroMacro/src'],
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2009-01-04 14:32:53 UTC (rev 1603)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2009-01-04 20:15:19 UTC (rev 1604)
+@@ -59,7 +59,7 @@
+ 		static Quaternionr rollPlanePtToSphere(const Vector3r&amp; planePt, const Real&amp; radius, const Vector3r&amp; normal);
+ 
+ 		void setTgPlanePts(Vector3r p1new, Vector3r p2new);
+-
++		
+ 		Vector3r contPtInTgPlane1() const {assert(hasShear); return unrollSpherePtToPlane(ori1*cp1rel,d1,normal);}
+ 		Vector3r contPtInTgPlane2() const {assert(hasShear); return unrollSpherePtToPlane(ori2*cp2rel,d2,-normal);}
+ 		Vector3r contPt() const {return contactPoint; /*pos1+(d1/d0)*(pos2-pos1)*/}
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2009-01-04 14:32:53 UTC (rev 1603)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2009-01-04 20:15:19 UTC (rev 1604)
+@@ -50,7 +50,7 @@
+ 			if(c-&gt;isNew){
+ 				// contact constants
+ 				scm-&gt;d0=(se32.position-se31.position).Length();
+-				scm-&gt;d1=s1-&gt;radius-penetrationDepth; scm-&gt;d2=s2-&gt;radius-penetrationDepth;
++				scm-&gt;d1=s1-&gt;radius-.5*penetrationDepth; scm-&gt;d2=s2-&gt;radius-.5*penetrationDepth;
+ 				scm-&gt;initRelOri12=se31.orientation.Conjugate()*se32.orientation;
+ 				// quasi-constants
+ 				scm-&gt;cp1rel.Align(Vector3r::UNIT_X,se31.orientation.Conjugate()*normal);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000633.html">[deprecated list] [Yade-dev] commit 1583, 3d view,	serialization.
+</A></li>
+	<LI>Next message: <A HREF="000564.html">[deprecated list] [Yade-dev] [svn] r1605 - in	trunk/pkg/dem:	DataClass/InteractionPhysics Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#562">[ date ]</a>
+              <a href="thread.html#562">[ thread ]</a>
+              <a href="subject.html#562">[ subject ]</a>
+              <a href="author.html#562">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

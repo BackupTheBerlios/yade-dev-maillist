@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] [Yade-commits] r1359 - in trunk: core gui/py	lib/import pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20r1359%20-%20in%20trunk%3A%20core%20gui/py%0A%09lib/import%20pkg/common/DataClass/PhysicalParameters%0A%09pkg/common/Engine/DeusExMachina%0A%09pkg/common/Engine/StandAloneEngine%20pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%0A%09pkg/dem/RenderingEngine/GLDrawElasticContactInteraction&In-Reply-To=%3C200805231851.12263.dorofeenko%40icp.ac.ru%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000198.html">
+   <LINK REL="Next"  HREF="000196.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py	lib/import pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction</H1>
+    <B>sega</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20r1359%20-%20in%20trunk%3A%20core%20gui/py%0A%09lib/import%20pkg/common/DataClass/PhysicalParameters%0A%09pkg/common/Engine/DeusExMachina%0A%09pkg/common/Engine/StandAloneEngine%20pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%0A%09pkg/dem/RenderingEngine/GLDrawElasticContactInteraction&In-Reply-To=%3C200805231851.12263.dorofeenko%40icp.ac.ru%3E"
+       TITLE="[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py	lib/import pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction">dorofeenko at icp.ac.ru
+       </A><BR>
+    <I>Fri May 23 16:51:11 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000198.html">[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py lib/import pkg/common/DataClass/PhysicalParameters pkg/common/Engine/DeusExMachina pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+        <LI>Next message: <A HREF="000196.html">[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py	lib/import pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#199">[ date ]</a>
+              <a href="thread.html#199">[ thread ]</a>
+              <a href="subject.html#199">[ subject ]</a>
+              <a href="author.html#199">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>&gt;<i> Moreover it seems to me that  
+</I>&gt;<i> InteractionGeometryMetaEngine doesn't care if interactions are real or 
+</I>&gt;<i> not. On the contrary it chooses if it is the case or not :
+</I>&gt;<i> l.46 InteractionGeometryMetaEngine.cpp :
+</I>&gt;<i> interaction-&gt;isReal =
+</I>&gt;<i>             b1-&gt;interactingGeometry &amp;&amp; b2-&gt;interactingGeometry &amp;&amp; // 
+</I>&gt;<i> some bodies do not have interactingGeometry
+</I>&gt;<i>             // FIXME put this inside VolatileInteractionCriterion dynlib
+</I>&gt;<i>             ( 
+</I>&gt;<i> persistentInteractions-&gt;find(interaction-&gt;getId1(),interaction-&gt;getId2()) 
+</I>&gt;<i> == 0 )
+</I>&gt;<i>              &amp;&amp;
+</I>&gt;<i>             operator()( b1-&gt;interactingGeometry , 
+</I>&gt;<i> b2-&gt;interactingGeometry , b1-&gt;physicalParameters-&gt;se3 , 
+</I>&gt;<i> b2-&gt;physicalParameters-&gt;se3 , interaction );
+</I>&gt;<i> 
+</I>&gt;<i> So ???
+</I>&gt;<i> 
+</I>&gt;<i> 
+</I>
+Yes. But! Any body that can interact with something gets its 
+InteractingGeometry with its creation.
+E.q. if (body-&gt;interactingGeometry) then body_is_interactable else 
+body_is_non_interactable
+InteractionGeometryMetaEngine cares about creating the _InteractionGeometry_ 
+from two InteractingGeometries.
+E.q. the _InteractionGeometryMetaEngine_  determines whether interaction 
+isReal or only potential.
+Therefore, there is no controversy: 
+1. A collider find the potential interaction (intersecting bounding volumes). 
+The Interaction isNew=1, isReal=0.
+2. InteractionPhysicsMetaEngine create InteractionPhysics for new interaction 
+(once for all interaction time). The Interaction isNew=0, isReal=0.
+3. InteractionGeometryMetaEngine create InteractingGeometry if the bodies are 
+really in contact (on each time step). The Interaction isNew=0, isReal=1.
+4. Calculating forces, ect...
+5. The bodies separated. They surfaces not intersect, but AABBs intersect yet. 
+Interaction potential again. Do not have to calculate physics. Do not have to 
+calculate geometry. isNew=0, isReal=0.
+6. They AABBs not intersect. The interaction is removed.
+
+-- 
+Best regards, Sergei D.
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000198.html">[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py lib/import pkg/common/DataClass/PhysicalParameters pkg/common/Engine/DeusExMachina pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+	<LI>Next message: <A HREF="000196.html">[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py	lib/import pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#199">[ date ]</a>
+              <a href="thread.html#199">[ thread ]</a>
+              <a href="subject.html#199">[ subject ]</a>
+              <a href="author.html#199">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

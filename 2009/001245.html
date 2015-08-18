@@ -1,0 +1,1037 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] yade crash launching xml
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20yade%20crash%20launching%20xml&In-Reply-To=%3CjUsT.aNoTheR.mEsSaGe.iD.12477674615692%40mailreader.com%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001244.html">
+   <LINK REL="Next"  HREF="001281.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] yade crash launching xml</H1>
+    <B>chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20yade%20crash%20launching%20xml&In-Reply-To=%3CjUsT.aNoTheR.mEsSaGe.iD.12477674615692%40mailreader.com%3E"
+       TITLE="[deprecated list] [Yade-dev] yade crash launching xml">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Thu Jul 16 19:59:36 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001244.html">[deprecated list] [Yade-dev] [svn] r1874 - in trunk: py scripts
+</A></li>
+        <LI>Next message: <A HREF="001281.html">[deprecated list] [Yade-dev] [svn] r1875 - in trunk: . core extra/tetra gui/py gui/qt3 lib lib/multimethods lib/py lib/py/boost-python-indexing-suite-v2-noSymlinkHeaders lib/py/boost-python-indexing-suite-v2-noSymlinkHeaders/suite lib/py/boost-python-indexing-suite-v2-noSymlinkHeaders/suite/indexing lib/serialization lib/serialization-qt pkg/common/DataClass/BoundingVolume pkg/common/DataClass/GeometricalModel pkg/common/DataClass/InteractingGeometry pkg/common/DataClass/InteractionGeometry pkg/common/DataClass/PhysicalParameters pkg/common/DataClass/Widgets pkg/common/Engine pkg/common/Engine/DeusExMachina pkg/common/Engine/EngineUnit pkg/common/Engine/FilterEngine pkg/common/Engine/StandAloneEngine pkg/common/RenderingEngine/GLDrawGeometricalModel pkg/common/RenderingEngine/OpenGLRenderingEngine pkg/dem pkg/dem/DataClass/InteractingGeometry pkg/dem/DataClass/InteractionGeometry pkg/dem/DataClass/InteractionPhysics pkg/dem/DataClass/PhysicalParameters pkg/dem/Engine/DeusExMachina pkg/dem/Engin! e/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry pkg/fem/DataClass/PhysicalParameters pkg/fem/Engine/EngineUnit pkg/fem/Engine/StandAloneEngine pkg/fem/PreProcessor pkg/lattice/DataClass/GeometricalModel pkg/lattice/DataClass/InteractionPhysics pkg/lattice/DataClass/PhysicalParameters pkg/lattice/Engine/StandAloneEngine pkg/lattice/PreProcessor pkg/mass-spring/DataClass/InteractionGeometry pkg/mass-spring/DataClass/InteractionPhysics pkg/mass-spring/Engine/StandAloneEngine pkg/mass-spring/PreProcessor pkg/realtime-rigidbody/Engine/StandAloneEngine pkg/realtime-rigidbody/PreProcessor pkg/snow/DataClass pkg/snow/Engine pkg/snow/PreProcessor py py/yadeWrapper scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1245">[ date ]</a>
+              <a href="thread.html#1245">[ thread ]</a>
+              <a href="subject.html#1245">[ subject ]</a>
+              <a href="author.html#1245">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+Do you have the same problem when you load an xml without the flow 
+engine in it?
+Did you remove the reference to the temporary object too, the one 
+like in the code below?
+
+Tes&amp; build(metabody)
+{
+   Tes t;
+   ...
+   return t;
+}
+
+Bruno
+
+p.s. This damn +8h time zone creates a 1 day delay in communication...
+
+
+
+Jeudi, 16 Juillet 2009, Emanuele Catalano &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">catalano at hmg.inpg.fr</A>&gt; 
+&#233;crivait :
+
+&gt;<i>Unfortunately, the problem still remains.
+</I>&gt;<i>Less times than before, but it happens.
+</I>&gt;<i>I noticed there two kinds of error messages, I copied them above.
+</I>&gt;<i>Anyway, I don't understand precisely from where it comes this &quot;random&quot;
+</I>&gt;<i>error, but I can not exclude it comes from some
+</I>&gt;<i>instability induced by the code I wrote. I decided to write in ML
+</I>&gt;<i>because sometimes it works, and that thing makes me confused.
+</I>&gt;<i>
+</I>&gt;<i>Ema
+</I>&gt;<i>
+</I>&gt;<i>MESSAGE 1:
+</I>&gt;<i>
+</I>&gt;<i><A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">lfavier at r2balme</A>:~/yade/bin$ ./yade-trunk TriaxialTest.xml
+</I>&gt;<i>Tesselation(void)
+</I>&gt;<i>Tesselation(void)
+</I>&gt;<i>Tesselation(void)
+</I>&gt;<i>Tesselation(void)
+</I>&gt;<i>Python TCP server listening on localhost:9000, auth cookie is `aeykcu'
+</I>&gt;<i>Running simulation TriaxialTest.xml
+</I>&gt;<i>yade-trunk: /usr/include/boost/shared_ptr.hpp&#194;&#160;:315&#194;&#160;:&#194;&#160;T*
+</I>&gt;<i>boost::shared_ptr&lt;T&gt;::operator-&gt;() const [with T = Engine]:  L'assertion
+</I>&gt;<i>&#194;&#171;&#194;&#160;px != 0&#194;&#160;&#194;&#187; a &#195;&#169;chou&#195;&#169;.
+</I>&gt;<i>SIGSEGV/SIGABRT handler called; gdb batch file is `/home/3S-LAB/lfavier
+</I>&gt;<i>/.yade-trunk/gdb_crash_batch-pid11441'
+</I>&gt;<i>Tesselation(void)
+</I>&gt;<i>Tesselation(void)
+</I>&gt;<i>GNU gdb 6.8-debian
+</I>&gt;<i>Copyright (C) 2008 Free Software Foundation, Inc.
+</I>&gt;<i>License GPLv3+: GNU GPL version 3 or later
+</I>&gt;<i>&lt;<A HREF="http://gnu.org/licenses/gpl.html">http://gnu.org/licenses/gpl.html</A>&gt;
+</I>&gt;<i>This is free software: you are free to change and redistribute it.
+</I>&gt;<i>There is NO WARRANTY, to the extent permitted by law.  Type &quot;show
+</I>&gt;<i>copying&quot;
+</I>&gt;<i>and &quot;show warranty&quot; for details.
+</I>&gt;<i>This GDB was configured as &quot;i486-linux-gnu&quot;.
+</I>&gt;<i>[Thread debugging using libthread_db enabled]
+</I>&gt;<i>[New Thread 0xb5dd46c0 (LWP 11441)]
+</I>&gt;<i>[New Thread 0xa70aab90 (LWP 11443)]
+</I>&gt;<i>[New Thread 0xa99f0b90 (LWP 11442)]
+</I>&gt;<i>warning: Lowest section in /usr/lib/libicudata.so.38 is .hash at
+</I>&gt;<i>000000b4
+</I>&gt;<i>0xb7f09410 in __kernel_vsyscall ()
+</I>&gt;<i>No symbol &quot;info&quot; in current context.
+</I>&gt;<i>
+</I>&gt;<i>Thread 3 (Thread 0xa99f0b90 (LWP 11442)):
+</I>&gt;<i>#0  0xb722fee5 in std::string::assign (this=0xb5b2f83c,
+</I>&gt;<i>__str=@0xa99ef194) at /build/buildd/gcc-4.2-4.2.4/build/i486-linux-
+</I>&gt;<i>gnu/libstdc++-v3/include/ext/atomicity.h:51
+</I>&gt;<i>#1  0xb722ff24 in std::string::operator= (this=0xb5b2f83c,
+</I>&gt;<i>__str=@0xa99ef194) at /build/buildd/gcc-4.2-4.2.4/build/i486-linux-
+</I>&gt;<i>gnu/libstdc++-v3/include/bits/basic_string.h:491
+</I>&gt;<i>#2  0xb5b2a4cb in XmlSaxParser::readNextXmlLine (this=0xb5b2f820,
+</I>&gt;<i>stream=@0xa99ef620) at lib/serialization-xml/XMLSaxParser.cpp:92
+</I>&gt;<i>#3  0xb5b2a556 in XmlSaxParser::readAndParseNextXmlLine
+</I>&gt;<i>(this=0xb5b2f820, stream=@0xa99ef620) at lib/serialization-
+</I>&gt;<i>xml/XMLSaxParser.cpp:31
+</I>&gt;<i>#4  0xb5b22036 in XMLFormatManager::deserializeSerializable
+</I>&gt;<i>(stream=@0xa99ef620, ac=@0x8482cd0) at lib/serialization-
+</I>&gt;<i>xml/XMLFormatManager.cpp:211
+</I>&gt;<i>#5  0xb5b216a1 in XMLFormatManager::deserializeSmartPointer
+</I>&gt;<i>(stream=@0xa99ef620, ac=@0x84694f8) at lib/serialization-
+</I>&gt;<i>xml/XMLFormatManager.cpp:309
+</I>&gt;<i>#6  0xb5b21c3c in XMLFormatManager::deserializeContainer
+</I>&gt;<i>(stream=@0xa99ef620, ac=@0x848a8e0, str=@0xa99ef3c4) at lib
+</I>&gt;<i>/serialization-xml/XMLFormatManager.cpp:261
+</I>&gt;<i>#7  0xb5b21fc6 in XMLFormatManager::deserializeSerializable
+</I>&gt;<i>(stream=@0xa99ef620, ac=@0x843cc68) at lib/serialization-
+</I>&gt;<i>xml/XMLFormatManager.cpp:204
+</I>&gt;<i>#8  0xb5b216a1 in XMLFormatManager::deserializeSmartPointer
+</I>&gt;<i>(stream=@0xa99ef620, ac=@0x84321a8) at lib/serialization-
+</I>&gt;<i>xml/XMLFormatManager.cpp:309
+</I>&gt;<i>#9  0xb5b21fc6 in XMLFormatManager::deserializeSerializable
+</I>&gt;<i>(stream=@0xa99ef620, ac=@0x8491b98) at lib/serialization-
+</I>&gt;<i>xml/XMLFormatManager.cpp:204
+</I>&gt;<i>#10 0xb5b216a1 in XMLFormatManager::deserializeSmartPointer
+</I>&gt;<i>(stream=@0xa99ef620, ac=@0x8420ae0) at lib/serialization-
+</I>&gt;<i>xml/XMLFormatManager.cpp:309
+</I>&gt;<i>#11 0x081b73ba in
+</I>&gt;<i>IOFormatManager::loadFromStream&lt;boost::shared_ptr&lt;MetaBody&gt; &gt;
+</I>&gt;<i>(libName=@0xa99ef8f0, in=@0xa99ef620, name=@0xa99ef8ec, t=@0x826339c) 
+</I>at
+&gt;<i>/home/3S-LAB/lfavier/yade/build-trunk/include/yade-trunk/yade/lib-
+</I>&gt;<i>serialization/IOFormatManager.tpp:31
+</I>&gt;<i>#12 0x081b7efd in
+</I>&gt;<i>IOFormatManager::loadFromFile&lt;boost::shared_ptr&lt;MetaBody&gt; &gt;
+</I>&gt;<i>(libName=@0xa99ef8f0, fileName=@0x82633c4, name=@0xa99ef8ec,
+</I>&gt;<i>t=@0x826339c) at /home/3S-LAB/lfavier/yade/build-trunk/include/yade-
+</I>&gt;<i>trunk/yade/lib-serialization/IOFormatManager.tpp:53
+</I>&gt;<i>#13 0x081ab8b6 in Omega::loadSimulation (this=0x8263350) at
+</I>&gt;<i>core/Omega.cpp:222
+</I>&gt;<i>#14 0xa9017ce2 in pyOmega::load (this=0x8967570, fileName=@0xa99efa3c)
+</I>&gt;<i>at py/yadeWrapper/yadeWrapper.cpp:526
+</I>&gt;<i>#15 0xa8efb76e in boost::python::detail::invoke&lt;int, void
+</I>&gt;<i>(pyOmega::*)(std::string), boost::python::arg_from_python&lt;pyOmega&amp;&gt;,
+</I>&gt;<i>boost::python::arg_from_python&lt;std::string&gt; &gt; (f=@0x83bc1c4,
+</I>&gt;<i>tc=@0xa99efaa4, ac0=@0xa99efa8c) at
+</I>&gt;<i>/usr/include/boost/python/detail/invoke.hpp:94
+</I>&gt;<i>#16 0xa8f9bb96 in boost::python::detail::caller_arity&lt;2u&gt;::impl&lt;void
+</I>&gt;<i>(pyOmega::*)(std::string), boost::python::default_call_policies,
+</I>&gt;<i>boost::mpl::vector3&lt;void, pyOmega&amp;, std::string&gt; &gt;::operator()
+</I>&gt;<i>(this=0x83bc1c4, args_=0xa89b4e6c) at
+</I>&gt;<i>/usr/include/boost/python/detail/caller.hpp:199
+</I>&gt;<i>#17 0xa8f9bc24 in
+</I>&gt;<i>boost::python::objects::caller_py_function_impl&lt;boost::python::detail:
+</I>&gt;:<i>caller&lt;void
+</I>&gt;<i>(pyOmega::*)(std::string), boost::python::default_call_policies,
+</I>&gt;<i>boost::mpl::vector3&lt;void, pyOmega&amp;, std::string&gt; &gt; &gt;::operator()
+</I>&gt;<i>(this=0x83bc1c0, args=0xa89b4e6c, kw=0x0) at
+</I>&gt;<i>/usr/include/boost/python/object/py_function.hpp:38
+</I>&gt;<i>#18 0xb73599c0 in boost::python::objects::function::call () from
+</I>&gt;<i>/usr/lib/libboost_python-gcc42-mt-1_34_1.so.1.34.1
+</I>&gt;<i>#19 0xb7359be7 in ?? () from /usr/lib/libboost_python-
+</I>&gt;<i>gcc42-mt-1_34_1.so.1.34.1
+</I>&gt;<i>#20 0xb7d8b01b in boost::function0&lt;void,
+</I>&gt;<i>std::allocator&lt;boost::function_base&gt; &gt;::operator() () from /usr/lib
+</I>&gt;<i>/libboost_thread-gcc42-mt-1_34_1.so.1.34.1
+</I>&gt;<i>#21 0xb736113e in boost::python::handle_exception_impl () from /usr/lib
+</I>&gt;<i>/libboost_python-gcc42-mt-1_34_1.so.1.34.1
+</I>&gt;<i>#22 0xb735740e in ?? () from /usr/lib/libboost_python-
+</I>&gt;<i>gcc42-mt-1_34_1.so.1.34.1
+</I>&gt;<i>#23 0xb7dd9897 in PyObject_Call () from /usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#24 0xb7e5beb0 in PyEval_EvalFrameEx () from
+</I>&gt;<i>/usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#25 0xb7e605a8 in PyEval_EvalCodeEx () from /usr/lib/libpython2.
+</I>5.so.1.0
+&gt;<i>#26 0xb7e60703 in PyEval_EvalCode () from /usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#27 0xb7e83b1a in PyRun_FileExFlags () from /usr/lib/libpython2.
+</I>5.so.1.0
+&gt;<i>#28 0xb7e83e1a in PyRun_SimpleFileExFlags () from
+</I>&gt;<i>/usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#29 0xb1702f4e in PythonUI::execScript (script=@0xa99f0298) at
+</I>&gt;<i>gui/py/PythonUI.cpp:46
+</I>&gt;<i>#30 0xb1704116 in PythonUI::pythonSession () at gui/py/PythonUI.cpp:99
+</I>&gt;<i>#31 0xb186ac91 in boost::detail::function::void_function_invoker0&lt;void
+</I>&gt;<i>(*)(), void&gt;::invoke (function_ptr=@0xa99f03b0) at
+</I>&gt;<i>/usr/include/boost/function/function_template.hpp:114
+</I>&gt;<i>#32 0xb7d8b01b in boost::function0&lt;void,
+</I>&gt;<i>std::allocator&lt;boost::function_base&gt; &gt;::operator() () from /usr/lib
+</I>&gt;<i>/libboost_thread-gcc42-mt-1_34_1.so.1.34.1
+</I>&gt;<i>#33 0xb7d8ac27 in ?? () from /usr/lib/libboost_thread-
+</I>&gt;<i>gcc42-mt-1_34_1.so.1.34.1
+</I>&gt;<i>#34 0xb7da54fb in start_thread () from
+</I>&gt;<i>/lib/tls/i686/cmov/libpthread.so.0
+</I>&gt;<i>#35 0xb70f1e5e in clone () from /lib/tls/i686/cmov/libc.so.6
+</I>&gt;<i>
+</I>&gt;<i>Thread 2 (Thread 0xa70aab90 (LWP 11443)):
+</I>&gt;<i>#0  0xb7f09410 in __kernel_vsyscall ()
+</I>&gt;<i>#1  0xb7dacbb8 in accept () from /lib/tls/i686/cmov/libpthread.so.0
+</I>&gt;<i>#2  0xa7da3e84 in ?? () from /usr/lib/python2.5/lib-dynload/_socket.so
+</I>&gt;<i>#3  0xb7e5e6ce in PyEval_EvalFrameEx () from
+</I>&gt;<i>/usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#4  0xb7e5f490 in PyEval_EvalFrameEx () from
+</I>&gt;<i>/usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#5  0xb7e5f490 in PyEval_EvalFrameEx () from
+</I>&gt;<i>/usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#6  0xb7e5f490 in PyEval_EvalFrameEx () from
+</I>&gt;<i>/usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#7  0xb7e605a8 in PyEval_EvalCodeEx () from /usr/lib/libpython2.
+</I>5.so.1.0
+&gt;<i>#8  0xb7dfc676 in ?? () from /usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#9  0xb7dd9897 in PyObject_Call () from /usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#10 0xb7de109c in ?? () from /usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#11 0xb7dd9897 in PyObject_Call () from /usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#12 0xb7e57dec in PyEval_CallObjectWithKeywords () from
+</I>&gt;<i>/usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#13 0xb7e8ff34 in ?? () from /usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#14 0xb7da54fb in start_thread () from
+</I>&gt;<i>/lib/tls/i686/cmov/libpthread.so.0
+</I>&gt;<i>#15 0xb70f1e5e in clone () from /lib/tls/i686/cmov/libc.so.6
+</I>&gt;<i>
+</I>&gt;<i>Thread 1 (Thread 0xb5dd46c0 (LWP 11441)):
+</I>&gt;<i>#0  0xb7f09410 in __kernel_vsyscall ()
+</I>&gt;<i>#1  0xb70b04fb in waitpid () from /lib/tls/i686/cmov/libc.so.6
+</I>&gt;<i>#2  0xb7053643 in ?? () from /lib/tls/i686/cmov/libc.so.6
+</I>&gt;<i>#3  0xb7053a02 in system () from /lib/tls/i686/cmov/libc.so.6
+</I>&gt;<i>#4  0xb7dadd7d in system () from /lib/tls/i686/cmov/libpthread.so.0
+</I>&gt;<i>#5  0x081c60cf in sigHandler (sig=6) at core/yade.cpp:80
+</I>&gt;<i>#6  &lt;signal handler called&gt;
+</I>&gt;<i>#7  0xb7f09410 in __kernel_vsyscall ()
+</I>&gt;<i>#8  0xb7046085 in raise () from /lib/tls/i686/cmov/libc.so.6
+</I>&gt;<i>#9  0xb7047a01 in abort () from /lib/tls/i686/cmov/libc.so.6
+</I>&gt;<i>#10 0xb703f10e in __assert_fail () from /lib/tls/i686/cmov/libc.so.6
+</I>&gt;<i>#11 0x08175eae in boost::shared_ptr&lt;Engine&gt;::operator-&gt; (this=0x8490ba0)
+</I>&gt;<i>at /usr/include/boost/shared_ptr.hpp:315
+</I>&gt;<i>#12 0x081a6d10 in Omega::timeStepperActive (this=0x8263350) at
+</I>&gt;<i>core/Omega.cpp:281
+</I>&gt;<i>#13 0xb187e28d in SimulationController::doUpdate (this=0x839e208) at
+</I>&gt;<i>gui/qt3/SimulationController.cpp:505
+</I>&gt;<i>#14 0xb187ef12 in SimulationController::timerEvent (this=0x839e208) at
+</I>&gt;<i>gui/qt3/SimulationController.cpp:319
+</I>&gt;<i>#15 0xb77a9568 in QObject::event () from /usr/lib/libqt-mt.so.3
+</I>&gt;<i>#16 0xb77e1d65 in QWidget::event () from /usr/lib/libqt-mt.so.3
+</I>&gt;<i>#17 0xb773fc36 in QApplication::internalNotify () from /usr/lib/libqt-
+</I>&gt;<i>mt.so.3
+</I>&gt;<i>#18 0xb7742564 in QApplication::notify () from /usr/lib/libqt-mt.so.3
+</I>&gt;<i>#19 0xb76d028d in QApplication::sendEvent () from /usr/lib/libqt-
+</I>mt.so.3
+&gt;<i>#20 0xb7732b19 in QEventLoop::activateTimers () from /usr/lib/libqt-
+</I>&gt;<i>mt.so.3
+</I>&gt;<i>#21 0xb76e564b in QEventLoop::processEvents () from /usr/lib/libqt-
+</I>&gt;<i>mt.so.3
+</I>&gt;<i>#22 0xb775af90 in QEventLoop::enterLoop () from /usr/lib/libqt-mt.so.3
+</I>&gt;<i>#23 0xb775ac8e in QEventLoop::exec () from /usr/lib/libqt-mt.so.3
+</I>&gt;<i>#24 0xb77417df in QApplication::exec () from /usr/lib/libqt-mt.so.3
+</I>&gt;<i>#25 0xb186a237 in QtGUI::run (this=0x83371c0, argc=2, argv=0xbf8a26a4)
+</I>&gt;<i>at gui/qt3/QtGUI.cpp:79
+</I>&gt;<i>#26 0x081c5a55 in main (argc=2, argv=0xbf8a26a4) at core/yade.cpp:288
+</I>&gt;<i>#0  0xb7f09410 in __kernel_vsyscall ()
+</I>&gt;<i>Abandon
+</I>&gt;<i>
+</I>&gt;<i>-------------------------------------------------------------------
+</I>&gt;<i>
+</I>&gt;<i><A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">lfavier at r2balme</A>:~/yade/bin$ ./yade-trunk TriaxialTest.xml
+</I>&gt;<i>Tesselation(void)
+</I>&gt;<i>Tesselation(void)
+</I>&gt;<i>Tesselation(void)
+</I>&gt;<i>Tesselation(void)
+</I>&gt;<i>Python TCP server listening on localhost:9000, auth cookie is `csasud'
+</I>&gt;<i>Running simulation TriaxialTest.xml
+</I>&gt;<i>yade-trunk: /usr/include/boost/shared_ptr.hpp&#194;&#160;:315&#194;&#160;:&#194;&#160;T*
+</I>&gt;<i>boost::shared_ptr&lt;T&gt;::operator-&gt;() const [with T = Engine]:  L'assertion
+</I>&gt;<i>&#194;&#171;&#194;&#160;px != 0&#194;&#160;&#194;&#187; a &#195;&#169;chou&#195;&#169;.
+</I>&gt;<i>SIGSEGV/SIGABRT handler called; gdb batch file is `/home/3S-LAB/lfavier
+</I>&gt;<i>/.yade-trunk/gdb_crash_batch-pid11457'
+</I>&gt;<i>GNU gdb 6.8-debian
+</I>&gt;<i>Copyright (C) 2008 Free Software Foundation, Inc.
+</I>&gt;<i>License GPLv3+: GNU GPL version 3 or later
+</I>&gt;<i>&lt;<A HREF="http://gnu.org/licenses/gpl.html">http://gnu.org/licenses/gpl.html</A>&gt;
+</I>&gt;<i>This is free software: you are free to change and redistribute it.
+</I>&gt;<i>There is NO WARRANTY, to the extent permitted by law.  Type &quot;show
+</I>&gt;<i>copying&quot;
+</I>&gt;<i>and &quot;show warranty&quot; for details.
+</I>&gt;<i>This GDB was configured as &quot;i486-linux-gnu&quot;.
+</I>&gt;<i>Tesselation(void)
+</I>&gt;<i>Tesselation(void)
+</I>&gt;<i>[Thread debugging using libthread_db enabled]
+</I>&gt;<i>[New Thread 0xb5dde6c0 (LWP 11457)]
+</I>&gt;<i>[New Thread 0xa6faab90 (LWP 11459)]
+</I>&gt;<i>[New Thread 0xa99fab90 (LWP 11458)]
+</I>&gt;<i>warning: Lowest section in /usr/lib/libicudata.so.38 is .hash at
+</I>&gt;<i>000000b4
+</I>&gt;<i>0xb7f13410 in __kernel_vsyscall ()
+</I>&gt;<i>No symbol &quot;info&quot; in current context.
+</I>&gt;<i>
+</I>&gt;<i>Thread 3 (Thread 0xa99fab90 (LWP 11458)):
+</I>&gt;<i>#0  0xb70fe568 in ?? () from /lib/tls/i686/cmov/libc.so.6
+</I>&gt;<i>#1  0xb70ff0df in mcount () from /lib/tls/i686/cmov/libc.so.6
+</I>&gt;<i>#2  0xb731145c in match (this=0xa99f8354) at
+</I>&gt;<i>/usr/include/boost/spirit/core/impl/match.ipp:64
+</I>&gt;<i>#3  0xb73115b4 in boost::spirit::match_policy::no_match
+</I>&gt;<i>(this=0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/scanner/scanner.hpp:69
+</I>&gt;<i>#4  0xb7319f8a in boost::spirit::char_parser&lt;boost::spirit::chlit&lt;char&gt;
+</I>&gt;&gt;::<i>parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa895db57, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/primitives/primitives.hpp:61
+</I>&gt;<i>#5  0xb731d23d in
+</I>&gt;<i>boost::spirit::difference&lt;boost::spirit::difference&lt;boost::spirit:
+</I>:<i>difference&lt;boost:
+</I>&gt;:<i>spirit::difference&lt;boost::spirit::graph_parser,
+</I>&gt;<i>boost::spirit::chlit&lt;char&gt; &gt;, boost::spirit::chlit&lt;char&gt; &gt;,
+</I>&gt;<i>boost::spirit::chlit&lt;char&gt; &gt;, boost::spirit::chlit&lt;char&gt;
+</I>&gt;&gt;::<i>parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa895db54, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/composite/difference.hpp:59
+</I>&gt;<i>#6  0xb731d350 in
+</I>&gt;<i>boost::spirit::positive&lt;boost::spirit::difference&lt;boost::spirit:
+</I>:<i>difference&lt;boost:
+</I>&gt;:<i>spirit::difference&lt;boost::spirit::difference&lt;boost::spirit::graph_parser,
+</I>
+&gt;<i>
+</I>&gt;<i>boost::spirit::chlit&lt;char&gt; &gt;, boost::spirit::chlit&lt;char&gt; &gt;,
+</I>&gt;<i>boost::spirit::chlit&lt;char&gt; &gt;, boost::spirit::chlit&lt;char&gt; &gt;
+</I>&gt;&gt;::<i>parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa895db54, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/composite/positive.hpp:60
+</I>&gt;<i>#7  0xb731d3cd in
+</I>&gt;<i>boost::spirit::impl::concrete_parser&lt;boost::spirit::positive&lt;boost:
+</I>:<i>spirit:
+</I>&gt;:<i>difference&lt;boost::spirit::difference&lt;boost::spirit::difference&lt;boost:
+</I>&gt;:<i>spirit::difference&lt;boost::spirit::graph_parser,
+</I>&gt;<i>boost::spirit::chlit&lt;char&gt; &gt;, boost::spirit::chlit&lt;char&gt; &gt;,
+</I>&gt;<i>boost::spirit::chlit&lt;char&gt; &gt;, boost::spirit::chlit&lt;char&gt; &gt; &gt;,
+</I>&gt;<i>boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt;,
+</I>&gt;<i>boost::spirit::nil_t&gt;::do_parse_virtual (this=0xa895db50,
+</I>&gt;<i>scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/non_terminal/impl/rule.ipp:233
+</I>&gt;<i>#8  0xb73171b1 in
+</I>&gt;<i>boost::spirit::impl::rule_base&lt;boost::spirit::rule&lt;boost::spirit:
+</I>:<i>nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; const&amp;, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt;::parse_main&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa99f8f50, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/non_terminal/impl/rule.ipp:189
+</I>&gt;<i>#9  0xb73172aa in
+</I>&gt;<i>boost::spirit::impl::rule_base&lt;boost::spirit::rule&lt;boost::spirit:
+</I>:<i>nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; const&amp;, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt;::parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa99f8f50, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/non_terminal/impl/rule.ipp:171
+</I>&gt;<i>#10 0xb73177a3 in
+</I>&gt;<i>boost::spirit::alternative&lt;boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;::parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa7c0d054, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/composite/alternative.hpp:60
+</I>&gt;<i>#11 0xb7319a69 in
+</I>&gt;<i>boost::spirit::alternative&lt;boost::spirit::alternative&lt;boost::spirit:
+</I>:<i>rule&lt;boost:
+</I>&gt;:<i>spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;, boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;
+</I>&gt;&gt;::<i>parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa7c0d054, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/composite/alternative.hpp:60
+</I>&gt;<i>#12 0xb7319b0b in
+</I>&gt;<i>boost::spirit::alternative&lt;boost::spirit::alternative&lt;boost::spirit:
+</I>:<i>alternative&lt;boost:
+</I>&gt;:<i>spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;, boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;::parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa7c0d054, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/composite/alternative.hpp:60
+</I>&gt;<i>#13 0xb7319bad in
+</I>&gt;<i>boost::spirit::alternative&lt;boost::spirit::alternative&lt;boost::spirit:
+</I>:<i>alternative&lt;boost:
+</I>&gt;:<i>spirit::alternative&lt;boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;, boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;, boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;
+</I>&gt;&gt;::<i>parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa7c0d054, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/composite/alternative.hpp:60
+</I>&gt;<i>#14 0xb731ecf6 in
+</I>&gt;<i>boost::spirit::action&lt;boost::spirit::alternative&lt;boost::spirit::
+</I>alternative&lt;boost:
+&gt;:<i>spirit::alternative&lt;boost::spirit::alternative&lt;boost::spirit::rule&lt;boost:
+</I>
+&gt;:<i>spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;, boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;, boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::ref_value_actor&lt;std::vector&lt;std::string,
+</I>&gt;<i>std::allocator&lt;std::string&gt; &gt;, boost::spirit::push_back_action&gt;
+</I>&gt;&gt;::<i>parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa7c0d054, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/composite/actions.hpp:105
+</I>&gt;<i>#15 0xb731ed95 in
+</I>&gt;<i>boost::spirit::sequence&lt;boost::spirit::action&lt;boost::spirit::alternative&lt;boost:
+</I>
+&gt;:<i>spirit::alternative&lt;boost::spirit::alternative&lt;boost::spirit::alternative&lt;boost:
+</I>
+&gt;:<i>spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;, boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;, boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::ref_value_actor&lt;std::vector&lt;std::string,
+</I>&gt;<i>std::allocator&lt;std::string&gt; &gt;, boost::spirit::push_back_action&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt;
+</I>&gt;&gt;::<i>parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa7c0d054, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/composite/sequence.hpp:53
+</I>&gt;<i>#16 0xb731ee84 in
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::sequence&lt;boost::spirit:
+</I>:<i>action&lt;boost:
+</I>&gt;:<i>spirit::alternative&lt;boost::spirit::alternative&lt;boost::spirit::alternative&lt;boost:
+</I>
+&gt;:<i>spirit::alternative&lt;boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;, boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;, boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::ref_value_actor&lt;std::vector&lt;std::string,
+</I>&gt;<i>std::allocator&lt;std::string&gt; &gt;, boost::spirit::push_back_action&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt; &gt;
+</I>&gt;&gt;::<i>parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa7c0d054, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/composite/kleene_star.hpp:58
+</I>&gt;<i>#17 0xb731ef42 in
+</I>&gt;<i>boost::spirit::sequence&lt;boost::spirit::kleene_star&lt;boost::spirit:
+</I>:<i>space_parser&gt;,
+</I>&gt;<i>
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::sequence&lt;boost::spirit:
+</I>:<i>action&lt;boost:
+</I>&gt;:<i>spirit::alternative&lt;boost::spirit::alternative&lt;boost::spirit::alternative&lt;boost:
+</I>
+&gt;:<i>spirit::alternative&lt;boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;, boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;, boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::ref_value_actor&lt;std::vector&lt;std::string,
+</I>&gt;<i>std::allocator&lt;std::string&gt; &gt;, boost::spirit::push_back_action&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt; &gt; &gt;
+</I>&gt;&gt;::<i>parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa7c0d050, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/composite/sequence.hpp:54
+</I>&gt;<i>#18 0xb731f012 in
+</I>&gt;<i>boost::spirit::sequence&lt;boost::spirit::kleene_star&lt;boost::spirit:
+</I>:<i>space_parser&gt;,
+</I>&gt;<i>
+</I>&gt;<i>boost::spirit::sequence&lt;boost::spirit::kleene_star&lt;boost::spirit:
+</I>:<i>space_parser&gt;,
+</I>&gt;<i>
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::sequence&lt;boost::spirit:
+</I>:<i>action&lt;boost:
+</I>&gt;:<i>spirit::alternative&lt;boost::spirit::alternative&lt;boost::spirit::alternative&lt;boost:
+</I>
+&gt;:<i>spirit::alternative&lt;boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;, boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;, boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::ref_value_actor&lt;std::vector&lt;std::string,
+</I>&gt;<i>std::allocator&lt;std::string&gt; &gt;, boost::spirit::push_back_action&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt; &gt; &gt; &gt;
+</I>&gt;&gt;::<i>parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa7c0d04c, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/composite/sequence.hpp:54
+</I>&gt;<i>#19 0xb731f0a7 in
+</I>&gt;<i>boost::spirit::sequence&lt;boost::spirit::sequence&lt;boost::spirit::kleene_star&lt;boost:
+</I>
+&gt;:<i>spirit::space_parser&gt;,
+</I>&gt;<i>boost::spirit::sequence&lt;boost::spirit::kleene_star&lt;boost::spirit:
+</I>:<i>space_parser&gt;,
+</I>&gt;<i>
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::sequence&lt;boost::spirit:
+</I>:<i>action&lt;boost:
+</I>&gt;:<i>spirit::alternative&lt;boost::spirit::alternative&lt;boost::spirit::alternative&lt;boost:
+</I>
+&gt;:<i>spirit::alternative&lt;boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;, boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;, boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::ref_value_actor&lt;std::vector&lt;std::string,
+</I>&gt;<i>std::allocator&lt;std::string&gt; &gt;, boost::spirit::push_back_action&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt; &gt; &gt; &gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt;
+</I>&gt;&gt;::<i>parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa7c0d04c, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/composite/sequence.hpp:53
+</I>&gt;<i>#20 0xb731f171 in
+</I>&gt;<i>boost::spirit::impl::concrete_parser&lt;boost::spirit::sequence&lt;boost:
+</I>:<i>spirit:
+</I>&gt;:<i>sequence&lt;boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt;,
+</I>&gt;<i>boost::spirit::sequence&lt;boost::spirit::kleene_star&lt;boost::spirit:
+</I>:<i>space_parser&gt;,
+</I>&gt;<i>
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::sequence&lt;boost::spirit:
+</I>:<i>action&lt;boost:
+</I>&gt;:<i>spirit::alternative&lt;boost::spirit::alternative&lt;boost::spirit::alternative&lt;boost:
+</I>
+&gt;:<i>spirit::alternative&lt;boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;, boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;, boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::ref_value_actor&lt;std::vector&lt;std::string,
+</I>&gt;<i>std::allocator&lt;std::string&gt; &gt;, boost::spirit::push_back_action&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt; &gt; &gt; &gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt; &gt;,
+</I>&gt;<i>boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt;,
+</I>&gt;<i>boost::spirit::nil_t&gt;::do_parse_virtual (this=0xa7c0d048,
+</I>&gt;<i>scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/non_terminal/impl/rule.ipp:233
+</I>&gt;<i>#21 0xb73171b1 in
+</I>&gt;<i>boost::spirit::impl::rule_base&lt;boost::spirit::rule&lt;boost::spirit:
+</I>:<i>nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; const&amp;, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt;::parse_main&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa99f8f2c, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/non_terminal/impl/rule.ipp:189
+</I>&gt;<i>#22 0xb73172aa in
+</I>&gt;<i>boost::spirit::impl::rule_base&lt;boost::spirit::rule&lt;boost::spirit:
+</I>:<i>nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; const&amp;, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt;::parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa99f8f2c, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/non_terminal/impl/rule.ipp:171
+</I>&gt;<i>#23 0xb731da1e in
+</I>&gt;<i>boost::spirit::sequence&lt;boost::spirit::sequence&lt;boost::spirit::sequence&lt;boost:
+</I>
+&gt;:<i>spirit::kleene_star&lt;boost::spirit::space_parser&gt;,
+</I>&gt;<i>boost::spirit::chlit&lt;char&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt; &gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;::parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa7c0d09c, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/composite/sequence.hpp:54
+</I>&gt;<i>#24 0xb731e575 in
+</I>&gt;<i>boost::spirit::sequence&lt;boost::spirit::sequence&lt;boost::spirit::sequence&lt;boost:
+</I>
+&gt;:<i>spirit::sequence&lt;boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt;,
+</I>
+&gt;<i>
+</I>&gt;<i>boost::spirit::chlit&lt;char&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt; &gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt;
+</I>&gt;&gt;::<i>parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa7c0d09c, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/composite/sequence.hpp:53
+</I>&gt;<i>#25 0xb731e645 in
+</I>&gt;<i>boost::spirit::sequence&lt;boost::spirit::sequence&lt;boost::spirit::sequence&lt;boost:
+</I>
+&gt;:<i>spirit::sequence&lt;boost::spirit::sequence&lt;boost::spirit::kleene_star&lt;boost:
+</I>
+&gt;:<i>spirit::space_parser&gt;,
+</I>&gt;<i>boost::spirit::chlit&lt;char&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt; &gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt; &gt;,
+</I>&gt;<i>boost::spirit::chlit&lt;char&gt; &gt;::parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa7c0d09c, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/composite/sequence.hpp:53
+</I>&gt;<i>#26 0xb731e733 in
+</I>&gt;<i>boost::spirit::sequence&lt;boost::spirit::sequence&lt;boost::spirit::sequence&lt;boost:
+</I>
+&gt;:<i>spirit::sequence&lt;boost::spirit::sequence&lt;boost::spirit::sequence&lt;boost:
+</I>
+&gt;:<i>spirit::kleene_star&lt;boost::spirit::space_parser&gt;,
+</I>&gt;<i>boost::spirit::chlit&lt;char&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt; &gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt; &gt;,
+</I>&gt;<i>boost::spirit::chlit&lt;char&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt;
+</I>&gt;&gt;::<i>parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa7c0d09c, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/composite/sequence.hpp:53
+</I>&gt;<i>#27 0xb731e803 in
+</I>&gt;<i>boost::spirit::sequence&lt;boost::spirit::sequence&lt;boost::spirit::sequence&lt;boost:
+</I>
+&gt;:<i>spirit::sequence&lt;boost::spirit::sequence&lt;boost::spirit::sequence&lt;boost:
+</I>
+&gt;:<i>spirit::sequence&lt;boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt;,
+</I>
+&gt;<i>
+</I>&gt;<i>boost::spirit::chlit&lt;char&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt; &gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt; &gt;,
+</I>&gt;<i>boost::spirit::chlit&lt;char&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt; &gt;,
+</I>&gt;<i>boost::spirit::end_parser&gt;::parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa7c0d09c, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/composite/sequence.hpp:53
+</I>&gt;<i>#28 0xb731e8cd in
+</I>&gt;<i>boost::spirit::impl::concrete_parser&lt;boost::spirit::sequence&lt;boost:
+</I>:<i>spirit:
+</I>&gt;:<i>sequence&lt;boost::spirit::sequence&lt;boost::spirit::sequence&lt;boost:
+</I>:<i>spirit:
+</I>&gt;:<i>sequence&lt;boost::spirit::sequence&lt;boost::spirit::sequence&lt;boost:
+</I>:<i>spirit:
+</I>&gt;:<i>kleene_star&lt;boost::spirit::space_parser&gt;,
+</I>&gt;<i>boost::spirit::chlit&lt;char&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt; &gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt; &gt;,
+</I>&gt;<i>boost::spirit::chlit&lt;char&gt; &gt;,
+</I>&gt;<i>boost::spirit::kleene_star&lt;boost::spirit::space_parser&gt; &gt;,
+</I>&gt;<i>boost::spirit::end_parser&gt;, boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt;,
+</I>&gt;<i>boost::spirit::nil_t&gt;::do_parse_virtual (this=0xa7c0d098,
+</I>&gt;<i>scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/non_terminal/impl/rule.ipp:233
+</I>&gt;<i>#29 0xb73171b1 in
+</I>&gt;<i>boost::spirit::impl::rule_base&lt;boost::spirit::rule&lt;boost::spirit:
+</I>:<i>nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; const&amp;, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt;::parse_main&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa99f8f20, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/non_terminal/impl/rule.ipp:189
+</I>&gt;<i>#30 0xb73172aa in
+</I>&gt;<i>boost::spirit::impl::rule_base&lt;boost::spirit::rule&lt;boost::spirit:
+</I>:<i>nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; const&amp;, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt;::parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa99f8f20, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/non_terminal/impl/rule.ipp:171
+</I>&gt;<i>#31 0xb73177f2 in
+</I>&gt;<i>boost::spirit::alternative&lt;boost::spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;::parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa89fe9ec, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/composite/alternative.hpp:64
+</I>&gt;<i>#32 0xb7317835 in
+</I>&gt;<i>boost::spirit::impl::concrete_parser&lt;boost::spirit::alternative&lt;boost:
+</I>&gt;:<i>spirit::rule&lt;boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt;, boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt;,
+</I>&gt;<i>boost::spirit::nil_t&gt;::do_parse_virtual (this=0xa89fe9e8,
+</I>&gt;<i>scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/non_terminal/impl/rule.ipp:233
+</I>&gt;<i>#33 0xb73171b1 in
+</I>&gt;<i>boost::spirit::impl::rule_base&lt;boost::spirit::rule&lt;boost::spirit:
+</I>:<i>nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; const&amp;, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt;::parse_main&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa99f8f1c, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/non_terminal/impl/rule.ipp:189
+</I>&gt;<i>#34 0xb73172aa in
+</I>&gt;<i>boost::spirit::impl::rule_base&lt;boost::spirit::rule&lt;boost::spirit:
+</I>:<i>nil_t,
+</I>&gt;<i>boost::spirit::nil_t, boost::spirit::nil_t&gt;,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; const&amp;, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt;::parse&lt;boost::spirit::scanner&lt;char const*,
+</I>&gt;<i>boost::spirit::scanner_policies&lt;boost::spirit::iteration_policy,
+</I>&gt;<i>boost::spirit::match_policy, boost::spirit::action_policy&gt; &gt; &gt;
+</I>&gt;<i>(this=0xa99f8f1c, scan=@0xa99f898c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/non_terminal/impl/rule.ipp:171
+</I>&gt;<i>#35 0xb7317362 in boost::spirit::parse&lt;char const*,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt; (first_=@0xa99f89e4, last=@0xa99f89d0,
+</I>&gt;<i>p=@0xa99f8f1c) at /usr/include/boost/spirit/core/impl/parser.ipp:28
+</I>&gt;<i>#36 0xb7317431 in boost::spirit::parse&lt;char,
+</I>&gt;<i>boost::spirit::rule&lt;boost::spirit::nil_t, boost::spirit::nil_t,
+</I>&gt;<i>boost::spirit::nil_t&gt; &gt; (str=0xa7c0c214 &quot;{0.001503798213414802
+</I>&gt;<i>0.001503798213414802 0.001503798213414802}&quot;, p=@0xa99f8f1c) at
+</I>&gt;<i>/usr/include/boost/spirit/core/impl/parser.ipp:45
+</I>&gt;<i>#37 0xb730f5f5 in IOFormatManager::parseFundamental (top=@0xa7c0cf2c,
+</I>&gt;<i>eval=@0xa99f8fd0) at lib/serialization/IOFormatManager.cpp:112
+</I>&gt;<i>#38 0xb59e1d20 in FundamentalHandler&lt;Wm3::Vector3&lt;double&gt; &gt;::creator
+</I>&gt;<i>(ac=@0xa7c0c0a0, a=@0xa99f902c) at /home/3S-LAB/lfavier/yade/build-
+</I>&gt;<i>trunk/include/yade-trunk/yade/lib-
+</I>&gt;<i>serialization/KnownFundamentalsHandler.tpp:169
+</I>&gt;<i>#39 0xb730e838 in IOFormatManager::deserializeFundamental
+</I>&gt;<i>(ac=@0xa7c0c0a0, str=@0xa7c0cf2c) at
+</I>&gt;<i>lib/serialization/IOFormatManager.cpp:140
+</I>&gt;<i>#40 0xb5b2b0d4 in XMLFormatManager::deserializeFundamental
+</I>&gt;<i>(stream=@0xa99f9620, ac=@0xa7c0c0a0, str=@0xa7c0cf2c) at lib
+</I>&gt;<i>/serialization-xml/XMLFormatManager.cpp:320
+</I>&gt;<i>#41 0xb5b2be7e in XMLFormatManager::deserializeSerializable
+</I>&gt;<i>(stream=@0xa99f9620, ac=@0xa7c0ccb8) at lib/serialization-
+</I>&gt;<i>xml/XMLFormatManager.cpp:189
+</I>&gt;<i>#42 0xb5b2b6a1 in XMLFormatManager::deserializeSmartPointer
+</I>&gt;<i>(stream=@0xa99f9620, ac=@0xa894fcb8) at lib/serialization-
+</I>&gt;<i>xml/XMLFormatManager.cpp:309
+</I>&gt;<i>#43 0xb5b2bfc6 in XMLFormatManager::deserializeSerializable
+</I>&gt;<i>(stream=@0xa99f9620, ac=@0xa7c0bd98) at lib/serialization-
+</I>&gt;<i>xml/XMLFormatManager.cpp:204
+</I>&gt;<i>#44 0xb5b2b6a1 in XMLFormatManager::deserializeSmartPointer
+</I>&gt;<i>(stream=@0xa99f9620, ac=@0xa7c0bcb0) at lib/serialization-
+</I>&gt;<i>xml/XMLFormatManager.cpp:309
+</I>&gt;<i>#45 0xb5b2bc3c in XMLFormatManager::deserializeContainer
+</I>&gt;<i>(stream=@0xa99f9620, ac=@0xa8941e90, str=@0xa99f93c4) at lib
+</I>&gt;<i>/serialization-xml/XMLFormatManager.cpp:261
+</I>&gt;<i>#46 0xb5b2bfc6 in XMLFormatManager::deserializeSerializable
+</I>&gt;<i>(stream=@0xa99f9620, ac=@0xa894f130) at lib/serialization-
+</I>&gt;<i>xml/XMLFormatManager.cpp:204
+</I>&gt;<i>#47 0xb5b2b6a1 in XMLFormatManager::deserializeSmartPointer
+</I>&gt;<i>(stream=@0xa99f9620, ac=@0x8371d68) at lib/serialization-
+</I>&gt;<i>xml/XMLFormatManager.cpp:309
+</I>&gt;<i>#48 0xb5b2bfc6 in XMLFormatManager::deserializeSerializable
+</I>&gt;<i>(stream=@0xa99f9620, ac=@0x826f128) at lib/serialization-
+</I>&gt;<i>xml/XMLFormatManager.cpp:204
+</I>&gt;<i>#49 0xb5b2b6a1 in XMLFormatManager::deserializeSmartPointer
+</I>&gt;<i>(stream=@0xa99f9620, ac=@0x842b460) at lib/serialization-
+</I>&gt;<i>xml/XMLFormatManager.cpp:309
+</I>&gt;<i>#50 0x081b73ba in
+</I>&gt;<i>IOFormatManager::loadFromStream&lt;boost::shared_ptr&lt;MetaBody&gt; &gt;
+</I>&gt;<i>(libName=@0xa99f98f0, in=@0xa99f9620, name=@0xa99f98ec, t=@0x826339c) 
+</I>at
+&gt;<i>/home/3S-LAB/lfavier/yade/build-trunk/include/yade-trunk/yade/lib-
+</I>&gt;<i>serialization/IOFormatManager.tpp:31
+</I>&gt;<i>#51 0x081b7efd in
+</I>&gt;<i>IOFormatManager::loadFromFile&lt;boost::shared_ptr&lt;MetaBody&gt; &gt;
+</I>&gt;<i>(libName=@0xa99f98f0, fileName=@0x82633c4, name=@0xa99f98ec,
+</I>&gt;<i>t=@0x826339c) at /home/3S-LAB/lfavier/yade/build-trunk/include/yade-
+</I>&gt;<i>trunk/yade/lib-serialization/IOFormatManager.tpp:53
+</I>&gt;<i>#52 0x081ab8b6 in Omega::loadSimulation (this=0x8263350) at
+</I>&gt;<i>core/Omega.cpp:222
+</I>&gt;<i>#53 0xa9021ce2 in pyOmega::load (this=0x896b450, fileName=@0xa99f9a3c)
+</I>&gt;<i>at py/yadeWrapper/yadeWrapper.cpp:526
+</I>&gt;<i>#54 0xa8f0576e in boost::python::detail::invoke&lt;int, void
+</I>&gt;<i>(pyOmega::*)(std::string), boost::python::arg_from_python&lt;pyOmega&amp;&gt;,
+</I>&gt;<i>boost::python::arg_from_python&lt;std::string&gt; &gt; (f=@0x83bc48c,
+</I>&gt;<i>tc=@0xa99f9aa4, ac0=@0xa99f9a8c) at
+</I>&gt;<i>/usr/include/boost/python/detail/invoke.hpp:94
+</I>&gt;<i>#55 0xa8fa5b96 in boost::python::detail::caller_arity&lt;2u&gt;::impl&lt;void
+</I>&gt;<i>(pyOmega::*)(std::string), boost::python::default_call_policies,
+</I>&gt;<i>boost::mpl::vector3&lt;void, pyOmega&amp;, std::string&gt; &gt;::operator()
+</I>&gt;<i>(this=0x83bc48c, args_=0xa7ebc14c) at
+</I>&gt;<i>/usr/include/boost/python/detail/caller.hpp:199
+</I>&gt;<i>#56 0xa8fa5c24 in
+</I>&gt;<i>boost::python::objects::caller_py_function_impl&lt;boost::python::detail:
+</I>&gt;:<i>caller&lt;void
+</I>&gt;<i>(pyOmega::*)(std::string), boost::python::default_call_policies,
+</I>&gt;<i>boost::mpl::vector3&lt;void, pyOmega&amp;, std::string&gt; &gt; &gt;::operator()
+</I>&gt;<i>(this=0x83bc488, args=0xa7ebc14c, kw=0x0) at
+</I>&gt;<i>/usr/include/boost/python/object/py_function.hpp:38
+</I>&gt;<i>#57 0xb73639c0 in boost::python::objects::function::call () from
+</I>&gt;<i>/usr/lib/libboost_python-gcc42-mt-1_34_1.so.1.34.1
+</I>&gt;<i>#58 0xb7363be7 in ?? () from /usr/lib/libboost_python-
+</I>&gt;<i>gcc42-mt-1_34_1.so.1.34.1
+</I>&gt;<i>#59 0xb7d9501b in boost::function0&lt;void,
+</I>&gt;<i>std::allocator&lt;boost::function_base&gt; &gt;::operator() () from /usr/lib
+</I>&gt;<i>/libboost_thread-gcc42-mt-1_34_1.so.1.34.1
+</I>&gt;<i>#60 0xb736b13e in boost::python::handle_exception_impl () from /usr/lib
+</I>&gt;<i>/libboost_python-gcc42-mt-1_34_1.so.1.34.1
+</I>&gt;<i>#61 0xb736140e in ?? () from /usr/lib/libboost_python-
+</I>&gt;<i>gcc42-mt-1_34_1.so.1.34.1
+</I>&gt;<i>#62 0xb7de3897 in PyObject_Call () from /usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#63 0xb7e65eb0 in PyEval_EvalFrameEx () from
+</I>&gt;<i>/usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#64 0xb7e6a5a8 in PyEval_EvalCodeEx () from /usr/lib/libpython2.
+</I>5.so.1.0
+&gt;<i>#65 0xb7e6a703 in PyEval_EvalCode () from /usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#66 0xb7e8db1a in PyRun_FileExFlags () from /usr/lib/libpython2.
+</I>5.so.1.0
+&gt;<i>#67 0xb7e8de1a in PyRun_SimpleFileExFlags () from
+</I>&gt;<i>/usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#68 0xb170cf4e in PythonUI::execScript (script=@0xa99fa298) at
+</I>&gt;<i>gui/py/PythonUI.cpp:46
+</I>&gt;<i>#69 0xb170e116 in PythonUI::pythonSession () at gui/py/PythonUI.cpp:99
+</I>&gt;<i>#70 0xb1874c91 in boost::detail::function::void_function_invoker0&lt;void
+</I>&gt;<i>(*)(), void&gt;::invoke (function_ptr=@0xa99fa3b0) at
+</I>&gt;<i>/usr/include/boost/function/function_template.hpp:114
+</I>&gt;<i>#71 0xb7d9501b in boost::function0&lt;void,
+</I>&gt;<i>std::allocator&lt;boost::function_base&gt; &gt;::operator() () from /usr/lib
+</I>&gt;<i>/libboost_thread-gcc42-mt-1_34_1.so.1.34.1
+</I>&gt;<i>#72 0xb7d94c27 in ?? () from /usr/lib/libboost_thread-
+</I>&gt;<i>gcc42-mt-1_34_1.so.1.34.1
+</I>&gt;<i>#73 0xb7daf4fb in start_thread () from
+</I>&gt;<i>/lib/tls/i686/cmov/libpthread.so.0
+</I>&gt;<i>#74 0xb70fbe5e in clone () from /lib/tls/i686/cmov/libc.so.6
+</I>&gt;<i>
+</I>&gt;<i>Thread 2 (Thread 0xa6faab90 (LWP 11459)):
+</I>&gt;<i>#0  0xb7f13410 in __kernel_vsyscall ()
+</I>&gt;<i>#1  0xb7db6bb8 in accept () from /lib/tls/i686/cmov/libpthread.so.0
+</I>&gt;<i>#2  0xa7d0ae84 in ?? () from /usr/lib/python2.5/lib-dynload/_socket.so
+</I>&gt;<i>#3  0xb7e686ce in PyEval_EvalFrameEx () from
+</I>&gt;<i>/usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#4  0xb7e69490 in PyEval_EvalFrameEx () from
+</I>&gt;<i>/usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#5  0xb7e69490 in PyEval_EvalFrameEx () from
+</I>&gt;<i>/usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#6  0xb7e69490 in PyEval_EvalFrameEx () from
+</I>&gt;<i>/usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#7  0xb7e6a5a8 in PyEval_EvalCodeEx () from /usr/lib/libpython2.
+</I>5.so.1.0
+&gt;<i>#8  0xb7e06676 in ?? () from /usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#9  0xb7de3897 in PyObject_Call () from /usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#10 0xb7deb09c in ?? () from /usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#11 0xb7de3897 in PyObject_Call () from /usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#12 0xb7e61dec in PyEval_CallObjectWithKeywords () from
+</I>&gt;<i>/usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#13 0xb7e99f34 in ?? () from /usr/lib/libpython2.5.so.1.0
+</I>&gt;<i>#14 0xb7daf4fb in start_thread () from
+</I>&gt;<i>/lib/tls/i686/cmov/libpthread.so.0
+</I>&gt;<i>#15 0xb70fbe5e in clone () from /lib/tls/i686/cmov/libc.so.6
+</I>&gt;<i>
+</I>&gt;<i>Thread 1 (Thread 0xb5dde6c0 (LWP 11457)):
+</I>&gt;<i>#0  0xb7f13410 in __kernel_vsyscall ()
+</I>&gt;<i>#1  0xb70ba4fb in waitpid () from /lib/tls/i686/cmov/libc.so.6
+</I>&gt;<i>#2  0xb705d643 in ?? () from /lib/tls/i686/cmov/libc.so.6
+</I>&gt;<i>#3  0xb705da02 in system () from /lib/tls/i686/cmov/libc.so.6
+</I>&gt;<i>#4  0xb7db7d7d in system () from /lib/tls/i686/cmov/libpthread.so.0
+</I>&gt;<i>#5  0x081c60cf in sigHandler (sig=6) at core/yade.cpp:80
+</I>&gt;<i>#6  &lt;signal handler called&gt;
+</I>&gt;<i>#7  0xb7f13410 in __kernel_vsyscall ()
+</I>&gt;<i>#8  0xb7050085 in raise () from /lib/tls/i686/cmov/libc.so.6
+</I>&gt;<i>#9  0xb7051a01 in abort () from /lib/tls/i686/cmov/libc.so.6
+</I>&gt;<i>#10 0xb704910e in __assert_fail () from /lib/tls/i686/cmov/libc.so.6
+</I>&gt;<i>#11 0x08175eae in boost::shared_ptr&lt;Engine&gt;::operator-&gt; (this=0x8476f30)
+</I>&gt;<i>at /usr/include/boost/shared_ptr.hpp:315
+</I>&gt;<i>#12 0x081a6d10 in Omega::timeStepperActive (this=0x8263350) at
+</I>&gt;<i>core/Omega.cpp:281
+</I>&gt;<i>#13 0xb188828d in SimulationController::doUpdate (this=0x839e1c8) at
+</I>&gt;<i>gui/qt3/SimulationController.cpp:505
+</I>&gt;<i>#14 0xb1888f12 in SimulationController::timerEvent (this=0x839e1c8) at
+</I>&gt;<i>gui/qt3/SimulationController.cpp:319
+</I>&gt;<i>#15 0xb77b3568 in QObject::event () from /usr/lib/libqt-mt.so.3
+</I>&gt;<i>#16 0xb77ebd65 in QWidget::event () from /usr/lib/libqt-mt.so.3
+</I>&gt;<i>#17 0xb7749c36 in QApplication::internalNotify () from /usr/lib/libqt-
+</I>&gt;<i>mt.so.3
+</I>&gt;<i>#18 0xb774c564 in QApplication::notify () from /usr/lib/libqt-mt.so.3
+</I>&gt;<i>#19 0xb76da28d in QApplication::sendEvent () from /usr/lib/libqt-
+</I>mt.so.3
+&gt;<i>#20 0xb773cb19 in QEventLoop::activateTimers () from /usr/lib/libqt-
+</I>&gt;<i>mt.so.3
+</I>&gt;<i>#21 0xb76ef64b in QEventLoop::processEvents () from /usr/lib/libqt-
+</I>&gt;<i>mt.so.3
+</I>&gt;<i>#22 0xb7764f90 in QEventLoop::enterLoop () from /usr/lib/libqt-mt.so.3
+</I>&gt;<i>#23 0xb7764c8e in QEventLoop::exec () from /usr/lib/libqt-mt.so.3
+</I>&gt;<i>#24 0xb774b7df in QApplication::exec () from /usr/lib/libqt-mt.so.3
+</I>&gt;<i>#25 0xb1874237 in QtGUI::run (this=0x83371c0, argc=2, argv=0xbfa6a064)
+</I>&gt;<i>at gui/qt3/QtGUI.cpp:79
+</I>&gt;<i>#26 0x081c5a55 in main (argc=2, argv=0xbfa6a064) at core/yade.cpp:288
+</I>&gt;<i>#0  0xb7f13410 in __kernel_vsyscall ()
+</I>&gt;<i>Abandon
+</I>&gt;<i>
+</I>&gt;&gt;<i> Bruno, I canceled the redeclaration of variables but the problem
+</I>&gt;&gt;<i> &gt; persists.
+</I>&gt;&gt;<i> &gt; Vaclav, i did update of trunk (v.1869) and actually it doesn't work
+</I>&gt;<i>at
+</I>&gt;&gt;<i> &gt; all.. neither the ./yade-trunk launching.
+</I>&gt;<i>
+</I>&gt;<i>Try 1870, I fixed that (it is machine-dependent thing, sorry).
+</I>&gt;<i>
+</I>&gt;<i>Vaclav
+</I>&gt;<i>-- 
+</I>&gt;<i>This message was sent from Launchpad by the user
+</I>&gt;<i>Emanuele Catalano (<A HREF="https://launchpad.net/~catalano">https://launchpad.net/~catalano</A>)
+</I>&gt;<i>using the &quot;Contact this team&quot; link on the Yade developers team page.
+</I>&gt;<i>For more information see
+</I>&gt;<i><A HREF="https://help.launchpad.net/YourAccount/ContactingPeople">https://help.launchpad.net/YourAccount/ContactingPeople</A>
+</I>&gt;<i>
+</I>&gt;<i>_______________________________________________
+</I>&gt;<i>Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+</I>&gt;<i>Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+</I>&gt;<i>Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+</I>&gt;<i>More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</I>&gt;<i>
+</I>
+
+
+
+===================================================================
+EASY and FREE access to your email anywhere: <A HREF="http://Mailreader.com/">http://Mailreader.com/</A>
+===================================================================
+
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001244.html">[deprecated list] [Yade-dev] [svn] r1874 - in trunk: py scripts
+</A></li>
+	<LI>Next message: <A HREF="001281.html">[deprecated list] [Yade-dev] [svn] r1875 - in trunk: . core extra/tetra gui/py gui/qt3 lib lib/multimethods lib/py lib/py/boost-python-indexing-suite-v2-noSymlinkHeaders lib/py/boost-python-indexing-suite-v2-noSymlinkHeaders/suite lib/py/boost-python-indexing-suite-v2-noSymlinkHeaders/suite/indexing lib/serialization lib/serialization-qt pkg/common/DataClass/BoundingVolume pkg/common/DataClass/GeometricalModel pkg/common/DataClass/InteractingGeometry pkg/common/DataClass/InteractionGeometry pkg/common/DataClass/PhysicalParameters pkg/common/DataClass/Widgets pkg/common/Engine pkg/common/Engine/DeusExMachina pkg/common/Engine/EngineUnit pkg/common/Engine/FilterEngine pkg/common/Engine/StandAloneEngine pkg/common/RenderingEngine/GLDrawGeometricalModel pkg/common/RenderingEngine/OpenGLRenderingEngine pkg/dem pkg/dem/DataClass/InteractingGeometry pkg/dem/DataClass/InteractionGeometry pkg/dem/DataClass/InteractionPhysics pkg/dem/DataClass/PhysicalParameters pkg/dem/Engine/DeusExMachina pkg/dem/Engin! e/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry pkg/fem/DataClass/PhysicalParameters pkg/fem/Engine/EngineUnit pkg/fem/Engine/StandAloneEngine pkg/fem/PreProcessor pkg/lattice/DataClass/GeometricalModel pkg/lattice/DataClass/InteractionPhysics pkg/lattice/DataClass/PhysicalParameters pkg/lattice/Engine/StandAloneEngine pkg/lattice/PreProcessor pkg/mass-spring/DataClass/InteractionGeometry pkg/mass-spring/DataClass/InteractionPhysics pkg/mass-spring/Engine/StandAloneEngine pkg/mass-spring/PreProcessor pkg/realtime-rigidbody/Engine/StandAloneEngine pkg/realtime-rigidbody/PreProcessor pkg/snow/DataClass pkg/snow/Engine pkg/snow/PreProcessor py py/yadeWrapper scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1245">[ date ]</a>
+              <a href="thread.html#1245">[ thread ]</a>
+              <a href="subject.html#1245">[ subject ]</a>
+              <a href="author.html#1245">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

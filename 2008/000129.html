@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] cmdGui
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20cmdGui&In-Reply-To=%3C47E94C24.6040804%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000128.html">
+   <LINK REL="Next"  HREF="000130.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] cmdGui</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20cmdGui&In-Reply-To=%3C47E94C24.6040804%40arcig.cz%3E"
+       TITLE="[yade-dev] cmdGui">eudoxos at arcig.cz
+       </A><BR>
+    <I>Tue Mar 25 20:01:56 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000128.html">[yade-dev] cmdGui
+</A></li>
+        <LI>Next message: <A HREF="000130.html">[yade-dev] cmdGui
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#129">[ date ]</a>
+              <a href="thread.html#129">[ thread ]</a>
+              <a href="subject.html#129">[ subject ]</a>
+              <a href="author.html#129">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Call for testers: can someone test the simple-scene.py so that I am able
+to figure out what those failures have in common, if they are reproduced?
+&gt;&gt;<i> Are you running the latest SVN? 
+</I>&gt;&gt;<i>     
+</I>&gt;<i> revision 1283
+</I>&gt;<i>   
+</I>Would you mind trying 1284 (I don't suspect that, but I am at loss about
+what the cause might be)?
+
+Second guess: what g++ version do you use? What arch? I am unable to
+test on 32bit i386, all my machines are native amd64. (There is some
+typeid() logic in IOFormatManager and maybe older compilers get it wrong?)
+&gt;&gt;<i> I am attaching my a.xml, which works very well. Can you try loading 
+</I>&gt;&gt;<i> it and the saving again (run &quot;yade-something -N cmdGui&quot;, then type
+</I>&gt;&gt;<i> o=Omega(); o.load('a.xml'); o.save('b.xml'); ) to see if you get correct
+</I>&gt;&gt;<i> output or not?
+</I>&gt;&gt;<i>     
+</I>&gt;<i>
+</I>&gt;<i> Yes, load, save and run this file is ok. 
+</I>&gt;<i> Furthermore, default-test.py is correct and own scripts too.
+</I>&gt;<i> For example,  this works correct:
+</I>&gt;<i> $ yade -N cmdGui
+</I>&gt;<i>   
+</I>&gt;&gt;&gt;&gt;<i> o=Omega()
+</I>&gt;&gt;&gt;&gt;<i> pp=Preprocessor('SDECSpheresPlane')
+</I>&gt;&gt;&gt;&gt;<i> pp.generate('scene.xml')
+</I>&gt;&gt;&gt;&gt;<i> o.load('scene.xml')
+</I>&gt;&gt;&gt;&gt;<i> import os
+</I>&gt;&gt;&gt;&gt;<i> os.system(yadeExecutable+' -N QtGUI -S ./sceneB.xml')
+</I>&gt;&gt;&gt;&gt;<i>         
+</I>The difference is that here you run a preprocessor (c++ code) to
+generate the scene. On the other hand, simple-scene.py is entirely in
+python. But I can't see how that does affect serializer so that it spews
+binary instead of XML for those tags.
+
+Janek, you know the serializer well, can you comment on that? Are you
+able to reproduce it? (I am not.)
+
+Regards, Vaclav
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000128.html">[yade-dev] cmdGui
+</A></li>
+	<LI>Next message: <A HREF="000130.html">[yade-dev] cmdGui
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#129">[ date ]</a>
+              <a href="thread.html#129">[ thread ]</a>
+              <a href="subject.html#129">[ subject ]</a>
+              <a href="author.html#129">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

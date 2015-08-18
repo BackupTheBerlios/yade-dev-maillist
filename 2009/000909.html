@@ -1,0 +1,373 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1748 - trunk/extra/mgpost/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1748%20-%20trunk/extra/mgpost/src&In-Reply-To=%3C200904061545.n36FjDG9006224%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000908.html">
+   <LINK REL="Next"  HREF="000910.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1748 - trunk/extra/mgpost/src</H1>
+    <B>richefeu at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1748%20-%20trunk/extra/mgpost/src&In-Reply-To=%3C200904061545.n36FjDG9006224%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1748 - trunk/extra/mgpost/src">richefeu at mail.berlios.de
+       </A><BR>
+    <I>Mon Apr  6 17:45:13 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000908.html">[deprecated list] [Yade-dev] [svn] r1747 - in	trunk/extra/SpherePadder: .	SpherePackingTriangulation
+</A></li>
+        <LI>Next message: <A HREF="000910.html">[deprecated list] [Yade-dev] [svn] r1749 - in trunk: gui/py	pkg/dem	pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#909">[ date ]</a>
+              <a href="thread.html#909">[ thread ]</a>
+              <a href="subject.html#909">[ subject ]</a>
+              <a href="author.html#909">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: richefeu
+Date: 2009-04-06 17:45:13 +0200 (Mon, 06 Apr 2009)
+New Revision: 1748
+
+Modified:
+   trunk/extra/mgpost/src/colors.h
+   trunk/extra/mgpost/src/display.c
+   trunk/extra/mgpost/src/display_funcs.c
+   trunk/extra/mgpost/src/display_funcs.h
+   trunk/extra/mgpost/src/files.c
+   trunk/extra/mgpost/src/memory.c
+   trunk/extra/mgpost/src/mgpost.c
+   trunk/extra/mgpost/src/mgpost.h
+Log:
+Increase the number of colors for the display of body's groupMasks from 6 to 10
+
+
+Modified: trunk/extra/mgpost/src/colors.h
+===================================================================
+--- trunk/extra/mgpost/src/colors.h	2009-04-06 15:42:25 UTC (rev 1747)
++++ trunk/extra/mgpost/src/colors.h	2009-04-06 15:45:13 UTC (rev 1748)
+@@ -178,12 +178,13 @@
+ 
+ /* Coloration de groupe de grains */
+ MGuchar nbcolgrp=0;
+-MGuchar colIsShown[6] = {0,0,0,0,0,0};
+-char colorName[6][30];
++MGuchar nbcolgrpMaxi = 10;
++MGuchar colIsShown[10] = {0,0,0,0,0,0,0,0,0,0};
++char colorName[10][30];
+ 
+-float rcolor[6]={0., 0., 1., 1., 0., 1.};
+-float gcolor[6]={0., 1., 0., 1., 1., 0.};
+-float bcolor[6]={1., 0., 0., 0., 1., 1.};
++float rcolor[10]={0., 0., 1., 1., 0., 1., 0.67 , 1.,  0.53, 0.8};
++float gcolor[10]={0., 1., 0., 1., 1., 0., 0.41 , 0.62, 0.5 , 0.8};
++float bcolor[10]={1., 0., 0., 0., 1., 1., 0.95, 0.1,  0.1 , 0.8};
+ 
+ 
+ #endif
+
+Modified: trunk/extra/mgpost/src/display.c
+===================================================================
+--- trunk/extra/mgpost/src/display.c	2009-04-06 15:42:25 UTC (rev 1747)
++++ trunk/extra/mgpost/src/display.c	2009-04-06 15:45:13 UTC (rev 1748)
+@@ -116,7 +116,12 @@
+     glTranslatef (-xvec, zvec, -yvec);
+     glCallList(repere);
+   }
+-  
++
++  if (isBiP)
++  {
++	disp_CellBiP();
++  }
++
+   if (afftime)
+     disp_time();
+   
+
+Modified: trunk/extra/mgpost/src/display_funcs.c
+===================================================================
+--- trunk/extra/mgpost/src/display_funcs.c	2009-04-06 15:42:25 UTC (rev 1747)
++++ trunk/extra/mgpost/src/display_funcs.c	2009-04-06 15:45:13 UTC (rev 1748)
+@@ -44,6 +44,11 @@
+ 
+ void disp_boundaries ()
+ {
++  if (isBiP)
++  {
++	disp_CellBiP();
++	return;
++  }
+   GLdouble Xcam = Xviewp * TRANS_CAM_FACTOR, Ycam = Yviewp * TRANS_CAM_FACTOR;
+   char txt[128];
+   int ii;
+@@ -98,6 +103,73 @@
+   glEnable (GL_LIGHTING);
+ }
+ 
++void disp_CellBiP()
++{
++  GLdouble Xcam = Xviewp * TRANS_CAM_FACTOR, Ycam = Yviewp * TRANS_CAM_FACTOR;
++  double extendx,extendy;
++  /*unsigned int i;*/
++  
++  glLoadIdentity ();
++  gluLookAt (Xcam, Ycam, distance, Xcam, Ycam, 0.0f, 0.0f, 1.0f, 0.0f);
++  glRotatef (phi, 1.0f, 0.0f, 0.0f);
++  glRotatef (theta, 0.0f, 0.0f, 1.0f);
++  
++  glLineWidth (1.0f);
++  
++  glDisable (GL_LIGHTING);
++  glColor3f (fg_color.r, fg_color.v, fg_color.b);
++
++  extendx = 0.5 * (hxx+hxy);
++  extendy = 0.5 * (hyx+hyy);
++  
++  glBegin (GL_LINE_LOOP);
++  glVertex3f (-extendx * adim, 0.0f, -extendy * adim);
++  glVertex3f (-extendx * adim, 0.0f, extendy * adim);
++  glVertex3f (extendx * adim, 0.0f, extendy * adim);
++  glVertex3f (extendx * adim, 0.0f, -extendy * adim);
++  glVertex3f (-extendx * adim, 0.0f, -extendy * adim);
++  glEnd();
++ 
++  glEnable (GL_LIGHTING);
++/*
++  
++  for (i = 0; i &lt; nbel; i++)	
++	{ 
++	  glLoadIdentity ();
++	  gluLookAt (Xcam, Ycam, distance, Xcam, Ycam, 0.0f, 0.0f, 1.0f, 0.0f);
++	  glRotatef (phi, 1.0f, 0.0f, 0.0f);
++	  glRotatef (theta, 0.0f, 0.0f, 1.0f);
++	  glTranslatef ((x[i][state]+hxx) * adim, 0.0f, (y[i][state]+hxy) * adim);
++	  glColor4f(0.5f,0.5f,0.5f,0.1f);
++	  mgbodyselect_plein (i, state);
++	  
++	  glLoadIdentity ();
++	  gluLookAt (Xcam, Ycam, distance, Xcam, Ycam, 0.0f, 0.0f, 1.0f, 0.0f);
++	  glRotatef (phi, 1.0f, 0.0f, 0.0f);
++	  glRotatef (theta, 0.0f, 0.0f, 1.0f);
++	  glTranslatef ((x[i][state]-hxx) * adim, 0.0f, (y[i][state]-hxy) * adim);
++	  glColor4f(0.5f,0.5f,0.5f,0.1f);
++	  mgbodyselect_plein (i, state);
++	  glLoadIdentity ();
++	  
++	  gluLookAt (Xcam, Ycam, distance, Xcam, Ycam, 0.0f, 0.0f, 1.0f, 0.0f);
++	  glRotatef (phi, 1.0f, 0.0f, 0.0f);
++	  glRotatef (theta, 0.0f, 0.0f, 1.0f);
++	  glTranslatef ((x[i][state]+hyx) * adim, 0.0f, (y[i][state]+hyy) * adim);
++	  mgbodyselect_plein (i, state);
++	  glLoadIdentity ();
++	  
++	  gluLookAt (Xcam, Ycam, distance, Xcam, Ycam, 0.0f, 0.0f, 1.0f, 0.0f);
++	  glRotatef (phi, 1.0f, 0.0f, 0.0f);
++	  glRotatef (theta, 0.0f, 0.0f, 1.0f);
++	  glTranslatef ((x[i][state]-hyx) * adim, 0.0f, (y[i][state]-hyy) * adim);
++	  mgbodyselect_plein (i, state);
++	  
++	}
++	*/
++}
++
++
+ void disp_outline () /* Only for spheres */
+ {
+   int i;
+@@ -524,7 +596,7 @@
+       {
+       coul = color[i];
+       if (!colIsShown[coul]) continue;
+-      else if (coul &lt; 0 || coul &gt; 5) continue;
++	  else if (coul &lt; 0 || coul &gt; nbcolgrpMaxi-1 /*5*/) continue;
+       glColor4f (rcolor[coul], gcolor[coul], bcolor[coul], alpha_color);
+ 
+       glLoadIdentity ();
+@@ -4725,7 +4797,7 @@
+   
+   nd=0;
+   for (i = 0; i &lt; nbel; ++i)
+-    if (bdyty[i]==MGP_SPHER)  
++	if (bdyty[i]==MGP_SPHER &amp;&amp; radius[i][state]&gt;0.0)  
+       {
+       d[nd]=2.*radius[i][state];
+       passing[nd]=nd;
+@@ -4737,7 +4809,7 @@
+   graph_position((int)((double)W / 6.0), (int)(5.0 * (double)W / 6.0),
+                  (int)((double)H / 6.0), (int)(5.0 * (double)H / 6.0) );
+   graph_open();
+-  graph_trace_buffer (d, passing, nd, 1, 0);
++  graph_trace_buffer (d, passing, nd, 0, 0);
+   graph_close();
+   
+   free (d);
+
+Modified: trunk/extra/mgpost/src/display_funcs.h
+===================================================================
+--- trunk/extra/mgpost/src/display_funcs.h	2009-04-06 15:42:25 UTC (rev 1747)
++++ trunk/extra/mgpost/src/display_funcs.h	2009-04-06 15:45:13 UTC (rev 1748)
+@@ -28,6 +28,7 @@
+ void disp_func_name ();
+ void disp_points ();
+ void disp_boundaries ();
++void disp_CellBiP();
+ void disp_obstacles ();
+ void disp_shapes ();
+ void disp_discrim ();
+
+Modified: trunk/extra/mgpost/src/files.c
+===================================================================
+--- trunk/extra/mgpost/src/files.c	2009-04-06 15:42:25 UTC (rev 1747)
++++ trunk/extra/mgpost/src/files.c	2009-04-06 15:45:13 UTC (rev 1748)
+@@ -390,7 +390,14 @@
+ 		
+                     i++;
+                     nbel++;
+-                  }	
++                  }
++				  
++				  if (!strcmp((const char *) token,&quot;CellBiP&quot;))
++				  {
++					fscanf(his_file, &quot;%lf %lf %lf %lf&quot;,
++							&amp;hxx,&amp;hxy,&amp;hyx,&amp;hyy);		
++                    isBiP = MG_TRUE;
++				  }	
+ 		}
+ 	}
+ 
+@@ -406,11 +413,23 @@
+                   if (!strcmp((const char *) token,&quot;dkdk&quot;)) 
+                   {
+                     fscanf(his_file, &quot;%d %d&quot;,&amp;ip,&amp;jp);
+-                    nbneighbors[ip-dec][0] += 1; 
++                    nbneighbors[ip-dec][0] += 1;
++					//bghty[nbint] == 0;
+                     neighbor[nbint][0] = jp-dec+1;
+                     fscanf(his_file, &quot;%*f %*f %lf %lf %*f&quot;,&amp;Fn[nbint][0],&amp;Ft[nbint][0]);
+                     nbint++;
+-                  }	
++                  }
++				  /*
++				  if (!strcmp((const char *) token,&quot;dkdkP&quot;))
++				  {
++					fscanf(his_file, &quot;%d %d&quot;,&amp;ip,&amp;jp);
++					nbneighbors[ip-dec][0] += 1;
++					//bghty[nbint] == 1;
++					neighbor[nbint][0] = jp-dec+1;
++					fscanf(his_file, &quot;%*f %*f %lf %lf %*f&quot;,&amp;Fn[nbint][0],&amp;Ft[nbint][0]);
++					nbint++;
++				  }
++				  */
+ 		}	
+ 	}	
+         
+@@ -481,7 +500,7 @@
+       }
+       
+       if (!strcmp((const char *)node-&gt;name, &quot;newcolor&quot;)) {
+-        if (nbcolgrp &lt; 6) nbcolgrp++;
++		if (nbcolgrp &lt; nbcolgrpMaxi) nbcolgrp++;
+         else break;
+         strcpy(colorName[nbcolgrp-1],(const char *) xmlGetProp(node, (const xmlChar *) &quot;name&quot;));
+         colIsShown[nbcolgrp-1] = MG_TRUE;
+
+Modified: trunk/extra/mgpost/src/memory.c
+===================================================================
+--- trunk/extra/mgpost/src/memory.c	2009-04-06 15:42:25 UTC (rev 1747)
++++ trunk/extra/mgpost/src/memory.c	2009-04-06 15:45:13 UTC (rev 1748)
+@@ -155,6 +155,7 @@
+ 
+   nbneighbors = AllocInt (nbbodies, nbtimes);
+   neighbor = AllocInt (nbbodies * nbcontacts, nbtimes);
++  //nghty = (unsigned char *) calloc ((size_t) (nbbodies*nbcontacts), sizeof (unsigned char));
+   Crot = AllocDouble (nbbodies * nbcontacts, nbtimes);
+   Vliq = AllocDouble (nbbodies * nbcontacts, nbtimes);
+ 
+
+Modified: trunk/extra/mgpost/src/mgpost.c
+===================================================================
+--- trunk/extra/mgpost/src/mgpost.c	2009-04-06 15:42:25 UTC (rev 1747)
++++ trunk/extra/mgpost/src/mgpost.c	2009-04-06 15:45:13 UTC (rev 1748)
+@@ -72,7 +72,7 @@
+   }
+   
+   /* couleurs de groupe */
+-  for (c=0;c&lt;6;++c)
++  for (c=0;c&lt;nbcolgrpMaxi;++c)
+     strcpy(colorName[c],&quot;Nothing&quot;);
+ 
+   strcpy(num_file_format,&quot;%03d&quot;);
+
+Modified: trunk/extra/mgpost/src/mgpost.h
+===================================================================
+--- trunk/extra/mgpost/src/mgpost.h	2009-04-06 15:42:25 UTC (rev 1747)
++++ trunk/extra/mgpost/src/mgpost.h	2009-04-06 15:45:13 UTC (rev 1748)
+@@ -261,6 +261,7 @@
+ double         *datas;
+ 
+ MGuchar  *bdyty;
++MGuchar  *nghty;
+ 
+ #define MGP_DISKx 0
+ #define MGP_SPHER 1
+@@ -269,6 +270,7 @@
+ #define MGP_JONCx 4
+ #define MGP_POLYE 5
+ #define MGP_PICKT 10
++#define MGP_CELLBiP 20
+ #define MGP_MURX0 100
+ #define MGP_MURX1 101
+ #define MGP_MURY0 102
+@@ -278,6 +280,10 @@
+ #define MGP_MBR2D 200
+ #define MGP_CYLYx 250
+ 
++MGuchar isBiP = MG_FALSE;
++double BiP_bandwidth = 0.0;
++double hxx,hxy,hyx,hyy;
++
+ MGuchar  *bdyclass;
+ 
+ #define MGP_GRAIN 0
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000908.html">[deprecated list] [Yade-dev] [svn] r1747 - in	trunk/extra/SpherePadder: .	SpherePackingTriangulation
+</A></li>
+	<LI>Next message: <A HREF="000910.html">[deprecated list] [Yade-dev] [svn] r1749 - in trunk: gui/py	pkg/dem	pkg/dem/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#909">[ date ]</a>
+              <a href="thread.html#909">[ thread ]</a>
+              <a href="subject.html#909">[ subject ]</a>
+              <a href="author.html#909">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

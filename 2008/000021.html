@@ -1,0 +1,190 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] trying cmdGui
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20trying%20cmdGui&In-Reply-To=%3C20080213181635.394395ea%40szpak%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000020.html">
+   <LINK REL="Next"  HREF="000022.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] trying cmdGui</H1>
+    <B>Janek Kozicki</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20trying%20cmdGui&In-Reply-To=%3C20080213181635.394395ea%40szpak%3E"
+       TITLE="[yade-dev] trying cmdGui">janek_listy at wp.pl
+       </A><BR>
+    <I>Wed Feb 13 18:16:35 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000020.html">[yade-dev] trying cmdGui
+</A></li>
+        <LI>Next message: <A HREF="000022.html">[yade-dev] trying cmdGui
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#21">[ date ]</a>
+              <a href="thread.html#21">[ thread ]</a>
+              <a href="subject.html#21">[ subject ]</a>
+              <a href="author.html#21">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Now after svn update. SVN-HEAD. I tried to play with python
+So here's my session (crashed at the end):
+
+
+<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">janek at szpak</A>:~/20-Programowanie/10-cpp/50-Yade/Bin/moment_law2/bin$ ./yade-svn1246-moment_law2 -N cmdGui
+Constructing ClassFactory  (if multiple times - check '-rdynamic' flag!).
+Constructing SerializableSingleton  (if multiple times - check '-rdynamic' flag!).
+WARNING: cannot open file used for capillary law, in TriaxalTestWater
+&gt;&gt;&gt;<i> o.engines
+</I>Traceback (most recent call last):
+  File &quot;&lt;console&gt;&quot;, line 1, in ?
+NameError: name 'o' is not defined
+&gt;&gt;&gt;<i> o=Omega()
+</I>&gt;&gt;&gt;<i> o.engines
+</I>Traceback (most recent call last):
+  File &quot;&lt;console&gt;&quot;, line 1, in ?
+RuntimeError: No root body.
+&gt;&gt;&gt;<i> p=Preprocessor()
+</I>&gt;&gt;&gt;<i> p.generator=&quot;BoxStack&quot;
+</I>&gt;&gt;&gt;<i> p.generate()
+</I>110650 [3055924960] FATAL yade.FileGenerator  - core/FileGenerator.cpp:71 generateAndSave: Unhandled exception: St13runtime_error : Class `InteractingSphere2InteractingSphere4ClosestFeatures' could not be cast to required 2D EngineUnit
+SIGSEGV/SIGABRT handler called; gdb batch file is `/home/janek/.yade-svn1246-moment_law2/gdb_crash_batch-pid22642'
+GNU gdb 6.4.90-debian
+Copyright (C) 2006 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type &quot;show copying&quot; to see the conditions.
+There is absolutely no warranty for GDB.  Type &quot;show warranty&quot; for details.
+This GDB was configured as &quot;i486-linux-gnu&quot;.
+Using host libthread_db library &quot;/lib/tls/i686/cmov/libthread_db.so.1&quot;.
+[Thread debugging using libthread_db enabled]
+[New Thread -1239042336 (LWP 22642)]
+0xffffe410 in __kernel_vsyscall ()
+No symbol &quot;info&quot; in current context.
+
+Thread 1 (Thread -1239042336 (LWP 22642)):
+#0  0xffffe410 in __kernel_vsyscall ()
+#1  0xb71a72f3 in waitpid () from /lib/tls/i686/cmov/libc.so.6
+#2  0xb714f669 in strtold_l () from /lib/tls/i686/cmov/libc.so.6
+#3  0xb7df9add in system () from /lib/tls/i686/cmov/libpthread.so.0
+#4  0x08131d8d in sigHandler (sig=6) at core/yade.cpp:53
+#5  &lt;signal handler called&gt;
+#6  0xffffe410 in __kernel_vsyscall ()
+#7  0xb7142811 in raise () from /lib/tls/i686/cmov/libc.so.6
+#8  0xb7143fb9 in abort () from /lib/tls/i686/cmov/libc.so.6
+#9  0x080d54c0 in FileGenerator::generateAndSave (this=0x82465e0) at core/FileGenerator.cpp:72
+#10 0xb25155ba in pyPreprocessor::generate (this=0x82423f8) at gui/cmd/yadeControl.cpp:255
+#11 0xb25056c6 in boost::python::detail::invoke&lt;boost::python::to_python_value&lt;bool const&amp;&gt;, bool (pyPreprocessor::*)(), boost::python::arg_from_python&lt;pyPreprocessor&amp;&gt; &gt; (rc=@0xbfbf082a, f=@0x824278c, tc=@0xbfbf0820) at /usr/include/boost/python/detail/invoke.hpp:88
+#12 0xb25057af in boost::python::detail::caller_arity&lt;1u&gt;::impl&lt;bool (pyPreprocessor::*)(), boost::python::default_call_policies, boost::mpl::vector2&lt;bool, pyPreprocessor&amp;&gt; &gt;::operator() (this=0x824278c, args_=0xb61e786c) at /usr/include/boost/python/detail/caller.hpp:199
+#13 0xb250580a in boost::python::objects::caller_py_function_impl&lt;boost::python::detail::caller&lt;bool (pyPreprocessor::*)(), boost::python::default_call_policies, boost::mpl::vector2&lt;bool, pyPreprocessor&amp;&gt; &gt; &gt;::operator() (this=0x8242788, args=0xb61e786c, kw=0x0)
+    at /usr/include/boost/python/object/py_function.hpp:38
+#14 0xb7408f56 in boost::python::objects::function::call () from /usr/lib/libboost_python-gcc41-mt-1_34_1.so.1.34.1
+#15 0xb740af37 in boost::detail::function::void_function_ref_invoker0&lt;boost::python::objects::(anonymous namespace)::bind_return, void&gt;::invoke ()
+   from /usr/lib/libboost_python-gcc41-mt-1_34_1.so.1.34.1
+#16 0xb7da602a in boost::function0&lt;void, std::allocator&lt;boost::function_base&gt; &gt;::operator() () from /usr/lib/libboost_thread-gcc41-mt-1_34_1.so.1.34.1
+#17 0xb74102eb in boost::python::handle_exception_impl () from /usr/lib/libboost_python-gcc41-mt-1_34_1.so.1.34.1
+#18 0xb740a45e in boost::python::handle_exception&lt;boost::python::objects::(anonymous namespace)::bind_return&gt; ()
+   from /usr/lib/libboost_python-gcc41-mt-1_34_1.so.1.34.1
+#19 0xb7406f9a in boost::python::objects::function::add_overload () from /usr/lib/libboost_python-gcc41-mt-1_34_1.so.1.34.1
+---Type &lt;return&gt; to continue, or q &lt;return&gt; to quit---
+#20 0xb7e20237 in PyObject_Call () from /usr/lib/libpython2.4.so.1.0
+#21 0xb7e87fa1 in PyEval_EvalFrame () from /usr/lib/libpython2.4.so.1.0
+#22 0xb7e8b77a in PyEval_EvalCodeEx () from /usr/lib/libpython2.4.so.1.0
+#23 0xb7e8b7e5 in PyEval_EvalCode () from /usr/lib/libpython2.4.so.1.0
+#24 0xb7eafeed in PyRun_InteractiveOneFlags () from /usr/lib/libpython2.4.so.1.0
+#25 0xb7eb0023 in PyRun_InteractiveLoopFlags () from /usr/lib/libpython2.4.so.1.0
+#26 0xb7eb00fa in PyRun_InteractiveLoop () from /usr/lib/libpython2.4.so.1.0
+#27 0xb4c877e3 in cmdGui::run (this=0x81fe4b8, argc=1, argv=0xbfbf11fc) at gui/cmd/cmdGui.cpp:85
+#28 0x081317d1 in main (argc=1, argv=0xbfbf11fc) at core/yade.cpp:242
+#0  0xffffe410 in __kernel_vsyscall ()
+(gdb)
+(gdb) q
+The program is running.  Quit anyway (and detach it)? (y or n) y
+
+
+
+
+But I think I made it work with &gt;&gt;&gt; p.generator=&quot;SDECSpheresPlane&quot;
+The simulation was running, only things that didn't work was:
+
+&gt;&gt;&gt;<i> v=View()
+</I>
+Opened a view, but with unrefreshable remnants of QTFileGenerator
+inside (the same that we see in QtGUI). Maybe it was simply in that
+part of memory, not something that current session created. And lots
+of errors:
+
+QGLContext::makeCurrent(): Failed.
+
+I remember this error. We had it, and yade was frequently crashing.
+Olivier's laptop was hanging sometimes. And later I've found some
+solution for that and it works cleanly now. I forgot what it was....
+gotta look into SVN history for that.
+
+I remember you talking something about pyView() so I tried:
+
+&gt;&gt;&gt;<i> v=pyView()
+</I>Traceback (most recent call last):
+  File &quot;&lt;console&gt;&quot;, line 1, in ?
+NameError: name 'pyView' is not defined
+
+But nothing,
+
+And finally - crash at exit:
+
+
+
+&gt;&gt;&gt;<i> QGLContext::makeCurrent(): Failed.
+</I>sys.exit(0)
+SIGSEGV/SIGABRT handler called; gdb batch file is `/home/janek/.yade-svn1246-moment_law2/gdb_crash_batch-pid24230'
+<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">janek at szpak</A>:~/20-Programowanie/10-cpp/50-Yade/Bin/moment_law2/bin$ GNU gdb 6.4.90-debian
+Copyright (C) 2006 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type &quot;show copying&quot; to see the conditions.
+There is absolutely no warranty for GDB.  Type &quot;show warranty&quot; for details.
+This GDB was configured as &quot;i486-linux-gnu&quot;.
+/home/janek/.yade-svn1246-moment_law2/gdb_crash_batch-pid24230:1: Error in sourced command file:
+ptrace: No such process.
+(gdb) q
+zsh: command not found: q
+
+
+Looks like gdb tried to start, but failed: ptrace: No such process. I
+hope that you can distinguish copy/pastes from my comments ;-)
+
+
+-- 
+Janek Kozicki                                                         |
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000020.html">[yade-dev] trying cmdGui
+</A></li>
+	<LI>Next message: <A HREF="000022.html">[yade-dev] trying cmdGui
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#21">[ date ]</a>
+              <a href="thread.html#21">[ thread ]</a>
+              <a href="subject.html#21">[ subject ]</a>
+              <a href="author.html#21">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

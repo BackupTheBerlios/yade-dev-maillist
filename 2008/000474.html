@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] Move a wall  and plot (force, displacement) in a Python simulation
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Move%20a%20wall%20%20and%20plot%20%28force%2C%0A%20displacement%29%20in%20a%20Python%20simulation&In-Reply-To=%3C490707A0.4090902%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000473.html">
+   <LINK REL="Next"  HREF="000475.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] Move a wall  and plot (force, displacement) in a Python simulation</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Move%20a%20wall%20%20and%20plot%20%28force%2C%0A%20displacement%29%20in%20a%20Python%20simulation&In-Reply-To=%3C490707A0.4090902%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev] Move a wall  and plot (force, displacement) in a Python simulation">eudoxos at arcig.cz
+       </A><BR>
+    <I>Tue Oct 28 13:37:52 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000473.html">[deprecated list] [Yade-dev] Move a wall  and plot (force,	displacement) in a Python simulation
+</A></li>
+        <LI>Next message: <A HREF="000475.html">[deprecated list] [Yade-dev] Problem with DeusExMachina('TranslationEngine', {'subscribedBodies':[idWall], 'velocity':[x, y, z]}) on Python
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#474">[ date ]</a>
+              <a href="thread.html#474">[ thread ]</a>
+              <a href="subject.html#474">[ subject ]</a>
+              <a href="author.html#474">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i>
+</I>&gt;<i>      If anyone can help me on Python. I have modified the script in
+</I>&gt;<i> Python to generate a cylindrical packing written by Vaclav.
+</I>&gt;<i>    I added with the facet, a wall at top (execute the attached file)
+</I>&gt;<i> in order to realize a uniaxial compaction.
+</I>Welcome to the python world! I will do my best...
+
+fichier = open('150_billes.txt','r')
+for ligne in fichier.readlines() :
+     donnees = map(float,ligne.split(&quot;,&quot;))
+ o.bodies.append(utils.sphere([donnees[0],donnees[1],donnees[2]],donnees[3],wire=True,color=[random.random(),random.random(),random.random()]))
+
+This you can do easier (since I've been doing that again and again, I've
+written a function for that)
+
+utils.spheresFromFile('150_billes.txt',wire=True)
+for s in o.bodies:
+b.shape['diffuseColor']=[random.random(),random.random(),random.random()]
+
+
+&gt;<i>
+</I>&gt;<i>             1) define this wall   (the last facet in my simulation)
+</I>&gt;<i> like a dynamic body. ==&gt; b['isDynamic']=True. What is b? It is not a
+</I>&gt;<i> number !!!
+</I>b is Body instance (o.bodies[id]), you need something like
+o.bodies[id]['isDynamic']=True; or you can define wall=o.bodies[wallId],
+say wall['isDynamic']=True; this wall variable can be used later
+&gt;<i>             2) give a translation velocity at this wall. What is the
+</I>&gt;<i> Python line to give a velocity at a body ?
+</I>o.bodies[id].phys['velocity']=[velX,velY,velZ]
+
+But that will give it initial velocity, that will be influenced by
+collisions etc. If you need constant translation velocity, you have to
+use TranslationEngine for that (put it somewhere into your engines,
+perhaps after NewtonsDampedLaw):
+
+DeusExMachina('TranslationEngine',{'subscribedBodies':[idWall],'velocity':[x,y,z]})
+
+&gt;<i>             3) plot the applied forces on this wall according to wall
+</I>&gt;<i> displacement.
+</I>have a look at scripts/simple-scene-graph.py 
+(<A HREF="http://svn.berlios.de/viewcvs/yade/trunk/scripts/simple-scene-graph.py?view=markup">http://svn.berlios.de/viewcvs/yade/trunk/scripts/simple-scene-graph.py?view=markup</A>)
+and <A HREF="http://yade.wikia.com/wiki/PythonPlotting.">http://yade.wikia.com/wiki/PythonPlotting.</A> Basically, you need an
+engine that records the data (PeriodicPythonRunner), a function that
+does that (myAddPlotData) and set yade.plot.plots to what you want to plot.
+
+You get the velocity again like wall.phys['velocity'][2] ([2] is for the
+z-component).
+
+Have a look at yade.plot.saveGnuplot, that saves your data to file so
+that you can plot it with gnuplot once you will have quit yade.
+
+Hope this helps, Vaclav
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000473.html">[deprecated list] [Yade-dev] Move a wall  and plot (force,	displacement) in a Python simulation
+</A></li>
+	<LI>Next message: <A HREF="000475.html">[deprecated list] [Yade-dev] Problem with DeusExMachina('TranslationEngine', {'subscribedBodies':[idWall], 'velocity':[x, y, z]}) on Python
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#474">[ date ]</a>
+              <a href="thread.html#474">[ thread ]</a>
+              <a href="subject.html#474">[ subject ]</a>
+              <a href="author.html#474">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

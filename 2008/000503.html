@@ -1,0 +1,146 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1571 - trunk/gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1571%20-%20trunk/gui/py&In-Reply-To=%3C492145D7.7040907%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000502.html">
+   <LINK REL="Next"  HREF="000504.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1571 - trunk/gui/py</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1571%20-%20trunk/gui/py&In-Reply-To=%3C492145D7.7040907%40hmg.inpg.fr%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1571 - trunk/gui/py">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Mon Nov 17 11:22:15 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000502.html">[deprecated list] [Yade-dev] [svn] r1571 - trunk/gui/py
+</A></li>
+        <LI>Next message: <A HREF="000504.html">[deprecated list] [Yade-dev] [svn] r1572 -	trunk/pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#503">[ date ]</a>
+              <a href="thread.html#503">[ thread ]</a>
+              <a href="subject.html#503">[ subject ]</a>
+              <a href="author.html#503">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>I don't know since when its like that but there is a new Python 
+prerequisite.
+I just added it on the wiki :
+
+/*sudo aptitude install python-numpy*/
+
+Bruno
+
+
+
+eudoxos at BerliOS a e'crit :
+&gt;<i> Author: eudoxos
+</I>&gt;<i> Date: 2008-11-16 10:12:37 +0100 (Sun, 16 Nov 2008)
+</I>&gt;<i> New Revision: 1571
+</I>&gt;<i>
+</I>&gt;<i> Added:
+</I>&gt;<i>    trunk/gui/py/_eudoxos.cpp
+</I>&gt;<i> Log:
+</I>&gt;<i> Add forgotten file. 
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i> Added: trunk/gui/py/_eudoxos.cpp
+</I>&gt;<i> ===================================================================
+</I>&gt;<i> --- trunk/gui/py/_eudoxos.cpp	2008-11-15 09:07:37 UTC (rev 1570)
+</I>&gt;<i> +++ trunk/gui/py/_eudoxos.cpp	2008-11-16 09:12:37 UTC (rev 1571)
+</I>&gt;<i> @@ -0,0 +1,29 @@
+</I>&gt;<i> +#include&lt;yade/extra/Brefcom.hpp&gt;
+</I>&gt;<i> +#include&lt;boost/python.hpp&gt;
+</I>&gt;<i> +using namespace boost;
+</I>&gt;<i> +using namespace std;
+</I>&gt;<i> +# if 0
+</I>&gt;<i> +Real elasticEnergyDensityInAABB(python::tuple AABB){
+</I>&gt;<i> +	Vector3r bbMin=tuple2vec(python::extract&lt;python::tuple&gt;(AABB[0])()), bbMax=tuple2vec(python::extract&lt;python::tuple&gt;(AABB[1])()); Vector3r box=bbMax-bbMin;
+</I>&gt;<i> +	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
+</I>&gt;<i> +	Real E=0;
+</I>&gt;<i> +	FOREACH(const shared_ptr&lt;Interaction&gt;&amp;i, *rb-&gt;transientInteractions){
+</I>&gt;<i> +		if(!i-&gt;interactionPhysics) continue;
+</I>&gt;<i> +		shared_ptr&lt;BrefcomContact&gt; bc=dynamic_pointer_cast&lt;BrefcomContact&gt;(i-&gt;interactionPhysics); if(!bc) continue;
+</I>&gt;<i> +		const shared_ptr&lt;Body&gt;&amp; b1=Body::byId(i-&gt;getId1(),rb), b2=Body::byId(i-&gt;getId2(),rb);
+</I>&gt;<i> +		bool isIn1=isInBB(b1-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax), isIn2=isInBB(b2-&gt;physicalParameters-&gt;se3.position,bbMin,bbMax);
+</I>&gt;<i> +		if(!isIn1 &amp;&amp; !isIn2) continue;
+</I>&gt;<i> +		Real weight=1.;
+</I>&gt;<i> +		if((!isIn1 &amp;&amp; isIn2) || (isIn1 &amp;&amp; !isIn2)){
+</I>&gt;<i> +			//shared_ptr&lt;Body&gt; bIn=isIn1?b1:b2, bOut=isIn2?b2:b1;
+</I>&gt;<i> +			Vector3r vIn=(isIn1?b1:b2)-&gt;physicalParameters-&gt;se3.position, vOut=(isIn2?b1:b2)-&gt;physicalParameters-&gt;se3.position;
+</I>&gt;<i> +			#define _WEIGHT_COMPONENT(axis) if(vOut[axis]&lt;bbMin[axis]) weight=min(weight,abs((vOut[axis]-bbMin[axis])/(vOut[axis]-vIn[axis]))); else if(vOut[axis]&gt;bbMax[axis]) weight=min(weight,abs((vOut[axis]-bbMax[axis])/(vOut[axis]-vIn[axis])));
+</I>&gt;<i> +			_WEIGHT_COMPONENT(0); _WEIGHT_COMPONENT(1); _WEIGHT_COMPONENT(2);
+</I>&gt;<i> +			assert(weight&gt;=0 &amp;&amp; weight&lt;=1);
+</I>&gt;<i> +		}
+</I>&gt;<i> +		E+=.5*bc-&gt;E*bc-&gt;crossSection*pow(bc-&gt;epsN,2)+.5*bc-&gt;G*bc-&gt;crossSection*pow(bc-&gt;epsT.Length(),2);
+</I>&gt;<i> +	}
+</I>&gt;<i> +	return E/(box[0]*box[1]*box[2]);
+</I>&gt;<i> +}
+</I>&gt;<i> +#endif
+</I>&gt;<i> +
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i> _______________________________________________
+</I>&gt;<i> Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+</I>&gt;<i> Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+</I>&gt;<i> Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+</I>&gt;<i> More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Grenoble INP
+Laboratoire 3SR - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+Te'l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000502.html">[deprecated list] [Yade-dev] [svn] r1571 - trunk/gui/py
+</A></li>
+	<LI>Next message: <A HREF="000504.html">[deprecated list] [Yade-dev] [svn] r1572 -	trunk/pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#503">[ date ]</a>
+              <a href="thread.html#503">[ thread ]</a>
+              <a href="subject.html#503">[ subject ]</a>
+              <a href="author.html#503">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

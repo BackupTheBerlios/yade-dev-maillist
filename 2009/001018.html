@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1795 - trunk/gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1795%20-%20trunk/gui/py&In-Reply-To=%3C200906131520.n5DFKW1N031966%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001017.html">
+   <LINK REL="Next"  HREF="001019.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1795 - trunk/gui/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1795%20-%20trunk/gui/py&In-Reply-To=%3C200906131520.n5DFKW1N031966%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1795 - trunk/gui/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Jun 13 17:20:32 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001017.html">[deprecated list] [Yade-dev] [svn] r1794 - in trunk: gui gui/py	scripts/test
+</A></li>
+        <LI>Next message: <A HREF="001019.html">[deprecated list] [Yade-dev] [svn] r1796 - in trunk: gui/py	scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1018">[ date ]</a>
+              <a href="thread.html#1018">[ thread ]</a>
+              <a href="subject.html#1018">[ subject ]</a>
+              <a href="author.html#1018">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-06-13 17:20:31 +0200 (Sat, 13 Jun 2009)
+New Revision: 1795
+
+Modified:
+   trunk/gui/py/utils.py
+Log:
+Remove leftover reularSpheresOrthoPack from utils. Is in yade.pack now.
+
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2009-06-13 15:09:51 UTC (rev 1794)
++++ trunk/gui/py/utils.py	2009-06-13 15:20:31 UTC (rev 1795)
+@@ -404,24 +404,6 @@
+ 	l=procStatus('VmData'); ll=l.split(); assert(ll[2]=='kB')
+ 	return int(ll[1])
+ 
+-def regularSphereOrthoPack(center,extents,radius,gap,**kw):
+-	&quot;&quot;&quot;Return set of spheres regularly spaced in either a box or sphere centered around center.
+-	If extents is a number, it is taken for sphere radius; if it is a sequence, it is 3 extents of the box.
+-	Created spheres will have given radius and will be separated by gap space.
+-	&quot;&quot;&quot;
+-	from numpy import arange; from math import sqrt
+-	import itertools
+-	ret=[]
+-	try: # extents is a single number, do sphere
+-		doSphere=True; dim=float(extents),float(extents),float(extents)
+-	except TypeError: # extents is a list, do box
+-		doSphere=False; dim=extents
+-	xx,yy,zz=[arange(center[i]-dim[i],center[i]+dim[i],2*radius+gap) for i in 0,1,2]
+-	for xyz in itertools.product(xx,yy,zz):
+-		if doSphere and sqrt(sum([(xyz[i]-center[i])**2 for i in 0,1,2]))&gt;extents: continue
+-		ret+=[sphere(xyz,radius=radius,**kw)]
+-	return ret
+-
+ def spheresFromFileUniaxial(filename,areaSections=10,**kw):
+ 	&quot;&quot;&quot;Load spheres from file, but do some additional work useful for uniaxial test:
+ 	
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001017.html">[deprecated list] [Yade-dev] [svn] r1794 - in trunk: gui gui/py	scripts/test
+</A></li>
+	<LI>Next message: <A HREF="001019.html">[deprecated list] [Yade-dev] [svn] r1796 - in trunk: gui/py	scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1018">[ date ]</a>
+              <a href="thread.html#1018">[ thread ]</a>
+              <a href="subject.html#1018">[ subject ]</a>
+              <a href="author.html#1018">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

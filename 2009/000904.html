@@ -1,0 +1,461 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1743 - in trunk: extra	extra/usct gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1743%20-%20in%20trunk%3A%20extra%0A%09extra/usct%20gui/py&In-Reply-To=%3C200904020928.n329S7s4006077%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000903.html">
+   <LINK REL="Next"  HREF="000905.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1743 - in trunk: extra	extra/usct gui/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1743%20-%20in%20trunk%3A%20extra%0A%09extra/usct%20gui/py&In-Reply-To=%3C200904020928.n329S7s4006077%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1743 - in trunk: extra	extra/usct gui/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Apr  2 11:28:07 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000903.html">[deprecated list] [Yade-dev] [svn] r1742 - in trunk:	gui/py	pkg/common/Engine/MetaEngine scripts
+</A></li>
+        <LI>Next message: <A HREF="000905.html">[deprecated list] [Yade-dev] [svn] r1744 - in trunk: extra	extra/usct gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#904">[ date ]</a>
+              <a href="thread.html#904">[ thread ]</a>
+              <a href="subject.html#904">[ subject ]</a>
+              <a href="author.html#904">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-04-02 11:28:06 +0200 (Thu, 02 Apr 2009)
+New Revision: 1743
+
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+   trunk/extra/usct/UniaxialStrainControlledTest.hpp
+   trunk/gui/py/plot.py
+   trunk/gui/py/yadeControl.cpp
+Log:
+1. cleanup UniaxialStrainer code, add vars to control length of the acceleration phase and the ability to set absolute speed
+2. EngineUnits within InteractionDispatchers can be labeled and accessed from python now.
+3. A few minor things in the plot module
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-03-31 23:10:43 UTC (rev 1742)
++++ trunk/extra/Brefcom.cpp	2009-04-02 09:28:06 UTC (rev 1743)
+@@ -144,7 +144,9 @@
+ 	const Real maxError=1e-12;
+ 	Real f, ret=0.;
+ 	for(int i=0; i&lt;maxIter; i++){
+-		cummBetaIter++;
++		#ifdef YADE_DEBUG
++			cummBetaIter++;
++		#endif
+ 		Real aux=c*exp(N*ret)+exp(ret);
+ 		f=log(aux);
+ 		if(fabs(f)&lt;maxError) return ret;
+@@ -166,12 +168,13 @@
+ 	Real deltaDmgStrain=(epsN*omega-dmgStrain)*exp(beta);
+ 	dmgStrain+=deltaDmgStrain;
+ 	LOG_DEBUG(&quot;deltaDmgStrain=&quot;&lt;&lt;deltaDmgStrain&lt;&lt;&quot;, viscous overstress &quot;&lt;&lt;(epsN*omega-dmgStrain)*E);
++	/* &#963;N=Kn(&#949;N-&#949;d); dmgOverstress=&#963;N-(1-&#969;)*Kn*&#949;N=&#8230;=Kn(&#969;*&#949;N-&#949;d) */
+ 	return (epsN*omega-dmgStrain)*E;
+ }
+ 
+ Real BrefcomContact::computeViscoplScalingFactor(Real sigmaTNorm, Real sigmaTYield,Real dt){
+ 	if(sigmaTNorm&lt;sigmaTYield) return 1.;
+-	Real c=/* should this be sigmaT0?? */ sigmaTNorm*pow(plTau/(G*dt),plRateExp)*pow(sigmaTNorm-sigmaTYield,plRateExp-1.);
++	Real c=sigmaTNorm*pow(plTau/(G*dt),plRateExp)*pow(sigmaTNorm-sigmaTYield,plRateExp-1.);
+ 	Real beta=solveBeta(c,plRateExp);
+ 	return 1.-exp(beta)*(1-sigmaTYield/sigmaTNorm);
+ }
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2009-03-31 23:10:43 UTC (rev 1742)
++++ trunk/extra/Brefcom.hpp	2009-04-02 09:28:06 UTC (rev 1743)
+@@ -172,8 +172,6 @@
+ 
+ class ef2_Spheres_Brefcom_BrefcomLaw: public ConstitutiveLaw{
+ 	public:
+-	/*! Cohesion evolution law (it is 1-funcH here) */
+-	Real funcH(const Real&amp; kappaD, const Real&amp; epsCrackOnset, const Real&amp; epsFracture, const bool&amp; neverDamage) const{ return 1-funcG(kappaD,epsCrackOnset,epsFracture,neverDamage); }
+ 	/*! Damage evolution law */
+ 	static Real funcG(const Real&amp; kappaD, const Real&amp; epsCrackOnset, const Real&amp; epsFracture, const bool&amp; neverDamage) {
+ 		if(kappaD&lt;epsCrackOnset || neverDamage) return 0;
+@@ -198,8 +196,6 @@
+ 		MetaBody* rootBody;
+ 		//! aplly calculated force on both particles (applied in the inverse sense on B)
+ 		void applyForce(const Vector3r&amp;, const body_id_t&amp;, const body_id_t&amp;);
+-		/*! Cohesion evolution law (it is 1-funcH here) */
+-		Real funcH(const Real&amp; kappaD, const Real&amp; epsCrackOnset, const Real&amp; epsFracture, const bool&amp; neverDamage) const{ return 1-funcG(kappaD,epsCrackOnset,epsFracture,neverDamage); }
+ 		/*! Damage evolution law */
+ 		Real funcG(const Real&amp; kappaD, const Real&amp; epsCrackOnset, const Real&amp; epsFracture, const bool&amp; neverDamage) const{ return ef2_Spheres_Brefcom_BrefcomLaw::funcG(kappaD,epsCrackOnset,epsFracture,neverDamage); }
+ 		
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2009-03-31 23:10:43 UTC (rev 1742)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2009-04-02 09:28:06 UTC (rev 1743)
+@@ -48,6 +48,11 @@
+ 	if(isnan(originalLength)) LOG_FATAL(&quot;Initial length is NaN!&quot;);
+ 	assert(originalLength&gt;0 &amp;&amp; !isnan(originalLength));
+ 
++	assert(!isnan(strainRate) || !isnan(absSpeed));
++	if(isnan(strainRate)){ strainRate=absSpeed/originalLength; }
++
++	initAccelTime_s=initAccelTime&gt;=0 ? initAccelTime : Omega::instance().getTimeStep()*(-initAccelTime);
++
+ 	/* if we have default (&lt;0) crossSectionArea, try to get it from root's AABB;
+ 	 * this will not work if there are foreign bodies in the simulation,
+ 	 * in which case you must give the value yourself as engine attribute.
+@@ -82,7 +87,10 @@
+ 	//nothing to do
+ 	if(posIds.size()==0 || negIds.size()==0) return;
+ 	// linearly increase strain to the desired value
+-	if(abs(currentStrainRate)&lt;abs(strainRate))currentStrainRate+=strainRate*.005; else currentStrainRate=strainRate;
++	if(abs(currentStrainRate)&lt;abs(strainRate)){
++		Real t=Omega::instance().getSimulationTime();
++		currentStrainRate=(t/initAccelTime_s)*strainRate;
++	} else currentStrainRate=strainRate;
+ 	// how much do we move (in total, symmetry handled below)
+ 	Real dAX=currentStrainRate*originalLength*Omega::instance().getTimeStep();
+ 	if(!isnan(stopStrain)){
+@@ -114,12 +122,6 @@
+ 
+ 	if(Omega::instance().getCurrentIteration()%10==0) {
+ 		computeAxialForce(rootBody);
+-		#if 0
+-			vector&lt;Real&gt; widths;
+-			pushTransStrainSensors(rootBody,widths);
+-			assert(widths.size()==originalWidths.size());
+-			for(size_t i=0; i&lt;widths.size(); i++) avgTransStrain+=(widths[i]/originalWidths[i]-1); avgTransStrain/=widths.size();
+-		#endif
+ 		avgStress=(sumPosForces+sumNegForces)/(2*crossSectionArea); // average nominal stress
+ 		if(!recordFile.empty() &amp;&amp; recStream.good()) recStream&lt;&lt;Omega::instance().getCurrentIteration()&lt;&lt;&quot; &quot;&lt;&lt;strain&lt;&lt;&quot; &quot;&lt;&lt;avgStress&lt;&lt;endl; // &lt;&lt;&quot; &quot;&lt;&lt;avgTransStrain&lt;&lt;endl;
+ 	}
+@@ -285,108 +287,3 @@
+ 
+ 
+ 
+-
+-
+-
+-
+-
+-/******************* DEPRECATED *********************/
+-
+-
+-
+-
+-
+-#if 0
+-/* Initialize UniaxialStrainSensorPusher so that subscribed bodies and forces are consistent.
+- * Apply small forces on those bodies, cap their velocity and reset orientation.
+- * Return vector of widths in the direction of sensor pairs.
+- */
+-void UniaxialStrainer::pushTransStrainSensors(MetaBody* rb, vector&lt;Real&gt;&amp; widths){
+-	if(transStrainSensors.size()==0) return;
+-	if(!sensorsPusher){
+-		int count=0;
+-		FOREACH(const shared_ptr&lt;Engine&gt;&amp; e,rb-&gt;engines){
+-			if(e-&gt;getClassName()==&quot;UniaxialStrainSensorPusher&quot;){ count++; sensorsPusher=static_pointer_cast&lt;UniaxialStrainSensorPusher&gt;(e); }
+-		}
+-		if(count&gt;1) LOG_ERROR(&quot;Multiple UniaxialStrainSensorPusher's found, using the last one&#160;for transversal strain sensors!&quot;);
+-		if(count&lt;1) { LOG_ERROR(&quot;No UniaxialStrainSensorPusher found, transversal strain sensors will not work!&quot;); return; }
+-		sensorsPusher-&gt;subscribedBodies.clear();
+-		FOREACH(body_id_t id, transStrainSensors) sensorsPusher-&gt;subscribedBodies.push_back(id);
+-		sensorsPusher-&gt;forces.resize(transStrainSensors.size());
+-		//TRVAR3(transStrainSensors.size(),sensorsPusher-&gt;subscribedBodies.size(),sensorsPusher-&gt;forces.size());
+-	}
+-	assert((sensorsPusher-&gt;subscribedBodies.size()==transStrainSensors.size()) &amp;&amp; (sensorsPusher-&gt;subscribedBodies.size()==sensorsPusher-&gt;forces.size()));
+-	Real forceMagnitude=.001*abs(avgStress)*transStrainSensorArea;
+-	Real maxVelocity=2*abs(strainRate)*originalLength; // move at max 5 &#215; faster than strained ends
+-	/* reset orientation to identity and limit velocity */
+-	FOREACH(body_id_t id, transStrainSensors){
+-		const shared_ptr&lt;Body&gt;&amp; b=Body::byId(id); const shared_ptr&lt;ParticleParameters&gt;&amp; pp=YADE_PTR_CAST&lt;ParticleParameters&gt;(b-&gt;physicalParameters);
+-		pp-&gt;se3.orientation=Quaternionr::IDENTITY;
+-		if(pp-&gt;velocity.SquaredLength()&gt;pow(maxVelocity,2)){ pp-&gt;velocity.Normalize(); pp-&gt;velocity*=maxVelocity; }
+-	}
+-	/* calcuate and store force that will be applied in UniaxialStrainSensorPusher */
+-	widths.clear();
+-	for(int i=1; i&lt;=(transStrainSensors.size()==2?1:2); i++){
+-		int transAxis=(axis+i)%3, perpTransAxis=(i==1?(axis+2)%3:/* i==2 */ (axis+1)%3);
+-		Vector3r F; F[axis]=0; F[perpTransAxis]=0; F[transAxis]=forceMagnitude;
+-		body_id_t n1=2*(i-1), n2=2*(i-1)+1;
+-		sensorsPusher-&gt;forces[n1]=+F; sensorsPusher-&gt;forces[n2]=-F;
+-		const shared_ptr&lt;Body&gt;&amp; lo=Body::byId(transStrainSensors[n1]), hi=Body::byId(transStrainSensors[n2]);
+-		Real wd=hi-&gt;physicalParameters-&gt;se3.position[transAxis]-lo-&gt;physicalParameters-&gt;se3.position[transAxis]-static_pointer_cast&lt;Box&gt;(hi-&gt;geometricalModel)-&gt;extents[transAxis]-static_pointer_cast&lt;Box&gt;(lo-&gt;geometricalModel)-&gt;extents[transAxis];
+-		// negative width? Apply no more force, reset velocity to 0
+-		if(wd&lt;=0) {
+-			/* doesn't work... Why? */
+-			//LOG_ERROR(&quot;Width is negative, resetting forces and velocities&quot;);
+-			sensorsPusher-&gt;forces[n1]=sensorsPusher-&gt;forces[n2]=Vector3r::ZERO;
+-			YADE_PTR_CAST&lt;ParticleParameters&gt;(lo-&gt;physicalParameters)-&gt;velocity=Vector3r::ZERO;
+-			YADE_PTR_CAST&lt;ParticleParameters&gt;(hi-&gt;physicalParameters)-&gt;velocity=Vector3r::ZERO;
+-			wd=0;
+-		}
+-		widths.push_back(wd);
+-	}
+-}
+-
+-void UniaxialStrainer::setupTransStrainSensors(){
+-	assert(transStrainSensors.size()==0 || transStrainSensors.size()==2 || transStrainSensors.size()==4);
+-	if(transStrainSensors.size()==0) return;
+-	assert(Omega::instance().getRootBody()-&gt;boundingVolume);
+-	shared_ptr&lt;AABB&gt; rbAABB=dynamic_pointer_cast&lt;AABB&gt;(Omega::instance().getRootBody()-&gt;boundingVolume);
+-	assert(rbAABB);
+-	TRVAR2(rbAABB-&gt;center,rbAABB-&gt;halfSize);
+-	transStrainSensorArea=0;
+-	int numCouples=(transStrainSensors.size()==2?1:2);
+-	originalWidths.clear();
+-	for(int i=1; i&lt;=numCouples; i++){
+-		int transAxis=(axis+i)%3, perpTransAxis=(i==1?(axis+2)%3:/* i==2 */ (axis+1)%3);
+-		TRVAR3(axis,transAxis,perpTransAxis);
+-		originalWidths.push_back(2*rbAABB-&gt;halfSize[transAxis]);
+-		body_id_t sensId[]={transStrainSensors[2*(i-1)],transStrainSensors[2*(i-1)+1]};
+-		// do the same on either side, only positioning will be different
+-		FOREACH(body_id_t id, sensId){
+-			shared_ptr&lt;Body&gt; b=Body::byId(id);
+-			shared_ptr&lt;RigidBodyParameters&gt; rbp=dynamic_pointer_cast&lt;RigidBodyParameters&gt;(b-&gt;physicalParameters);
+-			shared_ptr&lt;Box&gt; box=dynamic_pointer_cast&lt;Box&gt;(b-&gt;geometricalModel);
+-			shared_ptr&lt;InteractingBox&gt; iBox=dynamic_pointer_cast&lt;InteractingBox&gt;(b-&gt;interactingGeometry);
+-			assert(rbp &amp;&amp; box &amp;&amp; iBox);
+-			LOG_DEBUG(&quot;Setting up transversal strain sensor, #&quot;&lt;&lt;id);
+-			// change box size: axis,transAxis: length_specimen_along_axis)/10; perpTransAxis: width_specimen*1.5
+-			Vector3r ext;
+-			ext[axis]=ext[transAxis]=.1*rbAABB-&gt;halfSize[axis]; ext[perpTransAxis]=1.5*rbAABB-&gt;halfSize[perpTransAxis];
+-			box-&gt;extents=iBox-&gt;extents=ext;
+-			// reset orientation
+-			rbp-&gt;se3.orientation=Quaternionr::IDENTITY;
+-			// set isDynamic==True, GeometricalMode::wire=true;
+-			b-&gt;isDynamic=true; box-&gt;wire=true;
+-			// set position so that it touches AABB of rootBody
+-			int sign=(id==sensId[0]?-1:1); // first id goes underneath (pushed in the dir of +transAxis), the other one goes up
+-			rbp-&gt;se3.position[axis]=rbAABB-&gt;center[axis];
+-			rbp-&gt;se3.position[perpTransAxis]=rbAABB-&gt;center[perpTransAxis];
+-			rbp-&gt;se3.position[transAxis]=rbAABB-&gt;center[transAxis]+sign*rbAABB-&gt;halfSize[transAxis]+sign*iBox-&gt;extents[transAxis];
+-			TRVAR2(box-&gt;extents,rbp-&gt;se3.position);
+-			transStrainSensorArea+=(box-&gt;extents[axis]*rbAABB-&gt;halfSize[perpTransAxis]);
+-		}
+-	}
+-	transStrainSensorArea/=transStrainSensors.size();
+-}
+-#endif
+-
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.hpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.hpp	2009-03-31 23:10:43 UTC (rev 1742)
++++ trunk/extra/usct/UniaxialStrainControlledTest.hpp	2009-04-02 09:28:06 UTC (rev 1743)
+@@ -37,30 +37,7 @@
+ };
+ REGISTER_SERIALIZABLE(USCTGen);
+ 
+-#if 0
+-/* This class applies force on transversal strain sensors from UniaxialStrainer.
+- */
+-class UniaxialStrainSensorPusher: public DeusExMachina{
+-	public:
+-		UniaxialStrainSensorPusher(){ Shop::Bex::initCache(); }
+-		~UniaxialStrainSensorPusher(){}
+-		vector&lt;Vector3r&gt; forces;
+-		virtual void applyCondition(MetaBody* mb){
+-			assert(subscribedBodies.size()==forces.size());
+-			for(size_t i=0; i&lt;subscribedBodies.size(); i++) Shop::Bex::force(subscribedBodies[i])+=forces[i];
+-		}
+-	void registerAttributes(){	
+-		DeusExMachina::registerAttributes();
+-		REGISTER_ATTRIBUTE(forces);
+-	}
+-	REGISTER_CLASS_NAME(UniaxialStrainSensorPusher);
+-	REGISTER_BASE_CLASS_NAME(DeusExMachina);
+-	//DECLARE_LOGGER;
+-};
+-REGISTER_SERIALIZABLE(UniaxialStrainSensorPusher);
+-#endif
+ 
+-
+ /*! Axial displacing two groups of bodies in the opposite direction with given strain rate.
+  *
+  * Takes two groups of body IDs (in posIds and negIds) and displaces them at each timestep in the direction given by axis&#8712;{0,1,2} (for axes x,y,z respectively). These bodies automatically have Body::isDynamic==false.
+@@ -79,12 +56,14 @@
+ 		void init();
+ 	public:
+ 		virtual bool isActivated(){return active;}
++		//! strain rate, starting at 0, linearly raising to strainRate
+ 		Real strainRate,currentStrainRate;
++		//! alternatively, absolute speed of boundary motion can be specified; this is effective only at the beginning and if strainRate is not set; changing absSpeed directly during simulation wil have no effect.
++		Real absSpeed;
+ 		//! strain at which we will pause simulation; inactive (nan) by default; must be reached from below (in absolute value)
+ 		Real stopStrain;
+ 		//! distance of reference bodies in the direction of axis before straining started
+ 		Real originalLength;
+-		vector&lt;Real&gt; originalWidths;
+ 		//! invert the sense of straining (sharply, without transition) one this value of strain is reached. Not effective if 0.
+ 		Real limitStrain;
+ 		//! Flag whether the sense of straining has already been reversed
+@@ -103,6 +82,8 @@
+ 		bool active;
+ 		//! Number of iterations that will pass without straining activity after stopStrain has been reached (default: 0)
+ 		long idleIterations;
++		//! Time for strain reaching the requested value (linear interpolation). If negative, the time is dt*(-initAccelTime), where dt is  the timestep at the first iteration.
++		Real initAccelTime, initAccelTime_s /* value always in s, computed from initAccelTime */;
+ 
+ 		/** bodies on which straining will be applied (on the positive and negative side of axis) */
+ 		vector&lt;body_id_t&gt; posIds, negIds;
+@@ -129,10 +110,12 @@
+ 		Real strain, avgStress;
+ 
+ 		virtual void applyCondition(MetaBody* rootBody);
+-		UniaxialStrainer(){axis=2; asymmetry=0; currentStrainRate=0; originalLength=-1; limitStrain=0; notYetReversed=true; crossSectionArea=-1; needsInit=true; /* sensorsPusher=shared_ptr&lt;UniaxialStrainSensorPusher&gt;(); */ recordFile=&quot;&quot;; strain=avgStress=/*avgTransStrain=*/0; blockRotations=false; blockDisplacements=false;  stopStrain=numeric_limits&lt;Real&gt;::quiet_NaN(); active=true; idleIterations=0; };
++		UniaxialStrainer(){axis=2; asymmetry=0; currentStrainRate=0; originalLength=-1; limitStrain=0; notYetReversed=true; crossSectionArea=-1; needsInit=true; /* sensorsPusher=shared_ptr&lt;UniaxialStrainSensorPusher&gt;(); */ recordFile=&quot;&quot;; strain=avgStress=/*avgTransStrain=*/0; blockRotations=false; blockDisplacements=false;  absSpeed=strainRate=stopStrain=numeric_limits&lt;Real&gt;::quiet_NaN(); active=true; idleIterations=0; };
+ 		virtual ~UniaxialStrainer(){};
+ 		REGISTER_ATTRIBUTES(DeusExMachina,
+ 				(strainRate) 
++				(absSpeed)
++				(initAccelTime)
+ 				(stopStrain) 
+ 				(active)
+ 				(idleIterations)
+@@ -142,7 +125,6 @@
+ 				(posIds) 
+ 				(negIds) 
+ 				(originalLength) 
+-				(originalWidths) 
+ 				(limitStrain) 
+ 				(notYetReversed) 
+ 				(crossSectionArea) 
+
+Modified: trunk/gui/py/plot.py
+===================================================================
+--- trunk/gui/py/plot.py	2009-03-31 23:10:43 UTC (rev 1742)
++++ trunk/gui/py/plot.py	2009-04-02 09:28:06 UTC (rev 1743)
+@@ -47,6 +47,11 @@
+ 			for attr in ['virtPeriod','realPeriod','iterPeriod']:
+ 				if(plotDataCollector[attr]&gt;0): plotDataCollector[attr]=2*plotDataCollector[attr]
+ 
++def splitData():
++	&quot;Make all plots discontinuous at this point (adds nan's to all data fields)&quot;
++	addData({})
++
++
+ def reverseData():
+ 	for k in data: data[k].reverse()
+ 
+@@ -84,6 +89,7 @@
+ 		plotLines[p]=pylab.plot(*sum([[data[p],data[d[0]],d[1]] for d in plots_p],[]))
+ 		pylab.legend([_p[0] for _p in plots_p])
+ 		pylab.xlabel(p)
++		if 'title' in O.tags.keys(): pylab.title(O.tags['title'])
+ 	pylab.show()
+ updatePeriod=0
+ def periodicUpdate(period):
+@@ -141,6 +147,7 @@
+ 		if term in ['wxt','x11']: fPlot.write(&quot;set term %s %d persist\n&quot;%(term,i))
+ 		else: fPlot.write(&quot;set term %s; set output '%s.%d.%s'\n&quot;%(term,baseNameNoPath,i,extension))
+ 		fPlot.write(&quot;set xlabel '%s'\n&quot;%p)
++		fPlot.write(&quot;set datafile missing 'nan'\n&quot;%p)
+ 		if title: fPlot.write(&quot;set title '%s'\n&quot;%title)
+ 		fPlot.write(&quot;plot &quot;+&quot;,&quot;.join([&quot; %s using %d:%d title '%s(%s)' with lines&quot;%(dataFile,vars.index(p)+1,vars.index(pp[0])+1,pp[0],p) for pp in plots_p])+&quot;\n&quot;)
+ 		i+=1
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2009-03-31 23:10:43 UTC (rev 1742)
++++ trunk/gui/py/yadeControl.cpp	2009-04-02 09:28:06 UTC (rev 1743)
+@@ -445,12 +445,22 @@
+ 				shared_ptr&lt;MetaEngine&gt; ee=dynamic_pointer_cast&lt;MetaEngine&gt;(e);
+ 				FOREACH(const shared_ptr&lt;EngineUnit&gt;&amp; f, ee-&gt;functorArguments){
+ 					if(!f-&gt;label.empty()){
+-						PyGILState_STATE gstate; gstate = PyGILState_Ensure();
+-						PyRun_SimpleString((&quot;__builtins__.&quot;+f-&gt;label+&quot;=Omega().labeledEngine('&quot;+f-&gt;label+&quot;')&quot;).c_str());
+-						PyGILState_Release(gstate);
++						PyGILState_STATE gstate; gstate = PyGILState_Ensure(); PyRun_SimpleString((&quot;__builtins__.&quot;+f-&gt;label+&quot;=Omega().labeledEngine('&quot;+f-&gt;label+&quot;')&quot;).c_str()); PyGILState_Release(gstate);
+ 					}
+ 				}
+ 			}
++			if(isChildClassOf(e-&gt;getClassName(),&quot;InteractionDispatchers&quot;)){
++				shared_ptr&lt;InteractionDispatchers&gt; ee=dynamic_pointer_cast&lt;InteractionDispatchers&gt;(e);
++				list&lt;shared_ptr&lt;EngineUnit&gt; &gt; eus;
++				FOREACH(const shared_ptr&lt;EngineUnit&gt;&amp; eu,ee-&gt;geomDispatcher-&gt;functorArguments) eus.push_back(eu);
++				FOREACH(const shared_ptr&lt;EngineUnit&gt;&amp; eu,ee-&gt;physDispatcher-&gt;functorArguments) eus.push_back(eu);
++				FOREACH(const shared_ptr&lt;EngineUnit&gt;&amp; eu,ee-&gt;constLawDispatcher-&gt;functorArguments) eus.push_back(eu);
++				FOREACH(const shared_ptr&lt;EngineUnit&gt;&amp; eu,eus){
++					if(!eu-&gt;label.empty()){
++						PyGILState_STATE gstate; gstate = PyGILState_Ensure(); PyRun_SimpleString((&quot;__builtins__.&quot;+eu-&gt;label+&quot;=Omega().labeledEngine('&quot;+eu-&gt;label+&quot;')&quot;).c_str()); PyGILState_Release(gstate);
++					}
++				}
++			}
+ 		}
+ 	}
+ 
+@@ -557,6 +567,16 @@
+ 					if(eu-&gt;label==label) return python::object(pyEngineUnit(eu));
+ 				}
+ 			}
++			shared_ptr&lt;InteractionDispatchers&gt; ee=dynamic_pointer_cast&lt;InteractionDispatchers&gt;(eng);
++			if(ee){
++				list&lt;shared_ptr&lt;EngineUnit&gt; &gt; eus;
++				FOREACH(const shared_ptr&lt;EngineUnit&gt;&amp; eu,ee-&gt;geomDispatcher-&gt;functorArguments) eus.push_back(eu);
++				FOREACH(const shared_ptr&lt;EngineUnit&gt;&amp; eu,ee-&gt;physDispatcher-&gt;functorArguments) eus.push_back(eu);
++				FOREACH(const shared_ptr&lt;EngineUnit&gt;&amp; eu,ee-&gt;constLawDispatcher-&gt;functorArguments) eus.push_back(eu);
++				FOREACH(const shared_ptr&lt;EngineUnit&gt;&amp; eu,eus){
++					if(eu-&gt;label==label) return python::object(pyEngineUnit(eu));
++				}
++			}
+ 		}
+ 		throw std::invalid_argument(string(&quot;No engine labeled `&quot;)+label+&quot;'&quot;);
+ 	}
+@@ -607,7 +627,7 @@
+ 
+ BASIC_PY_PROXY_HEAD(pyFileGenerator,FileGenerator)
+ 	void generate(string outFile){ensureAcc(); proxee-&gt;setFileName(outFile); proxee-&gt;setSerializationLibrary(&quot;XMLFormatManager&quot;); bool ret=proxee-&gt;generateAndSave(); LOG_INFO((ret?&quot;SUCCESS:\n&quot;:&quot;FAILURE:\n&quot;)&lt;&lt;proxee-&gt;message); if(ret==false) throw runtime_error(&quot;Generator reported error: &quot;+proxee-&gt;message); };
+-	void load(){ ensureAcc(); char tmpnam_str [L_tmpnam]; tmpnam(tmpnam_str); string xml(tmpnam_str+string(&quot;.xml.bz2&quot;)); LOG_DEBUG(&quot;Using temp file &quot;&lt;&lt;xml); this-&gt;generate(xml); pyOmega().load(xml); }
++	void load(){ ensureAcc(); char tmpnam_str [L_tmpnam]; char* result=tmpnam(tmpnam_str); if(result!=tmpnam_str) throw runtime_error(__FILE__ &quot;: tmpnam(char*) failed!&quot;);  string xml(tmpnam_str+string(&quot;.xml.bz2&quot;)); LOG_DEBUG(&quot;Using temp file &quot;&lt;&lt;xml); this-&gt;generate(xml); pyOmega().load(xml); }
+ BASIC_PY_PROXY_TAIL;
+ 
+ class pySTLImporter : public STLImporter {
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000903.html">[deprecated list] [Yade-dev] [svn] r1742 - in trunk:	gui/py	pkg/common/Engine/MetaEngine scripts
+</A></li>
+	<LI>Next message: <A HREF="000905.html">[deprecated list] [Yade-dev] [svn] r1744 - in trunk: extra	extra/usct gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#904">[ date ]</a>
+              <a href="thread.html#904">[ thread ]</a>
+              <a href="subject.html#904">[ subject ]</a>
+              <a href="author.html#904">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

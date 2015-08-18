@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] [Yade-commits] r1359 - in trunk: core gui/py lib/import pkg/common/DataClass/PhysicalParameters pkg/common/Engine/DeusExMachina pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20r1359%20-%20in%20trunk%3A%20core%20gui/py%0A%20lib/import%20pkg/common/DataClass/PhysicalParameters%0A%20pkg/common/Engine/DeusExMachina%20pkg/common/Engine/StandAloneEngine%0A%20pkg/dem/Engine/EngineUnit%20pkg/dem/Engine/StandAloneEngine%0A%20pkg/dem/RenderingEngine/GLDrawElasticContactInteraction&In-Reply-To=%3C4836CCC3.5010505%40geo.hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000197.html">
+   <LINK REL="Next"  HREF="000199.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py lib/import pkg/common/DataClass/PhysicalParameters pkg/common/Engine/DeusExMachina pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/RenderingEngine/GLDrawElasticContactInteraction</H1>
+    <B>Jerome Duriez</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20r1359%20-%20in%20trunk%3A%20core%20gui/py%0A%20lib/import%20pkg/common/DataClass/PhysicalParameters%0A%20pkg/common/Engine/DeusExMachina%20pkg/common/Engine/StandAloneEngine%0A%20pkg/dem/Engine/EngineUnit%20pkg/dem/Engine/StandAloneEngine%0A%20pkg/dem/RenderingEngine/GLDrawElasticContactInteraction&In-Reply-To=%3C4836CCC3.5010505%40geo.hmg.inpg.fr%3E"
+       TITLE="[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py lib/import pkg/common/DataClass/PhysicalParameters pkg/common/Engine/DeusExMachina pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/RenderingEngine/GLDrawElasticContactInteraction">duriez at geo.hmg.inpg.fr
+       </A><BR>
+    <I>Fri May 23 15:55:15 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000197.html">[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py	lib/import pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+        <LI>Next message: <A HREF="000199.html">[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py	lib/import pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#198">[ date ]</a>
+              <a href="thread.html#198">[ thread ]</a>
+              <a href="subject.html#198">[ subject ]</a>
+              <a href="author.html#198">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+
+sega a &#233;crit :
+&gt;&gt;<i> Once the potential interactions are determined (so a lot of couple of bodies which will surely not interact are disregarded) it is investigated if the 
+</I>&gt;&gt;<i> bodies are really in contact or not (see flag isReal later), thanks to 
+</I>&gt;&gt;<i> InteractionGeometryMetaEngine.
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i>     
+</I>&gt;&gt;<i> After that, the physical properties of the interactions, which will be used to compute contact forces (rigidities...) are set by 
+</I>&gt;&gt;<i> InteractionPhysicsMetaEngine which uses classes containing the parameters of 
+</I>&gt;&gt;<i> bodies and classes describing how to compute interactions properties from 
+</I>&gt;&gt;<i> bodies properties (names finishing by ...RelationsShips). 
+</I>&gt;&gt;<i>
+</I>&gt;&gt;<i>     
+</I>&gt;<i> On the contrary. The first is InteractionPhysics (unique for each pair of 
+</I>&gt;<i> bodies, calculated at detecting potential contact), then InteractionGeometry 
+</I>&gt;<i> (calculated for the real contacts)...
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>Thank your for your opinion. But in my simulations (and because they 
+occur often to be false... I would add that it's also the case in the 
+TriaxialTest), the first is InteractionGeometry and then 
+Interactionphysics. Moreover it seems to me that 
+InteractionGeometryMetaEngine doesn't care if interactions are real or 
+not. On the contrary it chooses if it is the case or not :
+l.46 InteractionGeometryMetaEngine.cpp :
+interaction-&gt;isReal =
+            b1-&gt;interactingGeometry &amp;&amp; b2-&gt;interactingGeometry &amp;&amp; // 
+some bodies do not have interactingGeometry
+            // FIXME put this inside VolatileInteractionCriterion dynlib
+            ( 
+persistentInteractions-&gt;find(interaction-&gt;getId1(),interaction-&gt;getId2()) 
+== 0 )
+             &amp;&amp;
+            operator()( b1-&gt;interactingGeometry , 
+b2-&gt;interactingGeometry , b1-&gt;physicalParameters-&gt;se3 , 
+b2-&gt;physicalParameters-&gt;se3 , interaction );
+
+So ???
+
+-------------- next part --------------
+An HTML attachment was scrubbed...
+URL: &lt;<A HREF="https://lists.berlios.de/pipermail/yade-dev/attachments/20080523/719a3bc0/attachment.html">https://lists.berlios.de/pipermail/yade-dev/attachments/20080523/719a3bc0/attachment.html</A>&gt;
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000197.html">[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py	lib/import pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+	<LI>Next message: <A HREF="000199.html">[yade-dev] [Yade-commits] r1359 - in trunk: core gui/py	lib/import pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/RenderingEngine/GLDrawElasticContactInteraction
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#198">[ date ]</a>
+              <a href="thread.html#198">[ thread ]</a>
+              <a href="subject.html#198">[ subject ]</a>
+              <a href="author.html#198">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

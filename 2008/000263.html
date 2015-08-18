@@ -1,0 +1,87 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] run faster by +16% with r1402
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20run%20faster%20by%20%2B16%25%20with%20r1402&In-Reply-To=%3C4863C4A6.4000302%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000262.html">
+   <LINK REL="Next"  HREF="000270.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] run faster by +16% with r1402</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20run%20faster%20by%20%2B16%25%20with%20r1402&In-Reply-To=%3C4863C4A6.4000302%40arcig.cz%3E"
+       TITLE="[yade-dev] run faster by +16% with r1402">eudoxos at arcig.cz
+       </A><BR>
+    <I>Thu Jun 26 18:32:38 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000262.html">[yade-dev] run faster by +16% with r1402
+</A></li>
+        <LI>Next message: <A HREF="000270.html">[yade-dev] run faster by +16% with r1402
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#263">[ date ]</a>
+              <a href="thread.html#263">[ thread ]</a>
+              <a href="subject.html#263">[ subject ]</a>
+              <a href="author.html#263">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> I'm supervising his job. And I'm already experienced with
+</I>&gt;<i> boost::thread, which yade uses in some places. So it may be a sad
+</I>&gt;<i> news for you, but the in-engine parallelization will be done using
+</I>&gt;<i> boost::threads. We will see how it will affect the problem caused by not
+</I>&gt;<i> being able to random access the containers.
+</I>&gt;<i>   
+</I>OpenMP keeps pool of threads instead of creating new threads every time
+it enters parallel section. I assume boost::threads is going to do just
+that. I didn't measure that, but creating thread requires context switch
+(AFAIK - interaction with the kernel) and I think that will be quite
+expensive.
+
+No, it is not sad news at all - if boost::threads will be faster, I will
+be only happy to use it. The openMP and ParallelEngine took me about 3
+hours, so it is no big deal. But, heck, I need that _now_, that is why I
+did it.
+&gt;<i> - he has to do a parallel loop over all interactions and add force
+</I>&gt;<i>   to each id1 and id2. Doing it in parallel will involve some mutexes
+</I>&gt;<i>   to block the access to particular force[id1] so that another thread
+</I>&gt;<i>   will not attempt to modify it.
+</I>&gt;<i>   
+</I>The lock-free containers would be nice thing to have, for sure - if that
+is what you mean.
+
+Vaclav.
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000262.html">[yade-dev] run faster by +16% with r1402
+</A></li>
+	<LI>Next message: <A HREF="000270.html">[yade-dev] run faster by +16% with r1402
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#263">[ date ]</a>
+              <a href="thread.html#263">[ thread ]</a>
+              <a href="subject.html#263">[ subject ]</a>
+              <a href="author.html#263">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

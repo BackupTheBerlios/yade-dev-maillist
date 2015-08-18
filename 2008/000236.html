@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] Intergator and clumps
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Intergator%20and%20clumps&In-Reply-To=%3C48502924.9020904%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000235.html">
+   <LINK REL="Next"  HREF="000237.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] Intergator and clumps</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20Intergator%20and%20clumps&In-Reply-To=%3C48502924.9020904%40arcig.cz%3E"
+       TITLE="[yade-dev] Intergator and clumps">eudoxos at arcig.cz
+       </A><BR>
+    <I>Wed Jun 11 21:36:04 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000235.html">[yade-dev] Intergator and clumps
+</A></li>
+        <LI>Next message: <A HREF="000237.html">[yade-dev] Intergator and clumps
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#236">[ date ]</a>
+              <a href="thread.html#236">[ thread ]</a>
+              <a href="subject.html#236">[ subject ]</a>
+              <a href="author.html#236">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> 1/ Forces are damped based on the motion of each body. As a consequence, 
+</I>&gt;<i> different contact forces on the same clump will be damped independently. 
+</I>&gt;<i> Its a bit like damping separately each individual force applied on a 
+</I>&gt;<i> standalone body. The very bad effect of this is that a body at static 
+</I>&gt;<i> equilibrium can be moved out of equilibrium by damping effect (i.e. the 
+</I>&gt;<i> exact opposite of what damping is supposed to do...).
+</I>&gt;<i> The correct way to damp is to damp the resultant force/moment on a clump 
+</I>&gt;<i> based on the motion of the clump.
+</I>&gt;<i>   
+</I>I wasn't sure what the correct way was, but please fell free to adjust
+that. If you do, however, make sure that the same is done in the
+original engines (CundallNonViscous etc) so that the behavior is consistent.
+&gt;<i> 2/ From what I see in the code, if a clump has bodies &quot;i&quot; and &quot;j&quot;, I 
+</I>&gt;<i> fear the integration loop could make something like (depending on the 
+</I>&gt;<i> ordering of bodies):
+</I>&gt;<i>  
+</I>&gt;<i> on body i : clump-&gt;acceleration += i-&gt;force/clump-&gt;mass
+</I>&gt;<i> on clump : clump-&gt;velocity += clump-&gt;acceleration*dt
+</I>&gt;<i> on body j : clump-&gt;acceleration += j-&gt;force/clump-&gt;mass
+</I>&gt;<i>
+</I>&gt;<i> so that forces on clump member j are ignored in the motion of the clump...
+</I>&gt;<i>
+</I>&gt;<i> Is there something to prevent that? Are clumps always at the end of the 
+</I>&gt;<i> loop?
+</I>&gt;<i>   
+</I>Currently, the ordering of IDs of clump and its members is undefined.
+There are 2 ways out of this, it seems to me:
+
+1. Add an extra loop that would apply forces on clump members to clump
+itself, before calculating clump acceleration. Perhaps a flag on
+NewtonsDampedLaw so that the loop would be run only if clumps were
+actually in use. That could be either set by the user (like you have to
+set distant flag for the collider to make it work) or by the engine
+itself: at each iteration, it would remember whether some bodies were
+actually clumps - if so, the flag would be turned on and you would get
+the extra loop run at next iteration; you would miss just the first
+iteration, which is negligible. If the clump loop would run , at some
+point, without doing any work, it would switch that flag off automatically.
+
+2. Prescribe such ordering of clumps and its members so that the problem
+is prevented. It is not very user-friendly, but could be enforced by
+assertions/exceptions when the clump is created. But having bodies
+behave depending on their ID seems weird (non-intuitive).
+
+PS. I wonder if there is anyone using clumps actually (I don't need them
+now); there can be problem with shear forces, since clump members have
+zero velocities, even if they move (they are moved by a special engine);
+since shear displacement is frequently calculated from angularVelocity,
+it will give zero. It could be fixed (angularVelocity of each member
+would be calculated from clump's angular velocity) but it has not been
+done yet.
+
+Vaclav
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000235.html">[yade-dev] Intergator and clumps
+</A></li>
+	<LI>Next message: <A HREF="000237.html">[yade-dev] Intergator and clumps
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#236">[ date ]</a>
+              <a href="thread.html#236">[ thread ]</a>
+              <a href="subject.html#236">[ subject ]</a>
+              <a href="author.html#236">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

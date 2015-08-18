@@ -1,0 +1,82 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] CohesiveFrictionalContactLaw &quot;box&quot;
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20CohesiveFrictionalContactLaw%20%22box%22&In-Reply-To=%3C20080226201510.11b09062%40absurd%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000069.html">
+   <LINK REL="Next"  HREF="000074.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] CohesiveFrictionalContactLaw &quot;box&quot;</H1>
+    <B>Janek Kozicki</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20CohesiveFrictionalContactLaw%20%22box%22&In-Reply-To=%3C20080226201510.11b09062%40absurd%3E"
+       TITLE="[yade-dev] CohesiveFrictionalContactLaw &quot;box&quot;">janek_listy at wp.pl
+       </A><BR>
+    <I>Tue Feb 26 20:15:10 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000069.html">[yade-dev] LocateMultivirtual cost -&gt; callgrind
+</A></li>
+        <LI>Next message: <A HREF="000074.html">[yade-dev] CohesiveFrictionalContactLaw &quot;box&quot;
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#73">[ date ]</a>
+              <a href="thread.html#73">[ thread ]</a>
+              <a href="subject.html#73">[ subject ]</a>
+              <a href="author.html#73">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Bruno,
+
+I'm trying to add moment rotation into CohesiveFrictionalContactLaw,
+it will use that flag &quot;momentRotationLaw&quot; (which is true by default -
+so it will modify all existing simulations!)
+
+And I've seen this line in CohesiveFrictionalContactLaw.cpp:83
+
+if (detectBrokenBodies &amp;&amp;
+(*bodies)[(*ii)-&gt;getId1()]-&gt;interactingGeometry-&gt;getClassName() !=
+&quot;box&quot;  &amp;&amp;
+(*bodies)[(*ii)-&gt;getId2()]-&gt;interactingGeometry-&gt;getClassName() !=
+&quot;box&quot;) 
+
+there are two things wrong with it:
+
+1. interactingGeometry-&gt;getClassName() returns &quot;InteractingBox&quot; not &quot;box&quot;
+2. comparing strings is not fast.
+
+-- 
+Janek Kozicki                                                         |
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000069.html">[yade-dev] LocateMultivirtual cost -&gt; callgrind
+</A></li>
+	<LI>Next message: <A HREF="000074.html">[yade-dev] CohesiveFrictionalContactLaw &quot;box&quot;
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#73">[ date ]</a>
+              <a href="thread.html#73">[ thread ]</a>
+              <a href="subject.html#73">[ subject ]</a>
+              <a href="author.html#73">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

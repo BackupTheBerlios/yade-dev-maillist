@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1561 - trunk/lib/smoothing
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1561%20-%20trunk/lib/smoothing&In-Reply-To=%3C200810272141.m9RLfLup023366%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000470.html">
+   <LINK REL="Next"  HREF="000472.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1561 - trunk/lib/smoothing</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1561%20-%20trunk/lib/smoothing&In-Reply-To=%3C200810272141.m9RLfLup023366%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1561 - trunk/lib/smoothing">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Oct 27 22:41:21 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000470.html">[deprecated list] [Yade-dev] [svn] r1560 - in trunk: .	gui/py	pkg/dem/DataClass/InteractionGeometry
+</A></li>
+        <LI>Next message: <A HREF="000472.html">[deprecated list] [Yade-dev] [svn] r1562 - in trunk: core gui	gui/py scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#471">[ date ]</a>
+              <a href="thread.html#471">[ thread ]</a>
+              <a href="subject.html#471">[ subject ]</a>
+              <a href="author.html#471">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-10-27 22:41:21 +0100 (Mon, 27 Oct 2008)
+New Revision: 1561
+
+Modified:
+   trunk/lib/smoothing/WeightedAverage2d.hpp
+Log:
+1. Fix algebraic typo in max distance check.
+
+
+Modified: trunk/lib/smoothing/WeightedAverage2d.hpp
+===================================================================
+--- trunk/lib/smoothing/WeightedAverage2d.hpp	2008-10-27 20:26:39 UTC (rev 1560)
++++ trunk/lib/smoothing/WeightedAverage2d.hpp	2008-10-27 21:41:21 UTC (rev 1561)
+@@ -119,8 +119,8 @@
+ 	virtual Real getWeight(const Vector2r&amp; meanPt, const T&amp; e){	
+ 		Vector2r pos=getPosition(e);
+ 		Real rSq=pow(meanPt[0]-pos[0],2)+pow(meanPt[1]-pos[1],2);
+-		if(rSq&gt;relThreshold*stDev*stDev) return 0.;
+-		return (1./sqrt(2*M_PI*stDev*stDev))*exp(-rSq/(2*stDev*stDev));
++		if(rSq&gt;pow(relThreshold*stDev,2)) return 0.; // discard points further than relThreshold*stDev, by default 3*stDev
++		return (1./(stDev*sqrt(2*M_PI)))*exp(-rSq/(2*stDev*stDev));
+ 	}
+ 	virtual vector&lt;Vector2i&gt; filterCells(const Vector2r&amp; refPt){return WeightedAverage&lt;T,Tvalue&gt;::grid-&gt;circleFilter(refPt,stDev*relThreshold);}
+ };
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000470.html">[deprecated list] [Yade-dev] [svn] r1560 - in trunk: .	gui/py	pkg/dem/DataClass/InteractionGeometry
+</A></li>
+	<LI>Next message: <A HREF="000472.html">[deprecated list] [Yade-dev] [svn] r1562 - in trunk: core gui	gui/py scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#471">[ date ]</a>
+              <a href="thread.html#471">[ thread ]</a>
+              <a href="subject.html#471">[ subject ]</a>
+              <a href="author.html#471">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

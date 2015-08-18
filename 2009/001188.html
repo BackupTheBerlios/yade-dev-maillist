@@ -1,0 +1,218 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1861 - trunk/pkg/dem
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1861%20-%20trunk/pkg/dem&In-Reply-To=%3C200907131530.n6DFUbwg001849%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001186.html">
+   <LINK REL="Next"  HREF="001189.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1861 - trunk/pkg/dem</H1>
+    <B>gladky_anton at mail.berlios.de</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1861%20-%20trunk/pkg/dem&In-Reply-To=%3C200907131530.n6DFUbwg001849%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1861 - trunk/pkg/dem">gladky_anton at mail.berlios.de
+       </A><BR>
+    <I>Mon Jul 13 17:30:37 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001186.html">[deprecated list] [Yade-dev] [svn] r1860 - trunk/pkg/dem
+</A></li>
+        <LI>Next message: <A HREF="001189.html">[deprecated list] [Yade-dev] [svn] r1862 - in trunk: gui/qt3	pkg/common	pkg/common/DataClass	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem	pkg/dem/Engine/DeusExMachina scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1188">[ date ]</a>
+              <a href="thread.html#1188">[ thread ]</a>
+              <a href="subject.html#1188">[ subject ]</a>
+              <a href="author.html#1188">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: gladky_anton
+Date: 2009-07-13 17:30:36 +0200 (Mon, 13 Jul 2009)
+New Revision: 1861
+
+Modified:
+   trunk/pkg/dem/RockPM.cpp
+   trunk/pkg/dem/RockPM.hpp
+Log:
+Changes on RockPM.* files
+
+
+Modified: trunk/pkg/dem/RockPM.cpp
+===================================================================
+--- trunk/pkg/dem/RockPM.cpp	2009-07-13 09:41:46 UTC (rev 1860)
++++ trunk/pkg/dem/RockPM.cpp	2009-07-13 15:30:36 UTC (rev 1861)
+@@ -28,30 +28,34 @@
+ 
+ 
+ /********************** Law2_Dem3DofGeom_RockPMPhys_Rpm ****************************/
++CREATE_LOGGER(Law2_Dem3DofGeom_RockPMPhys_Rpm);
+ 
+ void Law2_Dem3DofGeom_RockPMPhys_Rpm::go(shared_ptr&lt;InteractionGeometry&gt;&amp; ig, shared_ptr&lt;InteractionPhysics&gt;&amp; ip, Interaction* contact, MetaBody* rootBody){
+ 	Dem3DofGeom* geom=static_cast&lt;Dem3DofGeom*&gt;(ig.get());
+-	
+ 	RpmPhys* phys=static_cast&lt;RpmPhys*&gt;(ip.get());
+-	
++
+ 	Real displN=geom-&gt;displacementN();
+-	
+-	if((displN&lt;=0)){
+-/*Normal Interaction*/
++	if(displN&lt;=0){
++		/*Normal Interaction*/
+ 		phys-&gt;normalForce=phys-&gt;kn*displN*geom-&gt;normal;
+ 		Real maxFsSq=phys-&gt;normalForce.SquaredLength()*pow(phys-&gt;tanFrictionAngle,2);
+ 		Vector3r trialFs=phys-&gt;ks*geom-&gt;displacementT();
+ 		if(trialFs.SquaredLength()&gt;maxFsSq){ geom-&gt;slipToDisplacementTMax(sqrt(maxFsSq)); trialFs*=sqrt(maxFsSq/(trialFs.SquaredLength()));} 
+ 		applyForceAtContactPoint(phys-&gt;normalForce+trialFs,geom-&gt;contactPoint,contact-&gt;getId1(),geom-&gt;se31.position,contact-&gt;getId2(),geom-&gt;se32.position,rootBody);
+-/*Normal Interaction_____*/
+-		return;
+-	} else if ((displN&gt;0)&amp;&amp;(phys-&gt;isCohesive)){
+-		if (displN&lt;(phys-&gt;lengthMaxTension)) {
+-			rootBody-&gt;interactions-&gt;requestErase(contact-&gt;getId1(),contact-&gt;getId2()); return;
++		/*Normal Interaction_____*/
++		if ((phys-&gt;isCohesive)&amp;&amp;(displN&lt;(-phys-&gt;lengthMaxCompression))) {
++			LOG_WARN(displN&lt;&lt;&quot;____&quot;&lt;&lt;phys-&gt;normalForce);
+ 		}
+-		rootBody-&gt;interactions-&gt;requestErase(contact-&gt;getId1(),contact-&gt;getId2()); return;
+ 	} else {
+-		rootBody-&gt;interactions-&gt;requestErase(contact-&gt;getId1(),contact-&gt;getId2()); return;
++		if (phys-&gt;isCohesive) {
++			phys-&gt;normalForce=phys-&gt;kn*displN*geom-&gt;normal;
++			//LOG_WARN(displN&lt;&lt;&quot;____&quot;&lt;&lt;phys-&gt;normalForce);
++			applyForceAtContactPoint(phys-&gt;normalForce,geom-&gt;contactPoint,contact-&gt;getId1(),geom-&gt;se31.position,contact-&gt;getId2(),geom-&gt;se32.position,rootBody);
++			return;
++		} else {
++			rootBody-&gt;interactions-&gt;requestErase(contact-&gt;getId1(),contact-&gt;getId2());
++			return;
++		}
+ 	}
+ 	
+ }
+@@ -63,6 +67,7 @@
+ 	if(interaction-&gt;interactionPhysics) return; 
+ 
+ 	Dem3DofGeom* contGeom=YADE_CAST&lt;Dem3DofGeom*&gt;(interaction-&gt;interactionGeometry.get());
++	
+ 	assert(contGeom);
+ 	
+ 	const shared_ptr&lt;RpmMat&gt;&amp; rpm1=YADE_PTR_CAST&lt;RpmMat&gt;(pp1);
+@@ -71,6 +76,8 @@
+ 	const shared_ptr&lt;BodyMacroParameters&gt;&amp; elast1=static_pointer_cast&lt;BodyMacroParameters&gt;(pp1);
+ 	const shared_ptr&lt;BodyMacroParameters&gt;&amp; elast2=static_pointer_cast&lt;BodyMacroParameters&gt;(pp2);
+ 
++	bool initCohesive = rpm1-&gt;initCohesive*rpm2-&gt;initCohesive;
++	
+ 	Real E12=2*elast1-&gt;young*elast2-&gt;young/(elast1-&gt;young+elast2-&gt;young);
+ 	Real minRad=(contGeom-&gt;refR1&lt;=0?contGeom-&gt;refR2:(contGeom-&gt;refR2&lt;=0?contGeom-&gt;refR1:min(contGeom-&gt;refR1,contGeom-&gt;refR2)));
+ 	Real S12=Mathr::PI*pow(minRad,2);
+@@ -82,13 +89,18 @@
+ 	contPhys-&gt;kn=contPhys-&gt;E*contPhys-&gt;crossSection;
+ 	contPhys-&gt;ks=contPhys-&gt;G*contPhys-&gt;crossSection;
+ 	
+-	contPhys-&gt;lengthMaxCompression=S12*(rpm2-&gt;stressCompressMax)/(contPhys-&gt;kn);
+-	contPhys-&gt;lengthMaxTension=S12*(rpm2-&gt;stressTensionMax)/(contPhys-&gt;kn);
++	contPhys-&gt;lengthMaxCompression=S12*(0.5*(rpm1-&gt;stressCompressMax+rpm2-&gt;stressCompressMax))/(contPhys-&gt;kn);
++	contPhys-&gt;lengthMaxTension=S12*(0.5*(rpm1-&gt;stressTensionMax+rpm2-&gt;stressTensionMax))/(contPhys-&gt;kn);
+ 	
+-	//If 2 bodies were not damaged previously, and they belong to 1 example (stone), they can be cohesive
+-	if ((rpm1-&gt;exampleNumber==rpm2-&gt;exampleNumber)&amp;&amp;(!(rpm1-&gt;isDamaged||rpm2-&gt;isDamaged))) {
++	initDistance = contGeom-&gt;displacementN();
++
++	if ((rpm1-&gt;exampleNumber==rpm2-&gt;exampleNumber)&amp;&amp;(initDistance&lt;(contPhys-&gt;lengthMaxTension))&amp;&amp;(initCohesive)) {
+ 		contPhys-&gt;isCohesive=true;
++		//LOG_WARN(&quot;InitDistance=&quot;&lt;&lt;initDistance);
++		//LOG_WARN(&quot;lengthMaxCompression=&quot;&lt;&lt;contPhys-&gt;lengthMaxCompression);
++		//LOG_WARN(&quot;lengthMaxTension=&quot;&lt;&lt;contPhys-&gt;lengthMaxTension);
+ 	}
++
+ 	
+ 	interaction-&gt;interactionPhysics=contPhys;
+ }
+
+Modified: trunk/pkg/dem/RockPM.hpp
+===================================================================
+--- trunk/pkg/dem/RockPM.hpp	2009-07-13 09:41:46 UTC (rev 1860)
++++ trunk/pkg/dem/RockPM.hpp	2009-07-13 15:30:36 UTC (rev 1861)
+@@ -39,6 +39,7 @@
+ 		FUNCTOR2D(Dem3DofGeom,RpmPhys);
+ 		REGISTER_CLASS_AND_BASE(Law2_Dem3DofGeom_RockPMPhys_Rpm,ConstitutiveLaw);
+ 		REGISTER_ATTRIBUTES(ConstitutiveLaw,/*nothing here*/);
++		DECLARE_LOGGER;	
+ };
+ REGISTER_SERIALIZABLE(Law2_Dem3DofGeom_RockPMPhys_Rpm);
+ 
+@@ -46,11 +47,11 @@
+ class RpmMat: public BodyMacroParameters {
+ 	public:
+ 		int exampleNumber; //Number of &quot;stone&quot;
+-		bool isDamaged;
++		bool initCohesive;
+ 		Real stressCompressMax, stressTensionMax; //Parameters for damaging
+ 
+-		RpmMat(): exampleNumber(0.), isDamaged(false), stressCompressMax(0), stressTensionMax(0) {createIndex();};
+-		REGISTER_ATTRIBUTES(BodyMacroParameters, (exampleNumber) (isDamaged) (stressCompressMax) (stressTensionMax));
++		RpmMat(): exampleNumber(0.), initCohesive(false), stressCompressMax(0), stressTensionMax(0) {createIndex();};
++		REGISTER_ATTRIBUTES(BodyMacroParameters, (exampleNumber) (initCohesive) (stressCompressMax) (stressTensionMax));
+ 		REGISTER_CLASS_AND_BASE(RpmMat,BodyMacroParameters);
+ };
+ REGISTER_SERIALIZABLE(RpmMat);
+@@ -59,16 +60,16 @@
+ class Ip2_RpmMat_RpmMat_RpmPhys: public InteractionPhysicsEngineUnit{
+ 	private:
+ 	public:
+-		Real sigmaT;
++		Real sigmaT, initDistance;
+ 
+ 		Ip2_RpmMat_RpmMat_RpmPhys(){
+-			// init to signaling_NaN to force crash if not initialized (better than unknowingly using garbage values)
+-			sigmaT=3;
++			initDistance = 0;
+ 		}
+ 
+ 		virtual void go(const shared_ptr&lt;PhysicalParameters&gt;&amp; pp1, const shared_ptr&lt;PhysicalParameters&gt;&amp; pp2, const shared_ptr&lt;Interaction&gt;&amp; interaction);
+ 		REGISTER_ATTRIBUTES(InteractionPhysicsEngineUnit,
+ 			(sigmaT)
++			(initDistance)
+ 		);
+ 
+ 		FUNCTOR2D(RpmMat,RpmMat);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001186.html">[deprecated list] [Yade-dev] [svn] r1860 - trunk/pkg/dem
+</A></li>
+	<LI>Next message: <A HREF="001189.html">[deprecated list] [Yade-dev] [svn] r1862 - in trunk: gui/qt3	pkg/common	pkg/common/DataClass	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem	pkg/dem/Engine/DeusExMachina scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1188">[ date ]</a>
+              <a href="thread.html#1188">[ thread ]</a>
+              <a href="subject.html#1188">[ subject ]</a>
+              <a href="author.html#1188">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,117 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] commit 1583, 3d view,	serialization.
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20commit%201583%2C%203d%20view%2C%0A%09serialization.&In-Reply-To=%3C492DC9E8.8080503%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000528.html">
+   <LINK REL="Next"  HREF="000532.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] commit 1583, 3d view,	serialization.</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20commit%201583%2C%203d%20view%2C%0A%09serialization.&In-Reply-To=%3C492DC9E8.8080503%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev] commit 1583, 3d view,	serialization.">eudoxos at arcig.cz
+       </A><BR>
+    <I>Wed Nov 26 23:12:56 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000528.html">[deprecated list] [Yade-dev] commit 1583, 3d view, serialization.
+</A></li>
+        <LI>Next message: <A HREF="000532.html">[deprecated list] [Yade-dev] commit 1583, 3d view,	serialization.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#530">[ date ]</a>
+              <a href="thread.html#530">[ thread ]</a>
+              <a href="subject.html#530">[ subject ]</a>
+              <a href="author.html#530">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> After you commit, the &quot;primary view&quot; window is empty (draws nothing),
+</I>&gt;<i> but when I click &quot;New 3D&quot; view - the new window draws everything as
+</I>&gt;<i> it should. Can you fix that?
+</I>&gt;<i>   
+</I>I am not aware of changing anything related to the 3d view lately. Can
+you precise?
+&gt;<i> In my commit 1584 I'm adding some snow-related stuff. It's my files
+</I>&gt;<i> that I have been developing as a separate code in the past. That code
+</I>&gt;<i> is using boost::serialization. So I guess that this is time for
+</I>&gt;<i> adding to yade a dependency on boost serialiaztion (unless you
+</I>&gt;<i> exclude='snow'). I think that actually having &quot;twice&quot; serialization
+</I>&gt;<i> in whole yade isn't too difficult to add. Look at how I'm using it in
+</I>&gt;<i> my files, and you can start adding it too in other files.... if you want.
+</I>&gt;<i>   
+</I>Hmmm... I don't have exactly time to do that, but I will study your
+code, it can surely be interesting.
+
+There is more things I would like to change in yade globally (besides
+serialization), so I think I will try to develop a working prototype
+from scratch (using existing classes here and there). What I would like
+to address specifically is:
+
+1. Use shared_ptr only if necessary, it has some performance penalties.
+It would be enough if the owner (Body, Interaction, ...) used auto_ptr
+to avoid leaks. If the owned object is used after the owner has been
+destroyed (which is OK with shared_ptr, but will crash with auto_ptr),
+it is a bug anyway.
+2. Better and faster python support, be it through py++ wrapper or other
+option, but _not_ by using conversions from and to strings.
+3. Better serialization, if possible automatically getting attributes to
+save (needs reflection - for example reflex library from CERN's root; if
+we have that, most macros in class declarations can be avoided).
+4. Experiment with multimethods, if it would not be faster to have
+hardwired if/else if/else if/... clauses for a few combinations rather
+than completely generic solution. I know it defeats genericity, but it
+is a compromise to consider.
+5. Experiment with pluginless build and whether plugins should be
+supported. The current state is that I know of exactly 0 cases that
+external plugin was built and used with yade compiled elsewhere. (oofem,
+for example, is a single binary, and is still very modular)
+6. Use some neat features from c++0x (future; g++ doesn't support those
+as of now)
+7. Use new (or better than those new) class names, have less files, less
+management code, more real code that does something.
+
+My time is constrained, though, those are just a few ideas about things
+that I find frustrating at times.
+
+Regards, Vaclav
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000528.html">[deprecated list] [Yade-dev] commit 1583, 3d view, serialization.
+</A></li>
+	<LI>Next message: <A HREF="000532.html">[deprecated list] [Yade-dev] commit 1583, 3d view,	serialization.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#530">[ date ]</a>
+              <a href="thread.html#530">[ thread ]</a>
+              <a href="subject.html#530">[ subject ]</a>
+              <a href="author.html#530">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1495 - trunk/gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1495%20-%20trunk/gui/py&In-Reply-To=%3C200808280858.m7S8wYFN026255%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000320.html">
+   <LINK REL="Next"  HREF="000322.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1495 - trunk/gui/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1495%20-%20trunk/gui/py&In-Reply-To=%3C200808280858.m7S8wYFN026255%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1495 - trunk/gui/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Aug 28 10:58:34 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000320.html">[deprecated list] [Yade-dev] [svn] r1494 - in trunk: extra	extra/clump gui gui/py
+</A></li>
+        <LI>Next message: <A HREF="000322.html">[deprecated list] [Yade-dev] [svn] r1496 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#321">[ date ]</a>
+              <a href="thread.html#321">[ thread ]</a>
+              <a href="subject.html#321">[ subject ]</a>
+              <a href="author.html#321">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-08-28 10:58:33 +0200 (Thu, 28 Aug 2008)
+New Revision: 1495
+
+Modified:
+   trunk/gui/py/yadeControl.cpp
+Log:
+1. Add python interface for blocking DOFs:
+		b.phys.blockedDOFs=['z','rx','ry']
+	It is friendlier than b.phys['blockedDOFs']=1&lt;&lt;2|1&lt;&lt;3|1&lt;&lt;4.
+	The property is read-write.
+
+
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-08-25 07:58:04 UTC (rev 1494)
++++ trunk/gui/py/yadeControl.cpp	2008-08-28 08:58:33 UTC (rev 1495)
+@@ -131,7 +131,27 @@
+ BASIC_PY_PROXY(pyInteractionPhysics,InteractionPhysics);
+ 
+ BASIC_PY_PROXY(pyGeometricalModel,GeometricalModel);
+-BASIC_PY_PROXY(pyPhysicalParameters,PhysicalParameters);
++BASIC_PY_PROXY_HEAD(pyPhysicalParameters,PhysicalParameters)
++	python::list blockedDOFs_get(){
++		python::list ret;
++		#define _SET_DOF(DOF_ANY,str) if((proxee-&gt;blockedDOFs &amp; PhysicalParameters::DOF_ANY)!=0) ret.append(str);
++		_SET_DOF(DOF_X,&quot;x&quot;); _SET_DOF(DOF_Y,&quot;y&quot;); _SET_DOF(DOF_Z,&quot;z&quot;); _SET_DOF(DOF_RX,&quot;rx&quot;); _SET_DOF(DOF_RY,&quot;ry&quot;); _SET_DOF(DOF_RZ,&quot;rz&quot;);
++		#undef _SET_DOF
++		return ret;
++	}
++	void blockedDOFs_set(python::list l){
++		proxee-&gt;blockedDOFs=PhysicalParameters::DOF_NONE;
++		int len=python::len(l);
++		for(int i=0; i&lt;len; i++){
++			string s=python::extract&lt;string&gt;(l[i])();
++			#define _GET_DOF(DOF_ANY,str) if(s==str) { proxee-&gt;blockedDOFs|=PhysicalParameters::DOF_ANY; continue; }
++			_GET_DOF(DOF_X,&quot;x&quot;); _GET_DOF(DOF_Y,&quot;y&quot;); _GET_DOF(DOF_Z,&quot;z&quot;); _GET_DOF(DOF_RX,&quot;rx&quot;); _GET_DOF(DOF_RY,&quot;ry&quot;); _GET_DOF(DOF_RZ,&quot;rz&quot;);
++			#undef _GET_DOF
++			throw std::invalid_argument(&quot;Invalid  DOF specification `&quot;+s+&quot;', must be &#8712;{x,y,z,rx,ry,rz}.&quot;);
++		}
++	}
++BASIC_PY_PROXY_TAIL;
++
+ BASIC_PY_PROXY(pyBoundingVolume,BoundingVolume);
+ BASIC_PY_PROXY(pyInteractingGeometry,InteractingGeometry);
+ 
+@@ -547,7 +567,8 @@
+ 
+ 	BASIC_PY_PROXY_WRAPPER(pyGeometricalModel,&quot;GeometricalModel&quot;);
+ 	BASIC_PY_PROXY_WRAPPER(pyInteractingGeometry,&quot;InteractingGeometry&quot;);
+-	BASIC_PY_PROXY_WRAPPER(pyPhysicalParameters,&quot;PhysicalParameters&quot;);
++	BASIC_PY_PROXY_WRAPPER(pyPhysicalParameters,&quot;PhysicalParameters&quot;)	
++		.add_property(&quot;blockedDOFs&quot;,&amp;pyPhysicalParameters::blockedDOFs_get,&amp;pyPhysicalParameters::blockedDOFs_set);
+ 	BASIC_PY_PROXY_WRAPPER(pyBoundingVolume,&quot;BoundingVolume&quot;);
+ 	BASIC_PY_PROXY_WRAPPER(pyInteractionGeometry,&quot;InteractionGeometry&quot;);
+ 	BASIC_PY_PROXY_WRAPPER(pyInteractionPhysics,&quot;InteractionPhysics&quot;);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000320.html">[deprecated list] [Yade-dev] [svn] r1494 - in trunk: extra	extra/clump gui gui/py
+</A></li>
+	<LI>Next message: <A HREF="000322.html">[deprecated list] [Yade-dev] [svn] r1496 - trunk
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#321">[ date ]</a>
+              <a href="thread.html#321">[ thread ]</a>
+              <a href="subject.html#321">[ subject ]</a>
+              <a href="author.html#321">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

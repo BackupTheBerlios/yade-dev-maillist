@@ -1,0 +1,155 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1498 - trunk/gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1498%20-%20trunk/gui/py&In-Reply-To=%3C200808292123.m7TLNvov025692%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000323.html">
+   <LINK REL="Next"  HREF="000325.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1498 - trunk/gui/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1498%20-%20trunk/gui/py&In-Reply-To=%3C200808292123.m7TLNvov025692%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1498 - trunk/gui/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Aug 29 23:23:57 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000323.html">[deprecated list] [Yade-dev] [svn] r1497 - trunk/gui/py
+</A></li>
+        <LI>Next message: <A HREF="000325.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-17138/bin/yade-svn1498:	DirectShearCis, FEMBeam,	HydraulicTest, SDECImpactTest, STLImporterTest, TetrahedronsTest
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#324">[ date ]</a>
+              <a href="thread.html#324">[ thread ]</a>
+              <a href="subject.html#324">[ subject ]</a>
+              <a href="author.html#324">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-08-29 23:23:56 +0200 (Fri, 29 Aug 2008)
+New Revision: 1498
+
+Modified:
+   trunk/gui/py/_utils.cpp
+   trunk/gui/py/eudoxos.py
+Log:
+1. Skip (almost) exactly zero projections, implement masking of bodies.
+
+ Preprocessor(&quot;TriaxialTest&quot;).load()
+ o=Omega(); o.run(50,True);
+ from yade import eudoxos
+ eudoxos.plotDirections(mask=2); # mask==2 on all bodies including walls ?\226?\134?\146 highly anisotropic
+
+
+
+Modified: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2008-08-29 20:54:03 UTC (rev 1497)
++++ trunk/gui/py/_utils.cpp	2008-08-29 21:23:56 UTC (rev 1498)
+@@ -58,16 +58,23 @@
+  * to the plane perpendicular to axis&#8712;[0,1,2]; the number of bins can be specified and they cover
+  * the range (0,&#960;), since interactions are bidirecional, hence periodically the same on (&#960;,2&#960;).
+  *
+- * only contacts using SpheresContactGeometry are considered.
++ * Only contacts using SpheresContactGeometry are considered.
++ * Both bodies must be in the mask (except if mask is 0, when all bodies are considered)
++ * If the projection is shorter than minProjLen, it is skipped.
++ *
++ * @todo implement groupMask
+  */
+-python::tuple interactionAnglesHistogram(int axis, size_t bins=20){
++python::tuple interactionAnglesHistogram(int axis, int mask=0, size_t bins=20, Real minProjLen=1e-6){
+ 	if(axis&lt;0||axis&gt;2) throw invalid_argument(&quot;Axis must be from {0,1,2}=x,y,z.&quot;);
+ 	Real binStep=Mathr::PI/bins; int axis2=(axis+1)%3, axis3=(axis+2)%3;
+ 	vector&lt;Real&gt; cummProj(bins,0.);
+-	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; i, *Omega::instance().getRootBody()-&gt;transientInteractions){
+-		shared_ptr&lt;SpheresContactGeometry&gt; scg=dynamic_pointer_cast&lt;SpheresContactGeometry&gt;(i-&gt;interactionGeometry);
+-		if(!scg) continue;
++	shared_ptr&lt;MetaBody&gt; rb=Omega::instance().getRootBody();
++	FOREACH(const shared_ptr&lt;Interaction&gt;&amp; i, *rb-&gt;transientInteractions){
++		if(!i-&gt;isReal) continue;
++		if(!(mask==0 || (mask&gt;0 &amp;&amp; (Body::byId(i-&gt;getId1(),rb)-&gt;getGroupMask() &amp; mask) &amp;&amp; (Body::byId(i-&gt;getId2(),rb)-&gt;getGroupMask() &amp; mask)))) continue;
++		shared_ptr&lt;SpheresContactGeometry&gt; scg=dynamic_pointer_cast&lt;SpheresContactGeometry&gt;(i-&gt;interactionGeometry); if(!scg) continue;
+ 		Vector3r n(scg-&gt;normal); n[axis]=0.; Real nLen=n.Length();
++		if(nLen&lt;minProjLen) continue; // this interaction is (almost) exactly parallel to our axis; skip that one
+ 		Real theta=acos(n[axis2]/nLen)*(n[axis3]&gt;0?1:-1); if(theta&lt;0) theta+=Mathr::PI;
+ 		int binNo=theta/binStep;
+ 		cummProj[binNo]+=nLen;
+@@ -76,7 +83,7 @@
+ 	for(size_t i=0; i&lt;(size_t)bins; i++){ val.append(cummProj[i]); binMid.append(i*binStep);}
+ 	return python::make_tuple(binMid,val);
+ }
+-BOOST_PYTHON_FUNCTION_OVERLOADS(interactionAnglesHistogram_overloads,interactionAnglesHistogram,1,2);
++BOOST_PYTHON_FUNCTION_OVERLOADS(interactionAnglesHistogram_overloads,interactionAnglesHistogram,1,3);
+ 
+ 
+ BOOST_PYTHON_MODULE(_utils){
+@@ -85,7 +92,7 @@
+ 	def(&quot;negPosExtremeIds&quot;,negPosExtremeIds,negPosExtremeIds_overloads(args(&quot;axis&quot;,&quot;distFactor&quot;)));
+ 	def(&quot;coordsAndDisplacements&quot;,coordsAndDisplacements);
+ 	def(&quot;setRefSe3&quot;,setRefSe3);
+-	def(&quot;interactionAnglesHistogram&quot;,interactionAnglesHistogram,interactionAnglesHistogram_overloads(args(&quot;axis&quot;,&quot;bins&quot;)));
++	def(&quot;interactionAnglesHistogram&quot;,interactionAnglesHistogram,interactionAnglesHistogram_overloads(args(&quot;axis&quot;,&quot;mask&quot;,&quot;bins&quot;)));
+ }
+ 
+ 
+
+Modified: trunk/gui/py/eudoxos.py
+===================================================================
+--- trunk/gui/py/eudoxos.py	2008-08-29 20:54:03 UTC (rev 1497)
++++ trunk/gui/py/eudoxos.py	2008-08-29 21:23:56 UTC (rev 1498)
+@@ -5,12 +5,12 @@
+ #
+ 
+ 
+-def plotDirections(bins=20):
++def plotDirections(mask=0,bins=20):
+ 	&quot;Plot 3 histograms for distribution of interaction directions, in yz,xz and xy planes.&quot;
+ 	import pylab
+ 	from yade import utils
+ 	for axis in [0,1,2]:
+-		d=utils.interactionAnglesHistogram(axis,bins)
++		d=utils.interactionAnglesHistogram(axis,mask=mask,bins=bins)
+ 		fc=[0,0,0]; fc[axis]=1.
+ 		pylab.subplot(220+axis+1,polar=True);
+ 		bar(d[0],d[1],width=math.pi/(1.2*bins),fc=fc,alpha=.7,label=['yz','xz','xy'][axis])
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000323.html">[deprecated list] [Yade-dev] [svn] r1497 - trunk/gui/py
+</A></li>
+	<LI>Next message: <A HREF="000325.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-17138/bin/yade-svn1498:	DirectShearCis, FEMBeam,	HydraulicTest, SDECImpactTest, STLImporterTest, TetrahedronsTest
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#324">[ date ]</a>
+              <a href="thread.html#324">[ thread ]</a>
+              <a href="subject.html#324">[ subject ]</a>
+              <a href="author.html#324">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

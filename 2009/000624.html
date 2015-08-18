@@ -1,0 +1,726 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1643 - in trunk/pkg/snow: .	DataClass Engine	PreProcessor RenderingEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1643%20-%20in%20trunk/pkg/snow%3A%20.%0A%09DataClass%20Engine%09PreProcessor%20RenderingEngine&In-Reply-To=%3C200901260334.n0Q3Y4E1018121%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000622.html">
+   <LINK REL="Next"  HREF="000625.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1643 - in trunk/pkg/snow: .	DataClass Engine	PreProcessor RenderingEngine</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1643%20-%20in%20trunk/pkg/snow%3A%20.%0A%09DataClass%20Engine%09PreProcessor%20RenderingEngine&In-Reply-To=%3C200901260334.n0Q3Y4E1018121%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1643 - in trunk/pkg/snow: .	DataClass Engine	PreProcessor RenderingEngine">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Mon Jan 26 04:34:04 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000622.html">[deprecated list] [Yade-dev] [svn] r1642 - in trunk/pkg/snow:	DataClass	RenderingEngine
+</A></li>
+        <LI>Next message: <A HREF="000625.html">[deprecated list] [Yade-dev] [svn] r1643 - in trunk/pkg/snow: .	DataClass Engine	PreProcessor RenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#624">[ date ]</a>
+              <a href="thread.html#624">[ thread ]</a>
+              <a href="subject.html#624">[ subject ]</a>
+              <a href="author.html#624">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2009-01-26 04:34:03 +0100 (Mon, 26 Jan 2009)
+New Revision: 1643
+
+Added:
+   trunk/pkg/snow/DataClass/IstSnowLayersContact.cpp
+   trunk/pkg/snow/DataClass/IstSnowLayersContact.hpp
+   trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.cpp
+   trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.hpp
+   trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.cpp
+   trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.hpp
+Modified:
+   trunk/pkg/snow/DataClass/BshSnowGrain.cpp
+   trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp
+   trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.cpp
+   trunk/pkg/snow/RenderingEngine/Ef1_BssSnowGrain_glDraw.cpp
+   trunk/pkg/snow/RenderingEngine/Ef1_BssSnowGrain_glDraw.hpp
+   trunk/pkg/snow/SConscript
+Log:
+small snow update
+
+
+
+Modified: trunk/pkg/snow/DataClass/BshSnowGrain.cpp
+===================================================================
+--- trunk/pkg/snow/DataClass/BshSnowGrain.cpp	2009-01-25 22:32:18 UTC (rev 1642)
++++ trunk/pkg/snow/DataClass/BshSnowGrain.cpp	2009-01-26 03:34:03 UTC (rev 1643)
+@@ -213,8 +213,8 @@
+ 				if( point_plane_distance &gt; depth*0.5 ) // (1-parallelepiped)
+ 				{ // that's close enough. We can speed up the computation by returning true at this point
+ 
+-// therefore in fact, we are checking if point is inside a volume of parallelepiped (1) the height of 1/2 depth
+-// within the polyhedron PLUS (that's the code below - the (2)) a polyhedron the height given by depth
++// therefore in fact, we are checking if point is inside a volume of parallelepiped (1-) the height of 1/2 depth
++// within the polyhedron PLUS (that's the code below - the (2-)) a polyhedron the height given by depth
+ // like this:
+ //              ____________     this weird shape is WHOLE polyhedron
+ //             /         Z. \                                                         ------
+@@ -225,9 +225,9 @@
+ //        /          '         ` \______________ XX face (see description)                 |e - search below for
+ //       /          '           `              /                                           |p 'arbitrary safety coefficient'
+ //      /      ....'.............`......      /                                            |t
+-//      \     '   '           1-parallelepiped with height equal to 1/2 of depth           |h
+-//       \    '  '                 `   '    /                                              |
+-//        \   ' '                   `  '   /                                               |
++//      \     '   '           1-parallelepiped with height equal to 1/2 of depth           |h ('Z' is orthogonal to triangle with 
++//       \    '  '                 `   '    /                                              |   'depth' distance from the
++//        \   ' '                   `  '   /                                               |   triangle's center point )
+ //         \  ''                     ` '  /                                                |
+ //          \ '                       `' /                                                 |
+ //           \__________________________/                                             ------
+
+Added: trunk/pkg/snow/DataClass/IstSnowLayersContact.cpp
+===================================================================
+--- trunk/pkg/snow/DataClass/IstSnowLayersContact.cpp	2009-01-25 22:32:18 UTC (rev 1642)
++++ trunk/pkg/snow/DataClass/IstSnowLayersContact.cpp	2009-01-26 03:34:03 UTC (rev 1643)
+@@ -0,0 +1,15 @@
++#include&lt;yade/pkg-snow/IstSnowLayersContact.hpp&gt;
++
++IstSnowLayersContact::IstSnowLayersContact()
++{
++	createIndex();
++}
++
++IstSnowLayersContact::~IstSnowLayersContact()
++{}
++		
++void IstSnowLayersContact::registerAttributes()
++{
++	SpheresContactGeometry::registerAttributes();
++}
++
+
+Added: trunk/pkg/snow/DataClass/IstSnowLayersContact.hpp
+===================================================================
+--- trunk/pkg/snow/DataClass/IstSnowLayersContact.hpp	2009-01-25 22:32:18 UTC (rev 1642)
++++ trunk/pkg/snow/DataClass/IstSnowLayersContact.hpp	2009-01-26 03:34:03 UTC (rev 1643)
+@@ -0,0 +1,23 @@
++// 2009 Janek Kozicki &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>&gt;
++
++#pragma once
++
++#include&lt;yade/core/InteractionGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++
++class IstSnowLayersContact : public SpheresContactGeometry
++{
++	public:
++		IstSnowLayersContact();
++		virtual ~IstSnowLayersContact();
++
++	protected :
++		virtual void registerAttributes();
++
++	REGISTER_CLASS_NAME(IstSnowLayersContact);
++	REGISTER_BASE_CLASS_NAME(SpheresContactGeometry);
++	REGISTER_CLASS_INDEX(IstSnowLayersContact,SpheresContactGeometry);
++};
++
++REGISTER_SERIALIZABLE(IstSnowLayersContact);
++
+
+Added: trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.cpp
+===================================================================
+--- trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.cpp	2009-01-25 22:32:18 UTC (rev 1642)
++++ trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.cpp	2009-01-26 03:34:03 UTC (rev 1643)
+@@ -0,0 +1,82 @@
++// &#194;&#169; 2004 Olivier Galizzi &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>&gt;
++// &#194;&#169; 2004 Janek Kozicki &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>&gt;
++// &#194;&#169; 2007 Bruno Chareyre &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at hmg.inpg.fr</A>&gt;
++// &#194;&#169; 2008 V&#195;&#161;clav &#197;&#160;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++
++#include&quot;Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.hpp&quot;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-snow/BssSnowGrain.hpp&gt;
++#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++
++#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++#include&lt;yade/core/Omega.hpp&gt;
++
++
++Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact::Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact()
++{
++}
++
++void Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact::registerAttributes()
++{	
++}
++
++bool Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact::go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++							const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++							const Se3r&amp; se31,
++							const Se3r&amp; se32,
++							const shared_ptr&lt;Interaction&gt;&amp; c)
++{
++//	bool result = g.go(cm1,cm2,se31,se32,c);
++//	std::cerr &lt;&lt; &quot;-----------------1- Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact\n&quot;;
++//	return result;
++
++	BssSnowGrain* s1=static_cast&lt;BssSnowGrain*&gt;(cm1.get()), *s2=static_cast&lt;BssSnowGrain*&gt;(cm2.get());
++	Vector3r normal=se32.position-se31.position;
++	Real penetrationDepthSq=pow((s1-&gt;radius+s2-&gt;radius),2) - normal.SquaredLength();
++	if (penetrationDepthSq&gt;0 || c-&gt;isReal)
++	{
++		shared_ptr&lt;SpheresContactGeometry&gt; scm;
++		if(c-&gt;interactionGeometry) scm=YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
++		else { scm=shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry()); c-&gt;interactionGeometry=scm; }
++
++		Real penetrationDepth=s1-&gt;radius+s2-&gt;radius-normal.Normalize(); /* Normalize() works in-place and returns length before normalization; from here, normal is unit vector */
++		scm-&gt;contactPoint=se31.position+(s1-&gt;radius-0.5*penetrationDepth)*normal;//0.5*(pt1+pt2);
++		scm-&gt;normal=normal;
++		scm-&gt;penetrationDepth=penetrationDepth;
++
++		int id1 = c-&gt;getId1();
++		int id2 = c-&gt;getId2();
++
++		if(s1-&gt;depth.find(id2) == s1-&gt;depth.end())
++			s1-&gt;depth[id2] = penetrationDepth;
++		if(s2-&gt;depth.find(id1) == s2-&gt;depth.end())
++			s2-&gt;depth[id1] = penetrationDepth;
++
++		Real d1 = s1-&gt;depth[id2];
++		Real d2 = s2-&gt;depth[id1];
++		if(d1 != d2)
++			std::cerr &lt;&lt; &quot;bad initial penetration?\n&quot;;
++
++		penetrationDepth -= d1;
++		scm-&gt;penetrationDepth=penetrationDepth;
++
++		scm-&gt;radius1=s1-&gt;radius;
++		scm-&gt;radius2=s2-&gt;radius;
++		return true;
++	}
++	return false;
++}
++
++
++bool Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact::goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++								const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++								const Se3r&amp; se31,
++								const Se3r&amp; se32,
++								const shared_ptr&lt;Interaction&gt;&amp; c)
++{
++//	std::cerr &lt;&lt; &quot;-----------------2- Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact\n&quot;;
++	return go(cm1,cm2,se31,se32,c);
++}
++
++YADE_PLUGIN();
++
+
+Added: trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.hpp
+===================================================================
+--- trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.hpp	2009-01-25 22:32:18 UTC (rev 1642)
++++ trunk/pkg/snow/Engine/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.hpp	2009-01-26 03:34:03 UTC (rev 1643)
+@@ -0,0 +1,37 @@
++/*************************************************************************
++*  Copyright (C) 2008 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#pragma once
++
++#include&lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
++#include&lt;yade/pkg-dem/InteractingSphere2InteractingSphere4SpheresContactGeometry.hpp&gt;
++
++class Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact : public InteractionGeometryEngineUnit
++{
++	public :
++		InteractingSphere2InteractingSphere4SpheresContactGeometry g;
++
++		virtual bool go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1, const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2, const Se3r&amp; se31, const Se3r&amp; se32, const shared_ptr&lt;Interaction&gt;&amp; c);
++		virtual bool goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1, const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2, const Se3r&amp; se31, const Se3r&amp; se32, const shared_ptr&lt;Interaction&gt;&amp; c);
++					
++		Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact();		
++		
++	REGISTER_CLASS_NAME(Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact);
++	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
++
++	FUNCTOR2D(BssSnowGrain,BssSnowGrain);
++	
++	DEFINE_FUNCTOR_ORDER_2D(BssSnowGrain,BssSnowGrain);
++	
++	protected :
++		virtual void registerAttributes();
++};
++
++REGISTER_SERIALIZABLE(Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact);
++
++
+
+Added: trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.cpp
+===================================================================
+--- trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.cpp	2009-01-25 22:32:18 UTC (rev 1642)
++++ trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.cpp	2009-01-26 03:34:03 UTC (rev 1643)
+@@ -0,0 +1,44 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Olivier Galizzi                                 *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&quot;Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.hpp&quot;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++#include&lt;yade/pkg-common/InteractingBox.hpp&gt;
++
++#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++
++
++bool Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact::go(
++		const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++		const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++		const Se3r&amp; se31,
++		const Se3r&amp; se32,
++		const shared_ptr&lt;Interaction&gt;&amp; c)
++{
++	bool result = g.go(cm1,cm2,se31,se32,c);
++//	std::cerr &lt;&lt; &quot;-----------------1- Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact\n&quot;;
++	return result;
++}
++
++
++bool Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact::goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++						const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++						const Se3r&amp; se31,
++						const Se3r&amp; se32,
++						const shared_ptr&lt;Interaction&gt;&amp; c)
++{
++	bool result = g.goReverse(cm1,cm2,se31,se32,c);
++//	std::cerr &lt;&lt; &quot;-----------------2- Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact\n&quot;;
++	return result;
++}
++
++YADE_PLUGIN();
++
+
+Added: trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.hpp
+===================================================================
+--- trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.hpp	2009-01-25 22:32:18 UTC (rev 1642)
++++ trunk/pkg/snow/Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.hpp	2009-01-26 03:34:03 UTC (rev 1643)
+@@ -0,0 +1,40 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#pragma once
++
++#include&lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
++#include&lt;yade/pkg-dem/InteractingBox2InteractingSphere4SpheresContactGeometry.hpp&gt;
++
++class Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact : public InteractionGeometryEngineUnit
++{
++	InteractingBox2InteractingSphere4SpheresContactGeometry g;
++	public :
++		virtual bool go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++					const Se3r&amp; se31,
++					const Se3r&amp; se32,
++					const shared_ptr&lt;Interaction&gt;&amp; c);
++
++		virtual bool goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
++					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
++					const Se3r&amp; se31,
++					const Se3r&amp; se32,
++					const shared_ptr&lt;Interaction&gt;&amp; c);
++
++	REGISTER_CLASS_NAME(Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact);
++	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
++
++	FUNCTOR2D(InteractingBox,BssSnowGrain);
++
++	DEFINE_FUNCTOR_ORDER_2D(InteractingBox,BssSnowGrain);
++};
++
++REGISTER_SERIALIZABLE(Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact);
++
++
+
+Modified: trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp
+===================================================================
+--- trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp	2009-01-25 22:32:18 UTC (rev 1642)
++++ trunk/pkg/snow/PreProcessor/SnowVoxelsLoader.cpp	2009-01-26 03:34:03 UTC (rev 1643)
+@@ -68,8 +68,10 @@
+ 
+ #include&quot;SnowVoxelsLoader.hpp&quot;
+ #include&lt;set&gt;
+-#include&lt;yade/pkg-snow/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.hpp&gt;
+-#include&lt;yade/pkg-snow/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-snow/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.hpp&gt;
++#include&lt;yade/pkg-snow/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.hpp&gt;
++//#include&lt;yade/pkg-snow/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.hpp&gt;
++//#include&lt;yade/pkg-snow/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.hpp&gt;
+ 
+ SnowVoxelsLoader::SnowVoxelsLoader() : FileGenerator()
+ {
+@@ -96,7 +98,7 @@
+ 
+ 	spheresColor		= Vector3r(0.8,0.3,0.3);
+ 
+-// a pixel is 20.4 microns (2.04 &#195;&#151; 10-5 meters)
++// a pixel is 20.4 microns (2.04 &#215; 10-5 meters)
+ // the sample was 10.4mm high
+ 	one_voxel_in_meters_is	= 2.04e-5;
+ 
+@@ -358,8 +360,10 @@
+ 	
+ 	shared_ptr&lt;InteractionGeometryMetaEngine&gt; interactionGeometryDispatcher(new InteractionGeometryMetaEngine);
+ 
+-	shared_ptr&lt;InteractionGeometryEngineUnit&gt; s1(new Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry);  //GRR 
+-	shared_ptr&lt;InteractionGeometryEngineUnit&gt; s2(new Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry);//GRR 
++	shared_ptr&lt;InteractionGeometryEngineUnit&gt; s1(new Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact);
++	shared_ptr&lt;InteractionGeometryEngineUnit&gt; s2(new Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact);
++	//shared_ptr&lt;InteractionGeometryEngineUnit&gt; s1(new Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry);
++	//shared_ptr&lt;InteractionGeometryEngineUnit&gt; s2(new Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry);
+ 	//shared_ptr&lt;InteractionGeometryEngineUnit&gt; s1(new InteractingSphere2InteractingSphere4SpheresContactGeometry);
+ 	//shared_ptr&lt;InteractionGeometryEngineUnit&gt; s2(new InteractingBox2InteractingSphere4SpheresContactGeometry);
+ 	
+@@ -533,8 +537,8 @@
+ 	shared_ptr&lt;BshSnowGrain&gt; gSnowGrain(grain);
+ 	
+ 
+-	shared_ptr&lt;BssSnowGrain&gt; iSphere(new BssSnowGrain(gSnowGrain.get(),one_voxel_in_meters_is));//GRR 
+-	Real radius = iSphere-&gt;radius;                                                              //GRR 
++	shared_ptr&lt;BssSnowGrain&gt; iSphere(new BssSnowGrain(gSnowGrain.get(),one_voxel_in_meters_is)); 
++	Real radius = iSphere-&gt;radius;
+ 	//shared_ptr&lt;InteractingSphere&gt; iSphere(new InteractingSphere);
+ 	//Real radius = (grain-&gt;start-grain-&gt;end).Length()*0.5;
+ 	
+@@ -564,7 +568,7 @@
+ 	gSnowGrain-&gt;visible		= true;
+ 	gSnowGrain-&gt;shadowCaster	= true;
+ 	
+-	//iSphere-&gt;radius			= radius; // already calculated //GRR
++	//iSphere-&gt;radius			= radius; // already calculated
+ 	iSphere-&gt;diffuseColor		= grain-&gt;color;
+ 
+ 	body-&gt;interactingGeometry	= iSphere;
+
+Modified: trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.cpp
+===================================================================
+--- trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.cpp	2009-01-25 22:32:18 UTC (rev 1642)
++++ trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.cpp	2009-01-26 03:34:03 UTC (rev 1643)
+@@ -42,7 +42,7 @@
+ 	Real LEN=(gr-&gt;start - gr-&gt;end).Length();
+ 
+ 	glColor3f(0.5,0.5,1.0);
+-	glutSolidCube(LEN*0.1);
++	glutWireCube(LEN*0.1);
+ 
+   	glMaterialv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, Vector3f(gm-&gt;diffuseColor[0],gm-&gt;diffuseColor[1],gm-&gt;diffuseColor[2]));
+ 	glColor3v(gm-&gt;diffuseColor);
+@@ -72,8 +72,8 @@
+ 		glDisable(GL_LIGHTING);
+ 		glBegin(GL_LINE_STRIP);
+ 			glColor3f(0,0,0);
+-			glVertex3d(gr-&gt;start[0],gr-&gt;start[1],gr-&gt;start[2]);
+-			glVertex3d(gr-&gt;end[0]  ,gr-&gt;end[1]  ,gr-&gt;end[2]);
++			glVertex3v(gr-&gt;start);
++			glVertex3v(gr-&gt;end);
+ 		glEnd();
+ 			glColor3v(gm-&gt;diffuseColor);
+ 			for(size_t i=0;i &lt; gr-&gt;slices.size();++i)
+@@ -132,9 +132,11 @@
+ //	}
+ */
+ 
++
++/*
++
+ // check inside of selected grain, with grain 17
+ 
+-
+ //if(!surface)
+ //{
+ 
+@@ -227,10 +229,10 @@
+ 	}
+ //}
+ 
++*/
+ 
+ 
+ 
+-
+ 	// check current grain insides
+ //if(!surface)
+ //{
+
+Modified: trunk/pkg/snow/RenderingEngine/Ef1_BssSnowGrain_glDraw.cpp
+===================================================================
+--- trunk/pkg/snow/RenderingEngine/Ef1_BssSnowGrain_glDraw.cpp	2009-01-25 22:32:18 UTC (rev 1642)
++++ trunk/pkg/snow/RenderingEngine/Ef1_BssSnowGrain_glDraw.cpp	2009-01-26 03:34:03 UTC (rev 1643)
+@@ -8,12 +8,142 @@
+ 
+ #include&quot;Ef1_BssSnowGrain_glDraw.hpp&quot;
+ #include&lt;yade/pkg-snow/BssSnowGrain.hpp&gt;
++#include&lt;yade/pkg-snow/BshSnowGrain.hpp&gt;
+ #include&lt;yade/lib-opengl/OpenGLWrapper.hpp&gt;
+ 
++void triangle(Vector3r a,Vector3r b, Vector3r c,Vector3r n)
++{
++	glNormal3v(n);
++	glVertex3v(a);
++	glVertex3v(b);
++	glVertex3v(c);
++}
+ 
++void quad(Vector3r a,Vector3r b, Vector3r c, Vector3r d,Vector3r n)
++{
++	glNormal3v(n);
++	glVertex3v(a);
++	glVertex3v(b);
++	glVertex3v(c);
++	glVertex3v(d);
++}
++
+ void Ef1_BssSnowGrain_glDraw::go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm, const shared_ptr&lt;PhysicalParameters&gt;&amp; pp,bool wire)
+ {
+-	s.go(cm,pp,wire);
++	bool surface = !wire;
++	BssSnowGrain* bssgr = static_cast&lt;BssSnowGrain*&gt;(cm.get());
++	BshSnowGrain&amp; gr = bssgr-&gt;m_copy;
++
++  	glMaterialv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, Vector3f(cm-&gt;diffuseColor[0],cm-&gt;diffuseColor[1],cm-&gt;diffuseColor[2]));
++	glColor3v(cm-&gt;diffuseColor);
++
++	const std::vector&lt;boost::tuple&lt;Vector3r,Vector3r,Vector3r,Vector3r&gt; &gt;&amp; f(gr.get_faces_const_ref());
++	if(surface)
++	{
++		glDisable(GL_CULL_FACE);
++		glEnable(GL_LIGHTING);
++		glShadeModel(GL_FLAT);
++		glBegin(GL_TRIANGLES);
++			for(size_t i = 0; i &lt; f.size() ; ++i)
++			{
++				Vector3r a(get&lt;0&gt;(f[i]));
++				Vector3r b(get&lt;1&gt;(f[i]));
++				Vector3r c(get&lt;2&gt;(f[i]));
++				Vector3r n(get&lt;3&gt;(f[i]));
++				// plot the triangular face
++				triangle(a,b,c,n);
++				
++				// plot the depth tetrahedron
++				Real depth = gr.depth(i);
++				Vector3r Z((a+b+c)/3.0 + n*depth);
++				Vector3r N1((Z - a).Cross(a - b));
++				Vector3r N2((Z - c).Cross(c - a));
++				Vector3r N3((Z - b).Cross(b - c));
++				
++				triangle(b,a,Z,N1);
++				triangle(a,c,Z,N2);
++				triangle(c,b,Z,N3);
++				
++				// plot the parallelepiped top-face at the half depth
++				Real depth2 = depth*0.5;
++				Vector3r N(n*depth2);
++				Vector3r A(a+N);
++				Vector3r B(b+N);
++				Vector3r C(c+N);
++				triangle(A,B,C,n);
++			}
++		glEnd();
++		glBegin(GL_QUADS);
++			for(size_t i = 0; i &lt; f.size() ; ++i)
++			{
++				Vector3r a(get&lt;0&gt;(f[i]));
++				Vector3r b(get&lt;1&gt;(f[i]));
++				Vector3r c(get&lt;2&gt;(f[i]));
++				Vector3r n(get&lt;3&gt;(f[i]));
++				// plot the parallelepiped side faces (quads)
++				Real depth = gr.depth(i)*0.5;
++				Vector3r N(n*depth);
++				Vector3r A(a+N);
++				Vector3r B(b+N);
++				Vector3r C(c+N);
++
++				Vector3r Z((a+b+c)/3.0 + n*depth);
++				Vector3r N1((A - a).Cross(a - b));
++				Vector3r N2((C - c).Cross(c - a));
++				Vector3r N3((B - b).Cross(b - c));
++				
++				quad(b,a,A,B,N1);
++				quad(a,c,C,A,N2);
++				quad(c,b,B,C,N3);
++			}
++		glEnd();
++		glShadeModel(GL_SMOOTH);
++		glEnable(GL_CULL_FACE);
++	}
++	else
++	{
++		glDisable(GL_LIGHTING);
++			glColor3v(cm-&gt;diffuseColor);
++			for(size_t i=0;i &lt; gr.slices.size();++i)
++			{
++				glBegin(GL_LINE_STRIP);
++					for(size_t j=0 ; j &lt; gr.slices[i].size() ; ++j)
++						glVertex3v(gr.slices[i][j]);
++					glVertex3v(gr.slices[i][0]);
++				glEnd();
++			}
++		glBegin(GL_LINES);
++			for(size_t i = 0; i &lt; f.size() ; ++i)
++			{
++				Vector3r a(get&lt;0&gt;(f[i]));
++				Vector3r b(get&lt;1&gt;(f[i]));
++				Vector3r c(get&lt;2&gt;(f[i]));
++				Vector3r n(get&lt;3&gt;(f[i]));
++				// plot the depth tetrahedron
++				Real depth = gr.depth(i);
++				Vector3r Z((a+b+c)/3.0 + n*depth);
++				glVertex3v(a);glVertex3v(Z);
++				glVertex3v(b);glVertex3v(Z);
++				glVertex3v(c);glVertex3v(Z);
++				
++				// plot the parallelepiped top-face at the half depth
++				Real depth2 = depth*0.5;
++				Vector3r N(n*depth2);
++				Vector3r A(a+N);
++				Vector3r B(b+N);
++				Vector3r C(c+N);
++
++				glVertex3v(A);glVertex3v(B);
++				glVertex3v(B);glVertex3v(C);
++				glVertex3v(C);glVertex3v(A);
++
++				glVertex3v(a);glVertex3v(A);
++				glVertex3v(b);glVertex3v(B);
++				glVertex3v(c);glVertex3v(C);
++			}
++		glEnd();
++		glEnable(GL_LIGHTING);
++	}
+ }
+ 
+ 
+
+Modified: trunk/pkg/snow/RenderingEngine/Ef1_BssSnowGrain_glDraw.hpp
+===================================================================
+--- trunk/pkg/snow/RenderingEngine/Ef1_BssSnowGrain_glDraw.hpp	2009-01-25 22:32:18 UTC (rev 1642)
++++ trunk/pkg/snow/RenderingEngine/Ef1_BssSnowGrain_glDraw.hpp	2009-01-26 03:34:03 UTC (rev 1643)
+@@ -9,12 +9,10 @@
+ #pragma once
+ 
+ #include&lt;yade/pkg-common/GLDrawFunctors.hpp&gt;
+-#include&lt;yade/pkg-common/GLDrawInteractingSphere.hpp&gt;
+ 
+ class Ef1_BssSnowGrain_glDraw : public GLDrawInteractingGeometryFunctor
+ {
+ 	public :
+-		GLDrawInteractingSphere s;
+ 		virtual void go(const shared_ptr&lt;InteractingGeometry&gt;&amp;, const shared_ptr&lt;PhysicalParameters&gt;&amp;,bool);
+ 
+ 	RENDERS(BssSnowGrain);
+
+Modified: trunk/pkg/snow/SConscript
+===================================================================
+--- trunk/pkg/snow/SConscript	2009-01-25 22:32:18 UTC (rev 1642)
++++ trunk/pkg/snow/SConscript	2009-01-26 03:34:03 UTC (rev 1643)
+@@ -4,20 +4,34 @@
+ env.Install('$PREFIX/lib/yade$SUFFIX/pkg-snow',[
+ 
+ 
++	env.SharedLibrary('IstSnowLayersContact',
++		['DataClass/IstSnowLayersContact.cpp'],
++		LIBS=env['LIBS']+['yade-serialization','yade-base','SpheresContactGeometry']),
++
++	env.SharedLibrary('Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact',
++	['Engine/Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact.cpp'],
++		LIBS=env['LIBS']+['BshSnowGrain','yade-opengl','yade-base',
++		'BssSnowGrain','InteractingBox','InteractingBox2InteractingSphere4SpheresContactGeometry']),
++	
++	env.SharedLibrary('Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact',
++	['Engine/Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact.cpp'],
++		LIBS=env['LIBS']+['BshSnowGrain','yade-opengl','yade-base',
++		'BssSnowGrain','InteractingSphere','InteractingSphere2InteractingSphere4SpheresContactGeometry']),
++
+ 	env.SharedLibrary('Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry',
+ 	['Engine/Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry.cpp'],
+ 		LIBS=env['LIBS']+['BshSnowGrain','yade-opengl','yade-base',
+ 		'BssSnowGrain','InteractingBox','InteractingBox2InteractingSphere4SpheresContactGeometry']),
+ 	
+-	env.SharedLibrary('Ef2_BssSnowGrain_AABB_makeAABB',['Engine/Ef2_BssSnowGrain_AABB_makeAABB.cpp'],
+-		LIBS=env['LIBS']+['BoundingVolumeMetaEngine','InteractingSphere','BssSnowGrain','AABB']),
+-	
+ 	env.SharedLibrary('Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry',['Engine/Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry.cpp'],
+ 		LIBS=env['LIBS']+['BshSnowGrain','yade-opengl','yade-base',
+ 		'BssSnowGrain','InteractingSphere','InteractingSphere2InteractingSphere4SpheresContactGeometry']),
+ 
++	env.SharedLibrary('Ef2_BssSnowGrain_AABB_makeAABB',['Engine/Ef2_BssSnowGrain_AABB_makeAABB.cpp'],
++		LIBS=env['LIBS']+['BoundingVolumeMetaEngine','InteractingSphere','BssSnowGrain','AABB']),
++	
+ 	env.SharedLibrary('Ef1_BssSnowGrain_glDraw',['RenderingEngine/Ef1_BssSnowGrain_glDraw.cpp'],
+-		LIBS=env['LIBS']+['BshSnowGrain','yade-opengl','yade-base','GLDrawInteractingSphere','BssSnowGrain','$QGLVIEWER_LIB']),
++		LIBS=env['LIBS']+['BshSnowGrain','yade-opengl','yade-base','BssSnowGrain','$QGLVIEWER_LIB']),
+ 
+ 	env.SharedLibrary('Ef1_BshSnowGrain_glDraw',['RenderingEngine/Ef1_BshSnowGrain_glDraw.cpp'],
+ 		LIBS=env['LIBS']+['BshSnowGrain','yade-opengl','yade-base','$QGLVIEWER_LIB']),
+@@ -39,6 +53,8 @@
+ 			'BshSnowGrain',
+ 			'BssSnowGrain',
+ 			'VelocityRecorder',
++			'Ef2_InteractingBox_BssSnowGrain_makeIstSnowLayersContact',
++			'Ef2_BssSnowGrain_BssSnowGrain_makeIstSnowLayersContact',
+ 			'Ef2_InteractingBox_BssSnowGrain_makeSpheresContactGeometry',
+ 			'Ef2_BssSnowGrain_BssSnowGrain_makeSpheresContactGeometry',
+ 			'ForceRecorder',
+
+
+-------------- next part --------------
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000622.html">[deprecated list] [Yade-dev] [svn] r1642 - in trunk/pkg/snow:	DataClass	RenderingEngine
+</A></li>
+	<LI>Next message: <A HREF="000625.html">[deprecated list] [Yade-dev] [svn] r1643 - in trunk/pkg/snow: .	DataClass Engine	PreProcessor RenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#624">[ date ]</a>
+              <a href="thread.html#624">[ thread ]</a>
+              <a href="subject.html#624">[ subject ]</a>
+              <a href="author.html#624">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] [Yade-commits] STLImporter
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20STLImporter&In-Reply-To=%3C4829F70F.3080708%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000174.html">
+   <LINK REL="Next"  HREF="000176.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] [Yade-commits] STLImporter</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20%5BYade-commits%5D%20STLImporter&In-Reply-To=%3C4829F70F.3080708%40arcig.cz%3E"
+       TITLE="[yade-dev] [Yade-commits] STLImporter">eudoxos at arcig.cz
+       </A><BR>
+    <I>Tue May 13 22:16:15 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000174.html">[yade-dev] [Yade-commits] STLImporter
+</A></li>
+        <LI>Next message: <A HREF="000176.html">[yade-dev] [Yade-commits] STLImporter
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#175">[ date ]</a>
+              <a href="thread.html#175">[ thread ]</a>
+              <a href="subject.html#175">[ subject ]</a>
+              <a href="author.html#175">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i> Then, the creation of python wrapper for the importer. 
+</I>&gt;<i>   
+</I>Good to know there are at least 2 python fans amongst yade folks :-)
+&lt;secret&gt; I had even such plans that all non-computational stuff (what
+doesn't repeat during iterations) would be recoded in python, including
+main, plugin manager, gui, serializer/deserializer. But I got blocked on
+qglviewer now, which I need to run with qt4 (custom event loop, qt3
+doesn't know that) and have no experience with such thing. &lt;/secret&gt;
+&gt;<i> Next, a model for my own research (until I study the dynamics of dry bulk 
+</I>&gt;<i> media), its profiling and optimization (I need 10k, a better 100k particles). 
+</I>&gt;<i> Also plan to export results in any format (silo, vtk, hdf5?) for the 
+</I>&gt;<i> postprocessing (paraview, visit?)... will be grateful for assistance in 
+</I>&gt;<i> selecting... I am inclined now to vtk and paraview.
+</I>Can't help you here, but I would be grateful to hear your experience on
+that. What kind of postprocessing do you need? Fields plots, contours
+and the like?
+
+I am experimenting with matplotlib integration now, for advanced
+plotting in yade, but that quite a different thing...
+&gt;<i> And plan to add simple 
+</I>&gt;<i> elastoplastic contact model.
+</I>&gt;<i>   
+</I>If you have your constitutive law formulated in terms of strain-stress
+rather than displacements and so on, you could base that on BrefcomLaw.
+I wanted to rename it to StrainStressLaw and use it as a base class for
+almost arbitrary strain-stress models: just plug in some equations and
+it's done. Didn't have time for that, though. And it is not (yet?) as
+fast as I want it to be.
+
+Regards, Vaclav
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000174.html">[yade-dev] [Yade-commits] STLImporter
+</A></li>
+	<LI>Next message: <A HREF="000176.html">[yade-dev] [Yade-commits] STLImporter
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#175">[ date ]</a>
+              <a href="thread.html#175">[ thread ]</a>
+              <a href="subject.html#175">[ subject ]</a>
+              <a href="author.html#175">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

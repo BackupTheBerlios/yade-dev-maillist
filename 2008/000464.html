@@ -1,0 +1,167 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1558 - in trunk/pkg/dem: .	Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1558%20-%20in%20trunk/pkg/dem%3A%20.%0A%09Engine/StandAloneEngine&In-Reply-To=%3C200810251903.m9PJ3Ihw013319%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000463.html">
+   <LINK REL="Next"  HREF="000465.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1558 - in trunk/pkg/dem: .	Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1558%20-%20in%20trunk/pkg/dem%3A%20.%0A%09Engine/StandAloneEngine&In-Reply-To=%3C200810251903.m9PJ3Ihw013319%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1558 - in trunk/pkg/dem: .	Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Oct 25 21:03:18 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000463.html">[deprecated list] [Yade-dev] [svn] r1557 - in trunk: core	extra/clump gui/py lib	lib/serialization lib/smoothing
+</A></li>
+        <LI>Next message: <A HREF="000465.html">[deprecated list] [Yade-dev] trunk doesn't compile	(TesselationWrapper)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#464">[ date ]</a>
+              <a href="thread.html#464">[ thread ]</a>
+              <a href="subject.html#464">[ subject ]</a>
+              <a href="author.html#464">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-10-25 21:03:17 +0200 (Sat, 25 Oct 2008)
+New Revision: 1558
+
+Modified:
+   trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.cpp
+   trunk/pkg/dem/SConscript
+Log:
+1. Fix errors preventing compilation due to missing TesselationWrapper.
+
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.cpp	2008-10-25 17:40:16 UTC (rev 1557)
++++ trunk/pkg/dem/Engine/StandAloneEngine/VolumicContactLaw.cpp	2008-10-25 19:03:17 UTC (rev 1558)
+@@ -22,14 +22,8 @@
+ 
+ #include &quot;VolumicContactLaw.hpp&quot;
+ 
+-// &lt;&lt;&lt;&lt;&lt;&lt;&lt; .mine
+-// 	#include&lt;/home/jf/YADE/trunk/lib/miniWm3/Wm3Math.h&gt;#include &lt;cmath&gt;
+-     #include &quot;/home/jf/YADE/trunk-clean/extra/triangulation/TesselationWrapper.h&quot;
++#include&lt;yade/extra/TesselationWrapper.h&gt;
+ 
+-// =======
+-//      #include &quot;TesselationWrapper.h&quot;
+-// &gt;&gt;&gt;&gt;&gt;&gt;&gt; .r1327
+-
+  
+ 
+ VolumicContactLaw::VolumicContactLaw() : InteractionSolver() , actionForce(new Force) , actionMomentum(new Momentum)
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2008-10-25 17:40:16 UTC (rev 1557)
++++ trunk/pkg/dem/SConscript	2008-10-25 19:03:17 UTC (rev 1558)
+@@ -1,5 +1,32 @@
+ # vim: set filetype=python :
+ Import('*')
++
++import os.path,os
++#  Dir('#') expands to the root of the source tree -- that is done by scons
++if os.path.exists(Dir('#').abspath+'/extra/triangulation/libTesselationWrapper.a'):
++	print &quot;Will build VolumetricContactLaw since libTesselationWrapper.a was found.&quot;
++	env.Install('$PREFIX/lib/yade$SUFFIX/pkg-dem',[
++		env.SharedLibrary('VolumicContactLaw',
++			['Engine/StandAloneEngine/VolumicContactLaw.cpp'],
++			LIBPATH=env['LIBPATH']+['../extra/triangulation'],
++			LIBS=env['LIBS']+['SDECLinkPhysics',
++				'ElasticContactInteraction',
++				'SDECLinkGeometry',
++				'SpheresContactGeometry',
++				'BodyMacroParameters',
++				'yade-serialization',
++				'yade-base',
++				'GLDrawInteractingSphere',
++				'yade-multimethods',
++				'Force',
++				'Momentum',
++				'Sphere',
++				'RigidBodyParameters',
++				'InteractingSphere',
++				'TesselationWrapper',
++				'CGAL'])
++		])
++
+ env.Install('$PREFIX/lib/yade$SUFFIX/pkg-dem',[
+ 
+ 	env.SharedLibrary('SQLiteRecorder',
+@@ -188,28 +215,7 @@
+ 			'Momentum',
+ 			'Sphere',
+ 			'RigidBodyParameters']),
+-			
+-   
+-			
+-	env.SharedLibrary('VolumicContactLaw',
+-		['Engine/StandAloneEngine/VolumicContactLaw.cpp'],
+-		#LIBPATH=env['LIBPATH']+['/home/jf/YADE/trunk-clean/extra/triangulation'],
+-		LIBS=env['LIBS']+['SDECLinkPhysics',
+-			'ElasticContactInteraction',
+-			'SDECLinkGeometry',
+-			'SpheresContactGeometry',
+-			'BodyMacroParameters',
+-			'yade-serialization',
+-			'yade-base',
+-			'GLDrawInteractingSphere',
+-			'yade-multimethods',
+-			'Force',
+-			'Momentum',
+-			'Sphere',
+-			'RigidBodyParameters',
+-			'InteractingSphere',
+-			'TesselationWrapper',
+-			'CGAL']),
++	
+ 
+ 	env.SharedLibrary('CohesiveFrictionalContactLaw',
+ 		['Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp'],
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000463.html">[deprecated list] [Yade-dev] [svn] r1557 - in trunk: core	extra/clump gui/py lib	lib/serialization lib/smoothing
+</A></li>
+	<LI>Next message: <A HREF="000465.html">[deprecated list] [Yade-dev] trunk doesn't compile	(TesselationWrapper)
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#464">[ date ]</a>
+              <a href="thread.html#464">[ thread ]</a>
+              <a href="subject.html#464">[ subject ]</a>
+              <a href="author.html#464">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

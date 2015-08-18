@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] ContactLaw1
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20ContactLaw1&In-Reply-To=%3C48EF542D.1050402%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000435.html">
+   <LINK REL="Next"  HREF="000438.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] ContactLaw1</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20ContactLaw1&In-Reply-To=%3C48EF542D.1050402%40hmg.inpg.fr%3E"
+       TITLE="[deprecated list] [Yade-dev] ContactLaw1">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Fri Oct 10 15:10:05 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000435.html">[deprecated list] [Yade-dev] ContactLaw1
+</A></li>
+        <LI>Next message: <A HREF="000438.html">[deprecated list] [Yade-dev] ContactLaw1
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#437">[ date ]</a>
+              <a href="thread.html#437">[ thread ]</a>
+              <a href="subject.html#437">[ subject ]</a>
+              <a href="author.html#437">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>It sounds good to me, except for two ascpects :
+- it will require different geometry classes for different constitutive 
+laws, because if you don't have moment at contacts, you don't want a 
+geometry class computing relative rotations (waste of time).
+- less fundamentally : due to this change, old xml's can't be loaded in 
+the new version (said Jerome Duriez).
+
+Bruno
+
+
+
+V&#225;clav &#352;milauer a &#233;crit :
+&gt;&gt;&gt;<i> If the constitutive law is simple as
+</I>&gt;&gt;&gt;<i>
+</I>&gt;&gt;&gt;<i> // loop over interactions etc
+</I>&gt;&gt;&gt;<i> Fn=contactGeom-&gt;strainN()*crossSection*E;
+</I>&gt;&gt;&gt;<i> Ft=contactGeom-&gt;strainT()*crossSection*G;
+</I>&gt;&gt;&gt;<i> // apply forces here
+</I>&gt;&gt;&gt;<i>
+</I>&gt;&gt;&gt;<i> the code for computing strain being elsewhere, then that code is still
+</I>&gt;&gt;&gt;<i> in one place (and can be fixed at one place) and the constitutive law is
+</I>&gt;&gt;&gt;<i> not a mess of flags.
+</I>&gt;&gt;&gt;<i>     
+</I>&gt;&gt;&gt;<i>       
+</I>&gt;<i>
+</I>&gt;<i> Hi there, I implemented ElasticContactLaw2 (for ilustration) that
+</I>&gt;<i> behaves like ElasticContactLaw (except that all contact are cohesive
+</I>&gt;<i> (don't break) and there is no moment rotation law) and uses new
+</I>&gt;<i> SpheresContactGeometry code; the code is about 15 lines.
+</I>&gt;<i>
+</I>&gt;<i> This is the way I imagine all constitutive laws should eventually look
+</I>&gt;<i> like: relationship from relative displacements (computed in the contact
+</I>&gt;<i> geometry class) to forces, nothing else.
+</I>&gt;<i>
+</I>&gt;<i> Vaclav
+</I>&gt;<i>
+</I>&gt;<i> _______________________________________________
+</I>&gt;<i> Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+</I>&gt;<i> Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+</I>&gt;<i> Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+</I>&gt;<i> More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Grenoble INP
+Laboratoire 3SR - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000435.html">[deprecated list] [Yade-dev] ContactLaw1
+</A></li>
+	<LI>Next message: <A HREF="000438.html">[deprecated list] [Yade-dev] ContactLaw1
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#437">[ date ]</a>
+              <a href="thread.html#437">[ thread ]</a>
+              <a href="subject.html#437">[ subject ]</a>
+              <a href="author.html#437">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

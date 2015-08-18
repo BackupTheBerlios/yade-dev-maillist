@@ -1,0 +1,2100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1756 - trunk/extra/SpherePadder
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1756%20-%20trunk/extra/SpherePadder&In-Reply-To=%3C200904171511.n3HFBO6v032349%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000923.html">
+   <LINK REL="Next"  HREF="000925.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1756 - trunk/extra/SpherePadder</H1>
+    <B>richefeu at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1756%20-%20trunk/extra/SpherePadder&In-Reply-To=%3C200904171511.n3HFBO6v032349%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1756 - trunk/extra/SpherePadder">richefeu at mail.berlios.de
+       </A><BR>
+    <I>Fri Apr 17 17:11:24 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000923.html">[deprecated list] [Yade-dev] [svn] r1755 - in trunk: extra gui/py	scripts
+</A></li>
+        <LI>Next message: <A HREF="000925.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-11910/bin/yade-svn1756:	TriaxialTestWater, USCTGen
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#924">[ date ]</a>
+              <a href="thread.html#924">[ thread ]</a>
+              <a href="subject.html#924">[ subject ]</a>
+              <a href="author.html#924">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: richefeu
+Date: 2009-04-17 17:11:23 +0200 (Fri, 17 Apr 2009)
+New Revision: 1756
+
+Modified:
+   trunk/extra/SpherePadder/SpherePadder.cpp
+   trunk/extra/SpherePadder/SpherePadder.hpp
+   trunk/extra/SpherePadder/TetraMesh.cpp
+   trunk/extra/SpherePadder/main.cpp
+Log:
+We can now make the packing denser with a stop criterion based on the solid fraction or total number of spheres.
+
+
+
+Modified: trunk/extra/SpherePadder/SpherePadder.cpp
+===================================================================
+--- trunk/extra/SpherePadder/SpherePadder.cpp	2009-04-15 08:19:44 UTC (rev 1755)
++++ trunk/extra/SpherePadder/SpherePadder.cpp	2009-04-17 15:11:23 UTC (rev 1756)
+@@ -13,10 +13,15 @@
+ int compare_neighbor_with_distance (const void * a, const void * b)
+ {
+   double d1 = (*(neighbor_with_distance *)a).distance;
+-  double d2 = (*(neighbor_with_distance *)b).distance;      
++  double d2 = (*(neighbor_with_distance *)b).distance;
++  bool   p1 = (*(neighbor_with_distance *)a).priority;
++  bool   p2 = (*(neighbor_with_distance *)a).priority;
++  if (p1 &amp;&amp; !p2) return -1;
++  if (p2 &amp;&amp; !p1) return 1;
+   return (d1 &gt; d2) ? 1 :-1;
+ }
+ 
++
+ int compare_tetra_porosity (const void * a, const void * b)
+ {
+   double d1 = (*(tetra_porosity *)a).void_volume;
+@@ -24,14 +29,16 @@
+   return ((d1) &lt; (d2)) ? 1 :-1;
+ }
+ 
++
+ int compareDouble (const void * a, const void * b)
+ {
+   return ( *(double*)a &gt; *(double*)b ) ? 1 :-1;
+ }
+ 
++
+ SpherePadder::SpherePadder()
+ {
+-  vector &lt;unsigned int&gt; lst;
++  vector &lt;id_type&gt; lst;
+   unsigned int nb = 5;
+ 
+   for (unsigned int i = 0 ; i &lt;= nb ; ++i)
+@@ -43,10 +50,10 @@
+ 		for (unsigned int l = k+1 ; l &lt;= nb+3 ; ++l)
+ 		{
+ 		  lst.clear();
+-		  lst.push_back(i);
+-		  lst.push_back(j);
+-		  lst.push_back(k);
+-		  lst.push_back(l);
++		  lst.push_back((id_type)i);
++		  lst.push_back((id_type)j);
++		  lst.push_back((id_type)k);
++		  lst.push_back((id_type)l);
+ 		  combination.push_back(lst);
+ 		}
+ 	  }
+@@ -54,15 +61,22 @@
+   }
+   
+   n1 = n2 = n3 = n4 = n5 = n_densify = 0;
+-  trace_functions = true;
++
++  // Default values
++  verbose = true;
+   meshIsPlugged = false;
+-  probeIsDefined = false;
+   RadiusDataIsOK = RadiusIsSet = false;
+-  
+   max_overlap_rate = 1e-4;
+   virtual_radius_factor = 100.0;
++  criterion.nb_spheres = false;
++  criterion.solid_fraction = false;
++  max_iter_densify = 20;
++  Must_Stop = false;
++  zmin = 1;
++  gap_max = 0.0;
+ }
+ 
++
+ void SpherePadder::setRadiusRatio(double r)
+ {
+   r = fabs(r);
+@@ -74,10 +88,16 @@
+ 	rmoy = 0.125 * mesh-&gt;mean_segment_length; // 1/8 = 0.125
+ 	rmin = (2.0 * rmoy) / (ratio + 1.0);
+ 	rmax = 2.0 * rmoy - rmin;
+-	dr = rmax - rmoy;
++	dr = rmax - rmoy; // FIXME a enlever
++	gap_max = rmin;
+ 	RadiusDataIsOK = true;
+-	cout &lt;&lt; &quot;rmin = &quot; &lt;&lt; rmin &lt;&lt; endl;
+-	cout &lt;&lt; &quot;rmax = &quot; &lt;&lt; rmax &lt;&lt; endl;
++	if (verbose)
++	{
++	  cout &lt;&lt; &quot;rmin  = &quot; &lt;&lt; rmin &lt;&lt; endl;
++	  cout &lt;&lt; &quot;rmax  = &quot; &lt;&lt; rmax &lt;&lt; endl;
++	  cout &lt;&lt; &quot;rmoy  = &quot; &lt;&lt; rmoy &lt;&lt; endl;
++	  cout &lt;&lt; &quot;ratio = &quot; &lt;&lt; ratio &lt;&lt; endl;
++	}
+   }
+   else
+   {
+@@ -88,6 +108,7 @@
+   RadiusIsSet = true;
+ }
+ 
++
+ void SpherePadder::setRadiusRange(double min, double max)
+ {
+   if (min &gt; max)
+@@ -102,26 +123,57 @@
+   }
+   ratio = rmax/rmin;
+   rmoy = 0.5*(rmin+rmax);
++  gap_max = rmin;
+   RadiusDataIsOK = true;
+   RadiusIsSet = true;
++
++  if (verbose)
++  {
++	cout &lt;&lt; &quot;rmin  = &quot; &lt;&lt; rmin &lt;&lt; endl;
++	cout &lt;&lt; &quot;rmax  = &quot; &lt;&lt; rmax &lt;&lt; endl;
++	cout &lt;&lt; &quot;rmoy  = &quot; &lt;&lt; rmoy &lt;&lt; endl;
++	cout &lt;&lt; &quot;ratio = &quot; &lt;&lt; ratio &lt;&lt; endl;
++  }
+ }
+ 
+ 
++void SpherePadder::setMaxNumberOfSpheres(id_type max)
++{
++  criterion.nb_spheres_max = max;
++  criterion.nb_spheres = true;
++}
++
++
++void SpherePadder::setMaxSolidFractioninProbe(double max, double x, double y,double z, double R)
++{
++  max = fabs(max);
++  if (max &gt;= 1.0) cout &lt;&lt; &quot;TargetSolidFraction &gt; 1.0 (!)&quot; &lt;&lt; endl;
++  criterion.solid_fraction_max = max;
++  criterion.solid_fraction = true;
++  criterion.x = x; // FIXME + xtrans ?
++  criterion.y = y;
++  criterion.z = z;
++  criterion.R = R;
++}
++
++
+ void SpherePadder::plugTetraMesh (TetraMesh * pluggedMesh)
+ {
+   mesh = pluggedMesh;
+   partition.init(*mesh);
+   meshIsPlugged = true;
+ 
+-  cout &lt;&lt; &quot;mesh-&gt;mean_segment_length = &quot; &lt;&lt; mesh-&gt;mean_segment_length &lt;&lt; endl;
+-  cout &lt;&lt; &quot;mesh-&gt;min_segment_length  = &quot; &lt;&lt; mesh-&gt;min_segment_length &lt;&lt; endl;
+-  cout &lt;&lt; &quot;mesh-&gt;max_segment_length  = &quot; &lt;&lt; mesh-&gt;max_segment_length &lt;&lt; endl;
++  if (verbose)
++  {
++	cout &lt;&lt; &quot;mesh-&gt;mean_segment_length = &quot; &lt;&lt; mesh-&gt;mean_segment_length &lt;&lt; endl;
++	cout &lt;&lt; &quot;mesh-&gt;min_segment_length  = &quot; &lt;&lt; mesh-&gt;min_segment_length &lt;&lt; endl;
++	cout &lt;&lt; &quot;mesh-&gt;max_segment_length  = &quot; &lt;&lt; mesh-&gt;max_segment_length &lt;&lt; endl;
++  }
+   
+-  if (!RadiusDataIsOK &amp;&amp; RadiusIsSet &amp;&amp; ratio != 0.0) setRadiusRatio(ratio);
+-  else cerr &lt;&lt; &quot;@SpherePadder::plugTetraMesh, no radius range defined!&quot; &lt;&lt; endl;
+-  
++  if (!RadiusDataIsOK &amp;&amp; RadiusIsSet &amp;&amp; ratio != 0.0) setRadiusRatio(ratio); 
+ }
+ 
++
+ void SpherePadder::pad_5 ()
+ {
+   if (mesh == 0) 
+@@ -147,65 +199,90 @@
+ 
+   time_t stop_time = clock();
+ 
+-  unsigned int nzero = 0;
+-  for (unsigned int i = 0 ; i &lt; sphere.size() ; ++i)
++  nzero = 0;
++  for (id_type i = 0 ; i &lt; sphere.size() ; ++i)
+   {
+ 	if (sphere[i].R &lt;= 0.0) ++nzero;
+   }
+-  
+-  cerr &lt;&lt; &quot;Total number of spheres    = &quot; &lt;&lt; sphere.size() &lt;&lt; endl;
+-  cerr &lt;&lt; &quot;Number at nodes            = &quot; &lt;&lt; n1 &lt;&lt; endl;
+-  cerr &lt;&lt; &quot;Number at segments         = &quot; &lt;&lt; n2 &lt;&lt; endl;
+-  cerr &lt;&lt; &quot;Number near faces          = &quot; &lt;&lt; n3 &lt;&lt; endl;
+-  cerr &lt;&lt; &quot;Number near tetra centers  = &quot; &lt;&lt; n4 &lt;&lt; endl;
+-  cerr &lt;&lt; &quot;Number near tetra vextexes = &quot; &lt;&lt; n5 &lt;&lt; endl;
+-  cerr &lt;&lt; &quot;Number cancelled           = &quot; &lt;&lt; nzero &lt;&lt; endl;
+ 
++  if (verbose)
++  {
++	cout &lt;&lt; &quot;Summary:&quot; &lt;&lt; endl;
++	cout &lt;&lt; &quot;  Total number of spheres    = &quot; &lt;&lt; sphere.size() &lt;&lt; endl;
++	cout &lt;&lt; &quot;  Number at nodes            = &quot; &lt;&lt; n1 &lt;&lt; endl;
++	cout &lt;&lt; &quot;  Number at segments         = &quot; &lt;&lt; n2 &lt;&lt; endl;
++	cout &lt;&lt; &quot;  Number near faces          = &quot; &lt;&lt; n3 &lt;&lt; endl;
++	cout &lt;&lt; &quot;  Number near tetra centers  = &quot; &lt;&lt; n4 &lt;&lt; endl;
++	cout &lt;&lt; &quot;  Number near tetra vextexes = &quot; &lt;&lt; n5 &lt;&lt; endl;
++	cout &lt;&lt; &quot;  Number cancelled           = &quot; &lt;&lt; nzero &lt;&lt; endl;
++  }
+   
+   float time_used = (float)(stop_time - start_time) / 1000000.0;
+-  cerr &lt;&lt; &quot;Time used = &quot; &lt;&lt; time_used &lt;&lt; &quot; s&quot; &lt;&lt; endl;
++  if (verbose) cout &lt;&lt; &quot;Time used (pad5) = &quot; &lt;&lt; time_used &lt;&lt; &quot; s&quot; &lt;&lt; endl;
+   
+ }
+ 
+-void SpherePadder::densify()
++
++void SpherePadder::densify() // makeDenser
+ {
+   BEGIN_FUNCTION (&quot;Densify&quot;);
+-  unsigned int added = 0, back_added = 0;
++  unsigned int added = 0;
+   unsigned int nbfail = 0;
+-  unsigned int max_iter_densify = 40;
+   unsigned int i;
+-  
++
+   repack_null_radii();
+   
+   for (i = 0 ; i &lt; max_iter_densify ; ++i)
+   {
+-
+-	// CRITERE BIDON !!!!! WARNING
+-  if ((added = iter_densify()) == back_added)
+-  {
+-	if (++nbfail == 3) { cout &lt;&lt; &quot;@densify, cannot add more spheres with this ratio&quot; &lt;&lt; endl; break; }
++	//repack_null_radii();
++	if ( (added = iter_densify(ceil(0.005*sphere.size()))) == 0 )
++    {  
++	  if (++nbfail == 2) { cout &lt;&lt; &quot;@densify, cannot add more spheres with this ratio&quot; &lt;&lt; endl; break; }
++    }
++    else nbfail = 0;
++	
++    cout &lt;&lt; &quot;iter &quot; &lt;&lt; i &lt;&lt; &quot;, Total number = &quot; &lt;&lt; sphere.size() - nzero &lt;&lt; &quot;, Added in this iteration = &quot; &lt;&lt; added &lt;&lt; endl;
++	if (Must_Stop) break;
+   }
+-  else nbfail = 0;
+   
+-  cout &lt;&lt; &quot;iter &quot; &lt;&lt; i &lt;&lt; &quot;, nb spheres = &quot; &lt;&lt; sphere.size() /*- nzero*/ &lt;&lt; &quot;, added = &quot; &lt;&lt; added &lt;&lt; endl;
+-  back_added = added;
+-  }
+-  
+   if (i == max_iter_densify) cout &lt;&lt; &quot;@densify, maximum number of iteration reached&quot; &lt;&lt; endl;
++
++  if (criterion.solid_fraction)
++	cout &lt;&lt; &quot;Final solid fraction = &quot; &lt;&lt; getMeanSolidFraction(criterion.x,criterion.y,criterion.z,criterion.R) &lt;&lt; endl;
+   
+   END_FUNCTION;
+ }
+ 
+-void SpherePadder::repack_null_radii() // TODO FIXME loop until target solid fraction is reached
+-{  
++
++void SpherePadder::repack_null_radii() // repack_boundaries
++{
++  Sphere S_stored;
+   for (unsigned int i = 0 ; i &lt; sphere.size() ; i++)
+   {
+ 	if (sphere[i].R &gt; 0.0) continue;
+-    place_sphere_4contacts(i);
++	S_stored = sphere[i];
++    if (!place_sphere_4contacts(i)) sphere[i] = S_stored;
+   }
++
++//Sphere S;
++//vector&lt;neighbor_with_distance&gt; neighbor;
++//unsigned int ns = sphere.size();
++//if (bounds.empty()) return;
++//Sphere S;
++//cout &lt;&lt; &quot;bounds.size() = &quot; &lt;&lt; bounds.size() &lt;&lt; endl;
++//list&lt;unsigned int&gt;::iterator it;
++//for (it = bounds.begin() ; it != bounds.end(); ++it)
++//{
++  //S = sphere[*it]; // save
++  
++  //if (sphere[*it].R == 0.0)
++  //if (!place_sphere_4contacts(*it)) sphere[*it] = S;
++  //else bounds.erase(it);
++//} 
+ }
+ 
+-unsigned int SpherePadder::iter_densify(unsigned int nb_check)   
++
++unsigned int SpherePadder::iter_densify(unsigned int nb_check)  // iter_MakeDenser
+ {
+   unsigned int nb_added = 0, total_added = 0;
+   tetra_porosity P;
+@@ -214,12 +291,13 @@
+   unsigned int ns = sphere.size();
+   unsigned int failure;
+   unsigned int nbVirtual;
+-  //double Volume_min = 1.333333333*M_PI*rmin*rmin*rmin;
+-  
+-  // TODO add bool VirtualSpheresOK
++  double Volume_min = 0.05*1.333333333*M_PI*rmin*rmin*rmin;
++  static bool finalyze = false;
+ 
++  if (finalyze) nb_check = 1;
++
+   triangulation.clear();
+-  for (unsigned int i = 0 ; i &lt; sphere.size() ; i++)
++  for (id_type i = 0 ; i &lt; sphere.size() ; i++)
+   {
+ 	if (sphere[i].R &lt;= 0.0) continue;
+ 	triangulation.insert_node(sphere[i].x, sphere[i].y, sphere[i].z, i, (sphere[i].type == VIRTUAL));
+@@ -231,7 +309,6 @@
+   do
+   {
+ 	triangulation.current_tetrahedron_get_nodes(P.id1,P.id2,P.id3,P.id4);
+-	if (P.id1 &gt;= ns || P.id2 &gt;= ns || P.id3 &gt;= ns || P.id4 &gt;= ns) continue; // FIXME why ?
+ 	  
+ 	nbVirtual = 0;
+ 	if (sphere[P.id1].type == VIRTUAL) ++nbVirtual; 
+@@ -240,18 +317,9 @@
+ 	if (sphere[P.id4].type == VIRTUAL) ++nbVirtual;
+ 	if (nbVirtual == 4) continue;
+ 
+-/*
+-	if (squared_distance_centre_spheres(P.id1, P.id2) &gt; 0.01) continue;
+-	if (squared_distance_centre_spheres(P.id1, P.id3) &gt; 0.01) continue;
+-	if (squared_distance_centre_spheres(P.id1, P.id4) &gt; 0.01) continue;
+-	if (squared_distance_centre_spheres(P.id2, P.id3) &gt; 0.01) continue;
+-	if (squared_distance_centre_spheres(P.id2, P.id4) &gt; 0.01) continue;
+-	if (squared_distance_centre_spheres(P.id3, P.id4) &gt; 0.01) continue;
+-*/
+-
+ 	P.volume = triangulation.current_tetrahedron_get_volume();
+ 	P.void_volume = P.volume - solid_volume_of_tetrahedron(sphere[P.id1], sphere[P.id2], sphere[P.id3], sphere[P.id4]);
+-	if (P.void_volume &gt; /*Volume_min*/ 0.0 || nbVirtual &gt; 0)
++	if (P.void_volume &gt; Volume_min || nbVirtual &gt; 0)
+ 	{
+ 	  tetra_porosities.push_back(P);
+ 	}
+@@ -260,63 +328,21 @@
+   // sort tetrahdrons from bigger to smaller void volumes 
+   qsort(&amp;(tetra_porosities[0]),tetra_porosities.size(),sizeof(tetra_porosity),compare_tetra_porosity);
+ 
+-  for (unsigned int i = 0 ; i &lt; tetra_porosities.size() ; i++)
++  for (id_type i = 0 ; i &lt; tetra_porosities.size() ; i++)
+   {	
+-	failure = place_fifth_sphere(tetra_porosities[i].id1,tetra_porosities[i].id2,tetra_porosities[i].id3,tetra_porosities[i].id4,S);
+-
+-	if (!failure)
+-	{
+-	  failure = check_overlaps(S,ns+1); // ns+1 i.e. on exclut aucune sphere
+-	}
+-	else // failure 
+-	{
+-// 	  Sphere &amp; S1 = sphere[tetra_porosities[i].id1];
+-// 	  Sphere &amp; S2 = sphere[tetra_porosities[i].id2];
+-// 	  Sphere &amp; S3 = sphere[tetra_porosities[i].id3];
+-// 	  Sphere &amp; S4 = sphere[tetra_porosities[i].id4];
+-
+-	  /*
+-	  CGAL::weighted_circumcenterC3 (
+-	                                 S1.x, S1.y, S1.z, S1.R * S1.R,
+-									 S2.x, S2.y, S2.z, S2.R * S2.R,
+-									 S3.x, S3.y, S3.z, S3.R * S3.R,
+-									 S4.x, S4.y, S4.z, S4.R * S4.R,
+-									 S.x, S.y, S.z
+-									 );
+-	  */
+-
+-      
+-
+-// 	  double distance_min = distance_centre_spheres(S,S1) - S1.R;
+-// 	  double distance;
+-// 	  distance_min = (distance_min &lt; (distance = distance_centre_spheres(S,S2) - S2.R)) ? distance_min : distance;
+-// 	  distance_min = (distance_min &lt; (distance = distance_centre_spheres(S,S3) - S3.R)) ? distance_min : distance;
+-// 	  distance_min = (distance_min &lt; (distance = distance_centre_spheres(S,S4) - S4.R)) ? distance_min : distance;
+-// 	  S.R = distance_min;
+-// 	  if (S.R &gt; rmax) S.R = rmax;
+-	  // TODO mettre en contact
+-
+-      S.R = rmin; // test
+-
+-      //if (S.R &gt;= rmin)
+-	  {
+-//failure = 0;
+-		failure = check_overlaps(S,ns+10);
+-	  }
+-	}
+-	
++	failure = place_fifth_sphere(tetra_porosities[i].id1, tetra_porosities[i].id2, tetra_porosities[i].id3, tetra_porosities[i].id4, S);
++	if (failure) S.R = rmin;
++	failure = check_overlaps(S,ns+1); // ns+1 (means that no sphere is excluded)
+ 	if(!failure)
+ 	{
+ 	  vector&lt;neighbor_with_distance&gt; neighbor;
+-	  build_sorted_list_of_neighbors(S, neighbor);
+-	  
++	  build_sorted_list_of_neighbors(S, neighbor);  
+ 	  S.R += neighbor[0].distance;
+       
+ 	  if (S.R &gt;= rmin &amp;&amp; S.R &lt;= rmax)
+ 	  {
+ 		sphere.push_back(S);++(n_densify);
+ 		partition.add(ns,S.x,S.y,S.z);
+-		triangulation.insert_node(S.x,S.y,S.z,ns,false); // necessary to compute mean solid fraction
+ 		++ns; ++nb_added; ++total_added;
+ 	  }
+ 	}
+@@ -324,20 +350,115 @@
+ 	// check if we must stop
+ 	if (nb_added &gt;= nb_check)
+ 	{
+-	  //cout &lt;&lt; &quot;check, total_added = &quot; &lt;&lt; total_added &lt;&lt; endl;
+ 	  nb_added = 0;
+-	  // getMeanSolidFraction();
++
++	  if (criterion.nb_spheres)
++	  {
++		cout &lt;&lt; &quot; Nb Spheres = &quot; &lt;&lt; sphere.size() &lt;&lt; endl;
++		if (sphere.size() &gt;= criterion.nb_spheres_max)
++		{
++		  cout &lt;&lt; &quot;------------------------------------&quot; &lt;&lt; endl;
++		  cout &lt;&lt; &quot;&gt;&gt; Maximum number of spheres reached&quot; &lt;&lt; endl;
++		  cout &lt;&lt; &quot; * Nb Spheres = &quot; &lt;&lt; sphere.size() &lt;&lt; endl;
++		  cout &lt;&lt; &quot; * Target     = &quot; &lt;&lt; criterion.nb_spheres_max &lt;&lt; endl;
++		  cout &lt;&lt; &quot;------------------------------------&quot; &lt;&lt; endl;
++		  Must_Stop = true;
++		  return total_added;
++		}
++	  }
++
++	  if (criterion.solid_fraction)
++	  {
++		double SF = getMeanSolidFraction(criterion.x,criterion.y,criterion.z,criterion.R);
++		cout &lt;&lt; &quot;Solid fraction = &quot; &lt;&lt; SF &lt;&lt; endl;
++		if (SF &gt;= 0.995*criterion.solid_fraction_max) { finalyze = true; nb_check = 1; }
++		if (SF &gt;= criterion.solid_fraction_max)
++		{
++		  cout &lt;&lt; &quot;------------------------------------&quot; &lt;&lt; endl;
++		  cout &lt;&lt; &quot;&gt;&gt; Maximum solid fraction reached&quot; &lt;&lt; endl;
++		  cout &lt;&lt; &quot; * Solid fraction = &quot; &lt;&lt; SF &lt;&lt; endl;
++		  cout &lt;&lt; &quot; * Target         = &quot; &lt;&lt; criterion.solid_fraction_max &lt;&lt; endl;
++		  cout &lt;&lt; &quot;------------------------------------&quot; &lt;&lt; endl;
++		  Must_Stop = true;
++		  return total_added;
++		}
++	  }
++
+ 	}
+   }
+ 
+ return total_added;
+ }
+ 
++
++double SpherePadder::getMeanSolidFraction(double x, double y, double z, double R)
++{
++  partition.locateCellOf(x-R, y-R, z-R);
++  unsigned int iCellMin = partition.i_down();
++  unsigned int jCellMin = partition.j_down();
++  unsigned int kCellMin = partition.k_down();
++  
++  partition.locateCellOf(x+R, y+R, z+R);
++  unsigned int iCellMax = partition.i_up();
++  unsigned int jCellMax = partition.j_up();
++  unsigned int kCellMax = partition.k_up();
++
++  id_type id;
++  Cell current_cell;
++  double dx,dy,dz,Rs,dist2,dist,d1,d2;
++  const double _4div3 = 1.3333333333333;
++  double Vs=0.0, Vp=_4div3*M_PI*R*R*R;
++  if (Vp &lt;= 0.0) return 0.0;
++  
++  for (unsigned int i = iCellMin ; i &lt;= iCellMax ; ++i)
++  {
++	for (unsigned int j = jCellMin ; j &lt;= jCellMax ; ++j)
++	{
++	  for (unsigned int k = kCellMin ; k &lt;= kCellMax ; ++k)
++	  {
++		current_cell = partition.get_cell(i,j,k);
++		for (unsigned int s = 0 ; s &lt; current_cell.sphereId.size() ; ++s)
++		{
++		  id = current_cell.sphereId[s];
++		  if (sphere[id].type != VIRTUAL &amp;&amp; sphere[id].R &gt; 0.0)
++		  {
++		  dx = sphere[id].x - x;
++		  dy = sphere[id].y - y;
++		  dz = sphere[id].z - z;
++		  Rs = sphere[id].R;
++		  dist2 = dx*dx + dy*dy + dz*dz;
++		  if (dist2 &lt;= (R+Rs)*(R+Rs)) // At least a portion of the sphere intersects the probe
++		  {
++
++			if (dist2 &lt;= (R-Rs)*(R-Rs)) // Entier sphere into the probe
++			{
++			  Vs += _4div3*M_PI*Rs*Rs*Rs;
++			}
++			else // Intersecting sphere
++			{
++			  dist = sqrt(dist2);
++			  d1 = (R+Rs-dist)*(R+Rs-dist);
++			  d2 = dist2 + 2.0*dist*Rs - 3.0*Rs*Rs + 2.0*dist*R + 6.0*Rs*R - 3.0*R*R;
++			  Vs += (M_PI*d1*d2)/(12.0*dist);
++			}
++			
++		  }
++
++		  }
++		}
++	  }
++	}
++  }
++
++  return (Vs/Vp);
++}
++
++
+ void SpherePadder::save_tri_mgpost (const char* name)
+ {
+   // triangulation
+   triangulation.clear();
+-  for (unsigned int i = 0 ; i &lt; sphere.size() ; i++)
++  for (id_type i = 0 ; i &lt; sphere.size() ; i++)
+   {
+ 	if (sphere[i].R &lt;= 0.0) continue;
+ 	triangulation.insert_node(sphere[i].x, sphere[i].y, sphere[i].z, i, (sphere[i].type == VIRTUAL));
+@@ -358,9 +479,9 @@
+ 	triangulation.current_tetrahedron_get_nodes(id1,id2,id3,id4);
+ 	//if(sphere[id1].type == VIRTUAL &amp;&amp; sphere[id2].type == VIRTUAL &amp;&amp; sphere[id3].type == VIRTUAL &amp;&amp; sphere[id4].type == VIRTUAL) continue;
+ 	
+-	xp = 0.25*(sphere[id1].x+sphere[id2].x+sphere[id3].x+sphere[id4].x);
+-	yp = 0.25*(sphere[id1].y+sphere[id2].y+sphere[id3].y+sphere[id4].y);
+-	zp = 0.25*(sphere[id1].z+sphere[id2].z+sphere[id3].z+sphere[id4].z);
++	xp = 0.25 * (sphere[id1].x+sphere[id2].x+sphere[id3].x+sphere[id4].x);
++	yp = 0.25 * (sphere[id1].y+sphere[id2].y+sphere[id3].y+sphere[id4].y);
++	zp = 0.25 * (sphere[id1].z+sphere[id2].z+sphere[id3].z+sphere[id4].z);
+ 	rad = (sphere[id1].R&gt;sphere[id2].R)?sphere[id1].R:sphere[id2].R;
+ 	rad = (rad&gt;sphere[id3].R)?rad:sphere[id3].R;
+ 	rad = (rad&gt;sphere[id4].R)?rad:sphere[id4].R;
+@@ -390,6 +511,7 @@
+ 
+ }
+ 
++
+ void SpherePadder::save_mgpost (const char* name)
+ {
+   BEGIN_FUNCTION (&quot;Save mgp&quot;);
+@@ -399,6 +521,7 @@
+   double xtrans = mesh-&gt;xtrans;
+   double ytrans = mesh-&gt;ytrans;
+   double ztrans = mesh-&gt;ztrans;
++  unsigned int n = 1;
+   
+   fmgpost &lt;&lt; &quot;&lt;?xml version=\&quot;1.0\&quot;?&gt;&quot; &lt;&lt; endl
+       &lt;&lt; &quot; &lt;mgpost mode=\&quot;3D\&quot;&gt;&quot; &lt;&lt; endl
+@@ -410,44 +533,55 @@
+       &lt;&lt; &quot;  &lt;newcolor name=\&quot;at tetra vertexes\&quot;/&gt;&quot; &lt;&lt; endl
+ 	  &lt;&lt; &quot;  &lt;newcolor name=\&quot;insered by user\&quot;/&gt;&quot; &lt;&lt; endl
+ 	  &lt;&lt; &quot;  &lt;newcolor name=\&quot;from triangulation\&quot;/&gt;&quot; &lt;&lt; endl
++	  &lt;&lt; &quot;  &lt;newcolor name=\&quot;virtual\&quot;/&gt;&quot; &lt;&lt; endl
+       &lt;&lt; &quot;  &lt;state id=\&quot;&quot; &lt;&lt; 1 
+       &lt;&lt; &quot;\&quot; time=\&quot;&quot; &lt;&lt; 0.0 &lt;&lt; &quot;\&quot;&gt;&quot; &lt;&lt; endl;
+ 
+-  for (unsigned int i = 0 ; i &lt; sphere.size() ; ++i)
+-  {
+-	// the sphere with R=0 that are placed at nodes are saved because mgpost needs them
+-	// for the display of tetrahdrons.
+-    if (sphere[i].R &lt;= 0.0 &amp;&amp; sphere[i].type != AT_NODE) continue; 
+-	if (sphere[i].type == VIRTUAL) continue;
+-
+-	
+-    fmgpost &lt;&lt; &quot;   &lt;body&gt;&quot; &lt;&lt; endl;
+-    fmgpost &lt;&lt; &quot;    &lt;SPHER id=\&quot;&quot; &lt;&lt; i+1 &lt;&lt; &quot;\&quot; col=\&quot;&quot; &lt;&lt; sphere[i].type &lt;&lt; &quot;\&quot; r=\&quot;&quot; &lt;&lt; sphere[i].R &lt;&lt; &quot;\&quot;&gt;&quot; &lt;&lt; endl
+-        &lt;&lt; &quot;     &lt;position x=\&quot;&quot; &lt;&lt; sphere[i].x + xtrans &lt;&lt; &quot;\&quot; y=\&quot;&quot; 
+-        &lt;&lt; sphere[i].y + ytrans &lt;&lt; &quot;\&quot; z=\&quot;&quot; &lt;&lt; sphere[i].z + ztrans &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl   
+-        &lt;&lt; &quot;    &lt;/SPHER&gt;&quot; &lt;&lt; endl &lt;&lt; flush;
+-
+-    // This is not the contact network but rather the tetrahedrons 
+-    if (i &lt; mesh-&gt;node.size())
+-	{
+-      for (unsigned int s = 0 ; s &lt; mesh-&gt;segment.size() ; ++s)
++	  for (unsigned int i = 0 ; i &lt; mesh-&gt;node.size() ; ++i)
+ 	  {
+-		if (mesh-&gt;segment[s].nodeId[0] == i)
++		fmgpost &lt;&lt; &quot;   &lt;body&gt;&quot; &lt;&lt; endl;
++		fmgpost &lt;&lt; &quot;    &lt;SPHER id=\&quot;&quot; &lt;&lt; n &lt;&lt; &quot;\&quot; col=\&quot;&quot; &lt;&lt; 9 &lt;&lt; &quot;\&quot; r=\&quot;&quot; &lt;&lt; 0.0 &lt;&lt; &quot;\&quot;&gt;&quot; &lt;&lt; endl
++		&lt;&lt; &quot;     &lt;position x=\&quot;&quot; &lt;&lt; mesh-&gt;node[i].x + xtrans &lt;&lt; &quot;\&quot; y=\&quot;&quot;
++		&lt;&lt; mesh-&gt;node[i].y + ytrans &lt;&lt; &quot;\&quot; z=\&quot;&quot; &lt;&lt; mesh-&gt;node[i].z + ztrans &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl
++		&lt;&lt; &quot;    &lt;/SPHER&gt;&quot; &lt;&lt; endl &lt;&lt; flush;
++		n++;
++		// This is not the contact network but rather the tetrahedrons
++		if (i &lt; mesh-&gt;node.size())
+ 		{
+-		if (mesh-&gt;segment[s].nodeId[1] &lt; mesh-&gt;node.size())
+-		  fmgpost &lt;&lt; &quot;    &lt;SPSPx antac=\&quot;&quot; &lt;&lt; mesh-&gt;segment[s].nodeId[1] + 1 &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl;
++		  for (unsigned int s = 0 ; s &lt; mesh-&gt;segment.size() ; ++s)
++		  {
++			if (mesh-&gt;segment[s].nodeId[0] == i)
++			{
++			  if (mesh-&gt;segment[s].nodeId[1] &lt; mesh-&gt;node.size())
++				fmgpost &lt;&lt; &quot;    &lt;SPSPx antac=\&quot;&quot; &lt;&lt; mesh-&gt;segment[s].nodeId[1] + 1 &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl;
++			}
++		  }
+ 		}
++		
++		fmgpost &lt;&lt; &quot;   &lt;/body&gt;&quot; &lt;&lt; endl;
+ 	  }
+-	}
++	  
++	  for (id_type i = 0 ; i &lt; sphere.size() ; ++i)
++	  {
++		if (sphere[i].R &lt;= 0.0 /*&amp;&amp; sphere[i].type != AT_NODE*/) continue;
++		if (sphere[i].type == VIRTUAL) continue;
+ 
+-    fmgpost &lt;&lt; &quot;   &lt;/body&gt;&quot; &lt;&lt; endl;
+-  }
+ 
++		fmgpost &lt;&lt; &quot;   &lt;body&gt;&quot; &lt;&lt; endl;
++		fmgpost &lt;&lt; &quot;    &lt;SPHER id=\&quot;&quot; &lt;&lt; n &lt;&lt; &quot;\&quot; col=\&quot;&quot; &lt;&lt; sphere[i].type &lt;&lt; &quot;\&quot; r=\&quot;&quot; &lt;&lt; sphere[i].R &lt;&lt; &quot;\&quot;&gt;&quot; &lt;&lt; endl
++			&lt;&lt; &quot;     &lt;position x=\&quot;&quot; &lt;&lt; sphere[i].x + xtrans &lt;&lt; &quot;\&quot; y=\&quot;&quot;
++			&lt;&lt; sphere[i].y + ytrans &lt;&lt; &quot;\&quot; z=\&quot;&quot; &lt;&lt; sphere[i].z + ztrans &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl
++			&lt;&lt; &quot;    &lt;/SPHER&gt;&quot; &lt;&lt; endl &lt;&lt; flush;
++		fmgpost &lt;&lt; &quot;   &lt;/body&gt;&quot; &lt;&lt; endl;
++		n++;
++	  }
++
+   fmgpost &lt;&lt; &quot;  &lt;/state&gt;&quot; &lt;&lt; endl
+       &lt;&lt; &quot; &lt;/mgpost&gt;&quot; &lt;&lt; endl;
+                 
+   END_FUNCTION;
+ }
++
+ 	
+ void SpherePadder::save_Rxyz (const char* name)
+ {
+@@ -468,24 +602,7 @@
+   END_FUNCTION;
+ }
+ 
+-void SpherePadder::save_granulo(const char* name)
+-{
+-  vector&lt;double&gt; D;
+-  for (unsigned int i = 0 ; i &lt; sphere.size() ; ++i)
+-  {
+-    if (sphere[i].R &lt;= 0.0) continue; 
+-    D.push_back(2.0 * sphere[i].R);
+-  }
+-  qsort (&amp;(D[0]), D.size(), sizeof(double), compareDouble);
+-  
+-  ofstream file(name);
+-  double inv_N = 1.0 / (double)D.size();
+-  for (unsigned int i = 0 ; i &lt; D.size() ; ++i)
+-  {
+-    file &lt;&lt; D[i] &lt;&lt; ' ' &lt;&lt; (double)i * inv_N &lt;&lt; endl;
+-  }
+-}
+-        
++     
+ void SpherePadder::place_at_nodes ()
+ {
+   BEGIN_FUNCTION(&quot;Place at nodes&quot;);
+@@ -507,18 +624,23 @@
+       segId = mesh-&gt;node[n].segmentOwner[i];
+       S.R = (S.R &lt; mesh-&gt;segment[segId].length) ? S.R : mesh-&gt;segment[segId].length;
+     }       
+-    S.R /= 4.0;
++    S.R *= 0.25;
+ 	if (S.R &gt; rmax) S.R = rmax;
+ 	if (S.R &lt; rmin) S.R = rmin;
+                 
+     sphere.push_back(S); ++(n1); 
+-    //check_inProbe(n);compacity_in_probe(n);
+     partition.add(n,S.x,S.y,S.z);
+   }
+-        
++  
++  if (verbose)
++  {
++    cout &lt;&lt; &quot; Added = &quot; &lt;&lt; n1 &lt;&lt; endl;
++  }
++		
+   END_FUNCTION;
+ }
+ 
++
+ void SpherePadder::place_at_segment_middle ()
+ {       
+   BEGIN_FUNCTION(&quot;Place at segment middle&quot;);
+@@ -554,8 +676,13 @@
+                 
+     mesh-&gt;segment[s].sphereId = ns;
+     ++ns;
+-                
+-  }       
++  }
++
++  if (verbose)
++  {
++	cout &lt;&lt; &quot; Added = &quot; &lt;&lt; n2 &lt;&lt; endl;
++  }
++  
+   END_FUNCTION;   
+ }
+ 
+@@ -564,7 +691,6 @@
+ {
+   BEGIN_FUNCTION(&quot;Place at faces&quot;);
+  
+-  // FIXME move the following loops in TetraMesh or at the end of place_at_segment_middle ??
+   unsigned int sphereId,faceId;
+   for (unsigned int s = 0 ; s &lt; mesh-&gt;segment.size() ; ++s)
+   {
+@@ -579,7 +705,6 @@
+   Sphere S;
+   S.type = AT_FACE;
+ 
+-  unsigned int ns = sphere.size();
+   const double div3 = 0.3333333333333;
+   Sphere S1,S2,S3;
+ 
+@@ -593,12 +718,15 @@
+     S.y = div3 * (S1.y + S2.y + S3.y);
+     S.z = div3 * (S1.z + S2.z + S3.z);                
+     S.R = rmin;
+-    
+-    sphere.push_back(S); ++(n3);
+-    place_sphere_4contacts(ns);
+-    ++ns;
++
++	n3 += place_sphere_4contacts(S);
+   }
+-        
++
++  if (verbose)
++  {
++	cout &lt;&lt; &quot; Added = &quot; &lt;&lt; n3 &lt;&lt; endl;
++  }
++
+   END_FUNCTION;  
+ }
+ 
+@@ -611,7 +739,6 @@
+   S.type = AT_TETRA_CENTER;
+   Tetraedre T;
+   
+-  unsigned int ns = sphere.size(); 
+   Node N1,N2,N3,N4;
+ 
+   for (unsigned int t = 0 ; t &lt; mesh-&gt;tetraedre.size() ; ++t)
+@@ -627,12 +754,14 @@
+     S.z = 0.25 * (N1.z + N2.z + N3.z + N4.z); 
+ 
+     S.R = rmin;
+-                
+-    sphere.push_back(S); ++(n4);
+-    place_sphere_4contacts(ns);
+-    ++ns;
++	n4 += place_sphere_4contacts(S);
+   }
+-        
++
++  if (verbose)
++  {
++	cout &lt;&lt; &quot; Added = &quot; &lt;&lt; n4 &lt;&lt; endl;
++  }
++
+   END_FUNCTION;  
+ }
+ 
+@@ -644,7 +773,6 @@
+   S.type = AT_TETRA_VERTEX;
+   Tetraedre T;
+   
+-  unsigned int ns = sphere.size();
+   Node N1,N2,N3,N4;
+   double centre[3];
+ 
+@@ -662,23 +790,27 @@
+ 
+     S.R = rmin;
+                 
+-    double pondere = 0.333333333; // FIXME parametrable ?
++    double pondere = 0.33333333333;
+     for (unsigned int n = 0 ; n &lt; 4 ; ++n)
+     {
+       S.x = pondere * mesh-&gt;node[ T.nodeId[n] ].x + (1.0 - pondere) * centre[0];
+       S.y = pondere * mesh-&gt;node[ T.nodeId[n] ].y + (1.0 - pondere) * centre[1];
+       S.z = pondere * mesh-&gt;node[ T.nodeId[n] ].z + (1.0 - pondere) * centre[2];
+-      
+-      sphere.push_back(S); ++(n5);
+-	  place_sphere_4contacts(ns);
+-	  ++ns;
++	  
++	  n5 += place_sphere_4contacts(S);
+     }
+   }
+-        
++  
++  if (verbose)
++  {
++	cout &lt;&lt; &quot; Added = &quot; &lt;&lt; n5 &lt;&lt; endl;
++  }
++  
+   END_FUNCTION; 
+ }
+ 
+-double SpherePadder::squared_distance_centre_spheres(unsigned int i, unsigned int j)
++
++double SpherePadder::squared_distance_centre_spheres(id_type i, id_type j)
+ {
+   double lx,ly,lz;
+   lx  = sphere[j].x - sphere[i].x;
+@@ -687,8 +819,8 @@
+   return ((lx*lx + ly*ly + lz*lz));
+ }
+ 
+-// deprecated
+-double SpherePadder::distance_spheres(unsigned int i, unsigned int j)
++
++double SpherePadder::distance_spheres(id_type i, id_type j)
+ {
+   double lx,ly,lz;
+   lx  = sphere[j].x - sphere[i].x;
+@@ -697,6 +829,7 @@
+   return (sqrt(lx*lx + ly*ly + lz*lz) - sphere[i].R - sphere[j].R);
+ }
+ 
++
+ double SpherePadder::distance_spheres(Sphere &amp; S1, Sphere &amp; S2)
+ {
+   double lx,ly,lz;
+@@ -706,6 +839,7 @@
+   return (sqrt(lx*lx + ly*ly + lz*lz) - S1.R - S2.R);
+ }
+ 
++
+ double SpherePadder::distance_centre_spheres(Sphere&amp; S1, Sphere&amp; S2)
+ {
+   double lx,ly,lz;
+@@ -715,9 +849,11 @@
+   return (sqrt(lx*lx + ly*ly + lz*lz));
+ }
+ 
++
+ void SpherePadder::build_sorted_list_of_neighbors(Sphere &amp; S, vector&lt;neighbor_with_distance&gt; &amp; neighbor)
+ {
+   neighbor_with_distance N;
++  if (!neighbor.empty()) neighbor.clear(); 
+   
+   unsigned int id;
+   Cell current_cell;
+@@ -736,10 +872,12 @@
+ 		for (unsigned int s = 0 ; s &lt; current_cell.sphereId.size() ; ++s)
+ 		{
+ 		  id = current_cell.sphereId[s];
+-		  //if (id != sphereId)
++		  //if (id != excluded)
++		  if (sphere[id].R &gt; 0.0)
+ 		  {
+ 			N.sphereId = id;
+ 			N.distance = distance_spheres(S,sphere[id]);
++			N.priority = (sphere[id].type == VIRTUAL); // or INSERTED_BY_USER ? FIXME
+ 			neighbor.push_back(N);
+ 		  }
+ 		}
+@@ -749,17 +887,25 @@
+   }
+   
+   qsort(&amp;(neighbor[0]),neighbor.size(),sizeof(neighbor_with_distance),compare_neighbor_with_distance);
++//   cout &lt;&lt; &quot;-&gt;&quot; ;
++//   for (unsigned int a = 0;a&lt;5;++a)
++//   {
++// 	cout &lt;&lt; &quot;dist &quot; &lt;&lt; neighbor[a].distance;
++// 	if (sphere[ neighbor[a].sphereId ].type == VIRTUAL) cout &lt;&lt; &quot; (VIRTUAL)&quot;  &lt;&lt; endl;
++// 	else cout &lt;&lt; endl;
++//   }
+ }
+ 
+-void SpherePadder::build_sorted_list_of_neighbors(unsigned int sphereId, vector&lt;neighbor_with_distance&gt; &amp; neighbor)
++
++void SpherePadder::build_sorted_list_of_neighbors(id_type sphereId, vector&lt;neighbor_with_distance&gt; &amp; neighbor)
+ {
+   neighbor_with_distance N;
+-  
++
+   unsigned int id;
+   Cell current_cell;
+-  
++
+   partition.locateCellOf(sphere[sphereId].x,sphere[sphereId].y,sphere[sphereId].z);
+-  
++
+   // Build the local list of neighbors
+   for (unsigned int i = partition.i_down() ; i &lt;= partition.i_up() ; ++i)
+   {
+@@ -767,34 +913,94 @@
+ 	{
+ 	  for (unsigned int k = partition.k_down() ; k &lt;= partition.k_up() ; ++k)
+ 	  {
+-		
++
+ 		current_cell = partition.get_cell(i,j,k);
+ 		for (unsigned int s = 0 ; s &lt; current_cell.sphereId.size() ; ++s)
+ 		{
+ 		  id = current_cell.sphereId[s];
+-		  if (id != sphereId)
++		  if (id != sphereId &amp;&amp; sphere[id].R &gt; 0.0)
+ 		  {
+ 			N.sphereId = id;
+ 			N.distance = distance_spheres(sphereId,id);
++			N.priority = (sphere[id].type == VIRTUAL);
+ 			neighbor.push_back(N);
+ 		  }
+ 		}
+-		
++
+ 	  }
+ 	}
+   }
+-  
++
+   qsort(&amp;(neighbor[0]),neighbor.size(),sizeof(neighbor_with_distance),compare_neighbor_with_distance);
+ }
+ 
+-unsigned int SpherePadder::place_sphere_4contacts (unsigned int sphereId, unsigned int nb_combi_max)
+-{ 
++
++unsigned int SpherePadder::place_sphere_4contacts (Sphere&amp; S, unsigned int nb_combi_max)
++{
++  unsigned int ns = sphere.size();
++  Sphere Sbackup;
++  
++  vector&lt;neighbor_with_distance&gt; neighbor;
++  build_sorted_list_of_neighbors(S, neighbor);
++  
++  S.R += neighbor[0].distance;
++  if (S.R &gt; rmax)      S.R = rmax;
++  else if (S.R &lt; rmin) S.R = 0.0;
++  
++  vector&lt;vector&lt;unsigned int&gt; &gt; possible_combination;
++  for (unsigned int c = 0 ; c &lt; combination.size() ; ++c)
++  {
++	if (combination[c][0] &gt;= neighbor.size()) continue;
++	if (combination[c][1] &gt;= neighbor.size()) continue;
++	if (combination[c][2] &gt;= neighbor.size()) continue;
++	if (combination[c][3] &gt;= neighbor.size()) continue;
++	possible_combination.push_back(combination[c]);
++  }
++  
++  unsigned int s1,s2,s3,s4;
++  unsigned int failure;
++  unsigned int nb_combi;
++  nb_combi = (nb_combi_max &lt; possible_combination.size()) ? nb_combi_max : possible_combination.size();
++  Sbackup = S;
++  for (unsigned int c = 0 ; c &lt; nb_combi ; ++c)
++  {
++	s1 = neighbor[ possible_combination[c][0] ].sphereId;
++	s2 = neighbor[ possible_combination[c][1] ].sphereId;
++	s3 = neighbor[ possible_combination[c][2] ].sphereId;
++	s4 = neighbor[ possible_combination[c][3] ].sphereId;
++
++	if (sphere[s1].R &lt;= 0.0) continue;
++	if (sphere[s2].R &lt;= 0.0) continue;
++	if (sphere[s3].R &lt;= 0.0) continue;
++	if (sphere[s4].R &lt;= 0.0) continue;
++	
++	S = Sbackup;
++	failure = place_fifth_sphere(s1,s2,s3,s4,S);
++	
++	if (!failure)
++	  failure = check_overlaps(S,ns+1);
++	else continue;
++	
++	if (!failure &amp;&amp; S.R &gt;= rmin &amp;&amp; S.R &lt;= rmax)
++	{
++	  sphere.push_back(S);
++	  partition.add(ns,S.x,S.y,S.z);//++ns;
++	  return 1;
++	}
++  }
++  
++  return 0;
++}
++
++
++unsigned int SpherePadder::place_sphere_4contacts (id_type sphereId, id_type nb_combi_max)
++{
+   Sphere S = sphere[sphereId];
+   Sphere Sbackup;
+ 
+   vector&lt;neighbor_with_distance&gt; neighbor;
+-  build_sorted_list_of_neighbors(sphereId, neighbor);
+-  
++  build_sorted_list_of_neighbors(sphere[sphereId], neighbor);
++
+   S.R += neighbor[0].distance;
+   if (S.R &gt;= rmin &amp;&amp; S.R &lt;= rmax) sphere[sphereId].R = S.R;
+   else if (S.R &gt; rmax)            sphere[sphereId].R = rmax;
+@@ -809,19 +1015,24 @@
+     if (combination[c][3] &gt;= neighbor.size()) continue;
+     possible_combination.push_back(combination[c]);
+   }
+-  
+-  unsigned int s1,s2,s3,s4;
++
++  id_type s1,s2,s3,s4;
+   unsigned int failure;
+   unsigned int nb_combi;
+   nb_combi = (nb_combi_max &lt; possible_combination.size()) ? nb_combi_max : possible_combination.size();
+   Sbackup = S;
+   for (unsigned int c = 0 ; c &lt; nb_combi ; ++c)
+-  {    
++  {
+     s1 = neighbor[ possible_combination[c][0] ].sphereId;
+     s2 = neighbor[ possible_combination[c][1] ].sphereId;
+     s3 = neighbor[ possible_combination[c][2] ].sphereId;
+     s4 = neighbor[ possible_combination[c][3] ].sphereId;
+-    
++
++	if (sphere[s1].R &lt;= 0.0) continue;
++	if (sphere[s2].R &lt;= 0.0) continue;
++	if (sphere[s3].R &lt;= 0.0) continue;
++	if (sphere[s4].R &lt;= 0.0) continue;
++
+     S = Sbackup;
+     failure = place_fifth_sphere(s1,s2,s3,s4,S);
+ 
+@@ -838,7 +1049,6 @@
+       partition.add(sphereId,S.x,S.y,S.z);
+       return 1;
+     }
+-
+   }
+ 
+   if (sphere[sphereId].R &gt; 0.0) partition.add(sphereId,S.x,S.y,S.z);
+@@ -847,7 +1057,7 @@
+ 
+ unsigned int SpherePadder::check_overlaps(Sphere &amp; S, unsigned int excludedId)
+ {
+-  unsigned int id;
++  id_type id;
+   Cell current_cell;
+   
+   partition.locateCellOf(S.x,S.y,S.z);
+@@ -863,7 +1073,7 @@
+ 		  id = current_cell.sphereId[s];
+ 		  if (id != excludedId &amp;&amp; sphere[id].R &gt; 0.0)
+ 		  {
+-			if (distance_spheres(S,sphere[id]) &lt; (-max_overlap_rate * rmin)) { return 128; }
++			if (distance_spheres(S,sphere[id]) &lt; (-max_overlap_rate * rmin)) { return FAIL_OVERLAP; }
+ 		  }
+ 		}
+ 	  }
+@@ -881,7 +1091,8 @@
+   return ( sqrt(D[0]*D[0] + D[1]*D[1] + D[2]*D[2]) );
+ }
+ 
+-unsigned int SpherePadder::place_fifth_sphere(unsigned int s1, unsigned int s2, unsigned int s3, unsigned int s4, Sphere&amp; S)
++// FIXME review  notations
++unsigned int SpherePadder::place_fifth_sphere(id_type s1, id_type s2, id_type s3, id_type s4, Sphere&amp; S)
+ {
+   double C1[3],C2[3],C3[3],C4[3];
+   double R1,R2,R3,R4;
+@@ -890,17 +1101,6 @@
+   C3[0] = sphere[s3].x ; C3[1] = sphere[s3].y ; C3[2] = sphere[s3].z ; R3 = sphere[s3].R; 
+   C4[0] = sphere[s4].x ; C4[1] = sphere[s4].y ; C4[2] = sphere[s4].z ; R4 = sphere[s4].R;
+ 
+-  // rougth estimate of the position
+-  // TODO 
+-  
+-  unsigned int fail_det          = 0x01;
+-  unsigned int fail_delta        = 0x02;
+-  unsigned int fail_radius       = 0x04;
+-  unsigned int fail_overlap      = 0x08;
+-  unsigned int fail_gap          = 0x10;
+-  unsigned int fail_radius_range = 0x20;
+-  unsigned int fail_NaN          = 0x40;
+-
+   // (x-x1)^2 + (y-y1)^2 + (z-z1)^2 = (r+r1)^2   (1)
+   // (x-x2)^2 + (y-y2)^2 + (z-z2)^2 = (r+r2)^2   (2)
+   // (x-x3)^2 + (y-y3)^2 + (z-z3)^2 = (r+r3)^2   (3)
+@@ -963,7 +1163,6 @@
+     double zb =  (a31*e + a32*ee + a33*eee);
+ 	
+     // Replace x, y and z in Equation (1) and solve the second order equation A*r^2 + B*r + C = 0
+-
+     double A = xa*xa + ya*ya + za*za - 1.0;
+     double B = 2.0*(xa*(xb-C1[0])) + 2.0*(ya*(yb-C1[1])) + 2.0*(za*(zb-C1[2])) - 2.0*R1;
+     double C = (xb-C1[0])*(xb-C1[0]) + (yb-C1[1])*(yb-C1[1]) + (zb-C1[2])*(zb-C1[2]) - R1*R1;
+@@ -978,19 +1177,19 @@
+       RR1 = (-B + sqrt_DELTA) * inv_2A;
+       RR2 = (-B - sqrt_DELTA) * inv_2A;
+     }
+-    else return fail_delta;
++    else return FAIL_DELTA;
+ 
+     if      (RR1 &gt; 0.0) R = RR1;
+     else if (RR2 &gt; 0.0) R = RR2;
+-    else if (RR1 &lt;= 0.0 &amp;&amp; RR2 &lt;= 0.0) return fail_radius;
++    else if (RR1 &lt;= 0.0 &amp;&amp; RR2 &lt;= 0.0) return FAIL_RADIUS;
+     
+-    if (R &lt; rmin || R &gt; rmax) return fail_radius_range;
++    if (R &lt; rmin || R &gt; rmax) return FAIL_RADIUS_RANGE;
+ 
+     centre[0] = xa * R + xb;
+     centre[1] = ya * R + yb;
+     centre[2] = za * R + zb;
+   }
+-  else return fail_det;
++  else return FAIL_DET;
+ 
+   S.x = centre[0];
+   S.y = centre[1];
+@@ -1011,32 +1210,35 @@
+ //         || ( distance2 &lt; half_distance_rate * (R + R2))
+ //         || ( distance3 &lt; half_distance_rate * (R + R3)) 
+ //         || ( distance4 &lt; half_distance_rate * (R + R4)) )
+-//   { return fail_overlap; }
++//   { return FAIL_OVERLAP; }
+ 
+   double max_overlap = -max_overlap_rate * rmin;
+   if ( ( distance1 &lt; max_overlap)
+ 	|| ( distance2 &lt; max_overlap)
+ 	|| ( distance3 &lt; max_overlap)
+ 	|| ( distance4 &lt; max_overlap) )
+-  { return fail_overlap; }
++  { return FAIL_OVERLAP; }
++
++  unsigned int nc = 0;
++  if (distance1 &lt;= 0.0) ++nc;
++  if (distance2 &lt;= 0.0) ++nc;
++  if (distance3 &lt;= 0.0) ++nc;
++  if (distance4 &lt;= 0.0) ++nc;
++  if (nc &lt; zmin) return FAIL_GAP;
++
++  if ( ( distance1 &gt; gap_max)
++    &amp;&amp; ( distance2 &gt; gap_max)
++    &amp;&amp; ( distance3 &gt; gap_max)
++    &amp;&amp; ( distance4 &gt; gap_max) )
++  { return FAIL_GAP; }
+   
+-  // The gap between spheres must not be too large
+-  double distance_max = max_overlap_rate * rmin;
+-  if ( ( distance1 &gt; distance_max)
+-    || ( distance2 &gt; distance_max)
+-    || ( distance3 &gt; distance_max)
+-    || ( distance4 &gt; distance_max) )
+-  { return fail_gap; }
+-  
+   // Check if there is NaN 
+   if ( (centre[0] != centre[0])
+     || (centre[1] != centre[1])
+     || (centre[2] != centre[2])
+     || (R != R))
+-  { return fail_NaN; }
++  { return FAIL_NaN; }
+ 
+-
+-  //S.R = R;
+   return 0;
+ }
+ 
+@@ -1044,11 +1246,12 @@
+  void SpherePadder::place_virtual_spheres() // WARNING there is a bug in this function (TODO include modifications of Philippe Marin)
+ {
+   
+-  BEGIN_FUNCTION(&quot;Place virtual spheres...&quot;);
++  BEGIN_FUNCTION(&quot;Place virtual spheres&quot;);
+     
+   Tetraedre current_tetra, tetra_neighbor;
+   
+-  unsigned int sphereId, current_tetra_id, n1, n2, n3, n4, s1, s2, s3, s4;
++  id_type sphereId, n1, n2, n3, n4, s1, s2, s3, s4;
++  unsigned int current_tetra_id;
+   const double div3 = 0.3333333333333;
+   Sphere S1,S2,S3,S4,S;
+   double sphere_virtual_radius, k;
+@@ -1056,7 +1259,7 @@
+   double vect1 [3], vect2 [3], vect3 [3], perpendicular_vector [3];
+ 
+   bool added;
+-  vector&lt;unsigned int&gt; j_ok;
++  vector&lt;id_type&gt; j_ok;
+    
+   sphere_virtual_radius = (mesh-&gt;mean_segment_length) * virtual_radius_factor;
+   k = sphere_virtual_radius;
+@@ -1131,8 +1334,8 @@
+ 
+       scalar_product =  ( (perpendicular_vector [0] * vect3 [0]) + (perpendicular_vector [1] * vect3 [1]) + (perpendicular_vector [2] * vect3 [2]) ) ;
+ 
+-      if ( k &lt; 0) k = -k;   
+-      if ( scalar_product &lt; 0) k = -k;
++      if (k &lt; 0) k = -k;
++      if (scalar_product &lt; 0) k = -k;
+       // TODO : il suffit de tester la valeur de mesh-&gt;face[f].normal_swap
+ 	  // mais pour le moment cette routine n'est pas critique (suffisemment rapide)
+ 	  
+@@ -1143,8 +1346,7 @@
+       S.y = S1.y + k * perpendicular_vector [1];
+       S.z = S1.z + k * perpendicular_vector [2];
+       S.R = sphere_virtual_radius;
+-      S.type = VIRTUAL;
+-      S.tetraOwner = current_tetra_id;   
++      S.type = VIRTUAL;  
+       
+       added = false;
+       for (unsigned int n = 0 ; n &lt; j_ok.size() ; ++n) 
+@@ -1170,8 +1372,7 @@
+       S.y = S2.y + k * perpendicular_vector [1];
+       S.z = S2.z + k * perpendicular_vector [2];
+       S.R = sphere_virtual_radius;
+-      S.type = VIRTUAL;
+-      S.tetraOwner = current_tetra_id;   
++      S.type = VIRTUAL;   
+       
+       added = false;
+       for (unsigned int n = 0 ; n &lt; j_ok.size() ; ++n) 
+@@ -1196,8 +1397,7 @@
+       S.y = S3.y + k * perpendicular_vector [1];
+       S.z = S3.z + k * perpendicular_vector [2];
+       S.R = sphere_virtual_radius;
+-      S.type = VIRTUAL;
+-      S.tetraOwner = current_tetra_id;   
++      S.type = VIRTUAL;   
+       
+       added = false;
+       for (unsigned int n = 0 ; n &lt; j_ok.size() ; ++n) 
+@@ -1225,7 +1425,6 @@
+       S.R = sphere_virtual_radius;
+ 
+       S.type = VIRTUAL;
+-      S.tetraOwner = current_tetra_id;
+       sphere.push_back(S);     
+       partition.add(sphereId++,S.x,S.y,S.z);
+ 
+@@ -1234,10 +1433,11 @@
+ 
+   }
+   
+-  unsigned int id;
++  id_type id;
+   Cell current_cell;
+   double distance_max = -max_overlap_rate * rmin;
+-
++  double dist,nx,ny,nz,invnorm;
++  
+   for ( unsigned int n = 0 ; n &lt; j_ok.size() ; ++n) //spheres virtuelles
+   { 
+     S = sphere[j_ok[n]];             
+@@ -1253,22 +1453,76 @@
+           for (unsigned int s = 0 ; s &lt; current_cell.sphereId.size() ; ++s)
+           {
+             id = current_cell.sphereId[s];
+-            if (sphere[id].type != VIRTUAL &amp;&amp; sphere[id].R &gt; 0.0)
++			if (sphere[id].type != VIRTUAL &amp;&amp; sphere[id].type != INSERTED_BY_USER &amp;&amp; sphere[id].R &gt; 0.0)
+             {
+-              if ((distance_centre_spheres(S,sphere[id]) - (S.R + sphere[id].R)) &lt; distance_max) sphere[id].R = 0.0; 
++              if ( (dist = distance_spheres(S,sphere[id])) &lt; distance_max )
++			  {
++				// Ingoing normal
++				invnorm = 1.0 / (dist + S.R + sphere[id].R);
++				nx = (sphere[id].x - S.x) * invnorm;
++				ny = (sphere[id].y - S.y) * invnorm;
++				nz = (sphere[id].z - S.z) * invnorm;
++				sphere[id].x -= (0.5 * dist)*nx;
++				sphere[id].y -= (0.5 * dist)*ny;
++				sphere[id].z -= (0.5 * dist)*nz;
++				sphere[id].R += 0.5 * dist;
++
++				//Sphere S = sphere[id]; // save
++				//if (!place_sphere_4contacts(id)) sphere[id] = S;
++				vector&lt;neighbor_with_distance&gt;  neighbor;
++				build_sorted_list_of_neighbors(id, neighbor);
++				double radius_max = fabs(neighbor[1].distance+sphere[id].R);
++				double inc = 0.5*max_overlap_rate*rmin;
++				while (sphere[id].R &lt; radius_max)
++				{
++				  sphere[id].x += inc*nx;
++				  sphere[id].y += inc*ny;
++				  sphere[id].z += inc*nz;
++				  sphere[id].R += inc;
++				}
++				
++				
++				// recherche plus proches voisins
++// 				vector&lt;neighbor_with_distance&gt;  neighbor;
++// 				build_sorted_list_of_neighbors(id, neighbor);
++// 				if ( (sphere[id].R + 0.5*neighbor[1].distance) &lt; rmax)
++// 				{
++// 				  sphere[id].R += 0.5*neighbor[1].distance;
++// 				  sphere[id].x += (0.5 * neighbor[1].distance)*nx;
++// 				  sphere[id].y += (0.5 * neighbor[1].distance)*ny;
++// 				  sphere[id].z += (0.5 * neighbor[1].distance)*nz;
++// 				}
++// 				else
++// 				{
++// 				  double d = rmax-sphere[id].R;
++// 				  sphere[id].R = rmax;
++// 				  sphere[id].x += (0.5 * d)*nx;
++// 				  sphere[id].y += (0.5 * d)*ny;
++// 				  sphere[id].z += (0.5 * d)*nz;
++// 				}
++  				
++				if (sphere[id].R &lt; rmin)
++				{
++				  sphere[id].R = 0.0;
++				  bounds.push_back(id);
++			    }
++			
++			  }
+             }
+           }
+-        
+         }
+       }
+     }
++  }
+ 
+-  }
+-            
++  cout &lt;&lt; &quot;bounds.size() = &quot; &lt;&lt; bounds.size() &lt;&lt; endl;
++  bounds.unique(); // FIXME marche pas !!!
++  cout &lt;&lt; &quot;bounds.size() = &quot; &lt;&lt; bounds.size() &lt;&lt; endl;
++  
+   END_FUNCTION;
+-  
+ }
+ 
++
+ void SpherePadder::insert_sphere(double x, double y, double z, double R)
+ {
+   Sphere S;
+@@ -1292,17 +1546,16 @@
+   unsigned int kCellMax = partition.k_up();
+   
+   double distance_max = -max_overlap_rate * rmin;
+-  unsigned int id;
++  id_type id;
+   Cell current_cell;
+ 
+-  for (unsigned int i = iCellMin ; i &lt;= iCellMax ; ++i /*unsigned int i = 0 ; i &lt;= partition.isize-1 ; ++i*/)
++  for (unsigned int i = iCellMin ; i &lt;= iCellMax ; ++i)
+   {
+-	for (unsigned int j = jCellMin ; j &lt;= jCellMax ; ++j /*unsigned int j = 0 ; j &lt;= partition.jsize-1 ; ++j*/)
++	for (unsigned int j = jCellMin ; j &lt;= jCellMax ; ++j)
+ 	{
+-	  for (unsigned int k = kCellMin ; k &lt;= kCellMax ; ++k /*unsigned int k = 0 ; k &lt;= partition.ksize-1 ; ++k*/)
++	  for (unsigned int k = kCellMin ; k &lt;= kCellMax ; ++k)
+ 	  {
+ 		current_cell = partition.get_cell(i,j,k);
+-		partition.add_in_cell(inseredId,i,j,k); // FIXME could be set only in iCellMin+1 to iCellMax-1 ...
+ 		for (unsigned int s = 0 ; s &lt; current_cell.sphereId.size() ; ++s)
+ 		{
+ 		  id = current_cell.sphereId[s];
+@@ -1317,32 +1570,29 @@
+ 	  }
+ 	}
+   }
++  
++  if (++iCellMin &gt; partition.isize - 1) iCellMin = partition.isize - 1;
++  if (++jCellMin &gt; partition.jsize - 1) jCellMin = partition.jsize - 1;
++  if (++kCellMin &gt; partition.ksize - 1) kCellMin = partition.ksize - 1;
++  if (--iCellMax &lt; 0) iCellMax = 0;
++  if (--jCellMax &lt; 0) jCellMax = 0;
++  if (--kCellMax &lt; 0) kCellMax = 0;
++  
++  for (unsigned int i = iCellMin ; i &lt;= iCellMax ; ++i)
++  {
++	for (unsigned int j = jCellMin ; j &lt;= jCellMax ; ++j)
++	{
++	  for (unsigned int k = kCellMin ; k &lt;= kCellMax ; ++k)
++	  {
++		partition.add_in_cell(inseredId,i,j,k);
++	  }
++	}
++  }
+ 
++}
+ 
+-//   for (/*unsigned int i = iCellMin ; i &lt;= iCellMax ; ++i*/unsigned int i = 0 ; i &lt;= partition.isize-1 ; ++i)
+-//   {
+-// 	for (/*unsigned int j = jCellMin ; j &lt;= jCellMax ; ++j*/unsigned int j = 0 ; j &lt;= partition.jsize-1 ; ++j)
+-// 	{
+-// 	  for (/*unsigned int k = kCellMin ; k &lt;= kCellMax ; ++k*/unsigned int k = 0 ; k &lt;= partition.ksize-1 ; ++k)
+-// 	  {
+-// 	
+-// 		current_cell = partition.get_cell(i,j,k);
+-// 		for (unsigned int s = 0 ; s &lt; current_cell.sphereId.size() ; ++s)
+-// 		{
+-// 
+-// 		  if (current_cell.sphereId[s] == inseredId)
+-// 			cout &lt;&lt; &quot;Cell &quot; &lt;&lt; i &lt;&lt; &quot;, &quot; &lt;&lt; j &lt;&lt; &quot;, &quot; &lt;&lt; k &lt;&lt; &quot;   OK    -&gt; &quot; &lt;&lt; current_cell.sphereId[s] &lt;&lt; endl;
+-// 
+-// 		}
+-// 	  }
+-// 	}
+-//   }
+ 
+-
+-
+-  
+-}
+-
++// FIXME Do not change radius of virtual and user spheres
+ void SpherePadder::cancel_overlaps()
+ {
+   BEGIN_FUNCTION(&quot;Cancel_overlaps&quot;);
+@@ -1431,28 +1681,20 @@
+             cerr &lt;&lt; &quot;  pos S1          = &quot; &lt;&lt; S1.x &lt;&lt; &quot;, &quot; &lt;&lt; S1.y &lt;&lt; &quot;, &quot; &lt;&lt; S1.z &lt;&lt; endl;
+             cerr &lt;&lt; &quot;  pos S2          = &quot; &lt;&lt; S2.x &lt;&lt; &quot;, &quot; &lt;&lt; S2.y &lt;&lt; &quot;, &quot; &lt;&lt; S2.z &lt;&lt; endl;
+             cerr &lt;&lt; &quot;  Distance / rmin = &quot; &lt;&lt; d/rmin &lt;&lt; endl;
+-            //cerr &lt;&lt; &quot;  rmin            = &quot; &lt;&lt; rmin &lt;&lt; endl;
+-            //sphere[n].type = sphere[t].type = AT_TETRA_VERTEX;
+-            //sphere[n].R = sphere[t].R = 0.0;
+             ++(nb_overlap);
+           }
+         }
+       }
+     }
+   }
+-  cerr &lt;&lt; &quot;NB Overlap = &quot; &lt;&lt; nb_overlap &lt;&lt; endl;
++  cerr &lt;&lt; &quot;NB Overlaps = &quot; &lt;&lt; nb_overlap &lt;&lt; endl;
+   
+   END_FUNCTION; 
+ }        
+ 
+ 
+ double SpherePadder::solid_volume_of_tetrahedron(Sphere&amp; S1, Sphere&amp; S2, Sphere&amp; S3, Sphere&amp; S4)
+-{
+-  double volume_portion1;
+-  double volume_portion2;
+-  double volume_portion3;
+-  double volume_portion4;
+-  
++{ 
+   double point1[4];
+   point1[0] = S1.x;
+   point1[1] = S1.y;
+@@ -1477,10 +1719,10 @@
+   point4[2] = S4.z;
+   point4[3] = S4.R;
+   
+-  volume_portion1 = spherical_triangle(point1, point2, point3, point4);
+-  volume_portion2 = spherical_triangle(point2, point1, point3, point4);
+-  volume_portion3 = spherical_triangle(point3, point1, point2, point4);
+-  volume_portion4 = spherical_triangle(point4, point1, point2, point3);
++  double volume_portion1 = spherical_triangle(point1, point2, point3, point4);
++  double volume_portion2 = spherical_triangle(point2, point1, point3, point4);
++  double volume_portion3 = spherical_triangle(point3, point1, point2, point4);
++  double volume_portion4 = spherical_triangle(point4, point1, point2, point3);
+ 
+   return (volume_portion1 + volume_portion2 + volume_portion3 + volume_portion4);
+ }
+@@ -1489,8 +1731,8 @@
+ double SpherePadder::spherical_triangle (double point1[],double point2[],double point3[],double point4[])
+ {
+ 
+-  double rayon = point1[3];
+-  if (rayon == 0.0) return 0.0;
++  double R = point1[3];
++  if (R == 0.0) return 0.0;
+   
+   double vect12[3], vect13[3], vect14[3];
+ 
+@@ -1514,84 +1756,159 @@
+   double B = acos( (vect12[0]*vect14[0] + vect12[1]*vect14[1] + vect12[2]*vect14[2]) / (norme14 * norme12));
+   double C = acos( (vect14[0]*vect13[0] + vect14[1]*vect13[1] + vect14[2]*vect13[2]) / (norme13 * norme14));
+ 
+-  double a = acos( (cos(A) - cos(B) * cos(C)) / (sin(B) * sin(C)) );
+-  double b = acos( (cos(B) - cos(C) * cos(A)) / (sin(C) * sin(A)) );
+-  double c = acos( (cos(C) - cos(A) * cos(B)) / (sin(A) * sin(B)) );
++  double cosA = cos(A);
++  double cosB = cos(B);
++  double cosC = cos(C);
++  double sinA = sin(A);
++  double sinB = sin(B);
++  double sinC = sin(C);
+   
+-  double aire_triangle_spherique = rayon * rayon * (a + b + c - M_PI);
++  double a = acos( (cosA - cosB * cosC) / (sinB * sinC) );
++  double b = acos( (cosB - cosC * cosA) / (sinC * sinA) );
++  double c = acos( (cosC - cosA * cosB) / (sinA * sinB) );
++  
++  double S = R * R * (a + b + c - M_PI);
+ 
+-  double aire_sphere = 4.0 * M_PI * rayon * rayon;
++  double Stot = 4.0 * M_PI * R * R;
+ 
+-  return ( (4.0 * 0.3333333 * M_PI * rayon * rayon * rayon) * (aire_triangle_spherique / aire_sphere) ) ;
+-
++  return ( (4.0 * 0.3333333 * M_PI * R * R * R) * (S/Stot) ) ;
+ }
+ 
+ // ============================
+ //           ANALISYS
+ // ============================
+ 
+-void SpherePadder::check_inProbe(unsigned int i)
++
++void SpherePadder::save_granulo(const char* name)
+ {
+-  if (!probeIsDefined)    return;
+-  if (sphere[i].R &lt;= 0.0) return;
+-  
+-  double dx = sphere[i].x - xProbe;
+-  double dy = sphere[i].y - yProbe;
+-  double dz = sphere[i].z - zProbe;
+-  double squared_distance = dx*dx + dy*dy + dz*dz;
+-  if (squared_distance + sphere[i].R*sphere[i].R &lt; RProbe * RProbe) sphereInProbe.push_back(i);
++  vector&lt;double&gt; D;
++  for (id_type i = 0 ; i &lt; sphere.size() ; ++i)
++  {
++	if (sphere[i].R &lt;= 0.0 || sphere[i].type == VIRTUAL) continue;
++	D.push_back(2.0 * sphere[i].R);
++  }
++  qsort (&amp;(D[0]), D.size(), sizeof(double), compareDouble);
++
++  ofstream file(name);
++  double inv_N = 1.0 / (double)D.size();
++  for (id_type i = 0 ; i &lt; D.size() ; ++i)
++  {
++	file &lt;&lt; D[i] &lt;&lt; &quot; &quot; &lt;&lt; (double)i * inv_N &lt;&lt; endl;
++  }
+ }
+ 
+-void SpherePadder::add_spherical_probe(double Rfact)
++
++// pair correlation function or radial distribution function (RDF)
++void SpherePadder::rdf (unsigned int Npoint, unsigned int Nrmean)
+ {
+-  double xmin,xmax;
+-  double ymin,ymax;
+-  double zmin,zmax;
+-  double R;
++  double rmean = 0.0;
++  unsigned int nspheres = 0;
++  double xmin,xmax,ymin,ymax,zmin,zmax;
+   
+-  xmin=xmax=mesh-&gt;node[0].x;
+-  ymin=ymax=mesh-&gt;node[0].y;
+-  zmin=zmax=mesh-&gt;node[0].z;
+-  for (unsigned int i = 1 ; i &lt; mesh-&gt;node.size() ; ++i)
++  xmin = xmax = sphere[0].x;
++  ymin = ymax = sphere[0].y;
++  zmin = zmax = sphere[0].z;
++  
++  for (unsigned int i = 0; i&lt;sphere.size();++i)
+   {
+-	xmin = (xmin &gt; mesh-&gt;node[i].x) ? mesh-&gt;node[i].x : xmin;
+-	xmax = (xmax &lt; mesh-&gt;node[i].x) ? mesh-&gt;node[i].x : xmax;
+-	ymin = (ymin &gt; mesh-&gt;node[i].y) ? mesh-&gt;node[i].y : ymin;
+-	ymax = (ymax &lt; mesh-&gt;node[i].y) ? mesh-&gt;node[i].y : ymax;
+-	zmin = (zmin &gt; mesh-&gt;node[i].z) ? mesh-&gt;node[i].z : zmin;
+-	zmax = (zmax &lt; mesh-&gt;node[i].z) ? mesh-&gt;node[i].z : zmax;
++	if (sphere[i].R &lt;= 0.0 || sphere[i].type == VIRTUAL || sphere[i].type == INSERTED_BY_USER) continue;
++	rmean += sphere[i].R;
++	++nspheres;
++	xmin = (xmin &lt; sphere[i].x) ? xmin : sphere[i].x;
++	xmax = (xmax &gt; sphere[i].x) ? xmax : sphere[i].x;
++	ymin = (ymin &lt; sphere[i].y) ? ymin : sphere[i].y;
++	ymax = (xmax &gt; sphere[i].y) ? ymax : sphere[i].y;
++	zmin = (zmin &lt; sphere[i].z) ? zmin : sphere[i].z;
++	zmax = (zmax &gt; sphere[i].z) ? zmax : sphere[i].z;
+   }
+-  xProbe = 0.5 * (xmin + xmax);
+-  yProbe = 0.5 * (ymin + ymax);
+-  zProbe = 0.5 * (zmin + zmax);
+-  RProbe = (xmax - xmin);
+-  RProbe = (RProbe &lt; (R = ymax - ymin)) ? RProbe : R;
+-  RProbe = (RProbe &lt; (R = zmax - zmin)) ? RProbe : R;
+-  RProbe *= 0.5 * Rfact;
+-  probeIsDefined = true;
+-  compacity_file.open(&quot;compacity.dat&quot;);
+-}
++  cout &lt;&lt; &quot;x : &quot; &lt;&lt; xmin &lt;&lt; &quot;,   &quot; &lt;&lt; xmax &lt;&lt; endl;
++  cout &lt;&lt; &quot;y : &quot; &lt;&lt; ymin &lt;&lt; &quot;,   &quot; &lt;&lt; ymax &lt;&lt; endl;
++  cout &lt;&lt; &quot;z : &quot; &lt;&lt; zmin &lt;&lt; &quot;,   &quot; &lt;&lt; zmax &lt;&lt; endl;
++  rmean /= (double)nspheres;
++  cout &lt;&lt; &quot;rmean = &quot; &lt;&lt; rmean &lt;&lt; endl;
++  xmin += Nrmean*rmean;
++  xmax -= Nrmean*rmean;
++  ymin += Nrmean*rmean;
++  ymax -= Nrmean*rmean;
++  zmin += Nrmean*rmean;
++  zmax -= Nrmean*rmean;
++  cout &lt;&lt; &quot;x : &quot; &lt;&lt; xmin &lt;&lt; &quot;,   &quot; &lt;&lt; xmax &lt;&lt; endl;
++  cout &lt;&lt; &quot;y : &quot; &lt;&lt; ymin &lt;&lt; &quot;,   &quot; &lt;&lt; ymax &lt;&lt; endl;
++  cout &lt;&lt; &quot;z : &quot; &lt;&lt; zmin &lt;&lt; &quot;,   &quot; &lt;&lt; zmax &lt;&lt; endl;
++  
++  vector&lt;unsigned int&gt; lst;
++  for (unsigned int i = 0 ; i &lt; sphere.size() ; ++i)
++  {
++	if (sphere[i].R &lt;= 0.0) continue;
++	if (sphere[i].x &lt; xmin) continue;
++	if (sphere[i].x &gt; xmax) continue;
++	if (sphere[i].y &lt; ymin) continue;
++	if (sphere[i].y &gt; ymax) continue;
++	if (sphere[i].z &lt; zmin) continue;
++	if (sphere[i].z &gt; zmax) continue;
++	lst.push_back(i);
++  }
++  unsigned int Nbod = lst.size();
++  cout &lt;&lt; &quot;Nbody = &quot; &lt;&lt; Nbod &lt;&lt; endl;
+ 
+-double SpherePadder::compacity_in_probe(unsigned int ninsered)
+-{
+-  if (!probeIsDefined) return -1.0;
++  double dx,dy,dz,d;
++  unsigned int rang;
++
++  double dmax = Nrmean*rmean;
++  double amp = dmax/(double) Npoint;
++  cout &lt;&lt; &quot;dmax = &quot; &lt;&lt; dmax &lt;&lt; endl;
++  cout &lt;&lt; &quot;amp  = &quot; &lt;&lt; amp &lt;&lt; endl;
+   
+-  double dr = 0.0;
+-  double Vs = 0.0;
+-  double fact = 1.333333333 * M_PI;
+-  for (unsigned int i = 1 ; i &lt; sphereInProbe.size() ; ++i)
++  vector&lt;unsigned int &gt; N(Npoint,0);
++  
++  for (unsigned int i = 0 ; i &lt; lst.size() ; ++i)
+   {
+-	Vs += fact * sphere[i].R * sphere[i].R * sphere[i].R;
++	unsigned int idi = lst[i];
++	double xi = sphere[idi].x;
++	double yi = sphere[idi].y;
++	double zi = sphere[idi].z;
++	
++	for( unsigned int j = 0 ; j &lt; sphere.size() ; ++j)
++	{
++	  if (idi == j) continue;
++	  
++	  dx = xi - sphere[j].x;
++	  dy = yi - sphere[j].y;
++	  dz = zi - sphere[j].z;
++	  d = sqrt(dx*dx + dy*dy + dz*dz);
++	  if (d&gt;dmax) continue;
++	  
++	  //rang = (unsigned int) floor( d/amp );
++	  rang = (unsigned int)(floor((d/dmax) * (double)Npoint));
++
++	  if (rang &gt; Npoint) continue;
++	  else N[rang] += 1;
++	  
++	}
+   }
+   
+-  // TODO ameliorer cette fonction en prennant en compte les spheres coupees...
++  double meandensity = (double) (Nbod)/((xmax-xmin)*(ymax-ymin)*(zmax-zmin));
++  cout &lt;&lt; &quot;mean number density = &quot; &lt;&lt; meandensity &lt;&lt; endl;
++  vector&lt;double&gt; density(Npoint);
++  double r;
++  density[0] = N[0]/(double)(Nbod)/( 4.0*M_PI*amp*amp);
++  for (unsigned int i = 1 ; i &lt; Npoint ; ++i)
++  {
++	r = (i+1.0) * amp;
++	density[i] =  (double) (N[i]) /(double)(Nbod);
++	density[i] /=  4.0*M_PI*r*r*amp;
++  }
+   
+-  dr = Vs / (fact*RProbe*RProbe*RProbe);
+-  compacity_file &lt;&lt; ninsered &lt;&lt; ' ' &lt;&lt; dr &lt;&lt; endl;
+-  return (dr);
++  ofstream rfd(&quot;rdf.dat&quot;,ios::out);
++  for (unsigned int i = 0 ; i &lt; Npoint ; ++i)
++  {
++	r = (i+1) * amp;
++	rfd &lt;&lt; 0.5*r / rmean &lt;&lt; &quot; &quot; &lt;&lt; density[i]/meandensity &lt;&lt; endl;
++  }
+ }
+ 
+ 
+ 
+ 
+ 
++
+
+Modified: trunk/extra/SpherePadder/SpherePadder.hpp
+===================================================================
+--- trunk/extra/SpherePadder/SpherePadder.hpp	2009-04-15 08:19:44 UTC (rev 1755)
++++ trunk/extra/SpherePadder/SpherePadder.hpp	2009-04-17 15:11:23 UTC (rev 1756)
+@@ -15,37 +15,67 @@
+ #include &quot;SpherePackingTriangulation/SpherePackingTriangulation.hpp&quot;
+ #include &lt;time.h&gt;
+ #include &lt;set&gt;
++#include &lt;list&gt;
+ 
+-# define BEGIN_FUNCTION(arg) if (trace_functions) cerr &lt;&lt; (arg) &lt;&lt; &quot;...&quot; &lt;&lt; endl &lt;&lt; flush
+-# define END_FUNCTION        if (trace_functions) cerr &lt;&lt; &quot;Done\n&quot; &lt;&lt; flush
++# define BEGIN_FUNCTION(arg) if (verbose) cerr &lt;&lt; &quot;+--&gt; &quot; &lt;&lt; (arg) &lt;&lt; endl &lt;&lt; flush
++# define END_FUNCTION        if (verbose) cerr &lt;&lt; &quot;+-- Done &lt;--+\n\n&quot; &lt;&lt; flush
+ 
+-enum SphereType {AT_NODE, AT_SEGMENT, AT_FACE, AT_TETRA_CENTER, AT_TETRA_VERTEX, INSERTED_BY_USER, FROM_TRIANGULATION, VIRTUAL};
++#define FAIL_DET            0x01
++#define FAIL_DELTA          0x02
++#define FAIL_RADIUS         0x04
++#define FAIL_OVERLAP        0x08
++#define FAIL_GAP            0x10
++#define FAIL_RADIUS_RANGE   0x20
++#define FAIL_NaN            0x40
+ 
++typedef unsigned int id_type; // [0 -&gt; 4,294,967,295] if 32 bits
++enum SphereType
++{
++  AT_NODE,
++  AT_SEGMENT,
++  AT_FACE,
++  AT_TETRA_CENTER,
++  AT_TETRA_VERTEX,
++  INSERTED_BY_USER,
++  FROM_TRIANGULATION,
++  VIRTUAL
++};
++
++struct Criterion
++{
++  bool nb_spheres;
++  bool solid_fraction;
++  id_type nb_spheres_max;
++  double solid_fraction_max;
++  double x,y,z,R;
++};
++
+ struct Sphere
+ {
+-  double        x,y,z,R;
+-  SphereType    type; 
+-  unsigned int  tetraOwner; // FIXME can be removed ??
++  double     x,y,z,R;
++  SphereType type;
+ };
+ 
+ struct Neighbor
+ {
+-  unsigned int i,j; // FIXME long ?      
++  id_type i,j;
+ };
+ 
+ struct neighbor_with_distance
+ {
+-  unsigned int sphereId;// FIXME long ?
+-  double       distance;
++  id_type sphereId;
++  double  distance;
++  bool    priority;
+ };
+ 
+ struct tetra_porosity
+ {
+-  unsigned int id1,id2,id3,id4;// FIXME long ?
+-  double volume;
+-  double void_volume;
++  id_type id1,id2,id3,id4;
++  double  volume;
++  double  void_volume;
+ };
+ 
++// not used
+ class CompareNeighborId
+ {
+   public:
+@@ -61,16 +91,17 @@
+ {
+   protected:
+                 
+-	vector&lt;vector&lt;unsigned int&gt; &gt; combination;// FIXME long ?
+-    SpherePackingTriangulation    triangulation;
+-    vector&lt;tetra_porosity&gt;        tetra_porosities;
++	vector&lt;vector&lt;id_type&gt; &gt;    combination;
++    SpherePackingTriangulation  triangulation;
++    vector&lt;tetra_porosity&gt;      tetra_porosities;
++	Criterion                   criterion;
+     
+-	double       distance_spheres (unsigned int i, unsigned int j);// FIXME long ?
++	double       distance_spheres (id_type i, id_type j); // deprecated
+ 	double       distance_spheres (Sphere&amp; S1,Sphere&amp; S2);
+-	double       squared_distance_centre_spheres(unsigned int i, unsigned int j);
++	double       squared_distance_centre_spheres(id_type i, id_type j); // deprecated
+     double       distance_centre_spheres(Sphere&amp; S1, Sphere&amp; S2);
+     double       distance_vector3 (double V1[],double V2[]);
+-	void         build_sorted_list_of_neighbors(unsigned int sphereId, vector&lt;neighbor_with_distance&gt; &amp; neighbor);
++	void         build_sorted_list_of_neighbors(id_type sphereId, vector&lt;neighbor_with_distance&gt; &amp; neighbor);
+ 	void         build_sorted_list_of_neighbors(Sphere &amp; S, vector&lt;neighbor_with_distance&gt; &amp; neighbor);
+     double       spherical_triangle (double point1[],double point2[],double point3[],double point4[]);
+     double       solid_volume_of_tetrahedron(Sphere&amp; S1, Sphere&amp; S2, Sphere&amp; S3, Sphere&amp; S4);
+@@ -80,77 +111,86 @@
+     void         place_at_tetra_centers ();
+     void         place_at_tetra_vertexes ();
+     void         cancel_overlaps ();
+-	unsigned int iter_densify(unsigned int nb_check = 100);
++	unsigned int iter_densify(unsigned int nb_check = 20);
+ 	void         repack_null_radii();
+     
+     // some key functions 
+-	unsigned int place_fifth_sphere(unsigned int s1, unsigned int s2, unsigned int s3, unsigned int s4, Sphere&amp; S);// FIXME long ?
+-	unsigned int place_sphere_4contacts (unsigned int sphereId, unsigned int nb_combi_max = 15);// FIXME long ?
+-	unsigned int check_overlaps(Sphere &amp; S, unsigned int excludedId);
++	unsigned int place_fifth_sphere(id_type s1, id_type s2, id_type s3, id_type s4, Sphere&amp; S);
++	unsigned int place_sphere_4contacts (id_type sphereId, unsigned int nb_combi_max = 15);//  (deprecated)
++	unsigned int place_sphere_4contacts (Sphere&amp; S, unsigned int nb_combi_max = 15);
++	unsigned int check_overlaps(Sphere &amp; S, id_type excludedId);
+ 	
+     double       rmin,rmax,rmoy,dr;
+     double       ratio; // rmax/rmin
+     double       max_overlap_rate;
+-    unsigned int n1,n2,n3,n4,n5,n_densify;
+-    unsigned int nb_iter_max;
++	id_type      n1,n2,n3,n4,n5,n_densify,nzero;
++	unsigned int max_iter_densify;
++	double       virtual_radius_factor;
+ 	bool         RadiusDataIsOK,RadiusIsSet;
++	unsigned int zmin;
++	double       gap_max;
+         
+     TetraMesh *      mesh;
+     vector &lt;Sphere&gt;  sphere;
+     CellPartition    partition;
+-   
+-    // FOR ANALYSIS
+-    set&lt;Neighbor,CompareNeighborId&gt; neighbor; // pas utilise pour le moment
+-    bool probeIsDefined;
+-	vector&lt;unsigned int&gt; sphereInProbe;// FIXME long ?
+-    double xProbe,yProbe,zProbe,RProbe;
+-    ofstream compacity_file;
++	list &lt;id_type&gt;   bounds;
+     
+-    double compacity_in_probe(unsigned int ninsered);
+-    void check_inProbe(unsigned int i);
+-    
+-    bool trace_functions;
+-    void save_granulo(const char* name);
+- 
++	bool verbose;
++	bool Must_Stop;
++
+   public:
+    
+     bool meshIsPlugged;
+ 
++	void ShutUp() { verbose = false; }
++	void Speak()  { verbose = true; }
++	
+ 	void setRadiusRatio(double r);
+ 	void setRadiusRange(double min, double max);
+ 	void setMaxOverlapRate(double r) { max_overlap_rate = fabs(r); }
+ 	void setVirtualRadiusFactor(double f) {virtual_radius_factor = fabs(f);}
+-	void setTargetSolidFraction(double sf)
++	void setMaxNumberOfSpheres(id_type max);
++	void setMaxSolidFractioninProbe(double max, double x, double y,double z, double R);
++
++
++	id_type getNumberOfSpheres()
+ 	{
+-	  // TODO
++	  id_type nb = 0;
++	  for (id_type i = 0 ; i &lt; sphere.size() ; ++i)
++	  {
++		if (sphere[i].type == VIRTUAL || sphere[i].type == INSERTED_BY_USER || sphere[i].R &lt;= 0.0) continue;
++		++nb;
++	  }
++	  return nb;
++	  //return (n1+n2+n3+n4+n5);
+ 	}
++	double getMeanSolidFraction(double x, double y, double z, double R);
+ 	
+     void plugTetraMesh (TetraMesh * mesh);
+     void save_mgpost (const char* name);
+ 	void save_tri_mgpost (const char* name);
+     void save_Rxyz (const char* name);
+-        
+-    double virtual_radius_factor;
+     
+     SpherePadder();
+ 
+-	// Check functions (to debug)
++	// Check functions only for debug (very slow!!)
+ 	void detect_overlap ();
+ 
+ 	//! \brief 5-step padding (for details see Jerier et al.)
+     void pad_5 ();
+ 
+-    //! \brief Place virtual spheres at boudaries.
++	//! \brief Place virtual spheres at mesh boudaries and modify the position and radius of overlapping spheres in such a way that theu are in contact with the boundary plans.
+ 	void place_virtual_spheres ();
+ 
+-	// en cours de debuggage
++	//! \brief Make the packing denser by filling void spaces detected by building a Delaunay triangulation (with CGAL)
+ 	void densify();
+ 
+ 	//! \brief Insert a sphere (x,y,z,R) within the packing. Overlapping spheres are cancelled.
+-    void insert_sphere(double x, double y, double z, double R);   
++    void insert_sphere(double x, double y, double z, double R);
+     
+     // FOR ANALYSIS
+-    void add_spherical_probe(double Rfact = 1.0);   
++	void save_granulo(const char* name);
++	void rdf (unsigned int Npoint, unsigned int Nrmean);
+ };
+ 
+ 
+
+Modified: trunk/extra/SpherePadder/TetraMesh.cpp
+===================================================================
+--- trunk/extra/SpherePadder/TetraMesh.cpp	2009-04-15 08:19:44 UTC (rev 1755)
++++ trunk/extra/SpherePadder/TetraMesh.cpp	2009-04-17 15:11:23 UTC (rev 1756)
+@@ -238,6 +238,10 @@
+ 
+ void TetraMesh::organize ()
+ {
++	// Display informations
++	cout &lt;&lt; &quot;nb Nodes = &quot; &lt;&lt; node.size() &lt;&lt; endl;
++	cout &lt;&lt; &quot;nb Tetra = &quot; &lt;&lt; tetraedre.size() &lt;&lt; endl;
++  
+     // Translate all nodes in such a manner that all coordinates are &gt; 0
+     xtrans = node[0].x;
+     ytrans = node[0].y;
+
+Modified: trunk/extra/SpherePadder/main.cpp
+===================================================================
+--- trunk/extra/SpherePadder/main.cpp	2009-04-15 08:19:44 UTC (rev 1755)
++++ trunk/extra/SpherePadder/main.cpp	2009-04-17 15:11:23 UTC (rev 1756)
+@@ -9,6 +9,7 @@
+ *************************************************************************/
+ 
+ #include &quot;SpherePadder.hpp&quot;
++#include &lt;limits.h&gt;
+ 
+ unsigned int           mesh_format;
+ vector &lt;unsigned int&gt;  output_format;
+@@ -16,37 +17,77 @@
+ char                   output_file_name[100];
+ void resume();
+ 
+-int main()
+-{ 
++int main(int argc, char ** argv)
++{
++# if 0
++  cout &lt;&lt; &quot;\n           Int Types&quot; &lt;&lt; endl;
++  cout &lt;&lt; &quot;Size of int types is &quot; &lt;&lt;
++  sizeof(int) &lt;&lt; &quot; bytes&quot; &lt;&lt; endl;
++  cout &lt;&lt; &quot;Signed int min: &quot; &lt;&lt; INT_MIN
++  &lt;&lt; &quot; max: &quot; &lt;&lt; INT_MAX &lt;&lt; endl;
++  cout &lt;&lt; &quot;Unsigned int min: 0 max: &quot; &lt;&lt;
++  UINT_MAX &lt;&lt; endl;
++
++  cout &lt;&lt; &quot;\n        Long Int Types&quot; &lt;&lt;
++  endl;
++  cout &lt;&lt; &quot;Size of long int types is &quot; &lt;&lt;
++  sizeof(long) &lt;&lt; &quot; bytes&quot; &lt;&lt; endl;
++  cout &lt;&lt; &quot;Signed long min: &quot; &lt;&lt; LONG_MIN
++  &lt;&lt; &quot; max: &quot; &lt;&lt; LONG_MAX &lt;&lt; endl;
++  cout &lt;&lt; &quot;Unsigned long min: 0 max: &quot; &lt;&lt;
++  ULONG_MAX &lt;&lt; endl;
++
++  return 0;
++#endif
++
+ #if 1
+  
+   TetraMesh * mesh = new TetraMesh();
+   //mesh-&gt;read_gmsh(&quot;meshes/cube1194.msh&quot;);
+-  mesh-&gt;read(&quot;meshes/test.tetra&quot;);
++  //mesh-&gt;read(&quot;meshes/test.tetra&quot;);
++  mesh-&gt;read_gmsh(&quot;etude_t_vs_ntetra/vincent_1000.msh&quot;);
++
+   //mesh-&gt;write_surface_MGP (&quot;cube.mgp&quot;);
+ 
+   SpherePadder * padder = new SpherePadder();
++  //padder-&gt;ShutUp();
+   
+   padder-&gt;plugTetraMesh(mesh);
+-  padder-&gt;setRadiusRatio(4.0);
++  padder-&gt;setRadiusRatio(3.0/*atof(argv[2])*/);
+   padder-&gt;setMaxOverlapRate(1.0e-4);
+-  padder-&gt;setVirtualRadiusFactor(100.0);
++  padder-&gt;setVirtualRadiusFactor(100.0); 
++
++  // ---------
++  time_t start_time = clock();
+   
+   padder-&gt;pad_5();
+   padder-&gt;place_virtual_spheres();
+-  padder-&gt;insert_sphere(0.5,0.5,0.5,0.4);
++  //padder-&gt;insert_sphere(0.5,0.5,0.5,0.2);
++  
++  //unsigned int nmax = padder-&gt;getNumberOfSpheres() * 1.2;
++  //padder-&gt;setMaxNumberOfSpheres(nmax);
++  padder-&gt;setMaxSolidFractioninProbe(0.6 /*atof(argv[1])*/, 0.5, 0.5,0.5, 0.45);
++  
+   padder-&gt;densify();
+-  padder-&gt;detect_overlap ();
+ 
++  time_t stop_time = clock();
++  float time_used = (float)(stop_time - start_time) / 1000000.0;
++  cout &lt;&lt; &quot;Total time used = &quot; &lt;&lt; fabs(time_used) &lt;&lt; &quot; s&quot; &lt;&lt; endl;
++  cout &lt;&lt; &quot;nspheres = &quot; &lt;&lt; padder-&gt;getNumberOfSpheres() &lt;&lt; endl;
++  // ---------
++  
++  //padder-&gt;detect_overlap ();
+   //padder-&gt;save_tri_mgpost(&quot;triangulation.mgp&quot;);
+-  padder-&gt;save_mgpost(&quot;mgp.out.001&quot;);
+-  padder-&gt;save_Rxyz(&quot;spheres.Rxyz&quot;);
++  //padder-&gt;save_mgpost(&quot;mgp.out.001&quot;);
++  //padder-&gt;save_Rxyz(&quot;spheres.Rxyz&quot;);
++  //padder-&gt;rdf(80,8);
++  //padder-&gt;save_granulo(&quot;granulo.dat&quot;);
+   return 0;  
+ 
+ #else
+   
+   char name_with_ext[100];
+-  
++
+   bool mesh_format_is_defined      = false;
+   bool mesh_file_name_is_defined   = false;  
+   bool output_file_name_is_defined = false;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000923.html">[deprecated list] [Yade-dev] [svn] r1755 - in trunk: extra gui/py	scripts
+</A></li>
+	<LI>Next message: <A HREF="000925.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-11910/bin/yade-svn1756:	TriaxialTestWater, USCTGen
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#924">[ date ]</a>
+              <a href="thread.html#924">[ thread ]</a>
+              <a href="subject.html#924">[ subject ]</a>
+              <a href="author.html#924">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

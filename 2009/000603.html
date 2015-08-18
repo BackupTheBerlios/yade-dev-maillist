@@ -1,0 +1,475 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1630 - in trunk: gui/py gui/qt3	lib/opengl	pkg/common/Engine/DeusExMachina	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1630%20-%20in%20trunk%3A%20gui/py%20gui/qt3%0A%09lib/opengl%09pkg/common/Engine/DeusExMachina%09pkg/common/RenderingEngine/GLDrawGeometricalModel%0A%09pkg/dem%09pkg/dem/DataClass/InteractionGeometry%0A%09pkg/dem/Engine/EngineUnit%09pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry%0A%09scripts&In-Reply-To=%3C200901201830.n0KIUl6i023853%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000602.html">
+   <LINK REL="Next"  HREF="000604.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1630 - in trunk: gui/py gui/qt3	lib/opengl	pkg/common/Engine/DeusExMachina	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1630%20-%20in%20trunk%3A%20gui/py%20gui/qt3%0A%09lib/opengl%09pkg/common/Engine/DeusExMachina%09pkg/common/RenderingEngine/GLDrawGeometricalModel%0A%09pkg/dem%09pkg/dem/DataClass/InteractionGeometry%0A%09pkg/dem/Engine/EngineUnit%09pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry%0A%09scripts&In-Reply-To=%3C200901201830.n0KIUl6i023853%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1630 - in trunk: gui/py gui/qt3	lib/opengl	pkg/common/Engine/DeusExMachina	pkg/common/RenderingEngine/GLDrawGeometricalModel	pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry	scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jan 20 19:30:47 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000602.html">[deprecated list] [Yade-dev] gluUse in GLDrawSphere
+</A></li>
+        <LI>Next message: <A HREF="000604.html">[deprecated list] [Yade-dev] r1630 - commit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#603">[ date ]</a>
+              <a href="thread.html#603">[ thread ]</a>
+              <a href="subject.html#603">[ subject ]</a>
+              <a href="author.html#603">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-01-20 19:30:38 +0100 (Tue, 20 Jan 2009)
+New Revision: 1630
+
+Added:
+   trunk/scripts/test-sphere-facet.py
+Modified:
+   trunk/gui/py/PythonUI.cpp
+   trunk/gui/py/PythonUI_rc.py
+   trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+   trunk/gui/qt3/QtGUI.cpp
+   trunk/lib/opengl/GLUtils.hpp
+   trunk/pkg/common/Engine/DeusExMachina/GravityEngines.hpp
+   trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp
+   trunk/pkg/dem/SConscript
+Log:
+1. Add algorithm for pushing sphere always to the same side when in contact with facet, even under extreme stress where the sphere geometrically passes to the other side.
+2. Add bool SpheresContactGeometry::initContactOnPositiveFacetSide for that
+3. Add test/demo script for that.
+4. Re-enabled GLDrawSphere::glutUse (cosurgi?)
+5. Renamed yade.runtime.args to argv, to be consistent with sys.argv
+6. Allow passing sys.argv (arguments to scripts) through QtGUI as well
+
+
+
+Modified: trunk/gui/py/PythonUI.cpp
+===================================================================
+--- trunk/gui/py/PythonUI.cpp	2009-01-19 15:19:01 UTC (rev 1629)
++++ trunk/gui/py/PythonUI.cpp	2009-01-20 18:30:38 UTC (rev 1630)
+@@ -90,7 +90,7 @@
+ 			PYTHON_DEFINE_STRING(&quot;script&quot;,runScript);
+ 			PYTHON_DEFINE_BOOL(&quot;stopAfter&quot;,stopAfter);
+ 			PYTHON_DEFINE_BOOL(&quot;nonInteractive&quot;,nonInteractive);
+-			{ ostringstream oss; oss&lt;&lt;&quot;yade.runtime.args=[&quot;; if(scriptArgs.size()&gt;0){ FOREACH(string s, scriptArgs) oss&lt;&lt;&quot;'&quot;&lt;&lt;s&lt;&lt;&quot;',&quot;; } oss&lt;&lt;&quot;]&quot;; PyRun_SimpleString(oss.str().c_str()); }
++			{ ostringstream oss; oss&lt;&lt;&quot;yade.runtime.argv=[&quot;; if(scriptArgs.size()&gt;0){ FOREACH(string s, scriptArgs) oss&lt;&lt;&quot;'&quot;&lt;&lt;s&lt;&lt;&quot;',&quot;; } oss&lt;&lt;&quot;]&quot;; PyRun_SimpleString(oss.str().c_str()); }
+ 		#undef PYTHON_DEFINE_STRING
+ 		#undef PYTHON_DEFINE_BOOL
+ 		execScript(PREFIX &quot;/lib/yade&quot; SUFFIX &quot;/gui/PythonUI_rc.py&quot;);
+
+Modified: trunk/gui/py/PythonUI_rc.py
+===================================================================
+--- trunk/gui/py/PythonUI_rc.py	2009-01-19 15:19:01 UTC (rev 1629)
++++ trunk/gui/py/PythonUI_rc.py	2009-01-20 18:30:38 UTC (rev 1630)
+@@ -28,6 +28,8 @@
+ srv=yade.PythonTCPServer.PythonTCPServer(minPort=9000)
+ yade.runtime.cookie=srv.server.cookie
+ sys.stdout.flush()
++runtime.argv=[runtime.script]+runtime.argv
++sys.argv=runtime.argv # could be [] as well
+ 
+ ## run simulation if requested from the command line
+ if runtime.simulation:
+@@ -57,9 +59,8 @@
+ 	import time;
+ 	while True: time.sleep(1)
+ else:
+-	sys.argv=runtime.args # could be [] as well
++	sys.argv[0]=['&lt;embedded python interpreter&gt;']
+ 	from IPython.Shell import IPShellEmbed
+-	sys.argv=['&lt;embedded python interpreter&gt;']
+ 	ipshell = IPShellEmbed(banner=r&quot;&quot;&quot;__   __    ____          ____                      _      
+ \ \ / /_ _|  _ \  ___   / ___|___  _ __  ___  ___ | | ___ 
+  \ V / _` | | | |/ _ \ | |   / _ \| '_ \/ __|/ _ \| |/ _ \ 
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2009-01-19 15:19:01 UTC (rev 1629)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2009-01-20 18:30:38 UTC (rev 1630)
+@@ -149,8 +149,8 @@
+ 		}
+ 		xyzNames.sort();
+ 	} else { /* load from sqlite database */
++		LOG_INFO(&quot;Opening sqlite database `&quot;&lt;&lt;fileName&lt;&lt;&quot;'&quot;);
+ 		con=shared_ptr&lt;sqlite3x::sqlite3_connection&gt;(new sqlite3x::sqlite3_connection(fileName));
+-		LOG_DEBUG(&quot;Opened sqlite db &quot;&lt;&lt;fileName);
+ 		if(0==con-&gt;executeint(&quot;select count(*) from sqlite_master where name='meta';&quot;)){ LOG_ERROR(&quot;Database doesn't have the 'meta' table.&quot;); return; }
+ 		if(0==con-&gt;executeint(&quot;select count(*) from sqlite_master where name='records';&quot;)){ LOG_ERROR(&quot;Database doesn't have the 'records' table.&quot;); return; }
+ 		simPlayer-&gt;pushMessage(&quot;Database OK, loading simulation...&quot;);
+
+Modified: trunk/gui/qt3/QtGUI.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI.cpp	2009-01-19 15:19:01 UTC (rev 1629)
++++ trunk/gui/qt3/QtGUI.cpp	2009-01-20 18:30:38 UTC (rev 1630)
+@@ -54,8 +54,15 @@
+ 		#endif
+ 		else optind--;
+ 	}
+-	for (int index=optind+1; index&lt;argc; index++) LOG_ERROR(&quot;Unprocessed non-option argument: `&quot;&lt;&lt;argv[index]&lt;&lt;&quot;'&quot;);
+-
++	for (int index=optind+1; index&lt;argc; index++) {
++		#ifdef EMBED_PYTHON
++			LOG_DEBUG(&quot;Adding script parameter `&quot;&lt;&lt;argv[index]&lt;&lt;&quot;' from the command line.&quot;);
++			PythonUI::scriptArgs.push_back(string(argv[index]));
++			if(!PythonUI::runScript.empty()) LOG_WARN(&quot;Got parameter `&quot;&lt;&lt;argv[index]&lt;&lt;&quot;', but no .py script to be run!&quot;);
++		#else
++			LOG_ERROR(&quot;Unprocessed non-option argument: `&quot;&lt;&lt;argv[index]&lt;&lt;&quot;'&quot;);
++		#endif
++	}
+ 	XInitThreads();
+    QApplication app(argc,argv);
+ 	mainWindow=new YadeQtMainWindow();
+
+Modified: trunk/lib/opengl/GLUtils.hpp
+===================================================================
+--- trunk/lib/opengl/GLUtils.hpp	2009-01-19 15:19:01 UTC (rev 1629)
++++ trunk/lib/opengl/GLUtils.hpp	2009-01-20 18:30:38 UTC (rev 1630)
+@@ -11,7 +11,6 @@
+ #include&lt;string&gt;
+ 
+ struct GLUtils{
+-
+ 	static void GLDrawArrow(const Vector3r&amp; from, const Vector3r&amp; to, const Vector3r&amp; color=Vector3r(1,1,1)){
+ 		glEnable(GL_LIGHTING); glColor3v(color); qglviewer::Vec a(from[0],from[1],from[2]),b(to[0],to[1],to[2]); QGLViewer::drawArrow(a,b);	
+ 	}
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/GravityEngines.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/GravityEngines.hpp	2009-01-19 15:19:01 UTC (rev 1629)
++++ trunk/pkg/common/Engine/DeusExMachina/GravityEngines.hpp	2009-01-20 18:30:38 UTC (rev 1630)
+@@ -16,10 +16,9 @@
+ 		virtual ~GravityEngine(){};
+ 		virtual void applyCondition(MetaBody*);
+ 	protected :
+-		virtual void registerAttributes(){REGISTER_ATTRIBUTE(gravity);}
+ 	NEEDS_BEX(&quot;Force&quot;);
+-	REGISTER_CLASS_NAME(GravityEngine);
+-	REGISTER_BASE_CLASS_NAME(DeusExMachina);
++	REGISTER_ATTRIBUTES(DeusExMachina,(gravity));
++	REGISTER_CLASS_AND_BASE(GravityEngine,DeusExMachina);
+ };
+ REGISTER_SERIALIZABLE(GravityEngine);
+ 
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp	2009-01-19 15:19:01 UTC (rev 1629)
++++ trunk/pkg/common/RenderingEngine/GLDrawGeometricalModel/GLDrawSphere.cpp	2009-01-20 18:30:38 UTC (rev 1630)
+@@ -37,7 +37,7 @@
+ 
+ void GLDrawSphere::go(const shared_ptr&lt;GeometricalModel&gt;&amp; gm, const shared_ptr&lt;PhysicalParameters&gt;&amp; ph,bool wire)
+ {
+-	/*if(glutUse){
++	if(glutUse){
+ 		Real r= (static_cast&lt;Sphere*&gt;(gm.get()))-&gt;radius;
+ 		glMaterialv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, Vector3f(gm-&gt;diffuseColor[0],gm-&gt;diffuseColor[1],gm-&gt;diffuseColor[2]));
+ 		glColor3v(gm-&gt;diffuseColor);
+@@ -46,7 +46,7 @@
+ 			else glutSolidSphere(r,glutSlices,glutStacks);
+ 		if(glutNormalize) glPopAttrib();
+ 		return;
+-	}*/
++	}
+ 
+ 	//first = true;
+ 	if (first)
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2009-01-19 15:19:01 UTC (rev 1629)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2009-01-20 18:30:38 UTC (rev 1630)
+@@ -32,9 +32,14 @@
+ 			contactPoint;
+ 		Real radius1,radius2,penetrationDepth;
+ 
++
++		// begin abusive storage
+ 		bool hasNormalViscosity;
+ 		Real NormalViscisity;
+ 		Real NormalRelativeVelocity;
++		//! Whether the original contact was on the positive or negative facet side; this is to permit repulsion to the right side even if the sphere passes, under extreme pressure, geometrically to the other facet's side. This is used only in InteractingFacet2IteractingSphere4SpheresContactGeometry.
++		bool initContactOnPositiveFacetSide;
++		// end abusive storage
+ 
+ 		bool hasShear; // whether the exact rotation code is being used -- following fields are needed for that
+ 		//! positions and orientations of both spheres -- must be updated at every iteration
+@@ -93,28 +98,26 @@
+ 
+ 		SpheresContactGeometry():contactPoint(Vector3r::ZERO),radius1(0),radius2(0),hasShear(false),pos1(Vector3r::ZERO),pos2(Vector3r::ZERO),ori1(Quaternionr::IDENTITY),ori2(Quaternionr::IDENTITY),cp1rel(Quaternionr::IDENTITY),cp2rel(Quaternionr::IDENTITY),d1(0),d2(0),d0(0),initRelOri12(Quaternionr::IDENTITY){createIndex();}
+ 		virtual ~SpheresContactGeometry();
+-	protected :
+-		virtual void registerAttributes(){
+-			REGISTER_ATTRIBUTE(normal);
+-			REGISTER_ATTRIBUTE(contactPoint);
+-			REGISTER_ATTRIBUTE(radius1);
+-			REGISTER_ATTRIBUTE(radius2);
+-			REGISTER_ATTRIBUTE(contactPoint); // to allow access from python
++	REGISTER_ATTRIBUTES(/* no attributes from base class */,
++			(normal)
++			(contactPoint)
++			(radius1)
++			(radius2)
++			(contactPoint) // to allow access from python
++			(initContactOnPositiveFacetSide)
+ 			// hasShear
+-			REGISTER_ATTRIBUTE(hasShear);
+-			REGISTER_ATTRIBUTE(pos1);
+-			REGISTER_ATTRIBUTE(pos2);
+-			REGISTER_ATTRIBUTE(ori1);
+-			REGISTER_ATTRIBUTE(ori2);
+-			REGISTER_ATTRIBUTE(cp1rel);
+-			REGISTER_ATTRIBUTE(cp2rel);
+-			REGISTER_ATTRIBUTE(d1);
+-			REGISTER_ATTRIBUTE(d2);
+-			REGISTER_ATTRIBUTE(d0);
+-			REGISTER_ATTRIBUTE(initRelOri12);
+-		}
+-	REGISTER_CLASS_NAME(SpheresContactGeometry);
+-	REGISTER_BASE_CLASS_NAME(InteractionGeometry);
++			(hasShear)
++			(pos1)
++			(pos2)
++			(ori1)
++			(ori2)
++			(cp1rel)
++			(cp2rel)
++			(d1)
++			(d2)
++			(d0)
++			(initRelOri12));
++	REGISTER_CLASS_AND_BASE(SpheresContactGeometry,InteractionGeometry);
+ 	REGISTER_CLASS_INDEX(SpheresContactGeometry,InteractionGeometry);
+ };
+ 
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2009-01-19 15:19:01 UTC (rev 1629)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2009-01-20 18:30:38 UTC (rev 1630)
+@@ -41,7 +41,7 @@
+ 	Matrix3r facetAxisT; se31.orientation.ToRotationMatrix(facetAxisT); 
+ 	Matrix3r facetAxis = facetAxisT.Transpose();
+ 	// local orientation
+-	Vector3r cl = facetAxis*(se32.position - se31.position); 
++	Vector3r cl = facetAxis*(se32.position - se31.position);  // &quot;contact line&quot; in facet-local coords
+ 
+ 	//
+ 	// BEGIN everything in facet-local coordinates
+@@ -49,10 +49,17 @@
+ 
+ 	Vector3r normal = facet-&gt;nf;
+ 	Real L = normal.Dot(cl);
+-	if (L&lt;0) { normal=-normal; L=-L; }
+-	Real sphereRadius = static_cast&lt;InteractingSphere*&gt;(cm2.get())-&gt;radius;
+ 
++	bool newOnPositiveSide; // temp to save what will be maybe needed for new contact
++	if(c-&gt;interactionGeometry){ // contact already exists, use old data here
++		const bool&amp; icopfs=YADE_CAST&lt;SpheresContactGeometry*&gt;(c-&gt;interactionGeometry.get())-&gt;initContactOnPositiveFacetSide;
++		if(!icopfs) { normal=-normal; L=-L; } // original contact on the other side, reverse the sense now
++	} else {
++		if (L&lt;0) { normal=-normal; L=-L; newOnPositiveSide=false;} // new contact on the negative face, reverse and save that information so that since now this contact is always reversed
++		else newOnPositiveSide=true;
++	}
+ 
++	Real sphereRadius = static_cast&lt;InteractingSphere*&gt;(cm2.get())-&gt;radius;
+ 	if (L &gt; sphereRadius)  return false; // no contact
+ 
+ 	Vector3r cp = cl - L*normal;
+@@ -108,7 +115,8 @@
+ 		if (c-&gt;interactionGeometry)
+ 			scm = YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
+ 		else
+-			scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
++			{ scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
++			scm-&gt;initContactOnPositiveFacetSide=newOnPositiveSide; }
+ 	  
+ 		normal = facetAxisT*normal; // in global orientation
+ 		scm-&gt;contactPoint = se32.position - (sphereRadius-0.5*penetrationDepth)*normal; 
+
+Modified: trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp	2009-01-19 15:19:01 UTC (rev 1629)
++++ trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp	2009-01-20 18:30:38 UTC (rev 1630)
+@@ -79,12 +79,17 @@
+ 
+ 	if(sc-&gt;hasShear){
+ 		Vector3r pos1=sc-&gt;pos1, pos2=sc-&gt;pos2, contPt=sc-&gt;contPt();
+-		//Vector3r contPt=se31.position+(sc-&gt;d1/sc-&gt;d0)*(se32.position-se31.position); // must be recalculated to not be unscaled if scaling displacements ...
+-		GLUtils::GLDrawLine(pos1,pos2,Vector3r(.5,.5,.5));
+-		Vector3r bend; Real tors;
+-		sc-&gt;bendingTorsionRel(bend,tors);
+-		GLUtils::GLDrawLine(contPt,contPt+10*sc-&gt;radius1*(bend+sc-&gt;normal*tors),Vector3r(1,0,0));
+ 		#if 0
++			GLUtils::GLDrawArrow(contPt,contPt+sc-&gt;normal*.5*sc-&gt;d0); // normal of the contact
++		#endif
++		#if 0
++			//Vector3r contPt=se31.position+(sc-&gt;d1/sc-&gt;d0)*(se32.position-se31.position); // must be recalculated to not be unscaled if scaling displacements ...
++			GLUtils::GLDrawLine(pos1,pos2,Vector3r(.5,.5,.5));
++			Vector3r bend; Real tors;
++			sc-&gt;bendingTorsionRel(bend,tors);
++			GLUtils::GLDrawLine(contPt,contPt+10*sc-&gt;radius1*(bend+sc-&gt;normal*tors),Vector3r(1,0,0));
++		#endif
++		#if 0
+ 		GLUtils::GLDrawNum(bend[0],contPt-.2*sc-&gt;normal*sc-&gt;radius1,Vector3r(1,0,0));
+ 		GLUtils::GLDrawNum(bend[1],contPt,Vector3r(0,1,0));
+ 		GLUtils::GLDrawNum(bend[2],contPt+.2*sc-&gt;normal*sc-&gt;radius1,Vector3r(0,0,1));
+@@ -96,14 +101,16 @@
+ 		//TRVAR4(pos1,sc-&gt;ori1,pos2,sc-&gt;ori2);
+ 		//TRVAR2(sc-&gt;cp2rel,pos2+(sc-&gt;ori2*sc-&gt;cp2rel*Vector3r::UNIT_X*sc-&gt;d2));
+ 		// contact point to projected points
+-		Vector3r ptTg1=sc-&gt;contPtInTgPlane1(), ptTg2=sc-&gt;contPtInTgPlane2();
+-		TRVAR3(ptTg1,ptTg2,sc-&gt;normal)
+-		//GLUtils::GLDrawLine(contPt,contPt+ptTg1,Vector3r(0,.5,1)); GLUtils::GLDrawLine(pos1,contPt+ptTg1,Vector3r(0,.5,1));
+-		//GLUtils::GLDrawLine(contPt,contPt+ptTg2,Vector3r(0,1,.5)); GLUtils::GLDrawLine(pos2,contPt+ptTg2,Vector3r(0,1,.5));
+-		// projected shear
+-		GLUtils::GLDrawLine(contPt+ptTg1,contPt+ptTg2,Vector3r(1,1,1));
+-		// 
+-		//GLUtils::GLDrawNum(sc-&gt;epsN(),contPt,Vector3r(1,1,1));
++		#if 0
++			Vector3r ptTg1=sc-&gt;contPtInTgPlane1(), ptTg2=sc-&gt;contPtInTgPlane2();
++			TRVAR3(ptTg1,ptTg2,sc-&gt;normal)
++			//GLUtils::GLDrawLine(contPt,contPt+ptTg1,Vector3r(0,.5,1)); GLUtils::GLDrawLine(pos1,contPt+ptTg1,Vector3r(0,.5,1));
++			//GLUtils::GLDrawLine(contPt,contPt+ptTg2,Vector3r(0,1,.5)); GLUtils::GLDrawLine(pos2,contPt+ptTg2,Vector3r(0,1,.5));
++			// projected shear
++			GLUtils::GLDrawLine(contPt+ptTg1,contPt+ptTg2,Vector3r(1,1,1));
++			// 
++			//GLUtils::GLDrawNum(sc-&gt;epsN(),contPt,Vector3r(1,1,1));
++		#endif
+ 	}
+ 
+ 
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2009-01-19 15:19:01 UTC (rev 1629)
++++ trunk/pkg/dem/SConscript	2009-01-20 18:30:38 UTC (rev 1630)
+@@ -385,7 +385,7 @@
+ 		['RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp'],
+ 		LIBS=env['LIBS']+['SpheresContactGeometry',
+ 			'ElasticContactInteraction',
+-			'yade-opengl']),
++			'yade-opengl','$QGLVIEWER_LIB']),
+ 
+ 	env.SharedLibrary('GLDrawSDECLinkGeometry',
+ 		['RenderingEngine/GLDrawSDECLinkGeometry/GLDrawSDECLinkGeometry.cpp'],
+
+Added: trunk/scripts/test-sphere-facet.py
+===================================================================
+--- trunk/scripts/test-sphere-facet.py	2009-01-19 15:19:01 UTC (rev 1629)
++++ trunk/scripts/test-sphere-facet.py	2009-01-20 18:30:38 UTC (rev 1630)
+@@ -0,0 +1,65 @@
++# &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++#
++# Test case for sphere-facet interaction preserving the original contact orientation.
++# Z-gravity is being increased every 4000 iterations, the sphere dives more into the facet and stabilizes,
++# etc. This process continues even if the sphere center passes on the other side of the facet and,
++# (if distant transient interactions are allowed in the collider) if the sphere passes in its entirety to
++# the other side of the facet. The interaction, however, still pushes in the same sense.
++#
++# After the gravity reaches some value, it is reset and the sphere should be pushed from the facet towards
++# its original position. When the contact on the original side is lost, the interaction should be deleted.
++#
++#
++# The only tunable sign places the sphere either on the top ot at the bottom of the facet
++# and sets gravity accordingly. It can be +1 or -1
++#
++sign=-1
++#
++
++O.initializers=[
++	StandAloneEngine('PhysicalActionContainerInitializer'),
++	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingBox2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
++	]
++O.engines=[
++	StandAloneEngine('PhysicalActionContainerReseter'),
++	MetaEngine('BoundingVolumeMetaEngine',[
++		EngineUnit('InteractingSphere2AABB'),
++		EngineUnit('InteractingBox2AABB'),
++		EngineUnit('MetaInteractingGeometry2AABB')
++	]),
++	StandAloneEngine('PersistentSAPCollider',{'haveDistantTransient':True}),
++	MetaEngine('InteractionGeometryMetaEngine',[
++		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry',{'hasShear':True,'interactionDetectionFactor':1.4}),
++		EngineUnit('InteractingFacet2InteractingSphere4SpheresContactGeometry',{'hasShear':True}),
++	]),
++	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
++	StandAloneEngine('ElasticContactLaw'),
++	DeusExMachina('GravityEngine',{'gravity':[0,0,-sign*500],'label':'gravitator'}),
++	DeusExMachina(&quot;NewtonsDampedLaw&quot;,{'damping':0.8}),
++	StandAloneEngine('PeriodicPythonRunner',{'iterPeriod':4000,'command':'setGravity()'}),
++	]
++O.bodies.append([
++	utils.facet([[-1,-1,0],[1,-1,0],[0,1,0]],dynamic=False,color=[1,0,0],young=1e3),
++	utils.sphere([0,0,sign*.49999],radius=.5,young=1e3,wire=True,density=1),
++])
++O.miscParams=[Generic('GLDrawSphere',{'glutUse':True})]
++O.saveTmp('init')
++O.dt=1e-4
++
++def setGravity():
++	gz=gravitator[&quot;gravity&quot;][2]
++	gravitator[&quot;gravity&quot;]=[0,0,1.05*gz]
++	if abs(gz)&gt;=2500:
++		print &quot;Gravity reset &amp; slow down&quot;
++		O.dt=1e-6;
++		gravitator[&quot;gravity&quot;]=[0,0,0]
++	if abs(gz)&gt;0: print gz
++
++try:
++	from yade import qt
++	renderer=qt.Renderer()
++	renderer['Interaction_geometry']=True
++	qt.Controller()
++except ImportError: pass
++
++
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000602.html">[deprecated list] [Yade-dev] gluUse in GLDrawSphere
+</A></li>
+	<LI>Next message: <A HREF="000604.html">[deprecated list] [Yade-dev] r1630 - commit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#603">[ date ]</a>
+              <a href="thread.html#603">[ thread ]</a>
+              <a href="subject.html#603">[ subject ]</a>
+              <a href="author.html#603">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

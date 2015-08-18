@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] facets
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20facets&In-Reply-To=%3C66CA6E9AD39EA644A9736998E6492E614B7A77E8DF%40EXMBXVS4B.campus.mcgill.ca%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000868.html">
+   <LINK REL="Next"  HREF="000878.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] facets</H1>
+    <B>Kien Dang, Mr</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20facets&In-Reply-To=%3C66CA6E9AD39EA644A9736998E6492E614B7A77E8DF%40EXMBXVS4B.campus.mcgill.ca%3E"
+       TITLE="[deprecated list] [Yade-dev] facets">kien.dang at mail.mcgill.ca
+       </A><BR>
+    <I>Thu Mar 19 16:56:17 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000868.html">[deprecated list] [Yade-dev] facets
+</A></li>
+        <LI>Next message: <A HREF="000878.html">[deprecated list] [Yade-dev] facets
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#919">[ date ]</a>
+              <a href="thread.html#919">[ thread ]</a>
+              <a href="subject.html#919">[ subject ]</a>
+              <a href="author.html#919">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Hi,
+According to my understanding,  the shrink factor in the paper is used to avoid the sphere interact with more than one facet, it is; however, not effective and it may cause unstability if shrink factor is too large and determine shrink factor suitable for each simulation is somehow unrealistic. In my opinion, we can remember the number of coincided contact points (in IF2IS4SC) for each sphere, we can check the conincidence by some criterion (contactpoint-contactpoint).Length() smaller than some value (can be tol*sphere radius) and then in the constitutive law the force at the contact will be divided by that number. By that way we can avoid complicated algorithms. 
+
+Regards,
+
+Kien Dang
+
+-----Original Message-----
+From: yade-dev-bounces+kien.dang=<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">mail.mcgill.ca at lists.launchpad.net</A> [mailto:yade-dev-bounces+kien.dang=<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">mail.mcgill.ca at lists.launchpad.net</A>] On Behalf Of V&#225;clav &#352;milauer
+Sent: Thursday, March 19, 2009 4:15 AM
+To: Yade Development Group
+Subject: [Yade-dev] facets
+
+Sega (and others),
+
+I commited Dem3DofGeom_FacetSphere class recently, along with a test 
+script in scripts/test/Dem3DofGeom.py.
+
+1. I copied your algorithm from 
+InteractingFacet2InteractingSphere4SpheresContactGeometry without 
+understanding some parts of that. Could you please review the code 
+briefly that it does what it should? In the test script, for example, 
+when the sphere passes over the boundary of the facet, it seems that the 
+contact exists longer than it visually should (but I didn't compare that 
+with IF2IS4SCG; it's either bug in my re-&quot;implementation&quot; or in the 
+original algo; I didn't want to write from scratch, sicne your approach 
+seems to nicely avoid computing distances and uses only vector products, 
+which should be much faster; or, if you have some description of the 
+algo, can you pass me a reference?).
+
+2. The shrinkFactor, if I understand, is there to make the surface 
+smoother. We still may have two interactions at the edge at the same 
+time, which means that the surface rigidity doubles at those points. I 
+propose to add the following topology information to InteractingFacet:
+
+  bool edgeActive[3];
+  bool vertexActive[3];
+  body_id_t edgeNeighbours[3];
+  // maybe also vector&lt;body_id_t&gt; vertexNeighbours[3]
+
+(the names would be different to match spartan naming onf the other data 
+members). Then I would make some initializer called, for example, 
+FacetTopologyAnalyzer, that would fill those information. Common 
+edges/vertices would be active only on one the adjacent facets and the 
+inactive ones wouldn't interact at all (in the sense of 
+InteractionGeometry).
+
+For the neighbour topology, the point would be to preserve interaction 
+data (such as plastic strain, initial contact point etc) accross facet 
+boundaries, but I am not yet sure how to handle that correctly (not in 
+collider, not in the InteractingGeometryMetaEngine either?, ...).
+
+In the future, it would also be possible to exploit this information 
+(and by adding relative angle of the 2 facets that meet at the edge) to 
+smooth the transition for neighbours (think b-spline/cylinder 
+interpolation, whatever). But let's start with smaller things first.
+
+Any comments on that?
+
+Vaclav
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000868.html">[deprecated list] [Yade-dev] facets
+</A></li>
+	<LI>Next message: <A HREF="000878.html">[deprecated list] [Yade-dev] facets
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#919">[ date ]</a>
+              <a href="thread.html#919">[ thread ]</a>
+              <a href="subject.html#919">[ subject ]</a>
+              <a href="author.html#919">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

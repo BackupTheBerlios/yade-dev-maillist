@@ -1,0 +1,340 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1675 - in trunk: core	extra/usct gui/py	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1675%20-%20in%20trunk%3A%20core%0A%09extra/usct%20gui/py%09pkg/common/Engine/MetaEngine%0A%09pkg/common/Engine/StandAloneEngine%09pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200902211351.n1LDpUVU014989%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000727.html">
+   <LINK REL="Next"  HREF="000722.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1675 - in trunk: core	extra/usct gui/py	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1675%20-%20in%20trunk%3A%20core%0A%09extra/usct%20gui/py%09pkg/common/Engine/MetaEngine%0A%09pkg/common/Engine/StandAloneEngine%09pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200902211351.n1LDpUVU014989%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1675 - in trunk: core	extra/usct gui/py	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Feb 21 14:51:30 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000727.html">[deprecated list] [Yade-dev] removing PhysicalAction genericity?
+</A></li>
+        <LI>Next message: <A HREF="000722.html">[deprecated list] [Yade-dev] [svn] r1675 - in trunk: core	extra/usct gui/py	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#720">[ date ]</a>
+              <a href="thread.html#720">[ thread ]</a>
+              <a href="subject.html#720">[ subject ]</a>
+              <a href="author.html#720">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-02-21 14:51:28 +0100 (Sat, 21 Feb 2009)
+New Revision: 1675
+
+Added:
+   trunk/core/BexContainer.hpp
+Modified:
+   trunk/core/MetaBody.hpp
+   trunk/core/PhysicalActionContainer.hpp
+   trunk/extra/usct/UniaxialStrainControlledTest.cpp
+   trunk/gui/py/yadeControl.cpp
+   trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerReseter.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+Log:
+1. Add new non-generic Bex container. For non-optimized build, it increased the speed by about 11% (9:35 vs. 8:49) as compared to PhysicalActionVectorVector.
+
+This breaks simulations that don't use it as it is enabled by default (once I test the build with PhysicalActionContainer disabled, it will be again disabled by default) and depends on whether BEX_CONTAINER is #defined in core/PhysicalActionContainer.hpp.
+
+Constitutive laws using dispatcher and ConstitutiveLaw::applyForceAtContactPoint need no further changes. No changes for python scripts necessary either.
+
+Please migrate other code soon.
+
+
+
+Added: trunk/core/BexContainer.hpp
+===================================================================
+--- trunk/core/BexContainer.hpp	2009-02-20 22:56:45 UTC (rev 1674)
++++ trunk/core/BexContainer.hpp	2009-02-21 13:51:28 UTC (rev 1675)
+@@ -0,0 +1,46 @@
++// 2009 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++#pragma once
++
++#include&lt;string.h&gt;
++#include&lt;vector&gt;
++#include&lt;Wm3Vector3.h&gt;
++// for body_id_t
++#include&lt;yade/core/Interaction.hpp&gt;
++
++/* Container for Body External Variables (bex), typically forces and torques from interactions.
++ * Values should be reset at every iteration by BexResetter.
++ * If you want to add your own bex, there are 4 steps:
++ *
++ * 	1. Create storage vector
++ * 	2. Create accessor function
++ * 	3. Update the resize function
++ * 	4. Update the reset function
++ *
++ */
++class BexContainer {
++	private:
++		std::vector&lt;Vector3r&gt; _force;
++		std::vector&lt;Vector3r&gt; _torque;
++		size_t size;
++	public:
++		BexContainer(): size(0){}
++		inline void ensureSize(body_id_t id){ if(size&lt;=(size_t)id) resize(min((size_t)1.5*(id+100),(size_t)(id+2000)));}
++		//! Get writable reference to force acting on body # id
++		inline Vector3r&amp; force(body_id_t id){ ensureSize(id); return _force[id]; }
++		//! Get writable reference to torque acting on body # id
++		inline Vector3r&amp; torque(body_id_t id){ ensureSize(id); return _torque[id]; }
++		//! Set all bex's to zero
++		void reset(){
++			memset(_force[0], 0,sizeof(Vector3r)*size);
++			memset(_torque[0],0,sizeof(Vector3r)*size);
++		}
++		/*! Resize the container; this happens automatically,
++		 * but you may want to set the size beforehand to avoid resizes as the simulation grows.
++		 */
++		void resize(size_t newSize){
++			_force.resize(newSize);
++			_torque.resize(newSize);
++			size=newSize;
++			std::cerr&lt;&lt;&quot;[DEBUG] BexContainer: Resized to &quot;&lt;&lt;size&lt;&lt;std::endl;
++		}
++};
+
+Modified: trunk/core/MetaBody.hpp
+===================================================================
+--- trunk/core/MetaBody.hpp	2009-02-20 22:56:45 UTC (rev 1674)
++++ trunk/core/MetaBody.hpp	2009-02-21 13:51:28 UTC (rev 1675)
+@@ -14,6 +14,7 @@
+ #include&quot;BodyContainer.hpp&quot;
+ #include&quot;Engine.hpp&quot;
+ #include&quot;DisplayParameters.hpp&quot;
++#include&quot;PhysicalActionContainer.hpp&quot;
+ //#include&quot;groupRelationData.hpp&quot;
+ 
+ class MetaBody : public Body
+@@ -25,6 +26,9 @@
+ 		__attribute__((__deprecated__)) shared_ptr&lt;InteractionContainer&gt;	persistentInteractions; // disappear, reappear according to physical (or any other non-spatial) criterion
+ 		shared_ptr&lt;InteractionContainer&gt;	transientInteractions;	// disappear, reappear according to spatial criterion
+ 		shared_ptr&lt;PhysicalActionContainer&gt;	physicalActions;
++		#ifdef BEX_CONTAINER
++			BexContainer bex;
++		#endif
+ 		vector&lt;shared_ptr&lt;Serializable&gt; &gt; miscParams; // will set static parameters during deserialization (primarily for GLDraw functors which otherwise have no attribute access)
+ 		//! tags like mp3 tags: author, date, version, description etc.
+ 		list&lt;string&gt; tags;
+
+Modified: trunk/core/PhysicalActionContainer.hpp
+===================================================================
+--- trunk/core/PhysicalActionContainer.hpp	2009-02-20 22:56:45 UTC (rev 1674)
++++ trunk/core/PhysicalActionContainer.hpp	2009-02-21 13:51:28 UTC (rev 1675)
+@@ -14,6 +14,13 @@
+ #include&lt;yade/core/PhysicalAction.hpp&gt;
+ #include&lt;iostream&gt;
+ 
++// experimental
++#define BEX_CONTAINER
++
++#ifdef BEX_CONTAINER
++	#include&lt;yade/core/BexContainer.hpp&gt;
++#endif
++
+ using namespace boost;
+ using namespace std;
+ 
+
+Modified: trunk/extra/usct/UniaxialStrainControlledTest.cpp
+===================================================================
+--- trunk/extra/usct/UniaxialStrainControlledTest.cpp	2009-02-20 22:56:45 UTC (rev 1674)
++++ trunk/extra/usct/UniaxialStrainControlledTest.cpp	2009-02-21 13:51:28 UTC (rev 1675)
+@@ -128,8 +128,13 @@
+ 
+ void UniaxialStrainer::computeAxialForce(MetaBody* rootBody){
+ 	sumPosForces=sumNegForces=0;
+-	FOREACH(body_id_t id, negIds) sumNegForces+=Shop::Bex::force(id)[axis];
+-	FOREACH(body_id_t id, posIds) sumPosForces-=Shop::Bex::force(id)[axis];
++	#ifdef BEX_CONTAINER
++		FOREACH(body_id_t id, negIds) sumNegForces+=rootBody-&gt;bex.force(id)[axis];
++		FOREACH(body_id_t id, posIds) sumNegForces-=rootBody-&gt;bex.force(id)[axis];
++	#else
++		FOREACH(body_id_t id, negIds) sumNegForces+=Shop::Bex::force(id)[axis];
++		FOREACH(body_id_t id, posIds) sumPosForces-=Shop::Bex::force(id)[axis];
++	#endif
+ }
+ 
+ /***************************************** USCTGen **************************/
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2009-02-20 22:56:45 UTC (rev 1674)
++++ trunk/gui/py/yadeControl.cpp	2009-02-21 13:51:28 UTC (rev 1675)
+@@ -383,9 +383,16 @@
+ 	python::tuple force_get(long id){ Shop::Bex::initCache(); Vector3r f=Shop::Bex::force(id); return python::make_tuple(f[0],f[1],f[2]);}
+ 	python::tuple momentum_get(long id){ Shop::Bex::initCache(); Vector3r m=Shop::Bex::momentum(id); return python::make_tuple(m[0],m[1],m[2]);}
+ };
++#ifdef BEX_CONTAINER
++class pyBexContainer{
++	public:
++		pyBexContainer(){}
++		python::tuple force_get(long id){ Vector3r&amp; f=Omega::instance().getRootBody()-&gt;bex.force(id); return python::make_tuple(f[0],f[1],f[2]); }
++		python::tuple torque_get(long id){ Vector3r&amp; m=Omega::instance().getRootBody()-&gt;bex.torque(id); return python::make_tuple(m[0],m[1],m[2]);}
++};
++#endif
+ 
+ 
+-
+ class pyOmega{
+ 	private:
+ 		// can be safely removed now, since pyOmega makes an empty rootBody in the constructor, if there is none
+@@ -516,9 +523,14 @@
+ 	
+ 	pyBodyContainer bodies_get(void){assertRootBody(); return pyBodyContainer(OMEGA.getRootBody()-&gt;bodies); }
+ 	pyInteractionContainer interactions_get(void){assertRootBody(); return pyInteractionContainer(OMEGA.getRootBody()-&gt;transientInteractions); }
++	
++	#ifdef BEX_CONTAINER
++		pyBexContainer actions_get(void){return pyBexContainer();}
++	#else
++		pyPhysicalActionContainer actions_get(void){return pyPhysicalActionContainer(OMEGA.getRootBody()-&gt;physicalActions); }
++	#endif
++	
+ 
+-	pyPhysicalActionContainer actions_get(void){return pyPhysicalActionContainer(OMEGA.getRootBody()-&gt;physicalActions); }
+-
+ 	boost::python::list listChildClasses(const string&amp; base){
+ 		boost::python::list ret;
+ 		for(map&lt;string,DynlibDescriptor&gt;::const_iterator di=Omega::instance().getDynlibsDescriptor().begin();di!=Omega::instance().getDynlibsDescriptor().end();++di) if (Omega::instance().isInheritingFrom((*di).first,base)) ret.append(di-&gt;first);
+@@ -633,8 +645,13 @@
+ 		.def(&quot;__getitem__&quot;,&amp;pyPhysicalActionContainer::pyGetitem)
+ 		.def(&quot;f&quot;,&amp;pyPhysicalActionContainer::force_get)
+ 		.def(&quot;m&quot;,&amp;pyPhysicalActionContainer::momentum_get);
+-	
+ 
++	#ifdef BEX_CONTAINER
++	boost::python::class_&lt;pyBexContainer&gt;(&quot;BexContainer&quot;,python::init&lt;pyBexContainer&amp;&gt;())
++		.def(&quot;f&quot;,&amp;pyBexContainer::force_get)
++		.def(&quot;m&quot;,&amp;pyBexContainer::torque_get);
++	#endif
++
+ 	BASIC_PY_PROXY_WRAPPER(pyStandAloneEngine,&quot;StandAloneEngine&quot;);
+ 	BASIC_PY_PROXY_WRAPPER(pyMetaEngine,&quot;MetaEngine&quot;)
+ 		.add_property(&quot;functors&quot;,&amp;pyMetaEngine::functors_get,&amp;pyMetaEngine::functors_set)
+
+Modified: trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp	2009-02-20 22:56:45 UTC (rev 1674)
++++ trunk/pkg/common/Engine/MetaEngine/ConstitutiveLaw.hpp	2009-02-21 13:51:28 UTC (rev 1675)
+@@ -26,9 +26,15 @@
+ 	Vector3r&amp; bodyTorque(const body_id_t id, MetaBody* rb) const { return static_pointer_cast&lt;Momentum&gt;(rb-&gt;physicalActions-&gt;find(id,torqueIdx))-&gt;momentum;}
+ 	/*! Convenience function to apply force and torque from one force at contact point. Not sure if this is the right place for it. */
+ 	void applyForceAtContactPoint(const Vector3r&amp; force, const Vector3r&amp; contactPoint, const body_id_t id1, const Vector3r&amp; pos1, const body_id_t id2, const Vector3r&amp; pos2, MetaBody* rb){
+-		bodyForce(id1,rb)+=force; bodyForce(id2,rb)-=force;
+-		bodyTorque(id1,rb)+=(contactPoint-pos1).Cross(force);
+-		bodyTorque(id2,rb)-=(contactPoint-pos2).Cross(force);
++		#ifdef BEX_CONTAINER
++			rb-&gt;bex.force(id1)+=force; rb-&gt;bex.force(id2)-=force;
++			rb-&gt;bex.torque(id1)+=(contactPoint-pos1).Cross(force);
++			rb-&gt;bex.torque(id2)-=(contactPoint-pos2).Cross(force);
++		#else
++			bodyForce(id1,rb)+=force; bodyForce(id2,rb)-=force;
++			bodyTorque(id1,rb)+=(contactPoint-pos1).Cross(force);
++			bodyTorque(id2,rb)-=(contactPoint-pos2).Cross(force);
++		#endif
+ 	}
+ };
+ REGISTER_SERIALIZABLE(ConstitutiveLaw);
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.cpp	2009-02-20 22:56:45 UTC (rev 1674)
++++ trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerInitializer.cpp	2009-02-21 13:51:28 UTC (rev 1675)
+@@ -31,6 +31,9 @@
+ 
+ void PhysicalActionContainerInitializer::action(MetaBody* ncb)
+ {
++	#ifdef BEX_CONTAINER
++		return;
++	#endif
+ 	list&lt;string&gt; allNames;
+ 	// copy physical action names that were passed by the user directly
+ 	allNames.insert(allNames.end(),physicalActionNames.begin(),physicalActionNames.end());
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerReseter.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerReseter.cpp	2009-02-20 22:56:45 UTC (rev 1674)
++++ trunk/pkg/common/Engine/StandAloneEngine/PhysicalActionContainerReseter.cpp	2009-02-21 13:51:28 UTC (rev 1675)
+@@ -20,7 +20,11 @@
+ 
+ void PhysicalActionContainerReseter::action(MetaBody* ncb)
+ {
+-	ncb-&gt;physicalActions-&gt;reset();
++	#ifdef BEX_CONTAINER
++		ncb-&gt;bex.reset();
++	#else
++		ncb-&gt;physicalActions-&gt;reset();
++	#endif
+ }
+ 
+ 
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-02-20 22:56:45 UTC (rev 1674)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-02-21 13:51:28 UTC (rev 1675)
+@@ -36,8 +36,13 @@
+ 		
+ 		RigidBodyParameters* rb = YADE_CAST&lt;RigidBodyParameters*&gt;(b-&gt;physicalParameters.get());
+ 		unsigned int id = b-&gt;getId();
+-		Vector3r&amp; m = ( static_cast&lt;Momentum*&gt; ( ncb-&gt;physicalActions-&gt;find ( id, momentumClassIndex ).get() ) )-&gt;momentum;
+-		Vector3r&amp; f = ( static_cast&lt;Force*&gt; ( ncb-&gt;physicalActions-&gt;find ( id, forceClassIndex ).get() ) )-&gt;force;
++		#ifdef BEX_CONTAINER
++			Vector3r&amp; m = ncb-&gt;bex.torque(id);
++			Vector3r&amp; f = ncb-&gt;bex.force(id);
++		#else
++			Vector3r&amp; m = ( static_cast&lt;Momentum*&gt; ( ncb-&gt;physicalActions-&gt;find ( id, momentumClassIndex ).get() ) )-&gt;momentum;
++			Vector3r&amp; f = ( static_cast&lt;Force*&gt; ( ncb-&gt;physicalActions-&gt;find ( id, forceClassIndex ).get() ) )-&gt;force;
++		#endif
+ 
+ 		Real dt = Omega::instance().getTimeStep();
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000727.html">[deprecated list] [Yade-dev] removing PhysicalAction genericity?
+</A></li>
+	<LI>Next message: <A HREF="000722.html">[deprecated list] [Yade-dev] [svn] r1675 - in trunk: core	extra/usct gui/py	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#720">[ date ]</a>
+              <a href="thread.html#720">[ thread ]</a>
+              <a href="subject.html#720">[ subject ]</a>
+              <a href="author.html#720">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

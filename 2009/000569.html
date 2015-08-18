@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] Iteration number stored in the xml : how to fix broken conditionals?
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Iteration%20number%20stored%20in%20the%20xml%0A%20%3A%20how%20to%20fix%20broken%20conditionals%3F&In-Reply-To=%3C49623A61.3090003%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000560.html">
+   <LINK REL="Next"  HREF="000561.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] Iteration number stored in the xml : how to fix broken conditionals?</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Iteration%20number%20stored%20in%20the%20xml%0A%20%3A%20how%20to%20fix%20broken%20conditionals%3F&In-Reply-To=%3C49623A61.3090003%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev] Iteration number stored in the xml : how to fix broken conditionals?">eudoxos at arcig.cz
+       </A><BR>
+    <I>Mon Jan  5 17:50:41 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000560.html">[deprecated list] [Yade-dev] Iteration number stored in the xml :	how to fix broken	conditionals?
+</A></li>
+        <LI>Next message: <A HREF="000561.html">[deprecated list] [Yade-dev] commit 1583, 3d view,	serialization.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#569">[ date ]</a>
+              <a href="thread.html#569">[ thread ]</a>
+              <a href="subject.html#569">[ subject ]</a>
+              <a href="author.html#569">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;<i>
+</I>&gt;<i> I realised that the iteration number feature (keeping the current
+</I>&gt;<i> iteration number after save/load) has broken some procedures (even
+</I>&gt;<i> though this feature was a good idea).
+</I>&gt;<i>
+</I>&gt;<i> I have some if(iteration==1) in a few places, but they mean in fact
+</I>&gt;<i> if(&quot;simulation was just loaded&quot;) (then do special operations on some
+</I>&gt;<i> members that are not registered parameters but need to be initialised).
+</I>&gt;<i>
+</I>&gt;<i> Is there a way to write those tests correctly now that I can't rely on
+</I>&gt;<i> iteration number?
+</I>You can have a data member in some class that will not be registered as
+serializable, and can reset it to the default value in the class'
+constructor. See UniaxialStrainer::needsInit.
+&gt;<i> Alternatively, is there a way to get the old behaviour back optionaly
+</I>&gt;<i> (setting iteration=0 at loading time), it would also help me to find
+</I>&gt;<i> the history of a sample, when the outputs of different consecutive
+</I>&gt;<i> simulations on one single sample are appended to one unique file.
+</I>If you think it is reasonable, O.iter can be made writable, then it
+would be possible:
+
+ O.load('simulation.xml'); O.iter=0;
+
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000560.html">[deprecated list] [Yade-dev] Iteration number stored in the xml :	how to fix broken	conditionals?
+</A></li>
+	<LI>Next message: <A HREF="000561.html">[deprecated list] [Yade-dev] commit 1583, 3d view,	serialization.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#569">[ date ]</a>
+              <a href="thread.html#569">[ thread ]</a>
+              <a href="subject.html#569">[ subject ]</a>
+              <a href="author.html#569">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

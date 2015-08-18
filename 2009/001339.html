@@ -1,0 +1,230 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1922 - in trunk: core gui/py	gui/qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1922%20-%20in%20trunk%3A%20core%20gui/py%0A%09gui/qt3&In-Reply-To=%3C200908051009.n75A9rU2032393%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001338.html">
+   <LINK REL="Next"  HREF="001340.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1922 - in trunk: core gui/py	gui/qt3</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1922%20-%20in%20trunk%3A%20core%20gui/py%0A%09gui/qt3&In-Reply-To=%3C200908051009.n75A9rU2032393%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1922 - in trunk: core gui/py	gui/qt3">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Aug  5 12:09:53 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001338.html">[deprecated list] [Yade-dev] CAELinux and YADE
+</A></li>
+        <LI>Next message: <A HREF="001340.html">[deprecated list] [Yade-dev] [svn] r1923 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1339">[ date ]</a>
+              <a href="thread.html#1339">[ thread ]</a>
+              <a href="subject.html#1339">[ subject ]</a>
+              <a href="author.html#1339">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-08-05 12:09:52 +0200 (Wed, 05 Aug 2009)
+New Revision: 1922
+
+Modified:
+   trunk/core/FrontEnd.hpp
+   trunk/core/yade.cpp
+   trunk/gui/py/PythonUI.hpp
+   trunk/gui/qt3/QtGUI-python.cpp
+   trunk/gui/qt3/QtGUI.cpp
+   trunk/gui/qt3/QtGUI.hpp
+   trunk/gui/qt3/qt.py
+Log:
+1. Be more tolerant to specifying invalid GUI at the command line
+2. Throw exception about unopenable $DISPLAY rather than letting QApplication abort()
+
+
+
+Modified: trunk/core/FrontEnd.hpp
+===================================================================
+--- trunk/core/FrontEnd.hpp	2009-08-05 09:02:32 UTC (rev 1921)
++++ trunk/core/FrontEnd.hpp	2009-08-05 10:09:52 UTC (rev 1922)
+@@ -20,10 +20,11 @@
+ 		virtual ~FrontEnd ();
+ 
+ 		virtual int run(int , char * []) { return -1;};
++		// called before actually invoking it
++		virtual bool available(){return false;}
+ 
+ 	REGISTER_CLASS_AND_BASE(FrontEnd,Factorable);
+ };
+-
+ REGISTER_FACTORABLE(FrontEnd);
+ 
+ 
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2009-08-05 09:02:32 UTC (rev 1921)
++++ trunk/core/yade.cpp	2009-08-05 10:09:52 UTC (rev 1922)
+@@ -278,15 +278,23 @@
+ 		}
+ 	}
+ 
++	// handle this a little more inteligently, use FrontEnd::available to chec kif the GUI will really run (QtGUi without DISPLAY and similar)
+ 	if(gui.size()==0) gui=Omega::instance().preferences-&gt;defaultGUILibName;
+ 	#ifdef YADE_OPENGL
+ 		if(!explicitUI &amp;&amp; gui==&quot;PythonUI&quot; &amp;&amp; !getenv(&quot;TERM&quot;)){ LOG_WARN(&quot;No $TERM, using QtGUI instead of PythonUI&quot;); gui=&quot;QtGUI&quot;; }
+ 	#else
+ 		if(gui==&quot;QtGUI&quot;){LOG_WARN(&quot;openGL-less build, using PythonUI instead of QtGUI&quot;); gui=&quot;PythonUI&quot;;}
+ 	#endif
++	if(string(getenv(&quot;DISPLAY&quot;)).empty()) unsetenv(&quot;DISPLAY&quot;); // empty $DISPLAY is no display
+ 	if(gui==&quot;QtGUI&quot; &amp;&amp; !getenv(&quot;DISPLAY&quot;)){ LOG_WARN(&quot;No $DISPLAY, using PythonUI instead of QtUI&quot;); gui=&quot;PythonUI&quot;; }
+-		
+-	shared_ptr&lt;FrontEnd&gt; frontEnd = dynamic_pointer_cast&lt;FrontEnd&gt;(ClassFactory::instance().createShared(gui));
++	shared_ptr&lt;FrontEnd&gt; frontEnd;
++	try{
++		frontEnd=dynamic_pointer_cast&lt;FrontEnd&gt;(ClassFactory::instance().createShared(gui));
++		if(!frontEnd){ LOG_FATAL(&quot;Selected class `&quot;&lt;&lt;gui&lt;&lt;&quot;' is not an UI.&quot;); exit(1);}
++	} catch (FactoryError&amp; e){
++		LOG_FATAL(&quot;Unable to create UI `&quot;&lt;&lt;gui&lt;&lt;&quot;', got error: &quot;&lt;&lt;e.what());
++		exit(1);
++	}
+ 	
+  	// for(int i=0;i&lt;argc; i++)cerr&lt;&lt;&quot;Argument &quot;&lt;&lt;i&lt;&lt;&quot;: &quot;&lt;&lt;argv[i]&lt;&lt;endl;
+ 	int ok = frontEnd-&gt;run(argc,argv);
+
+Modified: trunk/gui/py/PythonUI.hpp
+===================================================================
+--- trunk/gui/py/PythonUI.hpp	2009-08-05 09:02:32 UTC (rev 1921)
++++ trunk/gui/py/PythonUI.hpp	2009-08-05 10:09:52 UTC (rev 1922)
+@@ -22,7 +22,8 @@
+ 		static bool stopAfter;
+ 		static bool nonInteractive;
+ 		static vector&lt;string&gt; scriptArgs;
+-	
++
++	virtual bool available(){return true;}
+ 	REGISTER_CLASS_NAME(PythonUI);
+ 	REGISTER_BASE_CLASS_NAME(FrontEnd);
+ 	DECLARE_LOGGER;
+
+Modified: trunk/gui/qt3/QtGUI-python.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI-python.cpp	2009-08-05 09:02:32 UTC (rev 1921)
++++ trunk/gui/qt3/QtGUI-python.cpp	2009-08-05 10:09:52 UTC (rev 1922)
+@@ -20,7 +20,10 @@
+ void qtGuiActivate(){
+ 	if(qtGuiIsActive()) return;
+ 	QtGUI* gui=new QtGUI();
+-	gui-&gt;runNaked();
++	if(!gui-&gt;checkDisplay(/* quiet */ false) || !gui-&gt;runNaked()){
++		PyErr_SetString(PyExc_ImportError,&quot;Qt3 GUI could not be activated.&quot;);
++		python::throw_error_already_set();
++	}
+ }
+ 
+ YadeQtMainWindow* ensuredMainWindow(){if(!qtGuiIsActive()){qtGuiActivate(); while(!YadeQtMainWindow::self) usleep(50000); } /* throw runtime_error(&quot;No instance of YadeQtMainWindow&quot;);*/ return YadeQtMainWindow::self; }
+
+Modified: trunk/gui/qt3/QtGUI.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI.cpp	2009-08-05 09:02:32 UTC (rev 1921)
++++ trunk/gui/qt3/QtGUI.cpp	2009-08-05 10:09:52 UTC (rev 1922)
+@@ -81,12 +81,17 @@
+ 	return res;
+ }
+ 
++bool QtGUI::checkDisplay(bool quiet){
++	bool ret=(XOpenDisplay(NULL)!=0);
++	if(!ret) LOG_ERROR(&quot;Unable to open display `&quot;&lt;&lt;getenv(&quot;DISPLAY&quot;)&lt;&lt;&quot;'.&quot;);
++	return ret;
++}
+ 
+-void QtGUI::runNaked(){
++bool QtGUI::runNaked(){
+ 	if(!app){ // no app existing yet
+ 		if(getenv(&quot;DISPLAY&quot;)==0){
+ 			LOG_ERROR(&quot;$DISPLAY environment var not set, not starting qt3 gui.&quot;);
+-			return;
++			return false;
+ 		};
+ 		LOG_INFO(&quot;Creating QApplication&quot;);
+ 		XInitThreads();
+@@ -99,4 +104,5 @@
+ 		} else { LOG_ERROR(&quot;Main window was there, but not QtGUI::app??&quot;); }
+ 		boost::thread appThread(boost::bind(&amp;QApplication::exec,app));
+ 	}
++	return true;
+ }
+
+Modified: trunk/gui/qt3/QtGUI.hpp
+===================================================================
+--- trunk/gui/qt3/QtGUI.hpp	2009-08-05 09:02:32 UTC (rev 1921)
++++ trunk/gui/qt3/QtGUI.hpp	2009-08-05 10:09:52 UTC (rev 1922)
+@@ -29,7 +29,11 @@
+ 
+ 	public :
+ 		QtGUI ();
+-		void runNaked();
++		// run the QtGUI without showing the main window (called from python when importing yade.qt; yade.qt.Controller() will then show just the Controller and so on)
++		bool runNaked();
++		// try to open the X display, return false if fails; optionally display error to the log.
++		bool checkDisplay(bool quiet=true);
++		virtual bool available(){return checkDisplay();}
+ 		virtual ~QtGUI ();
+ 		virtual int run(int argc, char *argv[]);
+ 		void help();
+
+Modified: trunk/gui/qt3/qt.py
+===================================================================
+--- trunk/gui/qt3/qt.py	2009-08-05 09:02:32 UTC (rev 1921)
++++ trunk/gui/qt3/qt.py	2009-08-05 10:09:52 UTC (rev 1922)
+@@ -2,8 +2,8 @@
+ from _qt import *
+ 
+ if not isActive():
++	# will raise ImportError if the GUI could not be activated for some reason
+ 	activate()
+-#	# raise ImportError(&quot;The Qt gui is not being used (run with -N QtGUI).&quot;)
+ 
+ 
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001338.html">[deprecated list] [Yade-dev] CAELinux and YADE
+</A></li>
+	<LI>Next message: <A HREF="001340.html">[deprecated list] [Yade-dev] [svn] r1923 - trunk/core
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1339">[ date ]</a>
+              <a href="thread.html#1339">[ thread ]</a>
+              <a href="subject.html#1339">[ subject ]</a>
+              <a href="author.html#1339">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,418 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1557 - in trunk: core	extra/clump gui/py lib	lib/serialization lib/smoothing
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1557%20-%20in%20trunk%3A%20core%0A%09extra/clump%20gui/py%20lib%09lib/serialization%20lib/smoothing&In-Reply-To=%3C200810251740.m9PHeH76006242%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000461.html">
+   <LINK REL="Next"  HREF="000464.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1557 - in trunk: core	extra/clump gui/py lib	lib/serialization lib/smoothing</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1557%20-%20in%20trunk%3A%20core%0A%09extra/clump%20gui/py%20lib%09lib/serialization%20lib/smoothing&In-Reply-To=%3C200810251740.m9PHeH76006242%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1557 - in trunk: core	extra/clump gui/py lib	lib/serialization lib/smoothing">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Oct 25 19:40:17 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000461.html">[deprecated list] [Yade-dev] [svn] r1554 -	trunk/pkg/dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000464.html">[deprecated list] [Yade-dev] [svn] r1558 - in trunk/pkg/dem: .	Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#463">[ date ]</a>
+              <a href="thread.html#463">[ thread ]</a>
+              <a href="subject.html#463">[ subject ]</a>
+              <a href="author.html#463">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-10-25 19:40:16 +0200 (Sat, 25 Oct 2008)
+New Revision: 1557
+
+Added:
+   trunk/lib/smoothing/
+   trunk/lib/smoothing/WeightedAverage2d.cpp
+   trunk/lib/smoothing/WeightedAverage2d.hpp
+Modified:
+   trunk/core/Omega.cpp
+   trunk/extra/clump/Shop.cpp
+   trunk/gui/py/_utils.cpp
+   trunk/gui/py/yadeControl.cpp
+   trunk/lib/SConscript
+   trunk/lib/serialization/IOFormatManager.tpp
+Log:
+1. Add 2d weighted average smoothing abstract class and its specialization on symmetric gaussian kernel, with python glue of course.
+2. Remove .gz support.
+3. Fix some bugs in the spiral projection code.
+
+
+Modified: trunk/core/Omega.cpp
+===================================================================
+--- trunk/core/Omega.cpp	2008-10-24 15:29:45 UTC (rev 1556)
++++ trunk/core/Omega.cpp	2008-10-25 17:40:16 UTC (rev 1557)
+@@ -236,7 +236,7 @@
+ 		//boost::mutex::scoped_lock lock1(rootBody-&gt;persistentInteractions-&gt;drawloopmutex);
+ 		//boost::mutex::scoped_lock lock2(rootBody-&gt;transientInteractions-&gt;drawloopmutex);
+ 		
+-		if(algorithm::ends_with(simulationFileName,&quot;.xml&quot;) || algorithm::ends_with(simulationFileName,&quot;.xml.gz&quot;) || algorithm::ends_with(simulationFileName,&quot;.xml.bz2&quot;)){
++		if(algorithm::ends_with(simulationFileName,&quot;.xml&quot;) || algorithm::ends_with(simulationFileName,&quot;.xml.bz2&quot;)){
+ 			resetRootBody();
+ 			IOFormatManager::loadFromFile(&quot;XMLFormatManager&quot;,simulationFileName,&quot;rootBody&quot;,rootBody);
+ 		}
+@@ -267,7 +267,7 @@
+ 	if(name.size()==0) throw yadeBadFile(&quot;Filename with zero length.&quot;);
+ 	LOG_INFO(&quot;Saving file &quot; &lt;&lt; name);
+ 
+-	if(algorithm::ends_with(name,&quot;.xml&quot;) || algorithm::ends_with(name,&quot;.xml.gz&quot;) || algorithm::ends_with(name,&quot;.xml.bz2&quot;)){
++	if(algorithm::ends_with(name,&quot;.xml&quot;) || algorithm::ends_with(name,&quot;.xml.bz2&quot;)){
+ 		FormatChecker::format=FormatChecker::XML;
+ 		IOFormatManager::saveToFile(&quot;XMLFormatManager&quot;,name,&quot;rootBody&quot;,rootBody);
+ 	}
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2008-10-24 15:29:45 UTC (rev 1556)
++++ trunk/extra/clump/Shop.cpp	2008-10-25 17:40:16 UTC (rev 1557)
+@@ -1163,8 +1163,9 @@
+  * this number. The wrapped value is returned.
+  */
+ Real Shop::periodicWrap(Real x, Real x0, Real x1, long* period){
+-	double xNorm=(x-x0)/(x1-x0);
+-	double xxNorm=xNorm-floor(xNorm);
++	Real xNorm=(x-x0)/(x1-x0);
++	Real xxNorm=xNorm-floor(xNorm);
+ 	if(period) *period=(long)floor(xNorm);
+ 	return x0+xxNorm*(x1-x0);
+ }
++
+
+Modified: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2008-10-24 15:29:45 UTC (rev 1556)
++++ trunk/gui/py/_utils.cpp	2008-10-25 17:40:16 UTC (rev 1557)
+@@ -217,9 +217,9 @@
+ 	else theta=0;
+ 	Real hRef=dH_dTheta*(theta-theta0);
+ 	long period;
+-	Real h=Shop::periodicWrap(pt[axis],hRef-Mathr::PI*dH_dTheta,hRef+Mathr::PI*dH_dTheta,&amp;period);
+-	cerr&lt;&lt;&quot;:&quot;&lt;&lt;h-hRef&lt;&lt;&quot; &quot;&lt;&lt;h&lt;&lt;&quot; &quot;&lt;&lt;hRef&lt;&lt;&quot; &quot;&lt;&lt;&quot; (&quot;&lt;&lt;hRef-Mathr::PI*dH_dTheta&lt;&lt;&quot;,&quot;&lt;&lt;hRef+Mathr::PI*dH_dTheta&lt;&lt;&quot;) &quot;&lt;&lt;theta&lt;&lt;&quot; &quot;&lt;&lt;endl;
+-	return python::make_tuple(python::make_tuple(r,h-dH_dTheta*(theta-theta0+2*Mathr::PI*period)),theta);
++	Real h=Shop::periodicWrap(pt[axis],hRef-.5*Mathr::PI*dH_dTheta,hRef+.5*Mathr::PI*dH_dTheta,&amp;period);
++	if(abs(h-hRef)&gt;0.005) cerr&lt;&lt;&quot;@@@ &quot;&lt;&lt;h-hRef&lt;&lt;&quot; &quot;&lt;&lt;h&lt;&lt;&quot; &quot;&lt;&lt;hRef&lt;&lt;&quot; &quot;&lt;&lt;pt[axis]&lt;&lt;&quot; (&quot;&lt;&lt;hRef-.5*Mathr::PI*dH_dTheta&lt;&lt;&quot;,&quot;&lt;&lt;hRef+.5*Mathr::PI*dH_dTheta&lt;&lt;&quot;) &quot;&lt;&lt;theta&lt;&lt;&quot; &quot;&lt;&lt;endl;
++	return python::make_tuple(python::make_tuple(r,h-hRef),theta);
+ }
+ BOOST_PYTHON_FUNCTION_OVERLOADS(spiralProject_overloads,spiralProject,2,4);
+ 
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-10-24 15:29:45 UTC (rev 1556)
++++ trunk/gui/py/yadeControl.cpp	2008-10-25 17:40:16 UTC (rev 1557)
+@@ -433,8 +433,19 @@
+ 	void reload(){	load(OMEGA.getSimulationFileName());}
+ 	void saveTmp(string mark){ save(&quot;:memory:&quot;+mark);}
+ 	void loadTmp(string mark){ load(&quot;:memory:&quot;+mark);}
++	void tmpToFile(string mark, string filename){
++		// FIXME: memSavedSimulations are private, but I don't want to recompile all yade now; move it to public and uncomment these few lines at some point
++		// if(OMEGA.memSavedSimulations.count(&quot;:memory:&quot;+mark)==0) throw runtime_error(&quot;No memory-saved simulation named &quot;+mark);
++		iostreams::filtering_ostream out;
++		if(boost::algorithm::ends_with(filename,&quot;.bz2&quot;)) out.push(iostreams::bzip2_compressor());
++		out.push(iostreams::file_sink(filename));
++		if(!out.good()) throw runtime_error(&quot;Error while opening file `&quot;+filename+&quot;' for writing.&quot;);
++		LOG_INFO(&quot;Saving :memory:&quot;&lt;&lt;mark&lt;&lt;&quot; to &quot;&lt;&lt;filename);
++		//out&lt;&lt;OMEGA.memSavedSimulations[&quot;:memory:&quot;+mark];
++	}
+ 
+ 
++
+ 	void reset(){Py_BEGIN_ALLOW_THREADS; OMEGA.reset(); Py_END_ALLOW_THREADS; }
+ 
+ 	void save(std::string fileName){
+@@ -534,6 +545,7 @@
+ 		.def(&quot;save&quot;,&amp;pyOmega::save)
+ 		.def(&quot;loadTmp&quot;,&amp;pyOmega::loadTmp)
+ 		.def(&quot;saveTmp&quot;,&amp;pyOmega::saveTmp)
++		.def(&quot;tmpToFile&quot;,&amp;pyOmega::tmpToFile)
+ 		.def(&quot;saveSpheres&quot;,&amp;pyOmega::saveSpheres)
+ 		.def(&quot;run&quot;,&amp;pyOmega::run,omega_run_overloads())
+ 		.def(&quot;pause&quot;,&amp;pyOmega::pause)
+
+Modified: trunk/lib/SConscript
+===================================================================
+--- trunk/lib/SConscript	2008-10-24 15:29:45 UTC (rev 1556)
++++ trunk/lib/SConscript	2008-10-25 17:40:16 UTC (rev 1557)
+@@ -1,6 +1,11 @@
+ # vim: set filetype=python :
+ Import('*')
+ 
++if 'EMBED_PYTHON' in env['CPPDEFINES']:
++	env.Install('$PREFIX/lib/yade$SUFFIX/gui/yade',[
++		env.SharedLibrary('WeightedAverage2d',['smoothing/WeightedAverage2d.cpp'],SHLIBPREFIX='',
++		LIBS=env['LIBS']+['yade-base'])
++	])
+ 
+ 
+ if 'qt3' not in env['exclude']:
+
+Modified: trunk/lib/serialization/IOFormatManager.tpp
+===================================================================
+--- trunk/lib/serialization/IOFormatManager.tpp	2008-10-24 15:29:45 UTC (rev 1556)
++++ trunk/lib/serialization/IOFormatManager.tpp	2008-10-25 17:40:16 UTC (rev 1557)
+@@ -17,7 +17,6 @@
+ #include &quot;IOManagerExceptions.hpp&quot;
+ #include&lt;boost/scoped_ptr.hpp&gt;
+ #include&lt;boost/iostreams/filtering_stream.hpp&gt;
+-#include&lt;boost/iostreams/filter/gzip.hpp&gt;
+ #include&lt;boost/iostreams/filter/bzip2.hpp&gt;
+ #include&lt;boost/iostreams/device/file.hpp&gt;
+ #include&lt;boost/algorithm/string.hpp&gt;
+@@ -45,8 +44,7 @@
+ template&lt;typename Type&gt;
+ void IOFormatManager::loadFromFile(const string&amp; libName, const string&amp; fileName,const string&amp; name, Type&amp; t){
+ 	iostreams::filtering_istream in;
+-	if(boost::algorithm::ends_with(fileName,&quot;.gz&quot;)) in.push(iostreams::gzip_decompressor());
+-	else if(boost::algorithm::ends_with(fileName,&quot;.bz2&quot;)) in.push(iostreams::bzip2_decompressor());
++	if(boost::algorithm::ends_with(fileName,&quot;.bz2&quot;)) in.push(iostreams::bzip2_decompressor());
+ 	in.push(iostreams::file_source(fileName));
+ 	if(!in.good()) throw SerializableError(IOManagerExceptions::FileNotGood);
+ 
+@@ -57,8 +55,7 @@
+ template&lt;typename Type&gt;
+ void IOFormatManager::saveToFile(const string&amp; libName, const string&amp; fileName,const string&amp; name, Type&amp; t){
+ 	iostreams::filtering_ostream out;
+-	if(boost::algorithm::ends_with(fileName,&quot;.gz&quot;)) out.push(iostreams::gzip_compressor());
+-	else if(boost::algorithm::ends_with(fileName,&quot;.bz2&quot;)) out.push(iostreams::bzip2_compressor());
++	if(boost::algorithm::ends_with(fileName,&quot;.bz2&quot;)) out.push(iostreams::bzip2_compressor());
+ 	out.push(iostreams::file_sink(fileName));
+ 	if(!out.good()) throw SerializableError(IOManagerExceptions::FileNotGood);
+ 	saveToStream(libName,out,name,t);
+
+Added: trunk/lib/smoothing/WeightedAverage2d.cpp
+===================================================================
+--- trunk/lib/smoothing/WeightedAverage2d.cpp	2008-10-24 15:29:45 UTC (rev 1556)
++++ trunk/lib/smoothing/WeightedAverage2d.cpp	2008-10-25 17:40:16 UTC (rev 1557)
+@@ -0,0 +1,12 @@
++#include&quot;WeightedAverage2d.hpp&quot;
++
++BOOST_PYTHON_MODULE(WeightedAverage2d)
++{
++	boost::python::class_&lt;pyGaussAverage&gt;(&quot;GaussAverage&quot;,python::init&lt;python::tuple,python::tuple,python::tuple,Real&gt;())
++		.def(&quot;add&quot;,&amp;pyGaussAverage::addPt)
++		.def(&quot;avg&quot;,&amp;pyGaussAverage::avg)
++		.add_property(&quot;stDev&quot;,&amp;pyGaussAverage::stDev_get,&amp;pyGaussAverage::stDev_set)
++		.add_property(&quot;relThreshold&quot;,&amp;pyGaussAverage::relThreshold_get,&amp;pyGaussAverage::relThreshold_set)
++	;
++};
++
+
+Added: trunk/lib/smoothing/WeightedAverage2d.hpp
+===================================================================
+--- trunk/lib/smoothing/WeightedAverage2d.hpp	2008-10-24 15:29:45 UTC (rev 1556)
++++ trunk/lib/smoothing/WeightedAverage2d.hpp	2008-10-25 17:40:16 UTC (rev 1557)
+@@ -0,0 +1,166 @@
++// &#169; 2008 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++
++#pragma once
++
++#include&lt;iostream&gt;
++#include&lt;vector&gt;
++#include&lt;cstdlib&gt;
++#include&lt;algorithm&gt;
++#include&lt;cassert&gt;
++#include&lt;cmath&gt;
++#include&lt;stdexcept&gt;
++#include&lt;boost/foreach.hpp&gt;
++#include&lt;boost/lexical_cast.hpp&gt;
++#include&lt;boost/python.hpp&gt;
++
++#define FOREACH BOOST_FOREACH
++using namespace std;
++using namespace boost;
++
++#include&lt;yade/lib-base/yadeWm3.hpp&gt;
++#include&lt;Wm3Vector2.h&gt;
++typedef Wm3::Vector2&lt;int&gt; Vector2i;
++
++
++template&lt;typename T&gt;
++struct GridContainer{
++	private:
++		Vector2r lo, hi;
++		Vector2r cellSizes;
++		Vector2i nCells;
++	public:
++		vector&lt;vector&lt;vector&lt;T&gt; &gt; &gt; grid;
++	/* construct grid from lower left corner, upper right corner and number of cells in each direction */
++	GridContainer(Vector2r _lo, Vector2r _hi, Vector2i _nCells): lo(_lo), hi(_hi), nCells(_nCells){
++		cellSizes=Vector2r((hi[0]-lo[0])/nCells[0],(hi[1]-lo[1])/nCells[1]);
++		grid.resize(nCells[0]); for(int i=0; i&lt;nCells[0]; i++) grid[i].resize(nCells[1]);
++	}
++	/* turn spatial coordinates into cell coordinates; if inGrid is not given, out-of-grid throws; otherwise, it sets inGrid=false. */
++	Vector2i xy2cell(Vector2r xy, bool* inGrid=NULL) const {
++		Vector2i ret((int)(floor((xy[0]-lo[0])/cellSizes[0])),(int)(floor((xy[1]-lo[1])/cellSizes[1])));
++		if(ret[0]&lt;0 || ret[0]&gt;=nCells[0] || ret[1]&lt;0 || ret[1]&gt;=nCells[1]){
++			if(inGrid) *inGrid=false; else throw std::invalid_argument(&quot;Cell coordinates outside grid (xy=&quot;+lexical_cast&lt;string&gt;(xy[0])+&quot;,&quot;+lexical_cast&lt;string&gt;(xy[1])+&quot;, computed cell coordinates &quot;+lexical_cast&lt;string&gt;(ret[0])+&quot;,&quot;+lexical_cast&lt;string&gt;(ret[1])+&quot;).&quot;);
++		} else {if(inGrid) *inGrid=true;}
++		return ret;
++	}
++	Vector2r cell2xyMid(Vector2i cxy) const { return Vector2r(lo[0]+cellSizes[0]*(.5+cxy[0]),lo[1]+cellSizes[1]*(.5+cxy[1])); }
++
++	// add new element to the right cell
++	void add(const T&amp; t, Vector2r xy){Vector2i cxy=xy2cell(xy); grid[cxy[0]][cxy[1]].push_back(t);}
++
++	/* Filters: return list of cells, based on some spatial criterion: rectangle, ellipse, circle (add more if you need that) */
++	vector&lt;Vector2i&gt; rectangleFilter(Vector2r bbLo, Vector2r bbHi) const {
++		vector&lt;Vector2i&gt; ret; bool dummy; Vector2i cxymin=xy2cell(bbLo,&amp;dummy), cxymax=xy2cell(bbHi,&amp;dummy);
++		for(int cx=cxymin[0]; cx&lt;=cxymax[0]; cx++){ for(int cy=cxymin[1]; cy&lt;=cxymax[1]; cy++){ if(cx&gt;=0 &amp;&amp; cx&lt;nCells[0] &amp;&amp; cy&gt;=0 &amp;&amp; cy&lt;nCells[1]) ret.push_back(Vector2i(cx,cy));	} }
++		return ret;
++	}
++	vector&lt;Vector2i&gt; circleFilter(Vector2r xy, Real radius) const { return ellipseFilter(xy,Vector2r(radius,radius));}
++	vector&lt;Vector2i&gt; ellipseFilter(Vector2r xy0, Vector2r radii) const {
++		vector&lt;Vector2i&gt; rectangle=rectangleFilter(Vector2r(xy0[0]-radii[0],xy0[1]-radii[1]),Vector2r(xy0[0]+radii[0],xy0[1]+radii[1]));
++		vector&lt;Vector2i&gt; ret; bool inGrid;
++		Vector2i cxy=xy2cell(xy0,&amp;inGrid);
++		FOREACH(Vector2i mid, rectangle){
++			// if we are in the cell where the middle is also, this cell passes the filter
++			if(inGrid &amp;&amp; mid[0]==cxy[0] &amp;&amp; mid[1]==cxy[1]){ret.push_back(mid); continue;}
++			Vector2r xyMid=cell2xyMid(mid);
++			Vector2r xy(xyMid[0]-xy0[0],xyMid[1]-xy0[1]); // relative mid-cell coords
++			// tricky: move the mid-cell to the corner (or aligned pt on edge) according to position WRT center
++			if(mid[0]!=cxy[0]) xy.X()+=(mid[0]&lt;cxy[0]?1:-1)*.5*cellSizes[0]; else xy.X()=0;
++			if(mid[1]!=cxy[1]) xy.X()+=(mid[1]&lt;cxy[1]?1:-1)*.5*cellSizes[1]; else xy.Y()=0;
++			// are we inside the ellipse? pass the filter, then
++			if((pow(xy[0],2)/pow(radii[0],2)+pow(xy[1],2)/pow(radii[1],2))&lt;=1) ret.push_back(mid);
++		}
++		return ret;
++	}
++
++	// graphical representation of a set of filtered cells
++	string dumpGrid(vector&lt;Vector2i&gt; v){
++		vector&lt;vector&lt;bool&gt; &gt; vvb; string ret; vvb.resize(nCells[0]); for(size_t i=0; i&lt;(size_t)nCells[0]; i++) vvb[i].resize(nCells[1],false); FOREACH(Vector2i&amp; vv, v) vvb[vv[0]][vv[1]]=true;
++		for(int cy=nCells[1]-1; cy&gt;=0; cy--){ ret+=&quot;|&quot;; for(int cx=0; cx&lt;nCells[0]; cx++){ ret+=vvb[cx][cy]?&quot;@&quot;:&quot;.&quot;; }	ret+=&quot;|\n&quot;;	}
++		return ret;
++	}
++};
++/* Abstract class for averages templated by elements stored in the grid and by the type of average value.
++ *
++ * To define your own class, you need to override getPosition (returns exact position of an element),
++ * getWeight (return weight associated with given point and element -- may be 0, but should not be negative),
++ * getValue (for an element),and filterCells (returns vector of cells of which elements will be used in computation).
++ *
++ * computeAverage computes weighted average using the overridden methods.
++ */
++template&lt;typename T, typename Tvalue&gt;
++struct WeightedAverage{
++	const shared_ptr&lt;GridContainer&lt;T&gt; &gt; grid;
++	WeightedAverage(const shared_ptr&lt;GridContainer&lt;T&gt; &gt;&amp; _grid):grid(_grid){};
++	virtual Vector2r getPosition(const T&amp;)=0;
++	virtual Real getWeight(const Vector2r&amp; refPt, const T&amp;)=0;
++	virtual Tvalue getValue(const T&amp;)=0;
++	virtual vector&lt;Vector2i&gt; filterCells(const Vector2r&amp; refPt)=0;
++	Tvalue computeAverage(const Vector2r&amp; refPt){
++		vector&lt;Vector2i&gt; filtered=filterCells(refPt);
++		Real sumValues=0, sumWeights=0;
++		FOREACH(Vector2i cell, filtered){
++			FOREACH(const T&amp; element, grid-&gt;grid[cell[0]][cell[1]]){
++				Real weight=getWeight(refPt,element);
++				sumValues+=weight*getValue(element); sumWeights+=weight;
++			}
++		}
++		return sumValues/sumWeights;
++	}
++};
++
++/* Compute nonlocal average with isotropic Gaussian kernel.
++ *
++ */
++template&lt;typename T, typename Tvalue&gt;
++struct SymmGaussianKernelAverage: public WeightedAverage&lt;T,Tvalue&gt; {
++	Real stDev, relThreshold;
++	SymmGaussianKernelAverage(const shared_ptr&lt;GridContainer&lt;T&gt; &gt;&amp; _grid, Real _stDev, Real _relThreshold=3): WeightedAverage&lt;T,Tvalue&gt;(_grid), stDev(_stDev), relThreshold(_relThreshold){}
++	virtual Real getWeight(const Vector2r&amp; meanPt, const T&amp; e){	
++		Vector2r pos=getPosition(e);
++		Real rSq=pow(meanPt[0]-pos[0],2)+pow(meanPt[1]-pos[1],2);
++		if(rSq&gt;relThreshold*stDev) return 0.;
++		return (1./sqrt(2*M_PI*stDev))*exp(-rSq/(2*stDev));
++	}
++	virtual vector&lt;Vector2i&gt; filterCells(const Vector2r&amp; refPt){return WeightedAverage&lt;T,Tvalue&gt;::grid-&gt;circleFilter(refPt,stDev*relThreshold);}
++};
++
++/* Class for doing template specialization of gaussian kernel average  on SGKA_dataPt and for testing */
++struct dataPt{
++	Vector2r pos;
++	int val;
++};
++
++/* Final specialization; it only needs to define getValue and getPosition -- these functions contain knowledge about the element class itself */
++struct SGKA_dataPt: public SymmGaussianKernelAverage&lt;dataPt,Real&gt;{
++	SGKA_dataPt(const shared_ptr&lt;GridContainer&lt;dataPt&gt; &gt;&amp; _grid, Real _stDev, Real _relThreshold=3): SymmGaussianKernelAverage&lt;dataPt,Real&gt;(_grid,_stDev,_relThreshold){}
++	virtual Real getValue(const dataPt&amp; dp){return (Real)dp.val;}
++	virtual Vector2r getPosition(const dataPt&amp; dp){return dp.pos;}
++};
++
++/* simplified interface for python:
++ * 
++ * ga=GaussAverage((0,0),(100,100),(10,10),5)
++ * ga.add(53.444,(15.6,43.0))
++ * ...
++ * ga.avg((10,10))
++ * ...
++ *
++ * */
++class pyGaussAverage{
++	//struct dataPt{Vector2r pos; Real val;};
++	Vector2r tuple2vec2r(const python::tuple&amp; t){return Vector2r(python::extract&lt;Real&gt;(t[0])(),python::extract&lt;Real&gt;(t[1])());}
++	Vector2i tuple2vec2i(const python::tuple&amp; t){return Vector2i(python::extract&lt;int&gt;(t[0])(),python::extract&lt;int&gt;(t[1])());}
++	shared_ptr&lt;SGKA_dataPt&gt; sgka;
++	public:
++	pyGaussAverage(python::tuple lo, python::tuple hi, python::tuple nCells, Real stDev){
++		shared_ptr&lt;GridContainer&lt;dataPt&gt; &gt; g(new GridContainer&lt;dataPt&gt;(tuple2vec2r(lo),tuple2vec2r(hi),tuple2vec2i(nCells)));
++		sgka=shared_ptr&lt;SGKA_dataPt&gt;(new SGKA_dataPt(g,stDev));
++	}
++	void addPt(Real val, python::tuple pos){dataPt d; d.pos=tuple2vec2r(pos); d.val=val; sgka-&gt;grid-&gt;add(d,d.pos); }
++	Real avg(python::tuple pt){return sgka-&gt;computeAverage(tuple2vec2r(pt));}
++
++	Real stDev_get(){return sgka-&gt;stDev;} void stDev_set(Real s){sgka-&gt;stDev=s;}
++	Real relThreshold_get(){return sgka-&gt;relThreshold;} void relThreshold_set(Real rt){sgka-&gt;relThreshold=rt;}
++};
++
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000461.html">[deprecated list] [Yade-dev] [svn] r1554 -	trunk/pkg/dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000464.html">[deprecated list] [Yade-dev] [svn] r1558 - in trunk/pkg/dem: .	Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#463">[ date ]</a>
+              <a href="thread.html#463">[ thread ]</a>
+              <a href="subject.html#463">[ subject ]</a>
+              <a href="author.html#463">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

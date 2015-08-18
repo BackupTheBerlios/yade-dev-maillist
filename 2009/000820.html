@@ -1,0 +1,172 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1714 -	trunk/examples/collider-perf
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1714%20-%0A%09trunk/examples/collider-perf&In-Reply-To=%3C200903082303.n28N3g8v003130%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000819.html">
+   <LINK REL="Next"  HREF="000826.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1714 -	trunk/examples/collider-perf</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1714%20-%0A%09trunk/examples/collider-perf&In-Reply-To=%3C200903082303.n28N3g8v003130%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1714 -	trunk/examples/collider-perf">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Mar  9 00:03:42 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000819.html">[deprecated list] [Yade-dev] [svn] r1713 - in trunk:	examples/collider-perf gui/py	pkg/dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="000826.html">[deprecated list] [Yade-dev] [svn] r1715 - in trunk/pkg/dem:	.	DataClass/InteractionGeometry Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#820">[ date ]</a>
+              <a href="thread.html#820">[ thread ]</a>
+              <a href="subject.html#820">[ subject ]</a>
+              <a href="author.html#820">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-03-09 00:03:42 +0100 (Mon, 09 Mar 2009)
+New Revision: 1714
+
+Added:
+   trunk/examples/collider-perf/mkGraph.py
+Modified:
+   trunk/examples/collider-perf/README
+   trunk/examples/collider-perf/perf.table
+Log:
+1. Fixed collider performance benchmark
+2. Added script to generate graph from log files (like <A HREF="http://yade.wikia.com/wiki/Colliders_performace">http://yade.wikia.com/wiki/Colliders_performace</A>)
+
+
+Modified: trunk/examples/collider-perf/README
+===================================================================
+--- trunk/examples/collider-perf/README	2009-03-08 21:15:35 UTC (rev 1713)
++++ trunk/examples/collider-perf/README	2009-03-08 23:03:42 UTC (rev 1714)
+@@ -5,10 +5,13 @@
+ 
+  yade-trunk-multi perf.table perf.py
+ 
+-and wait. If you feel brave enough, uncomment lines with many spheres in perf.table. 
+-They take very long time (128k spheres with SAP collider over 3 hours)
++It will take time to finish. To get graphs from the generated log files, say
+ 
++ python mkGraph.py *.log
+ 
++To see other results, log files are named like perf.64k.log (64k spheres with
++PersistentSAPCollider), perf.32k.q.log (32k spheres, SpatialQuickSortCollider) etc.
++
+ 1. File with nSpheres spheres (loose packing) is generated first, it if doesn't exist yet.
+    This can take a few minutes, but is done only the first time for the particular sphere
+ 	number.
+@@ -16,6 +19,3 @@
+    done and timing.stats() printed (appears in the log file).
+ 3. Another 100 iterations are measured with siming.stats(), after which the test exits.
+ 
+-To get the results, grep the resulting log files, named like perf.64k.log (64k spheres with
+-PersistentSAPCollider), perf.32k.q.log (32k spheres, SpatialQuickSortCollider) etc.
+-
+
+Added: trunk/examples/collider-perf/mkGraph.py
+===================================================================
+--- trunk/examples/collider-perf/mkGraph.py	2009-03-08 21:15:35 UTC (rev 1713)
++++ trunk/examples/collider-perf/mkGraph.py	2009-03-08 23:03:42 UTC (rev 1714)
+@@ -0,0 +1,35 @@
++#encoding: utf-8
++dta={'QS':{},'SAP':{}}
++import sys
++for f in sys.argv[1:]:
++	print f,'',
++	N=f.split('.')[1];
++	assert(N[-1]=='k'); N=1000*int(N[:-1])
++	if '.q.' in f: collider='QS'
++	else: collider='SAP'
++	for l in open(f):
++		if 'Collider' in l:
++			t=l.split()[2]; assert(t[-2:]=='us'); t=float(t[:-2])/1e6
++			if not dta[collider].has_key(N): dta[collider][N]=[t]
++			else: dta[collider][N]+=[t*0.01] # the second time is per 100 iterations
++print 
++
++SAP_N=dta['SAP'].keys(); SAP_N.sort()
++QS_N=dta['QS'].keys(); QS_N.sort()
++SAPinit=[dta['SAP'][N][0] for N in SAP_N]; SAPstep=[dta['SAP'][N][1] for N in SAP_N]
++QSinit=[dta['QS'][N][0] for N in QS_N]; QSstep=[dta['QS'][N][1] for N in QS_N]
++from pylab import *
++plot(SAP_N,SAPinit,'m')
++gca().set_yscale('log')
++xlabel(&quot;Number of spheres&quot;)
++ylabel(u&quot;Log (!) time for the 1st SAP collider step [s]&quot;)
++title(&quot;SAP vs. QuickSort colliders performance&quot;)
++legend(('SAP init',),'upper left')
++
++ax2=twinx()
++plot(SAP_N,SAPstep,'r-',QS_N,QSstep,'g-',QS_N,QSinit,'b-')
++ylabel(u&quot;Linear time per 1 step [s]&quot;)
++legend(('SAP step','QuickSort step','QuickSort init'),'right')
++grid()
++savefig('colliders.svg')
++show()
+
+Modified: trunk/examples/collider-perf/perf.table
+===================================================================
+--- trunk/examples/collider-perf/perf.table	2009-03-08 21:15:35 UTC (rev 1713)
++++ trunk/examples/collider-perf/perf.table	2009-03-08 23:03:42 UTC (rev 1714)
+@@ -1,10 +1,10 @@
+ description nSpheres collider
+-#128k 128000 'PersistentSAPCollider'
+-#96k 96000 'PersistentSAPCollider'
+-#64k 64000 'PersistentSAPCollider'
+-#56k 56000 'PersistentSAPCollider'
+-#48k 48000 'PersistentSAPCollider'
+-#40k 40000 'PersistentSAPCollider'
++128k 128000 'PersistentSAPCollider'
++96k 96000 'PersistentSAPCollider'
++64k 64000 'PersistentSAPCollider'
++56k 56000 'PersistentSAPCollider'
++48k 48000 'PersistentSAPCollider'
++40k 40000 'PersistentSAPCollider'
+ 36k 36000 'PersistentSAPCollider'
+ 32k 32000 'PersistentSAPCollider'
+ 28k 28000 'PersistentSAPCollider'
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000819.html">[deprecated list] [Yade-dev] [svn] r1713 - in trunk:	examples/collider-perf gui/py	pkg/dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="000826.html">[deprecated list] [Yade-dev] [svn] r1715 - in trunk/pkg/dem:	.	DataClass/InteractionGeometry Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#820">[ date ]</a>
+              <a href="thread.html#820">[ thread ]</a>
+              <a href="subject.html#820">[ subject ]</a>
+              <a href="author.html#820">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev]  dispatch, inheritance,	virtual 	functions
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%20dispatch%2C%20inheritance%2C%0A%09virtual%20%09functions&In-Reply-To=%3C930069bf0908210624t7facf760mee1c9e408fcc7d2e%40mail.gmail.com%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001529.html">
+   <LINK REL="Next"  HREF="001498.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev]  dispatch, inheritance,	virtual 	functions</H1>
+    <B>Anton Gladky</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%20dispatch%2C%20inheritance%2C%0A%09virtual%20%09functions&In-Reply-To=%3C930069bf0908210624t7facf760mee1c9e408fcc7d2e%40mail.gmail.com%3E"
+       TITLE="[deprecated list] [Yade-dev]  dispatch, inheritance,	virtual 	functions">gladky.anton at gmail.com
+       </A><BR>
+    <I>Fri Aug 21 15:24:19 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001529.html">[deprecated list] [Yade-dev]  dispatch, inheritance, virtual  functions
+</A></li>
+        <LI>Next message: <A HREF="001498.html">[deprecated list] [Yade-dev] [Bug 412892] Re: Warnings in Doxygen
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1530">[ date ]</a>
+              <a href="thread.html#1530">[ thread ]</a>
+              <a href="subject.html#1530">[ subject ]</a>
+              <a href="author.html#1530">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Sorry, I did not think about that.
+
+Has just realized it :)
+______________________________
+
+
+Anton Gladkyy
+
+
+2009/8/21 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+
+&gt;<i> &gt; Monolithic
+</I>&gt;<i> &gt;
+</I>&gt;<i> &gt; OMP_NUM_THREADS=1:
+</I>&gt;<i> &gt;                       Iter/sec
+</I>&gt;<i> &gt; r1712_thread1 83.4262
+</I>&gt;<i> &gt; r1716_thread1 83.9633
+</I>&gt;<i> &gt;
+</I>&gt;<i> &gt;
+</I>&gt;<i> &gt; OMP_NUM_THREADS=2:
+</I>&gt;<i> &gt;                       Iter/sec
+</I>&gt;<i> &gt; r1712_thread2 120.561
+</I>&gt;<i> &gt; r1716_thread2 112.497
+</I>&gt;<i>
+</I>&gt;<i> Eh, and what did you test? ;-)
+</I>&gt;<i>
+</I>&gt;<i> Anyway, the impact will be close to zero as both InteractionDispatchers
+</I>&gt;<i> (and AABBMetaEngine as well) cache the functor so that they look up the
+</I>&gt;<i> dispatch matrix only once per interaction/body.
+</I>&gt;<i>
+</I>&gt;<i> If you used InteractionGeometryMetaEngine, InteractionPhysicsMetaEngine
+</I>&gt;<i> and ConstitutiveLawDispatcher separately, then the impact would be
+</I>&gt;<i> bigger.
+</I>&gt;<i>
+</I>&gt;<i> But don't bother. Anyone who cares about performance has switched to
+</I>&gt;<i> InteractionDispatchers long time ago.
+</I>&gt;<i>
+</I>&gt;<i> V.
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i>
+</I>&gt;<i> _______________________________________________
+</I>&gt;<i> Mailing list: <A HREF="https://launchpad.net/~yade-dev&lt;https://launchpad.net/%7Eyade-dev">https://launchpad.net/~yade-dev&lt;https://launchpad.net/%7Eyade-dev</A>&gt;
+</I>&gt;<i> Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+</I>&gt;<i> Unsubscribe : <A HREF="https://launchpad.net/~yade-dev&lt;https://launchpad.net/%7Eyade-dev">https://launchpad.net/~yade-dev&lt;https://launchpad.net/%7Eyade-dev</A>&gt;
+</I>&gt;<i> More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</I>&gt;<i>
+</I>-------------- next part --------------
+An HTML attachment was scrubbed...
+URL: &lt;<A HREF="https://lists.berlios.de/pipermail/yade-dev/attachments/20090821/2cd2ee90/attachment.html">https://lists.berlios.de/pipermail/yade-dev/attachments/20090821/2cd2ee90/attachment.html</A>&gt;
+-------------- next part --------------
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001529.html">[deprecated list] [Yade-dev]  dispatch, inheritance, virtual  functions
+</A></li>
+	<LI>Next message: <A HREF="001498.html">[deprecated list] [Yade-dev] [Bug 412892] Re: Warnings in Doxygen
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1530">[ date ]</a>
+              <a href="thread.html#1530">[ thread ]</a>
+              <a href="subject.html#1530">[ subject ]</a>
+              <a href="author.html#1530">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

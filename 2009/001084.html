@@ -1,0 +1,368 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1826 - in trunk: . gui gui/py	lib	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1826%20-%20in%20trunk%3A%20.%20gui%20gui/py%0A%09lib%09pkg/dem/Engine/EngineUnit%20pkg/dem/PreProcessor%20scripts/test&In-Reply-To=%3C200906302010.n5UKAWw9011251%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001083.html">
+   <LINK REL="Next"  HREF="001085.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1826 - in trunk: . gui gui/py	lib	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1826%20-%20in%20trunk%3A%20.%20gui%20gui/py%0A%09lib%09pkg/dem/Engine/EngineUnit%20pkg/dem/PreProcessor%20scripts/test&In-Reply-To=%3C200906302010.n5UKAWw9011251%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1826 - in trunk: . gui gui/py	lib	pkg/dem/Engine/EngineUnit pkg/dem/PreProcessor scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Jun 30 22:10:32 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001083.html">[deprecated list] [Yade-dev] [svn] r1825 - trunk/gui/py
+</A></li>
+        <LI>Next message: <A HREF="001085.html">[deprecated list] [Yade-dev] [svn] r1827 - trunk/extra/mgpost/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1084">[ date ]</a>
+              <a href="thread.html#1084">[ thread ]</a>
+              <a href="subject.html#1084">[ subject ]</a>
+              <a href="author.html#1084">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-06-30 22:10:30 +0200 (Tue, 30 Jun 2009)
+New Revision: 1826
+
+Modified:
+   trunk/SConstruct
+   trunk/gui/SConscript
+   trunk/gui/py/_packPredicates.cpp
+   trunk/gui/py/pack.py
+   trunk/lib/SConscript
+   trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron.cpp
+   trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+   trunk/scripts/test/gts-operators.py
+Log:
+1. Fix crashers in InteractingMyTetrahedron* classes (introduced by me when updating interaction logic)
+2. Reimplement inGtsSurface in c/c++ which makes it faster due to pygts interface limitations (addressed on pygts mailing list meanwhile), but is dirty programming.
+3. Set CCOMSTR to correspond to CXXCOMSTR in SConstruct (to show nice line when compiling c source file, for pygts)
+4. Set good-looking timestep in the TetrahedronsTest generator
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-06-29 22:09:04 UTC (rev 1825)
++++ trunk/SConstruct	2009-06-30 20:10:30 UTC (rev 1826)
+@@ -368,9 +368,10 @@
+ if env['pretty']:
+ 	## <A HREF="http://www.scons.org/wiki/HidingCommandLinesInOutput">http://www.scons.org/wiki/HidingCommandLinesInOutput</A>
+ 	env.Replace(CXXCOMSTR='C ${SOURCES}', # &#8594; ${TARGET.file}')
+-		SHCXXCOMSTR='C ${SOURCES}',  #&#8594; ${TARGET.file}')
+-		SHLINKCOMSTR='L ${TARGET.file}', # &#8594; ${TARGET.file}')
+-		LINKCOMSTR='L ${TARGET.file}', # &#8594; ${TARGET.file}')
++		CCOMSTR='C ${SOURCES}',
++		SHCXXCOMSTR='C ${SOURCES}', 
++		SHLINKCOMSTR='L ${TARGET.file}',
++		LINKCOMSTR='L ${TARGET.file}',
+ 		INSTALLSTR='&#8658; $TARGET',
+ 		QT_UICCOMSTR='U ${SOURCES}',
+ 		QT_MOCCOMSTR='M ${SOURCES}')
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2009-06-29 22:09:04 UTC (rev 1825)
++++ trunk/gui/SConscript	2009-06-30 20:10:30 UTC (rev 1826)
+@@ -73,9 +73,12 @@
+ 				'Clump'
+ 			],
+ 			),
+-		env.SharedLibrary('_utils',['py/_utils.cpp'],SHLIBPREFIX='',
+-			LIBS=env['LIBS']+['Shop','ConcretePM']),
+-		env.SharedLibrary('_packPredicates',['py/_packPredicates.cpp'],SHLIBPREFIX=''),
++		env.SharedLibrary('_utils',['py/_utils.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['Shop','ConcretePM']),
++		env.SharedLibrary('_packPredicates',['py/_packPredicates.cpp'],SHLIBPREFIX='',
++			# if we compile with GTS, link to the python module, as inGtsSurface uses some of its symbols.
++			# because the module doesn't have the lib- suffix, we put it directly to SHLINKFLAGS
++			# using the -l: syntax (see man ld) and declare the dependency below
++			SHLINKFLAGS=env['SHLINKFLAGS']+(['-l:$PREFIX/lib/yade$SUFFIX/py/gts/_gts.so'] if 'GTS' in env['features'] else [])),
+ 		env.SharedLibrary('_eudoxos',['py/_eudoxos.cpp'],SHLIBPREFIX='',CXXFLAGS=env['CXXFLAGS']+([] if not os.path.exists('../../brefcom-mm.hh') else ['-include','../brefcom-mm.hh']),LIBS=env['LIBS']+['Shop','ConcretePM']),
+ 		env.SharedLibrary('log',['py/log.cpp'],SHLIBPREFIX=''),
+ 		env.File('__init__.py','py'),
+@@ -90,5 +93,7 @@
+ 		env.File('pack.py','py'),
+ 	])
+ 	if os.path.exists('../../brefcom-mm.hh'): Depends('py/_eudoxos.cpp','../../brefcom-mm.hh')
++	# see comments for _packPredicates above
++	if 'GTS' in env['features']: env.Depends('_packPredicates.so','$PREFIX/lib/yade$SUFFIX/py/gts/_gts.so')
+ 
+ 
+
+Modified: trunk/gui/py/_packPredicates.cpp
+===================================================================
+--- trunk/gui/py/_packPredicates.cpp	2009-06-29 22:09:04 UTC (rev 1825)
++++ trunk/gui/py/_packPredicates.cpp	2009-06-30 20:10:30 UTC (rev 1826)
+@@ -269,7 +269,61 @@
+ 		return vvec2ttuple(Vector3r(-inf,-inf,-inf),Vector3r(inf,inf,inf)); }
+ };
+ 
++#ifdef YADE_GTS
++extern &quot;C&quot; {
++#include&lt;yade/lib-py/pygts.h&gt;
++}
++/* Helper function for inGtsSurface::aabb() */
++static void vertex_aabb(GtsVertex *vertex, pair&lt;Vector3r,Vector3r&gt; *bb)
++{
++	GtsPoint *_p=GTS_POINT(vertex);
++	Vector3r p(_p-&gt;x,_p-&gt;y,_p-&gt;z);
++	bb-&gt;first=componentMinVector(bb-&gt;first,p);
++	bb-&gt;second=componentMaxVector(bb-&gt;second,p);
++}
+ 
++/*
++This class plays tricks getting aroung pyGTS to get GTS objects and cache bb tree to speed
++up point inclusion tests. For this reason, we have to link with _gts.so (see corresponding
++SConscript file), which is at the same time the python module.
++*/
++class inGtsSurface: public Predicate{
++	python::object pySurf; // to hold the reference so that surf is valid
++	GtsSurface *surf;
++	bool is_open, noPad, noPadWarned;
++	GNode* tree;
++public:
++	inGtsSurface(python::object _surf, bool _noPad=false): pySurf(_surf), noPad(_noPad), noPadWarned(false) {
++		if(!pygts_surface_check(_surf.ptr())) throw invalid_argument(&quot;Ctor must receive a gts.Surface() instance.&quot;); 
++		surf=PYGTS_SURFACE_AS_GTS_SURFACE(PYGTS_SURFACE(_surf.ptr()));
++	 	if(!gts_surface_is_closed(surf)) throw invalid_argument(&quot;Surface is not closed.&quot;);
++		is_open=gts_surface_volume(surf)&lt;0.;
++		if((tree=gts_bb_tree_surface(surf))==NULL) throw runtime_error(&quot;Could not create GTree.&quot;);
++	}
++	~inGtsSurface(){g_node_destroy(tree);}
++	python::tuple aabb() const {
++		Real inf=std::numeric_limits&lt;Real&gt;::infinity();
++		pair&lt;Vector3r,Vector3r&gt; bb; bb.first=Vector3r(inf,inf,inf); bb.second=Vector3r(-inf,-inf,-inf);
++		gts_surface_foreach_vertex(surf,(GtsFunc)vertex_aabb,&amp;bb);
++		return vvec2ttuple(bb.first,bb.second);
++	}
++	bool ptCheck(Vector3r pt) const{
++		GtsPoint gp; gp.x=pt[0]; gp.y=pt[1]; gp.z=pt[2];
++		return (bool)gts_point_is_inside_surface(&amp;gp,tree,is_open);
++	}
++	bool operator()(python::tuple _pt, Real pad=0.) const {
++		Vector3r pt=tuple2vec(_pt);
++		if(noPad){
++			if(pad!=0. &amp;&amp; noPadWarned) LOG_WARN(&quot;inGtsSurface constructed with noPad; requested non-zero pad set to zero.&quot;);
++			return ptCheck(pt);
++		}
++		return ptCheck(pt) &amp;&amp; ptCheck(pt-Vector3r(pad,0,0)) &amp;&amp; ptCheck(pt+Vector3r(pad,0,0)) &amp;&amp; ptCheck(pt-Vector3r(0,pad,0))&amp;&amp; ptCheck(pt+Vector3r(0,pad,0)) &amp;&amp; ptCheck(pt-Vector3r(0,0,pad))&amp;&amp; ptCheck(pt+Vector3r(0,0,pad));
++	}
++};
++
++#endif
++
++
+ BOOST_PYTHON_MODULE(_packPredicates){
+ 	// base predicate class
+ 	python::class_&lt;PredicateWrap,/* necessary, as methods are pure virtual*/ boost::noncopyable&gt;(&quot;Predicate&quot;)
+@@ -290,5 +344,8 @@
+ 	python::class_&lt;inHyperboloid,python::bases&lt;Predicate&gt; &gt;(&quot;inHyperboloid&quot;,&quot;Hyperboloid predicate&quot;,python::init&lt;python::tuple,python::tuple,Real,Real&gt;(python::args(&quot;centerBottom&quot;,&quot;centerTop&quot;,&quot;radius&quot;,&quot;skirt&quot;),&quot;Ctor taking centers of the lateral walls (as 3-tuples), radius at bases and skirt (middle radius).&quot;));
+ 	python::class_&lt;inEllipsoid,python::bases&lt;Predicate&gt; &gt;(&quot;inEllipsoid&quot;,&quot;Ellipsoid predicate&quot;,python::init&lt;python::tuple,python::tuple&gt;(python::args(&quot;centerPoint&quot;,&quot;abc&quot;),&quot;Ctor taking center of the ellipsoid (3-tuple) and its 3 radii (3-tuple).&quot;));
+ 	python::class_&lt;notInNotch,python::bases&lt;Predicate&gt; &gt;(&quot;notInNotch&quot;,&quot;Outside of infinite, rectangle-shaped notch predicate&quot;,python::init&lt;python::tuple,python::tuple,python::tuple,Real&gt;(python::args(&quot;centerPoint&quot;,&quot;edge&quot;,&quot;normal&quot;,&quot;aperture&quot;),&quot;Ctor taking point in the symmetry plane, vector pointing along the edge, plane normal and aperture size.\nThe side inside the notch is edge&#215;normal.\nNormal is made perpendicular to the edge.\nAll vectors are normalized at construction time.&quot;)); 
++	#ifdef YADE_GTS
++		python::class_&lt;inGtsSurface,python::bases&lt;Predicate&gt; &gt;(&quot;inGtsSurface&quot;,&quot;GTS surface predicate&quot;,python::init&lt;python::object,python::optional&lt;bool&gt; &gt;(python::args(&quot;surface&quot;,&quot;noPad&quot;),&quot;Ctor taking a gts.Surface() instance, which must not be modified during instance lifetime.\nThe optional noPad can disable padding (if set to True), which speeds up calls several times.\nNote: padding checks inclusion of 6 points along +- cardinal directions in the pad distance from given point, which is not exact.&quot;));
++	#endif
+ }
+ 
+
+Modified: trunk/gui/py/pack.py
+===================================================================
+--- trunk/gui/py/pack.py	2009-06-29 22:09:04 UTC (rev 1825)
++++ trunk/gui/py/pack.py	2009-06-30 20:10:30 UTC (rev 1826)
+@@ -13,9 +13,16 @@
+ # make c++ predicates available in this module
+ from _packPredicates import *
+ 
++class inGtsSurface_py(Predicate):
++	&quot;&quot;&quot;This class was re-implemented in c++, but should stay here to serve as reference for implementing
++	Predicates in pure python code. C++ allows us to play dirty tricks in GTS which are not accessible
++	through pygts itself; the performance penalty of pygts comes from fact that if constructs and destructs
++	bb tree for the surface at every invocation of gts.Point().is_inside(). That is cached in the c++ code,
++	provided that the surface is not manipulated with during lifetime of the object (user's responsibility).
+ 
+-class inGtsSurface(Predicate):
+-	&quot;&quot;&quot;Predicate for GTS surfaces. Constructed using an already existing surfaces, which must be closed.
++	---
++	
++	Predicate for GTS surfaces. Constructed using an already existing surfaces, which must be closed.
+ 
+ 		import gts
+ 		surf=gts.read(open('horse.gts'))
+@@ -25,13 +32,13 @@
+ 	must be enabled in the ctor by saying doSlowPad=True. If it is not enabled and pad is not zero,
+ 	warning is issued.
+ 	&quot;&quot;&quot;
+-	def __init__(self,surf,doSlowPad=False):
++	def __init__(self,surf,noPad=False):
+ 		# call base class ctor; necessary for virtual methods to work as expected.
+ 		# see comments in _packPredicates.cpp for struct PredicateWrap.
+ 		super(inGtsSurface,self).__init__()
+ 		if not surf.is_closed(): raise RuntimeError(&quot;Surface for inGtsSurface predicate must be closed.&quot;)
+ 		self.surf=surf
+-		self.doSlowPad=doSlowPad
++		self.noPad=noPad
+ 		inf=float('inf')
+ 		mn,mx=[inf,inf,inf],[-inf,-inf,-inf]
+ 		for v in surf.vertices():
+@@ -42,8 +49,8 @@
+ 	def aabb(self): return self.mn,self.mx
+ 	def __call__(self,_pt,pad=0.):
+ 		p=gts.Point(*_pt)
+-		if not self.doSlowPad:
+-			if pad!=0: warnings.warn(&quot;Pad distance not supported for GTS surfaces, using 0 instead.&quot;)
++		if self.noPad:
++			if pad!=0: warnings.warn(&quot;Padding disabled in ctor, using 0 instead.&quot;)
+ 			return p.is_inside(self.surf)
+ 		pp=[gts.Point(_pt[0]-pad,_pt[1],_pt[2]),gts.Point(_pt[0]+pad,_pt[1],_pt[2]),gts.Point(_pt[0],_pt[1]-pad,_pt[2]),gts.Point(_pt[0],_pt[1]+pad,_pt[2]),gts.Point(_pt[0],_pt[1],_pt[2]-pad),gts.Point(_pt[0],_pt[1],_pt[2]+pad)]
+ 		return p.is_inside(self.surf) and pp[0].is_inside(self.surf) and pp[1].is_inside(self.surf) and pp[2].is_inside(self.surf) and pp[3].is_inside(self.surf) and pp[4].is_inside(self.surf) and pp[5].is_inside(self.surf)
+
+Modified: trunk/lib/SConscript
+===================================================================
+--- trunk/lib/SConscript	2009-06-29 22:09:04 UTC (rev 1825)
++++ trunk/lib/SConscript	2009-06-30 20:10:30 UTC (rev 1826)
+@@ -79,7 +79,12 @@
+ 		env.File('py/pygts-0.3.1/__init__.py'),
+ 		env.File('py/pygts-0.3.1/pygts.py')
+ 	])
++	#env.Install('$PREFIX/lib/yade$SUFFIX/lib',[
++	#	# the same, but to link the pack module with
++	#	env.SharedLibrary('_gts',['py/pygts-0.3.1/cleanup.c','py/pygts-0.3.1/edge.c','py/pygts-0.3.1/face.c','py/pygts-0.3.1/object.c','py/pygts-0.3.1/point.c','py/pygts-0.3.1/pygts.c','py/pygts-0.3.1/segment.c','py/pygts-0.3.1/surface.c','py/pygts-0.3.1/triangle.c','py/pygts-0.3.1/vertex.c'],CPPDEFINES=env['CPPDEFINES']+['PYGTS_HAS_NUMPY']),
++	#])
+ 
++
+ env.Install('$PREFIX/lib/yade$SUFFIX/lib',[
+ 
+ 	env.SharedLibrary('yade-base',
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron.cpp	2009-06-29 22:09:04 UTC (rev 1825)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron.cpp	2009-06-30 20:10:30 UTC (rev 1826)
+@@ -74,7 +74,7 @@
+ 
+ 	shared_ptr&lt;InteractionOfMyTetrahedron&gt; imt;
+ 	// depending whether it's a new interaction: create new one, or use the existing one.
+-	if (c-&gt;interactionGeometry)
++	if (!c-&gt;interactionGeometry)
+ 		imt = shared_ptr&lt;InteractionOfMyTetrahedron&gt;(new InteractionOfMyTetrahedron());
+ 	else
+ 		imt = YADE_PTR_CAST&lt;InteractionOfMyTetrahedron&gt;(c-&gt;interactionGeometry);	
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron.cpp	2009-06-29 22:09:04 UTC (rev 1825)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron.cpp	2009-06-30 20:10:30 UTC (rev 1826)
+@@ -36,10 +36,10 @@
+ 	
+ 	shared_ptr&lt;InteractionOfMyTetrahedron&gt; imt;
+ 	// depending whether it's a new interaction: create new one, or use the existing one.
+-	if (c-&gt;interactionGeometry)
++	if (!c-&gt;interactionGeometry)
+ 		imt = shared_ptr&lt;InteractionOfMyTetrahedron&gt;(new InteractionOfMyTetrahedron());
+ 	else
+-		imt = YADE_PTR_CAST&lt;InteractionOfMyTetrahedron&gt;(c-&gt;interactionGeometry);	
++		imt = YADE_PTR_CAST&lt;InteractionOfMyTetrahedron&gt;(c-&gt;interactionGeometry);
+ 
+ 	bool isInteracting = false;
+ 	for(int i=0 ; i&lt;4 ; ++i )
+@@ -66,7 +66,6 @@
+ 				isInteracting = true;
+ 		}
+ 
+-
+ 	c-&gt;interactionGeometry = imt;
+ 	return isInteracting;
+ }
+
+Modified: trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2009-06-29 22:09:04 UTC (rev 1825)
++++ trunk/pkg/dem/PreProcessor/TetrahedronsTest.cpp	2009-06-30 20:10:30 UTC (rev 1826)
+@@ -153,8 +153,10 @@
+ 				setProgress(current++/all);
+ 			}
+ 	}
++
++	rootBody-&gt;dt=1e-2;
+ 	
+-	message=&quot;foo bar &quot;+boost::lexical_cast&lt;std::string&gt;(42);
++	message=&quot;&quot;;
+ 	return true;
+ }
+ 
+
+Modified: trunk/scripts/test/gts-operators.py
+===================================================================
+--- trunk/scripts/test/gts-operators.py	2009-06-29 22:09:04 UTC (rev 1825)
++++ trunk/scripts/test/gts-operators.py	2009-06-30 20:10:30 UTC (rev 1826)
+@@ -3,7 +3,9 @@
+ create union of surfaces using GTS calls first and use a single
+ isGtsSurface as predicate with the united surface.
+ 
+-Surprisingly, the first variant seems faster.
++The disadvantage of the predicate union | is that each sphere must fit whole in one
++surface or another: with padding, several points on the sphere are tested. Therefore,
++areas near both surfaces' boundary will not be filled at all.
+ 
+ Note that GTS only moves references to surfaces around, therefore e.g. translating
+ surface that is part of the union will move also the part of the united surface.
+@@ -17,7 +19,7 @@
+ O.bodies.append(pack.gtsSurface2Facets(s1,color=(0,1,0))+pack.gtsSurface2Facets(s2,color=(1,0,0)))
+ 
+ s12=gts.Surface(); s12.copy(s1.union(s2)); s12.translate(0,0,.1)
+-radius=0.005
++radius=0.002
+ O.bodies.append(pack.gtsSurface2Facets(s12,color=(0,0,1)))
+ 
+ qt.View()
+@@ -29,4 +31,3 @@
+ O.bodies.append(pack.regularHexa(pack.inGtsSurface(s12),radius,gap=0.,color=(1,0,0)))
+ t2=time()
+ print 'Using surface union: %gs'%(t2-t1)
+-
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001083.html">[deprecated list] [Yade-dev] [svn] r1825 - trunk/gui/py
+</A></li>
+	<LI>Next message: <A HREF="001085.html">[deprecated list] [Yade-dev] [svn] r1827 - trunk/extra/mgpost/src
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1084">[ date ]</a>
+              <a href="thread.html#1084">[ thread ]</a>
+              <a href="subject.html#1084">[ subject ]</a>
+              <a href="author.html#1084">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,163 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1934 - in trunk:	extra	pkg/dem/DataClass/InteractionGeometry pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1934%20-%20in%20trunk%3A%0A%09extra%09pkg/dem/DataClass/InteractionGeometry%20pkg/dem/PreProcessor&In-Reply-To=%3C200908101211.n7ACBowr012935%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001356.html">
+   <LINK REL="Next"  HREF="001358.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1934 - in trunk:	extra	pkg/dem/DataClass/InteractionGeometry pkg/dem/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1934%20-%20in%20trunk%3A%0A%09extra%09pkg/dem/DataClass/InteractionGeometry%20pkg/dem/PreProcessor&In-Reply-To=%3C200908101211.n7ACBowr012935%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1934 - in trunk:	extra	pkg/dem/DataClass/InteractionGeometry pkg/dem/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Aug 10 14:11:50 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001356.html">[deprecated list] [Yade-dev] [svn] r1933 - in trunk: extra	lib	pkg/common/Engine/DeusExMachina	pkg/dem/DataClass	pkg/dem/meta py py/yadeWrapper scripts/test
+</A></li>
+        <LI>Next message: <A HREF="001358.html">[deprecated list] [Yade-dev] [svn] r1935 - in trunk:	examples	examples/dynamic_simulation_tests	examples/rod_penetration	pkg/dem/Engine/EngineUnit py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1357">[ date ]</a>
+              <a href="thread.html#1357">[ thread ]</a>
+              <a href="subject.html#1357">[ subject ]</a>
+              <a href="author.html#1357">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-08-10 14:11:49 +0200 (Mon, 10 Aug 2009)
+New Revision: 1934
+
+Modified:
+   trunk/extra/PeriodicInsertionSortCollider.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.hpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+Log:
+1. Fix missing vtable for GenericSphereContact (crasher with debugging)
+2. Fix collider stride for TriaxialTest with unspecified radius
+
+
+Modified: trunk/extra/PeriodicInsertionSortCollider.cpp
+===================================================================
+--- trunk/extra/PeriodicInsertionSortCollider.cpp	2009-08-10 11:32:23 UTC (rev 1933)
++++ trunk/extra/PeriodicInsertionSortCollider.cpp	2009-08-10 12:11:49 UTC (rev 1934)
+@@ -388,7 +388,7 @@
+ 	for(int axis=0; axis&lt;3; axis++){
+ 		// &#916;&#963;=&#916;&#949;E=(&#916;l/l)&#215;(l&#215;K/A) &#8596; &#916;l=&#916;&#963;&#215;A/K
+ 		// FIXME: either NormalShearInteraction::{kn,ks} is computed wrong or we have dimensionality problem here
+-		// FIXME: that is why the fixup 1e-2 is needed here
++		// FIXME: that is why the fixup 1e-4 is needed here
+ 		// FIXME: or perhaps maxDisplaPerStep=1e-2*charLen is too big??
+ 		cellGrow[axis]=1e-4*(sigma[axis]-sigmaGoal)*cellArea[axis]/(avgStiffness&gt;0?avgStiffness:1);
+ 		if(abs(cellGrow[axis])&gt;maxDisplPerStep) cellGrow[axis]=Mathr::Sign(cellGrow[axis])*maxDisplPerStep;
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.cpp	2009-08-10 11:32:23 UTC (rev 1933)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.cpp	2009-08-10 12:11:49 UTC (rev 1934)
+@@ -1,4 +1,5 @@
+ #include&quot;DemXDofGeom.hpp&quot;
+ YADE_PLUGIN((Dem3DofGeom));
+ Real Dem3DofGeom::displacementN(){throw;}
++GenericSpheresContact::~GenericSpheresContact(){}
+ 
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.hpp	2009-08-10 11:32:23 UTC (rev 1933)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/DemXDofGeom.hpp	2009-08-10 12:11:49 UTC (rev 1934)
+@@ -11,6 +11,7 @@
+ 	public:
+ 		Vector3r normal;
+ 		Real refR1, refR2;
++	virtual ~GenericSpheresContact(); // vtable
+ };
+ 
+ /*! Abstract base class for representing contact geometry of 2 elements that has 3 degrees of freedom:
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-08-10 11:32:23 UTC (rev 1933)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-08-10 12:11:49 UTC (rev 1934)
+@@ -195,26 +195,13 @@
+ 		fast=true;
+ 	}
+ 	
+-	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
+-	positionRootBody(rootBody);
+-
+-	//rootBody-&gt;transientInteractions		= shared_ptr&lt;InteractionContainer&gt;(new InteractionHashMap);
+-
+-	//rootBody-&gt;bodies 			= shared_ptr&lt;BodyContainer&gt;(new BodyRedirectionVector);
+-
+-	createActors(rootBody);
+-
+ 	shared_ptr&lt;Body&gt; body;
+ 
+-
+-
+ 	/* if _mean_radius is not given (i.e. &lt;=0), then calculate it from box size;
+ 	 * OTOH, if it is specified, scale the box preserving its ratio and lowerCorner so that the radius can be as requested
+ 	 */
+ 	Real porosity=.75;
+-	
+ 	vector&lt;BasicSphere&gt; sphere_list;
+-
+ 	if(importFilename==&quot;&quot;){
+ 		Vector3r dimensions=upperCorner-lowerCorner; Real volume=dimensions.X()*dimensions.Y()*dimensions.Z();
+ 		if(radiusMean&lt;=0) radiusMean=pow(volume*(1-porosity)/(Mathr::PI*(4/3.)*numberOfGrains),1/3.);
+@@ -235,6 +222,12 @@
+ 		sphere_list=Shop::loadSpheresFromFile(importFilename,lowerCorner,upperCorner);
+ 	}
+ 
++	// setup rootBody here, since radiusMean is now at its true value (if it was negative)
++	rootBody = shared_ptr&lt;MetaBody&gt;(new MetaBody);
++	positionRootBody(rootBody);
++	createActors(rootBody);
++
++
+ 	if(thickness&lt;0) thickness=radiusMean;
+ 	if(facetWalls) thickness=0;
+ 	
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001356.html">[deprecated list] [Yade-dev] [svn] r1933 - in trunk: extra	lib	pkg/common/Engine/DeusExMachina	pkg/dem/DataClass	pkg/dem/meta py py/yadeWrapper scripts/test
+</A></li>
+	<LI>Next message: <A HREF="001358.html">[deprecated list] [Yade-dev] [svn] r1935 - in trunk:	examples	examples/dynamic_simulation_tests	examples/rod_penetration	pkg/dem/Engine/EngineUnit py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1357">[ date ]</a>
+              <a href="thread.html#1357">[ thread ]</a>
+              <a href="subject.html#1357">[ subject ]</a>
+              <a href="author.html#1357">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

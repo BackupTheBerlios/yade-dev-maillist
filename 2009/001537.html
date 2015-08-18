@@ -1,0 +1,90 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] Warnings while compiling without	openmp feature
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Warnings%20while%20compiling%20without%0A%09openmp%20feature&In-Reply-To=%3C1250864547.11272.56.camel%40flux%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001535.html">
+   <LINK REL="Next"  HREF="001536.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] Warnings while compiling without	openmp feature</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20Warnings%20while%20compiling%20without%0A%09openmp%20feature&In-Reply-To=%3C1250864547.11272.56.camel%40flux%3E"
+       TITLE="[deprecated list] [Yade-dev] Warnings while compiling without	openmp feature">eudoxos at arcig.cz
+       </A><BR>
+    <I>Fri Aug 21 16:22:27 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001535.html">[deprecated list] [Yade-dev] Warnings while compiling without	openmp feature
+</A></li>
+        <LI>Next message: <A HREF="001536.html">[deprecated list] [Yade-dev] [Branch ~yade-dev/yade/trunk] Rev	1717: Avoid error	in	pack.triaxialTest if compiled without GTS.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1537">[ date ]</a>
+              <a href="thread.html#1537">[ thread ]</a>
+              <a href="subject.html#1537">[ subject ]</a>
+              <a href="author.html#1537">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>&gt;<i> In file included
+</I>&gt;<i> from /home/gladk/dem/yade/current_nomp/build-current_nomp/packages.cpp:3:
+</I>&gt;<i> /home/gladk/dem/yade/current_nomp/yade/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp:197: warning: ignoring #pragma omp parallel
+</I>&gt;<i> /home/gladk/dem/yade/current_nomp/yade/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp:199: warning: ignoring #pragma omp section
+</I>&gt;<i> /home/gladk/dem/yade/current_nomp/yade/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp:201: warning: ignoring #pragma omp section
+</I>&gt;<i> /home/gladk/dem/yade/current_nomp/yade/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp:203: warning: ignoring #pragma omp section
+</I>
+
+It is normal, without the openmp switches compiler doesn't recognize
+these pragmas and warns about them. There is no way to avoid that, I
+think -- except perhaps writing
+
+#ifdef YADE_OPENMP
+	#pragma omp parallel
+#endif
+
+but that would make the code really horrible; using -wunknown-pragmas
+parameter would help, but I want to keep all warnings if possible to not
+miss possible errors.
+
+V.
+
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001535.html">[deprecated list] [Yade-dev] Warnings while compiling without	openmp feature
+</A></li>
+	<LI>Next message: <A HREF="001536.html">[deprecated list] [Yade-dev] [Branch ~yade-dev/yade/trunk] Rev	1717: Avoid error	in	pack.triaxialTest if compiled without GTS.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1537">[ date ]</a>
+              <a href="thread.html#1537">[ thread ]</a>
+              <a href="subject.html#1537">[ subject ]</a>
+              <a href="author.html#1537">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

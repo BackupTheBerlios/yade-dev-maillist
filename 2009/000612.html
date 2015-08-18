@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1633 - in trunk: extra gui/py	gui/qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1633%20-%20in%20trunk%3A%20extra%20gui/py%0A%09gui/qt3&In-Reply-To=%3C200901232219.n0NMJBRw017589%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000609.html">
+   <LINK REL="Next"  HREF="000611.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1633 - in trunk: extra gui/py	gui/qt3</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1633%20-%20in%20trunk%3A%20extra%20gui/py%0A%09gui/qt3&In-Reply-To=%3C200901232219.n0NMJBRw017589%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1633 - in trunk: extra gui/py	gui/qt3">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Jan 23 23:19:11 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000609.html">[deprecated list] [Yade-dev] Python scripting and Yade
+</A></li>
+        <LI>Next message: <A HREF="000611.html">[deprecated list] [Yade-dev] [svn] r1634 -	trunk/pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#612">[ date ]</a>
+              <a href="thread.html#612">[ thread ]</a>
+              <a href="subject.html#612">[ subject ]</a>
+              <a href="author.html#612">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-01-23 23:18:54 +0100 (Fri, 23 Jan 2009)
+New Revision: 1633
+
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/gui/py/PythonUI_rc.py
+   trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+Log:
+1. Unbreak bad type (list) for sys.argv[0], broken recently
+2. Color bodies by residual strength rather than damage parameter (smoother)
+3. Make player messages (maybe) better formatted
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-01-23 09:05:03 UTC (rev 1632)
++++ trunk/extra/Brefcom.cpp	2009-01-23 22:18:54 UTC (rev 1633)
+@@ -266,7 +266,7 @@
+ 		if(!BC || !BC-&gt;isCohesive) continue;
+ 		const body_id_t id1=I-&gt;getId1(), id2=I-&gt;getId2();
+ 		bodyDamage[id1].first++; bodyDamage[id2].first++;
+-		bodyDamage[id1].second+=BC-&gt;omega; bodyDamage[id2].second+=BC-&gt;omega;
++		bodyDamage[id1].second+=(1-BC-&gt;relResidualStrength); bodyDamage[id2].second+=(1-BC-&gt;relResidualStrength);
+ 		maxOmega=max(maxOmega,BC-&gt;omega);
+ 	}
+ 	FOREACH(shared_ptr&lt;Body&gt; B, *rootBody-&gt;bodies){
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2009-01-23 09:05:03 UTC (rev 1632)
++++ trunk/extra/Brefcom.hpp	2009-01-23 22:18:54 UTC (rev 1633)
+@@ -136,7 +136,7 @@
+ 		int numBrokenCohesive;
+ 		//! number of contacts with this body
+ 		int numContacts;
+-		//! average damage including already deleted contacts
++		//! average damage including already deleted contacts (it is really not damage, but 1-relResidualStrength now)
+ 		Real normDmg;
+ 		BrefcomPhysParams(): epsVolumetric(0.), numBrokenCohesive(0), numContacts(0), normDmg(0.) {createIndex();};
+ 		REGISTER_ATTRIBUTES(BodyMacroParameters, (epsVolumetric) (numBrokenCohesive) (numContacts) (normDmg) );
+
+Modified: trunk/gui/py/PythonUI_rc.py
+===================================================================
+--- trunk/gui/py/PythonUI_rc.py	2009-01-23 09:05:03 UTC (rev 1632)
++++ trunk/gui/py/PythonUI_rc.py	2009-01-23 22:18:54 UTC (rev 1633)
+@@ -59,7 +59,7 @@
+ 	import time;
+ 	while True: time.sleep(1)
+ else:
+-	sys.argv[0]=['&lt;embedded python interpreter&gt;']
++	sys.argv[0]='&lt;embedded python interpreter&gt;'
+ 	from IPython.Shell import IPShellEmbed
+ 	ipshell = IPShellEmbed(banner=r&quot;&quot;&quot;__   __    ____          ____                      _      
+ \ \ / /_ _|  _ \  ___   / ___|___  _ __  ___  ___ | | ___ 
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2009-01-23 09:05:03 UTC (rev 1632)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2009-01-23 22:18:54 UTC (rev 1633)
+@@ -11,6 +11,8 @@
+ #include&lt;unistd.h&gt;
+ #include&lt;fstream&gt;
+ #include&lt;string&gt;
++#include&lt;sstream&gt;
++#include&lt;iomanip&gt;
+ #include&lt;boost/lexical_cast.hpp&gt;
+ #include&lt;boost/filesystem/operations.hpp&gt;
+ #include&lt;boost/filesystem/convenience.hpp&gt;
+@@ -67,7 +69,10 @@
+ 		long framesToGo=xyzNames.size()-frameNumber;
+ 		if(elapsedFrames&gt;0 &amp;&amp; framesToGo&gt;0){
+ 			long ETA_s=((now-lastCheckPointTime).total_milliseconds()/elapsedFrames)*(framesToGo)/1000;
+-			simPlayer-&gt;pushMessage(lexical_cast&lt;string&gt;(framesToGo)+&quot; frames to go, ETA &quot;+lexical_cast&lt;string&gt;(ETA_s/3600)+&quot;:&quot;+lexical_cast&lt;string&gt;((ETA_s%3600)/60)+&quot;:&quot;+lexical_cast&lt;string&gt;(ETA_s%60));
++			ostringstream oss;
++			oss&lt;&lt;framesToGo&lt;&lt;&quot; frames to go, ETA &quot;&lt;&lt;ETA_s/3600&lt;&lt;&quot;:&quot;&lt;&lt;setw(2)&lt;&lt;setfill('0')&lt;&lt;((ETA_s%3600)/60)&lt;&lt;&quot;:&quot;&lt;&lt;setw(2)&lt;&lt;setfill('0')&lt;&lt;ETA_s%60;
++			simPlayer-&gt;pushMessage(oss.str());
++			// simPlayer-&gt;pushMessage(lexical_cast&lt;string&gt;(framesToGo)+&quot; frames to go, ETA &quot;+lexical_cast&lt;string&gt;(ETA_s/3600)+&quot;:&quot;+lexical_cast&lt;string&gt;((ETA_s%3600)/60)+&quot;:&quot;+lexical_cast&lt;string&gt;(ETA_s%60));
+ 		}
+ 		lastCheckPointTime=now;
+ 		lastCheckPointFrame=frameNumber;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000609.html">[deprecated list] [Yade-dev] Python scripting and Yade
+</A></li>
+	<LI>Next message: <A HREF="000611.html">[deprecated list] [Yade-dev] [svn] r1634 -	trunk/pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#612">[ date ]</a>
+              <a href="thread.html#612">[ thread ]</a>
+              <a href="subject.html#612">[ subject ]</a>
+              <a href="author.html#612">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

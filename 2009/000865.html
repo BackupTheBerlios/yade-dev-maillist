@@ -1,0 +1,1138 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1722 - in trunk: . extra gui/py	lib/smoothing
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1722%20-%20in%20trunk%3A%20.%20extra%20gui/py%0A%09lib/smoothing&In-Reply-To=%3C200903182106.n2IL690P018664%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000871.html">
+   <LINK REL="Next"  HREF="000868.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1722 - in trunk: . extra gui/py	lib/smoothing</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1722%20-%20in%20trunk%3A%20.%20extra%20gui/py%0A%09lib/smoothing&In-Reply-To=%3C200903182106.n2IL690P018664%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1722 - in trunk: . extra gui/py	lib/smoothing">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Mar 18 22:06:09 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000871.html">[deprecated list] [Yade-dev] impossible to compile without python / sqlite3
+</A></li>
+        <LI>Next message: <A HREF="000868.html">[deprecated list] [Yade-dev] facets
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#865">[ date ]</a>
+              <a href="thread.html#865">[ thread ]</a>
+              <a href="subject.html#865">[ subject ]</a>
+              <a href="author.html#865">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-03-18 22:06:08 +0100 (Wed, 18 Mar 2009)
+New Revision: 1722
+
+Added:
+   trunk/extra/boost_python_len.hpp
+   trunk/extra/foreach.hpp_local
+Modified:
+   trunk/SConstruct
+   trunk/gui/py/_eudoxos.cpp
+   trunk/gui/py/_utils.cpp
+   trunk/gui/py/pyAttrUtils.hpp
+   trunk/gui/py/yadeControl.cpp
+   trunk/lib/smoothing/WeightedAverage2d.hpp
+Log:
+1. Use local foreach.hpp if not found in the system
+2. Use local file defining boost::python::len for boost&lt;1.34
+
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-03-17 15:14:49 UTC (rev 1721)
++++ trunk/SConstruct	2009-03-18 21:06:08 UTC (rev 1722)
+@@ -302,9 +302,8 @@
+ 	ok&amp;=CheckLib_maybeMT(conf,'boost_filesystem','boost/filesystem/path.hpp','c++','boost::filesystem::path();')
+ 	ok&amp;=CheckLib_maybeMT(conf,'boost_iostreams','boost/iostreams/device/file.hpp','c++','boost::iostreams::file_sink(&quot;&quot;);')
+ 	ok&amp;=CheckLib_maybeMT(conf,'boost_regex','boost/regex.hpp','c++','boost::regex(&quot;&quot;);')
+-	foreach=conf.CheckCXXHeader('boost/foreach.hpp','&lt;&gt;')
+-	if not foreach: print &quot;(You can get the foreach.hpp header from <A HREF="http://article.gmane.org/gmane.science.physics.yade.devel/367">http://article.gmane.org/gmane.science.physics.yade.devel/367</A> and save it in /usr/include/boost. It will coexist with boost 1.33 without problems.)&quot;
+-	ok&amp;=foreach
++	env['haveForeach']=conf.CheckCXXHeader('boost/foreach.hpp','&lt;&gt;')
++	if not env['haveForeach']: print &quot;(OK, local version will be used instead)&quot;
+ 	ok&amp;=conf.CheckLibWithHeader('sqlite3','sqlite3.h','c++','sqlite3_close(0L);',autoadd=0)
+ 
+ 	if not env['useMiniWm3']: ok&amp;=conf.CheckLibWithHeader('Wm3Foundation','Wm3Math.h','c++','Wm3::Math&lt;double&gt;::PI;',autoadd=1)
+@@ -485,13 +484,6 @@
+ 					subInc=join(yadeInc,m.group(1).replace(sep,'-')) # replace pkg/lattice by pkg-lattice
+ 					if not prefix: # local include directory: do symlinks
+ 						if not isdir(subInc): os.makedirs(subInc)
+-						def relpath(pf,pt):
+-							&quot;&quot;&quot;Returns relative path from pf (path from) to pt (path to) as string.
+-							Last component of pf MUST be filename, not directory name. It can be empty, though. Legal pf's: 'dir1/dir2/something.cc', 'dir1/dir2/'. Illegal: 'dir1/dir2'.&quot;&quot;&quot;
+-							from os.path import sep,join,abspath,split
+-							apfl=abspath(split(pf)[0]).split(sep); aptl=abspath(pt).split(sep); i=0
+-							while apfl[i]==aptl[i] and i&lt;min(len(apfl),len(aptl))-1: i+=1
+-							return sep.join(['..' for j in range(0,len(apfl)-i)]+aptl[i:])
+ 						linkName=join(subInc,f); linkTarget=relpath(linkName,join(root,f))
+ 						if not exists(linkName):
+ 							if lexists(linkName): os.remove(linkName) # broken symlink: remove it
+@@ -499,6 +491,15 @@
+ 					else: # install directory: use scons' Install facility
+ 						env.Install(subInc,join(root,f))
+ 
++def relpath(pf,pt):
++	&quot;&quot;&quot;Returns relative path from pf (path from) to pt (path to) as string.
++	Last component of pf MUST be filename, not directory name. It can be empty, though. Legal pf's: 'dir1/dir2/something.cc', 'dir1/dir2/'. Illegal: 'dir1/dir2'.&quot;&quot;&quot;
++	from os.path import sep,join,abspath,split
++	apfl=abspath(split(pf)[0]).split(sep); aptl=abspath(pt).split(sep); i=0
++	while apfl[i]==aptl[i] and i&lt;min(len(apfl),len(aptl))-1: i+=1
++	return sep.join(['..' for j in range(0,len(apfl)-i)]+aptl[i:])
++
++
+ def makePkgConfig(fileName):
+ 	cflags,libs='Cflags: ','Libs: '
+ 	cflags+=' '+' '.join(env['CXXFLAGS'])
+@@ -528,8 +529,18 @@
+ if not env.GetOption('clean'):
+ 	# how to make that executed automatically??! For now, run always.
+ 	#env.AddPreAction(installAlias,installHeaders)
++	from os.path import join,split,isabs,isdir,exists,lexists,islink,isfile,sep
+ 	installHeaders() # install to buildDir always
+ 	installHeaders(env.subst('$PREFIX')) # install to $PREFIX if specifically requested: like &quot;scons /usr/local/include&quot;
++	if not env['haveForeach']:
++		boostDir=buildDir+'/include/yade-'+env['version']+'/boost'
++		foreachLink=boostDir+'/foreach.hpp'
++		foreachTarget='extra/foreach.hpp_local'
++		if not exists(boostDir): os.makedirs(boostDir)
++		if not exists(foreachLink): 
++			if lexists(foreachLink): os.remove(foreachLink) # broken symlink: remove it
++			os.symlink(relpath(foreachLink,foreachTarget),foreachLink)
++		env.InstallAs(env['PREFIX']+'/include/yade-'+env['version']+'/boost/foreach.hpp',foreachTarget)
+ 	makePkgConfig('$buildDir/yade${SUFFIX}.pc')
+ 	env.Install(pcDir,'$buildDir/yade${SUFFIX}.pc')
+ 	installAlias=env.Alias('install',instDirs) # build and install everything that should go to instDirs, which are $PREFIX/{bin,lib} (uses scons' Install); include pkgconfig stuff
+
+Added: trunk/extra/boost_python_len.hpp
+===================================================================
+--- trunk/extra/boost_python_len.hpp	2009-03-17 15:14:49 UTC (rev 1721)
++++ trunk/extra/boost_python_len.hpp	2009-03-18 21:06:08 UTC (rev 1722)
+@@ -0,0 +1,22 @@
++#pragma once
++#include&lt;boost/python/object.hpp&gt;
++#include&lt;boost/version.hpp&gt;
++#if BOOST_VERSION&lt;103400
++	// taken from boost-1.34/python/object.hpp
++
++	// Copyright David Abrahams 2002.
++	// Distributed under the Boost Software License, Version 1.0. (See
++	// accompanying file LICENSE_1_0.txt or copy at
++	// <A HREF="http://www.boost.org/LICENSE_1_0.txt">http://www.boost.org/LICENSE_1_0.txt</A>)
++
++	namespace boost { namespace python {
++
++		 inline ssize_t len(object const&amp; obj)
++		 {
++			  ssize_t result = PyObject_Length(obj.ptr());
++			  if (PyErr_Occurred()) throw_error_already_set();
++			  return result;
++		 }
++
++	}} // namespace boost::python
++#endif // BOOST_VERSION&lt;103400
+
+Added: trunk/extra/foreach.hpp_local
+===================================================================
+--- trunk/extra/foreach.hpp_local	2009-03-17 15:14:49 UTC (rev 1721)
++++ trunk/extra/foreach.hpp_local	2009-03-18 21:06:08 UTC (rev 1722)
+@@ -0,0 +1,812 @@
++///////////////////////////////////////////////////////////////////////////////
++// foreach.hpp header file
++//
++// Copyright 2004 Eric Niebler.
++// Distributed under the Boost Software License, Version 1.0. (See
++// accompanying file LICENSE_1_0.txt or copy at
++// <A HREF="http://www.boost.org/LICENSE_1_0.txt">http://www.boost.org/LICENSE_1_0.txt</A>)
++//
++// Credits:
++//  Anson Tsao        - for the initial inspiration and several good suggestions.
++//  Thorsten Ottosen  - for Boost.Range, and for suggesting a way to detect
++//                      const-qualified rvalues at compile time on VC7.1+
++//  Russell Hind      - For help porting to Borland
++//  Alisdair Meredith - For help porting to Borland
++//  Stefan Slapeta    - For help porting to Intel
++
++#ifndef BOOST_FOREACH
++
++// MS compatible compilers support #pragma once
++#if defined(_MSC_VER) &amp;&amp; (_MSC_VER &gt;= 1020)
++# pragma once
++#endif
++
++#include &lt;cstddef&gt;
++#include &lt;utility&gt;  // for std::pair
++
++#include &lt;boost/config.hpp&gt;
++#include &lt;boost/detail/workaround.hpp&gt;
++
++// Some compilers let us detect even const-qualified rvalues at compile-time
++#if BOOST_WORKAROUND(BOOST_MSVC, &gt;= 1310)                                                       \
++ || (BOOST_WORKAROUND(__GNUC__, &gt;= 4) &amp;&amp; !defined(BOOST_INTEL))                                 \
++ || (BOOST_WORKAROUND(__GNUC__, == 3) &amp;&amp; (__GNUC_MINOR__ &gt;= 4) &amp;&amp; !defined(BOOST_INTEL))
++# define BOOST_FOREACH_COMPILE_TIME_CONST_RVALUE_DETECTION
++#else
++// Some compilers allow temporaries to be bound to non-const references.
++// These compilers make it impossible to for BOOST_FOREACH to detect
++// temporaries and avoid reevaluation of the collection expression.
++# if BOOST_WORKAROUND(BOOST_MSVC, &lt;= 1300)                                                      \
++  || BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x564))                                     \
++  || (BOOST_WORKAROUND(BOOST_INTEL_CXX_VERSION, &lt;= 700) &amp;&amp; defined(_MSC_VER))                   \
++  || BOOST_WORKAROUND(__SUNPRO_CC, BOOST_TESTED_AT(0x570))                                      \
++  || BOOST_WORKAROUND(__DECCXX_VER, BOOST_TESTED_AT(60590042))
++#  define BOOST_FOREACH_NO_RVALUE_DETECTION
++# endif
++// Some compilers do not correctly implement the lvalue/rvalue conversion
++// rules of the ternary conditional operator.
++# if defined(BOOST_FOREACH_NO_RVALUE_DETECTION)                                                 \
++  || defined(BOOST_NO_SFINAE)                                                                   \
++  || BOOST_WORKAROUND(BOOST_MSVC, BOOST_TESTED_AT(1400))                                        \
++  || BOOST_WORKAROUND(BOOST_INTEL_WIN, &lt;= 810)                                                  \
++  || BOOST_WORKAROUND(__GNUC__, &lt; 3)                                                            \
++  || (BOOST_WORKAROUND(__GNUC__, == 3) &amp;&amp; (__GNUC_MINOR__ &lt;= 2))                                \
++  || (BOOST_WORKAROUND(__GNUC__, == 3) &amp;&amp; (__GNUC_MINOR__ &lt;= 3) &amp;&amp; defined(__APPLE_CC__))       \
++  || BOOST_WORKAROUND(__IBMCPP__, BOOST_TESTED_AT(600))                                         \
++  || BOOST_WORKAROUND(__MWERKS__, BOOST_TESTED_AT(0x3206))
++#  define BOOST_FOREACH_NO_CONST_RVALUE_DETECTION
++# else
++#  define BOOST_FOREACH_RUN_TIME_CONST_RVALUE_DETECTION
++# endif
++#endif
++
++#include &lt;boost/mpl/if.hpp&gt;
++#include &lt;boost/mpl/logical.hpp&gt;
++#include &lt;boost/mpl/eval_if.hpp&gt;
++#include &lt;boost/noncopyable.hpp&gt;
++#include &lt;boost/range/end.hpp&gt;
++#include &lt;boost/range/begin.hpp&gt;
++#include &lt;boost/range/result_iterator.hpp&gt;
++#include &lt;boost/type_traits/is_array.hpp&gt;
++#include &lt;boost/type_traits/is_const.hpp&gt;
++#include &lt;boost/type_traits/is_abstract.hpp&gt;
++#include &lt;boost/type_traits/is_base_and_derived.hpp&gt;
++#include &lt;boost/iterator/iterator_traits.hpp&gt;
++#include &lt;boost/utility/addressof.hpp&gt;
++
++#ifdef BOOST_FOREACH_RUN_TIME_CONST_RVALUE_DETECTION
++# include &lt;new&gt;
++# include &lt;boost/aligned_storage.hpp&gt;
++# include &lt;boost/utility/enable_if.hpp&gt;
++# include &lt;boost/type_traits/remove_const.hpp&gt;
++#endif
++
++// This must be at global scope, hence the uglified name
++enum boost_foreach_argument_dependent_lookup_hack
++{
++    boost_foreach_argument_dependent_lookup_hack_value
++};
++
++namespace boost
++{
++
++// forward declarations for iterator_range
++template&lt;typename T&gt;
++class iterator_range;
++
++// forward declarations for sub_range
++template&lt;typename T&gt;
++class sub_range;
++
++namespace foreach
++{
++    ///////////////////////////////////////////////////////////////////////////////
++    // in_range
++    //
++    template&lt;typename T&gt;
++    inline std::pair&lt;T, T&gt; in_range(T begin, T end)
++    {
++        return std::make_pair(begin, end);
++    }
++
++    ///////////////////////////////////////////////////////////////////////////////
++    // boost::foreach::tag
++    //
++    typedef boost_foreach_argument_dependent_lookup_hack tag;
++
++    ///////////////////////////////////////////////////////////////////////////////
++    // boost::foreach::is_lightweight_proxy
++    //   Specialize this for user-defined collection types if they are inexpensive to copy.
++    //   This tells BOOST_FOREACH it can avoid the rvalue/lvalue detection stuff.
++    template&lt;typename T&gt;
++    struct is_lightweight_proxy
++      : boost::mpl::false_
++    {
++    };
++
++    ///////////////////////////////////////////////////////////////////////////////
++    // boost::foreach::is_noncopyable
++    //   Specialize this for user-defined collection types if they cannot be copied.
++    //   This also tells BOOST_FOREACH to avoid the rvalue/lvalue detection stuff.
++    template&lt;typename T&gt;
++    struct is_noncopyable
++    #if !defined(BOOST_BROKEN_IS_BASE_AND_DERIVED) &amp;&amp; !defined(BOOST_NO_IS_ABSTRACT)
++      : boost::mpl::or_&lt;
++            boost::is_abstract&lt;T&gt;
++          , boost::is_base_and_derived&lt;boost::noncopyable, T&gt;
++        &gt;
++    #elif !defined(BOOST_BROKEN_IS_BASE_AND_DERIVED)
++      : boost::is_base_and_derived&lt;boost::noncopyable, T&gt;
++    #elif !defined(BOOST_NO_IS_ABSTRACT)
++      : boost::is_abstract&lt;T&gt;
++    #else
++      : boost::mpl::false_
++    #endif
++    {
++    };
++
++} // namespace foreach
++
++} // namespace boost
++
++// vc6/7 needs help ordering the following overloads
++#ifdef BOOST_NO_FUNCTION_TEMPLATE_ORDERING
++# define BOOST_FOREACH_TAG_DEFAULT ...
++#else
++# define BOOST_FOREACH_TAG_DEFAULT boost::foreach::tag
++#endif
++
++///////////////////////////////////////////////////////////////////////////////
++// boost_foreach_is_lightweight_proxy
++//   Another customization point for the is_lightweight_proxy optimization,
++//   this one works on legacy compilers. Overload boost_foreach_is_lightweight_proxy
++//   at the global namespace for your type.
++template&lt;typename T&gt;
++inline boost::foreach::is_lightweight_proxy&lt;T&gt; *
++boost_foreach_is_lightweight_proxy(T *&amp;, BOOST_FOREACH_TAG_DEFAULT) { return 0; }
++
++template&lt;typename T&gt;
++inline boost::mpl::true_ *
++boost_foreach_is_lightweight_proxy(std::pair&lt;T, T&gt; *&amp;, boost::foreach::tag) { return 0; }
++
++template&lt;typename T&gt;
++inline boost::mpl::true_ *
++boost_foreach_is_lightweight_proxy(boost::iterator_range&lt;T&gt; *&amp;, boost::foreach::tag) { return 0; }
++
++template&lt;typename T&gt;
++inline boost::mpl::true_ *
++boost_foreach_is_lightweight_proxy(boost::sub_range&lt;T&gt; *&amp;, boost::foreach::tag) { return 0; }
++
++template&lt;typename T&gt;
++inline boost::mpl::true_ *
++boost_foreach_is_lightweight_proxy(T **&amp;, boost::foreach::tag) { return 0; }
++
++///////////////////////////////////////////////////////////////////////////////
++// boost_foreach_is_noncopyable
++//   Another customization point for the is_noncopyable trait,
++//   this one works on legacy compilers. Overload boost_foreach_is_noncopyable
++//   at the global namespace for your type.
++template&lt;typename T&gt;
++inline boost::foreach::is_noncopyable&lt;T&gt; *
++boost_foreach_is_noncopyable(T *&amp;, BOOST_FOREACH_TAG_DEFAULT) { return 0; }
++
++namespace boost
++{
++
++namespace foreach_detail_
++{
++
++///////////////////////////////////////////////////////////////////////////////
++// Define some utilities for assessing the properties of expressions
++//
++typedef char yes_type;
++typedef char (&amp;no_type)[2];
++yes_type is_true(boost::mpl::true_ *);
++no_type is_true(boost::mpl::false_ *);
++
++// Extracts the desired property from the expression without evaluating it
++#define BOOST_FOREACH_PROTECT(expr)                                                             \
++    (static_cast&lt;boost::mpl::bool_&lt;1 == sizeof(boost::foreach_detail_::is_true(expr))&gt; *&gt;(0))
++
++template&lt;typename Bool1, typename Bool2&gt;
++inline boost::mpl::and_&lt;Bool1, Bool2&gt; *and_(Bool1 *, Bool2 *) { return 0; }
++
++template&lt;typename Bool1, typename Bool2, typename Bool3&gt;
++inline boost::mpl::and_&lt;Bool1, Bool2, Bool3&gt; *and_(Bool1 *, Bool2 *, Bool3 *) { return 0; }
++
++template&lt;typename Bool1, typename Bool2&gt;
++inline boost::mpl::or_&lt;Bool1, Bool2&gt; *or_(Bool1 *, Bool2 *) { return 0; }
++
++template&lt;typename Bool1, typename Bool2, typename Bool3&gt;
++inline boost::mpl::or_&lt;Bool1, Bool2, Bool3&gt; *or_(Bool1 *, Bool2 *, Bool3 *) { return 0; }
++
++template&lt;typename Bool&gt;
++inline boost::mpl::not_&lt;Bool&gt; *not_(Bool *) { return 0; }
++
++template&lt;typename T&gt;
++inline boost::mpl::false_ *is_rvalue_(T &amp;, int) { return 0; }
++
++template&lt;typename T&gt;
++inline boost::mpl::true_ *is_rvalue_(T const &amp;, ...) { return 0; }
++
++template&lt;typename T&gt;
++inline boost::is_array&lt;T&gt; *is_array_(T const &amp;) { return 0; }
++
++template&lt;typename T&gt;
++inline boost::is_const&lt;T&gt; *is_const_(T &amp;) { return 0; }
++
++#ifndef BOOST_FOREACH_NO_RVALUE_DETECTION
++template&lt;typename T&gt;
++inline boost::mpl::true_ *is_const_(T const &amp;) { return 0; }
++#endif
++
++///////////////////////////////////////////////////////////////////////////////
++// auto_any_t/auto_any
++//  General utility for putting an object of any type into automatic storage
++struct auto_any_base
++{
++    // auto_any_base must evaluate to false in boolean context so that
++    // they can be declared in if() statements.
++    operator bool() const
++    {
++        return false;
++    }
++};
++
++template&lt;typename T&gt;
++struct auto_any : auto_any_base
++{
++    auto_any(T const &amp;t)
++      : item(t)
++    {
++    }
++
++    // temporaries of type auto_any will be bound to const auto_any_base
++    // references, but we still want to be able to mutate the stored
++    // data, so declare it as mutable.
++    mutable T item;
++};
++
++typedef auto_any_base const &amp;auto_any_t;
++
++template&lt;typename T, typename C&gt;
++inline BOOST_DEDUCED_TYPENAME boost::mpl::if_&lt;C, T const, T&gt;::type &amp;auto_any_cast(auto_any_t a)
++{
++    return static_cast&lt;auto_any&lt;T&gt; const &amp;&gt;(a).item;
++}
++
++typedef boost::mpl::true_ const_;
++
++///////////////////////////////////////////////////////////////////////////////
++// type2type
++//
++template&lt;typename T, typename C = boost::mpl::false_&gt;
++struct type2type
++  : boost::mpl::if_&lt;C, T const, T&gt;
++{
++};
++
++template&lt;typename T, typename C = boost::mpl::false_&gt;
++struct foreach_iterator
++{
++    typedef BOOST_DEDUCED_TYPENAME boost::mpl::eval_if&lt;
++        C
++      , range_const_iterator&lt;T&gt;
++      , range_iterator&lt;T&gt;
++    &gt;::type type;
++};
++
++template&lt;typename T, typename C = boost::mpl::false_&gt;
++struct foreach_reference
++  : iterator_reference&lt;BOOST_DEDUCED_TYPENAME foreach_iterator&lt;T, C&gt;::type&gt;
++{
++};
++
++///////////////////////////////////////////////////////////////////////////////
++// encode_type
++//
++template&lt;typename T&gt;
++inline type2type&lt;T&gt; *encode_type(T &amp;, boost::mpl::false_ *) { return 0; }
++
++template&lt;typename T&gt;
++inline type2type&lt;T, const_&gt; *encode_type(T const &amp;, boost::mpl::true_ *) { return 0; }
++
++///////////////////////////////////////////////////////////////////////////////
++// set_false
++//
++inline bool set_false(bool &amp;b) { return b = false; }
++
++///////////////////////////////////////////////////////////////////////////////
++// to_ptr
++//
++template&lt;typename T&gt;
++inline T *&amp;to_ptr(T const &amp;)
++{
++    static T *t = 0;
++    return t;
++}
++
++// Borland needs a little extra help with arrays
++#if BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x564))
++template&lt;typename T,std::size_t N&gt;
++inline T (*&amp;to_ptr(T (&amp;)[N]))[N]
++{
++    static T (*t)[N] = 0;
++    return t;
++}
++#endif
++
++///////////////////////////////////////////////////////////////////////////////
++// derefof
++//
++template&lt;typename T&gt;
++inline T &amp;derefof(T *t)
++{
++    // This is a work-around for a compiler bug in Borland. If T* is a pointer to array type U(*)[N],
++    // then dereferencing it results in a U* instead of U(&amp;)[N]. The cast forces the issue.
++    return reinterpret_cast&lt;T &amp;&gt;(
++        *const_cast&lt;char *&gt;(
++            reinterpret_cast&lt;char const volatile *&gt;(t)
++        )
++    );
++}
++
++#ifdef BOOST_FOREACH_COMPILE_TIME_CONST_RVALUE_DETECTION
++///////////////////////////////////////////////////////////////////////////////
++// Detect at compile-time whether an expression yields an rvalue or
++// an lvalue. This is rather non-standard, but some popular compilers
++// accept it.
++///////////////////////////////////////////////////////////////////////////////
++
++///////////////////////////////////////////////////////////////////////////////
++// rvalue_probe
++//
++template&lt;typename T&gt;
++struct rvalue_probe
++{
++    struct private_type_ {};
++    // can't ever return an array by value
++    typedef BOOST_DEDUCED_TYPENAME boost::mpl::if_&lt;
++        boost::mpl::or_&lt;boost::is_abstract&lt;T&gt;, boost::is_array&lt;T&gt; &gt;, private_type_, T
++    &gt;::type value_type;
++    operator value_type();
++    operator T &amp;() const;
++};
++
++template&lt;typename T&gt;
++rvalue_probe&lt;T&gt; const make_probe(T const &amp;t);
++
++# define BOOST_FOREACH_IS_RVALUE(COL)                                                           \
++    boost::foreach_detail_::and_(                                                               \
++        boost::foreach_detail_::not_(boost::foreach_detail_::is_array_(COL))                    \
++      , BOOST_FOREACH_PROTECT(boost::foreach_detail_::is_rvalue_(                               \
++            (true ? boost::foreach_detail_::make_probe(COL) : (COL)), 0)))
++
++#elif defined(BOOST_FOREACH_RUN_TIME_CONST_RVALUE_DETECTION)
++///////////////////////////////////////////////////////////////////////////////
++// Detect at run-time whether an expression yields an rvalue
++// or an lvalue. This is 100% standard C++, but not all compilers
++// accept it. Also, it causes FOREACH to break when used with non-
++// copyable collection types.
++///////////////////////////////////////////////////////////////////////////////
++
++///////////////////////////////////////////////////////////////////////////////
++// rvalue_probe
++//
++template&lt;typename T&gt;
++struct rvalue_probe
++{
++    rvalue_probe(T &amp;t, bool &amp;b)
++      : value(t)
++      , is_rvalue(b)
++    {
++    }
++
++    struct private_type_ {};
++    // can't ever return an array or an abstract type by value
++    #ifdef BOOST_NO_IS_ABSTRACT
++    typedef BOOST_DEDUCED_TYPENAME boost::mpl::if_&lt;
++        boost::is_array&lt;T&gt;, private_type_, T
++    &gt;::type value_type;
++    #else
++    typedef BOOST_DEDUCED_TYPENAME boost::mpl::if_&lt;
++        boost::mpl::or_&lt;boost::is_abstract&lt;T&gt;, boost::is_array&lt;T&gt; &gt;, private_type_, T
++    &gt;::type value_type;
++    #endif
++    
++    operator value_type()
++    {
++        this-&gt;is_rvalue = true;
++        return this-&gt;value;
++    }
++
++    operator T &amp;() const
++    {
++        return this-&gt;value;
++    }
++
++private:
++    T &value;
++    bool &amp;is_rvalue;
++};
++
++template&lt;typename T&gt;
++rvalue_probe&lt;T&gt; make_probe(T &amp;t, bool &amp;b) { return rvalue_probe&lt;T&gt;(t, b); }
++
++template&lt;typename T&gt;
++rvalue_probe&lt;T const&gt; make_probe(T const &amp;t, bool &amp;b)  { return rvalue_probe&lt;T const&gt;(t, b); }
++
++///////////////////////////////////////////////////////////////////////////////
++// simple_variant
++//  holds either a T or a T const*
++template&lt;typename T&gt;
++struct simple_variant
++{
++    simple_variant(T const *t)
++      : is_rvalue(false)
++    {
++        *static_cast&lt;T const **&gt;(this-&gt;data.address()) = t;
++    }
++
++    simple_variant(T const &amp;t)
++      : is_rvalue(true)
++    {
++        ::new(this-&gt;data.address()) T(t);
++    }
++
++    simple_variant(simple_variant const &amp;that)
++      : is_rvalue(that.is_rvalue)
++    {
++        if(this-&gt;is_rvalue)
++            ::new(this-&gt;data.address()) T(*that.get());
++        else
++            *static_cast&lt;T const **&gt;(this-&gt;data.address()) = that.get();
++    }
++
++    ~simple_variant()
++    {
++        if(this-&gt;is_rvalue)
++            this-&gt;get()-&gt;~T();
++    }
++
++    T const *get() const
++    {
++        if(this-&gt;is_rvalue)
++            return static_cast&lt;T const *&gt;(this-&gt;data.address());
++        else
++            return *static_cast&lt;T const * const *&gt;(this-&gt;data.address());
++    }
++
++private:
++    enum size_type { size = sizeof(T) &gt; sizeof(T*) ? sizeof(T) : sizeof(T*) };
++    simple_variant &amp;operator =(simple_variant const &amp;); 
++    bool const is_rvalue;
++    aligned_storage&lt;size&gt; data;
++};
++
++// If the collection is an array or is noncopyable, it must be an lvalue.
++// If the collection is a lightweight proxy, treat it as an rvalue
++// BUGBUG what about a noncopyable proxy?
++template&lt;typename LValue, typename IsProxy&gt;
++inline BOOST_DEDUCED_TYPENAME boost::enable_if&lt;boost::mpl::or_&lt;LValue, IsProxy&gt;, IsProxy&gt;::type *
++should_copy_impl(LValue *, IsProxy *, bool *)
++{
++    return 0;
++}
++
++// Otherwise, we must determine at runtime whether it's an lvalue or rvalue
++inline bool *
++should_copy_impl(boost::mpl::false_ *, boost::mpl::false_ *, bool *is_rvalue)
++{
++    return is_rvalue;
++}
++
++#endif
++
++///////////////////////////////////////////////////////////////////////////////
++// contain
++//
++template&lt;typename T&gt;
++inline auto_any&lt;T&gt; contain(T const &amp;t, boost::mpl::true_ *) // rvalue
++{
++    return t;
++}
++
++template&lt;typename T&gt;
++inline auto_any&lt;T *&gt; contain(T &amp;t, boost::mpl::false_ *) // lvalue
++{
++    // Cannot seem to get sunpro to handle addressof() with array types.
++    #if BOOST_WORKAROUND(__SUNPRO_CC, BOOST_TESTED_AT(0x570))
++    return &t;
++    #else
++    return boost::addressof(t);
++    #endif
++}
++
++#ifdef BOOST_FOREACH_RUN_TIME_CONST_RVALUE_DETECTION
++template&lt;typename T&gt;
++auto_any&lt;simple_variant&lt;T&gt; &gt;
++contain(T const &amp;t, bool *rvalue)
++{
++    return *rvalue ? simple_variant&lt;T&gt;(t) : simple_variant&lt;T&gt;(&amp;t);
++}
++#endif
++
++/////////////////////////////////////////////////////////////////////////////
++// begin
++//
++template&lt;typename T, typename C&gt;
++inline auto_any&lt;BOOST_DEDUCED_TYPENAME foreach_iterator&lt;T, C&gt;::type&gt;
++begin(auto_any_t col, type2type&lt;T, C&gt; *, boost::mpl::true_ *) // rvalue
++{
++    return boost::begin(auto_any_cast&lt;T, C&gt;(col));
++}
++
++template&lt;typename T, typename C&gt;
++inline auto_any&lt;BOOST_DEDUCED_TYPENAME foreach_iterator&lt;T, C&gt;::type&gt;
++begin(auto_any_t col, type2type&lt;T, C&gt; *, boost::mpl::false_ *) // lvalue
++{
++    typedef BOOST_DEDUCED_TYPENAME type2type&lt;T, C&gt;::type type;
++    typedef BOOST_DEDUCED_TYPENAME foreach_iterator&lt;T, C&gt;::type iterator;
++    return iterator(boost::begin(derefof(auto_any_cast&lt;type *, boost::mpl::false_&gt;(col))));
++}
++
++#ifdef BOOST_FOREACH_RUN_TIME_CONST_RVALUE_DETECTION
++template&lt;typename T&gt;
++auto_any&lt;BOOST_DEDUCED_TYPENAME foreach_iterator&lt;T, const_&gt;::type&gt;
++begin(auto_any_t col, type2type&lt;T, const_&gt; *, bool *)
++{
++    return boost::begin(*auto_any_cast&lt;simple_variant&lt;T&gt;, boost::mpl::false_&gt;(col).get());
++}
++#endif
++
++///////////////////////////////////////////////////////////////////////////////
++// end
++//
++template&lt;typename T, typename C&gt;
++inline auto_any&lt;BOOST_DEDUCED_TYPENAME foreach_iterator&lt;T, C&gt;::type&gt;
++end(auto_any_t col, type2type&lt;T, C&gt; *, boost::mpl::true_ *) // rvalue
++{
++    return boost::end(auto_any_cast&lt;T, C&gt;(col));
++}
++
++template&lt;typename T, typename C&gt;
++inline auto_any&lt;BOOST_DEDUCED_TYPENAME foreach_iterator&lt;T, C&gt;::type&gt;
++end(auto_any_t col, type2type&lt;T, C&gt; *, boost::mpl::false_ *) // lvalue
++{
++    typedef BOOST_DEDUCED_TYPENAME type2type&lt;T, C&gt;::type type;
++    typedef BOOST_DEDUCED_TYPENAME foreach_iterator&lt;T, C&gt;::type iterator;
++    return iterator(boost::end(derefof(auto_any_cast&lt;type *, boost::mpl::false_&gt;(col))));
++}
++
++#ifdef BOOST_FOREACH_RUN_TIME_CONST_RVALUE_DETECTION
++template&lt;typename T&gt;
++auto_any&lt;BOOST_DEDUCED_TYPENAME foreach_iterator&lt;T, const_&gt;::type&gt;
++end(auto_any_t col, type2type&lt;T, const_&gt; *, bool *)
++{
++    return boost::end(*auto_any_cast&lt;simple_variant&lt;T&gt;, boost::mpl::false_&gt;(col).get());
++}
++#endif
++
++#ifndef BOOST_NO_FUNCTION_TEMPLATE_ORDERING
++template&lt;typename T, typename C&gt;
++inline auto_any&lt;int&gt;
++end(auto_any_t col, type2type&lt;T *, C&gt; *, boost::mpl::true_ *) // null-terminated C-style strings
++{
++    return 0; // not used
++}
++#endif
++
++///////////////////////////////////////////////////////////////////////////////
++// done
++//
++template&lt;typename T, typename C&gt;
++inline bool done(auto_any_t cur, auto_any_t end, type2type&lt;T, C&gt; *)
++{
++    typedef BOOST_DEDUCED_TYPENAME foreach_iterator&lt;T, C&gt;::type iter_t;
++    return auto_any_cast&lt;iter_t, boost::mpl::false_&gt;(cur) == auto_any_cast&lt;iter_t, boost::mpl::false_&gt;(end);
++}
++
++#ifndef BOOST_NO_FUNCTION_TEMPLATE_ORDERING
++template&lt;typename T, typename C&gt;
++inline bool done(auto_any_t cur, auto_any_t, type2type&lt;T *, C&gt; *) // null-terminated C-style strings
++{
++    return ! *auto_any_cast&lt;T *, boost::mpl::false_&gt;(cur);
++}
++#endif
++
++///////////////////////////////////////////////////////////////////////////////
++// next
++//
++template&lt;typename T, typename C&gt;
++inline void next(auto_any_t cur, type2type&lt;T, C&gt; *)
++{
++    typedef BOOST_DEDUCED_TYPENAME foreach_iterator&lt;T, C&gt;::type iter_t;
++    ++auto_any_cast&lt;iter_t, boost::mpl::false_&gt;(cur);
++}
++
++///////////////////////////////////////////////////////////////////////////////
++// deref
++//
++template&lt;typename T, typename C&gt;
++inline BOOST_DEDUCED_TYPENAME foreach_reference&lt;T, C&gt;::type
++deref(auto_any_t cur, type2type&lt;T, C&gt; *)
++{
++    typedef BOOST_DEDUCED_TYPENAME foreach_iterator&lt;T, C&gt;::type iter_t;
++    return *auto_any_cast&lt;iter_t, boost::mpl::false_&gt;(cur);
++}
++
++} // namespace foreach_detail_
++} // namespace boost
++
++// A sneaky way to get the type of the collection without evaluating the expression
++#define BOOST_FOREACH_TYPEOF(COL)                                                               \
++    (true ? 0 : boost::foreach_detail_::encode_type(COL, boost::foreach_detail_::is_const_(COL)))
++
++// returns true_* if the type is noncopyable
++#define BOOST_FOREACH_IS_NONCOPYABLE(COL)                                                       \
++    boost_foreach_is_noncopyable(                                                               \
++        boost::foreach_detail_::to_ptr(COL)                                                     \
++      , boost_foreach_argument_dependent_lookup_hack_value)
++
++// returns true_* if the type is a lightweight proxy (and is not noncopyable)
++#define BOOST_FOREACH_IS_LIGHTWEIGHT_PROXY(COL)                                                 \
++    boost::foreach_detail_::and_(                                                               \
++        boost::foreach_detail_::not_(BOOST_FOREACH_IS_NONCOPYABLE(COL))                         \
++      , boost_foreach_is_lightweight_proxy(                                                     \
++            boost::foreach_detail_::to_ptr(COL)                                                 \
++          , boost_foreach_argument_dependent_lookup_hack_value))
++
++#ifdef BOOST_FOREACH_COMPILE_TIME_CONST_RVALUE_DETECTION
++///////////////////////////////////////////////////////////////////////////////
++// R-values and const R-values supported here with zero runtime overhead
++///////////////////////////////////////////////////////////////////////////////
++
++// No variable is needed to track the rvalue-ness of the collection expression
++# define BOOST_FOREACH_PREAMBLE()                                                               \
++    /**/
++
++// Evaluate the collection expression
++# define BOOST_FOREACH_EVALUATE(COL)                                                            \
++    (COL)
++
++# define BOOST_FOREACH_SHOULD_COPY(COL)                                                         \
++    (true ? 0 : boost::foreach_detail_::or_(                                                    \
++        BOOST_FOREACH_IS_RVALUE(COL)                                                            \
++      , BOOST_FOREACH_IS_LIGHTWEIGHT_PROXY(COL)))
++
++#elif defined(BOOST_FOREACH_RUN_TIME_CONST_RVALUE_DETECTION)
++///////////////////////////////////////////////////////////////////////////////
++// R-values and const R-values supported here
++///////////////////////////////////////////////////////////////////////////////
++
++// Declare a variable to track the rvalue-ness of the collection expression
++# define BOOST_FOREACH_PREAMBLE()                                                               \
++    if (bool _foreach_is_rvalue = false) {} else
++
++// Evaluate the collection expression, and detect if it is an lvalue or and rvalue
++# define BOOST_FOREACH_EVALUATE(COL)                                                            \
++    (true ? boost::foreach_detail_::make_probe((COL), _foreach_is_rvalue) : (COL))
++
++// The rvalue/lvalue-ness of the collection expression is determined dynamically, unless
++// type type is an array or is noncopyable or is non-const, in which case we know it's an lvalue.
++// If the type happens to be a lightweight proxy, always make a copy.
++# define BOOST_FOREACH_SHOULD_COPY(COL)                                                         \
++    (boost::foreach_detail_::should_copy_impl(                                                  \
++        true ? 0 : boost::foreach_detail_::or_(                                                 \
++            boost::foreach_detail_::is_array_(COL)                                              \
++          , BOOST_FOREACH_IS_NONCOPYABLE(COL)                                                   \
++          , boost::foreach_detail_::not_(boost::foreach_detail_::is_const_(COL)))               \
++      , true ? 0 : BOOST_FOREACH_IS_LIGHTWEIGHT_PROXY(COL)                                      \
++      , &amp;_foreach_is_rvalue))
++
++#elif !defined(BOOST_FOREACH_NO_RVALUE_DETECTION)
++///////////////////////////////////////////////////////////////////////////////
++// R-values supported here, const R-values NOT supported here
++///////////////////////////////////////////////////////////////////////////////
++
++// No variable is needed to track the rvalue-ness of the collection expression
++# define BOOST_FOREACH_PREAMBLE()                                                               \
++    /**/
++
++// Evaluate the collection expression
++# define BOOST_FOREACH_EVALUATE(COL)                                                            \
++    (COL)
++
++// Determine whether the collection expression is an lvalue or an rvalue.
++// NOTE: this gets the answer wrong for const rvalues.
++# define BOOST_FOREACH_SHOULD_COPY(COL)                                                         \
++    (true ? 0 : boost::foreach_detail_::or_(                                                    \
++        boost::foreach_detail_::is_rvalue_((COL), 0)                                            \
++      , BOOST_FOREACH_IS_LIGHTWEIGHT_PROXY(COL)))
++
++#else
++///////////////////////////////////////////////////////////////////////////////
++// R-values NOT supported here
++///////////////////////////////////////////////////////////////////////////////
++
++// No variable is needed to track the rvalue-ness of the collection expression
++# define BOOST_FOREACH_PREAMBLE()                                                               \
++    /**/
++
++// Evaluate the collection expression
++# define BOOST_FOREACH_EVALUATE(COL)                                                            \
++    (COL)
++
++// Can't use rvalues with BOOST_FOREACH (unless they are lightweight proxies)
++# define BOOST_FOREACH_SHOULD_COPY(COL)                                                         \
++    (true ? 0 : BOOST_FOREACH_IS_LIGHTWEIGHT_PROXY(COL))
++
++#endif
++
++#define BOOST_FOREACH_CONTAIN(COL)                                                              \
++    boost::foreach_detail_::contain(                                                            \
++        BOOST_FOREACH_EVALUATE(COL)                                                             \
++      , BOOST_FOREACH_SHOULD_COPY(COL))
++
++#define BOOST_FOREACH_BEGIN(COL)                                                                \
++    boost::foreach_detail_::begin(                                                              \
++        _foreach_col                                                                            \
++      , BOOST_FOREACH_TYPEOF(COL)                                                               \
++      , BOOST_FOREACH_SHOULD_COPY(COL))
++
++#define BOOST_FOREACH_END(COL)                                                                  \
++    boost::foreach_detail_::end(                                                                \
++        _foreach_col                                                                            \
++      , BOOST_FOREACH_TYPEOF(COL)                                                               \
++      , BOOST_FOREACH_SHOULD_COPY(COL))
++
++#define BOOST_FOREACH_DONE(COL)                                                                 \
++    boost::foreach_detail_::done(                                                               \
++        _foreach_cur                                                                            \
++      , _foreach_end                                                                            \
++      , BOOST_FOREACH_TYPEOF(COL))
++
++#define BOOST_FOREACH_NEXT(COL)                                                                 \
++    boost::foreach_detail_::next(                                                               \
++        _foreach_cur                                                                            \
++      , BOOST_FOREACH_TYPEOF(COL))
++
++#define BOOST_FOREACH_DEREF(COL)                                                                \
++    boost::foreach_detail_::deref(                                                              \
++        _foreach_cur                                                                            \
++      , BOOST_FOREACH_TYPEOF(COL))
++
++///////////////////////////////////////////////////////////////////////////////
++// BOOST_FOREACH
++//
++//   For iterating over collections. Collections can be
++//   arrays, null-terminated strings, or STL containers.
++//   The loop variable can be a value or reference. For
++//   example:
++//
++//   std::list&lt;int&gt; int_list(/*stuff*/);
++//   BOOST_FOREACH(int &amp;i, int_list)
++//   {
++//       /* 
++//        * loop body goes here.
++//        * i is a reference to the int in int_list.
++//        */
++//   }
++//
++//   Alternately, you can declare the loop variable first,
++//   so you can access it after the loop finishes. Obviously,
++//   if you do it this way, then the loop variable cannot be
++//   a reference.
++//
++//   int i;
++//   BOOST_FOREACH(i, int_list)
++//       { ... }
++//
++#define BOOST_FOREACH(VAR, COL)                                                                 \
++    BOOST_FOREACH_PREAMBLE()                                                                    \
++    if (boost::foreach_detail_::auto_any_t _foreach_col = BOOST_FOREACH_CONTAIN(COL)) {} else   \
++    if (boost::foreach_detail_::auto_any_t _foreach_cur = BOOST_FOREACH_BEGIN(COL)) {} else     \
++    if (boost::foreach_detail_::auto_any_t _foreach_end = BOOST_FOREACH_END(COL)) {} else       \
++    for (bool _foreach_continue = true;                                                         \
++              _foreach_continue &amp;&amp; !BOOST_FOREACH_DONE(COL);                                    \
++              _foreach_continue ? BOOST_FOREACH_NEXT(COL) : (void)0)                            \
++        if  (boost::foreach_detail_::set_false(_foreach_continue)) {} else                      \
++        for (VAR = BOOST_FOREACH_DEREF(COL); !_foreach_continue; _foreach_continue = true)
++
++#endif
+
+Modified: trunk/gui/py/_eudoxos.cpp
+===================================================================
+--- trunk/gui/py/_eudoxos.cpp	2009-03-17 15:14:49 UTC (rev 1721)
++++ trunk/gui/py/_eudoxos.cpp	2009-03-18 21:06:08 UTC (rev 1722)
+@@ -1,5 +1,6 @@
+ #include&lt;yade/extra/Brefcom.hpp&gt;
+ #include&lt;boost/python.hpp&gt;
++#include&lt;yade/extra/boost_python_len.hpp&gt;
+ using namespace boost::python;
+ using namespace std;
+ # if 0
+
+Modified: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2009-03-17 15:14:49 UTC (rev 1721)
++++ trunk/gui/py/_utils.cpp	2009-03-18 21:06:08 UTC (rev 1722)
+@@ -1,5 +1,6 @@
+ #include&lt;yade/extra/Shop.hpp&gt;
+ #include&lt;boost/python.hpp&gt;
++#include&lt;yade/extra/boost_python_len.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/core/Omega.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+
+Modified: trunk/gui/py/pyAttrUtils.hpp
+===================================================================
+--- trunk/gui/py/pyAttrUtils.hpp	2009-03-17 15:14:49 UTC (rev 1721)
++++ trunk/gui/py/pyAttrUtils.hpp	2009-03-18 21:06:08 UTC (rev 1722)
+@@ -6,6 +6,7 @@
+ #include&lt;yade/lib-serialization/Archive.hpp&gt;
+ #include&lt;yade/lib-serialization-xml/XMLFormatManager.hpp&gt;
+ #include&lt;boost/python.hpp&gt;
++#include&lt;yade/extra/boost_python_len.hpp&gt;
+ 
+ #include&lt;boost/foreach.hpp&gt;
+ #ifndef FOREACH
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2009-03-17 15:14:49 UTC (rev 1721)
++++ trunk/gui/py/yadeControl.cpp	2009-03-18 21:06:08 UTC (rev 1722)
+@@ -6,6 +6,7 @@
+ #include&lt;unistd.h&gt;
+ #include&lt;list&gt;
+ 
++
+ #include&lt;boost/python.hpp&gt;
+ #include&lt;boost/python/suite/indexing/vector_indexing_suite.hpp&gt;
+ #include&lt;boost/bind.hpp&gt;
+@@ -66,6 +67,7 @@
+ using namespace std;
+ 
+ #include&quot;pyAttrUtils.hpp&quot;
++#include&lt;yade/extra/boost_python_len.hpp&gt;
+ 
+ class RenderingEngine;
+ 
+@@ -200,7 +202,7 @@
+ 	pyParallelEngine(python::list slaves){init(&quot;ParallelEngine&quot;); slaves_set(slaves);}
+ 	void slaves_set(python::list slaves){
+ 		ensureAcc(); shared_ptr&lt;ParallelEngine&gt; me=dynamic_pointer_cast&lt;ParallelEngine&gt;(proxee); if(!me) throw runtime_error(&quot;Proxied class not a ParallelEngine. (WTF?)&quot;);
+-		int len=PySequence_Size(slaves.ptr()); /*[boost1.34] python::len(ftrs)*/;
++		int len=python::len(slaves);
+ 		me-&gt;slaves=ParallelEngine::slaveContainer(); // empty the container
+ 		for(int i=0; i&lt;len; i++){
+ 			python::extract&lt;python::list&gt; grpMaybe(slaves[i]);
+@@ -217,7 +219,7 @@
+ 		python::list ret;
+ 		FOREACH(vector&lt;shared_ptr&lt;Engine &gt; &gt;&amp; grp, me-&gt;slaves){
+ 			python::list rret=anyEngines_get(grp);
+-			if(PySequence_Size(rret.ptr())==1){ ret.append(rret[0]); } else ret.append(rret);
++			if(python::len(rret)==1){ ret.append(rret[0]); } else ret.append(rret);
+ 		}
+ 		return ret;
+ 	}
+@@ -249,7 +251,7 @@
+ 		}
+ 		void functors_set(python::list ftrs){
+ 			ensureAcc(); shared_ptr&lt;MetaEngine&gt; me=dynamic_pointer_cast&lt;MetaEngine&gt;(proxee); if(!me) throw runtime_error(&quot;Proxied class not a MetaEngine. (?!)&quot;);
+-			me-&gt;clear(); int len=PySequence_Size(ftrs.ptr()) /*[boost1.34] python::len(ftrs)*/;
++			me-&gt;clear(); int len=python::len(ftrs);
+ 			for(int i=0; i&lt;len; i++){
+ 				python::extract&lt;pyEngineUnit&gt; euEx(ftrs[i]); if(!euEx.check()) throw invalid_argument(&quot;Unable to extract type EngineUnit from sequence.&quot;);
+ 				bool ok=false;
+@@ -297,7 +299,7 @@
+ }
+ 
+ void anyEngines_set(vector&lt;shared_ptr&lt;Engine&gt; &gt;&amp; engContainer, python::object egs){
+-	int len=PySequence_Size(egs.ptr()) /*[boost1.34] python::len(egs)*/;
++	int len=python::len(egs);
+ 	//const shared_ptr&lt;MetaBody&gt;&amp; rootBody=OMEGA.getRootBody(); rootBody-&gt;engines.clear();
+ 	engContainer.clear();
+ 	for(int i=0; i&lt;len; i++){
+@@ -386,7 +388,7 @@
+ 		pyInteractionIterator pyIter(){return pyInteractionIterator(proxee);}
+ 		pyInteraction pyGetitem(python::object id12){
+ 			if(!PySequence_Check(id12.ptr())) throw invalid_argument(&quot;Key must be a tuple&quot;);
+-			if(PySequence_Size(id12.ptr())!=2) throw invalid_argument(&quot;Key must be a 2-tuple: id1,id2.&quot;);
++			if(python::len(id12)!=2) throw invalid_argument(&quot;Key must be a 2-tuple: id1,id2.&quot;);
+ 			python::extract&lt;body_id_t&gt; id1_(PySequence_GetItem(id12.ptr(),0)), id2_(PySequence_GetItem(id12.ptr(),1));
+ 			if(!id1_.check()) throw invalid_argument(&quot;Could not extract id1&quot;);
+ 			if(!id2_.check()) throw invalid_argument(&quot;Could not extract id2&quot;);
+@@ -410,7 +412,7 @@
+ 		pyPhysicalActionContainer(const shared_ptr&lt;PhysicalActionContainer&gt;&amp; _proxee): proxee(_proxee){}
+ 		pyPhysicalAction pyGetitem(python::object action_and_id){
+ 			if(!PySequence_Check(action_and_id.ptr())) throw invalid_argument(&quot;Key must be a tuple&quot;);
+-			if(PySequence_Size(action_and_id.ptr())!=2) throw invalid_argument(&quot;Key must be a 2-tuple: [action-name , body id].&quot;);
++			if(python::len(action_and_id)!=2) throw invalid_argument(&quot;Key must be a 2-tuple: [action-name , body id].&quot;);
+ 			python::extract&lt;string&gt; actionName_(PySequence_GetItem(action_and_id.ptr(),0));
+ 			python::extract&lt;body_id_t&gt; id_(PySequence_GetItem(action_and_id.ptr(),1));
+ 			if(!actionName_.check()) throw invalid_argument(&quot;Could not extract action-name.&quot;);
+@@ -538,7 +540,7 @@
+ 	}
+ 
+ 	void miscParams_set(python::list l){
+-		int len=PySequence_Size(l.ptr());
++		int len=python::len(l);
+ 		vector&lt;shared_ptr&lt;Serializable&gt; &gt;&amp; miscParams=OMEGA.getRootBody()-&gt;miscParams;
+ 		miscParams.clear();
+ 		for(int i=0; i&lt;len; i++){
+
+Modified: trunk/lib/smoothing/WeightedAverage2d.hpp
+===================================================================
+--- trunk/lib/smoothing/WeightedAverage2d.hpp	2009-03-17 15:14:49 UTC (rev 1721)
++++ trunk/lib/smoothing/WeightedAverage2d.hpp	2009-03-18 21:06:08 UTC (rev 1722)
+@@ -12,8 +12,11 @@
+ #include&lt;boost/foreach.hpp&gt;
+ #include&lt;boost/lexical_cast.hpp&gt;
+ #include&lt;boost/python.hpp&gt;
++#include&lt;yade/extra/boost_python_len.hpp&gt;
+ 
+-#define FOREACH BOOST_FOREACH
++#ifndef FOREACH
++	#define FOREACH BOOST_FOREACH
++#endif
+ using namespace std;
+ using namespace boost;
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000871.html">[deprecated list] [Yade-dev] impossible to compile without python / sqlite3
+</A></li>
+	<LI>Next message: <A HREF="000868.html">[deprecated list] [Yade-dev] facets
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#865">[ date ]</a>
+              <a href="thread.html#865">[ thread ]</a>
+              <a href="subject.html#865">[ subject ]</a>
+              <a href="author.html#865">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

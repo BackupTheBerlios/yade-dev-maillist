@@ -1,0 +1,129 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [Bug 418107] Re: bzr1727 fails to	compile on ubuntu 9.04
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5BBug%20418107%5D%20Re%3A%20bzr1727%20fails%20to%0A%09compile%20on%20ubuntu%209.04&In-Reply-To=%3C20090824141402.10124.42933.malone%40gangotri.canonical.com%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001573.html">
+   <LINK REL="Next"  HREF="001577.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [Bug 418107] Re: bzr1727 fails to	compile on ubuntu 9.04</H1>
+    <B>Janek Kozicki</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5BBug%20418107%5D%20Re%3A%20bzr1727%20fails%20to%0A%09compile%20on%20ubuntu%209.04&In-Reply-To=%3C20090824141402.10124.42933.malone%40gangotri.canonical.com%3E"
+       TITLE="[deprecated list] [Yade-dev] [Bug 418107] Re: bzr1727 fails to	compile on ubuntu 9.04">janek_listy at wp.pl
+       </A><BR>
+    <I>Mon Aug 24 16:14:02 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001573.html">[deprecated list] [Yade-dev] [Bug 418107] Re: bzr1727 fails to	compile on ubuntu 9.04
+</A></li>
+        <LI>Next message: <A HREF="001577.html">[deprecated list] [Yade-dev] [Bug 418107] Re: bzr1727 fails to	compile on ubuntu 9.04
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1574">[ date ]</a>
+              <a href="thread.html#1574">[ thread ]</a>
+              <a href="subject.html#1574">[ subject ]</a>
+              <a href="author.html#1574">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>sorry for the false alarm. Indeed my bzr tree wasn't clean. And that's
+because I just copied bzr dir from another computer, because in ubuntu
+9.04 we don't have bzr 1.16 so I couldn't download trunk.
+
+So I backported bzr 1.17 to 9.04 and then it worked, but only if I used
+features=python,opengl otherwise, for &quot;plain&quot; compile (no options at
+all) I get this error:
+
+<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">janek at janek-desktop</A>:~/Y/trunk$ scons PREFIX=/home/janek/Z/BIN
+scons: Reading SConscript files ...
+@@@ Using profile default (scons.profile-default) @@@
+Yade version is `bzr1726', installed files will be suffixed with `-bzr1726'.
+All intermediary files will be in `/home/janek/Y/build-bzr1726'.
+Mkdir(&quot;/home/janek/Y/build-bzr1726&quot;)
+Checking whether c++ compiler &quot;g++&quot; works...yes
+Checking for pthread_exit(NULL) in C library pthread... yes
+Checking for boost::system::error_code(); /* non-essential */ in C++ library boost_system-mt... no
+Checking for boost::system::error_code(); /* non-essential */ in C++ library boost_system... no
+Checking for boost::thread::thread() in C++ library boost_thread-mt... yes
+Checking for boost::posix_time::time_duration::time_duration() in C++ library boost_date_time-mt... yes
+Checking for boost::filesystem::path() in C++ library boost_filesystem-mt... yes
+Checking for boost::iostreams::file_sink(&quot;&quot;) in C++ library boost_iostreams-mt... yes
+Checking for boost::regex(&quot;&quot;) in C++ library boost_regex-mt... yes
+Checking for try{} catch (const boost::archive::archive_exception&amp; e) {} in C++ library boost_serialization-mt... yes
+Checking for boost::program_options::options_description o in C++ library boost_program_options-mt... yes
+Checking for C++ header file boost/foreach.hpp... yes
+Checking for sqlite3_close(0L) in C++ library sqlite3... yes
+Checking for glutGetModifiers() in C library glut... yes
+Package glib-2.0 was not found in the pkg-config search path.
+Perhaps you should add the directory containing `glib-2.0.pc'
+to the PKG_CONFIG_PATH environment variable
+No package 'glib-2.0' found
+OSError: 'pkg-config glib-2.0 --cflags --libs' exited 1:
+  File &quot;/home/janek/Y/trunk/SConstruct&quot;, line 333:
+    env.ParseConfig('pkg-config glib-2.0 --cflags --libs');
+  File &quot;/usr/lib/scons/SCons/Environment.py&quot;, line 1447:
+    return function(self, self.backtick(command))
+  File &quot;/usr/lib/scons/SCons/Environment.py&quot;, line 585:
+    raise OSError(&quot;'%s' exited %d&quot; % (command, status))
+
+so something is missing, but only if I use all the features.
+I installed all stuff from <A HREF="http://yade.wikia.com/wiki/Installation_of_yade_on_debian_or_kubuntu">http://yade.wikia.com/wiki/Installation_of_yade_on_debian_or_kubuntu</A> for 9.04 so apparently some package isn't listed there :) Remind you - I'm testing this on clean 9.04 install in vmware.
+
+-- 
+bzr1727 fails to compile on ubuntu 9.04
+<A HREF="https://bugs.launchpad.net/bugs/418107">https://bugs.launchpad.net/bugs/418107</A>
+You received this bug notification because you are a member of Yade
+developers, which is subscribed to Yade.
+
+Status in Yet Another Dynamic Engine: New
+
+Bug description:
+I even made a clean ubuntu 9.04 install under vmware to be sure that it's not some broken python configuration. When you type scons to compile you only get this error:
+
+scons: Reading SCconscript files...
+@@@ Using profile default (scons.profile default) @@@
+TypeError: cannot concatenate 'str' and 'NoneType' objects:
+  File &quot;/home/janek/trunk/SConstruct&quot;, line 194:
+    env['SUFFIX']='-'+env['version']+env['variant']
+
+
+It doesn't even start checking what libraries are available.
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001573.html">[deprecated list] [Yade-dev] [Bug 418107] Re: bzr1727 fails to	compile on ubuntu 9.04
+</A></li>
+	<LI>Next message: <A HREF="001577.html">[deprecated list] [Yade-dev] [Bug 418107] Re: bzr1727 fails to	compile on ubuntu 9.04
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1574">[ date ]</a>
+              <a href="thread.html#1574">[ thread ]</a>
+              <a href="subject.html#1574">[ subject ]</a>
+              <a href="author.html#1574">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

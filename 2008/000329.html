@@ -1,0 +1,757 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1501 - in trunk: core gui	gui/qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1501%20-%20in%20trunk%3A%20core%20gui%0A%09gui/qt3&In-Reply-To=%3C200809021552.m82Fqgvj021384%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000330.html">
+   <LINK REL="Next"  HREF="000331.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1501 - in trunk: core gui	gui/qt3</H1>
+    <B>cosurgi at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1501%20-%20in%20trunk%3A%20core%20gui%0A%09gui/qt3&In-Reply-To=%3C200809021552.m82Fqgvj021384%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1501 - in trunk: core gui	gui/qt3">cosurgi at mail.berlios.de
+       </A><BR>
+    <I>Tue Sep  2 17:52:42 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000330.html">[deprecated list] [Yade-dev] changes needing review.
+</A></li>
+        <LI>Next message: <A HREF="000331.html">[deprecated list] [Yade-dev] [svn] r1501 - in trunk: core gui	gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#329">[ date ]</a>
+              <a href="thread.html#329">[ thread ]</a>
+              <a href="subject.html#329">[ subject ]</a>
+              <a href="author.html#329">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: cosurgi
+Date: 2008-09-02 17:52:37 +0200 (Tue, 02 Sep 2008)
+New Revision: 1501
+
+Modified:
+   trunk/core/NullGUI.cpp
+   trunk/gui/SConscript
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/GLViewer.hpp
+   trunk/gui/qt3/QtGeneratedSimulationController.ui
+   trunk/gui/qt3/SimulationController.cpp
+   trunk/gui/qt3/SimulationController.hpp
+   trunk/gui/qt3/YadeQtMainWindow.cpp
+   trunk/gui/qt3/YadeQtMainWindow.hpp
+Log:
+add to SimulationController buttons for looking in different directions. The default view direction is now down along the direction of gravity.
+
+
+
+Modified: trunk/core/NullGUI.cpp
+===================================================================
+--- trunk/core/NullGUI.cpp	2008-09-02 03:51:24 UTC (rev 1500)
++++ trunk/core/NullGUI.cpp	2008-09-02 15:52:37 UTC (rev 1501)
+@@ -50,7 +50,8 @@
+ \n\
+     input:\n\
+ 	-f name		- specify filename to load, or filegenerator configuration file\n\
+-			  (if a filegenerator then it must be the)\n\
++			  (if a filegenerator then it must be a last parameter\n\
++			  and multiple filegenerators are allowed)\n\
+ \n\
+     output:\n\
+ 	-s number	- if specified, a snapshot is saved every 'number'\n\
+
+Modified: trunk/gui/SConscript
+===================================================================
+--- trunk/gui/SConscript	2008-09-02 03:51:24 UTC (rev 1500)
++++ trunk/gui/SConscript	2008-09-02 15:52:37 UTC (rev 1501)
+@@ -29,6 +29,7 @@
+ 				'yade-serialization',
+ 				'XMLFormatManager',
+ 				'yade-serialization-qt',
++				'GravityEngines',
+ 				'OpenGLRenderingEngine',
+ 				'PositionOrientationRecorder',
+ 				'sqlite3x',
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-09-02 03:51:24 UTC (rev 1500)
++++ trunk/gui/qt3/GLViewer.cpp	2008-09-02 15:52:37 UTC (rev 1501)
+@@ -169,6 +169,8 @@
+ 
+ void GLViewer::keyPressEvent(QKeyEvent *e)
+ {
++	last_user_event = boost::posix_time::second_clock::local_time();
++
+ 	if(false){}
+ 	/* special keys: Escape and Space */
+ 	else if(e-&gt;key()==Qt::Key_Escape){ resetManipulation(); displayMessage(&quot;Manipulating scene.&quot;); }
+@@ -496,12 +498,24 @@
+ 	YadeQtMainWindow::self-&gt;closeView(this);
+ }
+ 
++void GLViewer::mouseMoveEvent(QMouseEvent *e){
++	last_user_event = boost::posix_time::second_clock::local_time();
++	QGLViewer::mouseMoveEvent(e);
++}
++
++void GLViewer::mousePressEvent(QMouseEvent *e){
++	last_user_event = boost::posix_time::second_clock::local_time();
++	QGLViewer::mousePressEvent(e);
++}
++
+ /* Handle double-click event; if clipping plane is manipulated, align it with the global coordinate system.
+  * Otherwise pass the event to QGLViewer to handle it normally.
+  *
+  * mostly copied over from ManipulatedFrame::mouseDoubleClickEvent
+  */
+ void GLViewer::mouseDoubleClickEvent(QMouseEvent *event){
++	last_user_event = boost::posix_time::second_clock::local_time();
++
+ 	if(manipulatedClipPlane&lt;0) { /* LOG_DEBUG(&quot;Double click not on clipping plane&quot;); */ QGLViewer::mouseDoubleClickEvent(event); return; }
+ #if QT_VERSION &gt;= 0x040000
+ 	if (event-&gt;modifiers() == Qt::NoModifier)
+@@ -516,6 +530,8 @@
+ }
+ 
+ void GLViewer::wheelEvent(QWheelEvent* event){
++	last_user_event = boost::posix_time::second_clock::local_time();
++
+ 	if(manipulatedClipPlane&lt;0){ QGLViewer::wheelEvent(event); return; }
+ 	assert(manipulatedClipPlane&lt;renderer-&gt;clipPlaneNum);
+ 	float distStep=1e-3*sceneRadius();
+@@ -554,3 +570,5 @@
+ 	}
+ }
+ 
++boost::posix_time::ptime GLViewer::getLastUserEvent(){return last_user_event;};
++
+
+Modified: trunk/gui/qt3/GLViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.hpp	2008-09-02 03:51:24 UTC (rev 1500)
++++ trunk/gui/qt3/GLViewer.hpp	2008-09-02 15:52:37 UTC (rev 1501)
+@@ -6,6 +6,7 @@
+ #include&lt;yade/pkg-common/OpenGLRenderingEngine.hpp&gt;
+ #include&lt;yade/lib-QGLViewer/qglviewer.h&gt;
+ #include&lt;yade/lib-QGLViewer/constraint.h&gt;
++#include &lt;boost/date_time/posix_time/posix_time.hpp&gt;
+ #include&lt;set&gt;
+ 
+ /*! Class handling user interaction with the openGL rendering of simulation.
+@@ -47,6 +48,7 @@
+ 		set&lt;int&gt; boundClipPlanes;
+ 		shared_ptr&lt;qglviewer::LocalConstraint&gt; xyPlaneConstraint;
+ 		string strBoundGroup(){string ret;FOREACH(int i, boundClipPlanes) ret+=&quot; &quot;+lexical_cast&lt;string&gt;(i+1);return ret;}
++		boost::posix_time::ptime last_user_event;
+ 
+      public :
+ 
+@@ -82,7 +84,9 @@
+ 		void initFromDOMElement(const QDomElement&amp; element);
+ 		int viewId;
+ 
++		boost::posix_time::ptime getLastUserEvent();
+ 
++
+ 		DECLARE_LOGGER;
+ 	protected :
+ 		virtual void keyPressEvent(QKeyEvent *e);
+@@ -92,4 +96,6 @@
+ 		virtual void endSelection(const QPoint &amp;point);
+ 		virtual void mouseDoubleClickEvent(QMouseEvent *e);
+ 		virtual void wheelEvent(QWheelEvent* e);
++		virtual void mouseMoveEvent(QMouseEvent *e);
++		virtual void mousePressEvent(QMouseEvent *e);
+ };
+
+Modified: trunk/gui/qt3/QtGeneratedSimulationController.ui
+===================================================================
+--- trunk/gui/qt3/QtGeneratedSimulationController.ui	2008-09-02 03:51:24 UTC (rev 1500)
++++ trunk/gui/qt3/QtGeneratedSimulationController.ui	2008-09-02 15:52:37 UTC (rev 1501)
+@@ -8,8 +8,8 @@
+         &lt;rect&gt;
+             &lt;x&gt;0&lt;/x&gt;
+             &lt;y&gt;0&lt;/y&gt;
+-            &lt;width&gt;261&lt;/width&gt;
+-            &lt;height&gt;470&lt;/height&gt;
++            &lt;width&gt;269&lt;/width&gt;
++            &lt;height&gt;519&lt;/height&gt;
+         &lt;/rect&gt;
+     &lt;/property&gt;
+     &lt;property name=&quot;sizePolicy&quot;&gt;
+@@ -38,90 +38,98 @@
+         &lt;/property&gt;
+         &lt;widget class=&quot;QLayoutWidget&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
+             &lt;property name=&quot;name&quot;&gt;
+-                &lt;cstring&gt;layout11&lt;/cstring&gt;
++                &lt;cstring&gt;layout9&lt;/cstring&gt;
+             &lt;/property&gt;
++            &lt;vbox&gt;
++                &lt;property name=&quot;name&quot;&gt;
++                    &lt;cstring&gt;unnamed&lt;/cstring&gt;
++                &lt;/property&gt;
++                &lt;property name=&quot;spacing&quot;&gt;
++                    &lt;number&gt;0&lt;/number&gt;
++                &lt;/property&gt;
++                &lt;widget class=&quot;QLabel&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;labelRealTime&lt;/cstring&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                        &lt;sizepolicy&gt;
++                            &lt;hsizetype&gt;5&lt;/hsizetype&gt;
++                            &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                        &lt;/sizepolicy&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;text&quot;&gt;
++                        &lt;string&gt;real 0:00:00.000&lt;/string&gt;
++                    &lt;/property&gt;
++                &lt;/widget&gt;
++                &lt;widget class=&quot;QLabel&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;labelSimulTime&lt;/cstring&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                        &lt;sizepolicy&gt;
++                            &lt;hsizetype&gt;5&lt;/hsizetype&gt;
++                            &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                        &lt;/sizepolicy&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;text&quot;&gt;
++                        &lt;string&gt;virt 00:000.000m000u000n&lt;/string&gt;
++                    &lt;/property&gt;
++                &lt;/widget&gt;
++                &lt;widget class=&quot;QLabel&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;labelIter&lt;/cstring&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                        &lt;sizepolicy&gt;
++                            &lt;hsizetype&gt;5&lt;/hsizetype&gt;
++                            &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                        &lt;/sizepolicy&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;text&quot;&gt;
++                        &lt;string&gt;iter #0, 0/s&lt;/string&gt;
++                    &lt;/property&gt;
++                &lt;/widget&gt;
++                &lt;widget class=&quot;QLabel&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;labelStep&lt;/cstring&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                        &lt;sizepolicy&gt;
++                            &lt;hsizetype&gt;5&lt;/hsizetype&gt;
++                            &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                        &lt;/sizepolicy&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;text&quot;&gt;
++                        &lt;string&gt;step 4e-3&lt;/string&gt;
++                    &lt;/property&gt;
++                &lt;/widget&gt;
++            &lt;/vbox&gt;
++        &lt;/widget&gt;
++        &lt;widget class=&quot;QLayoutWidget&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
++            &lt;property name=&quot;name&quot;&gt;
++                &lt;cstring&gt;layout12&lt;/cstring&gt;
++            &lt;/property&gt;
+             &lt;grid&gt;
+                 &lt;property name=&quot;name&quot;&gt;
+                     &lt;cstring&gt;unnamed&lt;/cstring&gt;
+                 &lt;/property&gt;
+-                &lt;widget class=&quot;QLayoutWidget&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
++                &lt;widget class=&quot;QPushButton&quot; row=&quot;1&quot; column=&quot;1&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;layout9&lt;/cstring&gt;
++                        &lt;cstring&gt;pbReference&lt;/cstring&gt;
+                     &lt;/property&gt;
+-                    &lt;vbox&gt;
+-                        &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;unnamed&lt;/cstring&gt;
+-                        &lt;/property&gt;
+-                        &lt;property name=&quot;spacing&quot;&gt;
+-                            &lt;number&gt;0&lt;/number&gt;
+-                        &lt;/property&gt;
+-                        &lt;widget class=&quot;QLabel&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;labelRealTime&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;5&lt;/hsizetype&gt;
+-                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                &lt;/sizepolicy&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;real 0:00:00.000&lt;/string&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                        &lt;widget class=&quot;QLabel&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;labelSimulTime&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;5&lt;/hsizetype&gt;
+-                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                &lt;/sizepolicy&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;virt 00:000.000m000u000n&lt;/string&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                        &lt;widget class=&quot;QLabel&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;labelIter&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;5&lt;/hsizetype&gt;
+-                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                &lt;/sizepolicy&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;iter #0, 0/s&lt;/string&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                        &lt;widget class=&quot;QLabel&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;labelStep&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;5&lt;/hsizetype&gt;
+-                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                &lt;/sizepolicy&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;step 4e-3&lt;/string&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                    &lt;/vbox&gt;
++                    &lt;property name=&quot;text&quot;&gt;
++                        &lt;string&gt;Reference&lt;/string&gt;
++                    &lt;/property&gt;
+                 &lt;/widget&gt;
+-                &lt;widget class=&quot;QTabWidget&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
++                &lt;widget class=&quot;QTabWidget&quot; row=&quot;0&quot; column=&quot;0&quot; rowspan=&quot;1&quot; colspan=&quot;3&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+                         &lt;cstring&gt;tabWidget&lt;/cstring&gt;
+                     &lt;/property&gt;
+@@ -626,59 +634,125 @@
+                         &lt;/grid&gt;
+                     &lt;/widget&gt;
+                 &lt;/widget&gt;
+-                &lt;widget class=&quot;QLayoutWidget&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;
++                &lt;widget class=&quot;QPushButton&quot; row=&quot;2&quot; column=&quot;0&quot;&gt;
+                     &lt;property name=&quot;name&quot;&gt;
+-                        &lt;cstring&gt;layout8&lt;/cstring&gt;
++                        &lt;cstring&gt;pbXYZ&lt;/cstring&gt;
+                     &lt;/property&gt;
+-                    &lt;grid&gt;
+-                        &lt;property name=&quot;name&quot;&gt;
+-                            &lt;cstring&gt;unnamed&lt;/cstring&gt;
+-                        &lt;/property&gt;
+-                        &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;1&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;pbReference&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;Reference&lt;/string&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                        &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;2&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;pbCenterScene_2&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;7&lt;/hsizetype&gt;
+-                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                &lt;/sizepolicy&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;Center&lt;/string&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                        &lt;widget class=&quot;QPushButton&quot; row=&quot;0&quot; column=&quot;0&quot;&gt;
+-                            &lt;property name=&quot;name&quot;&gt;
+-                                &lt;cstring&gt;pbNewView_2&lt;/cstring&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;enabled&quot;&gt;
+-                                &lt;bool&gt;true&lt;/bool&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;sizePolicy&quot;&gt;
+-                                &lt;sizepolicy&gt;
+-                                    &lt;hsizetype&gt;7&lt;/hsizetype&gt;
+-                                    &lt;vsizetype&gt;0&lt;/vsizetype&gt;
+-                                    &lt;horstretch&gt;0&lt;/horstretch&gt;
+-                                    &lt;verstretch&gt;0&lt;/verstretch&gt;
+-                                &lt;/sizepolicy&gt;
+-                            &lt;/property&gt;
+-                            &lt;property name=&quot;text&quot;&gt;
+-                                &lt;string&gt;New 3D&lt;/string&gt;
+-                            &lt;/property&gt;
+-                        &lt;/widget&gt;
+-                    &lt;/grid&gt;
++                    &lt;property name=&quot;enabled&quot;&gt;
++                        &lt;bool&gt;true&lt;/bool&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                        &lt;sizepolicy&gt;
++                            &lt;hsizetype&gt;3&lt;/hsizetype&gt;
++                            &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                        &lt;/sizepolicy&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;minimumSize&quot;&gt;
++                        &lt;size&gt;
++                            &lt;width&gt;0&lt;/width&gt;
++                            &lt;height&gt;25&lt;/height&gt;
++                        &lt;/size&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;text&quot;&gt;
++                        &lt;string&gt;&lt;/string&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;pixmap&quot;&gt;
++                        &lt;pixmap&gt;image5&lt;/pixmap&gt;
++                    &lt;/property&gt;
+                 &lt;/widget&gt;
++                &lt;widget class=&quot;QPushButton&quot; row=&quot;2&quot; column=&quot;2&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;pbZXY&lt;/cstring&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;enabled&quot;&gt;
++                        &lt;bool&gt;true&lt;/bool&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                        &lt;sizepolicy&gt;
++                            &lt;hsizetype&gt;3&lt;/hsizetype&gt;
++                            &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                        &lt;/sizepolicy&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;minimumSize&quot;&gt;
++                        &lt;size&gt;
++                            &lt;width&gt;0&lt;/width&gt;
++                            &lt;height&gt;25&lt;/height&gt;
++                        &lt;/size&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;text&quot;&gt;
++                        &lt;string&gt;&lt;/string&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;pixmap&quot;&gt;
++                        &lt;pixmap&gt;image6&lt;/pixmap&gt;
++                    &lt;/property&gt;
++                &lt;/widget&gt;
++                &lt;widget class=&quot;QPushButton&quot; row=&quot;2&quot; column=&quot;1&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;pbYZX&lt;/cstring&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;enabled&quot;&gt;
++                        &lt;bool&gt;true&lt;/bool&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                        &lt;sizepolicy&gt;
++                            &lt;hsizetype&gt;3&lt;/hsizetype&gt;
++                            &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                        &lt;/sizepolicy&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;minimumSize&quot;&gt;
++                        &lt;size&gt;
++                            &lt;width&gt;0&lt;/width&gt;
++                            &lt;height&gt;25&lt;/height&gt;
++                        &lt;/size&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;text&quot;&gt;
++                        &lt;string&gt;&lt;/string&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;pixmap&quot;&gt;
++                        &lt;pixmap&gt;image7&lt;/pixmap&gt;
++                    &lt;/property&gt;
++                &lt;/widget&gt;
++                &lt;widget class=&quot;QPushButton&quot; row=&quot;1&quot; column=&quot;2&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;pbCenterScene_2&lt;/cstring&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                        &lt;sizepolicy&gt;
++                            &lt;hsizetype&gt;7&lt;/hsizetype&gt;
++                            &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                        &lt;/sizepolicy&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;text&quot;&gt;
++                        &lt;string&gt;Center&lt;/string&gt;
++                    &lt;/property&gt;
++                &lt;/widget&gt;
++                &lt;widget class=&quot;QPushButton&quot; row=&quot;1&quot; column=&quot;0&quot;&gt;
++                    &lt;property name=&quot;name&quot;&gt;
++                        &lt;cstring&gt;pbNewView_2&lt;/cstring&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;enabled&quot;&gt;
++                        &lt;bool&gt;true&lt;/bool&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;sizePolicy&quot;&gt;
++                        &lt;sizepolicy&gt;
++                            &lt;hsizetype&gt;7&lt;/hsizetype&gt;
++                            &lt;vsizetype&gt;0&lt;/vsizetype&gt;
++                            &lt;horstretch&gt;0&lt;/horstretch&gt;
++                            &lt;verstretch&gt;0&lt;/verstretch&gt;
++                        &lt;/sizepolicy&gt;
++                    &lt;/property&gt;
++                    &lt;property name=&quot;text&quot;&gt;
++                        &lt;string&gt;New 3D&lt;/string&gt;
++                    &lt;/property&gt;
++                &lt;/widget&gt;
+             &lt;/grid&gt;
+         &lt;/widget&gt;
+     &lt;/grid&gt;
+@@ -699,6 +773,15 @@
+     &lt;image name=&quot;image4&quot;&gt;
+         &lt;data format=&quot;PNG&quot; length=&quot;160&quot;&gt;89504e470d0a1a0a0000000d4948445200000015000000150806000000a917a5960000006749444154388dadccd10d80300c03d1947118a1fbcb23b00e2c4013dbc9fd9ef4168098eecae6def73b8eba70893a3085aa308d2ab084b2b08c32b08556b08d66700b3dc16d1478d628fa07b6d01368a31968a11528a30c28a12c48a30a48a12a58a20e1811f101d3512a7c38fee1ac0000000049454e44ae426082&lt;/data&gt;
+     &lt;/image&gt;
++    &lt;image name=&quot;image5&quot;&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;409&quot;&gt;89504e470d0a1a0a0000000d49484452000000280000002808060000008cfeb86d00000160494441545885edd8cf2a05511cc0f1cf95c80bb0916c9462c1d2c20b7801b6ec59515e025bb628af203b6b65cfe6a2946c08c502d762ce2dae3b7f34cc8c9a6ffdea77a6697edf39bf9973eaf095135ca211e22a5cab0c4b686106b3215f2c53a8d1311ec03576d187790ce3b960af44364592b7d828d9a52b63a2d6b6425e49da82a5d353b6401a9517fcd7d4df60163a17ea36ad0cf71442e567b0f282dddad7ede728adcd959fc124ea65260bb5605e6ac1bcd48279a905f3d2de637fb26b94b22f67152c7cfbeb6c712b26fe924334d11fa219ae7d13eb644874c27096725f1a692f398157ac622de4136982bd38c63dc67f4930a923dbb80bb113f790cf6ce10d73198ae589368378c0a3a87389820b61bc9ee145b290650647f01262344970124f3848289647308e3ddc84d84f2a7c8e53d139e16f09a63185772c6325e4d37185d3be95bf103cc285e8c0b42fe44771826914be50f79659bca6083e00acfe78c833f5cc8f0000000049454e44ae426082&lt;/data&gt;
++    &lt;/image&gt;
++    &lt;image name=&quot;image6&quot;&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;435&quot;&gt;89504e470d0a1a0a0000000d49484452000000280000002808060000008cfeb86d0000017a494441545885edd83f6a1b411480f19f8250e20b5827100494c22e5df8023e415aa74f2a1b7289fca98c5ddbe02b1877ae0de99d4689c1100c714292328952684416696777c55a9a35ec07034fc3e3e99b3768060df39c6184c7618cc25c6318e237f6b01fe26152a31c0ef12d8ca3c42eb9ace3077ea29f52a41b997f825e88d756e4b210c7f812c64962973936f0172ff12ac49b498d6638c727932dee85f83ca1cfc3659c5a001ea51628a313991f57c859098def60e305f3b62fefc7916c9b1bdfc122da63a60aad605d5ac1bab482756905eb32bd6317b93592dccb5505577efde56df1253e9b74aa83eb30b72cc691319734e545f8bc85ed10efe6e42d2a50853e6e705524b8863bbcc701befaffba504730da9d401717f88ea74582f0d66425b77853f26575469677f8839dd82ab30c324506057955a8d2c1e761fe75519158e1b2bc4504f378865f382d2b122b5c9657978ff820f28a963da8670fe0f14c4e2caf2eb14577aa24552db634b20f988df893d472dffc03abb374caa8555fb90000000049454e44ae426082&lt;/data&gt;
++    &lt;/image&gt;
++    &lt;image name=&quot;image7&quot;&gt;
++        &lt;data format=&quot;PNG&quot; length=&quot;434&quot;&gt;89504e470d0a1a0a0000000d49484452000000280000002808060000008cfeb86d00000179494441545885edd8b14a1c4118c0f1df8928be8076218d2068114b0b5fc027486b7a5345c84b68ac24d60a798560672df800369a4040021ad11416ea59ec1c6c74766f8e3d7737b07ff860f8e6dbbbffceccceb0dbf3927e2407bd82fcab3219c9e545e67082bff5e88cc6248e708d85865da27cc103d69a1689f15eb6163f372d126349b6e6be352d52c4a9ecc198695a84f8d6d1aa6de6bfa668246b65a269816114adab7e424d2db47e045b2f98bacd3436cdad1fc132ba6d26854eb02a9d60553ac1aa748255199cb1a39c1a8d9ccba982b51f7fb129fe8e334c87380bb9d7e2183f6433d3c3cf90fb87fcc82ce21e9fb019da8b91ba54fa43aefb10fa57b01adaeb6582f0157f42ec95d48d22988f3c33b8c20e767129f24efefca259dce056f685abeccfaac4806dfcc26f6c15dd659e37b80bf1b6a42e85612308f3b9bef914c17d5c843818a3604a5d61e7807778c4063e86f67205c15492050f718ea910e721f7bc6edc240b0efb915ac97fa36ec54b52c7b879020c2e72e95070cdb80000000049454e44ae426082&lt;/data&gt;
++    &lt;/image&gt;
+ &lt;/images&gt;
+ &lt;connections&gt;
+     &lt;connection&gt;
+@@ -797,6 +880,24 @@
+         &lt;receiver&gt;QtGeneratedSimulationController&lt;/receiver&gt;
+         &lt;slot&gt;pbReferenceClicked()&lt;/slot&gt;
+     &lt;/connection&gt;
++    &lt;connection&gt;
++        &lt;sender&gt;pbXYZ&lt;/sender&gt;
++        &lt;signal&gt;clicked()&lt;/signal&gt;
++        &lt;receiver&gt;QtGeneratedSimulationController&lt;/receiver&gt;
++        &lt;slot&gt;pbXYZ_clicked()&lt;/slot&gt;
++    &lt;/connection&gt;
++    &lt;connection&gt;
++        &lt;sender&gt;pbYZX&lt;/sender&gt;
++        &lt;signal&gt;clicked()&lt;/signal&gt;
++        &lt;receiver&gt;QtGeneratedSimulationController&lt;/receiver&gt;
++        &lt;slot&gt;pbYZX_clicked()&lt;/slot&gt;
++    &lt;/connection&gt;
++    &lt;connection&gt;
++        &lt;sender&gt;pbZXY&lt;/sender&gt;
++        &lt;signal&gt;clicked()&lt;/signal&gt;
++        &lt;receiver&gt;QtGeneratedSimulationController&lt;/receiver&gt;
++        &lt;slot&gt;pbZXY_clicked()&lt;/slot&gt;
++    &lt;/connection&gt;
+ &lt;/connections&gt;
+ &lt;includes&gt;
+     &lt;include location=&quot;local&quot; impldecl=&quot;in implementation&quot;&gt;QtGeneratedSimulationController.ui.h&lt;/include&gt;
+@@ -827,6 +928,9 @@
+     &lt;slot&gt;closeGLViewEvent( int )&lt;/slot&gt;
+     &lt;slot&gt;pbReference_clicked()&lt;/slot&gt;
+     &lt;slot&gt;pbReferenceClicked()&lt;/slot&gt;
++    &lt;slot&gt;pbXYZ_clicked()&lt;/slot&gt;
++    &lt;slot&gt;pbYZX_clicked()&lt;/slot&gt;
++    &lt;slot&gt;pbZXY_clicked()&lt;/slot&gt;
+ &lt;/slots&gt;
+ &lt;layoutdefaults spacing=&quot;6&quot; margin=&quot;11&quot;/&gt;
+ &lt;/UI&gt;
+
+Modified: trunk/gui/qt3/SimulationController.cpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.cpp	2008-09-02 03:51:24 UTC (rev 1500)
++++ trunk/gui/qt3/SimulationController.cpp	2008-09-02 15:52:37 UTC (rev 1501)
+@@ -94,9 +94,25 @@
+ void SimulationController::pbApplyClicked()
+ {
+ 	guiGen.deserialize(YadeQtMainWindow::self-&gt;renderer);
++	YadeQtMainWindow::self-&gt;redrawAll(true);
+ }
++		
++void SimulationController::pbXYZ_clicked()
++{
++	YadeQtMainWindow::self-&gt;adjustCameraInCurrentView(qglviewer::Vec(0,1,0),qglviewer::Vec(0,0,-1));
++};
+ 
++void SimulationController::pbYZX_clicked()
++{
++	YadeQtMainWindow::self-&gt;adjustCameraInCurrentView(qglviewer::Vec(0,0,1),qglviewer::Vec(-1,0,0));
++};
+ 
++void SimulationController::pbZXY_clicked()
++{
++	YadeQtMainWindow::self-&gt;adjustCameraInCurrentView(qglviewer::Vec(1,0,0),qglviewer::Vec(0,-1,0));
++};
++
++
+ void SimulationController::pbLoadClicked()
+ {
+ 	pbStopClicked();
+
+Modified: trunk/gui/qt3/SimulationController.hpp
+===================================================================
+--- trunk/gui/qt3/SimulationController.hpp	2008-09-02 03:51:24 UTC (rev 1500)
++++ trunk/gui/qt3/SimulationController.hpp	2008-09-02 15:52:37 UTC (rev 1501)
+@@ -72,6 +72,9 @@
+ 		virtual void sbRefreshValueChanged(int);
+ 		virtual void cbSyncToggled(bool);
+ 		virtual void pbStart2Clicked();
++		virtual void pbXYZ_clicked();
++		virtual void pbYZX_clicked();
++		virtual void pbZXY_clicked();
+ 
+ 
+ 
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.cpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.cpp	2008-09-02 03:51:24 UTC (rev 1500)
++++ trunk/gui/qt3/YadeQtMainWindow.cpp	2008-09-02 15:52:37 UTC (rev 1501)
+@@ -23,7 +23,9 @@
+ #include &lt;qpixmap.h&gt;
+ #include &lt;boost/filesystem/operations.hpp&gt;
+ #include &lt;boost/filesystem/convenience.hpp&gt;
++#include &lt;boost/date_time/posix_time/posix_time.hpp&gt;
+ 
++#include &lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+ 
+ using namespace std;
+@@ -96,7 +98,7 @@
+ 	}
+ }
+ 
+-void YadeQtMainWindow::loadSimulation(string file){createController();	controller-&gt;loadSimulationFromFileName(file);}
++void YadeQtMainWindow::loadSimulation(string file){createController();	controller-&gt;loadSimulationFromFileName(file); lookDown(glViews[0]);}
+ void YadeQtMainWindow::centerViews(){FOREACH(const shared_ptr&lt;GLViewer&gt;&amp; glv,glViews){ if(glv) glv-&gt;centerScene(); }}
+ 
+ 
+@@ -150,12 +152,44 @@
+ 	glv-&gt;setCamera(new YadeCamera);
+ 	glv-&gt;camera()-&gt;frame()-&gt;setWheelSensitivity(-1.0f);
+ 	glv-&gt;camera()-&gt;setUpVector(qglviewer::Vec(0,0,1));
+-	glv-&gt;camera()-&gt;setViewDirection(qglviewer::Vec(-1,0,0));
+-	glv-&gt;centerScene();
++	glv-&gt;camera()-&gt;setViewDirection(qglviewer::Vec(-1,-1,-1));
++	lookDown(glv);
+ 	glViews.push_back(glv);
+ 	//connect( glv, SIGNAL(closeSignal(int)), this, SLOT( closeGLViewEvent(int) ) );
+ }
+ 
++void YadeQtMainWindow::lookDown(shared_ptr&lt;GLViewer&gt; glv)
++{
++	bool hasSimulation=(Omega::instance().getRootBody() ? Omega::instance().getRootBody()-&gt;bodies-&gt;size()&gt;0 : false );
++	if(hasSimulation)
++	{	
++		Vector3r g(0,0,1);
++		FOREACH(const shared_ptr&lt;Engine&gt;&amp; e,Omega::instance().getRootBody()-&gt;engines){
++			if(e &amp;&amp; e-&gt;getClassName()==&quot;GravityEngine&quot;)  
++				g = -1.0*(dynamic_cast&lt;GravityEngine*&gt;(e.get()))-&gt;gravity;
++		}
++		glv-&gt;camera()-&gt;setUpVector(qglviewer::Vec(g[0],g[1],g[2]));
++	} else {
++		glv-&gt;camera()-&gt;setUpVector(qglviewer::Vec(0,0,1));
++	}
++	glv-&gt;camera()-&gt;setViewDirection(qglviewer::Vec(-1,-1,-1));
++	glv-&gt;centerScene();
++};
++		
++void YadeQtMainWindow::adjustCameraInCurrentView(qglviewer::Vec up,qglviewer::Vec dir)
++{
++	boost::posix_time::ptime last(boost::posix_time::second_clock::local_time()-boost::posix_time::hours(1000));
++	FOREACH(const shared_ptr&lt;GLViewer&gt;&amp; glv,glViews){ if(glv) last=std::max(last,glv-&gt;getLastUserEvent()); }
++	FOREACH(const shared_ptr&lt;GLViewer&gt;&amp; glv,glViews){ 
++		if(glv &amp;&amp; glv-&gt;getLastUserEvent()&gt;=last)
++		{
++			glv-&gt;camera()-&gt;setUpVector(up);
++			glv-&gt;camera()-&gt;setViewDirection(dir);
++			glv-&gt;centerScene();
++		}
++	}
++};
++
+ void YadeQtMainWindow::closeView(GLViewer* glv){
+ 	for(size_t i=0; i&lt;glViews.size(); i++){
+ 		if(glViews[i].get()==glv){
+
+Modified: trunk/gui/qt3/YadeQtMainWindow.hpp
+===================================================================
+--- trunk/gui/qt3/YadeQtMainWindow.hpp	2008-09-02 03:51:24 UTC (rev 1500)
++++ trunk/gui/qt3/YadeQtMainWindow.hpp	2008-09-02 15:52:37 UTC (rev 1501)
+@@ -36,8 +36,10 @@
+ 		void closeView(GLViewer*);
+ 		void closeView(int);
+ 		void centerViews();
++		void adjustCameraInCurrentView(qglviewer::Vec up,qglviewer::Vec dir);
+ 		void loadSimulation(string file);
+ 		void redrawAll(bool force=false);
++		void lookDown(shared_ptr&lt;GLViewer&gt; glv);
+ 
+ 	protected :
+ 		shared_ptr&lt;QtGUIPreferences&gt; preferences;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000330.html">[deprecated list] [Yade-dev] changes needing review.
+</A></li>
+	<LI>Next message: <A HREF="000331.html">[deprecated list] [Yade-dev] [svn] r1501 - in trunk: core gui	gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#329">[ date ]</a>
+              <a href="thread.html#329">[ thread ]</a>
+              <a href="subject.html#329">[ subject ]</a>
+              <a href="author.html#329">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

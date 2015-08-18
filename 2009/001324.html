@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1912 - in trunk: .	lib/factory	pkg/dem/DataClass/InteractionGeometry
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1912%20-%20in%20trunk%3A%20.%0A%09lib/factory%09pkg/dem/DataClass/InteractionGeometry&In-Reply-To=%3C200908031525.n73FP6Lq011922%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001416.html">
+   <LINK REL="Next"  HREF="001328.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1912 - in trunk: .	lib/factory	pkg/dem/DataClass/InteractionGeometry</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1912%20-%20in%20trunk%3A%20.%0A%09lib/factory%09pkg/dem/DataClass/InteractionGeometry&In-Reply-To=%3C200908031525.n73FP6Lq011922%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1912 - in trunk: .	lib/factory	pkg/dem/DataClass/InteractionGeometry">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Aug  3 17:25:06 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001416.html">[deprecated list] [Yade-dev] [svn] r1911 - in trunk: . core core/containers gui/qt3 lib/base lib/factory lib/multimethods lib/serialization pkg/common/DataClass/BoundingVolume pkg/common/DataClass/GeometricalModel pkg/common/DataClass/InteractingGeometry pkg/common/DataClass/InteractionGeometry pkg/common/DataClass/InteractionPhysics pkg/common/DataClass/PhysicalParameters pkg/common/DataClass/Widgets pkg/common/Engine pkg/common/Engine/DeusExMachina pkg/common/Engine/EngineUnit pkg/common/Engine/FilterEngine pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine pkg/common/RenderingEngine/GLDrawBoundingVolume pkg/common/RenderingEngine/GLDrawGeometricalModel pkg/common/RenderingEngine/GLDrawInteractingGeometry pkg/common/RenderingEngine/GLDrawInteractionGeometry pkg/common/RenderingEngine/GLDrawInteractionPhysics pkg/common/RenderingEngine/GLDrawShadowVolume pkg/common/RenderingEngine/GLDrawState pkg/common/RenderingEngine/GLDrawWidgets pkg/common/RenderingEngine/OpenGLRenderingEngine! pkg/dem/DataClass pkg/dem/DataClass/InteractingGeometry pkg/dem/DataClass/InteractionGeometry pkg/dem/DataClass/InteractionPhysics pkg/dem/DataClass/PhysicalParameters pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction pkg/dem/RenderingEngine/GLDrawElasticContactInteraction pkg/dem/RenderingEngine/GLDrawInteractingMyTetrahedron pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry pkg/dem/RenderingEngine/GLDrawViscoelasticInteraction pkg/dem/meta pkg/fem/DataClass/GeometricalModel pkg/fem/DataClass/PhysicalParameters pkg/fem/Engine/EngineUnit pkg/fem/Engine/StandAloneEngine pkg/fem/PreProcessor pkg/lattice/DataClass/GeometricalModel pkg/lattice/DataClass/InteractingGeometry pkg/lattice/DataClass/InteractionPhysics pkg/lattice/DataClass/PhysicalParameters pkg/lattice/Engine/EngineUnit pkg/lattice/Engine/StandAloneEngine pkg/lattice/PreProcessor pkg/latt! ice/RenderingEngine/GLDrawLatticeBeamState pkg/lattice/Renderi! ngEngine
+</A></li>
+        <LI>Next message: <A HREF="001328.html">[deprecated list] [Yade-dev] [svn] r1912 - in trunk: .	lib/factory	pkg/dem/DataClass/InteractionGeometry
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1324">[ date ]</a>
+              <a href="thread.html#1324">[ thread ]</a>
+              <a href="subject.html#1324">[ subject ]</a>
+              <a href="author.html#1324">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-08-03 17:25:05 +0200 (Mon, 03 Aug 2009)
+New Revision: 1912
+
+Modified:
+   trunk/SConstruct
+   trunk/lib/factory/ClassFactory.hpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.hpp
+Log:
+1. Don't use __COUNTER__ to generate plugin registration function names, as they wre added in gcc 4.3 Use the name of the first plugin instead.
+2. Dem3Dof_SphereSphere takes touching distance as equilibrium if distanceFactor is &lt;=1. The initial position otherwise (was the default everytime until now)
+
+
+Modified: trunk/SConstruct
+===================================================================
+--- trunk/SConstruct	2009-08-03 11:02:11 UTC (rev 1911)
++++ trunk/SConstruct	2009-08-03 15:25:05 UTC (rev 1912)
+@@ -405,7 +405,7 @@
+ 
+ ### COMPILER
+ if env['debug']: env.Append(CXXFLAGS='-ggdb2',CPPDEFINES=['YADE_DEBUG'])
+-else: env.Append(CXXFLAGS='-O2')
++else: env.Append(CXXFLAGS='-O3')
+ if env['openmp']: env.Append(CXXFLAGS='-fopenmp',LIBS='gomp',CPPDEFINES='YADE_OPENMP')
+ if env['optimize']:
+ 	env.Append(CXXFLAGS=Split('-O3 -march=%s'%env['march']),
+
+Modified: trunk/lib/factory/ClassFactory.hpp
+===================================================================
+--- trunk/lib/factory/ClassFactory.hpp	2009-08-03 11:02:11 UTC (rev 1911)
++++ trunk/lib/factory/ClassFactory.hpp	2009-08-03 15:25:05 UTC (rev 1912)
+@@ -177,9 +177,8 @@
+ 
+ 
+ /*! Macro defining what classes can be found in this plugin -- must always be used in the respective .cpp file.
+- *
+- * Note: __COUNTER__ generates unique function name for each plugin. This avoids name clashes, even if multiple .cpp files
+- * are compiled into one plugin.
++ * A function registerThisPluginClasses_FirstPluginName is generated at every occurence. The identifier should
++ * be unique and avoids use of __COUNTER__ which didn't appear in gcc until 4.3.
+  */
+ 
+ #ifdef YADE_BOOST_SERIALIZATION
+@@ -189,7 +188,7 @@
+ #endif
+ 
+ #define _YADE_PLUGIN_REPEAT(x,y,z) BOOST_PP_STRINGIZE(z),
+-#define YADE_PLUGIN(plugins) namespace{ __attribute__((constructor)) void BOOST_PP_CAT(registerThisPluginClasses,__COUNTER__) (void){ const char* info[]={__FILE__ , BOOST_PP_SEQ_FOR_EACH(_YADE_PLUGIN_REPEAT,~,plugins) NULL}; ClassFactory::instance().registerPluginClasses(info);} } BOOST_PP_SEQ_FOR_EACH(_YADE_PLUGIN_BOOST_REGISTER,~,plugins)
++#define YADE_PLUGIN(plugins) namespace{ __attribute__((constructor)) void BOOST_PP_CAT(registerThisPluginClasses_,BOOST_PP_SEQ_HEAD(plugins)) (void){ const char* info[]={__FILE__ , BOOST_PP_SEQ_FOR_EACH(_YADE_PLUGIN_REPEAT,~,plugins) NULL}; ClassFactory::instance().registerPluginClasses(info);} } BOOST_PP_SEQ_FOR_EACH(_YADE_PLUGIN_BOOST_REGISTER,~,plugins)
+ //! Macro informing build file generator what features that particular file depends on. Has no effect at compile-time. Can be specified multiple times within a single (.cpp) file
+ #define YADE_REQUIRE_FEATURE(feature)
+ 
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp	2009-08-03 11:02:11 UTC (rev 1911)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.cpp	2009-08-03 15:25:05 UTC (rev 1912)
+@@ -162,7 +162,8 @@
+ 		ss=shared_ptr&lt;Dem3DofGeom_SphereSphere&gt;(new Dem3DofGeom_SphereSphere());
+ 		c-&gt;interactionGeometry=ss;
+ 		// constants
+-		ss-&gt;refLength=dist;
++		if(distanceFactor&gt;1) ss-&gt;refLength=dist;
++		else ss-&gt;refLength=s1-&gt;radius+s2-&gt;radius;
+ 		ss-&gt;refR1=s1-&gt;radius; ss-&gt;refR2=s2-&gt;radius;
+ 		Real penetrationDepth=s1-&gt;radius+s2-&gt;radius-ss-&gt;refLength;
+ 		if(Omega::instance().getCurrentIteration()&lt;=10){
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.hpp	2009-08-03 11:02:11 UTC (rev 1911)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/Dem3DofGeom_SphereSphere.hpp	2009-08-03 15:25:05 UTC (rev 1912)
+@@ -61,6 +61,7 @@
+ 		virtual bool go(const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1, const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2, const Se3r&amp; se31, const Se3r&amp; se32, const shared_ptr&lt;Interaction&gt;&amp; c);
+ 		virtual bool goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp;, const shared_ptr&lt;InteractingGeometry&gt;&amp;, const Se3r&amp;, const Se3r&amp;, const shared_ptr&lt;Interaction&gt;&amp;){throw runtime_error(&quot;goReverse on symmetric functor should never be called!&quot;);}
+ 		//! Factor of sphere radius such that sphere &quot;touch&quot; if their centers are not further than distanceFactor*(r1+r2); defaults to 1.
++		//! If &gt;1, equilibrium distance is the one when spheres get into initial contact; it is the sum of their radii otherwise.
+ 		Real distanceFactor;
+ 		ef2_Sphere_Sphere_Dem3DofGeom(): distanceFactor(1.) {}
+ 	FUNCTOR2D(InteractingSphere,InteractingSphere);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001416.html">[deprecated list] [Yade-dev] [svn] r1911 - in trunk: . core core/containers gui/qt3 lib/base lib/factory lib/multimethods lib/serialization pkg/common/DataClass/BoundingVolume pkg/common/DataClass/GeometricalModel pkg/common/DataClass/InteractingGeometry pkg/common/DataClass/InteractionGeometry pkg/common/DataClass/InteractionPhysics pkg/common/DataClass/PhysicalParameters pkg/common/DataClass/Widgets pkg/common/Engine pkg/common/Engine/DeusExMachina pkg/common/Engine/EngineUnit pkg/common/Engine/FilterEngine pkg/common/Engine/MetaEngine pkg/common/Engine/StandAloneEngine pkg/common/RenderingEngine/GLDrawBoundingVolume pkg/common/RenderingEngine/GLDrawGeometricalModel pkg/common/RenderingEngine/GLDrawInteractingGeometry pkg/common/RenderingEngine/GLDrawInteractionGeometry pkg/common/RenderingEngine/GLDrawInteractionPhysics pkg/common/RenderingEngine/GLDrawShadowVolume pkg/common/RenderingEngine/GLDrawState pkg/common/RenderingEngine/GLDrawWidgets pkg/common/RenderingEngine/OpenGLRenderingEngine! pkg/dem/DataClass pkg/dem/DataClass/InteractingGeometry pkg/dem/DataClass/InteractionGeometry pkg/dem/DataClass/InteractionPhysics pkg/dem/DataClass/PhysicalParameters pkg/dem/Engine/DeusExMachina pkg/dem/Engine/EngineUnit pkg/dem/Engine/StandAloneEngine pkg/dem/PreProcessor pkg/dem/RenderingEngine/GLDrawCohesiveFrictionalContactInteraction pkg/dem/RenderingEngine/GLDrawElasticContactInteraction pkg/dem/RenderingEngine/GLDrawInteractingMyTetrahedron pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry pkg/dem/RenderingEngine/GLDrawViscoelasticInteraction pkg/dem/meta pkg/fem/DataClass/GeometricalModel pkg/fem/DataClass/PhysicalParameters pkg/fem/Engine/EngineUnit pkg/fem/Engine/StandAloneEngine pkg/fem/PreProcessor pkg/lattice/DataClass/GeometricalModel pkg/lattice/DataClass/InteractingGeometry pkg/lattice/DataClass/InteractionPhysics pkg/lattice/DataClass/PhysicalParameters pkg/lattice/Engine/EngineUnit pkg/lattice/Engine/StandAloneEngine pkg/lattice/PreProcessor pkg/latt! ice/RenderingEngine/GLDrawLatticeBeamState pkg/lattice/Renderi! ngEngine
+</A></li>
+	<LI>Next message: <A HREF="001328.html">[deprecated list] [Yade-dev] [svn] r1912 - in trunk: .	lib/factory	pkg/dem/DataClass/InteractionGeometry
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1324">[ date ]</a>
+              <a href="thread.html#1324">[ thread ]</a>
+              <a href="subject.html#1324">[ subject ]</a>
+              <a href="author.html#1324">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

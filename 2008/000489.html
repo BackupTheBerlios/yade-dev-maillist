@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] recent changes in	TriaxialCompressionEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20recent%20changes%20in%0A%09TriaxialCompressionEngine&In-Reply-To=%3C4908D6BE.3020307%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000488.html">
+   <LINK REL="Next"  HREF="000494.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] recent changes in	TriaxialCompressionEngine</H1>
+    <B>V&#225;clav S(milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20recent%20changes%20in%0A%09TriaxialCompressionEngine&In-Reply-To=%3C4908D6BE.3020307%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev] recent changes in	TriaxialCompressionEngine">eudoxos at arcig.cz
+       </A><BR>
+    <I>Wed Oct 29 22:33:50 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000488.html">[deprecated list] [Yade-dev] recent changes in	TriaxialCompressionEngine
+</A></li>
+        <LI>Next message: <A HREF="000494.html">[deprecated list] [Yade-dev] [svn] r1566 - in trunk/pkg:	common	common/DataClass/InteractingGeometry	common/Engine/EngineUnit	common/RenderingEngine/GLDrawGeometricalModel	common/RenderingEngine/GLDrawInteractingGeometry	dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#489">[ date ]</a>
+              <a href="thread.html#489">[ thread ]</a>
+              <a href="subject.html#489">[ subject ]</a>
+              <a href="author.html#489">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>(make sure you reply to the list, not to me directly)
+&gt;<i>   Sure, there is a problem for the other state in a
+</I>&gt;<i> TriaxialCompressionEngine.cpp, the condition &amp;&amp; wishedporosity &lt; 1 is
+</I>&gt;<i> wrong. I was too happy to realize my first commit.
+</I>&gt;<i> I am sorry for the generated problems. I think the best thing to do is to
+</I>&gt;<i> replace the files : triaxialcompressionengine, triaxialtest,
+</I>&gt;<i> triaxialstaterecorder, elasticcontactinteraction by the same files just
+</I>&gt;<i> before my commit. I am conscious, it is not the wonder solution.
+</I>&gt;<i>   
+</I>No problem with the code commited, I think that we can keep it, because
+it can certainly be useful, it will be ironed our progressively. Unless
+you really want to revert your changes, which should be quite easy --
+svn has all the history.
+&gt;<i> Concerning: STATE_DIE_COMPRESSION is a new state in the triaxail simulation
+</I>&gt;<i> in order to realize a compaction by the wall displacement until a porosity
+</I>&gt;<i> controlled (parameter : wishedPorosity) by the user.
+</I>&gt;<i> The code calculates the porosity in a cube (parameter: calculatedporosity),
+</I>&gt;<i> when the wishedPorosity equal to calculatedporosity =&gt; the simulation is
+</I>&gt;<i> stopped.
+</I>&gt;<i>
+</I>&gt;<i> To resume, it is an isotropic compaction until a fixed porosity value.
+</I>&gt;<i>   
+</I>Nice explanation. Now just copy&amp;paste that to
+TriaxialCompressionEngine.hpp, to the big comment before &quot;class
+TriaxialCompressionEngine :-)
+
+A+, Vaclav
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000488.html">[deprecated list] [Yade-dev] recent changes in	TriaxialCompressionEngine
+</A></li>
+	<LI>Next message: <A HREF="000494.html">[deprecated list] [Yade-dev] [svn] r1566 - in trunk/pkg:	common	common/DataClass/InteractingGeometry	common/Engine/EngineUnit	common/RenderingEngine/GLDrawGeometricalModel	common/RenderingEngine/GLDrawInteractingGeometry	dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#489">[ date ]</a>
+              <a href="thread.html#489">[ thread ]</a>
+              <a href="subject.html#489">[ subject ]</a>
+              <a href="author.html#489">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

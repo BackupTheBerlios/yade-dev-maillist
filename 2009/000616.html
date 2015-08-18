@@ -1,0 +1,198 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1638 - trunk/gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1638%20-%20trunk/gui/py&In-Reply-To=%3C200901241040.n0OAeBVH028192%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000615.html">
+   <LINK REL="Next"  HREF="000617.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1638 - trunk/gui/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1638%20-%20trunk/gui/py&In-Reply-To=%3C200901241040.n0OAeBVH028192%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1638 - trunk/gui/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Jan 24 11:40:11 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000615.html">[deprecated list] [Yade-dev] [svn] r1637 - trunk/gui/qt3
+</A></li>
+        <LI>Next message: <A HREF="000617.html">[deprecated list] [Yade-dev] [svn] r1639 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#616">[ date ]</a>
+              <a href="thread.html#616">[ thread ]</a>
+              <a href="subject.html#616">[ subject ]</a>
+              <a href="author.html#616">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-01-24 11:40:10 +0100 (Sat, 24 Jan 2009)
+New Revision: 1638
+
+Modified:
+   trunk/gui/py/utils.py
+   trunk/gui/py/yade-multi
+Log:
+1. Number lines in parameter table for multijobs from 1 (as text editors do)
+2. Print short summary at the end of job log (when started, when finished, exit status, duration, commandline)
+
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2009-01-24 05:55:23 UTC (rev 1637)
++++ trunk/gui/py/utils.py	2009-01-24 10:40:10 UTC (rev 1638)
+@@ -295,7 +295,7 @@
+ 		if not tableFileLine: tableFileLine=os.environ['PARAM_TABLE']
+ 		tableFile,tableLine=tableFileLine.split(':')
+ 		o.tags['line']='l'+tableLine
+-		ll=[l.split('#')[0] for l in open(tableFile).readlines()]; names=ll[0].split(); values=ll[int(tableLine)].split()
++		ll=[l.split('#')[0] for l in ['']+open(tableFile).readlines()]; names=ll[1].split(); values=ll[int(tableLine)].split()
+ 		assert(len(names)==len(values))
+ 		for i in range(len(names)):
+ 			if names[i]=='description': o.tags['description']=values[i]
+
+Modified: trunk/gui/py/yade-multi
+===================================================================
+--- trunk/gui/py/yade-multi	2009-01-24 05:55:23 UTC (rev 1637)
++++ trunk/gui/py/yade-multi	2009-01-24 10:40:10 UTC (rev 1638)
+@@ -3,25 +3,44 @@
+ #
+ # portions &#169; 2008 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+ 
++import os, sys, thread, time
+ 
++class JobInfo():
++	def __init__(self,num,id,command,log):
++		self.started,self.finished,self.duration,self.exitStatus=None,None,None,None
++		self.command=command; self.num=num; self.log=log; self.id=id
++	def saveInfo(self):
++		log=file(self.log,'a')
++		log.write(&quot;&quot;&quot;
++=================== JOB&#160;SUMMARY ================
++id      : %s
++status  : %d (%s)
++duration: %s
++command : %s
++started : %s
++finished: %s
++&quot;&quot;&quot;%(self.id,self.exitStatus,'OK' if self.exitStatus==0 else 'FAILED',self.duration,self.command,time.asctime(time.localtime(self.started)),time.asctime(time.localtime(self.finished))));
++		log.close()
++
+ #
+ # _MANY_ thanks to Mark Pettit for concurrent jobs handling!
+ # <A HREF="http://code.activestate.com/recipes/534160/">http://code.activestate.com/recipes/534160/</A>
+ #
+ 
+-import os, sys, thread, time
+ 
+ def __concurrent_batch(cmd,thread_num,completion_status_dict,exit_code_dict):
+ 	&quot;&quot;&quot;Helper routine for 'concurrent_batches.&quot;&quot;&quot;
+-
+-	t0=time.time()
++	job=jobs[thread_num]
++	job.started=time.time();
+ 	print '#%d started on %s'%(thread_num,time.asctime())
+ 	exit_code_dict[thread_num] = os.system(cmd)
+ 	completion_status_dict[thread_num] = 1  # for sum() routine
+-	dt=int(time.time()-t0)
+-	strDt='%02d:%02d:%02d'%(dt//3600,(dt%3600)//60,(dt%60))
+-	strStatus='done   ' if exit_code_dict[thread_num]==0 else 'FAILED '
+-	print &quot;#%d %s (exit status %d), duration %s&quot;%(thread_num,strStatus,exit_code_dict[thread_num],strDt)
++	job.finished=time.time(); dt=job.finished-job.started;
++	job.exitStatus=exit_code_dict[thread_num]
++	job.duration='%02d:%02d:%02d'%(dt//3600,(dt%3600)//60,(dt%60))
++	strStatus='done   ' if job.exitStatus==0 else 'FAILED '
++	print &quot;#%d %s (exit status %d), duration %s, log %s&quot;%(thread_num,strStatus,exit_code_dict[thread_num],job.duration,job.log)
++	job.saveInfo()
+ 
+ def concurrent_batches(batchlist,maxjobs=0,maxtime=0):
+ 	&quot;&quot;&quot;Run a list of batch commands simultaneously.
+@@ -104,8 +123,8 @@
+ 
+ print &quot;Will run `%s' on `%s' with nice value %d, output redirected to `%s', %d jobs at a time.&quot;%(executable,simul,nice,logFormat,maxJobs)
+ 
+-ll=open(table,'r').readlines()
+-availableLines=[i for i in range(len(ll)) if not re.match(r'^\s*(#.*)?$',ll[i][:-1]) and i&gt;0]
++ll=['']+open(table,'r').readlines()
++availableLines=[i for i in range(len(ll)) if not re.match(r'^\s*(#.*)?$',ll[i][:-1]) and i&gt;1]
+ 
+ print &quot;Will use table `%s', with available lines&quot;%(table),', '.join([str(i) for i in availableLines])+'.'
+ 
+@@ -120,13 +139,13 @@
+ 	useLines0=numRange2List(lineList)
+ 	for l in useLines0:
+ 		if l not in availableLines: print &quot;WARNING: skipping unavailable line %d that was requested from the command line.&quot;%l
+-		elif l==0: print &quot;WARNING: skipping line 0 that should contain variable labels&quot;
++		elif l==1: print &quot;WARNING: skipping line 1 that should contain variable labels&quot;
+ 		else: useLines+=[l]
+ else: useLines=availableLines
+ print &quot;Will use lines &quot;,', '.join([str(i) for i in useLines])+'.'
+ # find column where description is
+ try:
+-	idColumn=ll[0].split().index('description')
++	idColumn=ll[1].split().index('description')
+ 	idStrings={}
+ 	for i in useLines: idStrings[i]=ll[i].split()[idColumn] # textual descripion of respective lines 
+ 	print idStrings
+@@ -135,14 +154,15 @@
+ 	idStrings=None
+ 
+ 
+-batches=[]
+-for l in useLines:
++jobs=[]
++for i,l in enumerate(useLines):
+ 	logFile=logFormat.replace('%',str(l))
+ 	if idStrings: logFile=logFile.replace('@',idStrings[l])
+-	batches.append('PARAM_TABLE=%s:%d nice -n %d %s -N PythonUI -- -n -x %s &gt; %s 2&gt;&amp;1'%(table,l,nice,executable,simul,logFile))
++	jobs.append(JobInfo(i,idStrings[l] if idStrings else '#'+str(i),'PARAM_TABLE=%s:%d nice -n %d %s -N PythonUI -- -n -x %s &gt; %s 2&gt;&amp;1'%(table,l,nice,executable,simul,logFile),logFile))
++
+ print &quot;Job summary:&quot;
+-for i in range(len(batches)):
+-	print '   #%d:'%i, batches[i]
++for job in jobs:
++	print '   #%d (%s):'%(job.num,job.id),job.command
+ # OK, go now
+-concurrent_batches(batches,maxjobs=maxJobs)
++concurrent_batches([job.command for job in jobs],maxjobs=maxJobs)
+ print 'All jobs finished, bye.'
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000615.html">[deprecated list] [Yade-dev] [svn] r1637 - trunk/gui/qt3
+</A></li>
+	<LI>Next message: <A HREF="000617.html">[deprecated list] [Yade-dev] [svn] r1639 - trunk/gui/qt3
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#616">[ date ]</a>
+              <a href="thread.html#616">[ thread ]</a>
+              <a href="subject.html#616">[ subject ]</a>
+              <a href="author.html#616">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

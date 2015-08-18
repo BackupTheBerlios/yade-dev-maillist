@@ -1,0 +1,256 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1627 - in trunk: extra	gui/qt3	pkg/common/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1627%20-%20in%20trunk%3A%20extra%0A%09gui/qt3%09pkg/common/Engine/DeusExMachina&In-Reply-To=%3C200901181230.n0ICUFcM020299%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000597.html">
+   <LINK REL="Next"  HREF="000599.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1627 - in trunk: extra	gui/qt3	pkg/common/Engine/DeusExMachina</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1627%20-%20in%20trunk%3A%20extra%0A%09gui/qt3%09pkg/common/Engine/DeusExMachina&In-Reply-To=%3C200901181230.n0ICUFcM020299%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1627 - in trunk: extra	gui/qt3	pkg/common/Engine/DeusExMachina">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Jan 18 13:30:15 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000597.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-14387/bin/yade-svn1626:	DirectShearCis, FEMBeam,	HydraulicTest, SDECImpactTest, STLImporterTest, SimpleShear,	SnowVoxelsLoader, TriaxialTestWater, USCTGen
+</A></li>
+        <LI>Next message: <A HREF="000599.html">[deprecated list] [Yade-dev] [svn] r1628 - trunk/doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#598">[ date ]</a>
+              <a href="thread.html#598">[ thread ]</a>
+              <a href="subject.html#598">[ subject ]</a>
+              <a href="author.html#598">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-01-18 13:30:14 +0100 (Sun, 18 Jan 2009)
+New Revision: 1627
+
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+   trunk/gui/qt3/GLSimulationPlayerViewer.hpp
+   trunk/gui/qt3/QtGUI-python.cpp
+   trunk/gui/qt3/qt.py
+   trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp
+   trunk/pkg/common/Engine/DeusExMachina/RotationEngine.hpp
+Log:
+1. fix damage colorizer (removed dynamic_cast causing segfaults on non-spheres)
+2. InterpolatingSpiralEngine now takes bool wrap rather than Real period.
+3. qt.makePlayerVideo takse startWait argument, which waits for Backspace before starting (useful for setting up the view manually); postLoadHook gets run afterwards now.
+
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-01-17 22:26:54 UTC (rev 1626)
++++ trunk/extra/Brefcom.cpp	2009-01-18 12:30:14 UTC (rev 1627)
+@@ -272,7 +272,8 @@
+ 	FOREACH(shared_ptr&lt;Body&gt; B, *rootBody-&gt;bodies){
+ 		body_id_t id=B-&gt;getId();
+ 		// add damaged contacts that have already been deleted
+-		shared_ptr&lt;BrefcomPhysParams&gt; bpp=YADE_PTR_CAST&lt;BrefcomPhysParams&gt;(B-&gt;physicalParameters);
++		BrefcomPhysParams* bpp=dynamic_cast&lt;BrefcomPhysParams*&gt;(B-&gt;physicalParameters.get());
++		if(!bpp) continue;
+ 		//if(bodyDamage[B-&gt;getId()].first==0) {B-&gt;geometricalModel-&gt;diffuseColor=Vector3r(0.5,0.5,B-&gt;isDynamic?0:1); continue; }
+ 		int pastOrPresentContacts=bodyDamage[id].first+bpp-&gt;numBrokenCohesive;
+ 		if(pastOrPresentContacts&gt;0) bpp-&gt;normDmg=(bodyDamage[id].second+bpp-&gt;numBrokenCohesive)/pastOrPresentContacts;
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2009-01-17 22:26:54 UTC (rev 1626)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.cpp	2009-01-18 12:30:14 UTC (rev 1627)
+@@ -39,6 +39,7 @@
+ 
+ void GLSimulationPlayerViewer::keyPressEvent(QKeyEvent* e){
+ 	if(e-&gt;key()==Qt::Key_H &amp;&amp; (e-&gt;state() &amp; AltButton)){ if(simPlayer-&gt;isHidden()) simPlayer-&gt;show(); else simPlayer-&gt;hide(); }
++	else if(e-&gt;key()==Qt::Key_Backspace &amp;&amp; !trigger) { trigger=true; }
+ 	else GLViewer::keyPressEvent(e);
+ }
+ 
+
+Modified: trunk/gui/qt3/GLSimulationPlayerViewer.hpp
+===================================================================
+--- trunk/gui/qt3/GLSimulationPlayerViewer.hpp	2009-01-17 22:26:54 UTC (rev 1626)
++++ trunk/gui/qt3/GLSimulationPlayerViewer.hpp	2009-01-18 12:30:14 UTC (rev 1627)
+@@ -32,6 +32,7 @@
+ 		Real wallClock, realTime;
+ 		virtual string getRealTimeString();
+ 	public:
++		bool trigger;
+ 		list&lt;string&gt; snapshots;
+ 		QtSimulationPlayer* simPlayer;
+ 		boost::posix_time::ptime lastCheckPointTime;
+
+Modified: trunk/gui/qt3/QtGUI-python.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI-python.cpp	2009-01-17 22:26:54 UTC (rev 1626)
++++ trunk/gui/qt3/QtGUI-python.cpp	2009-01-18 12:30:14 UTC (rev 1627)
+@@ -75,25 +75,21 @@
+  *
+  * @returns tuple of (wildcard,[snap0,snap1,snap2,...]), where the list contains filename of snapshots.
+  */
+-python::tuple runPlayerSession(string savedSim,string snapBase=&quot;&quot;,string savedQGLState=&quot;&quot;,int dispParamsNo=-1,int stride=1,string postLoadHook=&quot;&quot;){
++python::tuple runPlayerSession(string savedSim,string snapBase=&quot;&quot;,string savedQGLState=&quot;&quot;,int dispParamsNo=-1,int stride=1,string postLoadHook=&quot;&quot;,bool startWait=false){
+ 	evtPLAYER();
+ 	shared_ptr&lt;QtSimulationPlayer&gt; player=ensuredMainWindow()-&gt;player;
+ 	GLSimulationPlayerViewer* glv=player-&gt;glSimulationPlayerViewer;
+-	player-&gt;hide();
+ 	string snapBase2(snapBase);
+ 	if(snapBase2.empty()){ char tmpnam_str [L_tmpnam]; tmpnam(tmpnam_str); snapBase2=tmpnam_str; LOG_INFO(&quot;Using &quot;&lt;&lt;snapBase2&lt;&lt;&quot; as temporary basename for snapshots.&quot;); }
+ 	glv-&gt;stride=stride;
+ 	glv-&gt;load(savedSim);
+-	if(!postLoadHook.empty()){ PyGILState_STATE gstate; LOG_INFO(&quot;Running postLoadHook &quot;&lt;&lt;postLoadHook); Py_BEGIN_ALLOW_THREADS; gstate = PyGILState_Ensure(); PyRun_SimpleString(postLoadHook.c_str()); PyGILState_Release(gstate); Py_END_ALLOW_THREADS; }
+ 	glv-&gt;saveSnapShots=true;
+ 	glv-&gt;snapshotsBase=snapBase2;
+-	if(!savedQGLState.empty()){
+-		LOG_INFO(&quot;Loading view state from &quot;&lt;&lt;savedQGLState);
+-		glv-&gt;setStateFileName(savedQGLState);
+-		glv-&gt;restoreStateFromFile();
+-		glv-&gt;setStateFileName(QString::null);
+-	}
++	if(!savedQGLState.empty()){ LOG_INFO(&quot;Loading view state from &quot;&lt;&lt;savedQGLState); glv-&gt;setStateFileName(savedQGLState); glv-&gt;restoreStateFromFile(); glv-&gt;setStateFileName(QString::null); }
+ 	if(dispParamsNo&gt;=0) { LOG_INFO(&quot;Loading view state from state #&quot;&lt;&lt;dispParamsNo); glv-&gt;useDisplayParameters(dispParamsNo);}
++	if(startWait){ LOG_INFO(&quot;[[[ Manual view setup, press BACKSPACE to start player ]]]&quot;); glv-&gt;trigger=false; while(!glv-&gt;trigger) {usleep(200000);cerr&lt;&lt;&quot;@&quot;;} }
++	if(!postLoadHook.empty()){ PyGILState_STATE gstate; LOG_INFO(&quot;Running postLoadHook &quot;&lt;&lt;postLoadHook); Py_BEGIN_ALLOW_THREADS; gstate = PyGILState_Ensure(); PyRun_SimpleString(postLoadHook.c_str()); PyGILState_Release(gstate); Py_END_ALLOW_THREADS; }
++	player-&gt;hide();
+ 	glv-&gt;raise();
+ 	glv-&gt;startAnimation();
+ 	Py_BEGIN_ALLOW_THREADS;
+@@ -105,7 +101,7 @@
+ 
+ bool qtGuiIsActive(){return (bool)YadeQtMainWindow::self;}
+ 
+-BOOST_PYTHON_FUNCTION_OVERLOADS(runPlayerSession_overloads,runPlayerSession,2,6);
++BOOST_PYTHON_FUNCTION_OVERLOADS(runPlayerSession_overloads,runPlayerSession,2,7);
+ 
+ qglviewer::Vec tuple2vec(python::tuple t){ qglviewer::Vec ret; for(int i=0;i&lt;3;i++){python::extract&lt;Real&gt; e(t[i]); if(!e.check()) throw invalid_argument(&quot;Element #&quot;+lexical_cast&lt;string&gt;(i)+&quot; is not a number&quot;); ret[i]=e();} return ret;};
+ python::tuple vec2tuple(qglviewer::Vec v){return python::make_tuple(v[0],v[1],v[2]);};
+@@ -166,7 +162,7 @@
+ 	def(&quot;Renderer&quot;,ensuredRenderer,&quot;Return wrapped OpenGLRenderingEngine; the renderer is constructed if necessary.&quot;);
+ 	def(&quot;close&quot;,Quit);
+ 	def(&quot;isActive&quot;,qtGuiIsActive,&quot;Whether the Qt GUI is being used.&quot;);
+-	def(&quot;runPlayerSession&quot;,runPlayerSession,runPlayerSession_overloads(args(&quot;savedQGLState&quot;,&quot;dispParamsNo&quot;,&quot;stride&quot;,&quot;postLoadHook&quot;)));
++	def(&quot;runPlayerSession&quot;,runPlayerSession,runPlayerSession_overloads(args(&quot;savedQGLState&quot;,&quot;dispParamsNo&quot;,&quot;stride&quot;,&quot;postLoadHook&quot;,&quot;startWait&quot;)));
+ 	def(&quot;views&quot;,getAllViews);
+ 
+ 	BASIC_PY_PROXY_WRAPPER(pyOpenGLRenderingEngine,&quot;GLRenderer&quot;)
+
+Modified: trunk/gui/qt3/qt.py
+===================================================================
+--- trunk/gui/qt3/qt.py	2009-01-17 22:26:54 UTC (rev 1626)
++++ trunk/gui/qt3/qt.py	2009-01-18 12:30:14 UTC (rev 1627)
+@@ -36,7 +36,7 @@
+ 	o.engines=origEngines
+ 
+ 
+-def makePlayerVideo(playerDb,out,viewerState=None,dispParamsNo=-1,stride=1,fps=24,postLoadHook=None):
++def makePlayerVideo(playerDb,out,viewerState=None,dispParamsNo=-1,stride=1,fps=24,postLoadHook=None,startWait=False):
+ 	&quot;&quot;&quot;Create video by replaying a simulation. Snapshots are taken to temporary files,
+ 	encoded to a .ogg stream (theora codec); temps are deleted at the end.
+ 
+@@ -59,7 +59,8 @@
+ 		savedQGLState=(viewerState if viewerState else ''),
+ 		dispParamsNo=dispParamsNo,
+ 		stride=stride,
+-		postLoadHook=(postLoadHook if postLoadHook else ''))
++		postLoadHook=(postLoadHook if postLoadHook else ''),
++		startWait=startWait)
+ 	utils.encodeVideoFromFrames(wildcard,out,renameNotOverwrite=True,fps=fps)
+ 	print &quot;Cleaning snapshot files.&quot;
+ 	for f in snaps: os.remove(f)
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp	2009-01-17 22:26:54 UTC (rev 1626)
++++ trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp	2009-01-18 12:30:14 UTC (rev 1627)
+@@ -21,7 +21,7 @@
+ 
+ 
+ void InterpolatingSpiralEngine::applyCondition(MetaBody* rb){
+-	Real virtTime=period&gt;0 ? Shop::periodicWrap(rb-&gt;simulationTime,0,period) : rb-&gt;simulationTime;
++	Real virtTime=wrap ? Shop::periodicWrap(rb-&gt;simulationTime,*times.begin(),*times.rbegin()) : rb-&gt;simulationTime;
+ 	angularVelocity=linearInterpolate&lt;Real&gt;(virtTime,times,angularVelocities,pos);
+ 	linearVelocity=angularVelocity*slope;
+ 	SpiralEngine::applyCondition(rb);
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/RotationEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/RotationEngine.hpp	2009-01-17 22:26:54 UTC (rev 1626)
++++ trunk/pkg/common/Engine/DeusExMachina/RotationEngine.hpp	2009-01-18 12:30:14 UTC (rev 1627)
+@@ -50,8 +50,8 @@
+  * times and velocities and translation by using slope parameter.
+  *
+  * The interpolation assumes the margin value before the first time point and last value
+- * after the last time point. If period is specified, time will wrap around, but no interpolation
+- * between last and first values is done!
++ * after the last time point. If wrap is specified, time will wrap around the last times value to the first one (note that no interpolation
++ * between last and first values is done).
+  * */
+ class InterpolatingSpiralEngine: public SpiralEngine{
+ 	public:
+@@ -59,16 +59,16 @@
+ 		vector&lt;Real&gt; times;
+ 		//! list of angular velocities; manadatorily of same length as times
+ 		vector&lt;Real&gt; angularVelocities;
+-		//! period after which we will wrap time to zero (no wrapping if period&lt;=0)
+-		Real period;
++		//! wrap t if t&gt;times_n, i.e. t_wrapped=t-N*(times_n-times_0)
++		bool wrap;
+ 		//! axial translation per radian turn (can be negative)
+ 		Real slope;
+ 		//! holder of interpolation state, should not be touched by the user.
+ 		size_t pos;
+-		InterpolatingSpiralEngine(): period(-1), slope(0), pos(0){}
++		InterpolatingSpiralEngine(): wrap(false), slope(0), pos(0){}
+ 		virtual void applyCondition(MetaBody* rb);
+ 	REGISTER_CLASS_AND_BASE(InterpolatingSpiralEngine,SpiralEngine);
+-	REGISTER_ATTRIBUTES(SpiralEngine,(times)(angularVelocities)(period)(slope)(pos));
++	REGISTER_ATTRIBUTES(SpiralEngine,(times)(angularVelocities)(wrap)(slope)(pos));
+ };
+ REGISTER_SERIALIZABLE(InterpolatingSpiralEngine);
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000597.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-14387/bin/yade-svn1626:	DirectShearCis, FEMBeam,	HydraulicTest, SDECImpactTest, STLImporterTest, SimpleShear,	SnowVoxelsLoader, TriaxialTestWater, USCTGen
+</A></li>
+	<LI>Next message: <A HREF="000599.html">[deprecated list] [Yade-dev] [svn] r1628 - trunk/doc
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#598">[ date ]</a>
+              <a href="thread.html#598">[ thread ]</a>
+              <a href="subject.html#598">[ subject ]</a>
+              <a href="author.html#598">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

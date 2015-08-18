@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1679 - in trunk/pkg/snow:	PreProcessor/Voxel	RenderingEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1679%20-%20in%20trunk/pkg/snow%3A%0A%09PreProcessor/Voxel%09RenderingEngine&In-Reply-To=%3C200902221308.n1MD8lLU012384%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000725.html">
+   <LINK REL="Next"  HREF="000730.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1679 - in trunk/pkg/snow:	PreProcessor/Voxel	RenderingEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1679%20-%20in%20trunk/pkg/snow%3A%0A%09PreProcessor/Voxel%09RenderingEngine&In-Reply-To=%3C200902221308.n1MD8lLU012384%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1679 - in trunk/pkg/snow:	PreProcessor/Voxel	RenderingEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Feb 22 14:08:47 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000725.html">[deprecated list] [Yade-dev] [svn] r1678 - in trunk:	core	core/DefaultContainerImplementations extra extra/clump	gui/py	lib/base	pkg/common/Engine/MetaEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000730.html">[deprecated list] [Yade-dev] Wm3 replacement candidate
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#726">[ date ]</a>
+              <a href="thread.html#726">[ thread ]</a>
+              <a href="subject.html#726">[ subject ]</a>
+              <a href="author.html#726">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-02-22 14:08:47 +0100 (Sun, 22 Feb 2009)
+New Revision: 1679
+
+Modified:
+   trunk/pkg/snow/PreProcessor/Voxel/DataSurface.cpp
+   trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.cpp
+Log:
+1. Define Janek's functions to convert from/to QGLViewer vector where they are used.
+
+
+
+Modified: trunk/pkg/snow/PreProcessor/Voxel/DataSurface.cpp
+===================================================================
+--- trunk/pkg/snow/PreProcessor/Voxel/DataSurface.cpp	2009-02-22 10:30:11 UTC (rev 1678)
++++ trunk/pkg/snow/PreProcessor/Voxel/DataSurface.cpp	2009-02-22 13:08:47 UTC (rev 1679)
+@@ -63,6 +63,8 @@
+ 		return point_plane_dist(p1,s_local_camera) &gt; point_plane_dist(p2,s_local_camera);
+ 	}
+ 
++inline Vector3r toVec(qglviewer::Vec v){return Vector3r(v[0],v[1],v[2]);};
++
+ void DataSurface::draw(SafeVectors3&amp; axes,SafeVectors3&amp; colors,Config&amp; c,const std::vector&lt;Vector3r&gt;&amp; centers)
+ {
+ 	if(!c.draw_using_surfaces())
+
+Modified: trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.cpp
+===================================================================
+--- trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.cpp	2009-02-22 10:30:11 UTC (rev 1678)
++++ trunk/pkg/snow/RenderingEngine/Ef1_BshSnowGrain_glDraw.cpp	2009-02-22 13:08:47 UTC (rev 1679)
+@@ -13,6 +13,8 @@
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/lib-QGLViewer/qglviewer.h&gt;
+ 
++inline qglviewer::Vec toQGLViewierVec(Vector3r v){return qglviewer::Vec(v[0],v[1],v[2]);};
++
+ bool light_selection(int which)
+ {
+ 	GLfloat matAmbient[4];
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000725.html">[deprecated list] [Yade-dev] [svn] r1678 - in trunk:	core	core/DefaultContainerImplementations extra extra/clump	gui/py	lib/base	pkg/common/Engine/MetaEngine	pkg/dem/Engine/DeusExMachina	pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000730.html">[deprecated list] [Yade-dev] Wm3 replacement candidate
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#726">[ date ]</a>
+              <a href="thread.html#726">[ thread ]</a>
+              <a href="subject.html#726">[ subject ]</a>
+              <a href="author.html#726">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

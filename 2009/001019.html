@@ -1,0 +1,143 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1796 - in trunk: gui/py	scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1796%20-%20in%20trunk%3A%20gui/py%0A%09scripts/test&In-Reply-To=%3C200906132147.n5DLlLQU025365%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001018.html">
+   <LINK REL="Next"  HREF="001021.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1796 - in trunk: gui/py	scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1796%20-%20in%20trunk%3A%20gui/py%0A%09scripts/test&In-Reply-To=%3C200906132147.n5DLlLQU025365%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1796 - in trunk: gui/py	scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Jun 13 23:47:21 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001018.html">[deprecated list] [Yade-dev] [svn] r1795 - trunk/gui/py
+</A></li>
+        <LI>Next message: <A HREF="001021.html">[deprecated list] [Yade-dev] [svn] r1796 - in trunk: gui/py	scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1019">[ date ]</a>
+              <a href="thread.html#1019">[ thread ]</a>
+              <a href="subject.html#1019">[ subject ]</a>
+              <a href="author.html#1019">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-06-13 23:47:20 +0200 (Sat, 13 Jun 2009)
+New Revision: 1796
+
+Modified:
+   trunk/gui/py/_packPredicates.cpp
+   trunk/scripts/test/regular-sphere-pack.py
+Log:
+Add pack.inHyperboloid predicate. Should be useful for cylindric specimen in uniaxial tension, but with the middle part having smaller diameter. Added to the test script as well.
+
+
+Modified: trunk/gui/py/_packPredicates.cpp
+===================================================================
+--- trunk/gui/py/_packPredicates.cpp	2009-06-13 15:20:31 UTC (rev 1795)
++++ trunk/gui/py/_packPredicates.cpp	2009-06-13 21:47:20 UTC (rev 1796)
+@@ -82,12 +82,42 @@
+ 	}
+ };
+ 
++/* Oriented hyperboloid predicate (cylinder as special case).
++
++See <A HREF="http://mathworld.wolfram.com/Hyperboloid.html">http://mathworld.wolfram.com/Hyperboloid.html</A> for the parametrization and meaning of symbols
++*/
++class inHyperboloid{
++	Vector3r c1,c2,c12; Real R,a,ht,c;
++public:
++	inHyperboloid(python::tuple _c1, python::tuple _c2, Real _R, Real _r){
++		c1=tuple2vec(_c1); c2=tuple2vec(_c2); R=_R; a=_r;
++		c12=c2-c1; ht=c12.Length();
++		Real uMax=sqrt(pow(R/a,2)-1); c=ht/(2*uMax);
++	}
++	bool operator()(python::tuple _pt, Real pad=0.){
++		Vector3r pt=tuple2vec(_pt);
++		Real v=(pt.Dot(c12)-c1.Dot(c12))/(ht*ht); // normalized coordinate along the c1--c2 axis
++		if((v*ht&lt;0+pad) || (v*ht&gt;ht-pad)) return false; // out of cylinder along the axis
++		Real u=(v-.5)*ht/c; // u from the wolfram parametrization; u is 0 in the center
++		Real rHere=a*sqrt(1+u*u); // pad is taken perpendicular to the axis, not to the surface (inaccurate)
++		Real axisDist=((pt-c1).Cross(pt-c2)).Length()/ht;
++		if(axisDist&gt;rHere-pad) return false;
++		return true;
++	}
++	python::tuple aabb(){
++		// the lazy way
++		return inCylinder(vec2tuple(c1),vec2tuple(c2),R).aabb();
++	}
++};
++
+ BOOST_PYTHON_MODULE(_packPredicates){
+-	boost::python::class_&lt;inSphere&gt;(&quot;inSphere&quot;,&quot;Sphere predicate.&quot;,python::init&lt;python::tuple,Real&gt;(&quot;Ctor taking center (as a 3-tuple) and radius&quot;))
++	boost::python::class_&lt;inSphere&gt;(&quot;inSphere&quot;,&quot;Sphere predicate.&quot;,python::init&lt;python::tuple,Real&gt;(python::args(&quot;center&quot;,&quot;radius&quot;),&quot;Ctor taking center (as a 3-tuple) and radius&quot;))
+ 		.def(&quot;__call__&quot;,&amp;inSphere::operator(),&quot;Tell whether given point lies within this sphere, still having 'pad' space to the solid boundary&quot;).def(&quot;aabb&quot;,&amp;inSphere::aabb,&quot;Return minimum and maximum values for AABB&quot;);
+-	boost::python::class_&lt;inAlignedBox&gt;(&quot;inAlignedBox&quot;,&quot;Axis-aligned box predicate&quot;,python::init&lt;python::tuple,python::tuple&gt;(&quot;Ctor taking minumum and maximum points of the box (as 3-tuples).&quot;))
++	boost::python::class_&lt;inAlignedBox&gt;(&quot;inAlignedBox&quot;,&quot;Axis-aligned box predicate&quot;,python::init&lt;python::tuple,python::tuple&gt;(python::args(&quot;minAABB&quot;,&quot;maxAABB&quot;),&quot;Ctor taking minumum and maximum points of the box (as 3-tuples).&quot;))
+ 		.def(&quot;__call__&quot;,&amp;inAlignedBox::operator(),&quot;Tell whether given point lies within this box, still having 'pad' space to the solid boundary&quot;).def(&quot;aabb&quot;,&amp;inAlignedBox::aabb,&quot;Return minimum and maximum values for AABB&quot;);
+-	boost::python::class_&lt;inCylinder&gt;(&quot;inCylinder&quot;,&quot;Cylinder predicate&quot;,python::init&lt;python::tuple,python::tuple,Real&gt;(&quot;Ctor taking centers of the lateral walls (as 3-tuples) and radius.&quot;))
++	boost::python::class_&lt;inCylinder&gt;(&quot;inCylinder&quot;,&quot;Cylinder predicate&quot;,python::init&lt;python::tuple,python::tuple,Real&gt;(python::args(&quot;centerBottom&quot;,&quot;centerTop&quot;,&quot;radius&quot;),&quot;Ctor taking centers of the lateral walls (as 3-tuples) and radius.&quot;))
+ 		.def(&quot;__call__&quot;,&amp;inCylinder::operator(),&quot;Tell whether given point lies within this cylinder, still having 'pad' space to the solid boundary&quot;).def(&quot;aabb&quot;,&amp;inCylinder::aabb,&quot;Return minimum and maximum values for AABB&quot;);
++	boost::python::class_&lt;inHyperboloid&gt;(&quot;inHyperboloid&quot;,&quot;Hyperboloid predicate&quot;,python::init&lt;python::tuple,python::tuple,Real,Real&gt;(python::args(&quot;centerBottom&quot;,&quot;centerTop&quot;,&quot;radius&quot;,&quot;skirt&quot;),&quot;Ctor taking centers of the lateral walls (as 3-tuples), radius at bases and skirt (middle radius).&quot;))
++		.def(&quot;__call__&quot;,&amp;inHyperboloid::operator(),&quot;Tell whether given point lies within this hyperboloid, still having 'pad' space to the solid boundary\n(not accurate, since distance perpendicular to the axis, not the surface, is taken in account)&quot;).def(&quot;aabb&quot;,&amp;inHyperboloid::aabb,&quot;Return minimum and maximum values for AABB&quot;);
+ }
+ 
+
+Modified: trunk/scripts/test/regular-sphere-pack.py
+===================================================================
+--- trunk/scripts/test/regular-sphere-pack.py	2009-06-13 15:20:31 UTC (rev 1795)
++++ trunk/scripts/test/regular-sphere-pack.py	2009-06-13 21:47:20 UTC (rev 1796)
+@@ -14,7 +14,7 @@
+ 	pack.regularHexa (pack.inAlignedBox((-2,-2,-2),(2,2,2)),radius=1.5*rad,gap=2*gap,color=(1,0,1),**kw), # body,
+ 	pack.regularOrtho(pack.inCylinder((-1,0,-2),(-1,0,-6),1),radius=rad,gap=gap,color=(0,1,1),**kw), # left leg
+ 	pack.regularHexa (pack.inCylinder((+1,1,-2.5),(0,3,-5),1),radius=rad,gap=gap,color=(0,1,1),**kw), # right leg
+-	pack.regularHexa (pack.inCylinder((+2,0,1),(+6,0,1),1),radius=rad,gap=gap,color=(0,0,1),**kw), # right hand
++	pack.regularHexa (pack.inHyperboloid((+2,0,1),(+6,0,1),1,.5),radius=rad,gap=gap,color=(0,0,1),**kw), # right hand
+ 	pack.regularOrtho(pack.inCylinder((-2,0,2),(-5,0,4),1),radius=rad,gap=gap,color=(0,0,1),**kw) # left hand
+ 	]: O.bodies.appendClumped(part)
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001018.html">[deprecated list] [Yade-dev] [svn] r1795 - trunk/gui/py
+</A></li>
+	<LI>Next message: <A HREF="001021.html">[deprecated list] [Yade-dev] [svn] r1796 - in trunk: gui/py	scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1019">[ date ]</a>
+              <a href="thread.html#1019">[ thread ]</a>
+              <a href="subject.html#1019">[ subject ]</a>
+              <a href="author.html#1019">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

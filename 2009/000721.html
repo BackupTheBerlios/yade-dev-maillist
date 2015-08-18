@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1676 - trunk/core
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1676%20-%20trunk/core&In-Reply-To=%3C200902211412.n1LECLeD017039%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000732.html">
+   <LINK REL="Next"  HREF="000723.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1676 - trunk/core</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1676%20-%20trunk/core&In-Reply-To=%3C200902211412.n1LECLeD017039%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1676 - trunk/core">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Feb 21 15:12:21 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000732.html">[deprecated list] [Yade-dev] BexContainer
+</A></li>
+        <LI>Next message: <A HREF="000723.html">[deprecated list] [Yade-dev] [svn] r1677 - in	trunk/pkg/common/Engine: DeusExMachina	MetaEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#721">[ date ]</a>
+              <a href="thread.html#721">[ thread ]</a>
+              <a href="subject.html#721">[ subject ]</a>
+              <a href="author.html#721">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-02-21 15:12:20 +0100 (Sat, 21 Feb 2009)
+New Revision: 1676
+
+Modified:
+   trunk/core/PhysicalActionContainer.hpp
+Log:
+Users willling to go with the slower PhysicalActionContainer can compile with scons CXXFLAGS=-DNO_BEX now to get the old behavior.
+
+
+Modified: trunk/core/PhysicalActionContainer.hpp
+===================================================================
+--- trunk/core/PhysicalActionContainer.hpp	2009-02-21 13:51:28 UTC (rev 1675)
++++ trunk/core/PhysicalActionContainer.hpp	2009-02-21 14:12:20 UTC (rev 1676)
+@@ -15,7 +15,9 @@
+ #include&lt;iostream&gt;
+ 
+ // experimental
+-#define BEX_CONTAINER
++#ifndef NO_BEX
++#	define BEX_CONTAINER
++#endif
+ 
+ #ifdef BEX_CONTAINER
+ 	#include&lt;yade/core/BexContainer.hpp&gt;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000732.html">[deprecated list] [Yade-dev] BexContainer
+</A></li>
+	<LI>Next message: <A HREF="000723.html">[deprecated list] [Yade-dev] [svn] r1677 - in	trunk/pkg/common/Engine: DeusExMachina	MetaEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#721">[ date ]</a>
+              <a href="thread.html#721">[ thread ]</a>
+              <a href="subject.html#721">[ subject ]</a>
+              <a href="author.html#721">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

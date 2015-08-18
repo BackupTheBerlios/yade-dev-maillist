@@ -1,0 +1,315 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1797 - in trunk/pkg/dem: .	Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1797%20-%20in%20trunk/pkg/dem%3A%20.%0A%09Engine/StandAloneEngine&In-Reply-To=%3C200906151343.n5FDhTwC010515%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001020.html">
+   <LINK REL="Next"  HREF="001023.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1797 - in trunk/pkg/dem: .	Engine/StandAloneEngine</H1>
+    <B>richefeu at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1797%20-%20in%20trunk/pkg/dem%3A%20.%0A%09Engine/StandAloneEngine&In-Reply-To=%3C200906151343.n5FDhTwC010515%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1797 - in trunk/pkg/dem: .	Engine/StandAloneEngine">richefeu at mail.berlios.de
+       </A><BR>
+    <I>Mon Jun 15 15:43:29 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001020.html">[deprecated list] [Yade-dev] contact logic &amp; InsertionSortCollider
+</A></li>
+        <LI>Next message: <A HREF="001023.html">[deprecated list] [Yade-dev] [svn] r1797 - in trunk/pkg/dem:	.	Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1022">[ date ]</a>
+              <a href="thread.html#1022">[ thread ]</a>
+              <a href="subject.html#1022">[ subject ]</a>
+              <a href="author.html#1022">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: richefeu
+Date: 2009-06-15 15:43:29 +0200 (Mon, 15 Jun 2009)
+New Revision: 1797
+
+Added:
+   trunk/pkg/dem/Engine/StandAloneEngine/HistoryRecorder.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/HistoryRecorder.hpp
+Modified:
+   trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.cpp
+   trunk/pkg/dem/SConscript
+Log:
+- Add 'HistoryRecorder' to save the sample and network state with a given time-step interval.
+- Correct a small bug due to the fact that a Clump cannot be casted into a GeometricalModel (and I don't know why!)
+
+
+Added: trunk/pkg/dem/Engine/StandAloneEngine/HistoryRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/HistoryRecorder.cpp	2009-06-13 21:47:20 UTC (rev 1796)
++++ trunk/pkg/dem/Engine/StandAloneEngine/HistoryRecorder.cpp	2009-06-15 13:43:29 UTC (rev 1797)
+@@ -0,0 +1,149 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Vincent Richefeu                                *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">Vincent.Richefeu at hmg.inpg.fr</A>                                          *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;HistoryRecorder.hpp&quot;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++#include&lt;yade/core/Omega.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include &lt;boost/lexical_cast.hpp&gt;
++
++#include &lt;yade/pkg-common/Sphere.hpp&gt;
++#include &lt;yade/pkg-common/Box.hpp&gt;
++
++#include &lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include &lt;yade/pkg-common/NormalShearInteractions.hpp&gt;
++
++HistoryRecorder::HistoryRecorder () : DataRecorder()
++{
++  outputBase = &quot;spl_nwk_&quot;;
++  interval   = 50;
++  stateId    = 0;
++}
++
++
++HistoryRecorder::~HistoryRecorder ()
++{
++
++}
++
++
++void HistoryRecorder::postProcessAttributes(bool deserializing)
++{
++	if(deserializing)
++	{
++		
++	}
++}
++
++
++void HistoryRecorder::registerAttributes()
++{
++	DataRecorder::registerAttributes();
++	REGISTER_ATTRIBUTE(outputBase);
++	REGISTER_ATTRIBUTE(interval);
++	REGISTER_ATTRIBUTE(stateId);
++}
++
++bool HistoryRecorder::isActivated()
++{
++	return ((Omega::instance().getCurrentIteration() % interval == 0));
++}
++
++
++
++void HistoryRecorder::action(MetaBody * ncb)
++{
++  shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++
++  std::string outputFile = outputBase + lexical_cast&lt;string&gt;(stateId++) + &quot;.his&quot;;
++  std::ofstream ofs(outputFile.c_str());
++  cout &lt;&lt; &quot;Saving &quot; &lt;&lt; outputFile &lt;&lt; &quot;...&quot; &lt;&lt; endl;
++   ofs &lt;&lt; &quot;Sample{&quot; &lt;&lt; endl;
++
++   BodyContainer::iterator bi    = bodies-&gt;begin();
++   BodyContainer::iterator biEnd = bodies-&gt;end();
++   for( ; bi != biEnd ; ++bi)
++   {
++     const shared_ptr&lt;Body&gt;&amp; b = *bi;
++	 if (b-&gt;isClump()) continue;
++	 
++     const RigidBodyParameters* p = YADE_CAST&lt;RigidBodyParameters*&gt;(b-&gt;physicalParameters.get());
++	 const GeometricalModel* gm   = YADE_CAST&lt;GeometricalModel*&gt;(b-&gt;geometricalModel.get());
++
++	if ( typeid(*gm) == typeid(Sphere) )
++     {
++		ofs &lt;&lt; &quot;sphere &quot; &lt;&lt; b-&gt;groupMask &lt;&lt; &quot; &quot; &lt;&lt; YADE_CAST&lt;Sphere*&gt;(b-&gt;geometricalModel.get())-&gt;radius
++		&lt;&lt; &quot; &quot; &lt;&lt; p-&gt;se3.position[0] &lt;&lt; &quot; &quot; &lt;&lt; p-&gt;se3.position[1] &lt;&lt; &quot; &quot; &lt;&lt; p-&gt;se3.position[2]
++		&lt;&lt; &quot; 0 0 0&quot; 
++		&lt;&lt; &quot; &quot; &lt;&lt; p-&gt;velocity[0] &lt;&lt; &quot; &quot; &lt;&lt; p-&gt;velocity[1] &lt;&lt; &quot; &quot; &lt;&lt; p-&gt;velocity[2]
++		&lt;&lt; &quot; &quot; &lt;&lt; p-&gt;angularVelocity[0] &lt;&lt; &quot; &quot; &lt;&lt; p-&gt;angularVelocity[1] &lt;&lt; &quot; &quot; &lt;&lt; p-&gt;angularVelocity[2]
++		&lt;&lt; endl &lt;&lt; flush;
++	 }
++
++	if ( typeid(*gm) == typeid(Box) )
++	{
++	  ofs &lt;&lt; &quot;box &quot; &lt;&lt; b-&gt;groupMask &lt;&lt; &quot; &quot; &lt;&lt; YADE_CAST&lt;Box*&gt;(b-&gt;geometricalModel.get())-&gt;extents
++	  &lt;&lt; &quot; &quot; &lt;&lt; p-&gt;se3.position[0] &lt;&lt; &quot; &quot; &lt;&lt; p-&gt;se3.position[1] &lt;&lt; &quot; &quot; &lt;&lt; p-&gt;se3.position[2]
++	  &lt;&lt; &quot; 0 0 0&quot;
++	  &lt;&lt; &quot; &quot; &lt;&lt; p-&gt;velocity[0] &lt;&lt; &quot; &quot; &lt;&lt; p-&gt;velocity[1] &lt;&lt; &quot; &quot; &lt;&lt; p-&gt;velocity[2]
++	  &lt;&lt; &quot; &quot; &lt;&lt; p-&gt;angularVelocity[0] &lt;&lt; &quot; &quot; &lt;&lt; p-&gt;angularVelocity[1] &lt;&lt; &quot; &quot; &lt;&lt; p-&gt;angularVelocity[2]
++	  &lt;&lt; endl &lt;&lt; flush;
++	}
++
++   } 
++   ofs &lt;&lt; &quot;}&quot; &lt;&lt; endl &lt;&lt; endl;
++   
++   ofs &lt;&lt; &quot;Network{&quot; &lt;&lt; endl;
++   
++   InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
++   InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
++   
++   for( ;ii!=iiEnd;++ii)
++   {
++	 if ((*ii)-&gt;isReal()) // to be claryfied...
++	 {
++	   const shared_ptr&lt;Interaction&gt;&amp; contact = *ii;
++
++	   const InteractionGeometry* ig = YADE_CAST&lt;InteractionGeometry*&gt;(contact-&gt;interactionGeometry.get());
++	   
++	   body_id_t id1 = contact-&gt;getId1();
++	   body_id_t id2 = contact-&gt;getId2();
++	   
++	   shared_ptr&lt;Body&gt; b1=(*bodies)[id1];
++	   shared_ptr&lt;Body&gt; b2=(*bodies)[id2];
++
++	   if( typeid(*ig) == typeid(SpheresContactGeometry) )
++	   {
++		 
++		 if (typeid(*(b1-&gt;geometricalModel.get())) == typeid(Sphere)
++		  &amp;&amp; typeid(*(b2-&gt;geometricalModel.get())) == typeid(Sphere))
++		 {
++		   const NormalShearInteraction* nsi = YADE_CAST&lt;NormalShearInteraction*&gt;(contact-&gt;interactionPhysics.get());
++		   Vector3r n = nsi-&gt;normalForce;
++		   Real fn = n.Length();
++
++		   Vector3r t = nsi-&gt;shearForce;
++		   Real ft = t.Length();
++		   
++		   // remark: This is not exactly the format used in gdm-tk
++		   ofs &lt;&lt; &quot;spsp &quot; &lt;&lt; id1 &lt;&lt; &quot; &quot; &lt;&lt; id2 &lt;&lt; &quot; &quot; &lt;&lt; n &lt;&lt; &quot; &quot; &lt;&lt; t &lt;&lt; &quot; &quot;
++			   &lt;&lt; fn &lt;&lt; &quot; &quot; &lt;&lt; ft &lt;&lt; &quot; 0 0 0 0&quot;
++		       &lt;&lt; endl;
++		 }
++
++	   }
++	 }
++   }
++
++  ofs &lt;&lt; &quot;}&quot; &lt;&lt; endl &lt;&lt; endl;
++   
++}
++
++
++
++
+
+Added: trunk/pkg/dem/Engine/StandAloneEngine/HistoryRecorder.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/HistoryRecorder.hpp	2009-06-13 21:47:20 UTC (rev 1796)
++++ trunk/pkg/dem/Engine/StandAloneEngine/HistoryRecorder.hpp	2009-06-15 13:43:29 UTC (rev 1797)
+@@ -0,0 +1,38 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Vincent Richefeu                                *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">Vincent.Richefeu at hmg.inpg.fr</A>                                          *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#pragma once
++
++#include&lt;yade/core/DataRecorder.hpp&gt;
++#include &lt;string&gt;
++#include &lt;fstream&gt;
++
++class HistoryRecorder : public DataRecorder
++{
++public :
++	
++	string outputBase; 
++    int interval;
++    int stateId;
++	
++	HistoryRecorder ();
++	~HistoryRecorder ();
++	virtual void action(MetaBody*);
++	virtual bool isActivated();
++
++protected :
++
++	virtual void postProcessAttributes(bool deserializing);
++	virtual void registerAttributes();
++	REGISTER_CLASS_NAME(HistoryRecorder);
++	REGISTER_BASE_CLASS_NAME(DataRecorder);
++};
++
++REGISTER_SERIALIZABLE(HistoryRecorder);
++
++
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.cpp	2009-06-13 21:47:20 UTC (rev 1796)
++++ trunk/pkg/dem/Engine/StandAloneEngine/MGPRecorder.cpp	2009-06-15 13:43:29 UTC (rev 1797)
+@@ -67,6 +67,8 @@
+    for(; bi != biEnd ; ++bi)
+    {
+      const shared_ptr&lt;Body&gt;&amp; b = *bi;
++	 if (b-&gt;isClump()) continue;
++	 
+      const RigidBodyParameters* p = YADE_CAST&lt;RigidBodyParameters*&gt;(b-&gt;physicalParameters.get());
+      const GeometricalModel* gm   = YADE_CAST&lt;GeometricalModel*&gt;(b-&gt;geometricalModel.get());
+ 
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2009-06-13 21:47:20 UTC (rev 1796)
++++ trunk/pkg/dem/SConscript	2009-06-15 13:43:29 UTC (rev 1797)
+@@ -982,6 +982,14 @@
+ 	,['Engine/StandAloneEngine/RigidBodyRecorder.cpp']
+ 	,LIBS=env['LIBS']+['RigidBodyParameters'])
+ 
++	,env.SharedLibrary('MGPRecorder'
++	,['Engine/StandAloneEngine/MGPRecorder.cpp']
++	,LIBS=env['LIBS']+['RigidBodyParameters','Sphere'])
++
++	,env.SharedLibrary('HistoryRecorder'
++	,['Engine/StandAloneEngine/HistoryRecorder.cpp']
++	,LIBS=env['LIBS']+['RigidBodyParameters','Sphere','Box','SpheresContactGeometry','NormalShearInteractions'])
++
+ 	,env.SharedLibrary('TestSimpleViscoelastic'
+ 		,['PreProcessor/TestSimpleViscoelastic.cpp']
+ 		,LIBS=env['LIBS']+['AABB'
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001020.html">[deprecated list] [Yade-dev] contact logic &amp; InsertionSortCollider
+</A></li>
+	<LI>Next message: <A HREF="001023.html">[deprecated list] [Yade-dev] [svn] r1797 - in trunk/pkg/dem:	.	Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1022">[ date ]</a>
+              <a href="thread.html#1022">[ thread ]</a>
+              <a href="subject.html#1022">[ subject ]</a>
+              <a href="author.html#1022">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

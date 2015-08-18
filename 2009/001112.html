@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1836 -	trunk/pkg/dem/Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1836%20-%0A%09trunk/pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200907022113.n62LDuAG008408%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001111.html">
+   <LINK REL="Next"  HREF="001113.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1836 -	trunk/pkg/dem/Engine/DeusExMachina</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1836%20-%0A%09trunk/pkg/dem/Engine/DeusExMachina&In-Reply-To=%3C200907022113.n62LDuAG008408%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1836 -	trunk/pkg/dem/Engine/DeusExMachina">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Thu Jul  2 23:13:56 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001111.html">[deprecated list] [Yade-dev] [svn] r1835 -	trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+        <LI>Next message: <A HREF="001113.html">[deprecated list] [Yade-dev] [svn] r1837 -	trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1112">[ date ]</a>
+              <a href="thread.html#1112">[ thread ]</a>
+              <a href="subject.html#1112">[ subject ]</a>
+              <a href="author.html#1112">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2009-07-02 23:13:56 +0200 (Thu, 02 Jul 2009)
+New Revision: 1836
+
+Modified:
+   trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+Log:
+
+Dimensions could be 0 when &quot;updateParameters&quot; was called from TriaxialCompressionEngine before 
+TTController::action
+
+
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2009-07-02 20:32:47 UTC (rev 1835)
++++ trunk/pkg/dem/Engine/DeusExMachina/TriaxialStressController.cpp	2009-07-02 21:13:56 UTC (rev 1836)
+@@ -324,10 +324,10 @@
+ void TriaxialStressController::computeStressStrain(MetaBody* ncb)
+ {
+ 	
+-// 	height = p_top-&gt;se3.position.Y() - p_bottom-&gt;se3.position.Y() - thickness;
+-// 	width = p_right-&gt;se3.position.X() - p_left-&gt;se3.position.X() - thickness;
+-// 	depth = p_front-&gt;se3.position.Z() - p_back-&gt;se3.position.Z() - thickness;
+-	assert(height&gt;0); assert(width&gt;0); assert(depth&gt;0);
++ 	height = p_top-&gt;se3.position.Y() - p_bottom-&gt;se3.position.Y() - thickness;
++ 	width = p_right-&gt;se3.position.X() - p_left-&gt;se3.position.X() - thickness;
++ 	depth = p_front-&gt;se3.position.Z() - p_back-&gt;se3.position.Z() - thickness;
++	//assert(height&gt;0); assert(width&gt;0); assert(depth&gt;0);
+ 	
+ 	meanStress = 0;
+ 	if (height0 == 0) height0 = height;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001111.html">[deprecated list] [Yade-dev] [svn] r1835 -	trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+	<LI>Next message: <A HREF="001113.html">[deprecated list] [Yade-dev] [svn] r1837 -	trunk/pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1112">[ date ]</a>
+              <a href="thread.html#1112">[ thread ]</a>
+              <a href="subject.html#1112">[ subject ]</a>
+              <a href="author.html#1112">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

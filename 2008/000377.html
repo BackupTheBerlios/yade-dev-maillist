@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1524 - in trunk: gui/py	pkg/dem/Engine/EngineUnit	scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1524%20-%20in%20trunk%3A%20gui/py%0A%09pkg/dem/Engine/EngineUnit%09scripts&In-Reply-To=%3C200809231344.m8NDitiI015648%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000373.html">
+   <LINK REL="Next"  HREF="000379.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1524 - in trunk: gui/py	pkg/dem/Engine/EngineUnit	scripts</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1524%20-%20in%20trunk%3A%20gui/py%0A%09pkg/dem/Engine/EngineUnit%09scripts&In-Reply-To=%3C200809231344.m8NDitiI015648%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1524 - in trunk: gui/py	pkg/dem/Engine/EngineUnit	scripts">sega at mail.berlios.de
+       </A><BR>
+    <I>Tue Sep 23 15:44:55 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000373.html">[deprecated list] [Yade-dev] [svn] r1523 - trunk/gui/py
+</A></li>
+        <LI>Next message: <A HREF="000379.html">[deprecated list] [Yade-dev] [svn] r1525 - in trunk: core extra	extra/clump	gui/py	pkg/common/DataClass/InteractionPhysics	pkg/common/Engine/DeusExMachina	pkg/dem/DataClass/InteractionPhysics	pkg/dem/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#377">[ date ]</a>
+              <a href="thread.html#377">[ thread ]</a>
+              <a href="subject.html#377">[ subject ]</a>
+              <a href="author.html#377">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2008-09-23 15:44:55 +0200 (Tue, 23 Sep 2008)
+New Revision: 1524
+
+Modified:
+   trunk/gui/py/yadeControl.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.hpp
+   trunk/scripts/exact-rot-facet.py
+Log:
+small fixes
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-09-23 07:51:55 UTC (rev 1523)
++++ trunk/gui/py/yadeControl.cpp	2008-09-23 13:44:55 UTC (rev 1524)
+@@ -495,7 +495,7 @@
+ 
+ class pySTLImporter : public STLImporter {
+     public:
+-	unsigned int py_import(pyBodyContainer bc, unsigned int begin=0) { import(bc.proxee,begin); }
++	void py_import(pyBodyContainer bc, unsigned int begin=0) { import(bc.proxee,begin); }
+ };
+ 
+ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(STLImporter_import_overloads,py_import,1,2);
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2008-09-23 07:51:55 UTC (rev 1523)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2008-09-23 13:44:55 UTC (rev 1524)
+@@ -64,6 +64,15 @@
+ 	Real sh = sphereRadius*shrinkFactor;
+ 	Real icr = facet-&gt;icr-sh;
+ 
++	if (icr&lt;0)
++	{
++		LOG_INFO(&quot;WARNING: a radius of a facet's inscribed circle less than zero! So, shrinkFactor is too large and would be reduced to zero.&quot;);
++		shrinkFactor=0;
++		icr = facet-&gt;icr;
++		sh = 0;
++	}
++
++
+ 	if (bm&lt;icr) // contact with facet's surface
+ 	{
+ 		penetrationDepth = sphereRadius - L;
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.hpp	2008-09-23 07:51:55 UTC (rev 1523)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.hpp	2008-09-23 13:44:55 UTC (rev 1524)
+@@ -35,7 +35,14 @@
+ 
+ 	DEFINE_FUNCTOR_ORDER_2D(InteractingFacet,InteractingSphere);
+ 
+-	Real shrinkFactor;
++	// The radius of the inscribed circle of the facet is decreases by the
++	// value of the sphere's radius multipled by shrinkFactor. So, at
++	// definition of a contact point on the surface made of facets, the given
++	// surface is not continuous and is similar to a surface covered with a
++	// tile, with a gap between the separate tiles equal to the sphere's radius
++	// multiplied by 2*shrinkFactor. By default shrinkFactor=0.
++	Real shrinkFactor; 
++
+ 	bool hasShear;
+ 	
+ 	protected :
+
+Modified: trunk/scripts/exact-rot-facet.py
+===================================================================
+--- trunk/scripts/exact-rot-facet.py	2008-09-23 07:51:55 UTC (rev 1523)
++++ trunk/scripts/exact-rot-facet.py	2008-09-23 13:44:55 UTC (rev 1524)
+@@ -20,7 +20,7 @@
+ 	StandAloneEngine('PersistentSAPCollider'),
+ 	MetaEngine('InteractionGeometryMetaEngine',[
+ 		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry',{'hasShear':True,'interactionDetectionFactor':1.4}),
+-		EngineUnit('InteractingFacet2InteractingSphere4SpheresContactGeometry',{'hasShear':True,'shrinkFactor':1.}),
++		EngineUnit('InteractingFacet2InteractingSphere4SpheresContactGeometry',{'hasShear':True,'shrinkFactor':0.}),
+ 	]),
+ 	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+ 	StandAloneEngine('ElasticContactLaw'),
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000373.html">[deprecated list] [Yade-dev] [svn] r1523 - trunk/gui/py
+</A></li>
+	<LI>Next message: <A HREF="000379.html">[deprecated list] [Yade-dev] [svn] r1525 - in trunk: core extra	extra/clump	gui/py	pkg/common/DataClass/InteractionPhysics	pkg/common/Engine/DeusExMachina	pkg/dem/DataClass/InteractionPhysics	pkg/dem/Engine/EngineUnit
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#377">[ date ]</a>
+              <a href="thread.html#377">[ thread ]</a>
+              <a href="subject.html#377">[ subject ]</a>
+              <a href="author.html#377">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

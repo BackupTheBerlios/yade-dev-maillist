@@ -1,0 +1,385 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1536 - in trunk: core gui/qt3	lib/multimethods	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1536%20-%20in%20trunk%3A%20core%20gui/qt3%0A%09lib/multimethods%09pkg/dem/Engine/EngineUnit%09pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry&In-Reply-To=%3C200810051321.m95DLqFm021992%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000429.html">
+   <LINK REL="Next"  HREF="000432.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1536 - in trunk: core gui/qt3	lib/multimethods	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1536%20-%20in%20trunk%3A%20core%20gui/qt3%0A%09lib/multimethods%09pkg/dem/Engine/EngineUnit%09pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry&In-Reply-To=%3C200810051321.m95DLqFm021992%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1536 - in trunk: core gui/qt3	lib/multimethods	pkg/dem/Engine/EngineUnit	pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Oct  5 15:21:52 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000429.html">[deprecated list] [Yade-dev] random-access container for	interactions
+</A></li>
+        <LI>Next message: <A HREF="000432.html">[deprecated list] [Yade-dev] calling EngineUnit::go to create	persistent interaction?
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#431">[ date ]</a>
+              <a href="thread.html#431">[ thread ]</a>
+              <a href="subject.html#431">[ subject ]</a>
+              <a href="author.html#431">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-10-05 15:21:51 +0200 (Sun, 05 Oct 2008)
+New Revision: 1536
+
+Modified:
+   trunk/core/Interaction.cpp
+   trunk/core/Interaction.hpp
+   trunk/gui/qt3/GLViewer.cpp
+   trunk/gui/qt3/SnapshotEngine.cpp
+   trunk/gui/qt3/SnapshotEngine.hpp
+   trunk/gui/qt3/qt.py
+   trunk/lib/multimethods/DynLibDispatcher.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+   trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp
+   trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.hpp
+Log:
+1. Add Interaction::swapOrder(), for use in EngineUnits that want to avoid calling goReverse()
+2. SnapshotEngine can sleep specified number of msecs after shot, which probably can avoid some hw problems (make_current failed in mesa, freezes etc)
+3. InteractingFacet2IS4SCG now works &quot;correctly&quot; (not exactly physically, though) with shear
+4. DynLibDispatcher should report names of classes if dispatch fails.
+
+
+
+
+Modified: trunk/core/Interaction.cpp
+===================================================================
+--- trunk/core/Interaction.cpp	2008-10-01 09:41:03 UTC (rev 1535)
++++ trunk/core/Interaction.cpp	2008-10-05 13:21:51 UTC (rev 1536)
+@@ -43,3 +43,9 @@
+ 	REGISTER_ATTRIBUTE(interactionPhysics);
+ }
+ 
++void Interaction::swapOrder(){
++	if(interactionGeometry || interactionPhysics || !isNew){
++		throw std::logic_error(&quot;Bodies in interaction cannot be swapped if !isNew, have interactionGeometry or have interactionPhysics.&quot;);
++	}
++	std::swap(id1,id2);
++}
+
+Modified: trunk/core/Interaction.hpp
+===================================================================
+--- trunk/core/Interaction.hpp	2008-10-01 09:41:03 UTC (rev 1535)
++++ trunk/core/Interaction.hpp	2008-10-05 13:21:51 UTC (rev 1536)
+@@ -13,6 +13,8 @@
+ //BOOST_STRONG_TYPEDEF(int, body_id_t)
+ typedef int body_id_t;
+ 
++class InteractionGeometryEngineUnit;
++
+ class Interaction : public Serializable
+ {
+ 	private	:
+@@ -33,6 +35,9 @@
+ 		body_id_t getId1() {return id1;};
+ 		body_id_t getId2() {return id2;};
+ 
++		//! swaps order of bodies within the interaction
++		void swapOrder();
++
+ 		#if 0
+ 			//! Whether both bodies involved in interaction satisfies given mask; provide rootBody for faster lookup
+ 			bool maskBothOK(int mask, MetaBody* rootBody=NULL){return (mask==0) || (Body::byId(id1,rootBody)-&gt;maskOK(mask) &amp;&amp; Body::byId(id2,rootBody)-&gt;maskOK(mask));}
+
+Modified: trunk/gui/qt3/GLViewer.cpp
+===================================================================
+--- trunk/gui/qt3/GLViewer.cpp	2008-10-01 09:41:03 UTC (rev 1535)
++++ trunk/gui/qt3/GLViewer.cpp	2008-10-05 13:21:51 UTC (rev 1536)
+@@ -228,7 +228,7 @@
+ 		}
+ 	}
+ 	else if(e-&gt;key()==Qt::Key_S){
+-		LOG_DEBUG(&quot;Saving QGLViewer state to /tmp/qglviewerState.xml&quot;);
++		LOG_INFO(&quot;Saving QGLViewer state to /tmp/qglviewerState.xml&quot;);
+ 		setStateFileName(&quot;/tmp/qglviewerState.xml&quot;); saveStateToFile(); setStateFileName(QString::null);
+ 	}
+ 	else if(e-&gt;key()==Qt::Key_X || e-&gt;key()==Qt::Key_Y || e-&gt;key()==Qt::Key_Z){
+
+Modified: trunk/gui/qt3/SnapshotEngine.cpp
+===================================================================
+--- trunk/gui/qt3/SnapshotEngine.cpp	2008-10-01 09:41:03 UTC (rev 1535)
++++ trunk/gui/qt3/SnapshotEngine.cpp	2008-10-05 13:21:51 UTC (rev 1536)
+@@ -13,5 +13,6 @@
+ 	glv-&gt;setSnapshotFormat(&quot;PNG&quot;);
+ 	glv-&gt;saveSnapshot(QString(fss.str()),/*overwrite*/ true);
+ 	savedSnapshots.push_back(fss.str());
++	usleep((long)(msecSleep*1000));
+ }
+ 
+
+Modified: trunk/gui/qt3/SnapshotEngine.hpp
+===================================================================
+--- trunk/gui/qt3/SnapshotEngine.hpp	2008-10-01 09:41:03 UTC (rev 1535)
++++ trunk/gui/qt3/SnapshotEngine.hpp	2008-10-05 13:21:51 UTC (rev 1536)
+@@ -21,7 +21,9 @@
+ 		bool ignoreErrors;
+ 		//! files that have been created so far
+ 		vector&lt;string&gt; savedSnapshots;
+-	SnapshotEngine():counter(0),viewNo(0),ignoreErrors(true){}
++		//! number of msec to sleep after snapshot (to prevent 3d hw problems)
++		int msecSleep;
++	SnapshotEngine():counter(0),viewNo(0),ignoreErrors(true),msecSleep(0){}
+ 	virtual void action(MetaBody*);
+ 	void registerAttributes(){	
+ 		PeriodicEngine::registerAttributes();
+@@ -30,6 +32,7 @@
+ 		REGISTER_ATTRIBUTE(viewNo);
+ 		REGISTER_ATTRIBUTE(ignoreErrors);
+ 		REGISTER_ATTRIBUTE(savedSnapshots);
++		REGISTER_ATTRIBUTE(msecSleep);
+ 	}
+ 	DECLARE_LOGGER;
+ 	REGISTER_CLASS_NAME(SnapshotEngine);
+
+Modified: trunk/gui/qt3/qt.py
+===================================================================
+--- trunk/gui/qt3/qt.py	2008-10-01 09:41:03 UTC (rev 1535)
++++ trunk/gui/qt3/qt.py	2008-10-05 13:21:51 UTC (rev 1536)
+@@ -6,7 +6,7 @@
+ 
+ 
+ 
+-def makeSimulationVideo(output,realPeriod=1,virtPeriod=0,iterPeriod=0,viewNo=0,fps=24):
++def makeSimulationVideo(output,realPeriod=1,virtPeriod=0,iterPeriod=0,viewNo=0,fps=24,msecSleep=0):
+ 	&quot;&quot;&quot;Create video by running simulation. SnapshotEngine is added (and removed once done), temporary
+ 	files are deleted. The video is theora-encoded in the ogg container. Periodicity is controlled
+ 	in the same way as for PeriodicEngine (SnapshotEngine is a PeriodicEngine and realPeriod, virtPeriod 
+@@ -26,7 +26,7 @@
+ 	# create primary view if none
+ 	if len(views())==0: View()
+ 	# remove existing SnaphotEngines
+-	se=wrapper.StandAloneEngine('SnapshotEngine',{'iterPeriod':iterPeriod,'realPeriod':realPeriod,'virtPeriod':virtPeriod,'fileBase':os.tmpnam(),'ignoreErrors':False,'viewNo':viewNo})
++	se=wrapper.StandAloneEngine('SnapshotEngine',{'iterPeriod':iterPeriod,'realPeriod':realPeriod,'virtPeriod':virtPeriod,'fileBase':os.tmpnam(),'ignoreErrors':False,'viewNo':viewNo,'msecSleep':msecSleep})
+ 	origEngines=o.engines; o.engines=[e for e in o.engines if e.name!='SnapshotEngine']+[se]
+ 	o.run(); o.wait();
+ 	wildcard=se['fileBase']+'%04d.png'
+
+Modified: trunk/lib/multimethods/DynLibDispatcher.hpp
+===================================================================
+--- trunk/lib/multimethods/DynLibDispatcher.hpp	2008-10-01 09:41:03 UTC (rev 1535)
++++ trunk/lib/multimethods/DynLibDispatcher.hpp	2008-10-05 13:21:51 UTC (rev 1536)
+@@ -494,7 +494,7 @@
+ 				}
+ 			}
+ 			else if( index1_tmp != -1 &amp;&amp; index2_tmp != -1 )
+-				cerr &lt;&lt; &quot;DynLibDispatcher: ambigious dispatch, could not determine which multivirtual function should be called\n&quot;;
++				throw std::runtime_error(&quot;DynLibDispatcher: ambiguous or undefined dispatch for 2d multivirtual function, classes: &quot;+base1-&gt;getClassName()+&quot; &quot;+base2-&gt;getClassName());
+ 			
+ 			return false;
+ 		  };
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2008-10-01 09:41:03 UTC (rev 1535)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp	2008-10-05 13:21:51 UTC (rev 1536)
+@@ -35,12 +35,18 @@
+ 							const shared_ptr&lt;Interaction&gt;&amp; c)
+ {
+ 	InteractingFacet*   facet = static_cast&lt;InteractingFacet*&gt;(cm1.get());
++	/* could be written as (needs to be tested):
++	 * Vector3r cl=se32.orientation.Conjugate()*(se32.position-se32.position);
++	 */
+ 	Matrix3r facetAxisT; se31.orientation.ToRotationMatrix(facetAxisT); 
+ 	Matrix3r facetAxis = facetAxisT.Transpose();
+-	
+ 	// local orientation
+ 	Vector3r cl = facetAxis*(se32.position - se31.position); 
+ 
++	//
++	// BEGIN everything in facet-local coordinates
++	//
++
+ 	Vector3r normal = facet-&gt;nf;
+ 	Real L = normal.Dot(cl);
+ 	if (L&lt;0) { normal=-normal; L=-L; }
+@@ -67,7 +73,7 @@
+ 
+ 	if (icr&lt;0)
+ 	{
+-		LOG_INFO(&quot;WARNING: a radius of a facet's inscribed circle less than zero! So, shrinkFactor is too large and would be reduced to zero.&quot;);
++		LOG_WARN(&quot;a radius of a facet's inscribed circle less than zero! So, shrinkFactor is too large and would be reduced to zero.&quot;);
+ 		shrinkFactor=0;
+ 		icr = facet-&gt;icr;
+ 		sh = 0;
+@@ -92,6 +98,10 @@
+ 		penetrationDepth = sphereRadius - normal.Normalize();
+ 	}
+ 
++	//
++	// END everything in facet-local coordinates
++	//
++
+ 	if (penetrationDepth&gt;0)
+ 	{
+ 		shared_ptr&lt;SpheresContactGeometry&gt; scm;
+@@ -100,7 +110,7 @@
+ 		else
+ 			scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
+ 	  
+-	    normal = facetAxisT*normal; // global orientation
++		normal = facetAxisT*normal; // in global orientation
+ 		scm-&gt;contactPoint = se32.position - (sphereRadius-0.5*penetrationDepth)*normal; 
+ 		scm-&gt;normal = normal; 
+ 		scm-&gt;penetrationDepth = penetrationDepth;
+@@ -112,17 +122,18 @@
+ 
+ 		if(hasShear){
+ 			scm-&gt;hasShear=true;
+-			scm-&gt;pos1=scm-&gt;contactPoint-(2*sphereRadius-.5*penetrationDepth)*normal; scm-&gt;pos2=se32.position;
++			// fictive center of the sphere representing the facet in the sphere-sphere contact
++			scm-&gt;pos1=scm-&gt;contactPoint-(scm-&gt;radius1-.5*penetrationDepth)*normal; scm-&gt;pos2=se32.position;
+ 			scm-&gt;ori1=se31.orientation; scm-&gt;ori2=se32.orientation;
+ 			if(c-&gt;isNew){
+-				scm-&gt;d0=(scm-&gt;pos2-scm-&gt;pos1).Length();
+-				scm-&gt;d1=2*sphereRadius-penetrationDepth; scm-&gt;d2=sphereRadius-penetrationDepth;
++				scm-&gt;d0=scm-&gt;radius1+scm-&gt;radius2-penetrationDepth;
++				scm-&gt;d1=scm-&gt;radius1-.5*penetrationDepth; scm-&gt;d2=scm-&gt;radius2-.5*penetrationDepth;
+ 				// quasi-constants
+ 				scm-&gt;cp1rel.Align(Vector3r::UNIT_X,se31.orientation.Conjugate()*normal);
+ 				scm-&gt;cp2rel.Align(Vector3r::UNIT_X,se32.orientation.Conjugate()*(-normal));
+ 				scm-&gt;cp1rel.Normalize(); scm-&gt;cp2rel.Normalize();
+ 			}
+-			cerr&lt;&lt;&quot;[n&quot;&lt;&lt;scm-&gt;displacementN()&lt;&lt;&quot; t&quot;&lt;&lt;scm-&gt;displacementT()&lt;&lt;&quot;]&quot;;
++			TRVAR2(scm-&gt;contPtInTgPlane1(),scm-&gt;contPtInTgPlane2());
+ 		}
+ 
+ 		return true;
+@@ -137,16 +148,23 @@
+ 								const Se3r&amp; se32,
+ 								const shared_ptr&lt;Interaction&gt;&amp; c)
+ {
++	c-&gt;swapOrder();
++	//LOG_WARN(&quot;Swapped interaction order for &quot;&lt;&lt;c-&gt;getId2()&lt;&lt;&quot;&amp;&quot;&lt;&lt;c-&gt;getId1());
++	return go(cm2,cm1,se32,se31,c);
++#if 0	
+ 	bool isInteracting = go(cm2,cm1,se32,se31,c);
+ 	if (isInteracting)
+ 	{
+ 	    SpheresContactGeometry* scm = static_cast&lt;SpheresContactGeometry*&gt;(c-&gt;interactionGeometry.get());
+-	    scm-&gt;normal = -scm-&gt;normal;
+-	    Real tmpR = scm-&gt;radius1;
+-	    scm-&gt;radius1 = scm-&gt;radius2;
+-	    scm-&gt;radius2 = tmpR;
++		 scm-&gt;normal*=-1;
++		 std::swap(scm-&gt;radius1,scm-&gt;radius2);
++		 if(hasShear){
++			 swap(scm-&gt;pos1,scm-&gt;pos2); swap(scm-&gt;ori1,scm-&gt;ori2);
++			 if(c-&gt;isNew){ swap(scm-&gt;cp1rel,scm-&gt;cp2rel); swap(scm-&gt;d1,scm-&gt;d2); }
++		 }
+ 	}
+ 	return isInteracting;
++#endif
+ }
+ 
+ YADE_PLUGIN();
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2008-10-01 09:41:03 UTC (rev 1535)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp	2008-10-05 13:21:51 UTC (rev 1536)
+@@ -36,7 +36,6 @@
+ 		shared_ptr&lt;SpheresContactGeometry&gt; scm;
+ 		if(c-&gt;interactionGeometry) scm=YADE_PTR_CAST&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
+ 		else { scm=shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry()); c-&gt;interactionGeometry=scm; }
+-		//cerr&lt;&lt;&quot;Assigned scm &quot;&lt;&lt;scm.get()&lt;&lt;&quot;==&quot;&lt;&lt;c-&gt;interactionGeometry.get()&lt;&lt;endl;
+ 
+ 		Real penetrationDepth=s1-&gt;radius+s2-&gt;radius-normal.Normalize(); /* Normalize() works in-place and returns length before normalization; from here, normal is unit vector */
+ 		scm-&gt;contactPoint=se31.position+(s1-&gt;radius-0.5*penetrationDepth)*normal;//0.5*(pt1+pt2);
+
+Modified: trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp	2008-10-01 09:41:03 UTC (rev 1535)
++++ trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.cpp	2008-10-05 13:21:51 UTC (rev 1536)
+@@ -15,6 +15,7 @@
+ #include&lt;yade/lib-opengl/GLUtils.hpp&gt;
+ 
+ YADE_PLUGIN(&quot;GLDrawSpheresContactGeometry&quot;);
++CREATE_LOGGER(GLDrawSpheresContactGeometry);
+ 
+ void GLDrawSpheresContactGeometry::go(
+ 		const shared_ptr&lt;InteractionGeometry&gt;&amp; ig,
+@@ -77,15 +78,19 @@
+ 	}
+ 
+ 	if(sc-&gt;hasShear){
+-		Vector3r contPt=se31.position+(sc-&gt;d1/sc-&gt;d0)*(se32.position-se31.position); // must be recalculated to not be unscaled if scaling displacements ...
++		Vector3r pos1=sc-&gt;pos1, pos2=sc-&gt;pos2, contPt=sc-&gt;contPt();
++		//Vector3r contPt=se31.position+(sc-&gt;d1/sc-&gt;d0)*(se32.position-se31.position); // must be recalculated to not be unscaled if scaling displacements ...
+ 		GLUtils::GLDrawLine(pos1,pos2,Vector3r(.5,.5,.5));
+ 		// sphere center to point on the sphere
+ 		//GLUtils::GLDrawLine(pos1,pos1+(sc-&gt;ori1*sc-&gt;cp1rel*Vector3r::UNIT_X*sc-&gt;d1),Vector3r(0,.5,1));
+ 		//GLUtils::GLDrawLine(pos2,pos2+(sc-&gt;ori2*sc-&gt;cp2rel*Vector3r::UNIT_X*sc-&gt;d2),Vector3r(0,1,.5));
++		//TRVAR4(pos1,sc-&gt;ori1,pos2,sc-&gt;ori2);
++		//TRVAR2(sc-&gt;cp2rel,pos2+(sc-&gt;ori2*sc-&gt;cp2rel*Vector3r::UNIT_X*sc-&gt;d2));
+ 		// contact point to projected points
+ 		Vector3r ptTg1=sc-&gt;contPtInTgPlane1(), ptTg2=sc-&gt;contPtInTgPlane2();
+-		GLUtils::GLDrawLine(contPt,contPt+ptTg1,Vector3r(0,.5,1));
+-		GLUtils::GLDrawLine(contPt,contPt+ptTg2,Vector3r(0,1,.5));
++		TRVAR3(ptTg1,ptTg2,sc-&gt;normal)
++		//GLUtils::GLDrawLine(contPt,contPt+ptTg1,Vector3r(0,.5,1)); GLUtils::GLDrawLine(pos1,contPt+ptTg1,Vector3r(0,.5,1));
++		//GLUtils::GLDrawLine(contPt,contPt+ptTg2,Vector3r(0,1,.5)); GLUtils::GLDrawLine(pos2,contPt+ptTg2,Vector3r(0,1,.5));
+ 		// projected shear
+ 		GLUtils::GLDrawLine(contPt+ptTg1,contPt+ptTg2,Vector3r(1,1,1));
+ 		// 
+
+Modified: trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.hpp	2008-10-01 09:41:03 UTC (rev 1535)
++++ trunk/pkg/dem/RenderingEngine/GLDrawSpheresContactGeometry/GLDrawSpheresContactGeometry.hpp	2008-10-05 13:21:51 UTC (rev 1536)
+@@ -20,6 +20,7 @@
+ 		virtual void go(const shared_ptr&lt;InteractionGeometry&gt;&amp;,const shared_ptr&lt;Interaction&gt;&amp;,const shared_ptr&lt;Body&gt;&amp;,const shared_ptr&lt;Body&gt;&amp;,bool wireFrame);
+ 		//	virtual void registerAttributes();
+ 
++	DECLARE_LOGGER;
+ 	RENDERS(SpheresContactGeometry);
+ 	REGISTER_CLASS_NAME(GLDrawSpheresContactGeometry);
+ 	REGISTER_BASE_CLASS_NAME(GLDrawInteractionGeometryFunctor);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000429.html">[deprecated list] [Yade-dev] random-access container for	interactions
+</A></li>
+	<LI>Next message: <A HREF="000432.html">[deprecated list] [Yade-dev] calling EngineUnit::go to create	persistent interaction?
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#431">[ date ]</a>
+              <a href="thread.html#431">[ thread ]</a>
+              <a href="subject.html#431">[ subject ]</a>
+              <a href="author.html#431">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

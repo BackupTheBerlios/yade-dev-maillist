@@ -1,0 +1,824 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1641 - in trunk: core	examples	examples/SpheresFactory gui/py lib/import	pkg/common	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1641%20-%20in%20trunk%3A%20core%0A%09examples%09examples/SpheresFactory%20gui/py%20lib/import%0A%09pkg/common%09pkg/common/Engine/MetaEngine%0A%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200901251428.n0PESdAP022117%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000623.html">
+   <LINK REL="Next"  HREF="000622.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1641 - in trunk: core	examples	examples/SpheresFactory gui/py lib/import	pkg/common	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1641%20-%20in%20trunk%3A%20core%0A%09examples%09examples/SpheresFactory%20gui/py%20lib/import%0A%09pkg/common%09pkg/common/Engine/MetaEngine%0A%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200901251428.n0PESdAP022117%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1641 - in trunk: core	examples	examples/SpheresFactory gui/py lib/import	pkg/common	pkg/common/Engine/MetaEngine	pkg/common/Engine/StandAloneEngine">sega at mail.berlios.de
+       </A><BR>
+    <I>Sun Jan 25 15:28:39 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000623.html">[deprecated list] [Yade-dev] polyhedron collisions
+</A></li>
+        <LI>Next message: <A HREF="000622.html">[deprecated list] [Yade-dev] [svn] r1642 - in trunk/pkg/snow:	DataClass	RenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#621">[ date ]</a>
+              <a href="thread.html#621">[ thread ]</a>
+              <a href="subject.html#621">[ subject ]</a>
+              <a href="author.html#621">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2009-01-25 15:28:37 +0100 (Sun, 25 Jan 2009)
+New Revision: 1641
+
+Added:
+   trunk/core/BroadInteractor.cpp
+   trunk/examples/SpheresFactory/
+   trunk/examples/SpheresFactory/circle.stl
+   trunk/examples/SpheresFactory/model.py
+   trunk/examples/SpheresFactory/plane.stl
+   trunk/examples/SpheresFactory/square.stl
+   trunk/examples/SpheresFactory/yade.stl
+Modified:
+   trunk/core/BroadInteractor.hpp
+   trunk/core/SConscript
+   trunk/examples/STLImporterTest.py
+   trunk/gui/py/utils.py
+   trunk/gui/py/yadeControl.cpp
+   trunk/lib/import/STLImporter.cpp
+   trunk/lib/import/STLImporter.hpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp
+   trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.hpp
+   trunk/pkg/common/SConscript
+Log:
+1.First worked version of SpheresFactory engine. Example in examples/SpheresFactory
+2.Added PersistentSAPCollider::probeBoundingVolume function (for using with SpheresFactory)
+3.InteractionGeometryMetaEngine::explicitAction has been modified to remove artifical (as me seems) asserts.
+4.python import_stl_geometry now return list of body ids instead only their number.
+5.import stl geometry now allows import facets without BoundingVolume  and InteractingGeometry.
+6.Fixed dynamic_cast for BroadInteractor. 
+
+
+
+Added: trunk/core/BroadInteractor.cpp
+===================================================================
+--- trunk/core/BroadInteractor.cpp	2009-01-25 04:38:29 UTC (rev 1640)
++++ trunk/core/BroadInteractor.cpp	2009-01-25 14:28:37 UTC (rev 1641)
+@@ -0,0 +1,20 @@
++/*************************************************************************
++*  Copyright (C) 2004 by Janek Kozicki                                   *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;BroadInteractor.hpp&quot;
++
++BroadInteractor::BroadInteractor()
++{
++	
++}
++
++BroadInteractor::~BroadInteractor()
++{
++	
++}
++
+
+Modified: trunk/core/BroadInteractor.hpp
+===================================================================
+--- trunk/core/BroadInteractor.hpp	2009-01-25 04:38:29 UTC (rev 1640)
++++ trunk/core/BroadInteractor.hpp	2009-01-25 14:28:37 UTC (rev 1641)
+@@ -15,9 +15,9 @@
+ class BroadInteractor : public StandAloneEngine
+ {
+ 	public :
+-		BroadInteractor() {};
+-		virtual ~BroadInteractor() {};
+-		virtual  bool probeBoundingVolume(const shared_ptr&lt;BoundingVolume&gt;&amp; bv, const Vector3r&amp; center){throw;}
++		BroadInteractor();
++		virtual ~BroadInteractor();
++		virtual  bool probeBoundingVolume(const BoundingVolume&amp;){throw;}
+ 		vector&lt;body_id_t&gt; probedBodies;
+ 
+ 	protected:
+
+Modified: trunk/core/SConscript
+===================================================================
+--- trunk/core/SConscript	2009-01-25 04:38:29 UTC (rev 1640)
++++ trunk/core/SConscript	2009-01-25 14:28:37 UTC (rev 1641)
+@@ -4,6 +4,7 @@
+ 		['Body.cpp',
+ 			'BodyContainer.cpp',
+ 			'BoundingVolume.cpp',
++			'BroadInteractor.cpp',
+ 			'DeusExMachina.cpp',
+ 			'FileGenerator.cpp',
+ 			'FrontEnd.cpp',
+
+Modified: trunk/examples/STLImporterTest.py
+===================================================================
+--- trunk/examples/STLImporterTest.py	2009-01-25 04:38:29 UTC (rev 1640)
++++ trunk/examples/STLImporterTest.py	2009-01-25 14:28:37 UTC (rev 1641)
+@@ -74,7 +74,7 @@
+ 	## Angular acceleration changes angular velocity, resulting in position and/or orientation change of the body.
+ 	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogOrientationIntegrator')]),
+ 	## Apply kinematics to walls
+-	DeusExMachina('RotationEngine',{'subscribedBodies':range(imported),'rotationAxis':[0,0,1],'rotateAroundZero':True,'angularVelocity':0.5}),
++	DeusExMachina('RotationEngine',{'subscribedBodies':imported,'rotationAxis':[0,0,1],'rotateAroundZero':True,'angularVelocity':0.5}),
+ ]
+ 
+ ## Save the scene to file, so that it can be loaded later. Supported extension are: .xml, .xml.gz, .xml.bz2.
+
+Added: trunk/examples/SpheresFactory/circle.stl
+===================================================================
+(Binary files differ)
+
+
+Property changes on: trunk/examples/SpheresFactory/circle.stl
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+Added: trunk/examples/SpheresFactory/model.py
+===================================================================
+--- trunk/examples/SpheresFactory/model.py	2009-01-25 04:38:29 UTC (rev 1640)
++++ trunk/examples/SpheresFactory/model.py	2009-01-25 14:28:37 UTC (rev 1641)
+@@ -0,0 +1,73 @@
++# -*- encoding=utf-8 -*-
++
++from yade import utils
++
++## Omega
++o=Omega() 
++
++## PhysicalParameters 
++Young = 0.15e9
++Poisson = 0.3
++
++## Import box geometry
++box = utils.import_stl_geometry('plane.stl',young=Young,poisson=Poisson,color=[0.7,0.7,0.7],wire=False)
++## Import factory geometry
++factory1 = utils.import_stl_geometry('yade.stl',color=[0.7,0.4,0.4],noInteractingGeometry=True)
++factory2 = utils.import_stl_geometry('circle.stl',color=[0.4,0.7,0.4],noInteractingGeometry=True)
++factory3 = utils.import_stl_geometry('square.stl',color=[0.4,0.4,0.7],noInteractingGeometry=True)
++
++## Timestep 
++o.dt=0.0001
++
++## Initializers 
++o.initializers=[
++	StandAloneEngine('PhysicalActionContainerInitializer'),
++	MetaEngine('BoundingVolumeMetaEngine',
++		[EngineUnit('InteractingSphere2AABB'),
++			EngineUnit('InteractingFacet2AABB'),
++			EngineUnit('MetaInteractingGeometry2AABB')])
++	]
++
++## Engines 
++o.engines=[
++	StandAloneEngine('PhysicalActionContainerReseter'),
++	MetaEngine('BoundingVolumeMetaEngine',[
++		EngineUnit('InteractingSphere2AABB'),
++		EngineUnit('InteractingFacet2AABB'),
++		EngineUnit('MetaInteractingGeometry2AABB')
++	]),
++	StandAloneEngine('PersistentSAPCollider'),
++
++	## Spheres factory engine
++	StandAloneEngine('SpheresFactory',{'factoryFacets':factory1,'virtPeriod':0.005,'radius':0.07,'radiusRange':0.03,'young':Young,'color':[1,0,0]}),
++	StandAloneEngine('SpheresFactory',{'factoryFacets':factory2,'virtPeriod':0.01,'radius':0.08,'young':Young,'color':[0,1,0]}),
++	StandAloneEngine('SpheresFactory',{'factoryFacets':factory3,'virtPeriod':0.01,'radius':0.05,'young':Young,'color':[0,0,1]}),
++
++	MetaEngine('InteractionGeometryMetaEngine',[
++		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
++		EngineUnit('InteractingFacet2InteractingSphere4SpheresContactGeometry')
++	]),
++	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('MacroMicroElasticRelationships')]),
++
++	DeusExMachina('GravityEngine',{'gravity':[0,0,-9.81]}),
++	
++	StandAloneEngine('ElasticContactLaw'),
++	
++	MetaEngine('PhysicalActionDamper',[
++		EngineUnit('CundallNonViscousForceDamping',{'damping':0.3}),
++		EngineUnit('CundallNonViscousMomentumDamping',{'damping':0.3})
++	]),
++
++	MetaEngine('PhysicalActionApplier',[
++		EngineUnit('NewtonsForceLaw'),
++		EngineUnit('NewtonsMomentumLaw'),
++	]),
++
++	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogPositionIntegrator')]),
++	MetaEngine('PhysicalParametersMetaEngine',[EngineUnit('LeapFrogOrientationIntegrator')]),
++
++]
++
++## Save the scene to file, so that it can be loaded later. Supported extension are: .xml, .xml.gz, .xml.bz2.
++o.save('/tmp/a.xml');
++
+
+Added: trunk/examples/SpheresFactory/plane.stl
+===================================================================
+(Binary files differ)
+
+
+Property changes on: trunk/examples/SpheresFactory/plane.stl
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+Added: trunk/examples/SpheresFactory/square.stl
+===================================================================
+(Binary files differ)
+
+
+Property changes on: trunk/examples/SpheresFactory/square.stl
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+Added: trunk/examples/SpheresFactory/yade.stl
+===================================================================
+(Binary files differ)
+
+
+Property changes on: trunk/examples/SpheresFactory/yade.stl
+___________________________________________________________________
+Name: svn:mime-type
+   + application/octet-stream
+
+Modified: trunk/gui/py/utils.py
+===================================================================
+--- trunk/gui/py/utils.py	2009-01-25 04:38:29 UTC (rev 1640)
++++ trunk/gui/py/utils.py	2009-01-25 14:28:37 UTC (rev 1641)
+@@ -225,22 +225,28 @@
+ 	pylab.show()
+ 
+ 
+-def import_stl_geometry(file, begin=0, young=30e9,poisson=.3,frictionAngle=0.5236,wire=True):
+-		## Import walls geometry from STL file
+-		imp = STLImporter()
+-		imp.wire = wire
+-		imp.open(file)
+-		o=Omega()
+-		for i in xrange(imp.number_of_facets):
+-			b=Body()
+-			b['isDynamic']=False
+-			b.phys=PhysicalParameters('BodyMacroParameters',{'se3':[0,0,0,1,0,0,0],'mass':0,'inertia':[0,0,0],'young':young,'poisson':poisson,'frictionAngle':frictionAngle})
++def import_stl_geometry(file, young=30e9,poisson=.3,color=[0,1,0],frictionAngle=0.5236,wire=True,noBoundingVolume=False,noInteractingGeometry=False):
++	&quot;&quot;&quot; Import geometry from stl file, create bodies and return list of their ids. 
++	&quot;&quot;&quot;
++	imp = STLImporter()
++	imp.wire = wire
++	imp.open(file)
++	o=Omega()
++	begin=len(o.bodies)
++	for i in xrange(imp.number_of_facets):
++		b=Body()
++		b['isDynamic']=False
++		b.phys=PhysicalParameters('BodyMacroParameters',{'se3':[0,0,0,1,0,0,0],'mass':0,'inertia':[0,0,0],'young':young,'poisson':poisson,'frictionAngle':frictionAngle})
++		if not noBoundingVolume:
+ 			b.bound=BoundingVolume('AABB',{'diffuseColor':[0,1,0]})
+-			o.bodies.append(b)
+-		imp.import_geometry(o.bodies,begin)
+-		for i in xrange(begin,begin+imp.number_of_facets):
++		o.bodies.append(b)
++	imp.import_geometry(o.bodies,begin,noInteractingGeometry)
++	imported=range(begin,begin+imp.number_of_facets)
++	for i in imported:
++		if not noInteractingGeometry:
+ 			o.bodies[i].mold.postProcessAttributes()
+-		return imp.number_of_facets
++		o.bodies[i].shape['diffuseColor']=color
++	return imported
+ 
+ def encodeVideoFromFrames(wildcard,out,renameNotOverwrite=True,fps=24):
+ 	import pygst,sys,gobject,os
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2009-01-25 04:38:29 UTC (rev 1640)
++++ trunk/gui/py/yadeControl.cpp	2009-01-25 14:28:37 UTC (rev 1641)
+@@ -532,10 +532,10 @@
+ 
+ class pySTLImporter : public STLImporter {
+     public:
+-	void py_import(pyBodyContainer bc, unsigned int begin=0) { import(bc.proxee,begin); }
++	void py_import(pyBodyContainer bc, unsigned int begin=0, bool noInteractingGeometry=false) { import(bc.proxee,begin,noInteractingGeometry); }
+ };
+ 
+-BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(STLImporter_import_overloads,py_import,1,2);
++BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(STLImporter_import_overloads,py_import,1,3);
+ 
+ BOOST_PYTHON_MODULE(wrapper)
+ {
+
+Modified: trunk/lib/import/STLImporter.cpp
+===================================================================
+--- trunk/lib/import/STLImporter.cpp	2009-01-25 04:38:29 UTC (rev 1640)
++++ trunk/lib/import/STLImporter.cpp	2009-01-25 14:28:37 UTC (rev 1641)
+@@ -35,7 +35,7 @@
+ 	return true;
+ }
+ 
+-void STLImporter::import(shared_ptr&lt;BodyContainer&gt; bodies, unsigned int begin)
++void STLImporter::import(shared_ptr&lt;BodyContainer&gt; bodies, unsigned int begin, bool noInteractingGeometry)
+ {
+ 	unsigned int b_id = begin;
+ 	for(int i=0,e=tr.size(); i&lt;e; i+=3)
+@@ -61,7 +61,7 @@
+ 
+ 		(*bodies)[b_id]-&gt;physicalParameters-&gt;se3 = Se3r( icc, Quaternionr( 1,0,0,0 ) );
+ 		(*bodies)[b_id]-&gt;geometricalModel	= gFacet;
+-		(*bodies)[b_id]-&gt;interactingGeometry	= iFacet;
++		if (!noInteractingGeometry) (*bodies)[b_id]-&gt;interactingGeometry	= iFacet;
+ 
+ 		++b_id;
+ 	}
+
+Modified: trunk/lib/import/STLImporter.hpp
+===================================================================
+--- trunk/lib/import/STLImporter.hpp	2009-01-25 04:38:29 UTC (rev 1640)
++++ trunk/lib/import/STLImporter.hpp	2009-01-25 14:28:37 UTC (rev 1641)
+@@ -27,7 +27,7 @@
+ 	bool wire;
+ 
+ 	/// import geometry 
+-	void import(shared_ptr&lt;BodyContainer&gt; bodies, unsigned int begin=0);
++	void import(shared_ptr&lt;BodyContainer&gt; bodies, unsigned int begin=0, bool noInteractingGeometry=false);
+ 
+ 	DECLARE_LOGGER;
+ protected:
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp	2009-01-25 04:38:29 UTC (rev 1640)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.cpp	2009-01-25 14:28:37 UTC (rev 1641)
+@@ -20,13 +20,24 @@
+  * The EngineUnit must not fail (return false).
+  */
+ 
+-shared_ptr&lt;Interaction&gt; InteractionGeometryMetaEngine::explicitAction(const shared_ptr&lt;Body&gt;&amp; b1, const shared_ptr&lt;Body&gt; b2){
+-	assert(b1-&gt;interactingGeometry &amp;&amp; b2-&gt;interactingGeometry);
+-	shared_ptr&lt;Interaction&gt; i(new Interaction(b1-&gt;getId(),b2-&gt;getId()));
+-	i-&gt;isReal=true;
+-	bool op=operator()(b1-&gt;interactingGeometry,b2-&gt;interactingGeometry,b1-&gt;physicalParameters-&gt;se3,b2-&gt;physicalParameters-&gt;se3,i);
+-	if(!op) throw runtime_error(&quot;InteractionGeometryMetaEngine::explicitAction could not dispatch for given types (&quot;+b1-&gt;interactingGeometry-&gt;getClassName()+&quot;,&quot;+b2-&gt;interactingGeometry-&gt;getClassName()+&quot;) or the dispatchee returned false.&quot;);
+-	return i;
++shared_ptr&lt;Interaction&gt; InteractionGeometryMetaEngine::explicitAction(const shared_ptr&lt;Body&gt;&amp; b1, const shared_ptr&lt;Body&gt;&amp; b2){
++	//assert(b1-&gt;interactingGeometry &amp;&amp; b2-&gt;interactingGeometry);
++	//shared_ptr&lt;Interaction&gt; i(new Interaction(b1-&gt;getId(),b2-&gt;getId()));
++	//i-&gt;isReal=true;
++	//bool op=operator()(b1-&gt;interactingGeometry,b2-&gt;interactingGeometry,b1-&gt;physicalParameters-&gt;se3,b2-&gt;physicalParameters-&gt;se3,i);
++	//if(!op) throw runtime_error(&quot;InteractionGeometryMetaEngine::explicitAction could not dispatch for given types (&quot;+b1-&gt;interactingGeometry-&gt;getClassName()+&quot;,&quot;+b2-&gt;interactingGeometry-&gt;getClassName()+&quot;) or the dispatchee returned false.&quot;);
++	//return i;
++	
++	// Seems asserts and throws in code above is not good idea.
++	// Below code do same (i.e. create interaction for specified bodies), but
++	// without artifical exceptions. If creating interaction is fail (for
++	// example if bodies don't have an interactionGeometry), returned
++	// interaction is non real, i.e. interaction-&gt;isReal==false. Sega.
++	shared_ptr&lt;Interaction&gt; interaction(new Interaction(b1-&gt;getId(),b2-&gt;getId()));
++	interaction-&gt;isReal =
++		b1-&gt;interactingGeometry &amp;&amp; b2-&gt;interactingGeometry &amp;&amp; 
++		operator()( b1-&gt;interactingGeometry , b2-&gt;interactingGeometry , b1-&gt;physicalParameters-&gt;se3 , b2-&gt;physicalParameters-&gt;se3 , interaction );
++	return interaction;
+ }
+ 
+ void InteractionGeometryMetaEngine::action(MetaBody* ncb)
+@@ -54,9 +65,9 @@
+ 		//cerr&lt;&lt;&quot;isReal=&quot;&lt;&lt;interaction-&gt;isReal&lt;&lt;&quot;, wasReal=&quot;&lt;&lt;wasReal&lt;&lt;&quot;, isNew=&quot;&lt;&lt;interaction-&gt;isNew&lt;&lt;endl;
+ 
+ 		//tmp
+-		if(!(b1-&gt;interactingGeometry&amp;&amp;b2-&gt;interactingGeometry)){
+-			cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot;: no interacting geometry &quot;&lt;&lt; (b1-&gt;interactingGeometry?b1-&gt;getId():-1)&lt;&lt;&quot; &quot;&lt;&lt;(b2-&gt;interactingGeometry?b2-&gt;getId():-1)&lt;&lt;endl;
+-		}
++		//if(!(b1-&gt;interactingGeometry&amp;&amp;b2-&gt;interactingGeometry)){
++			//cerr&lt;&lt;__FILE__&lt;&lt;&quot;:&quot;&lt;&lt;__LINE__&lt;&lt;&quot;: no interacting geometry &quot;&lt;&lt; (b1-&gt;interactingGeometry?b1-&gt;getId():-1)&lt;&lt;&quot; &quot;&lt;&lt;(b2-&gt;interactingGeometry?b2-&gt;getId():-1)&lt;&lt;endl;
++		//}
+ 			
+ 	}
+ }
+
+Modified: trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp
+===================================================================
+--- trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp	2009-01-25 04:38:29 UTC (rev 1640)
++++ trunk/pkg/common/Engine/MetaEngine/InteractionGeometryMetaEngine.hpp	2009-01-25 14:28:37 UTC (rev 1641)
+@@ -37,7 +37,7 @@
+ {
+ 	public :
+ 		virtual void action(MetaBody*);
+-		shared_ptr&lt;Interaction&gt; explicitAction(const shared_ptr&lt;Body&gt;&amp; b1, const shared_ptr&lt;Body&gt; b2);
++		shared_ptr&lt;Interaction&gt; explicitAction(const shared_ptr&lt;Body&gt;&amp; b1, const shared_ptr&lt;Body&gt;&amp; b2);
+ 
+ 	REGISTER_CLASS_NAME(InteractionGeometryMetaEngine);
+ 	REGISTER_BASE_CLASS_NAME(MetaEngine2D);
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-01-25 04:38:29 UTC (rev 1640)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-01-25 14:28:37 UTC (rev 1641)
+@@ -104,7 +104,28 @@
+ 	}
+ }
+ 
++bool PersistentSAPCollider::probeBoundingVolume(const BoundingVolume&amp; bv)
++{
++	probedBodies.clear();
++	for( vector&lt;shared_ptr&lt;AABBBound&gt; &gt;::iterator 
++			it=xBounds.begin(),et=xBounds.end(); it &lt; et; ++it)
++	{
++		if ((*it)-&gt;value &gt; bv.max[0]) break;
++		if (!(*it)-&gt;lower) continue;
++		int offset = 3*(*it)-&gt;id;
++		if (!(maxima[offset] &lt; bv.min[0] ||
++				minima[offset+1] &gt; bv.max[1] ||
++				maxima[offset+1] &lt; bv.min[1] ||
++				minima[offset+2] &gt; bv.max[2] ||
++				maxima[offset+2] &lt; bv.min[2] )) 
++		{
++			probedBodies.push_back((*it)-&gt;id);
++		}
++	}
++	return (bool)probedBodies.size();
++}
+ 
++
+ void PersistentSAPCollider::updateIds(unsigned int nbElements)
+ {
+ 	// the first time broadInteractionTest is called nbObject=0
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp	2009-01-25 04:38:29 UTC (rev 1640)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp	2009-01-25 14:28:37 UTC (rev 1641)
+@@ -95,6 +95,9 @@
+ 		/// return a list &quot;transientInteractions&quot; of pairs of Body which Bounding volume are in potential interaction
+ 		void action(MetaBody *);
+ 
++		/// return true if BoundingVolume is in potential interaction
++		bool probeBoundingVolume(const BoundingVolume&amp; bv);
++
+ 		//! When creating transient interaction, look first if a persistent link between the pair in question exists; in that case, skip it.
+ 		bool noTransientIfPersistentExists;
+ 		//! Don't break transient interaction once bodies don't overlap anymore; material law will be responsible for breaking it.
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.cpp	2009-01-25 04:38:29 UTC (rev 1640)
++++ trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.cpp	2009-01-25 14:28:37 UTC (rev 1641)
+@@ -8,19 +8,38 @@
+ 
+ #include&lt;boost/random.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
+-#include&lt;yade/pkg-common/PersistentSAPCollider.hpp&gt;
+ #include&lt;yade/pkg-common/AABB.hpp&gt;
+ #include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
+-#include&lt;yade/pkg-common/InteractingFacet.hpp&gt;
++#include&lt;yade/pkg-common/Facet.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+ #include&quot;SpheresFactory.hpp&quot;
+ 
+ CREATE_LOGGER(SpheresFactory);
+ 
+-SpheresFactory::SpheresFactory() : first_run(true) 
++namespace {
++boost::variate_generator&lt;boost::mt19937,boost::uniform_real&lt;&gt; &gt; 
++	randomUnit(boost::mt19937(),boost::uniform_real&lt;&gt;(0,1));
++boost::variate_generator&lt;boost::mt19937,boost::uniform_real&lt;&gt; &gt;
++	randomSymmetricUnit(boost::mt19937(),boost::uniform_real&lt;&gt;(-1,1));
++}
++
++SpheresFactory::SpheresFactory() 
+ {
+-
++	factoryFacets.clear();
++	maxAttempts=20;
++	radius=0.01;
++	radiusRange=0;
++	velocity=Vector3r(0,0,0);
++	velocityRange=Vector3r(0,0,0);
++	angularVelocity=Vector3r(0,0,0);
++	angularVelocityRange=Vector3r(0,0,0);
++	young		= 0;
++	poisson		= 0;
++	frictionAngle = 0;
++	density 	= 2400;
++	first_run = true;
++	color=Vector3r(0.8,0.8,0.8);
+ }
+ 
+ SpheresFactory::~SpheresFactory()
+@@ -28,46 +47,74 @@
+ 	
+ }
+ 
+-
+-
+ void SpheresFactory::action(MetaBody* ncb)
+ {
+ 	if (first_run)
+ 	{
+-		//FIXME: Why dynamic_cast failed here???
+-		Engine* eng = ncb-&gt;engineByLabel(labelBroadInteractor).get();
+-		bI=dynamic_cast&lt;BroadInteractor*&gt;(eng);
++		FOREACH(shared_ptr&lt;Engine&gt; eng, ncb-&gt;engines)
++		{
++			bI=dynamic_cast&lt;BroadInteractor*&gt;(eng.get());
++			if (bI) break;
++		}
+ 		if (!bI) 
+ 		{
+-			LOG_FATAL(&quot;For engine with label '&quot; &lt;&lt; labelBroadInteractor &lt;&lt; &quot;' dynamic_cast from class '&quot; &lt;&lt; eng-&gt;getClassName() &lt;&lt; &quot;' to class 'BroadInteractor' failed!&quot; );
++			LOG_FATAL(&quot;Can't find BroadInteractor.&quot; );
+ 			return;
+ 		}
++		iGME=dynamic_cast&lt;InteractionGeometryMetaEngine*&gt;(ncb-&gt;engineByName(&quot;InteractionGeometryMetaEngine&quot;).get());
++		if (!iGME) 
++		{
++			LOG_FATAL(&quot;Can't find InteractionGeometryMetaEngine.&quot; );
++			return;
++		}
+ 		first_run=false;
++		randomFacet= shared_ptr&lt;RandomInt&gt;(new RandomInt(boost::minstd_rand(),boost::uniform_int&lt;&gt;(0,factoryFacets.size()-1)));
+ 	}
+ 
+-	static boost::variate_generator&lt;boost::minstd_rand,boost::uniform_int&lt;&gt; &gt; randomFacet(boost::minstd_rand(),boost::uniform_int&lt;&gt;(0,factoryFacets.size()-1));
+ 
+-	static boost::variate_generator&lt;boost::mt19937,boost::uniform_real&lt;&gt; &gt; random(boost::mt19937(),boost::uniform_real&lt;&gt;(0,1));
+ 
+-	body_id_t facetId = factoryFacets[randomFacet()];
+-	Real t1 = random();
+-	Real t2 = random()*(1-t1);
++	for (int attempt=0; attempt&lt;maxAttempts; ++attempt)
++	{
++		body_id_t facetId = factoryFacets[(*randomFacet)()];
++		Real t1 = randomUnit();
++		Real t2 = randomUnit()*(1-t1);
+ 
+-	shared_ptr&lt;Body&gt; facet = Body::byId(factoryFacets[facetId]);
+-	InteractingFacet* ifacet = static_cast&lt;InteractingFacet*&gt;(facet-&gt;interactingGeometry.get());
++		shared_ptr&lt;Body&gt; facet = Body::byId(facetId);
++		Facet* gfacet = static_cast&lt;Facet*&gt;(facet-&gt;geometricalModel.get());
+ 
+-	Vector3r position = t1*(ifacet-&gt;vertices[1]-ifacet-&gt;vertices[0])+t2*(ifacet-&gt;vertices[2]-ifacet-&gt;vertices[0])+ifacet-&gt;vertices[0]+facet-&gt;physicalParameters-&gt;se3.position;
++		Vector3r position = t1*(gfacet-&gt;vertices[1]-gfacet-&gt;vertices[0])+t2*(gfacet-&gt;vertices[2]-gfacet-&gt;vertices[0])+gfacet-&gt;vertices[0]+facet-&gt;physicalParameters-&gt;se3.position;
+ 
+-	Real radius=0.1;
++		Real r=radius+radiusRange*randomSymmetricUnit();
+ 
+-	shared_ptr&lt;Body&gt; sphere;
+-	createSphere(sphere,position,radius);
+-	ncb-&gt;bodies-&gt;insert(sphere);
++		BoundingVolume bv;
++		bv.min = Vector3r(position[0]-r, position[1]-r, position[2]-r);
++		bv.max = Vector3r(position[0]+r, position[1]+r, position[2]+r);
+ 
+-	bI-&gt;action(ncb);
++		shared_ptr&lt;Body&gt; sphere;
++		createSphere(sphere,position,r);
++
++		if (bI-&gt;probeBoundingVolume(bv)) 
++		{
++			bool is_overlap=false;
++			for( unsigned int i=0, e=bI-&gt;probedBodies.size(); i&lt;e; ++i)
++			{
++				if (iGME-&gt;explicitAction(sphere,Body::byId(bI-&gt;probedBodies[i]))-&gt;isReal)
++				{
++					is_overlap=true;
++					break;
++				}
++			}
++			if (is_overlap) continue;
++		}
++		ncb-&gt;bodies-&gt;insert(sphere);
++		bI-&gt;action(ncb);
++		return;
++	}
++	LOG_WARN(&quot;Can't placing sphere during &quot; &lt;&lt; maxAttempts &lt;&lt; &quot; attemps.&quot;);
+ }
+ 
+-void SpheresFactory::createSphere(shared_ptr&lt;Body&gt;&amp; body, const Vector3r&amp; position, Real radius)
++void SpheresFactory::createSphere(shared_ptr&lt;Body&gt;&amp; body, 
++		const Vector3r&amp; position, Real r)
+ {
+ 	body = shared_ptr&lt;Body&gt;(new Body(body_id_t(0),1));
+ 	shared_ptr&lt;BodyMacroParameters&gt; physics(new BodyMacroParameters);
+@@ -78,27 +125,36 @@
+ 	Quaternionr q;
+ 	q.FromAxisAngle( Vector3r(0,0,1),0);
+ 	
+-	body-&gt;isDynamic			= false;
++	body-&gt;isDynamic			= true;
+ 	
+-	physics-&gt;angularVelocity	= Vector3r(0,0,0);
+-	physics-&gt;velocity		= Vector3r(0,0,0);
+-	physics-&gt;mass			= 4.0/3.0*Mathr::PI*radius*radius*radius*2400;
+-	physics-&gt;inertia		= Vector3r(2.0/5.0*physics-&gt;mass*radius*radius,2.0/5.0*physics-&gt;mass*radius*radius,2.0/5.0*physics-&gt;mass*radius*radius); //
++	physics-&gt;velocity		= Vector3r(//
++			velocity[0]+velocityRange[0]*randomSymmetricUnit(),
++			velocity[1]+velocityRange[1]*randomSymmetricUnit(),
++			velocity[2]+velocityRange[2]*randomSymmetricUnit());
++	physics-&gt;angularVelocity= Vector3r(//
++			angularVelocity[0]+angularVelocityRange[0]*randomSymmetricUnit(),
++			angularVelocity[1]+angularVelocityRange[1]*randomSymmetricUnit(),
++			angularVelocity[2]+angularVelocityRange[2]*randomSymmetricUnit());
++	physics-&gt;mass			= 4.0/3.0*Mathr::PI*r*r*r*density;
++	physics-&gt;inertia = Vector3r(//
++			2.0/5.0*physics-&gt;mass*r*r,
++			2.0/5.0*physics-&gt;mass*r*r,
++			2.0/5.0*physics-&gt;mass*r*r); 
+ 	physics-&gt;se3			= Se3r(position,q);
+-	physics-&gt;young			= 0.15e9;
+-	physics-&gt;poisson		= 0.3;
+-	//physics-&gt;frictionAngle	= sphereFrictionDeg * Mathr::PI/180.0;
++	if (young) 			physics-&gt;young			= young;
++	if (poisson) 		physics-&gt;poisson		= poisson;
++	if (frictionAngle) 	physics-&gt;frictionAngle	= frictionAngle;
+ 
+ 	aabb-&gt;diffuseColor		= Vector3r(0,1,0);
+ 
+-	gSphere-&gt;radius			= radius;
+-	gSphere-&gt;diffuseColor		= Vector3r(Mathr::UnitRandom(),Mathr::UnitRandom(),Mathr::UnitRandom());
++	gSphere-&gt;radius			= r;
++	gSphere-&gt;diffuseColor	= color;
+ 	gSphere-&gt;wire			= false;
+ 	gSphere-&gt;visible		= true;
+-	gSphere-&gt;shadowCaster		= true;
++	gSphere-&gt;shadowCaster	= true;
+ 	
+-	iSphere-&gt;radius			= radius;
+-	iSphere-&gt;diffuseColor		= Vector3r(0.8,0.3,0.3);
++	iSphere-&gt;radius			= r;
++	iSphere-&gt;diffuseColor	= Vector3r(0.8,0.3,0.3);
+ 
+ 	body-&gt;interactingGeometry	= iSphere;
+ 	body-&gt;geometricalModel		= gSphere;
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.hpp	2009-01-25 04:38:29 UTC (rev 1640)
++++ trunk/pkg/common/Engine/StandAloneEngine/SpheresFactory.hpp	2009-01-25 14:28:37 UTC (rev 1641)
+@@ -8,7 +8,8 @@
+ #ifndef ___SPHERESFACTORYENGINE___
+ #define ___SPHERESFACTORYENGINE___
+ 
+-#include &lt;yade/core/StandAloneEngine.hpp&gt;
++#include &lt;yade/pkg-common/PeriodicEngines.hpp&gt;
++#include &lt;yade/pkg-common/InteractionGeometryMetaEngine.hpp&gt;
+ #include &lt;yade/core/BroadInteractor.hpp&gt;
+ #include &lt;yade/core/MetaBody.hpp&gt;
+ #include &lt;vector&gt;
+@@ -16,26 +17,87 @@
+ 
+ using namespace std;
+ 
+-class SpheresFactory : public StandAloneEngine {
++/// @brief Produces spheres over the course of a simulation. 
++class SpheresFactory : public PeriodicEngine {
+ public:
+ 
+ 	SpheresFactory();
+ 	virtual ~SpheresFactory();
+ 
++	/// @brief Create one sphere per call.
+ 	virtual void action(MetaBody*);
+ 
++	/// @brief The geometry of the surface on which spheres will be placed. 
+ 	vector&lt;body_id_t&gt; factoryFacets; 
+-	string labelBroadInteractor;
+ 
+-protected:
++	/// @brief Max attemps to place sphere.
++	/// If placing the sphere in certain random position would cause an overlap with any other physical body in the model, SpheresFactory will try to find another position. Default 20 attempts allow.
++	int maxAttempts; 
++
++	/// @brief Mean radius of spheres.
++	Real radius; 
++
++	/// @brief Half size of a radii distribution interval.
++	/// New sphere will have random radius within the range radius&#177;radiusRange.
++	Real radiusRange;
++
++	/// @brief Mean velocity of spheres.
++	Vector3r velocity;
++
++	/// @brief Half size of a velocities distribution interval.
++	/// New sphere will have random velocity within the range velocity&#177;velocityRange.
++	Vector3r velocityRange;
++	
++	/// @brief Mean angularVelocity of spheres.
++	Vector3r angularVelocity;
++
++	/// @brief Half size of a angularVelocity distribution interval.
++	/// New sphere will have random angularVelocity within the range angularVelocity&#177;angularVelocityRange.
++	Vector3r angularVelocityRange;
++
++	/// @brief Young modulus.
++	Real young;
++	/// @brief Poisson ratio.
++	Real poisson;
++	/// @brief Density of material.
++	Real density;
++	/// @brief Friction angle (radians).
++	Real frictionAngle;
++	/// @brief Color.
++	Vector3r color;
++
++private:
++	/// @brief Pointer to BroadInteractor.
++	/// It is necessary in order to probe the bounding volume for new sphere.
+ 	BroadInteractor* bI;
++	
++	/// @brief Pointer to InteractionGeometryMetaEngine.
++	/// It is necessary in order to detect a real overlap with other bodies.
++	InteractionGeometryMetaEngine* iGME;
++
+ 	bool first_run;
+ 
+-	void createSphere(shared_ptr&lt;Body&gt;&amp; body, const Vector3r&amp; position, Real radius);
++	void createSphere(shared_ptr&lt;Body&gt;&amp; body, const Vector3r&amp; position, Real r);
+ 
++	typedef	boost::variate_generator&lt;boost::minstd_rand,boost::uniform_int&lt;&gt; &gt; RandomInt;
++	shared_ptr&lt;RandomInt&gt; randomFacet;
++
+ 	DECLARE_LOGGER;
+ 
+-	REGISTER_ATTRIBUTES(StandAloneEngine,(factoryFacets)(labelBroadInteractor))
++	REGISTER_ATTRIBUTES(PeriodicEngine,
++			(factoryFacets)
++			(maxAttempts)
++			(radius)
++			(radiusRange)
++			(velocity)
++			(velocityRange)
++			(angularVelocity)
++			(angularVelocityRange)
++			(young)
++			(poisson)
++			(density)
++			(frictionAngle)
++			(color))
+ 	REGISTER_CLASS_AND_BASE(SpheresFactory, StandAloneEngine);
+ 
+ };
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2009-01-25 04:38:29 UTC (rev 1640)
++++ trunk/pkg/common/SConscript	2009-01-25 14:28:37 UTC (rev 1641)
+@@ -153,7 +153,7 @@
+ 	#	CPPPATH=env['CPPPATH']+['Engine/StandAloneEngine', '$PREFIX/include', '/home/bruno/micromacro/KdevMicroMacro/src']),
+     
+ 	env.SharedLibrary('SpheresFactory',['Engine/StandAloneEngine/SpheresFactory.cpp'],
+-		LIBS=env['LIBS']+['AABB','InteractingSphere','InteractingFacet','Sphere','BodyMacroParameters','PersistentSAPCollider']),
++		LIBS=env['LIBS']+['AABB','InteractingSphere','Facet','Sphere','BodyMacroParameters','InteractionGeometryMetaEngine']),
+ 	env.SharedLibrary('SpatialQuickSortCollider',['Engine/StandAloneEngine/SpatialQuickSortCollider.cpp']),
+ 	env.SharedLibrary('PersistentSAPCollider',['Engine/StandAloneEngine/PersistentSAPCollider.cpp']),
+ 	env.SharedLibrary('DistantPersistentSAPCollider',['Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp']),
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000623.html">[deprecated list] [Yade-dev] polyhedron collisions
+</A></li>
+	<LI>Next message: <A HREF="000622.html">[deprecated list] [Yade-dev] [svn] r1642 - in trunk/pkg/snow:	DataClass	RenderingEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#621">[ date ]</a>
+              <a href="thread.html#621">[ thread ]</a>
+              <a href="subject.html#621">[ subject ]</a>
+              <a href="author.html#621">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

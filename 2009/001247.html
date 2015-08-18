@@ -1,0 +1,981 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1876 - in trunk: core doc	gui/py gui/qt3
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1876%20-%20in%20trunk%3A%20core%20doc%0A%09gui/py%20gui/qt3&In-Reply-To=%3C200907180835.n6I8Z8NA006772%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001250.html">
+   <LINK REL="Next"  HREF="001248.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1876 - in trunk: core doc	gui/py gui/qt3</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1876%20-%20in%20trunk%3A%20core%20doc%0A%09gui/py%20gui/qt3&In-Reply-To=%3C200907180835.n6I8Z8NA006772%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1876 - in trunk: core doc	gui/py gui/qt3">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Jul 18 10:35:08 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001250.html">[deprecated list] [Yade-dev] small changes in lots of code	(attribute	registration)
+</A></li>
+        <LI>Next message: <A HREF="001248.html">[deprecated list] [Yade-dev] [robot] SVN checkout failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1247">[ date ]</a>
+              <a href="thread.html#1247">[ thread ]</a>
+              <a href="subject.html#1247">[ subject ]</a>
+              <a href="author.html#1247">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-18 10:35:07 +0200 (Sat, 18 Jul 2009)
+New Revision: 1876
+
+Added:
+   trunk/doc/README
+   trunk/doc/yade-epydoc.conf
+   trunk/doc/yade-epydoc.py
+Removed:
+   trunk/doc/Body.png
+   trunk/doc/CoulombCriterion.png
+   trunk/doc/DruckerPragerCriterion.png
+   trunk/doc/HookesLaw.png
+   trunk/doc/IdealElasticPlastic.png
+   trunk/doc/IdealRigidPlastic.png
+   trunk/doc/Interaction.png
+   trunk/doc/Motion.png
+   trunk/doc/NonIdealElasticPlastic1.png
+   trunk/doc/NonIdealElasticPlastic2.png
+   trunk/doc/README
+   trunk/doc/REMOVED_STUFF
+   trunk/doc/ViscoElastic.png
+   trunk/doc/ViscoPlastic.png
+   trunk/doc/schedule
+   trunk/doc/tree
+   trunk/doc/yadeClassDiagram.dia
+   trunk/doc/yadeSequenceDiagramExample.dia
+Modified:
+   trunk/core/yade.cpp
+   trunk/gui/py/PythonUI.cpp
+   trunk/gui/py/pyAttrUtils.hpp
+   trunk/gui/qt3/QtGUI.cpp
+Log:
+1. Remove garbage from doc
+2. Instruct getopt to not shuffle command-line arguments, so that their order is preserved
+3. Add epydoc documentation for all python classes and functions
+
+
+
+Modified: trunk/core/yade.cpp
+===================================================================
+--- trunk/core/yade.cpp	2009-07-17 21:50:55 UTC (rev 1875)
++++ trunk/core/yade.cpp	2009-07-18 08:35:07 UTC (rev 1876)
+@@ -184,7 +184,7 @@
+ 	bool useGdb=true;
+ 	
+ 	int ch; string gui=&quot;&quot;; string simulationFileName=&quot;&quot;; bool setup=false; int verbose=0; bool coreOptions=true; bool explicitUI=false;
+-	while(coreOptions &amp;&amp; (ch=getopt(argc,argv,&quot;hnN:wC:cxvS:&quot;))!=-1)
++	while(coreOptions &amp;&amp; (ch=getopt(argc,argv,&quot;+hnN:wC:cxvS:&quot;))!=-1)
+ 		switch(ch){
+ 			case 'h': printHelp(); return 1;
+ 			case 'n': gui=&quot;NullGUI&quot;; explicitUI=true; break;
+@@ -196,7 +196,7 @@
+ 			case 'v': verbose+=1; break;
+ 			case 'S': simulationFileName=optarg; break;
+ 			case '-': coreOptions=false; break;
+-			default: printHelp(); return 1;
++			default: simulationFileName=optarg; coreOptions=false; break; // printHelp(); return 1;
+ 		}
+ 	// save original options
+ 	Omega::instance().origArgv=argv; Omega::instance().origArgc=argc;
+
+Deleted: trunk/doc/Body.png
+===================================================================
+(Binary files differ)
+
+Deleted: trunk/doc/CoulombCriterion.png
+===================================================================
+(Binary files differ)
+
+Deleted: trunk/doc/DruckerPragerCriterion.png
+===================================================================
+(Binary files differ)
+
+Deleted: trunk/doc/HookesLaw.png
+===================================================================
+(Binary files differ)
+
+Deleted: trunk/doc/IdealElasticPlastic.png
+===================================================================
+(Binary files differ)
+
+Deleted: trunk/doc/IdealRigidPlastic.png
+===================================================================
+(Binary files differ)
+
+Deleted: trunk/doc/Interaction.png
+===================================================================
+(Binary files differ)
+
+Deleted: trunk/doc/Motion.png
+===================================================================
+(Binary files differ)
+
+Deleted: trunk/doc/NonIdealElasticPlastic1.png
+===================================================================
+(Binary files differ)
+
+Deleted: trunk/doc/NonIdealElasticPlastic2.png
+===================================================================
+(Binary files differ)
+
+Deleted: trunk/doc/README
+===================================================================
+--- trunk/doc/README	2009-07-17 21:50:55 UTC (rev 1875)
++++ trunk/doc/README	2009-07-18 08:35:07 UTC (rev 1876)
+@@ -1,3 +0,0 @@
+-you can download documentation from yade homepage on berlios.de
+-
+-and you can generate a reference with doxygen
+\ No newline at end of file
+
+Added: trunk/doc/README
+===================================================================
+--- trunk/doc/README	2009-07-17 21:50:55 UTC (rev 1875)
++++ trunk/doc/README	2009-07-18 08:35:07 UTC (rev 1876)
+@@ -0,0 +1,6 @@
++To generate documentation (dpxygen for c++ and epydoc for python classes), run
++
++	doxygen Doxyfile
++	yade-* yade-epydoc.py
++
++or more documentation, go to <A HREF="http://yade.wikia.com">http://yade.wikia.com</A>
+
+Deleted: trunk/doc/REMOVED_STUFF
+===================================================================
+--- trunk/doc/REMOVED_STUFF	2009-07-17 21:50:55 UTC (rev 1875)
++++ trunk/doc/REMOVED_STUFF	2009-07-18 08:35:07 UTC (rev 1876)
+@@ -1,4 +0,0 @@
+-This file records what elements were removed from yade's repositories and at which point. The reason is that even if the component is in SVN history, it is useless if someone doesn't know that is there.
+-
+- * PerlinNoise
+-
+
+Deleted: trunk/doc/ViscoElastic.png
+===================================================================
+(Binary files differ)
+
+Deleted: trunk/doc/ViscoPlastic.png
+===================================================================
+(Binary files differ)
+
+Deleted: trunk/doc/schedule
+===================================================================
+--- trunk/doc/schedule	2009-07-17 21:50:55 UTC (rev 1875)
++++ trunk/doc/schedule	2009-07-18 08:35:07 UTC (rev 1876)
+@@ -1,67 +0,0 @@
+-Milestone 1 (completed: September 2004)                                                                                                                                     Done
+-
+-Initial version of yade framework                                                                                                                                           Done
+-SimpleSpring RigidBody, spherical element for testing (explicit calculations)                                                                                               Done
+-Plugin support (ClassFactory, class Factorable)                                                                                                                             Done
+-Easy extensibility for arbitrary element type (class Serialization)                                                                                                         Mostly Done
+-XML Serialization                                                                                                                                                           Done
+-Interaction support between different physical models (Multimethods)                                                                                                        Done
+-Add new physical element type, Cloth (mass spring system, explicit) for testing multimethods and interactions                                                               Done
+-Implicit Cloth, to test framework extensibility                                                                                                                             Postponed
+-FEM beam element, explicit, to test framework extensibility                                                                                                                 Done
+-SDEC element, explicit, to test framework extensibility                                                                                                                     Done
+-Their interactions (collisions and glueing)                                                                                                                                 Mostly Donne
+-Redesign Yade, based on previous tests                                                                                                                                      Done
+-Complete doxygen documentation reference                                                                                                                                    Half Done
+-
+-Milestone 2 (Completed: June 2005)                                                                                                                                          Done
+-
+-Load FEM mesh from file (gmsh or netgen)                                                                                                                                    Done
+-Start documentation - explain Yade priciples, ideas and design                                                                                                              Done
+-Start documentation - explain how to use Yade as easy framework for physical modelling                                                                                      Done
+-Start documentation - explain adding plugins                                                                                                                                Done
+-Start documentation - explain preprocessing, postprocessing and debugging                                                                                                   Done
+-Yade runs without a GUI                                                                                                                                                     Done
+-Add automatic plugin detection                                                                                                                                              Done
+-Start adding serious element types: SDEC with rotation conserved, traingle-cylinder-sphere, SDEC cubical, Finite Element Method various elements, Lattice Beam model        Done (started)
+-Start resolving their interactions                                                                                                                                          Done (started)
+-
+-Milestone 3                                                                                                                                                                 Ongoing
+-
+-Release beta version of yade framework                                                                                                                                      Done
+-Release documentation (initial version)                                                                                                                                     Ongoing
+-GUI to build time loop with actors                                                                                                                                          Ongoing
+-Compare speed of DEM in yade with totally unextensible, focused on speed spherical dem simulator (to see the cost of extensibility)                                         Ongoing
+-Binary Serialization                                                                                                                                                        Todo
+-Rewrite Interaction Containers, so that they can store interaction between any number of bodies (currently only two (bi-associative) are supported)                         Todo
+-Clean FEM in yade using new Interaction Containers                                                                                                                          Todo
+-Split DEM calculations into: HookesLaw, ElasticContactLaw, ElasticBondLaw                                                                                                   Mostly Done
+-Resolve license problems of Magic Software math library                                                                                                                     Ongoing
+-Add two virtual functions to plugin interface: string longDescription() and string shortDescription(), so that yade can print information about them from within the GUI    Todo
+-
+-Milestone 4                                                                                                                                                                 Todo
+-
+-Save/Load configurations in File Generator dialog box                                                                                                                       Todo
+-Add InteractionMatrix as another way to store interactions                                                                                                                  Todo
+-Gas Example, &lt;a href=&quot;<A HREF="http://www.compsoc.man.ac.uk/~lucky/Democritus/Theory/lenjon.html">http://www.compsoc.man.ac.uk/~lucky/Democritus/Theory/lenjon.html</A>&quot;&gt;Lennard-Jones&lt;/a&gt; Forces                                                           Todo
+-Add GridCollider to compare it with existing Sweep and Prune Collider                                                                                                       Todo
+-Display graphical inheritance tree of all loaded plugins                                                                                                                    Todo
+-Perform benchmarks to compare speed of different revisions, and learn from that what changes are making slower/faster code                                                  Todo
+-Perform (more) unit tests, to verify that working with code does not infer with the calculation results                                                                     Todo
+-Investigate again concept of 'parameters singleton', to see if it's still suitable                                                                                          Todo
+-Use physical units, from dimnum or SIunits library                                                                                                                          Todo
+-Explore disturbed computing capabilities of yade (should make yade faster than unextensible, focused on speed spherical dem simulator)                                      Todo
+-
+-Milestone 5                                                                                                                                                                 Todo
+-
+-GUI gives better control over the model, possibly add preprocessing capabilities to GUI                                                                                     Ongoing
+-Possibly split yade into yade_server and yade_gui, or another way to prepare yade for multiprocessor/disturbed calculations                                                 Todo
+-Easier preprocessing of data, import objects from blender, gmsh, netgen, autocad, dxf                                                                                       Todo
+-yade_server communicates with yade_gui over the network                                                                                                                     Todo
+-yade_server uses multiple processors                                                                                                                                        Todo
+-yade is doing calculations using disturbed computing                                                                                                                        Todo
+-
+-Milestone 6
+-
+-not planned yet.
+-
+
+Deleted: trunk/doc/tree
+===================================================================
+--- trunk/doc/tree	2009-07-17 21:50:55 UTC (rev 1875)
++++ trunk/doc/tree	2009-07-18 08:35:07 UTC (rev 1876)
+@@ -1,456 +0,0 @@
+-
+-|-- plugins
+-|   |-- Body
+-|   |   |-- BoundingVolume
+-|   |   |   |-- AABB
+-|   |   |   |   |-- AABB.cpp
+-|   |   |   |   `-- AABB.hpp
+-|   |   |   `-- BoundingSphere
+-|   |   |       |-- BoundingSphere.cpp
+-|   |   |       `-- BoundingSphere.hpp
+-|   |   |-- BoundingVolumeFunctor
+-|   |   |   |-- Box2AABBFunctor
+-|   |   |   |   |-- Box2AABBFunctor.cpp
+-|   |   |   |   `-- Box2AABBFunctor.hpp
+-|   |   |   |-- InteractionDescriptionSet2AABBFunctor
+-|   |   |   |   |-- InteractionDescriptionSet2AABBFunctor.cpp
+-|   |   |   |   `-- InteractionDescriptionSet2AABBFunctor.hpp
+-|   |   |   |-- Sphere2AABBFunctor
+-|   |   |   |   |-- Sphere2AABBFunctor.cpp
+-|   |   |   |   `-- Sphere2AABBFunctor.hpp
+-|   |   |   `-- Terrain2AABBFunctor
+-|   |   |       |-- Terrain2AABBFunctor.cpp
+-|   |   |       `-- Terrain2AABBFunctor.hpp
+-|   |   |-- GeometricalModel
+-|   |   |   |-- Box
+-|   |   |   |   |-- Box.cpp
+-|   |   |   |   `-- Box.hpp
+-|   |   |   |-- FEMSetGeometry
+-|   |   |   |   |-- FEMSetGeometry.cpp
+-|   |   |   |   `-- FEMSetGeometry.hpp
+-|   |   |   |-- LatticeSetGeometry
+-|   |   |   |   |-- LatticeSetGeometry.cpp
+-|   |   |   |   `-- LatticeSetGeometry.hpp
+-|   |   |   |-- LineSegment
+-|   |   |   |   |-- LineSegment.cpp
+-|   |   |   |   `-- LineSegment.hpp
+-|   |   |   |-- MarchingCubes
+-|   |   |   |   |-- MarchingCubes.cpp
+-|   |   |   |   `-- MarchingCubes.hpp
+-|   |   |   |-- Mesh2D
+-|   |   |   |   |-- Mesh2D.cpp
+-|   |   |   |   `-- Mesh2D.hpp
+-|   |   |   |-- Polyhedron
+-|   |   |   |   |-- Polyhedron.cpp
+-|   |   |   |   `-- Polyhedron.hpp
+-|   |   |   |-- Sphere
+-|   |   |   |   |-- Sphere.cpp
+-|   |   |   |   `-- Sphere.hpp
+-|   |   |   |-- Terrain
+-|   |   |   |   |-- Terrain.cpp
+-|   |   |   |   `-- Terrain.hpp
+-|   |   |   `-- Tetrahedron
+-|   |   |       |-- Tetrahedron.cpp
+-|   |   |       `-- Tetrahedron.hpp
+-|   |   |-- GeometricalModelFunctor
+-|   |   |   |-- FEMSet2MarchingCubes
+-|   |   |   |   |-- FEMSet2MarchingCubes.cpp
+-|   |   |   |   `-- FEMSet2MarchingCubes.hpp
+-|   |   |   |-- FEMSet2Tetrahedrons
+-|   |   |   |   |-- FEMSet2Tetrahedrons.cpp
+-|   |   |   |   `-- FEMSet2Tetrahedrons.hpp
+-|   |   |   |-- LatticeSet2LatticeBeams
+-|   |   |   |   |-- LatticeSet2LatticeBeams.cpp
+-|   |   |   |   `-- LatticeSet2LatticeBeams.hpp
+-|   |   |   |-- LatticeSet2MarchingCubes
+-|   |   |   |   |-- LatticeSet2MarchingCubes.cpp
+-|   |   |   |   `-- LatticeSet2MarchingCubes.hpp
+-|   |   |   |-- ParticleSet2Mesh2D
+-|   |   |   |   |-- ParticleSet2Mesh2D.cpp
+-|   |   |   |   `-- ParticleSet2Mesh2D.hpp
+-|   |   |   `-- VRML2TerrainFunctor
+-|   |   |       |-- VRML2TerrainFunctor.cpp
+-|   |   |       `-- VRML2TerrainFunctor.hpp
+-|   |   |-- InteractingGeometry
+-|   |   |   |-- InteractingBox
+-|   |   |   |   |-- InteractingBox.cpp
+-|   |   |   |   `-- InteractingBox.hpp
+-|   |   |   |-- InteractingSphere
+-|   |   |   |   |-- InteractingSphere.cpp
+-|   |   |   |   `-- InteractingSphere.hpp
+-|   |   |   `-- MetaInteractingGeometry
+-|   |   |       |-- MetaInteractingGeometry.cpp
+-|   |   |       `-- MetaInteractingGeometry.hpp
+-|   |   |-- InteractingGeometryFunctor
+-|   |   |-- PhysicalParameters
+-|   |   |   |-- BodyMacroParameters
+-|   |   |   |   |-- BodyMacroParameters.cpp
+-|   |   |   |   `-- BodyMacroParameters.hpp
+-|   |   |   |-- FEMNodeData
+-|   |   |   |   |-- FEMNodeData.cpp
+-|   |   |   |   `-- FEMNodeData.hpp
+-|   |   |   |-- FEMSetParameters
+-|   |   |   |   |-- FEMSetParameters.cpp
+-|   |   |   |   `-- FEMSetParameters.hpp
+-|   |   |   |-- FEMTetrahedronData
+-|   |   |   |   |-- FEMTetrahedronData.cpp
+-|   |   |   |   `-- FEMTetrahedronData.hpp
+-|   |   |   |-- LatticeBeamParameters
+-|   |   |   |   |-- LatticeBeamParameters.cpp
+-|   |   |   |   `-- LatticeBeamParameters.hpp
+-|   |   |   |-- LatticeNodeParameters
+-|   |   |   |   |-- LatticeNodeParameters.cpp
+-|   |   |   |   `-- LatticeNodeParameters.hpp
+-|   |   |   |-- LatticeSetParameters
+-|   |   |   |   |-- LatticeSetParameters.cpp
+-|   |   |   |   `-- LatticeSetParameters.hpp
+-|   |   |   |-- ParticleParameters
+-|   |   |   |   |-- ParticleParameters.cpp
+-|   |   |   |   `-- ParticleParameters.hpp
+-|   |   |   |-- ParticleSetParameters
+-|   |   |   |   |-- ParticleSetParameters.cpp
+-|   |   |   |   `-- ParticleSetParameters.hpp
+-|   |   |   `-- RigidBodyParameters
+-|   |   |       |-- RigidBodyParameters.cpp
+-|   |   |       `-- RigidBodyParameters.hpp
+-|   |   `-- PhysicalParametersFunctor
+-|   |       |-- FEMSetTextLoaderFunctor
+-|   |       |   |-- FEMSetTextLoaderFunctor.cpp
+-|   |       |   `-- FEMSetTextLoaderFunctor.hpp
+-|   |       |-- FEMTetrahedronStiffness
+-|   |       |   |-- FEMTetrahedronStiffness.cpp
+-|   |       |   `-- FEMTetrahedronStiffness.hpp
+-|   |       |-- LeapFrogOrientationIntegratorFunctor
+-|   |       |   |-- LeapFrogOrientationIntegratorFunctor.cpp
+-|   |       |   `-- LeapFrogOrientationIntegratorFunctor.hpp
+-|   |       `-- LeapFrogPositionIntegratorFunctor
+-|   |           |-- LeapFrogPositionIntegratorFunctor.cpp
+-|   |           `-- LeapFrogPositionIntegratorFunctor.hpp
+-|   |-- DataRecorder
+-|   |   |-- AveragePositionRecorder
+-|   |   |   |-- AveragePositionRecorder.cpp
+-|   |   |   `-- AveragePositionRecorder.hpp
+-|   |   |-- ForceRecorder
+-|   |   |   |-- ForceRecorder.cpp
+-|   |   |   `-- ForceRecorder.hpp
+-|   |   |-- PositionOrientationRecorder
+-|   |   |   |-- PositionOrientationRecorder.cpp
+-|   |   |   `-- PositionOrientationRecorder.hpp
+-|   |   `-- VelocityRecorder
+-|   |       |-- VelocityRecorder.cpp
+-|   |       `-- VelocityRecorder.hpp
+-|   |-- Engine
+-|   |   |-- ActionParameter
+-|   |   |   |-- ActionParameterForce
+-|   |   |   |   |-- ActionParameterForce.cpp
+-|   |   |   |   `-- ActionParameterForce.hpp
+-|   |   |   `-- ActionParameterMomentum
+-|   |   |       |-- ActionParameterMomentum.cpp
+-|   |   |       `-- ActionParameterMomentum.hpp
+-|   |   |-- ActionParameterFunctor
+-|   |   |   |-- CundallNonViscousForceDampingFunctor
+-|   |   |   |   |-- CundallNonViscousForceDampingFunctor.cpp
+-|   |   |   |   `-- CundallNonViscousForceDampingFunctor.hpp
+-|   |   |   |-- CundallNonViscousMomentumDampingFunctor
+-|   |   |   |   |-- CundallNonViscousMomentumDampingFunctor.cpp
+-|   |   |   |   `-- CundallNonViscousMomentumDampingFunctor.hpp
+-|   |   |   |-- NewtonsForceLawFunctor
+-|   |   |   |   |-- NewtonsForceLawFunctor.cpp
+-|   |   |   |   `-- NewtonsForceLawFunctor.hpp
+-|   |   |   `-- NewtonsMomentumLawFunctor
+-|   |   |       |-- NewtonsMomentumLawFunctor.cpp
+-|   |   |       `-- NewtonsMomentumLawFunctor.hpp
+-|   |   |-- ActionParameterInitializer
+-|   |   |   |-- ActionParameterInitializer.cpp
+-|   |   |   `-- ActionParameterInitializer.hpp
+-|   |   |-- DeusExMachina
+-|   |   |   |-- ForceCondition					ForceApplier
+-|   |   |   |   |-- ForceCondition.cpp
+-|   |   |   |   `-- ForceCondition.hpp
+-|   |   |   |-- GravityCondition				GravityApplier
+-|   |   |   |   |-- GravityCondition.cpp
+-|   |   |   |   `-- GravityCondition.hpp
+-|   |   |   |-- RotationCondition				Rotor
+-|   |   |   |   |-- RotationCondition.cpp
+-|   |   |   |   `-- RotationCondition.hpp
+-|   |   |   `-- TranslationCondition				Translator
+-|   |   |       |-- TranslationCondition.cpp
+-|   |   |       `-- TranslationCondition.hpp
+-|   |   |   -- ActionParameterReset				ter
+-|   |   |      |-- ActionParameterReset.cpp
+-|   |   |      `-- ActionParameterReset.hpp
+-|   |   `-- InteractionSolver
+-|   |       |-- ElasticContactLaw
+-|   |       |   |-- ElasticContactLaw.cpp
+-|   |       |   `-- ElasticContactLaw.hpp
+-|   |       |-- ErrorTolerantLaw
+-|   |       |   |-- ErrorTolerantLaw.cpp
+-|   |       |   `-- ErrorTolerantLaw.hpp
+-|   |       |-- FEMLaw
+-|   |       |   |-- FEMLaw.cpp
+-|   |       |   `-- FEMLaw.hpp
+-|   |       |-- MassSpringBody2RigidBodyLaw
+-|   |       |   |-- MassSpringBody2RigidBodyLaw.cpp
+-|   |       |   `-- MassSpringBody2RigidBodyLaw.hpp
+-|   |       |-- MassSpringLaw
+-|   |       |   |-- MassSpringLaw.cpp
+-|   |       |   `-- MassSpringLaw.hpp
+-|   |       |-- SDECTimeStepper
+-|   |       |   |-- SDECTimeStepper.cpp
+-|   |       |   `-- SDECTimeStepper.hpp
+-|   |       `-- SimpleSpringLaw
+-|   |           |-- SimpleSpringLaw.cpp
+-|   |           `-- SimpleSpringLaw.hpp
+-|   `-- Interaction
+-|       |-- BroadInteractor
+-|       |   |-- PersistentSAPCollider
+-|       |   |   |-- PersistentSAPCollider.cpp
+-|       |   |   `-- PersistentSAPCollider.hpp
+-|       |   |-- SAPCollider
+-|       |   |   |-- SAPCollider.cpp
+-|       |   |   `-- SAPCollider.hpp
+-|       |   `-- SimpleBroadInteractor					BroadInteractionMetaEngine
+-|       |       |-- SimpleBroadInteractor.cpp
+-|       |       `-- SimpleBroadInteractor.hpp
+-|       |-- InteractionGeometry
+-|       |   |-- ClosestFeatures
+-|       |   |   |-- ClosestFeatures.cpp
+-|       |   |   `-- ClosestFeatures.hpp
+-|       |   |-- ErrorTolerantContactModel
+-|       |   |   |-- ErrorTolerantContactModel.cpp
+-|       |   |   `-- ErrorTolerantContactModel.hpp
+-|       |   |-- MacroMicroContactGeometry
+-|       |   |   |-- MacroMicroContactGeometry.cpp
+-|       |   |   `-- MacroMicroContactGeometry.hpp
+-|       |   |-- SDECLinkGeometry
+-|       |   |   |-- SDECLinkGeometry.cpp
+-|       |   |   `-- SDECLinkGeometry.hpp
+-|       |   `-- SpringGeometry
+-|       |       |-- SpringGeometry.cpp
+-|       |       `-- SpringGeometry.hpp
+-|       |-- InteractionGeometryFunctor
+-|       |   |-- ClosestFeatures
+-|       |   |   |-- AABox2Sphere4ClosestFeatures
+-|       |   |   |   |-- AABox2Sphere4ClosestFeatures.cpp
+-|       |   |   |   `-- AABox2Sphere4ClosestFeatures.hpp
+-|       |   |   |-- Box2Box4ClosestFeatures
+-|       |   |   |   |-- Box2Box4ClosestFeatures.cpp
+-|       |   |   |   `-- Box2Box4ClosestFeatures.hpp
+-|       |   |   |-- Box2Sphere4ClosestFeatures
+-|       |   |   |   |-- Box2Sphere4ClosestFeatures.cpp
+-|       |   |   |   `-- Box2Sphere4ClosestFeatures.hpp
+-|       |   |   |-- Sphere2Mesh2D4ClosestFeatures
+-|       |   |   |   |-- Sphere2Mesh2D4ClosestFeatures.cpp
+-|       |   |   |   `-- Sphere2Mesh2D4ClosestFeatures.hpp
+-|       |   |   |-- Sphere2Sphere4ClosestFeatures
+-|       |   |   |   |-- Sphere2Sphere4ClosestFeatures.cpp
+-|       |   |   |   `-- Sphere2Sphere4ClosestFeatures.hpp
+-|       |   |   `-- Terrain2Sphere4ClosestFeatures
+-|       |   |       |-- Terrain2Sphere4ClosestFeatures.cpp
+-|       |   |       `-- Terrain2Sphere4ClosestFeatures.hpp
+-|       |   |-- ErrorTolerant
+-|       |   |   |-- Box2Sphere4ErrorTolerant
+-|       |   |   |   |-- Box2Sphere4ErrorTolerant.cpp
+-|       |   |   |   `-- Box2Sphere4ErrorTolerant.hpp
+-|       |   |   `-- Sphere2Sphere4ErrorTolerant
+-|       |   |       |-- Sphere2Sphere4ErrorTolerant.cpp
+-|       |   |       `-- Sphere2Sphere4ErrorTolerant.hpp
+-|       |   `-- MacroMicroContactGeometry
+-|       |       |-- Box2Sphere4MacroMicroContactGeometry
+-|       |       |   |-- Box2Sphere4MacroMicroContactGeometry.cpp
+-|       |       |   `-- Box2Sphere4MacroMicroContactGeometry.hpp
+-|       |       `-- Sphere2Sphere4MacroMicroContactGeometry
+-|       |           |-- Sphere2Sphere4MacroMicroContactGeometry.cpp
+-|       |           `-- Sphere2Sphere4MacroMicroContactGeometry.hpp
+-|       |-- InteractionPhysics
+-|       |   |-- ElasticContactParameters
+-|       |   |   |-- ElasticContactParameters.cpp
+-|       |   |   `-- ElasticContactParameters.hpp
+-|       |   |-- SDECLinkPhysics
+-|       |   |   |-- SDECLinkPhysics.cpp
+-|       |   |   `-- SDECLinkPhysics.hpp
+-|       |   `-- SpringPhysics
+-|       |       |-- SpringPhysics.cpp
+-|       |       `-- SpringPhysics.hpp
+-|       `-- InteractionPhysicsFunctor
+-|           `-- ElasticContactParameters
+-|               `-- MacroMicroElasticRelationships
+-|                   |-- MacroMicroElasticRelationships.cpp
+-|                   `-- MacroMicroElasticRelationships.hpp
+-`-- yade
+-    |-- Body
+-    |   |-- Body
+-    |   |   |-- Body.cpp
+-    |   |   |-- Body.hpp
+-    |   |   |-- BodyContainer.cpp
+-    |   |   |-- BodyContainer.hpp
+-    |   |   |-- MetaBody.cpp
+-    |   |   `-- MetaBody.hpp
+-    |   |-- BoundingVolume
+-    |   |   |-- BoundingVolume.cpp
+-    |   |   |-- BoundingVolume.hpp
+-    |   |   |-- BoundingVolumeFunctor.hpp			BoundingVolumeEngine.hpp
+-    |   |   |-- BoundingVolumeMetaEngine.cpp
+-    |   |   `-- BoundingVolumeMetaEngine.hpp
+-    |   |-- GeometricalModel
+-    |   |   |-- GeometricalModel.cpp
+-    |   |   |-- GeometricalModel.hpp
+-    |   |   |-- GeometricalModelDispatcher.cpp			metaengine
+-    |   |   |-- GeometricalModelDispatcher.hpp
+-    |   |   `-- GeometricalModelFunctor.hpp			engine
+-    |   |-- InteractingGeometry
+-    |   |   |-- InteractingGeometry.cpp
+-    |   |   |-- InteractingGeometry.hpp
+-    |   |   |-- InteractingGeometryDispatcher.cpp 		==========MetaEngine
+-    |   |   |-- InteractingGeometryDispatcher.hpp
+-    |   |   `-- InteractingGeometryFunctor.hpp 			==========Engine
+-    |   `-- PhysicalParameters					split into State  and   PhysicalParameters  (and Body will contain 5 classes)
+-    |       |-- PhysicalParameters.cpp
+-    |       |-- PhysicalParameters.hpp
+-    |       |-- PhysicalParametersDispatcher.cpp		===========MetaEngine
+-    |       |-- PhysicalParametersDispatcher.hpp
+-    |       `-- PhysicalParametersFunctor.hpp 			===========Engine
+-    |   `-- State					split into State  and   PhysicalParameters  (and Body will contain 5 classes)
+-    |       |-- State.cpp
+-    |       |-- State.hpp
+-    |       |-- StateMetaEngine.cpp				===========MetaEngine
+-    |       |-- StateMetaEngine.hpp
+-    |       `-- StateEngine.hpp 				===========Engine
+-
+-    |-- Engine
+-    |   |-- ActionParameter.hpp					PhysicalAction
+-    |   |-- ActionParameterContainer.cpp
+-    |   |-- ActionParameterContainer.hpp
+-    |   |-- ActionParameterDispatcher.cpp			PhysicalActionMetaEngine
+-    |   |-- ActionParameterDispatcher.hpp
+-    |   |-- ActionParameterFunctor.hpp				PhysicalActionEngine
+-							
+-								PhysicalActionModifierEngine
+-								PhysicalActionUpdatorEngine
+-								PhysicalActionCreatorEngine
+-								PhysicalActionDeleterEngine
+-
+-
+-?????????????????????????????????????????????????????????????????????? BEGIN
+-								GeometricalModelModifier
+-								Geomet==========ModifierMetaEngine
+-								Geomet==========ModifierEngine
+-
+-								PhysicalParamatersModifier
+-								P=======ParamatersModifierMetaEngine
+-								P=======ParamatersModifierEngine
+-?????????????????????????????????????????????????????????????????????? END
+-
+-
+-
+-?????????????????????????????????????????????????????????????????????????????????????? BEGIN
+-								InetarctionGeometryModifier
+-								InetarctionGeometryModifierMetaEngine
+-								InetarctionGeometryModifierEngine
+-
+-								InetarctionPhysicsModifier
+-								InetarctionPhysicsModifierMetaEngine
+-								InetarctionPhysicsModifierEngine
+-??????????????????????????????????????????????????????????????????????????????????????? END
+-								
+-
+-
+-
+-    |   |-- DeusExMachina.cpp
+-    |   |-- DeusExMachina.hpp
+-    |   |-- InteractionSolver.cpp
+-    |   `-- InteractionSolver.hpp
+-    |-- Interaction
+-    |   |-- Interaction
+-    |   |   |-- BroadInteractor.cpp				BroadInteractionEngine
+-    |   |   |-- BroadInteractor.hpp
+-    |   |   |-- Interaction.cpp
+-    |   |   |-- Interaction.hpp
+-    |   |   |-- InteractionContainer.cpp
+-    |   |   `-- InteractionContainer.hpp
+-    |   |-- InteractionGeometry
+-    |   |   |-- InteractionGeometry.hpp				NarrowInteractionGeometry
+-    |   |   |-- InteractionGeometryDispatcher.cpp		Narro====================MetaEngine
+-    |   |   |-- InteractionGeometryDispatcher.hpp		
+-    |   |   `-- InteractionGeometryFunctor.hpp			Narro====================Engine
+-    |   `-- InteractionPhysics
+-    |       |-- InteractionPhysics.hpp
+-    |       |-- InteractionPhysicsDispatcher.cpp 		InteractionPhysicsMetaEngine
+-    |       |-- InteractionPhysicsDispatcher.hpp
+-    |       `-- InteractionPhysicsFunctor.hpp			In================Engine
+-    `-- yade
+-        |-- Engine.hpp
+-        |-- FileGenerator.cpp
+-        |-- FileGenerator.hpp
+-        |-- FrontEnd.cpp
+-        |-- FrontEnd.hpp
+-        |-- Omega.cpp
+-        |-- Omega.hpp
+-        |-- RenderingEngine.hpp
+-        |-- SimulationLoop.cpp
+-        |-- SimulationLoop.hpp
+-        |-- yade.cpp
+-        |-- yadeExceptions.cpp
+-        `-- yadeExceptions.hpp
+-
+-185 directories, 424 files
+-
+-
+-
+-
+-
+-
+-
+-
+-IDEA
+-
+-
+-    |-- Interaction
+-    |   |-- Interaction
+-    |   |   |-- BroadInteractor.cpp				BroadInteractionEngine
+-    |   |   |-- BroadInteractor.hpp
+-    |   |   |-- Interaction.cpp
+-    |   |   |-- Interaction.hpp
+-    |   |   |-- InteractionContainer.cpp
+-    |   |   `-- InteractionContainer.hpp
+-
+-            PotentialInteraction
+-
+-		RealInteraction
+-                
+-
+-    |   |-- InteractionGeometry
+-    |   |   |-- InteractionGeometry.hpp				NarrowInteractionGeometry
+-    |   |   |-- InteractionGeometryDispatcher.cpp		Narro====================MetaEngine
+-    |   |   |-- InteractionGeometryDispatcher.hpp		
+-    |   |   `-- InteractionGeometryFunctor.hpp			Narro====================Engine
+-    |   `-- InteractionPhysics
+-    |       |-- InteractionPhysics.hpp
+-    |       |-- InteractionPhysicsDispatcher.cpp 		InteractionPhysicsMetaEngine
+-    |       |-- InteractionPhysicsDispatcher.hpp
+-    |       `-- InteractionPhysicsFunctor.hpp			In================Engine
+-
+-
+-
+-broad interactor will fill a container with ids.
+-
+-
+-
+-Broad     Narrow            Physics
+-
+-ids       geometry+isNew    physics
+-
+-
+-
+-
+-
+-
+-
+-BoundingVolume 			InteractingGeometry 		GeometricalModel 	State		PhysicalParameters
+-
+-
+-NarrowInteractionGeometry	InteractionPhysics
+-
+-
+-PhysicalAction
+-
+
+Added: trunk/doc/yade-epydoc.conf
+===================================================================
+--- trunk/doc/yade-epydoc.conf	2009-07-17 21:50:55 UTC (rev 1875)
++++ trunk/doc/yade-epydoc.conf	2009-07-18 08:35:07 UTC (rev 1876)
+@@ -0,0 +1,154 @@
++#
++# copied from <A HREF="http://epydoc.sourceforge.net/manual-reference.html#sample-configuration-file">http://epydoc.sourceforge.net/manual-reference.html#sample-configuration-file</A>
++# and adapted
++#
++
++[epydoc] # Epydoc section marker (required by ConfigParser)
++
++# The list of objects to document.  Objects can be named using
++# dotted names, module filenames, or package directory names.
++# Alases for this option include &quot;objects&quot; and &quot;values&quot;.
++modules: yade
++
++# The type of output that should be generated.  Should be one
++# of: html, text, latex, dvi, ps, pdf.
++output: html
++
++# The path to the output directory.  May be relative or absolute.
++target: epydoc/
++
++# An integer indicating how verbose epydoc should be.  The default
++# value is 0; negative values will supress warnings and errors;
++# positive values will give more verbose output.
++verbosity: 0
++
++# A boolean value indicating that Epydoc should show a tracaback
++# in case of unexpected error. By default don't show tracebacks
++debug: 0
++
++# If True, don't try to use colors or cursor control when doing
++# textual output. The default False assumes a rich text prompt
++simple-term: 0
++
++
++### Generation options
++
++# The default markup language for docstrings, for modules that do
++# not define __docformat__.  Defaults to epytext.
++docformat: epytext
++
++# Whether or not parsing should be used to examine objects.
++parse: yes
++
++# Whether or not introspection should be used to examine objects.
++introspect: yes
++
++# Don't examine in any way the modules whose dotted name match this
++# regular expression pattern.
++exclude: yade.(_customConverters|otherModuleToExclude)
++
++# Don't perform introspection on the modules whose dotted name match this
++# regular expression pattern.
++#exclude-introspect
++
++# Don't perform parsing on the modules whose dotted name match this
++# regular expression pattern.
++#exclude-parse
++
++# The format for showing inheritance objects.
++# It should be one of: 'grouped', 'listed', 'included'.
++inheritance: listed
++
++# Whether or not to inclue private variables.  (Even if included,
++# private variables will be hidden by default.)
++private: yes
++
++# Whether or not to list each module's imports.
++imports: yes
++
++# Whether or not to include syntax highlighted source code in
++# the output (HTML only).
++sourcecode: yes
++
++# Whether or not to includea a page with Epydoc log, containing
++# effective option at the time of generation and the reported logs.
++include-log: yes
++
++
++### Output options
++
++# The documented project's name.
++name: Yade
++
++# The CSS stylesheet for HTML output.  Can be the name of a builtin
++# stylesheet, or the name of a file.
++css: white
++
++# The documented project's URL.
++url: <A HREF="http://yade.wikia.com">http://yade.wikia.com</A>
++
++# HTML code for the project link in the navigation bar.  If left
++# unspecified, the project link will be generated based on the
++# project's name and URL.
++#link: &lt;a href=&quot;somewhere&quot;&gt;My Cool Project&lt;/a&gt;
++
++# The &quot;top&quot; page for the documentation.  Can be a URL, the name
++# of a module or class, or one of the special names &quot;trees.html&quot;,
++# &quot;indices.html&quot;, or &quot;help.html&quot;
++#top: os.path
++
++# An alternative help file.  The named file should contain the
++# body of an HTML file; navigation bars will be added to it.
++#help: my_helpfile.html
++
++# Whether or not to include a frames-based table of contents.
++frames: yes
++
++# Whether each class should be listed in its own section when
++# generating LaTeX or PDF output.
++separate-classes: no
++
++
++### API linking options
++
++# Define a new API document.  A new interpreted text role
++# will be created
++#external-api: epydoc
++
++# Use the records in this file to resolve objects in the API named NAME.
++#external-api-file: epydoc:api-objects.txt
++
++# Use this URL prefix to configure the string returned for external API.
++#external-api-root: epydoc:<A HREF="http://epydoc.sourceforge.net/api">http://epydoc.sourceforge.net/api</A>
++
++
++### Graph options
++
++# The list of graph types that should be automatically included
++# in the output.  Graphs are generated using the Graphviz &quot;dot&quot;
++# executable.  Graph types include: &quot;classtree&quot;, &quot;callgraph&quot;,
++# &quot;umlclass&quot;.  Use &quot;all&quot; to include all graph types
++graph: all
++
++# The path to the Graphviz &quot;dot&quot; executable, used to generate
++# graphs.
++dotpath: /usr/bin/dot
++
++# The name of one or more pstat files (generated by the profile
++# or hotshot module).  These are used to generate call graphs.
++pstat: profile.out
++
++# Specify the font used to generate Graphviz graphs.
++# (e.g., helvetica or times).
++graph-font: Helvetica
++
++# Specify the font size used to generate Graphviz graphs.
++graph-font-size: 10
++
++
++### Return value options
++
++# The condition upon which Epydoc should exit with a non-zero
++# exit status. Possible values are error, warning, docstring_warning
++#fail-on: error
++
+
+Added: trunk/doc/yade-epydoc.py
+===================================================================
+--- trunk/doc/yade-epydoc.py	2009-07-17 21:50:55 UTC (rev 1875)
++++ trunk/doc/yade-epydoc.py	2009-07-18 08:35:07 UTC (rev 1876)
+@@ -0,0 +1,13 @@
++#
++# Run this file with yade to generate documentation for python modules &amp; classes within yade:
++#
++#  yade-trunk yade-epydoc.py
++#
++#
++
++import sys
++# add the configuration file
++sys.argv+=['--config=yade-epydoc.conf'] # '-v'
++from epydoc.cli import cli
++cli()
++quit()
+
+Deleted: trunk/doc/yadeClassDiagram.dia
+===================================================================
+(Binary files differ)
+
+Deleted: trunk/doc/yadeSequenceDiagramExample.dia
+===================================================================
+(Binary files differ)
+
+Modified: trunk/gui/py/PythonUI.cpp
+===================================================================
+--- trunk/gui/py/PythonUI.cpp	2009-07-17 21:50:55 UTC (rev 1875)
++++ trunk/gui/py/PythonUI.cpp	2009-07-18 08:35:07 UTC (rev 1876)
+@@ -102,7 +102,7 @@
+ 
+ int PythonUI::run(int argc, char *argv[]) {
+ 	int ch;
+-	while((ch=getopt(argc,argv,&quot;hns:x&quot;))!=-1){
++	while((ch=getopt(argc,argv,&quot;+hns:x&quot;))!=-1){
+ 		switch(ch){
+ 			case 'h': help(); return 1; break;
+ 			case 's': runScript=string(optarg); break;
+
+Modified: trunk/gui/py/pyAttrUtils.hpp
+===================================================================
+--- trunk/gui/py/pyAttrUtils.hpp	2009-07-17 21:50:55 UTC (rev 1875)
++++ trunk/gui/py/pyAttrUtils.hpp	2009-07-18 08:35:07 UTC (rev 1876)
+@@ -38,6 +38,7 @@
+ class pyClass{ \
+ 	private: void init(string clss){ proxee=dynamic_pointer_cast&lt;yadeClass&gt;(ClassFactory::instance().createShared(clss.empty()? #yadeClass : clss)); if(!proxee) throw runtime_error(&quot;Invalid class `&quot;+clss+&quot;': either nonexistent, or unable to cast to `&quot;+#yadeClass+&quot;'&quot;); } \
+ 	public: shared_ptr&lt;yadeClass&gt; proxee; \
++		typedef yadeClass wrappedClass; \
+ 		/* void ensureProxee(){ if(!proxee) throw runtime_error(string(&quot;No proxied `&quot;)+#yadeClass+&quot;' (programming error, please report!)&quot;); } */ \
+ 		pyClass(string clss=&quot;&quot;, python::dict attrs=python::dict()){ init(clss); python::list l=attrs.items(); int len=PySequence_Size(l.ptr()); for(int i=0; i&lt;len; i++){ python::extract&lt;python::tuple&gt; t(l[i]); python::extract&lt;string&gt; keyEx(t()[0]); if(!keyEx.check()) throw invalid_argument(&quot;Attribute keys must be strings.&quot;); wrappedPySetAttr2(keyEx(),t()[1]); } } \
+ 		pyClass(const shared_ptr&lt;yadeClass&gt;&amp; _proxee): proxee(_proxee) {} \
+@@ -60,7 +61,7 @@
+ 	void pyName##_set(pyClass proxy){ proxee-&gt;yadeName=proxy.proxee; }
+ /*! Boost.python's definition of python object corresponding to BASIC_PY_PROXY */
+ #define BASIC_PY_PROXY_WRAPPER(pyClass,pyName)  \
+-	boost::python::class_&lt;pyClass&gt;(pyName,python::init&lt;python::optional&lt;string,python::dict&gt; &gt;()) \
++	boost::python::class_&lt;pyClass /*, shared_ptr&lt;pyClass::wrappedClass&gt; --- see <A HREF="http://wiki.python.org/moin/boost.python/PointersAndSmartPointers">http://wiki.python.org/moin/boost.python/PointersAndSmartPointers</A> */ &gt;(pyName,python::init&lt;python::optional&lt;string,python::dict&gt; &gt;()) \
+ 	.ATTR_ACCESS_PY(pyClass) \
+ 	.def(&quot;__str__&quot;,&amp;pyClass::pyStr).def(&quot;__repr__&quot;,&amp;pyClass::pyStr) \
+ 	.add_property(&quot;name&quot;,&amp;pyClass::className) \
+
+Modified: trunk/gui/qt3/QtGUI.cpp
+===================================================================
+--- trunk/gui/qt3/QtGUI.cpp	2009-07-17 21:50:55 UTC (rev 1875)
++++ trunk/gui/qt3/QtGUI.cpp	2009-07-18 08:35:07 UTC (rev 1876)
+@@ -42,7 +42,7 @@
+ int QtGUI::run(int argc, char *argv[])
+ {
+ 	int ch;
+-	while( ( ch = getopt(argc,argv,&quot;hw&quot;) ) != -1)
++	while( ( ch = getopt(argc,argv,&quot;+hw&quot;) ) != -1)
+ 		switch(ch){
+ 			case 'w'	: mainWindowHidden=true; break;
+ 			case 'h' : help(); return 0; break;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001250.html">[deprecated list] [Yade-dev] small changes in lots of code	(attribute	registration)
+</A></li>
+	<LI>Next message: <A HREF="001248.html">[deprecated list] [Yade-dev] [robot] SVN checkout failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1247">[ date ]</a>
+              <a href="thread.html#1247">[ thread ]</a>
+              <a href="subject.html#1247">[ subject ]</a>
+              <a href="author.html#1247">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

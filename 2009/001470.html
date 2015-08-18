@@ -1,0 +1,190 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [Branch ~yade-dev/yade/trunk] Rev	1704: 1. Add	compatibility for hardy
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5BBranch%20%7Eyade-dev/yade/trunk%5D%20Rev%0A%091704%3A%201.%20Add%09compatibility%20for%20hardy&In-Reply-To=%3C20090819120410.15805.59700.launchpad%40loganberry.canonical.com%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001469.html">
+   <LINK REL="Next"  HREF="001471.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [Branch ~yade-dev/yade/trunk] Rev	1704: 1. Add	compatibility for hardy</H1>
+    <B>noreply at launchpad.net</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5BBranch%20%7Eyade-dev/yade/trunk%5D%20Rev%0A%091704%3A%201.%20Add%09compatibility%20for%20hardy&In-Reply-To=%3C20090819120410.15805.59700.launchpad%40loganberry.canonical.com%3E"
+       TITLE="[deprecated list] [Yade-dev] [Branch ~yade-dev/yade/trunk] Rev	1704: 1. Add	compatibility for hardy">noreply at launchpad.net
+       </A><BR>
+    <I>Wed Aug 19 14:04:10 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001469.html">[deprecated list] [Yade-dev] [Branch ~yade-dev/yade/trunk] Rev	1703: 1. Clen the	plugin loading	logic a little (no nominal	win32 support), support YADE_PREFIX for cha...
+</A></li>
+        <LI>Next message: <A HREF="001471.html">[deprecated list] [Yade-dev] [Bug 415873] [NEW] Problem to start	YADE 1703
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1470">[ date ]</a>
+              <a href="thread.html#1470">[ thread ]</a>
+              <a href="subject.html#1470">[ subject ]</a>
+              <a href="author.html#1470">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>------------------------------------------------------------
+revno: 1704
+committer: V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">vaclav at flux</A>&gt;
+branch nick: trunk
+timestamp: Wed 2009-08-19 14:00:35 +0200
+message:
+  1. Add compatibility for hardy
+  2. Fix missing newlines (hardy compiler gives warning)
+modified:
+  SConstruct
+  pkg/common/DataClass/InteractingGeometry/BssSweptSphereLineSegment.cpp
+  pkg/common/DataClass/InteractingGeometry/InteractingBox.cpp
+  pkg/common/DataClass/InteractingGeometry/InteractingFacet.cpp
+  pkg/common/DataClass/InteractingGeometry/InteractingNode.cpp
+  pkg/common/DataClass/InteractingGeometry/InteractingSphere.cpp
+  pkg/common/DataClass/InteractionGeometry/ClosestFeatures.cpp
+  pkg/common/DataClass/PhysicalParameters/BcpConnection.cpp
+  pkg/common/DataClass/PhysicalParameters/ElasticBodyParameters.cpp
+  pkg/common/DataClass/PhysicalParameters/ParticleParameters.cpp
+  pkg/common/DataClass/PhysicalParameters/RigidBodyParameters.cpp
+  pkg/common/DataClass/Widgets/ColorScale.cpp
+  pkg/common/Engine/DeusExMachina/DisplacementEngine.cpp
+  pkg/common/Engine/DeusExMachina/DisplacementToForceEngine.cpp
+  pkg/common/Engine/DeusExMachina/MomentEngine.cpp
+  pkg/common/Engine/DeusExMachina/StaticAttractionEngine.cpp
+  pkg/common/Engine/DeusExMachina/TranslationEngine.cpp
+  pkg/common/Engine/EngineUnit/ElasticBodySimpleRelationship.cpp
+  pkg/common/Engine/EngineUnit/InteractingBox2AABB.cpp
+  pkg/common/Engine/EngineUnit/InteractingFacet2AABB.cpp
+  pkg/common/Engine/EngineUnit/InteractingSphere2AABB.cpp
+  pkg/common/Engine/EngineUnit/LeapFrogOrientationIntegrator.cpp
+  pkg/common/Engine/EngineUnit/LeapFrogPositionIntegrator.cpp
+  pkg/common/Engine/EngineUnit/MetaInteractingGeometry2AABB.cpp
+  pkg/common/Engine/EngineUnit/NewtonsForceLaw.cpp
+  pkg/common/Engine/EngineUnit/NewtonsMomentumLaw.cpp
+  pkg/common/Engine/EngineUnit/ef2_BshTube_BssSweptSphereLineSegment_makeBssSweptSphereLineSegment.cpp
+  pkg/common/Engine/EngineUnit/ef2_BssSweptSphereLineSegment_AABB_makeAABB.cpp
+  pkg/common/Engine/FilterEngine/ColorizedLayerFilter.cpp
+  pkg/common/Engine/FilterEngine/ColorizedTimeFilter.cpp
+  pkg/common/Engine/FilterEngine/ColorizedVelocityFilter.cpp
+  pkg/common/Engine/MetaEngine/GeometricalModelMetaEngine.cpp
+  pkg/common/Engine/MetaEngine/InteractingGeometryMetaEngine.cpp
+  pkg/common/Engine/MetaEngine/InteractionPhysicsMetaEngine.cpp
+  pkg/common/Engine/MetaEngine/PhysicalActionApplier.cpp
+  pkg/common/Engine/MetaEngine/PhysicalActionDamper.cpp
+  pkg/common/Engine/MetaEngine/PhysicalParametersMetaEngine.cpp
+  pkg/common/Engine/StandAloneEngine/ResetPositionEngine.cpp
+  pkg/dem/DataClass/InteractingGeometry/InteractingMyTetrahedron.cpp
+  pkg/dem/DataClass/InteractionGeometry/InteractionOfMyTetrahedron.cpp
+  pkg/dem/DataClass/InteractionPhysics/CohesiveFrictionalContactInteraction.cpp
+  pkg/dem/DataClass/InteractionPhysics/ContactLaw1Interaction.cpp
+  pkg/dem/DataClass/InteractionPhysics/SDECLinkPhysics.cpp
+  pkg/dem/DataClass/InteractionPhysics/ViscoelasticInteraction.cpp
+  pkg/dem/DataClass/PhysicalParameters/BodyMacroParameters.cpp
+  pkg/dem/DataClass/PhysicalParameters/CohesiveFrictionalBodyParameters.cpp
+  pkg/dem/DataClass/PhysicalParameters/SimpleViscoelasticBodyParameters.cpp
+  pkg/dem/Engine/DeusExMachina/CapillaryPressureEngine.cpp*
+  pkg/dem/Engine/DeusExMachina/CapillaryRecorder.cpp*
+  pkg/dem/Engine/DeusExMachina/CapillaryStressRecorder.cpp*
+  pkg/dem/Engine/DeusExMachina/ContactStressRecorder.cpp*
+  pkg/dem/Engine/DeusExMachina/FlowEngine.cpp
+  pkg/dem/Engine/DeusExMachina/HydraulicForceEngine.cpp
+  pkg/dem/Engine/DeusExMachina/StaticSpheresAttractionEngine.cpp
+  pkg/dem/Engine/DeusExMachina/ThreeDTriaxialEngine.cpp
+  pkg/dem/Engine/DeusExMachina/TriaxialCompressionEngine.cpp
+  pkg/dem/Engine/DeusExMachina/TriaxialStateRecorder.cpp
+  pkg/dem/Engine/DeusExMachina/WallStressRecorder.cpp*
+  pkg/dem/Engine/EngineUnit/BasicViscoelasticRelationships.cpp
+  pkg/dem/Engine/EngineUnit/CL1Relationships.cpp
+  pkg/dem/Engine/EngineUnit/CohesiveFrictionalRelationships.cpp
+  pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometry.cpp
+  pkg/dem/Engine/EngineUnit/InteractingFacet2InteractingSphere4SpheresContactGeometry.cpp
+  pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2AABB.cpp
+  pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingBox4InteractionOfMyTetrahedron.cpp
+  pkg/dem/Engine/EngineUnit/InteractingMyTetrahedron2InteractingMyTetrahedron4InteractionOfMyTetrahedron.cpp
+  pkg/dem/Engine/EngineUnit/InteractingSphere2BssSweptSphereLineSegment4SpheresContactGeometry.cpp
+  pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometry.cpp
+  pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationships.cpp
+  pkg/dem/Engine/EngineUnit/SimpleElasticRelationships.cpp
+  pkg/dem/Engine/EngineUnit/SimpleElasticRelationshipsWater.cpp*
+  pkg/dem/Engine/EngineUnit/SimpleViscoelasticRelationships.cpp
+  pkg/dem/Engine/EngineUnit/Tetrahedron2InteractingMyTetrahedron.cpp
+  pkg/dem/Engine/StandAloneEngine/AveragePositionRecorder.cpp
+  pkg/dem/Engine/StandAloneEngine/CohesiveFrictionalContactLaw.cpp
+  pkg/dem/Engine/StandAloneEngine/ContactLaw1.cpp
+  pkg/dem/Engine/StandAloneEngine/ElasticCohesiveLaw.cpp
+  pkg/dem/Engine/StandAloneEngine/ElasticCriterionTimeStepper.cpp
+  pkg/dem/Engine/StandAloneEngine/ForceRecorder.cpp
+  pkg/dem/Engine/StandAloneEngine/GeometricalModelForceColorizer.cpp
+  pkg/dem/Engine/StandAloneEngine/MGPRecorder.cpp
+  pkg/dem/Engine/StandAloneEngine/MyTetrahedronLaw.cpp
+  pkg/dem/Engine/StandAloneEngine/PositionOrientationRecorder.cpp
+  pkg/dem/Engine/StandAloneEngine/RigidBodyRecorder.cpp
+  pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticSpheresInteractionRecorder.cpp
+  pkg/dem/Engine/StandAloneEngine/VelocityRecorder.cpp
+  pkg/dem/PreProcessor/HydraulicTest.cpp
+  pkg/dem/PreProcessor/STLImporterTest.cpp
+  pkg/lattice/DataClass/GeometricalModel/LatticeSetGeometry.cpp
+  pkg/lattice/DataClass/GeometricalModel/LineSegment.cpp
+  pkg/lattice/DataClass/InteractingGeometry/LatticeInteractingGeometry.cpp
+  pkg/lattice/DataClass/InteractionPhysics/LatticeBeamAngularSpring.cpp
+  pkg/lattice/DataClass/InteractionPhysics/NonLocalDependency.cpp
+  pkg/lattice/DataClass/PhysicalParameters/LatticeBeamParameters.cpp
+  pkg/lattice/DataClass/PhysicalParameters/LatticeNodeParameters.cpp
+  pkg/lattice/DataClass/PhysicalParameters/LatticeSetParameters.cpp
+  pkg/lattice/Engine/EngineUnit/LatticeSet2LatticeBeams.cpp
+  pkg/lattice/Engine/StandAloneEngine/BeamRecorder.cpp
+  pkg/lattice/Engine/StandAloneEngine/LatticeLaw.cpp
+  pkg/lattice/Engine/StandAloneEngine/MeasurePoisson.cpp
+  pkg/lattice/Engine/StandAloneEngine/MovingSupport.cpp
+  pkg/lattice/Engine/StandAloneEngine/NodeRecorder.cpp
+  pkg/lattice/Engine/StandAloneEngine/NonLocalInitializer.cpp
+  pkg/lattice/Engine/StandAloneEngine/StrainRecorder.cpp
+  pkg/lattice/PreProcessor/LatticeExample.cpp
+  pkg/lattice/PreProcessor/LatticeExampleCTData.cpp
+  pkg/lattice/PreProcessor/LatticeExampleSimple.cpp
+The size of the diff (1194 lines) is larger than your specified limit of 1000 lines
+
+--
+lp:yade
+<A HREF="https://code.launchpad.net/~yade-dev/yade/trunk">https://code.launchpad.net/~yade-dev/yade/trunk</A>
+
+Your team Yade developers is subscribed to branch lp:yade.
+To unsubscribe from this branch go to <A HREF="https://code.launchpad.net/~yade-dev/yade/trunk/+edit-subscription.">https://code.launchpad.net/~yade-dev/yade/trunk/+edit-subscription.</A>
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001469.html">[deprecated list] [Yade-dev] [Branch ~yade-dev/yade/trunk] Rev	1703: 1. Clen the	plugin loading	logic a little (no nominal	win32 support), support YADE_PREFIX for cha...
+</A></li>
+	<LI>Next message: <A HREF="001471.html">[deprecated list] [Yade-dev] [Bug 415873] [NEW] Problem to start	YADE 1703
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1470">[ date ]</a>
+              <a href="thread.html#1470">[ thread ]</a>
+              <a href="subject.html#1470">[ subject ]</a>
+              <a href="author.html#1470">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,95 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] shared_ptr&lt;PhysicalAction&gt;
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20shared_ptr%3CPhysicalAction%3E&In-Reply-To=%3C499B0F9B.1010303%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000698.html">
+   <LINK REL="Next"  HREF="000692.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] shared_ptr&lt;PhysicalAction&gt;</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20shared_ptr%3CPhysicalAction%3E&In-Reply-To=%3C499B0F9B.1010303%40arcig.cz%3E"
+       TITLE="[deprecated list] [Yade-dev] shared_ptr&lt;PhysicalAction&gt;">eudoxos at arcig.cz
+       </A><BR>
+    <I>Tue Feb 17 20:27:23 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000698.html">[deprecated list] [Yade-dev] shared_ptr&lt;PhysicalAction&gt;
+</A></li>
+        <LI>Next message: <A HREF="000692.html">[deprecated list] [Yade-dev] [svn] r1668 - in	trunk:	examples/dynamic_simulation_tests gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#704">[ date ]</a>
+              <a href="thread.html#704">[ thread ]</a>
+              <a href="subject.html#704">[ subject ]</a>
+              <a href="author.html#704">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>
+&gt;&gt;<i> Hi there, any reason PhysicalActionContainer contains shared_ptr's?
+</I>&gt;&gt;<i> Wouldn't it be better to contain just array of PhysicalActions? It would
+</I>&gt;&gt;<i> allow for very fast resetting with
+</I>&gt;&gt;<i> memset(action[0],0,sizeof(thisAction)) and perhaps would save some
+</I>&gt;&gt;<i> shared_ptr overhead we have currently. V.   
+</I>&gt;<i> I thought it would be used for parallelisation. If not, I'm all for
+</I>&gt;<i> removing shared_pointers when it is possible.
+</I>I think that for cases where it is clear who is responsible for
+allocation/deletion &amp;&amp; it is always done just in one place, we could
+eliminate shared_ptr's. The lock-free access control Janek mentioned
+only affects access to the pointer itself (like reference counting), but
+not the the pointed object.
+
+Physical actions are allocated and deleted by the container, engines
+just modify their contents. And we can make sure that the container
+doesn't leak, since it is just small piece of code.
+
+For other things, shared_ptr's are quite handy; for example python proxy
+objects reference an engine, and it still is a valid reference even if
+the simulation was already unloaded. That is nice.
+
+I would like to know what the overhead of shared_ptr's is, but we will
+probably never know that, since its methods are, I bet, almost always
+inlined and therefore contribute to the calling function. Someone
+volunteering to take a few weeks and try shared_ptr-free yade? ;-)
+
+V.
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000698.html">[deprecated list] [Yade-dev] shared_ptr&lt;PhysicalAction&gt;
+</A></li>
+	<LI>Next message: <A HREF="000692.html">[deprecated list] [Yade-dev] [svn] r1668 - in	trunk:	examples/dynamic_simulation_tests gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#704">[ date ]</a>
+              <a href="thread.html#704">[ thread ]</a>
+              <a href="subject.html#704">[ subject ]</a>
+              <a href="author.html#704">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,227 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1741 - in trunk: extra gui/py	scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1741%20-%20in%20trunk%3A%20extra%20gui/py%0A%09scripts/test&In-Reply-To=%3C200903312023.n2VKNJPK017920%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000901.html">
+   <LINK REL="Next"  HREF="000903.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1741 - in trunk: extra gui/py	scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1741%20-%20in%20trunk%3A%20extra%20gui/py%0A%09scripts/test&In-Reply-To=%3C200903312023.n2VKNJPK017920%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1741 - in trunk: extra gui/py	scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Mar 31 22:23:19 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000901.html">[deprecated list] [Yade-dev] [svn] r1740 - in trunk: core extra	pkg/common
+</A></li>
+        <LI>Next message: <A HREF="000903.html">[deprecated list] [Yade-dev] [svn] r1742 - in trunk:	gui/py	pkg/common/Engine/MetaEngine scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#902">[ date ]</a>
+              <a href="thread.html#902">[ thread ]</a>
+              <a href="subject.html#902">[ subject ]</a>
+              <a href="author.html#902">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-03-31 22:23:18 +0200 (Tue, 31 Mar 2009)
+New Revision: 1741
+
+Added:
+   trunk/scripts/test/interpolating-force.py
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/gui/py/pyAttrUtils.hpp
+Log:
+1. A few fixes in Brefcom.
+2. Make python wrapper correctly handle long long attributes.
+3. Added test script for InterpolatingDirectedForceEngine
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-03-31 18:56:32 UTC (rev 1740)
++++ trunk/extra/Brefcom.cpp	2009-03-31 20:23:18 UTC (rev 1741)
+@@ -134,11 +134,17 @@
+ 
+ CREATE_LOGGER(ef2_Spheres_Brefcom_BrefcomLaw);
+ 
++long BrefcomContact::cummBetaIter=0, BrefcomContact::cummBetaCount=0;
++
+ Real BrefcomContact::solveBeta(const Real c, const Real N){
++	#ifdef YADE_DEBUG
++		cummBetaCount++;
++	#endif
+ 	const int maxIter=20;
+ 	const Real maxError=1e-12;
+ 	Real f, ret=0.;
+ 	for(int i=0; i&lt;maxIter; i++){
++		cummBetaIter++;
+ 		Real aux=c*exp(N*ret)+exp(ret);
+ 		f=log(aux);
+ 		if(fabs(f)&lt;maxError) return ret;
+@@ -152,7 +158,7 @@
+ Real BrefcomContact::computeDmgOverstress(Real dt){
+ 	if(dmgStrain&gt;=epsN*omega){ // unloading, no viscous stress
+ 		dmgStrain=epsN*omega;
+-		LOG_DEBUG(&quot;Unloading, no viscous overstress&quot;);
++		LOG_DEBUG(&quot;Elastic/unloading, no viscous overstress&quot;);
+ 		return 0.;
+ 	}
+ 	Real c=epsCrackOnset*(1-omega)*pow(dmgTau/dt,dmgRateExp)*pow(epsN*omega-dmgStrain,dmgRateExp-1.);
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2009-03-31 18:56:32 UTC (rev 1740)
++++ trunk/extra/Brefcom.hpp	2009-03-31 20:23:18 UTC (rev 1741)
+@@ -89,6 +89,8 @@
+ 		bool neverDamage;
+ 		/*! cummulative plastic strain measure (scalar) on this contact */
+ 		Real epsPlSum;
++		//! debugging, to see convergence rate
++		static long cummBetaIter, cummBetaCount;
+ 
+ 		/*! auxiliary variable for visualization, recalculated in BrefcomLaw at every iteration */
+ 		// FIXME: Fn and Fs are stored as Vector3r normalForce, shearForce in NormalShearInteraction 
+@@ -122,6 +124,9 @@
+ 			(plRateExp)
+ 			(transStrainCoeff)
+ 
++			(cummBetaIter)
++			(cummBetaCount)
++
+ 			(kappaD)
+ 			(neverDamage)
+ 			(epsT)
+
+Modified: trunk/gui/py/pyAttrUtils.hpp
+===================================================================
+--- trunk/gui/py/pyAttrUtils.hpp	2009-03-31 18:56:32 UTC (rev 1740)
++++ trunk/gui/py/pyAttrUtils.hpp	2009-03-31 20:23:18 UTC (rev 1741)
+@@ -113,7 +113,7 @@
+ 					if      (any_cast&lt;string*&gt;(&amp;instance)) { desc.type=AttrAccess::STRING; goto found; }
+ 					else if (any_cast&lt;bool*&gt;(&amp;instance)) { desc.type=AttrAccess::BOOL; goto found; }
+ 					else if (any_cast&lt;Real*&gt;(&amp;instance) || any_cast&lt;long double*&gt;(&amp;instance) || any_cast&lt;double*&gt;(&amp;instance) || any_cast&lt;float*&gt;(&amp;instance)) { desc.type=AttrAccess::FLOAT; goto found;}
+-					else if (any_cast&lt;int*&gt;(&amp;instance) || any_cast&lt;unsigned int*&gt;(&amp;instance) || any_cast&lt;long*&gt;(&amp;instance) || any_cast&lt;unsigned long*&gt;(&amp;instance)) {desc.type=AttrAccess::INTEGER; goto found; }
++					else if (any_cast&lt;int*&gt;(&amp;instance) || any_cast&lt;unsigned int*&gt;(&amp;instance) || any_cast&lt;long*&gt;(&amp;instance) || any_cast&lt;unsigned long*&gt;(&amp;instance) || any_cast&lt;long long*&gt;(&amp;instance) || any_cast&lt;unsigned long long*&gt;(&amp;instance)) {desc.type=AttrAccess::INTEGER; goto found; }
+ 					else if (any_cast&lt;vector&lt;string&gt;*&gt;(&amp;instance)) { desc.type=AttrAccess::SEQ_STRING; goto found; }
+ 				#if 0
+ 					else if (any_cast&lt;vector&lt;Vector3r&gt;*&gt;(&amp;instance)) { cerr&lt;&lt;&quot;WWWWWWWWWWWWW&quot;&lt;&lt;endl;}
+
+Added: trunk/scripts/test/interpolating-force.py
+===================================================================
+--- trunk/scripts/test/interpolating-force.py	2009-03-31 18:56:32 UTC (rev 1740)
++++ trunk/scripts/test/interpolating-force.py	2009-03-31 20:23:18 UTC (rev 1741)
+@@ -0,0 +1,69 @@
++# 2009 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++# encoding: utf-8
++
++# script showing how to use InterpolatingDirectedForceEngine,
++# simply pushing one free sphere agains a fixed one with varying force
++#
++# The force evolution is sine wave, but it could really be any data
++
++from numpy import arange
++
++nPulses=2 # run for total of 2 pulses
++freq=10. # 5 pulses per second
++times=arange(0,1/freq,.01/freq) # generate 100 points equally distributed over the period (can be much more)
++maxMag=1e10 # maximum magnitude of applied force
++magnitudes=[.5*maxMag*(sin(t*(freq*2*pi))+1) for t in times] # generate points on sine wave over 1 period, but shifted up to be &#8712;(0,2)
++
++O.engines=[
++	StandAloneEngine('PhysicalActionContainerReseter'),
++	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),]),
++	StandAloneEngine('PersistentSAPCollider'),
++	InteractionDispatchers(
++		[EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry')],
++		[EngineUnit('SimpleElasticRelationships')],
++		[EngineUnit('ef2_Spheres_Elastic_ElasticLaw'),]
++	),
++	# subscribedBodies: what bodies is force applied to
++	# direction: direction of the force (normalized automatically), constant
++	# magnitudes: series of force magnitude
++	# times: time points at which magnitudes are defined
++	# wrap: continue from t0 once t_last is reached
++	# label: automatically defines python variable of that name pointing to this engine
++	DeusExMachina('InterpolatingDirectedForceEngine',{'subscribedBodies':[1],'direction':[0,0,-1],'magnitudes':magnitudes,'times':times,'wrap':True,'label':'forcer'}),
++	# without damping, the interaction never stabilizes and oscillates wildly&#8230; try it
++	DeusExMachina('NewtonsDampedLaw',{'damping':0.01}),
++	# collect some data to plot periodically (every 50 steps)
++	StandAloneEngine('PeriodicPythonRunner',{'iterPeriod':50,'command':'myAddPlotData()','label':'plotDataCollector'})
++]
++
++O.bodies.append([
++	utils.sphere([0,0,0],1,dynamic=False,color=[1,0,0]),
++	utils.sphere([0,0,2],1,color=[0,1,0])
++])
++
++# elastic timestep
++O.dt=utils.PWaveTimeStep()
++
++# callback for plotDataCollector
++import yade.plot as yp
++def myAddPlotData():
++	yp.addData({'t':O.time,'F_applied':forcer['force'],'supportReaction':O.actions.f(0)[2]})
++
++O.saveTmp('init')
++
++# try open 3d view, if not running in pure console mode
++try:
++	import yade.qt
++	yade.qt.View()
++except ImportError: pass
++
++# run so many steps such that prescribed number of pulses is done
++O.run(int((nPulses/freq)/O.dt),True)
++
++# plot the time-series of force magnitude
++import pylab
++pylab.plot(times,magnitudes,label='Force magnitude over 1 pulse'); pylab.legend(('Force magnitude',)); pylab.xlabel('t'); pylab.grid(True)
++# plot some recorded data
++yp.plots={'t':('F_applied','supportReaction')}
++yp.plot()
++
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000901.html">[deprecated list] [Yade-dev] [svn] r1740 - in trunk: core extra	pkg/common
+</A></li>
+	<LI>Next message: <A HREF="000903.html">[deprecated list] [Yade-dev] [svn] r1742 - in trunk:	gui/py	pkg/common/Engine/MetaEngine scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#902">[ date ]</a>
+              <a href="thread.html#902">[ thread ]</a>
+              <a href="subject.html#902">[ subject ]</a>
+              <a href="author.html#902">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

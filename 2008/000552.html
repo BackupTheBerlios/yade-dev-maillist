@@ -1,0 +1,162 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1598 - in trunk: extra/clump	gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1598%20-%20in%20trunk%3A%20extra/clump%0A%09gui/py&In-Reply-To=%3C200812141032.mBEAW9OD017005%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000551.html">
+   <LINK REL="Next"  HREF="000553.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1598 - in trunk: extra/clump	gui/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1598%20-%20in%20trunk%3A%20extra/clump%0A%09gui/py&In-Reply-To=%3C200812141032.mBEAW9OD017005%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1598 - in trunk: extra/clump	gui/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sun Dec 14 11:32:09 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000551.html">[deprecated list] [Yade-dev] [robot] build failed
+</A></li>
+        <LI>Next message: <A HREF="000553.html">[deprecated list] [Yade-dev] detecting cut&amp;paste in yade
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#552">[ date ]</a>
+              <a href="thread.html#552">[ thread ]</a>
+              <a href="subject.html#552">[ subject ]</a>
+              <a href="author.html#552">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-12-14 11:32:09 +0100 (Sun, 14 Dec 2008)
+New Revision: 1598
+
+Modified:
+   trunk/extra/clump/Shop.cpp
+   trunk/gui/py/eudoxos.py
+   trunk/gui/py/yadeControl.cpp
+Log:
+Fix typo (compilation error in debug mode) in Shop::kineticEnergy
+
+
+Modified: trunk/extra/clump/Shop.cpp
+===================================================================
+--- trunk/extra/clump/Shop.cpp	2008-12-12 16:04:51 UTC (rev 1597)
++++ trunk/extra/clump/Shop.cpp	2008-12-14 10:32:09 UTC (rev 1598)
+@@ -140,7 +140,7 @@
+ 	Real ret=0.;
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rb-&gt;bodies){
+ 		if(!b-&gt;isDynamic) continue;
+-		shared_ptr&lt;RigidBodyParameters&gt; rbp=YADE_PTR_CAST&lt;RigidBodyParameters&gt;(b-&gt;physicalParameters); assert(pp);
++		shared_ptr&lt;RigidBodyParameters&gt; rbp=YADE_PTR_CAST&lt;RigidBodyParameters&gt;(b-&gt;physicalParameters); assert(rbp);
+ 		Matrix3r inertiaMatrix(rbp-&gt;inertia[0],rbp-&gt;inertia[1],rbp-&gt;inertia[2]);
+ 		// &#189;(mv&#178;+&#969;I&#969;)
+ 		ret+=.5*(rbp-&gt;mass*rbp-&gt;velocity.SquaredLength()+rbp-&gt;angularVelocity.Dot(diagMult(rbp-&gt;inertia,rbp-&gt;angularVelocity)));
+
+Modified: trunk/gui/py/eudoxos.py
+===================================================================
+--- trunk/gui/py/eudoxos.py	2008-12-12 16:04:51 UTC (rev 1597)
++++ trunk/gui/py/eudoxos.py	2008-12-14 10:32:09 UTC (rev 1598)
+@@ -96,6 +96,41 @@
+ 	f.write('\n'.join(material+[&quot;%d %d&quot;%(len(bodies),len(interactions))]+bodies+interactions))
+ 	f.close()
+ 
++def oofemPrescribedDisplacementsExport(fileName):
++	f=open(fileName,'w')
++	f.write(fileName+'.out\n'+'''All Yade displacements prescribed as boundary conditions
++NonLinearStatic nsteps 2 contextOutputStep 1 rtolv 1.e-2 stiffMode 2 maxiter 50 controllmode 1 nmodules 0
++domain 3dshell
++OutputManager tstep_all dofman_all element_all
++''')
++	inters=[i for i in O.interactions if (i.geom and i.phys)]
++	f.write(&quot;ndofman %d nelem %d ncrosssect 1 nmat 1 nbc %d nic 0 nltf 1 nbarrier 0\n&quot;%(len(O.bodies),len(inters),len(O.bodies)*6))
++	bcMax=0; bcMap={}
++	for b in O.bodies:
++		f.write(&quot;Particle %d coords 3 %.15e %.15e %.15e rad %g&quot;%(b.id+1,b.phys['se3'][0],b.phys['se3'][1],b.phys['se3'][2],b.shape['radius']))
++		bcMap[b.id]=tuple([bcMax+i for i in [1,2,3,4,5,6]])
++		bcMax+=6
++		f.write(' bc '+' '.join([str(i) for i in bcMap[b.id]])+'\n')
++	for j,i in enumerate(inters):
++		f.write('CohSur3d %d nodes 2 %d %d mat 1 crossSect 1 area %g\n'%(j+1,i.id1+1,i.id2+1,i.phys['crossSection']))
++	# crosssection
++	f.write(&quot;SimpleCS 1 thick 1.0 width 1.0\n&quot;)
++	# material
++	ph=inters[0].phys
++	f.write(&quot;CohInt 1 kn %g ks %g e0 %g ef %g c 0. ksi %g coh %g tanphi %g d 1.0 conf 0.0 maxdist 0.0\n&quot;%(ph['E'],ph['G'],ph['epsCrackOnset'],ph['epsFracture'],ph['xiShear'],ph['undamagedCohesion'],ph['tanFrictionAngle']))
++	# boundary conditions
++	for b in O.bodies:
++		displ=b.phys.displ; rot=b.phys.rot
++		dofs=[displ[0],displ[1],displ[2],rot[0],rot[1],rot[2]]
++		f.write('# body #%d\n'%b.id)
++		for dof in range(6):
++			f.write('BoundaryCondition %d loadTimeFunction 1 prescribedvalue %.15e\n'%(bcMap[b.id][dof],dofs[dof]))
++	#f.write('PiecewiseLinFunction 1 npoints 3 t 3 0. 10. 1000.  f(t) 3 0. 10. 1000.\n')
++	f.write('ConstantFunction 1 f(t) 1.0\n')
++
++
++
++
+ def oofemDirectExport(fileBase,title=None,negIds=[],posIds=[]):
+ 	from yade.wrapper import Omega
+ 	material,bodies,interactions=[],[],[]
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-12-12 16:04:51 UTC (rev 1597)
++++ trunk/gui/py/yadeControl.cpp	2008-12-14 10:32:09 UTC (rev 1598)
+@@ -149,6 +149,8 @@
+ 			throw std::invalid_argument(&quot;Invalid  DOF specification `&quot;+s+&quot;', must be &#8712;{x,y,z,rx,ry,rz}.&quot;);
+ 		}
+ 	}
++	python::tuple displ_get(){Vector3r ret=proxee-&gt;se3.position-proxee-&gt;refSe3.position; return python::make_tuple(ret[0],ret[1],ret[2]);}
++	python::tuple rot_get(){Quaternionr relRot=proxee-&gt;refSe3.orientation.Conjugate()*proxee-&gt;se3.orientation; Vector3r axis; Real angle; relRot.ToAxisAngle(axis,angle); axis*=angle; return python::make_tuple(axis[0],axis[1],axis[2]); }
+ 	python::tuple pos_get(){const Vector3r&amp; p=proxee-&gt;se3.position; return python::make_tuple(p[0],p[1],p[2]);}
+ 	python::tuple refPos_get(){const Vector3r&amp; p=proxee-&gt;refSe3.position; return python::make_tuple(p[0],p[1],p[2]);}
+ 	python::tuple ori_get(){Vector3r axis; Real angle; proxee-&gt;se3.orientation.ToAxisAngle(axis,angle); return python::make_tuple(axis[0],axis[1],axis[2],angle);}
+@@ -619,6 +621,8 @@
+ 		.add_property(&quot;pos&quot;,&amp;pyPhysicalParameters::pos_get,&amp;pyPhysicalParameters::pos_set)
+ 		.add_property(&quot;ori&quot;,&amp;pyPhysicalParameters::ori_get,&amp;pyPhysicalParameters::ori_set)
+ 		.add_property(&quot;refPos&quot;,&amp;pyPhysicalParameters::refPos_get,&amp;pyPhysicalParameters::refPos_set)
++		.add_property(&quot;displ&quot;,&amp;pyPhysicalParameters::displ_get)
++		.add_property(&quot;rot&quot;,&amp;pyPhysicalParameters::rot_get)
+ 		;
+ 	BASIC_PY_PROXY_WRAPPER(pyBoundingVolume,&quot;BoundingVolume&quot;);
+ 	BASIC_PY_PROXY_WRAPPER(pyInteractionGeometry,&quot;InteractionGeometry&quot;);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000551.html">[deprecated list] [Yade-dev] [robot] build failed
+</A></li>
+	<LI>Next message: <A HREF="000553.html">[deprecated list] [Yade-dev] detecting cut&amp;paste in yade
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#552">[ date ]</a>
+              <a href="thread.html#552">[ thread ]</a>
+              <a href="subject.html#552">[ subject ]</a>
+              <a href="author.html#552">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

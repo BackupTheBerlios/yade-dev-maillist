@@ -1,0 +1,812 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1933 - in trunk: extra	lib	pkg/common/Engine/DeusExMachina	pkg/dem/DataClass	pkg/dem/meta py py/yadeWrapper scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1933%20-%20in%20trunk%3A%20extra%0A%09lib%09pkg/common/Engine/DeusExMachina%0A%09pkg/dem/DataClass%09pkg/dem/meta%20py%20py/yadeWrapper%20scripts/test&In-Reply-To=%3C200908101132.n7ABWZWk025998%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001355.html">
+   <LINK REL="Next"  HREF="001357.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1933 - in trunk: extra	lib	pkg/common/Engine/DeusExMachina	pkg/dem/DataClass	pkg/dem/meta py py/yadeWrapper scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1933%20-%20in%20trunk%3A%20extra%0A%09lib%09pkg/common/Engine/DeusExMachina%0A%09pkg/dem/DataClass%09pkg/dem/meta%20py%20py/yadeWrapper%20scripts/test&In-Reply-To=%3C200908101132.n7ABWZWk025998%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1933 - in trunk: extra	lib	pkg/common/Engine/DeusExMachina	pkg/dem/DataClass	pkg/dem/meta py py/yadeWrapper scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Aug 10 13:32:35 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001355.html">[deprecated list] [Yade-dev] [svn] r1932 - in trunk: core extra	gui/qt3	lib/serialization	pkg/dem/DataClass/InteractionGeometry scripts/test
+</A></li>
+        <LI>Next message: <A HREF="001357.html">[deprecated list] [Yade-dev] [svn] r1934 - in trunk:	extra	pkg/dem/DataClass/InteractionGeometry pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1356">[ date ]</a>
+              <a href="thread.html#1356">[ thread ]</a>
+              <a href="subject.html#1356">[ subject ]</a>
+              <a href="author.html#1356">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-08-10 13:32:23 +0200 (Mon, 10 Aug 2009)
+New Revision: 1933
+
+Added:
+   trunk/pkg/dem/DataClass/SpherePack.cpp
+   trunk/pkg/dem/DataClass/SpherePack.hpp
+   trunk/scripts/test/periodic-compress.py
+Modified:
+   trunk/extra/PeriodicInsertionSortCollider.cpp
+   trunk/extra/PeriodicInsertionSortCollider.hpp
+   trunk/extra/SConscript
+   trunk/lib/SConscript
+   trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.cpp
+   trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.hpp
+   trunk/pkg/dem/meta/Shop.cpp
+   trunk/pkg/dem/meta/Shop.hpp
+   trunk/py/SConscript
+   trunk/py/_packSpheres.cpp
+   trunk/py/_utils.cpp
+   trunk/py/yadeWrapper/yadeWrapper.cpp
+   trunk/scripts/test/periodic-grow.py
+Log:
+1. Add PeriIsoCompressor for periodic isotropic compression; see scripts/test/periodic-compress.py. Not so much slower than regular triax, nice surprise.
+2. Make SpherePack standalone class (previously just in python's _packSpheres), add the function to generate cloud of spheres, both periodic and non-periodic. _packSpheres wrapper is update, but otherwise not changed.
+3. Fix python-less compilation for se3 interpolator engine
+4. Add Omega().runEngine()
+5. Fix some compilation/linking issues.
+
+
+
+Modified: trunk/extra/PeriodicInsertionSortCollider.cpp
+===================================================================
+--- trunk/extra/PeriodicInsertionSortCollider.cpp	2009-08-09 17:17:53 UTC (rev 1932)
++++ trunk/extra/PeriodicInsertionSortCollider.cpp	2009-08-10 11:32:23 UTC (rev 1933)
+@@ -16,7 +16,7 @@
+ 
+ using namespace std;
+ 
+-YADE_PLUGIN((PeriodicInsertionSortCollider))
++YADE_PLUGIN((PeriodicInsertionSortCollider)(PeriIsoCompressor))
+ CREATE_LOGGER(PeriodicInsertionSortCollider);
+ 
+ // return floating value wrapped between x0 and x1 and saving period number to period
+@@ -348,3 +348,70 @@
+ 			}
+ 		}
+ }
++
++
++
++
++
++/***********************************************************************************************************
++******************************* PeriIsoCompressor *********************************************************/
++#include&lt;yade/pkg-dem/Shop.hpp&gt;
++
++
++CREATE_LOGGER(PeriIsoCompressor);
++void PeriIsoCompressor::action(MetaBody* rb){
++	if(!rb-&gt;isPeriodic){ LOG_FATAL(&quot;Being used on non-periodic simulation!&quot;); throw; }
++	if(state&gt;=stresses.size()) return;
++	// initialize values
++	if(charLen&lt;0){
++		BoundingVolume* bv=Body::byId(0,rb)-&gt;boundingVolume.get();
++		if(!bv){ LOG_FATAL(&quot;No charLen defined and body #0 has no boundingVolume&quot;); throw; }
++		const Vector3r sz=bv-&gt;max-bv-&gt;min;
++		charLen=(sz[0]+sz[1]+sz[2])/3.;
++		LOG_INFO(&quot;No charLen defined, taking avg bbox size of body #0 = &quot;&lt;&lt;charLen);
++	}
++	if(maxDisplPerStep&lt;0) maxDisplPerStep=1e-2*charLen; // this should be tuned somehow&#8230;
++	const long&amp; step=rb-&gt;currentIteration;
++	Vector3r cellSize=rb-&gt;cellMax-rb-&gt;cellMin; //unused: Real cellVolume=cellSize[0]*cellSize[1]*cellSize[2];
++	Vector3r cellArea=Vector3r(cellSize[1]*cellSize[2],cellSize[0]*cellSize[2],cellSize[0]*cellSize[1]);
++	if(((step%globalUpdateInt)==0) || avgStiffness&lt;0 || sigma[0]&lt;0 || sigma[1]&lt;0 || sigma[2]&lt;0){
++		Vector3r sumForces=Shop::totalForceInVolume(avgStiffness,rb);
++		sigma=Vector3r(sumForces[0]/cellArea[0],sumForces[1]/cellArea[1],sumForces[2]/cellArea[2]);
++		LOG_TRACE(&quot;Updated sigma=&quot;&lt;&lt;sigma&lt;&lt;&quot;, avgStiffness=&quot;&lt;&lt;avgStiffness);
++	}
++	Real sigmaGoal=stresses[state]; assert(sigmaGoal&gt;0);
++	// expansion of cell in this step (absolute length)
++	Vector3r cellGrow(Vector3r::ZERO);
++	// is the stress condition satisfied in all directions?
++	bool allStressesOK=true;
++	Vector3r cg_;
++	for(int axis=0; axis&lt;3; axis++){
++		// &#916;&#963;=&#916;&#949;E=(&#916;l/l)&#215;(l&#215;K/A) &#8596; &#916;l=&#916;&#963;&#215;A/K
++		// FIXME: either NormalShearInteraction::{kn,ks} is computed wrong or we have dimensionality problem here
++		// FIXME: that is why the fixup 1e-2 is needed here
++		// FIXME: or perhaps maxDisplaPerStep=1e-2*charLen is too big??
++		cellGrow[axis]=1e-4*(sigma[axis]-sigmaGoal)*cellArea[axis]/(avgStiffness&gt;0?avgStiffness:1);
++		if(abs(cellGrow[axis])&gt;maxDisplPerStep) cellGrow[axis]=Mathr::Sign(cellGrow[axis])*maxDisplPerStep;
++		// crude way of predicting sigma, for steps when it is not computed from intrs
++		if(avgStiffness&gt;0) sigma[axis]-=cellGrow[axis]*avgStiffness;
++		if(abs((sigma[axis]-sigmaGoal)/sigmaGoal)&gt;5e-3) allStressesOK=false;
++	}
++	TRVAR4(cellGrow,sigma,sigmaGoal,avgStiffness);
++	rb-&gt;cellMin-=.5*cellGrow; rb-&gt;cellMax+=.5*cellGrow;
++	// handle state transitions
++	if(allStressesOK){
++		if((step%globalUpdateInt)==0) currUnbalanced=Shop::unbalancedForce(/*useMaxForce=*/false,rb);
++		if(currUnbalanced&lt;maxUnbalanced){
++			state+=1;
++			// sigmaGoal reached and packing stable
++			if(state==stresses.size()){ // no next stress to go for
++				LOG_INFO(&quot;Finished&quot;);
++				#ifdef YADE_PYTHON
++					if(!doneHook.empty()){ LOG_DEBUG(&quot;Running doneHook: &quot;&lt;&lt;doneHook); PyGILState_STATE gstate; gstate=PyGILState_Ensure(); PyRun_SimpleString(doneHook.c_str()); PyGILState_Release(gstate); }
++				#endif
++			} else { LOG_INFO(&quot;Loading to &quot;&lt;&lt;sigmaGoal&lt;&lt;&quot; done, starting going to &quot;&lt;&lt;stresses[state]&lt;&lt;&quot; now&quot;); }
++		} else {
++			if((step%globalUpdateInt)==0) LOG_DEBUG(&quot;Stress=&quot;&lt;&lt;sigma&lt;&lt;&quot;, goal=&quot;&lt;&lt;sigmaGoal&lt;&lt;&quot;, unbalanced=&quot;&lt;&lt;currUnbalanced);
++		}
++	}
++}
+
+Modified: trunk/extra/PeriodicInsertionSortCollider.hpp
+===================================================================
+--- trunk/extra/PeriodicInsertionSortCollider.hpp	2009-08-09 17:17:53 UTC (rev 1932)
++++ trunk/extra/PeriodicInsertionSortCollider.hpp	2009-08-10 11:32:23 UTC (rev 1933)
+@@ -138,3 +138,29 @@
+ 	DECLARE_LOGGER;
+ };
+ REGISTER_SERIALIZABLE(PeriodicInsertionSortCollider);
++
++/* Simple engine for compressing random cloud of spheres until
++it reaches given average stress and then goes back to given residual stress
++*/
++class PeriIsoCompressor: public StandAloneEngine{
++	Real avgStiffness; Real maxDisplPerStep; Vector3r sumForces, sigma; 
++	public:
++	//! Stresses that should be reached, one after another
++	vector&lt;Real&gt; stresses;
++	//! Characteristic length, should be something like mean particle diameter (default -1=invalid value))
++	Real charLen;
++	//! if actual unbalanced force is smaller than this number, the packing is considered stable (default 1e-4)
++	Real maxUnbalanced, currUnbalanced;
++	//! how often to recompute average stress, stiffness and unbalanced force (default 100)
++	int globalUpdateInt;
++	//! Where are we at in the process
++	size_t state;
++	//! python command to be run when reaching the last specified stress
++	string doneHook;
++	void action(MetaBody*);
++	PeriIsoCompressor(): avgStiffness(-1), maxDisplPerStep(-1), sumForces(Vector3r::ZERO), sigma(Vector3r::ZERO), charLen(-1), maxUnbalanced(1e-4), currUnbalanced(-1), globalUpdateInt(100), state(0){}
++	REGISTER_ATTRIBUTES(StandAloneEngine,(stresses)(charLen)(maxUnbalanced)(globalUpdateInt)(state)(doneHook));
++	DECLARE_LOGGER;
++	REGISTER_CLASS_AND_BASE(PeriIsoCompressor,StandAloneEngine);
++};
++REGISTER_SERIALIZABLE(PeriIsoCompressor);
+
+Modified: trunk/extra/SConscript
+===================================================================
+--- trunk/extra/SConscript	2009-08-09 17:17:53 UTC (rev 1932)
++++ trunk/extra/SConscript	2009-08-10 11:32:23 UTC (rev 1933)
+@@ -6,7 +6,7 @@
+ import os.path, os
+ 
+ env.Install('$PREFIX/lib/yade$SUFFIX/extra',[
+-	env.SharedLibrary('PeriodicInsertionSortCollider',['PeriodicInsertionSortCollider.cpp'],LIBS=env['LIBS']+linkPlugins(['InsertionSortCollider'])),
++	env.SharedLibrary('PeriodicInsertionSortCollider',['PeriodicInsertionSortCollider.cpp'],LIBS=env['LIBS']+linkPlugins(['InsertionSortCollider','Shop'])),
+ ])
+ 
+ 
+
+Modified: trunk/lib/SConscript
+===================================================================
+--- trunk/lib/SConscript	2009-08-09 17:17:53 UTC (rev 1932)
++++ trunk/lib/SConscript	2009-08-10 11:32:23 UTC (rev 1933)
+@@ -59,7 +59,7 @@
+ 	'factory/ClassFactory.cpp','factory/DynLibManager.cpp','factory/FactoryExceptions.cpp',
+ 	'multimethods/Indexable.cpp','multimethods/MultiMethodsExceptions.cpp',
+ 	'serialization-xml/XMLFormatManager.cpp','serialization-xml/XMLSaxParser.cpp','serialization/Archive.cpp',
+-	'serialization/IOFormatManager.cpp','serialization/IOManagerExceptions.cpp','serialization/FormatChecker.cpp','serialization/Serializable.cpp','serialization/SerializableSingleton.cpp','serialization/SerializationExceptions.cpp']))
++	'serialization/IOFormatManager.cpp','serialization/IOManagerExceptions.cpp','serialization/FormatChecker.cpp','serialization/Serializable.cpp','serialization/SerializableSingleton.cpp','serialization/SerializationExceptions.cpp']),LIBS=['dl'])
+ 
+ #######################
+ ###### 3rd party libs
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.cpp	2009-08-09 17:17:53 UTC (rev 1932)
++++ trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.cpp	2009-08-10 11:32:23 UTC (rev 1933)
+@@ -31,6 +31,8 @@
+ 	if(t&gt;=1.){
+ 		done=true;
+ 		LOG_DEBUG(&quot;Goal reached.&quot;);
+-		if(!goalHook.empty()){ PyGILState_STATE gstate; gstate=PyGILState_Ensure(); PyRun_SimpleString(goalHook.c_str()); PyGILState_Release(gstate); }
++		#ifdef YADE_PYTHON
++			if(!goalHook.empty()){ PyGILState_STATE gstate; gstate=PyGILState_Ensure(); PyRun_SimpleString(goalHook.c_str()); PyGILState_Release(gstate); }
++		#endif
+ 	}
+ }
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.hpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.hpp	2009-08-09 17:17:53 UTC (rev 1932)
++++ trunk/pkg/common/Engine/DeusExMachina/Se3Interpolator.hpp	2009-08-10 11:32:23 UTC (rev 1933)
+@@ -4,7 +4,9 @@
+ #include&lt;yade/core/DeusExMachina.hpp&gt;
+ #include&lt;yade/core/PhysicalParameters.hpp&gt;
+ #include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+-#include&lt;Python.h&gt;
++#ifdef YADE_PYTHON
++	#include&lt;Python.h&gt;
++#endif
+ 
+ /* Engine interpolating between starting (current) and goal (given) se3, both position and orientation.
+  *
+
+Added: trunk/pkg/dem/DataClass/SpherePack.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/SpherePack.cpp	2009-08-09 17:17:53 UTC (rev 1932)
++++ trunk/pkg/dem/DataClass/SpherePack.cpp	2009-08-10 11:32:23 UTC (rev 1933)
+@@ -0,0 +1,113 @@
++// &#169; 2009 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++
++#include&lt;yade/pkg-dem/SpherePack.hpp&gt;
++
++#include&lt;yade/core/Omega.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++#include&lt;yade/pkg-dem/Shop.hpp&gt;
++
++#include &lt;boost/random/linear_congruential.hpp&gt;
++#include &lt;boost/random/uniform_real.hpp&gt;
++#include &lt;boost/random/variate_generator.hpp&gt;
++
++#include&lt;yade/core/Timing.hpp&gt;
++
++// not a serializable in the sense of YADE_PLUGIN
++
++CREATE_LOGGER(SpherePack);
++
++using namespace std;
++using namespace boost;
++
++#ifdef YADE_PYTHON
++	// if we need explicit conversions at a few places
++	python::tuple vec2tuple(const Vector3r&amp; v){return boost::python::make_tuple(v[0],v[1],v[2]);}
++	Vector3r tuple2vec(const python::tuple&amp; t){return Vector3r(python::extract&lt;double&gt;(t[0])(),python::extract&lt;double&gt;(t[1])(),python::extract&lt;double&gt;(t[2])());}
++	Vector3r tuple2vec(python::tuple&amp; t){return Vector3r(python::extract&lt;double&gt;(t[0])(),python::extract&lt;double&gt;(t[1])(),python::extract&lt;double&gt;(t[2])());}
++
++	void SpherePack::fromList(const python::list&amp; l){
++		pack.clear();
++		size_t len=python::len(l);
++		for(size_t i=0; i&lt;len; i++){
++			const python::tuple&amp; t=python::extract&lt;python::tuple&gt;(l[i]);
++			//python::extract&lt;python::tuple&gt; tup(t[0]);
++			//if(tup.check()) { pack.push_back(Sph(tuple2vec(tup()),python::extract&lt;double&gt;(t[1]))); continue;}
++			python::extract&lt;Vector3r&gt; vec(t[0]);
++			if(vec.check()) { pack.push_back(Sph(vec(),python::extract&lt;double&gt;(t[1]))); continue; }
++			PyErr_SetString(PyExc_TypeError, &quot;List elements must be (tuple or Vector3, float)!&quot;);
++			python::throw_error_already_set();
++		}
++	};
++
++	python::list SpherePack::toList() const {
++		python::list ret;
++		FOREACH(const Sph&amp; s, pack) ret.append(python::make_tuple(s.c,s.r));
++		return ret;
++	};
++
++	python::list SpherePack::toList_pointsAsTuples() const {
++		python::list ret;
++		FOREACH(const Sph&amp; s, pack) ret.append(python::make_tuple(vec2tuple(s.c),s.r));
++		return ret;
++	};
++#endif
++
++void SpherePack::fromFile(string file) {
++	typedef pair&lt;Vector3r,Real&gt; pairVector3rReal;
++	vector&lt;pairVector3rReal&gt; ss;
++	Vector3r mn,mx;
++	ss=Shop::loadSpheresFromFile(file,mn,mx);
++	pack.clear();
++	FOREACH(const pairVector3rReal&amp; s, ss) pack.push_back(Sph(s.first,s.second));
++}
++
++void SpherePack::toFile(const string fname) const {
++	ofstream f(fname.c_str());
++	if(!f.good()) throw runtime_error(&quot;Unable to open file `&quot;+fname+&quot;'&quot;);
++	FOREACH(const Sph&amp; s, pack) f&lt;&lt;s.c[0]&lt;&lt;&quot; &quot;&lt;&lt;s.c[1]&lt;&lt;&quot; &quot;&lt;&lt;s.c[2]&lt;&lt;&quot; &quot;&lt;&lt;s.r&lt;&lt;endl;
++	f.close();
++};
++
++void SpherePack::fromSimulation() {
++	pack.clear();
++	MetaBody* rootBody=Omega::instance().getRootBody().get();
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
++		shared_ptr&lt;InteractingSphere&gt;	intSph=dynamic_pointer_cast&lt;InteractingSphere&gt;(b-&gt;interactingGeometry);
++		if(!intSph) continue;
++		pack.push_back(Sph(b-&gt;physicalParameters-&gt;se3.position,intSph-&gt;radius));
++	}
++}
++
++long SpherePack::makeCloud(Vector3r mn, Vector3r mx, Real rMean, Real rRelFuzz, size_t num, bool periodic){
++	static boost::minstd_rand randGen(TimingInfo::getNow(/* get the number even if timing is disabled globally */ true));
++	static boost::variate_generator&lt;boost::minstd_rand&amp;, boost::uniform_real&lt;&gt; &gt; rnd(randGen, boost::uniform_real&lt;&gt;(0,1));
++	const size_t maxTry=1000;
++	Vector3r size=mx-mn;
++	if(periodic)(cellSize=size);
++	for(size_t i=0; i&lt;num; i++) {
++		size_t t;
++		for(t=0; t&lt;maxTry; ++t){
++			Real r=(rnd()-.5)*rRelFuzz+rMean; Vector3r c;
++			if(!periodic) { for(int axis=0; axis&lt;3; axis++) c[axis]=mn[axis]+r+(size[axis]-2*r)*rnd(); }
++			else { for(int axis=0; axis&lt;3; axis++) c[axis]=mn[axis]+size[axis]*rnd(); }
++			size_t packSize=pack.size(); bool overlap=false;
++			if(!periodic){
++				for(size_t j=0; j&lt;packSize; j++){ if(pow(pack[j].r+r,2) &gt;= (pack[j].c-c).SquaredLength()) { overlap=true; break; } }
++			} else {
++				for(size_t j=0; j&lt;packSize; j++){
++					Vector3r dr;
++					for(int axis=0; axis&lt;3; axis++) dr[axis]=min(cellWrapRel(c[axis],pack[j].c[axis],pack[j].c[axis]+size[axis]),cellWrapRel(pack[j].c[axis],c[axis],c[axis]+size[axis]));
++					if(pow(pack[j].r+r,2)&gt;= dr.SquaredLength()){ overlap=true; break; }
++				}
++			}
++			if(!overlap) { pack.push_back(Sph(c,r)); break; }
++		}
++		if (t==maxTry) {
++			LOG_WARN(&quot;Exceeded &quot;&lt;&lt;maxTry&lt;&lt;&quot; tries to insert non-overlapping sphere to packing. Only &quot;&lt;&lt;i&lt;&lt;&quot; spheres was added, although you requested &quot;&lt;&lt;num);
++			return i;
++		}
++	}
++	return pack.size();
++}
++
+
+Added: trunk/pkg/dem/DataClass/SpherePack.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/SpherePack.hpp	2009-08-09 17:17:53 UTC (rev 1932)
++++ trunk/pkg/dem/DataClass/SpherePack.hpp	2009-08-10 11:32:23 UTC (rev 1933)
+@@ -0,0 +1,100 @@
++// &#169; 2009 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++
++#include&lt;vector&gt;
++#include&lt;string&gt;	
++using namespace std; // sorry
++
++#ifdef YADE_PYTHON
++	#include&lt;boost/python.hpp&gt;
++	#include&lt;yade/extra/boost_python_len.hpp&gt;
++	using namespace boost;
++#endif
++
++#include&lt;boost/foreach.hpp&gt;
++#ifndef FOREACH
++	#define FOREACH BOOST_FOREACH
++#endif
++
++#include&lt;yade/lib-base/Logging.hpp&gt;
++#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++
++/*! Class representing geometry of spherical packing, with some utility functions.
++
++*/
++class SpherePack{
++	// return coordinate wrapped to x0&#8230;x1, relative to x0; don't care about period
++	// copied from PeriodicInsertionSortCollider
++	Real cellWrapRel(const Real x, const Real x0, const Real x1){
++		Real xNorm=(x-x0)/(x1-x0);
++		return (xNorm-floor(xNorm))*(x1-x0);
++	}
++public:
++	struct Sph{
++		Vector3r c; Real r;
++		Sph(const Vector3r&amp; _c, Real _r): c(_c), r(_r){};
++		#ifdef YADE_PYTHON
++			python::tuple asTuple() const { return python::make_tuple(c,r); }
++		#endif
++	};
++	std::vector&lt;Sph&gt; pack;
++	Vector3r cellSize;
++	SpherePack(): cellSize(Vector3r::ZERO){};
++	#ifdef YADE_PYTHON
++		SpherePack(const python::list&amp; l):cellSize(Vector3r::ZERO){ fromList(l); }
++	#endif
++	// add single sphere
++	void add(const Vector3r&amp; c, Real r){ pack.push_back(Sph(c,r)); }
++
++	// I/O
++	#ifdef YADE_PYTHON
++		void fromList(const python::list&amp; l);
++		python::list toList() const;
++		python::list toList_pointsAsTuples() const;
++	#endif
++	void fromFile(const string file);
++	void toFile(const string file) const;
++	void fromSimulation();
++
++	// random generation
++	long makeCloud(Vector3r min, Vector3r max, Real rMean, Real rFuzz, size_t num, bool periodic=false);
++
++	// spatial characteristics
++	Vector3r dim() const {Vector3r mn,mx; aabb(mn,mx); return mx-mn;}
++	#ifdef YADE_PYTHON
++		python::tuple aabb_py() const { Vector3r mn,mx; aabb(mn,mx); return python::make_tuple(mn,mx); }
++	#endif
++	void aabb(Vector3r&amp; mn, Vector3r&amp; mx) const {
++		Real inf=std::numeric_limits&lt;Real&gt;::infinity(); mn=Vector3r(inf,inf,inf); mx=Vector3r(-inf,-inf,-inf);
++		FOREACH(const Sph&amp; s, pack){ Vector3r r(s.r,s.r,s.r); mn=componentMinVector(mn,s.c-r); mx=componentMaxVector(mx,s.c+r);}
++	}
++	Vector3r midPt() const {Vector3r mn,mx; aabb(mn,mx); return .5*(mn+mx);}
++	Real relDensity() const {
++		Real sphVol=0; Vector3r dd=dim();
++		FOREACH(const Sph&amp; s, pack) sphVol+=pow(s.r,3);
++		sphVol*=(4/3.)*Mathr::PI;
++		return sphVol/(dd[0]*dd[1]*dd[2]);
++	}
++
++	// transformations
++	void translate(const Vector3r&amp; shift){ FOREACH(Sph&amp; s, pack) s.c+=shift; }
++	void rotate(const Vector3r&amp; axis, Real angle){ Vector3r mid=midPt(); Quaternionr q(axis,angle); FOREACH(Sph&amp; s, pack) s.c=q*(s.c-mid)+mid; }
++	void scale(Real scale){ Vector3r mid=midPt(); FOREACH(Sph&amp; s, pack) {s.c=scale*(s.c-mid)+mid; s.r*=abs(scale); } }
++
++	// iteration 
++	#ifdef YADE_PYTHON
++		size_t len() const{ return pack.size(); }
++		python::tuple getitem(size_t idx){ if(idx&lt;0 || idx&gt;=pack.size()) throw runtime_error(&quot;Index &quot;+lexical_cast&lt;string&gt;(idx)+&quot; out of range 0..&quot;+lexical_cast&lt;string&gt;(pack.size()-1)); return pack[idx].asTuple(); }
++		struct iterator{
++			const SpherePack&amp; sPack; size_t pos;
++			iterator(const SpherePack&amp; _sPack): sPack(_sPack), pos(0){}
++			iterator iter(){ return *this;}
++			python::tuple next(){
++				if(pos==sPack.pack.size()){ PyErr_SetNone(PyExc_StopIteration); python::throw_error_already_set(); }
++				return sPack.pack[pos++].asTuple();
++			}
++		};
++		SpherePack::iterator getIterator() const{ return SpherePack::iterator(*this);};
++	#endif
++	DECLARE_LOGGER;
++};
++
+
+Modified: trunk/pkg/dem/meta/Shop.cpp
+===================================================================
+--- trunk/pkg/dem/meta/Shop.cpp	2009-08-09 17:17:53 UTC (rev 1932)
++++ trunk/pkg/dem/meta/Shop.cpp	2009-08-10 11:32:23 UTC (rev 1933)
+@@ -85,22 +85,25 @@
+ }
+ 
+ 
+-/*! Compute sum of forces in the whole simulation.
++/*! Compute sum of forces in the whole simulation and averages stiffness.
+ 
+ Designed for being used with periodic cell, where diving the resulting components by
+ areas of the cell will give average stress in that direction.
+ 
+ Requires all .isReal() interaction to have interactionPhysics deriving from NormalShearInteraction.
+ */
+-Vector3r Shop::totalForceInVolume(MetaBody* _rb){
++Vector3r Shop::totalForceInVolume(Real&amp; avgIsoStiffness, MetaBody* _rb){
+ 	MetaBody* rb=_rb ? _rb : Omega::instance().getRootBody().get();
+-	Vector3r ret(Vector3r::ZERO);
++	Vector3r force(Vector3r::ZERO); Real stiff=0; long n=0;
+ 	FOREACH(const shared_ptr&lt;Interaction&gt;&amp;I, *rb-&gt;interactions){
+ 		if(!I-&gt;isReal()) continue;
+ 		NormalShearInteraction* nsi=YADE_CAST&lt;NormalShearInteraction*&gt;(I-&gt;interactionPhysics.get());
+-		ret+=Vector3r(abs(nsi-&gt;normalForce[0]+nsi-&gt;shearForce[0]),abs(nsi-&gt;normalForce[1]+nsi-&gt;shearForce[1]),abs(nsi-&gt;normalForce[2]+nsi-&gt;shearForce[2]));
++		force+=Vector3r(abs(nsi-&gt;normalForce[0]+nsi-&gt;shearForce[0]),abs(nsi-&gt;normalForce[1]+nsi-&gt;shearForce[1]),abs(nsi-&gt;normalForce[2]+nsi-&gt;shearForce[2]));
++		stiff+=(1/3.)*nsi-&gt;kn+(2/3.)*nsi-&gt;ks; // count kn in one direction and ks in the other two
++		n++;
+ 	}
+-	return ret;
++	avgIsoStiffness= n&gt;0 ? (1./n)*stiff : -1;
++	return force;
+ }
+ 
+ Real Shop::unbalancedForce(bool useMaxForce, MetaBody* _rb){
+@@ -1167,3 +1170,4 @@
+ 	return x0+xxNorm*(x1-x0);
+ }
+ 
++
+
+Modified: trunk/pkg/dem/meta/Shop.hpp
+===================================================================
+--- trunk/pkg/dem/meta/Shop.hpp	2009-08-09 17:17:53 UTC (rev 1932)
++++ trunk/pkg/dem/meta/Shop.hpp	2009-08-10 11:32:23 UTC (rev 1933)
+@@ -94,7 +94,7 @@
+ 		//! Get unbalanced force of the whole simulation
+ 		static Real unbalancedForce(bool useMaxForce=false, MetaBody* _rb=NULL);
+ 		static Real kineticEnergy(MetaBody* _rb=NULL);
+-		static Vector3r totalForceInVolume(MetaBody *_rb=NULL);
++		static Vector3r totalForceInVolume(Real&amp; avgIsoStiffness, MetaBody *_rb=NULL);
+ 
+ 		//! create transientInteraction between 2 bodies, using existing MetaEngine in Omega
+ 		static shared_ptr&lt;Interaction&gt; createExplicitInteraction(body_id_t id1, body_id_t id2);
+
+Modified: trunk/py/SConscript
+===================================================================
+--- trunk/py/SConscript	2009-08-09 17:17:53 UTC (rev 1932)
++++ trunk/py/SConscript	2009-08-10 11:32:23 UTC (rev 1933)
+@@ -18,7 +18,7 @@
+ 			LIBS=env['LIBS']+(['_gts__python-module'] if 'GTS' in env['features'] else []),
+ 			),
+ 		env.SharedLibrary('_packSpheres',['_packSpheres.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+[
+-			linkPlugins(['Shop']),
++			linkPlugins(['Shop','SpherePack']),
+ 			]),
+ 		env.SharedLibrary('_packObb',['_packObb.cpp'],SHLIBPREFIX=''),
+ 		env.File('utils.py'),
+
+Modified: trunk/py/_packSpheres.cpp
+===================================================================
+--- trunk/py/_packSpheres.cpp	2009-08-09 17:17:53 UTC (rev 1932)
++++ trunk/py/_packSpheres.cpp	2009-08-10 11:32:23 UTC (rev 1933)
+@@ -1,132 +1,7 @@
+ // 2009 &#169; V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+-#include&lt;boost/python.hpp&gt;
+-#include&lt;yade/extra/boost_python_len.hpp&gt;
+-#include&lt;yade/lib-base/Logging.hpp&gt;
+-#include&lt;yade/lib-base/yadeWm3.hpp&gt;
+-#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+-// #include&lt;yade/gui-py/_utils.hpp&gt; // will be: yade/lib-py/_utils.hpp&gt; at some point
+-#include&lt;Wm3Vector3.h&gt;
+ 
+-#include&lt;yade/core/Omega.hpp&gt;
+-#include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/InteractingSphere.hpp&gt;
++#include&lt;yade/pkg-dem/SpherePack.hpp&gt;
+ 
+-#include&lt;yade/pkg-dem/Shop.hpp&gt;
+-
+-using namespace boost;
+-using namespace std;
+-#ifdef LOG4CXX
+-	log4cxx::LoggerPtr logger=log4cxx::Logger::getLogger(&quot;yade.pack.spheres&quot;);
+-#endif
+-
+-// copied from _packPredicates.cpp :-(
+-python::tuple vec2tuple(const Vector3r&amp; v){return boost::python::make_tuple(v[0],v[1],v[2]);}
+-Vector3r tuple2vec(const python::tuple&amp; t){return Vector3r(python::extract&lt;double&gt;(t[0])(),python::extract&lt;double&gt;(t[1])(),python::extract&lt;double&gt;(t[2])());}
+-Vector3r tuple2vec(python::tuple&amp; t){return Vector3r(python::extract&lt;double&gt;(t[0])(),python::extract&lt;double&gt;(t[1])(),python::extract&lt;double&gt;(t[2])());}
+-
+-struct SpherePack{
+-	struct Sph{ Vector3r c; Real r; Sph(const Vector3r&amp; _c, Real _r): c(_c), r(_r){};
+-		python::tuple asTuple() const { return python::make_tuple(c,r); }
+-	};
+-	vector&lt;Sph&gt; pack;
+-	SpherePack(){};
+-	SpherePack(const python::list&amp; l){ fromList(l); }
+-	// add single sphere
+-	void add(const Vector3r&amp; c, Real r){ pack.push_back(Sph(c,r)); }
+-	// I/O
+-	void fromList(const python::list&amp; l);
+-	python::list toList() const;
+-	python::list toList_pointsAsTuples() const;
+-	void fromFile(const string file);
+-	void toFile(const string file) const;
+-	void fromSimulation();
+-	// spatial characteristics
+-	Vector3r dim() const {Vector3r mn,mx; aabb(mn,mx); return mx-mn;}
+-	python::tuple aabb_py() const { Vector3r mn,mx; aabb(mn,mx); return python::make_tuple(mn,mx); }
+-	void aabb(Vector3r&amp; mn, Vector3r&amp; mx) const {
+-		Real inf=std::numeric_limits&lt;Real&gt;::infinity(); mn=Vector3r(inf,inf,inf); mx=Vector3r(-inf,-inf,-inf);
+-		FOREACH(const Sph&amp; s, pack){ Vector3r r(s.r,s.r,s.r); mn=componentMinVector(mn,s.c-r); mx=componentMaxVector(mx,s.c+r);}
+-	}
+-	Vector3r midPt() const {Vector3r mn,mx; aabb(mn,mx); return .5*(mn+mx);}
+-	Real relDensity() const {
+-		Real sphVol=0; Vector3r dd=dim();
+-		FOREACH(const Sph&amp; s, pack) sphVol+=pow(s.r,3);
+-		sphVol*=(4/3.)*Mathr::PI;
+-		return sphVol/(dd[0]*dd[1]*dd[2]);
+-	}
+-	// transformations
+-	void translate(const Vector3r&amp; shift){ FOREACH(Sph&amp; s, pack) s.c+=shift; }
+-	void rotate(const Vector3r&amp; axis, Real angle){ Vector3r mid=midPt(); Quaternionr q(axis,angle); FOREACH(Sph&amp; s, pack) s.c=q*(s.c-mid)+mid; }
+-	void scale(Real scale){ Vector3r mid=midPt(); FOREACH(Sph&amp; s, pack) {s.c=scale*(s.c-mid)+mid; s.r*=abs(scale); } }
+-	// iteration 
+-	size_t len() const{ return pack.size(); }
+-	python::tuple getitem(size_t idx){ if(idx&lt;0 || idx&gt;=pack.size()) throw runtime_error(&quot;Index &quot;+lexical_cast&lt;string&gt;(idx)+&quot; out of range 0..&quot;+lexical_cast&lt;string&gt;(pack.size()-1)); return pack[idx].asTuple(); }
+-	struct iterator{
+-		const SpherePack&amp; sPack; size_t pos;
+-		iterator(const SpherePack&amp; _sPack): sPack(_sPack), pos(0){}
+-		iterator iter(){ return *this;}
+-		python::tuple next(){
+-			if(pos==sPack.pack.size()-1){ PyErr_SetNone(PyExc_StopIteration); python::throw_error_already_set(); }
+-			return sPack.pack[pos++].asTuple();
+-		}
+-	};
+-	SpherePack::iterator getIterator() const{ return SpherePack::iterator(*this);};
+-};
+-
+-void SpherePack::fromList(const python::list&amp; l){
+-	pack.clear();
+-	size_t len=python::len(l);
+-	for(size_t i=0; i&lt;len; i++){
+-		const python::tuple&amp; t=python::extract&lt;python::tuple&gt;(l[i]);
+-		python::extract&lt;python::tuple&gt; tup(t[0]);
+-		if(tup.check()) { pack.push_back(Sph(tuple2vec(tup()),python::extract&lt;double&gt;(t[1]))); continue;}
+-		python::extract&lt;Vector3r&gt; vec(t[0]);
+-		if(vec.check()) { pack.push_back(Sph(vec(),python::extract&lt;double&gt;(t[1]))); continue; }
+-		PyErr_SetString(PyExc_TypeError, &quot;List elements must be (tuple or Vector3, float)!&quot;);
+-		python::throw_error_already_set();
+-	}
+-};
+-
+-python::list SpherePack::toList() const {
+-	python::list ret;
+-	FOREACH(const Sph&amp; s, pack) ret.append(python::make_tuple(s.c,s.r));
+-	return ret;
+-};
+-
+-python::list SpherePack::toList_pointsAsTuples() const {
+-	python::list ret;
+-	FOREACH(const Sph&amp; s, pack) ret.append(python::make_tuple(vec2tuple(s.c),s.r));
+-	return ret;
+-};
+-
+-void SpherePack::fromFile(string file) {
+-	typedef pair&lt;Vector3r,Real&gt; pairVector3rReal;
+-	vector&lt;pairVector3rReal&gt; ss;
+-	Vector3r mn,mx;
+-	ss=Shop::loadSpheresFromFile(file,mn,mx);
+-	pack.clear();
+-	FOREACH(const pairVector3rReal&amp; s, ss) pack.push_back(Sph(s.first,s.second));
+-}
+-
+-void SpherePack::toFile(const string fname) const {
+-	ofstream f(fname.c_str());
+-	if(!f.good()) throw runtime_error(&quot;Unable to open file `&quot;+fname+&quot;'&quot;);
+-	FOREACH(const Sph&amp; s, pack) f&lt;&lt;s.c[0]&lt;&lt;&quot; &quot;&lt;&lt;s.c[1]&lt;&lt;&quot; &quot;&lt;&lt;s.c[2]&lt;&lt;&quot; &quot;&lt;&lt;s.r&lt;&lt;endl;
+-	f.close();
+-};
+-
+-void SpherePack::fromSimulation() {
+-	pack.clear();
+-	MetaBody* rootBody=Omega::instance().getRootBody().get();
+-	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rootBody-&gt;bodies){
+-		shared_ptr&lt;InteractingSphere&gt;	intSph=dynamic_pointer_cast&lt;InteractingSphere&gt;(b-&gt;interactingGeometry);
+-		if(!intSph) continue;
+-		pack.push_back(Sph(b-&gt;physicalParameters-&gt;se3.position,intSph-&gt;radius));
+-	}
+-}
+-
+-
+-
+ BOOST_PYTHON_MODULE(_packSpheres){
+ 	python::class_&lt;SpherePack&gt;(&quot;SpherePack&quot;,&quot;Set of spheres as centers and radii&quot;,python::init&lt;python::optional&lt;python::list&gt; &gt;(python::args(&quot;list&quot;),&quot;Empty constructor, optionally taking list [ ((cx,cy,cz),r), &#8230; ] for initial data.&quot; ))
+ 		.def(&quot;add&quot;,&amp;SpherePack::add,&quot;Add single sphere to packing, given center as 3-tuple and radius&quot;)
+@@ -136,9 +11,11 @@
+ 		.def(&quot;load&quot;,&amp;SpherePack::fromFile,&quot;Load packing from external text file (current data will be discarded).&quot;)
+ 		.def(&quot;save&quot;,&amp;SpherePack::toFile,&quot;Save packing to external text file (will be overwritten).&quot;)
+ 		.def(&quot;fromSimulation&quot;,&amp;SpherePack::fromSimulation,&quot;Make packing corresponding to the current simulation. Discards current data.&quot;)
++		.def(&quot;makeCloud&quot;,&amp;SpherePack::makeCloud,python::args(&quot;minCorner&quot;,&quot;maxCorner&quot;,&quot;rMean&quot;,&quot;rRelFuzz&quot;,&quot;num&quot;,&quot;periodic&quot;),&quot;Create random packing encosed in box given by minCorner and maxCorner, containing num spheres. Returns number of created spheres, which can be &lt; num if the packing is too tight.&quot;)
+ 		.def(&quot;aabb&quot;,&amp;SpherePack::aabb_py,&quot;Get axis-aligned bounding box coordinates, as 2 3-tuples.&quot;)
+ 		.def(&quot;dim&quot;,&amp;SpherePack::dim,&quot;Return dimensions of the packing in terms of aabb(), as a 3-tuple.&quot;)
+ 		.def(&quot;center&quot;,&amp;SpherePack::midPt,&quot;Return coordinates of the bounding box center.&quot;)
++		.def_readonly(&quot;cellSize&quot;,&amp;SpherePack::cellSize,&quot;Size of periodic cell; is Vector3(0,0,0) if not periodic.&quot;)
+ 		.def(&quot;relDensity&quot;,&amp;SpherePack::relDensity,&quot;Relative packing density, measured as sum of spheres' volumes / aabb volume.\n(Sphere overlaps are ignored.)&quot;)
+ 		.def(&quot;translate&quot;,&amp;SpherePack::translate,&quot;Translate all spheres by given vector.&quot;)
+ 		.def(&quot;rotate&quot;,&amp;SpherePack::rotate,&quot;Rotate all spheres around packing center (in terms of aabb()), given axis and angle of the rotation.&quot;)
+
+Modified: trunk/py/_utils.cpp
+===================================================================
+--- trunk/py/_utils.cpp	2009-08-09 17:17:53 UTC (rev 1932)
++++ trunk/py/_utils.cpp	2009-08-10 11:32:23 UTC (rev 1933)
+@@ -396,7 +396,7 @@
+ 
+ BOOST_PYTHON_FUNCTION_OVERLOADS(unbalancedForce_overloads,Shop::unbalancedForce,0,1);
+ Real Shop__kineticEnergy(){return Shop::kineticEnergy();}
+-Vector3r Shop__totalForceInVolume(){return Shop::totalForceInVolume();}
++python::tuple Shop__totalForceInVolume(){Real stiff; Vector3r ret=Shop::totalForceInVolume(stiff); return python::make_tuple(ret,stiff); }
+ 
+ BOOST_PYTHON_MODULE(_utils){
+ 	// <A HREF="http://numpy.scipy.org/numpydoc/numpy-13.html">http://numpy.scipy.org/numpydoc/numpy-13.html</A> mentions this must be done in module init, otherwise we will crash
+@@ -420,7 +420,7 @@
+ 	def(&quot;sumBexTorques&quot;,sumBexTorques);
+ 	def(&quot;forcesOnPlane&quot;,forcesOnPlane);
+ 	def(&quot;forcesOnCoordPlane&quot;,forcesOnCoordPlane);
+-	def(&quot;totalForceInVolume&quot;,Shop__totalForceInVolume);
++	def(&quot;totalForceInVolume&quot;,Shop__totalForceInVolume,&quot;Return summed forces on all interactions and average isotropic stiffness, as tuple (Vector3,float)&quot;);
+ 	def(&quot;createInteraction&quot;,Shop__createExplicitInteraction);
+ 	def(&quot;spiralProject&quot;,spiralProject,spiralProject_overloads(args(&quot;axis&quot;,&quot;periodStart&quot;,&quot;theta0&quot;)));
+ 	def(&quot;pointInsidePolygon&quot;,pointInsidePolygon);
+
+Modified: trunk/py/yadeWrapper/yadeWrapper.cpp
+===================================================================
+--- trunk/py/yadeWrapper/yadeWrapper.cpp	2009-08-09 17:17:53 UTC (rev 1932)
++++ trunk/py/yadeWrapper/yadeWrapper.cpp	2009-08-10 11:32:23 UTC (rev 1933)
+@@ -462,6 +462,7 @@
+ 		signal(SIGSEGV,termHandler); /* unset the handler that runs gdb and prints backtrace */
+ 		exit(status);
+ 	}
++	void runEngine(const shared_ptr&lt;Engine&gt;&amp; e){ e-&gt;action(OMEGA.getRootBody().get()); }
+ };
+ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(omega_run_overloads,run,0,2);
+ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(omega_saveTmp_overloads,saveTmp,0,1);
+@@ -648,6 +649,7 @@
+ 		#ifdef YADE_BOOST_SERIALIZATION
+ 			.def(&quot;saveXML&quot;,&amp;pyOmega::saveXML,&quot;[EXPERIMENTAL] function saving to XML file using boost::serialization.&quot;)
+ 		#endif
++		.def(&quot;runEngine&quot;,&amp;pyOmega::runEngine,&quot;Run given engine exactly once; simulation time, step number etc. will not be incremented (use only if you know what you do).&quot;)
+ 		;
+ 	python::class_&lt;pyTags&gt;(&quot;TagsWrapper&quot;,python::init&lt;pyTags&amp;&gt;())
+ 		.def(&quot;__getitem__&quot;,&amp;pyTags::getItem)
+
+Added: trunk/scripts/test/periodic-compress.py
+===================================================================
+--- trunk/scripts/test/periodic-compress.py	2009-08-09 17:17:53 UTC (rev 1932)
++++ trunk/scripts/test/periodic-compress.py	2009-08-10 11:32:23 UTC (rev 1933)
+@@ -0,0 +1,27 @@
++O.periodicCell=(0,0,0),(20,20,20)
++from yade import pack,log,timing
++p=pack.SpherePack()
++p.makeCloud(O.periodicCell[0],O.periodicCell[1],1,.5,700,True)
++for sph in p:
++	O.bodies.append(utils.sphere(sph[0],sph[1],density=1000,dynamic=True))
++
++#log.setLevel(&quot;PeriIsoCompressor&quot;,log.TRACE)
++O.timingEnabled=True
++O.engines=[
++	BexResetter(),
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),MetaInteractingGeometry2AABB()]),
++	PeriodicInsertionSortCollider(),
++	InteractionDispatchers(
++		[ef2_Sphere_Sphere_Dem3DofGeom()],
++		[SimpleElasticRelationships()],
++		[Law2_Dem3Dof_Elastic_Elastic()],
++	),
++	PeriIsoCompressor(charLen=.1,stresses=[50e9,1e8],doneHook=&quot;print 'FINISHED'; O.pause() &quot;),
++	NewtonsDampedLaw(damping=.4)
++]
++O.dt=utils.PWaveTimeStep()
++O.saveTmp()
++from yade import qt; qt.Controller(); qt.View()
++O.run()
++O.wait()
++timing.stats()
+
+Modified: trunk/scripts/test/periodic-grow.py
+===================================================================
+--- trunk/scripts/test/periodic-grow.py	2009-08-09 17:17:53 UTC (rev 1932)
++++ trunk/scripts/test/periodic-grow.py	2009-08-10 11:32:23 UTC (rev 1933)
+@@ -32,7 +32,7 @@
+ 	step=(mx-mn); step=Vector3(.002*step[0],.002*step[1],.002*step[2])
+ 	O.periodicCell=mn+step,mx-step
+ 	if (i%10==0):
+-		F=utils.totalForceInVolume()
++		F,stiff=utils.totalForceInVolume()
+ 		dim=mx-mn; A=Vector3(dim[1]*dim[2],dim[0]*dim[2],dim[0]*dim[1])
+ 		avgStress=sum([F[i]/A[i] for i in 0,1,2])/3.
+ 		print 'strain',(cubeSize-dim[0])/cubeSize,'avg. stress ',avgStress,'unbalanced ',utils.unbalancedForce()
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001355.html">[deprecated list] [Yade-dev] [svn] r1932 - in trunk: core extra	gui/qt3	lib/serialization	pkg/dem/DataClass/InteractionGeometry scripts/test
+</A></li>
+	<LI>Next message: <A HREF="001357.html">[deprecated list] [Yade-dev] [svn] r1934 - in trunk:	extra	pkg/dem/DataClass/InteractionGeometry pkg/dem/PreProcessor
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1356">[ date ]</a>
+              <a href="thread.html#1356">[ thread ]</a>
+              <a href="subject.html#1356">[ subject ]</a>
+              <a href="author.html#1356">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

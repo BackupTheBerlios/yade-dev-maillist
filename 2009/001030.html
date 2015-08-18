@@ -1,0 +1,166 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1803 - in trunk: gui/py	scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1803%20-%20in%20trunk%3A%20gui/py%0A%09scripts/test&In-Reply-To=%3C200906171547.n5HFlnOL029819%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001029.html">
+   <LINK REL="Next"  HREF="001031.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1803 - in trunk: gui/py	scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1803%20-%20in%20trunk%3A%20gui/py%0A%09scripts/test&In-Reply-To=%3C200906171547.n5HFlnOL029819%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1803 - in trunk: gui/py	scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jun 17 17:47:49 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001029.html">[deprecated list] [Yade-dev] Parallelepiped instead of cube
+</A></li>
+        <LI>Next message: <A HREF="001031.html">[deprecated list] [Yade-dev] [svn] r1804 - in trunk/lib: . py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1030">[ date ]</a>
+              <a href="thread.html#1030">[ thread ]</a>
+              <a href="subject.html#1030">[ subject ]</a>
+              <a href="author.html#1030">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-06-17 17:47:48 +0200 (Wed, 17 Jun 2009)
+New Revision: 1803
+
+Modified:
+   trunk/gui/py/_packPredicates.cpp
+   trunk/gui/py/pack.py
+   trunk/scripts/test/regular-sphere-pack.py
+Log:
+Anton's new things: axis-aligned ellipsoid predicate and fix in pack.regularHexa.
+
+I added elliptical leg to the sample script and mouth as cylinder. The reason is that
+critical timestep depends (also) on the minimum sphere size, therefore the simulation
+would run slower...
+
+
+
+Modified: trunk/gui/py/_packPredicates.cpp
+===================================================================
+--- trunk/gui/py/_packPredicates.cpp	2009-06-17 12:49:09 UTC (rev 1802)
++++ trunk/gui/py/_packPredicates.cpp	2009-06-17 15:47:48 UTC (rev 1803)
+@@ -110,6 +110,32 @@
+ 	}
+ };
+ 
++/* Axis-aligned ellipsoid predicate */
++class inEllipsoid{
++	Vector3r c, abc;
++public:
++	inEllipsoid(python::tuple _c, python::tuple _abc)
++		{c=tuple2vec(_c); abc=tuple2vec(_abc);}
++	bool operator()(python::tuple _pt, Real pad=0.){
++		Vector3r pt=tuple2vec(_pt);
++		
++		//Define the ellipsoid X-coordinate of given Y and Z
++		Real x = sqrt((1-pow((pt[1]-c[1]),2)/((abc[1]-pad)*(abc[1]-pad))-pow((pt[2]-c[2]),2)/((abc[2]-pad)*(abc[2]-pad)))*((abc[0]-pad)*(abc[0]-pad)))+c[0]; 
++		Vector3r edgeEllipsoid(x,pt[1],pt[2]); // create a vector of these 3 coordinates
++		
++		if ((pt-c).Length()&lt;=(edgeEllipsoid-c).Length()) { //check whether given coordinates lie inside ellipsoid or not
++			return true;
++		} else {
++			return false;
++		}
++	}
++	python::tuple aabb(){
++		Vector3r&amp; center(c); Vector3r&amp; ABC(abc);
++		return vvec2ttuple(Vector3r(center[0]-ABC[0],center[1]-ABC[1],center[2]-ABC[2]),Vector3r(center[0]+ABC[0],center[1]+ABC[1],center[2]+ABC[2]));
++	}
++};
++
++
+ BOOST_PYTHON_MODULE(_packPredicates){
+ 	boost::python::class_&lt;inSphere&gt;(&quot;inSphere&quot;,&quot;Sphere predicate.&quot;,python::init&lt;python::tuple,Real&gt;(python::args(&quot;center&quot;,&quot;radius&quot;),&quot;Ctor taking center (as a 3-tuple) and radius&quot;))
+ 		.def(&quot;__call__&quot;,&amp;inSphere::operator(),&quot;Tell whether given point lies within this sphere, still having 'pad' space to the solid boundary&quot;).def(&quot;aabb&quot;,&amp;inSphere::aabb,&quot;Return minimum and maximum values for AABB&quot;);
+@@ -119,5 +145,7 @@
+ 		.def(&quot;__call__&quot;,&amp;inCylinder::operator(),&quot;Tell whether given point lies within this cylinder, still having 'pad' space to the solid boundary&quot;).def(&quot;aabb&quot;,&amp;inCylinder::aabb,&quot;Return minimum and maximum values for AABB&quot;);
+ 	boost::python::class_&lt;inHyperboloid&gt;(&quot;inHyperboloid&quot;,&quot;Hyperboloid predicate&quot;,python::init&lt;python::tuple,python::tuple,Real,Real&gt;(python::args(&quot;centerBottom&quot;,&quot;centerTop&quot;,&quot;radius&quot;,&quot;skirt&quot;),&quot;Ctor taking centers of the lateral walls (as 3-tuples), radius at bases and skirt (middle radius).&quot;))
+ 		.def(&quot;__call__&quot;,&amp;inHyperboloid::operator(),&quot;Tell whether given point lies within this hyperboloid, still having 'pad' space to the solid boundary\n(not accurate, since distance perpendicular to the axis, not the surface, is taken in account)&quot;).def(&quot;aabb&quot;,&amp;inHyperboloid::aabb,&quot;Return minimum and maximum values for AABB&quot;);
++	boost::python::class_&lt;inEllipsoid&gt;(&quot;inEllipsoid&quot;,&quot;Ellipsoid predicate&quot;,python::init&lt;python::tuple,python::tuple&gt;(python::args(&quot;centerPoint&quot;,&quot;abc&quot;),&quot;Ctor taking center of the ellipsoid (3-tuple) and its 3 radii (3-tuple).&quot;))
++		.def(&quot;__call__&quot;,&amp;inEllipsoid::operator(),&quot;Tell whether given point lies within this inEllipsoid&quot;).def(&quot;aabb&quot;,&amp;inEllipsoid::aabb,&quot;Return minimum and maximum values for AABB&quot;);
+ }
+ 
+
+Modified: trunk/gui/py/pack.py
+===================================================================
+--- trunk/gui/py/pack.py	2009-06-17 12:49:09 UTC (rev 1802)
++++ trunk/gui/py/pack.py	2009-06-17 15:47:48 UTC (rev 1803)
+@@ -24,7 +24,7 @@
+ 	h=a*sqrt(3)/2.
+ 	mn,mx=predicate.aabb()
+ 	dim=[mx[i]-mn[i] for i in 0,1,2]
+-	ii,jj,kk=[range(0,int(2*dim[0]/a)+1),range(0,int(dim[1]/h)+1),range(0,int(dim[2]/h)+1)]
++	ii,jj,kk=[range(0,int(dim[0]/a)+1),range(0,int(dim[1]/h)+1),range(0,int(dim[2]/h)+1)]
+ 	for i,j,k in itertools.product(ii,jj,kk):
+ 		x,y,z=mn[0]+radius+i*a,mn[1]+radius+j*h,mn[2]+radius+k*h
+ 		if j%2==0: x+= a/2. if k%2==0 else -a/2.
+
+Modified: trunk/scripts/test/regular-sphere-pack.py
+===================================================================
+--- trunk/scripts/test/regular-sphere-pack.py	2009-06-17 12:49:09 UTC (rev 1802)
++++ trunk/scripts/test/regular-sphere-pack.py	2009-06-17 15:47:48 UTC (rev 1803)
+@@ -8,13 +8,14 @@
+ 	pack.regularHexa(pack.inSphere((0,0,4),2),radius=rad,gap=gap,color=(0,1,0),density=10*rho) # head
+ 	+[utils.sphere((.8,1.9,5),radius=.2,color=(.6,.6,.6),density=rho),utils.sphere((-.8,1.9,5),radius=.2,color=(.6,.6,.6),density=rho),utils.sphere((0,2.4,4),radius=.4,color=(1,0,0),density=rho)] # eyes and nose
+ 	+[utils.facet([(12,0,-6),(0,12,-6,),(-12,-12,-6)],dynamic=False)] # ground
++	+pack.regularHexa(pack.inCylinder((-1,2.2,3.3),(1,2.2,3.3),2*rad),radius=rad,gap=gap/3,color=(0.929,0.412,0.412),density=10*rho) #mouth
+ )
+ 
+ for part in [
+ 	pack.regularHexa (pack.inAlignedBox((-2,-2,-2),(2,2,2)),radius=1.5*rad,gap=2*gap,color=(1,0,1),**kw), # body,
+-	pack.regularOrtho(pack.inCylinder((-1,0,-2),(-1,0,-6),1),radius=rad,gap=gap,color=(0,1,1),**kw), # left leg
++	pack.regularOrtho(pack.inEllipsoid((-1,0,-4),(1,1,2)),radius=rad,gap=0,color=(0,1,1),**kw), # left leg
+ 	pack.regularHexa (pack.inCylinder((+1,1,-2.5),(0,3,-5),1),radius=rad,gap=gap,color=(0,1,1),**kw), # right leg
+-	pack.regularHexa (pack.inHyperboloid((+2,0,1),(+6,0,1),1,.5),radius=rad,gap=gap,color=(0,0,1),**kw), # right hand
++	pack.regularHexa (pack.inHyperboloid((+2,0,1),(+6,0,0),1,.5),radius=rad,gap=gap,color=(0,0,1),**kw), # right hand
+ 	pack.regularOrtho(pack.inCylinder((-2,0,2),(-5,0,4),1),radius=rad,gap=gap,color=(0,0,1),**kw) # left hand
+ 	]: O.bodies.appendClumped(part)
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001029.html">[deprecated list] [Yade-dev] Parallelepiped instead of cube
+</A></li>
+	<LI>Next message: <A HREF="001031.html">[deprecated list] [Yade-dev] [svn] r1804 - in trunk/lib: . py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1030">[ date ]</a>
+              <a href="thread.html#1030">[ thread ]</a>
+              <a href="subject.html#1030">[ subject ]</a>
+              <a href="author.html#1030">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

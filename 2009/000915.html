@@ -1,0 +1,334 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1752 - in trunk: gui/py scripts	scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1752%20-%20in%20trunk%3A%20gui/py%20scripts%0A%09scripts/test&In-Reply-To=%3C200904091015.n39AFrxS026211%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000916.html">
+   <LINK REL="Next"  HREF="000917.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1752 - in trunk: gui/py scripts	scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1752%20-%20in%20trunk%3A%20gui/py%20scripts%0A%09scripts/test&In-Reply-To=%3C200904091015.n39AFrxS026211%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1752 - in trunk: gui/py scripts	scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Thu Apr  9 12:15:53 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000916.html">[deprecated list] [Yade-dev] facet topology
+</A></li>
+        <LI>Next message: <A HREF="000917.html">[deprecated list] [Yade-dev] [svn] r1753 - in trunk: . extra	extra/usct gui/py	pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#915">[ date ]</a>
+              <a href="thread.html#915">[ thread ]</a>
+              <a href="subject.html#915">[ subject ]</a>
+              <a href="author.html#915">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-04-09 12:15:52 +0200 (Thu, 09 Apr 2009)
+New Revision: 1752
+
+Modified:
+   trunk/gui/py/log.cpp
+   trunk/gui/py/plot.py
+   trunk/gui/py/yade-multi
+   trunk/scripts/multi.py
+   trunk/scripts/test/facet-topo.py
+Log:
+1. Add preliminary gnuplot plots merging facility to yade-multi
+2. Fix yade.log module so that it also works without log4cxx (and gives 1 warning)
+3. Switch to new syntax in scripts/plot.py
+
+
+Modified: trunk/gui/py/log.cpp
+===================================================================
+--- trunk/gui/py/log.cpp	2009-04-08 20:31:20 UTC (rev 1751)
++++ trunk/gui/py/log.cpp	2009-04-09 10:15:52 UTC (rev 1752)
+@@ -1,38 +1,48 @@
+-
+-#ifdef LOG4CXX
+-
+ #include&lt;boost/python.hpp&gt;
++#include&lt;string&gt;
+ #include&lt;yade/lib-base/Logging.hpp&gt;
+-#include&lt;log4cxx/logmanager.h&gt;
+-#include&lt;string&gt;
+ using namespace boost;
+-
+ enum{ll_TRACE,ll_DEBUG,ll_INFO,ll_WARN,ll_ERROR,ll_FATAL};
+ 
+-void logSetLevel(std::string loggerName,int level){
+-	std::string fullName(loggerName.empty()?&quot;yade&quot;:(&quot;yade.&quot;+loggerName));
+-	if(!log4cxx::LogManager::exists(fullName)) throw std::invalid_argument(&quot;No logger named `&quot;+fullName+&quot;'&quot;);
+-	log4cxx::LevelPtr l;
+-	switch(level){
+-		#ifdef LOG4CXX_TRACE
+-			case ll_TRACE: l=log4cxx::Level::getTrace(); break;
+-			case ll_DEBUG: l=log4cxx::Level::getDebug(); break;
+-			case ll_INFO:  l=log4cxx::Level::getInfo(); break;
+-			case ll_WARN:  l=log4cxx::Level::getWarn(); break;
+-			case ll_ERROR: l=log4cxx::Level::getError(); break;
+-			case ll_FATAL: l=log4cxx::Level::getFatal(); break;
+-		#else
+-			case ll_TRACE: l=log4cxx::Level::DEBUG; break;
+-			case ll_DEBUG: l=log4cxx::Level::DEBUG; break;
+-			case ll_INFO:  l=log4cxx::Level::INFO; break;
+-			case ll_WARN:  l=log4cxx::Level::WARN; break;
+-			case ll_ERROR: l=log4cxx::Level::ERROR; break;
+-			case ll_FATAL: l=log4cxx::Level::FATAL; break;
+-		#endif
+-		default: throw std::invalid_argument(&quot;Unrecognized logging level &quot;+lexical_cast&lt;std::string&gt;(level));
++#ifdef LOG4CXX
++	#include&lt;log4cxx/logmanager.h&gt;
++
++	void logSetLevel(std::string loggerName,int level){
++		std::string fullName(loggerName.empty()?&quot;yade&quot;:(&quot;yade.&quot;+loggerName));
++		if(!log4cxx::LogManager::exists(fullName)) throw std::invalid_argument(&quot;No logger named `&quot;+fullName+&quot;'&quot;);
++		log4cxx::LevelPtr l;
++		switch(level){
++			#ifdef LOG4CXX_TRACE
++				case ll_TRACE: l=log4cxx::Level::getTrace(); break;
++				case ll_DEBUG: l=log4cxx::Level::getDebug(); break;
++				case ll_INFO:  l=log4cxx::Level::getInfo(); break;
++				case ll_WARN:  l=log4cxx::Level::getWarn(); break;
++				case ll_ERROR: l=log4cxx::Level::getError(); break;
++				case ll_FATAL: l=log4cxx::Level::getFatal(); break;
++			#else
++				case ll_TRACE: l=log4cxx::Level::DEBUG; break;
++				case ll_DEBUG: l=log4cxx::Level::DEBUG; break;
++				case ll_INFO:  l=log4cxx::Level::INFO; break;
++				case ll_WARN:  l=log4cxx::Level::WARN; break;
++				case ll_ERROR: l=log4cxx::Level::ERROR; break;
++				case ll_FATAL: l=log4cxx::Level::FATAL; break;
++			#endif
++			default: throw std::invalid_argument(&quot;Unrecognized logging level &quot;+lexical_cast&lt;std::string&gt;(level));
++		}
++		log4cxx::LogManager::getLogger(&quot;yade.&quot;+loggerName)-&gt;setLevel(l);
+ 	}
+-	log4cxx::LogManager::getLogger(&quot;yade.&quot;+loggerName)-&gt;setLevel(l);
+-}
++#else
++	bool warnedOnce=false;
++	void logSetLevel(std::string loggerName, int level){
++		// better somehow python's raise RuntimeWarning, but not sure how to do that from c++
++		// it shouldn't be trapped by boost::python's exception translator, just print warning
++		// Do like this for now.
++		if(!warnedOnce){
++			LOG_WARN(&quot;Yade was compiled without log4cxx support. Setting log levels from python will have no effect (warn once).&quot;);
++			warnedOnce=true;
++		}
++	}
++#endif
+ 
+ BOOST_PYTHON_MODULE(log){
+ 	python::def(&quot;setLevel&quot;,logSetLevel,&quot;Set minimum severity level (constants TRACE,DEBUG,INFO,WARN,ERROR,FATAL) for given logger\nleading 'yade.' will be appended automatically to the logger name; if logger is '', the root logger 'yade' will be operated on.&quot;);
+@@ -43,5 +53,3 @@
+ 	python::scope().attr(&quot;ERROR&quot;)=(int)ll_ERROR;
+ 	python::scope().attr(&quot;FATAL&quot;)=(int)ll_FATAL;
+ }
+-
+-#endif
+
+Modified: trunk/gui/py/plot.py
+===================================================================
+--- trunk/gui/py/plot.py	2009-04-08 20:31:20 UTC (rev 1751)
++++ trunk/gui/py/plot.py	2009-04-09 10:15:52 UTC (rev 1752)
+@@ -122,6 +122,8 @@
+ 		timestamp: append numeric time to the basename
+ 		varData: whether file to plot will be declared as variable or be in-place in the plot expression
+ 		comment: a user comment (may be multiline) that will be embedded in the control file
++
++		Returns name fo the gnuplot file created.
+ 	&quot;&quot;&quot;
+ 	import time,bz2
+ 	vars=data.keys(); vars.sort()
+@@ -153,6 +155,7 @@
+ 		fPlot.write(&quot;plot &quot;+&quot;,&quot;.join([&quot; %s using %d:%d title '%s(%s)' with lines&quot;%(dataFile,vars.index(p)+1,vars.index(pp[0])+1,pp[0],p) for pp in plots_p])+&quot;\n&quot;)
+ 		i+=1
+ 	fPlot.close()
++	return baseName+'.gnuplot'
+ 
+ 
+ 	
+
+Modified: trunk/gui/py/yade-multi
+===================================================================
+--- trunk/gui/py/yade-multi	2009-04-08 20:31:20 UTC (rev 1751)
++++ trunk/gui/py/yade-multi	2009-04-09 10:15:52 UTC (rev 1752)
+@@ -3,7 +3,7 @@
+ #
+ # portions &#169; 2008 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
+ 
+-import os, sys, thread, time
++import os, sys, thread, time,logging
+ 
+ class JobInfo():
+ 	def __init__(self,num,id,command,log,nSlots):
+@@ -67,8 +67,10 @@
+ parser.add_option('-l','--lines',dest='lineList',help='Lines of TABLE to use, in the format 2,3-5,8,11-13 (default: all available lines in TABLE)',metavar='LIST')
+ parser.add_option('--nice',dest='nice',type='int',help='Nice value of spawned jobs (default: 10)',default=10)
+ parser.add_option('--executable',dest='executable',help='Name of the program to run (default: %s)'%sys.argv[0][:-6],default=sys.argv[0][:-6],metavar='FILE') ## strip the '-multi' extension
++parser.add_option('--gnuplot',dest='gnuplotOut',help='Gnuplot file where gnuplot from all jobs should be put together',default=None,metavar='FILE')
++parser.add_option('--dry-run',dest='dryRun',help='Do not actually run (useful for getting gnuplot only, for instance)',default=False)
+ opts,args=parser.parse_args()
+-logFormat,lineList,maxJobs,nice,executable=opts.logFormat,opts.lineList,opts.maxJobs,opts.nice,opts.executable
++logFormat,lineList,maxJobs,nice,executable,gnuplotOut,dryRun=opts.logFormat,opts.lineList,opts.maxJobs,opts.nice,opts.executable,opts.gnuplotOut,opts.dryRun
+ 
+ if len(args)!=2:
+ 	#print &quot;Exactly two non-option arguments must be specified -- parameter table and script to be run.\n&quot;
+@@ -104,8 +106,8 @@
+ 		return ret
+ 	useLines0=numRange2List(lineList)
+ 	for l in useLines0:
+-		if l not in availableLines: print &quot;WARNING: skipping unavailable line %d that was requested from the command line.&quot;%l
+-		elif l==1: print &quot;WARNING: skipping line 1 that should contain variable labels&quot;
++		if l not in availableLines: logging.warn('skipping unavailable line %d that was requested from the command line.'%l)
++		elif l==1: logging.warn(&quot;WARNING: skipping line 1 that should contain variable labels&quot;)
+ 		else: useLines+=[l]
+ else: useLines=availableLines
+ try:
+@@ -131,7 +133,7 @@
+ 		if head=='!EXEC': executable=values[l][col]
+ 		if head=='!OMP_NUM_THREADS': nSlots=int(values[l][col])
+ 		if head[0]=='!': envVars+=['%s=%s'%(head[1:],values[l][col])]
+-	if nSlots&gt;maxJobs: print 'WARNING: job #%d wants %d slots but only %d are available'%(i,nSlots,maxJobs)
++	if nSlots&gt;maxJobs: logging.warning('WARNING: job #%d wants %d slots but only %d are available'%(i,nSlots,maxJobs))
+ 	jobs.append(JobInfo(i,idStrings[l] if idStrings else '#'+str(i),'PARAM_TABLE=%s:%d %s nice -n %d %s -N PythonUI -- -n -x %s &gt; %s 2&gt;&amp;1'%(table,l,' '.join(envVars),nice,executable,simul,logFile),logFile,nSlots))
+ 
+ print &quot;Job summary:&quot;
+@@ -139,5 +141,36 @@
+ 	print '   #%d (%s%s):'%(job.num,job.id,'' if job.nSlots==1 else '/%d'%job.nSlots),job.command
+ 
+ # OK, go now
+-runJobs(jobs,maxJobs)
+-print 'All jobs finished, bye.'
++if not dryRun: runJobs(jobs,maxJobs)
++
++print 'All jobs finished,',
++if not gnuplotOut:
++	print 'bye.'
++else:
++	print 'assembling gnuplot files&#8230;'
++	for job in jobs:
++		for l in file(job.log):
++			if l.startswith('gnuplot '):
++				job.plot=l.split()[1]
++				break
++	preamble,plots='',[]
++	for job in jobs:
++		if not job.plot:
++			# warn here
++			continue
++		for l in file(job.plot):
++			if l.startswith('plot'):
++				# attempt to parse the plot line
++				ll=l.split(' ',1)[1][:-1] # rest of the line, without newline
++				# replace title 'something' with title 'description: something'
++				ll,nn=re.subn(r'title\s+[\'&quot;]([^\'&quot;]*)[\'&quot;]',r'title &quot;'+job.id+r': \1&quot;',ll)
++				if nn==0:
++					logging.error(&quot;Plot line in &quot;+job.plot+&quot; not parsed (skipping): &quot;+ll)
++				plots.append(ll)
++				break
++			if not plots: # first plot, copy all preceding lines
++				preamble+=l
++	gp=file(gnuplotOut,'w')
++	gp.write(preamble)
++	gp.write('plot '+','.join(plots))
++	print &quot;Finished writing &quot;+gnuplotOut+&quot;, bye.&quot;
+
+Modified: trunk/scripts/multi.py
+===================================================================
+--- trunk/scripts/multi.py	2009-04-08 20:31:20 UTC (rev 1751)
++++ trunk/scripts/multi.py	2009-04-09 10:15:52 UTC (rev 1752)
+@@ -8,24 +8,23 @@
+ 
+ o=Omega()
+ o.initializers=[
+-	MetaEngine('BoundingVolumeMetaEngine',[EngineUnit('InteractingSphere2AABB'),EngineUnit('InteractingFacet2AABB'),EngineUnit('MetaInteractingGeometry2AABB')])
++		BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingFacet2AABB(),MetaInteractingGeometry2AABB()])
+ 	]
+ o.engines=[
+-	StandAloneEngine('PhysicalActionContainerReseter'),
+-	MetaEngine('BoundingVolumeMetaEngine',[
+-		EngineUnit('InteractingSphere2AABB'),
+-		EngineUnit('InteractingBox2AABB'),
+-		EngineUnit('MetaInteractingGeometry2AABB')
++	PhysicalActionContainerReseter(),
++	BoundingVolumeMetaEngine([
++		InteractingSphere2AABB(),
++		InteractingBox2AABB(),
++		MetaInteractingGeometry2AABB()
+ 	]),
+-	StandAloneEngine('PersistentSAPCollider'),
+-	MetaEngine('InteractionGeometryMetaEngine',[
+-		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
+-		EngineUnit('InteractingBox2InteractingSphere4SpheresContactGeometry')
+-	]),
+-	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleElasticRelationships')]),
+-	StandAloneEngine('ElasticContactLaw'),
+-	DeusExMachina('GravityEngine',{'gravity':[0,0,gravity]}), ## here we use the 'gravity' parameter
+-	DeusExMachina('NewtonsDampedLaw',{'damping':0.4})
++	PersistentSAPCollider(),
++	InteractionDispatchers(
++		[InteractingSphere2InteractingSphere4SpheresContactGeometry(),InteractingBox2InteractingSphere4SpheresContactGeometry()],
++		[SimpleElasticRelationships(),],
++		[ef2_Spheres_Elastic_ElasticLaw(),]
++	)
++	GravityEngine(gravity=(0,0,gravity)), ## here we use the 'gravity' parameter
++	NewtonsDampedLaw(damping=0.4)
+ ]
+ o.bodies.append(utils.box([0,50,0],extents=[1,50,1],dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=density)) ## here we use the density parameter
+ o.bodies.append(utils.sphere([0,0,10],1,color=[0,1,0],young=30e9,poisson=.3,density=density)) ## here again
+
+Modified: trunk/scripts/test/facet-topo.py
+===================================================================
+--- trunk/scripts/test/facet-topo.py	2009-04-08 20:31:20 UTC (rev 1751)
++++ trunk/scripts/test/facet-topo.py	2009-04-09 10:15:52 UTC (rev 1752)
+@@ -20,5 +20,5 @@
+ 		utils.facet([(1,1,0),(1,0,0),(0,1,0)]),
+ 	])
+ 	O.step()
+-	#assert(O.bodies[0].phys['edgeAdjIds'][1]==1 and O.bodies[1].phys['edgeAdjIds'][0]==1)
++	assert(O.bodies[0].phys['edgeAdjIds'][1]==1 and O.bodies[1].phys['edgeAdjIds'][0]==1)
+ 	assert(topo['commonEdgesFound']==1)
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000916.html">[deprecated list] [Yade-dev] facet topology
+</A></li>
+	<LI>Next message: <A HREF="000917.html">[deprecated list] [Yade-dev] [svn] r1753 - in trunk: . extra	extra/usct gui/py	pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#915">[ date ]</a>
+              <a href="thread.html#915">[ thread ]</a>
+              <a href="subject.html#915">[ subject ]</a>
+              <a href="author.html#915">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

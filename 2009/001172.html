@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] strided collider speedups
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20strided%20collider%20speedups&In-Reply-To=%3C4A57725B.7070600%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001171.html">
+   <LINK REL="Next"  HREF="001173.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] strided collider speedups</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20strided%20collider%20speedups&In-Reply-To=%3C4A57725B.7070600%40hmg.inpg.fr%3E"
+       TITLE="[deprecated list] [Yade-dev] strided collider speedups">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Fri Jul 10 18:54:51 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001171.html">[deprecated list] [Yade-dev] strided collider speedups
+</A></li>
+        <LI>Next message: <A HREF="001173.html">[deprecated list] [Yade-dev] strided collider speedups
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1172">[ date ]</a>
+              <a href="thread.html#1172">[ thread ]</a>
+              <a href="subject.html#1172">[ subject ]</a>
+              <a href="author.html#1172">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>V&#225;clav &#352;milauer a &#233;crit :
+&gt;&gt;<i> I think this sounds just awesome.
+</I>&gt;&gt;<i> This really changes the priorities in terms of &quot;where to optimize&quot; and 
+</I>&gt;&gt;<i> paralellisation, doesn't it?
+</I>&gt;&gt;<i>     
+</I>&gt;<i>
+</I>&gt;<i> In what way?
+</I>If the collider takes 6% with 50k spheres, then optimisation should 
+focus on interactions handling (but perhaps this really optimised already)
+
+&gt;<i>  I actually don't think so. At this point, this
+</I>&gt;<i> &quot;optimization&quot; is not even reliable (bodies may get out of their BB,
+</I>&gt;<i> which is not acceptable).
+</I>Well, fundamentally, there is no difference, bodies get out of BBs at 
+each time step already. With detectionFactor = 1, you can miss contacts 
+created DURING the timestep, if spheres are x-aligned.
+Just imagine that activating the collider each 10 steps is like setting 
+dt 10 times larger...
+
+&gt;<i>  
+</I>&gt;<i> I am looking at
+</I>&gt;<i>  <A HREF="http://www3.interscience.wiley.com/journal/112140923/abstract">http://www3.interscience.wiley.com/journal/112140923/abstract</A> now, but
+</I>&gt;<i> I don't think I will have time for proper implementation.
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>Just read the abstract and forget it :
+&quot;The algorithm is applicable to systems comprising bodies of a similar 
+sizes.&quot;
+
+Bruno
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Ma&#238;tre de Conferences
+
+Grenoble INP
+Laboratoire 3SR - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001171.html">[deprecated list] [Yade-dev] strided collider speedups
+</A></li>
+	<LI>Next message: <A HREF="001173.html">[deprecated list] [Yade-dev] strided collider speedups
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1172">[ date ]</a>
+              <a href="thread.html#1172">[ thread ]</a>
+              <a href="subject.html#1172">[ subject ]</a>
+              <a href="author.html#1172">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

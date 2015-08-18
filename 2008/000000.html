@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] metaengines etc.
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20metaengines%20etc.&In-Reply-To=%3C47A72C70.5060900%40arcig.cz%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   
+   <LINK REL="Next"  HREF="000001.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] metaengines etc.</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20metaengines%20etc.&In-Reply-To=%3C47A72C70.5060900%40arcig.cz%3E"
+       TITLE="[yade-dev] metaengines etc.">eudoxos at arcig.cz
+       </A><BR>
+    <I>Mon Feb  4 16:17:04 CET 2008</I>
+    <P><UL>
+        
+        <LI>Next message: <A HREF="000001.html">[yade-dev] metaengines etc.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#0">[ date ]</a>
+              <a href="thread.html#0">[ thread ]</a>
+              <a href="subject.html#0">[ subject ]</a>
+              <a href="author.html#0">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Hi everybody (but mostly Janek),
+
+I have a few questions / suggestions.
+
+1. What is the purpose of MetaEngine, if only MetaDispatchingEngine is used?
+
+2. Shouldn't I add a macro to EngineUnit's so that what types they take
+as arguments is inside the class? Then instead of saying
+dispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;InteractingSphere&quot;,&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;),
+one would only have to say
+dispatcher-&gt;add(instanceOfInteractingBox2InteractingSphere4SpheresContactGeometry)
+and the instance would say to the dispatcher what types it takes - like
+we have RENDERS in gl drawers, there would be something like
+DISPATCHES(InteractingBox,InteractingSphere) inside the
+InteractingBox2InteractingSphere4SpheresContactGeometry class. Sounds
+reasonable?
+
+3. Why do we distinguish DeusExMachina and StandAloneEngine, if they do
+the same thing? I know it is supposed to apply different effects
+(kinematic vs. dynamic), but from programming point of view, is there a
+difference?
+
+4. What is the status of boost::serialization in yade, what is the
+status of removing singletons, moving to the boost factory (?) etc? I am
+asking because I want to know how much force should I put into python
+wrapper now, since it relies quite heavily on the old serialization model.
+
+Regards,
+
+Vaclav
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	
+	<LI>Next message: <A HREF="000001.html">[yade-dev] metaengines etc.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#0">[ date ]</a>
+              <a href="thread.html#0">[ thread ]</a>
+              <a href="subject.html#0">[ subject ]</a>
+              <a href="author.html#0">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

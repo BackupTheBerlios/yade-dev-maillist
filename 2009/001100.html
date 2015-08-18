@@ -1,0 +1,265 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1834 - in trunk/pkg/dem: .	Engine/DeusExMachina
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1834%20-%20in%20trunk/pkg/dem%3A%20.%0A%09Engine/DeusExMachina&In-Reply-To=%3C200907021526.n62FQ39s015616%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001097.html">
+   <LINK REL="Next"  HREF="001116.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1834 - in trunk/pkg/dem: .	Engine/DeusExMachina</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1834%20-%20in%20trunk/pkg/dem%3A%20.%0A%09Engine/DeusExMachina&In-Reply-To=%3C200907021526.n62FQ39s015616%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1834 - in trunk/pkg/dem: .	Engine/DeusExMachina">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Thu Jul  2 17:26:03 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001097.html">[deprecated list] [Yade-dev] [svn] r1833 -	trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="001116.html">[deprecated list] [Yade-dev] [svn] r1834 - in trunk/pkg/dem:	.	Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1100">[ date ]</a>
+              <a href="thread.html#1100">[ thread ]</a>
+              <a href="subject.html#1100">[ subject ]</a>
+              <a href="author.html#1100">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2009-07-02 17:26:02 +0200 (Thu, 02 Jul 2009)
+New Revision: 1834
+
+Added:
+   trunk/pkg/dem/Engine/DeusExMachina/FlowEngine.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/FlowEngine.hpp
+Modified:
+   trunk/pkg/dem/SConscript
+Log:
+Base class for the solid-fluid coupling (E. Catalano PhD).
+ 
+
+
+Added: trunk/pkg/dem/Engine/DeusExMachina/FlowEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/FlowEngine.cpp	2009-07-02 13:33:47 UTC (rev 1833)
++++ trunk/pkg/dem/Engine/DeusExMachina/FlowEngine.cpp	2009-07-02 15:26:02 UTC (rev 1834)
+@@ -0,0 +1,89 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Bruno Chareyre                                  *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at hmg.inpg.fr</A>                                            *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;FlowEngine.hpp&quot;
++#include &lt;yade/pkg-common/ParticleParameters.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/core/MetaBody.hpp&gt;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++#include&lt;yade/lib-base/yadeWm3Extra.hpp&gt;
++
++
++FlowEngine::FlowEngine() : gravity(Vector3r::ZERO), isActivated(false)
++{
++dummyParameter = false;
++}
++
++
++FlowEngine::~FlowEngine()
++{
++}
++
++
++void FlowEngine::registerAttributes()
++{
++// 	REGISTER_ATTRIBUTE(gravity);
++	REGISTER_ATTRIBUTE(isActivated);
++	REGISTER_ATTRIBUTE(dummyParameter);
++}
++
++
++void FlowEngine::applyCondition(MetaBody* ncb)
++{
++
++    if (isActivated)
++    {
++        shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++
++
++
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *ncb-&gt;bodies){
++		// clump members are non-dynamic; they skip the rest of loop once their forces are properly taken into account, however
++		//if (!b-&gt;isDynamic &amp;&amp; !b-&gt;isClumpMember()) continue;
++		
++		RigidBodyParameters* rb = YADE_CAST&lt;RigidBodyParameters*&gt;(b-&gt;physicalParameters.get());
++		///Access data (examples)
++		const body_id_t&amp; id=b-&gt;getId();
++		Real vx = rb-&gt;velocity[0];
++		Real rx = rb-&gt;angularVelocity[0];
++		Real x = rb-&gt;se3.position[0];
++	}
++
++	///Compute flow and and forces here
++
++	
++	
++	
++	
++	
++		
++	
++	
++	///End Compute flow and and forces
++	
++	
++	
++	
++	int Nspheres=100;
++	for (long i=1; i&lt;Nspheres; ++i)
++	{
++
++		//file &gt;&gt; id &gt;&gt; fx &gt;&gt; fy &gt;&gt; fz &gt;&gt; mx &gt;&gt; my &gt;&gt; mz;
++
++		//Vector3r f (fx,fy,fz);
++		//Vector3r t (mx,my,mz);
++                
++		//b-&gt;bex.addForce(id,f);
++		//ncb-&gt;bex.addTorque(id,t);
++
++	}
++	
++    }
++}
++
++YADE_PLUGIN();
+
+Added: trunk/pkg/dem/Engine/DeusExMachina/FlowEngine.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/FlowEngine.hpp	2009-07-02 13:33:47 UTC (rev 1833)
++++ trunk/pkg/dem/Engine/DeusExMachina/FlowEngine.hpp	2009-07-02 15:26:02 UTC (rev 1834)
+@@ -0,0 +1,32 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Bruno Chareyre                                  *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at hmg.inpg.fr</A>                                            *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#pragma once
++
++#include&lt;yade/core/DeusExMachina.hpp&gt;
++
++class FlowEngine : public DeusExMachina 
++{
++	public :
++		Vector3r gravity;
++		bool isActivated;
++		bool dummyParameter;
++		FlowEngine();
++		virtual ~FlowEngine();
++	
++		virtual void applyCondition(MetaBody*);
++	
++	protected :
++		virtual void registerAttributes();
++	REGISTER_CLASS_NAME(FlowEngine);
++	REGISTER_BASE_CLASS_NAME(DeusExMachina);
++};
++
++REGISTER_SERIALIZABLE(FlowEngine);
++
++
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2009-07-02 13:33:47 UTC (rev 1833)
++++ trunk/pkg/dem/SConscript	2009-07-02 15:26:02 UTC (rev 1834)
+@@ -846,18 +846,18 @@
+ 		['DataClass/InteractionPhysics/CapillaryParameters.cpp'],
+ 		LIBS=env['LIBS']+['ElasticContactInteraction']),
+ 
+-env.SharedLibrary('InteractingSphere2InteractingSphere4SpheresContactGeometryWater',
+-		['Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometryWater.cpp'],
+-		LIBS=env['LIBS']+['SpheresContactGeometry',
+-			'InteractionGeometryMetaEngine',
+-			'InteractingSphere' ]),
++#env.SharedLibrary('InteractingSphere2InteractingSphere4SpheresContactGeometryWater',
++		#['Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometryWater.cpp'],
++		#LIBS=env['LIBS']+['SpheresContactGeometry',
++			#'InteractionGeometryMetaEngine',
++			#'InteractingSphere' ]),
+ 
+-env.SharedLibrary('InteractingBox2InteractingSphere4SpheresContactGeometryWater',
+-		['Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometryWater.cpp'],
+-		LIBS=env['LIBS']+['SpheresContactGeometry',
+-			'InteractionGeometryMetaEngine',
+-			'InteractingSphere',
+-			'InteractingBox' ]),
++#env.SharedLibrary('InteractingBox2InteractingSphere4SpheresContactGeometryWater',
++		#['Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometryWater.cpp'],
++		#LIBS=env['LIBS']+['SpheresContactGeometry',
++			#'InteractionGeometryMetaEngine',
++			#'InteractingSphere',
++			#'InteractingBox' ]),
+ 
+ #env.SharedLibrary('MacroMicroElasticRelationshipsWater',
+ 		#['Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp'],
+@@ -883,6 +883,15 @@
+ 			'$PREFIX/include',
+ 			'DataClass/PhysicalParameters']),
+ 			
++#env.SharedLibrary('FlowEngine',
++		#['Engine/DeusExMachina/FlowEngine.cpp'],
++		#LIBS=env['LIBS']+['yade-base',   'ParticleParameters', 'CohesiveFrictionalBodyParameters', 'TriaxialCompressionEngine', 'GravityEngines'],
++		#CPPPATH=env['CPPPATH']+['Engine/DeusExMachina',
++			#'DataClass/PhysicalAction',
++			#'RigidBodyParameters',
++			#'$PREFIX/include',
++			#'DataClass/PhysicalParameters']),
++			
+ env.SharedLibrary('SampleCapillaryPressureEngine',
+ 		['Engine/DeusExMachina/SampleCapillaryPressureEngine.cpp'],
+ 		LIBS=env['LIBS']+['yade-factory',
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001097.html">[deprecated list] [Yade-dev] [svn] r1833 -	trunk/pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="001116.html">[deprecated list] [Yade-dev] [svn] r1834 - in trunk/pkg/dem:	.	Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1100">[ date ]</a>
+              <a href="thread.html#1100">[ thread ]</a>
+              <a href="subject.html#1100">[ subject ]</a>
+              <a href="author.html#1100">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

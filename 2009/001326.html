@@ -1,0 +1,277 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1914 - in trunk:	examples/concrete	examples/concrete/uniaxial py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1914%20-%20in%20trunk%3A%0A%09examples/concrete%09examples/concrete/uniaxial%20py&In-Reply-To=%3C200908031956.n73Jucgn024387%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001325.html">
+   <LINK REL="Next"  HREF="001327.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1914 - in trunk:	examples/concrete	examples/concrete/uniaxial py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1914%20-%20in%20trunk%3A%0A%09examples/concrete%09examples/concrete/uniaxial%20py&In-Reply-To=%3C200908031956.n73Jucgn024387%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1914 - in trunk:	examples/concrete	examples/concrete/uniaxial py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Aug  3 21:56:38 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001325.html">[deprecated list] [Yade-dev] [svn] r1913 - in trunk: . gui/py py	scripts scripts/test
+</A></li>
+        <LI>Next message: <A HREF="001327.html">[deprecated list] [Yade-dev] [svn] r1915 - in trunk: gui/py	py/yadeWrapper scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1326">[ date ]</a>
+              <a href="thread.html#1326">[ thread ]</a>
+              <a href="subject.html#1326">[ subject ]</a>
+              <a href="author.html#1326">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-08-03 21:56:37 +0200 (Mon, 03 Aug 2009)
+New Revision: 1914
+
+Added:
+   trunk/examples/concrete/uniaxial/
+   trunk/examples/concrete/uniaxial/rb.py
+Modified:
+   trunk/py/utils.py
+Log:
+1. Add an example of uniaxial tension-compression test for concrete (ready long time ago...)
+
+
+
+Added: trunk/examples/concrete/uniaxial/rb.py
+===================================================================
+--- trunk/examples/concrete/uniaxial/rb.py	2009-08-03 18:53:26 UTC (rev 1913)
++++ trunk/examples/concrete/uniaxial/rb.py	2009-08-03 19:56:37 UTC (rev 1914)
+@@ -0,0 +1,160 @@
++# -*- encoding=utf-8 -*-
++from __future__ import division
++
++from yade import utils,plot,pack
++import time, sys, os, copy
++
++&quot;&quot;&quot;
++A fairly complex script performing uniaxial tension-compression test on hyperboloid-shaped specimen.
++
++Most parameters of the model (and of the setup) can be read from table using yade-multi.
++
++After the simulation setup, tension loading is run and stresses are periodically saved for plotting
++as well as checked for getting below the maximum value so far. This indicates failure (see stopIfDamaged
++function). After failure in tension, the original setup is loaded anew and the sense of loading reversed.
++After failure in compression, strain-stress curves are saved via plot.saveGnuplot and we exit,
++giving some useful information like peak stresses in tension/compression.
++
++Running this script for the first time can take long time, as the specimen is prepared using triaxial
++compression. Next time, however, an attempt is made to load previously-generated packing 
++(from /tmp/triaxPackCache.sqlite) and this expensive procedure is avoided.
++
++The specimen length can be specified, its diameter is half of the length and skirt of the hyperboloid is 
++4/5 of the width.
++
++The particle size is constant and can be specified using the sphereRadius parameter.
++
++The 3d display has displacement scaling applied, so that the fracture looks more spectacular. The scale
++is 1000 for tension and 100 for compression.
++
++&quot;&quot;&quot;
++
++
++
++# default parameters or from table
++utils.readParamsFromTable(noTableOk=True, # unknownOk=True,
++	young=24e9,
++	poisson=.2,
++	G_over_E=.20,
++
++	sigmaT=3.5e6,
++	frictionAngle=atan(0.8),
++	epsCrackOnset=1e-4,
++	relDuctility=30,
++
++	intRadius=1.5,
++	dtSafety=.8,
++	damping=0.4,
++	strainRateTension=.1,
++	strainRateCompression=1,
++	setSpeeds=True,
++	# the packing has about 50% porosity, 2&#215;2400==4800
++	density=4800,
++	# 1=tension, 2=compression (ANDed; 3=both)
++	doModes=3,
++
++	specimenLength=.2,
++	sphereRadius=3.5e-3,
++)
++
++if 'description' in O.tags.keys(): O.tags['id']=O.tags['id']+O.tags['description']
++
++
++# make geom; the dimensions are hard-coded here; could be in param table if desired
++# z-oriented hyperboloid, length 20cm, diameter 10cm, skirt 8cm
++# using spheres 7mm of diameter
++spheres=pack.triaxialPack(pack.inHyperboloid((0,0,-.5*specimenLength),(0,0,.5*specimenLength),.25*specimenLength,.2*specimenLength),radius=sphereRadius,memoizeDb='/tmp/triaxPackCache.sqlite',young=young,poisson=poisson,frictionAngle=frictionAngle,physParamsClass='CpmMat',density=density)
++O.bodies.append(spheres)
++bb=utils.uniaxialTestFeatures()
++negIds,posIds,axis,crossSectionArea=bb['negIds'],bb['posIds'],bb['axis'],bb['area']
++O.dt=dtSafety*utils.PWaveTimeStep()
++print 'Timestep',O.dt
++
++mm,mx=[pt[axis] for pt in utils.aabbExtrema()]
++coord_25,coord_50,coord_75=mm+.25*(mx-mm),mm+.5*(mx-mm),mm+.75*(mx-mm)
++area_25,area_50,area_75=utils.approxSectionArea(coord_25,axis),utils.approxSectionArea(coord_50,axis),utils.approxSectionArea(coord_75,axis)
++
++O.engines=[
++	BexResetter(),
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(aabbEnlargeFactor=intRadius),MetaInteractingGeometry2AABB()]),
++	InsertionSortCollider(),
++	InteractionDispatchers(
++		[ef2_Sphere_Sphere_Dem3DofGeom(distanceFactor=intRadius,label='ss2d3dg')],
++		[Ip2_CpmMat_CpmMat_CpmPhys(sigmaT=sigmaT,relDuctility=relDuctility,epsCrackOnset=epsCrackOnset,G_over_E=G_over_E)],
++		[Law2_Dem3DofGeom_CpmPhys_Cpm()],
++	),
++	NewtonsDampedLaw(damping=damping,label='damper'),
++	CpmPhysDamageColorizer(realPeriod=1),
++	UniaxialStrainer(strainRate=strainRateTension,axis=axis,asymmetry=0,posIds=posIds,negIds=negIds,crossSectionArea=crossSectionArea,blockDisplacements=False,blockRotations=False,setSpeeds=setSpeeds,label='strainer'),
++	PeriodicPythonRunner(virtPeriod=3e-5/strainRateTension,realLim=5,command='addPlotData()',label='plotDataCollector'),
++	PeriodicPythonRunner(realPeriod=4,command='stopIfDamaged()',label='damageChecker'),
++]
++O.miscParams=[GLDrawCpmPhys(dmgLabel=False,colorStrain=False,epsNLabel=False,epsT=False,epsTAxes=False,normal=False,contactLine=True)]
++
++plot.plots={'eps':('sigma','sigma.25','sigma.50','sigma.75')}
++plot.maxDataLen=4000
++
++O.saveTmp('initial');
++
++global mode
++mode='tension' if doModes &amp; 1 else 'compression'
++
++def initTest():
++	global mode
++	print &quot;init&quot;
++	if O.iter&gt;0:
++		O.wait();
++		O.loadTmp('initial')
++		print &quot;Reversing plot data&quot;; plot.reverseData()
++	strainer['strainRate']=abs(strainRateTension) if mode=='tension' else -abs(strainRateCompression)
++	try:
++		from yade import qt
++		renderer=qt.Renderer()
++		renderer['scaleDisplacements']=True
++		renderer['displacementScale']=(1000,1000,1000) if mode=='tension' else (100,100,100)
++	except ImportError: pass
++	print &quot;init done, will now run.&quot;
++	O.run()
++
++def stopIfDamaged():
++	global mode
++	if O.iter&lt;2 or not plot.data.has_key('sigma'): return # do nothing at the very beginning
++	sigma,eps=plot.data['sigma'],plot.data['eps']
++	extremum=max(sigma) if (strainer['strainRate']&gt;0) else min(sigma)
++	minMaxRatio=0.5 if mode=='tension' else 0.5
++	if extremum==0: return
++	print O.tags['id'],mode,strainer['strain'],sigma[-1]
++	import sys;	sys.stdout.flush()
++	if abs(sigma[-1]/extremum)&lt;minMaxRatio:
++		if mode=='tension' and doModes &amp; 2: # only if compression is enabled
++			mode='compression'
++			print &quot;Damaged, switching to compression... &quot;; O.pause()
++			# important! initTest must be launched in a separate thread;
++			# otherwise O.load would wait for the iteration to finish,
++			# but it would wait for initTest to return and deadlock would result
++			import thread; thread.start_new_thread(initTest,())
++			return
++		else:
++			print &quot;Damaged, stopping.&quot;
++			ft,fc=max(sigma),min(sigma)
++			print 'Strengths fc=%g, ft=%g, |fc/ft|=%g'%(fc,ft,abs(fc/ft))
++			title=O.tags['description'] if 'description' in O.tags.keys() else O.tags['params']
++			print'gnuplot',plot.saveGnuplot(O.tags['id'],title=title)
++			print 'Bye.'
++			# O.pause()
++			sys.exit(0)
++		
++def addPlotData():
++	yade.plot.addData({'t':O.time,'i':O.iter,'eps':strainer['strain'],'sigma':strainer['avgStress'],
++		'sigma.25':utils.forcesOnCoordPlane(coord_25,axis)[axis]/area_25,
++		'sigma.50':utils.forcesOnCoordPlane(coord_50,axis)[axis]/area_50,
++		'sigma.75':utils.forcesOnCoordPlane(coord_75,axis)[axis]/area_75,
++		})
++
++
++
++initTest()
++#while True: time.sleep(1)
++
++
++
+
+Modified: trunk/py/utils.py
+===================================================================
+--- trunk/py/utils.py	2009-08-03 18:53:26 UTC (rev 1913)
++++ trunk/py/utils.py	2009-08-03 19:56:37 UTC (rev 1914)
+@@ -465,8 +465,8 @@
+ 	l=procStatus('VmData'); ll=l.split(); assert(ll[2]=='kB')
+ 	return int(ll[1])
+ 
+-def spheresFromFileUniaxial(filename,areaSections=10,**kw):
+-	&quot;&quot;&quot;Load spheres from file, but do some additional work useful for uniaxial test:
++def uniaxialTestFeatures(filename=None,areaSections=10,**kw):
++	&quot;&quot;&quot;Get some data about the current packing useful for uniaxial test:
+ 	
+ 	1. Find the dimensions that is the longest (uniaxial loading axis)
+ 	2. Find the minimum cross-section area of the speciment by examining several (areaSections)
+@@ -475,9 +475,13 @@
+ 	3. Find the bodies that are on the negative/positive boundary, to which the straining condition
+ 		should be applied.
+ 
++	@param filename if given, spheres will be loaded from this file (ASCII format); if not, current simulation will be used.
++	@param areaSection number of section that will be used to estimate cross-section
++
+ 	Returns dictionary with keys 'negIds', 'posIds', 'axis', 'area'.
+ 	&quot;&quot;&quot;
+-	ids=spheresFromFile(filename,**kw)
++	if filename: ids=spheresFromFile(filename,**kw)
++	else: ids=[b.id for b in O.bodies]
+ 	mm,mx=aabbExtrema()
+ 	dim=aabbDim(); axis=dim.index(max(dim))
+ 	import numpy
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001325.html">[deprecated list] [Yade-dev] [svn] r1913 - in trunk: . gui/py py	scripts scripts/test
+</A></li>
+	<LI>Next message: <A HREF="001327.html">[deprecated list] [Yade-dev] [svn] r1915 - in trunk: gui/py	py/yadeWrapper scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1326">[ date ]</a>
+              <a href="thread.html#1326">[ thread ]</a>
+              <a href="subject.html#1326">[ subject ]</a>
+              <a href="author.html#1326">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

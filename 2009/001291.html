@@ -1,0 +1,134 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1899 - in	trunk/pkg:	common/Engine/StandAloneEngine dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1899%20-%20in%0A%09trunk/pkg%3A%09common/Engine/StandAloneEngine%20dem/PreProcessor&In-Reply-To=%3C200907290804.n6T84akJ002071%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001293.html">
+   <LINK REL="Next"  HREF="001294.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1899 - in	trunk/pkg:	common/Engine/StandAloneEngine dem/PreProcessor</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1899%20-%20in%0A%09trunk/pkg%3A%09common/Engine/StandAloneEngine%20dem/PreProcessor&In-Reply-To=%3C200907290804.n6T84akJ002071%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1899 - in	trunk/pkg:	common/Engine/StandAloneEngine dem/PreProcessor">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul 29 10:04:36 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001293.html">[deprecated list] [Yade-dev] old/new python syntax
+</A></li>
+        <LI>Next message: <A HREF="001294.html">[deprecated list] [Yade-dev] [svn] r1900 - in trunk: core gui/qt3	scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1291">[ date ]</a>
+              <a href="thread.html#1291">[ thread ]</a>
+              <a href="subject.html#1291">[ subject ]</a>
+              <a href="author.html#1291">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-29 10:04:35 +0200 (Wed, 29 Jul 2009)
+New Revision: 1899
+
+Modified:
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+Log:
+1. Hopefully fix <A HREF="https://bugs.launchpad.net/yade/+bug/402098">https://bugs.launchpad.net/yade/+bug/402098</A>
+2. Fast in TriaxialTest uses nBins==5 and binCoeff==2 for VelocityBins
+
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-07-29 08:00:56 UTC (rev 1898)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-07-29 08:04:35 UTC (rev 1899)
+@@ -216,20 +216,35 @@
+ 				// skip bodies without bbox since we would possibly never meet the upper bound again (std::sort may not be stable) and we don't want to collide those anyway
+ 				if(!(V[i].flags.isMin &amp;&amp; V[i].flags.hasBB)) continue;
+ 				const body_id_t&amp; iid=V[i].id;
++				/* If std::sort swaps equal min/max bounds, there are 2 cases distinct cases to handle:
++
++					1. i is inside V, j gets to the end of V (since it loops till the maxbound is found)
++						here, we swap min/max to get the in the right order and continue with the loop over i;
++						next time this j-bound is handled (with a different i, for sure), it will be OK.
++					2. i is at the end of V, therefore (j=i+1)==2*nBodies, therefore V[j] doesn't exist (past the end)
++						here, we can just check for that and break the loop if it happens.
++						It is the last i that we process, nothing will come after.
++
++					NOTE: XX,YY,ZZ containers don't guarantee that i_min&lt;i_max. This is needed only here and is
++						handled only for the sortAxis. Functionality-wise, this has no impact on further collision
++						detection, though.
++				*/
+ 				// TRVAR3(i,iid,V[i].coord);
+ 				// go up until we meet the upper bound
+-				for(size_t j=i+1; V[j].id!=iid; j++){
++				for(size_t j=i+1; V[j].id!=iid &amp;&amp; /* handle case 2. of swapped min/max */ j&lt;2*nBodies; j++){
+ 					const body_id_t&amp; jid=V[j].id;
+ 					/// Not sure why this doesn't work. If this condition is commented out, we have exact same interactions as from SpatialQuickSort. Otherwise some interactions are missing!
+ 					// skip bodies with smaller (arbitrary, could be greater as well) id, since they will detect us when their turn comes
+ 					//if(jid&lt;iid) { /* LOG_TRACE(&quot;Skip #&quot;&lt;&lt;V[j].id&lt;&lt;(V[j].flags.isMin?&quot;(min)&quot;:&quot;(max)&quot;)&lt;&lt;&quot; with &quot;&lt;&lt;iid&lt;&lt;&quot; (smaller id)&quot;); */ continue; }
++					// take 2 of the same condition (only handle collision [min_i..max_i]+min_j, not [min_i..max_i]+min_i (symmetric)
++					if(!V[j].flags.isMin) continue;
+ 					/* abuse the same function here; since it does spatial overlap check first, it is OK to use it */
+ 					handleBoundInversion(iid,jid,interactions,rb);
+ 					// now we are at the last element, but we still have not met the upper bound of V[i].id
+ 					// that means that the upper bound is before the upper one; that can only happen if they
+ 					// are equal and the unstable std::sort has swapped them. In that case, we need to go reverse
+ 					// from V[i] until we meet the upper bound and swap the isMin flag
+-					if(j==2*nBodies-1){
++					if(j==2*nBodies-1){ /* handle case 1. of swapped min/max */
+ 						size_t k=i-1;
+ 						while(V[k].id!=iid &amp;&amp; k&gt;0) k--;
+ 						assert(V[k].id==iid); // if this fails, we didn't meet the other bound in the downwards sense either; that should never happen
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-07-29 08:00:56 UTC (rev 1898)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-07-29 08:04:35 UTC (rev 1899)
+@@ -573,6 +573,7 @@
+ 	rootBody-&gt;engines.push_back(collider);
+ 	if(fast){
+ 		collider-&gt;sweepLength=.05*radiusMean;
++		collider-&gt;nBins=5; collider-&gt;binCoeff=2; /* gives a 2^5=32&#215; difference between the lower and higher bin sweep lengths */
+ 		shared_ptr&lt;InteractionDispatchers&gt; ids(new InteractionDispatchers);
+ 			ids-&gt;geomDispatcher=interactionGeometryDispatcher;
+ 			ids-&gt;physDispatcher=interactionPhysicsDispatcher;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001293.html">[deprecated list] [Yade-dev] old/new python syntax
+</A></li>
+	<LI>Next message: <A HREF="001294.html">[deprecated list] [Yade-dev] [svn] r1900 - in trunk: core gui/qt3	scripts
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1291">[ date ]</a>
+              <a href="thread.html#1291">[ thread ]</a>
+              <a href="subject.html#1291">[ subject ]</a>
+              <a href="author.html#1291">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

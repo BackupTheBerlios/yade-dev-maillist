@@ -1,0 +1,249 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1755 - in trunk: extra gui/py	scripts
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1755%20-%20in%20trunk%3A%20extra%20gui/py%0A%09scripts&In-Reply-To=%3C200904150819.n3F8JiK0027392%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000922.html">
+   <LINK REL="Next"  HREF="000924.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1755 - in trunk: extra gui/py	scripts</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1755%20-%20in%20trunk%3A%20extra%20gui/py%0A%09scripts&In-Reply-To=%3C200904150819.n3F8JiK0027392%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1755 - in trunk: extra gui/py	scripts">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Apr 15 10:19:44 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000922.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-13614/bin/yade-svn1754:	TriaxialTestWater, USCTGen
+</A></li>
+        <LI>Next message: <A HREF="000924.html">[deprecated list] [Yade-dev] [svn] r1756 - trunk/extra/SpherePadder
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#923">[ date ]</a>
+              <a href="thread.html#923">[ thread ]</a>
+              <a href="subject.html#923">[ subject ]</a>
+              <a href="author.html#923">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-04-15 10:19:44 +0200 (Wed, 15 Apr 2009)
+New Revision: 1755
+
+Modified:
+   trunk/extra/Brefcom.cpp
+   trunk/extra/Brefcom.hpp
+   trunk/gui/py/yade-multi
+   trunk/scripts/multi.py
+Log:
+1. Add approximate viscosity equations to brefcom (not working)
+2. Fixes in yade-multi 
+
+
+Modified: trunk/extra/Brefcom.cpp
+===================================================================
+--- trunk/extra/Brefcom.cpp	2009-04-10 11:36:17 UTC (rev 1754)
++++ trunk/extra/Brefcom.cpp	2009-04-15 08:19:44 UTC (rev 1755)
+@@ -105,6 +105,7 @@
+ 		contPhys-&gt;dmgRateExp=dmgRateExp;
+ 		contPhys-&gt;plTau=plTau;
+ 		contPhys-&gt;plRateExp=plRateExp;
++		contPhys-&gt;viscApprox=viscApprox;
+ 
+ 		interaction-&gt;interactionPhysics=contPhys;
+ 	}
+@@ -156,6 +157,14 @@
+ }
+ 
+ Real BrefcomContact::computeDmgOverstress(Real dt){
++	if(viscApprox){
++		Real prevDmgStrain=dmgStrain;
++		dmgStrain=max(0.,epsN*omega-dmgOverstress/E);
++		if(dmgStrain&lt;=prevDmgStrain) dmgOverstress=0; // damage doesn't grow, no viscous response
++		else dmgOverstress=epsCrackOnset*E*pow(dmgTau*(dmgStrain-prevDmgStrain)/dt,dmgRateExp);
++		LOG_TRACE(&quot;dmgStrain=&quot;&lt;&lt;dmgStrain&lt;&lt;&quot;, dmgOverstress=&quot;&lt;&lt;dmgOverstress);
++		return dmgOverstress;
++	}
+ 	if(dmgStrain&gt;=epsN*omega){ // unloading, no viscous stress
+ 		dmgStrain=epsN*omega;
+ 		LOG_TRACE(&quot;Elastic/unloading, no viscous overstress&quot;);
+@@ -174,7 +183,7 @@
+ 	if(sigmaTNorm&lt;sigmaTYield) return 1.;
+ 	Real c=undamagedCohesion*pow(plTau/(G*dt),plRateExp)*pow(sigmaTNorm-sigmaTYield,plRateExp-1.);
+ 	Real beta=solveBeta(c,plRateExp);
+-	LOG_DEBUG(&quot;scaling factor &quot;&lt;&lt;1.-exp(beta)*(1-sigmaTYield/sigmaTNorm));
++	//LOG_DEBUG(&quot;scaling factor &quot;&lt;&lt;1.-exp(beta)*(1-sigmaTYield/sigmaTNorm));
+ 	return 1.-exp(beta)*(1-sigmaTYield/sigmaTNorm);
+ }
+ 
+
+Modified: trunk/extra/Brefcom.hpp
+===================================================================
+--- trunk/extra/Brefcom.hpp	2009-04-10 11:36:17 UTC (rev 1754)
++++ trunk/extra/Brefcom.hpp	2009-04-15 08:19:44 UTC (rev 1755)
+@@ -72,14 +72,16 @@
+ 			dmgTau,
+ 			//! exponent in the rate-dependent damage evolution
+ 			dmgRateExp,
+-			//! damage strain
++			//! damage strain (at previous or current step)
+ 			dmgStrain,
++			//! damage viscous overstress (at previous step or at current step)
++			dmgOverstress,
+ 			//! characteristic time for viscoplasticity (if non-positive, no rate-dependence for shear)
+ 			plTau,
+ 			//! exponent in the rate-dependent viscoplasticity
+-			plRateExp,
+-			//! coefficient that takes transversal strain into accound when calculating kappaDReduced
+-			transStrainCoeff;
++			plRateExp;
++		//! whether to approximate viscosity with difference relation instead of iterating to find solution
++		bool viscApprox;
+ 		/*! Up to now maximum normal strain (semi-norm), non-decreasing in time. */
+ 		Real kappaD;
+ 		/*! Transversal strain (perpendicular to the contact axis) */
+@@ -104,7 +106,7 @@
+ 
+ 
+ 
+-		BrefcomContact(): NormalShearInteraction(),E(0), G(0), tanFrictionAngle(0), undamagedCohesion(0), crossSection(0), xiShear(0), dmgTau(-1), dmgRateExp(0), dmgStrain(0), plTau(-1), plRateExp(0), epsPlSum(0.) { createIndex(); epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; neverDamage=false; omega=0; Fn=0; Fs=Vector3r::ZERO; epsPlSum=0; }
++		BrefcomContact(): NormalShearInteraction(),E(0), G(0), tanFrictionAngle(0), undamagedCohesion(0), crossSection(0), xiShear(0), dmgTau(-1), dmgRateExp(0), dmgStrain(0), plTau(-1), plRateExp(0), epsPlSum(0.) { createIndex(); epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; neverDamage=false; omega=0; Fn=0; Fs=Vector3r::ZERO; epsPlSum=0; viscApprox=false; dmgOverstress=0; dmgStrain=0; }
+ 		//	BrefcomContact(Real _E, Real _G, Real _tanFrictionAngle, Real _undamagedCohesion, Real _equilibriumDist, Real _crossSection, Real _epsCrackOnset, Real _epsFracture, Real _expBending, Real _xiShear, Real _tau=0, Real _expDmgRate=1): InteractionPhysics(), E(_E), G(_G), tanFrictionAngle(_tanFrictionAngle), undamagedCohesion(_undamagedCohesion), equilibriumDist(_equilibriumDist), crossSection(_crossSection), epsCrackOnset(_epsCrackOnset), epsFracture(_epsFracture), expBending(_expBending), xiShear(_xiShear), tau(_tau), expDmgRate(_expDmgRate) { epsT=Vector3r::ZERO; kappaD=0; isCohesive=false; neverDamage=false; omega=0; Fn=0; Fs=Vector3r::ZERO; /*TRVAR5(epsCrackOnset,epsFracture,Kn,crossSection,equilibriumDist); */ }
+ 		virtual ~BrefcomContact();
+ 
+@@ -121,9 +123,10 @@
+ 			(dmgTau)
+ 			(dmgRateExp)
+ 			(dmgStrain)
++			(dmgOverstress)
+ 			(plTau)
+ 			(plRateExp)
+-			(transStrainCoeff)
++			(viscApprox)
+ 
+ 			(cummBetaIter)
+ 			(cummBetaCount)
+@@ -225,6 +228,7 @@
+ 		
+ 		*/
+ 		Real sigmaT, epsCrackOnset, relDuctility, G_over_E, tau, expDmgRate, omegaThreshold, dmgTau, dmgRateExp, plTau, plRateExp;
++		bool viscApprox;
+ 		//! Should new contacts be cohesive? They will before this iter#, they will not be afterwards. If 0, they will never be. If negative, they will always be created as cohesive.
+ 		long cohesiveThresholdIter;
+ 		//! Create contacts that don't receive any damage (BrefcomContact::neverDamage=true); defaults to false
+@@ -233,7 +237,7 @@
+ 		BrefcomMakeContact(){
+ 			// init to signaling_NaN to force crash if not initialized (better than unknowingly using garbage values)
+ 			sigmaT=epsCrackOnset=relDuctility=G_over_E=std::numeric_limits&lt;Real&gt;::signaling_NaN();
+-			neverDamage=false;
++			neverDamage=viscApprox=false;
+ 			cohesiveThresholdIter=-1;
+ 			dmgTau=-1; dmgRateExp=0; plTau=-1; plRateExp=-1;
+ 			omegaThreshold=0.999;
+@@ -251,6 +255,7 @@
+ 			(dmgRateExp)
+ 			(plTau)
+ 			(plRateExp)
++			(viscApprox)
+ 			(omegaThreshold)
+ 		);
+ 
+
+Modified: trunk/gui/py/yade-multi
+===================================================================
+--- trunk/gui/py/yade-multi	2009-04-10 11:36:17 UTC (rev 1754)
++++ trunk/gui/py/yade-multi	2009-04-15 08:19:44 UTC (rev 1755)
+@@ -82,7 +82,7 @@
+ 
+ print &quot;Will run `%s' on `%s' with nice value %d, output redirected to `%s', %d jobs at a time.&quot;%(executable,simul,nice,logFormat,maxJobs)
+ 
+-ll=['']+open(table,'r').readlines()
++ll=[re.sub('\s*#.*','',l) for l in ['']+open(table,'r').readlines()] # remove comments
+ availableLines=[i for i in range(len(ll)) if not re.match(r'^\s*(#.*)?$',ll[i][:-1]) and i&gt;1]
+ 
+ # read actual data
+
+Modified: trunk/scripts/multi.py
+===================================================================
+--- trunk/scripts/multi.py	2009-04-10 11:36:17 UTC (rev 1754)
++++ trunk/scripts/multi.py	2009-04-15 08:19:44 UTC (rev 1755)
+@@ -2,8 +2,8 @@
+ # see <A HREF="http://yade.wikia.com/wiki/ScriptParametricStudy#scripts.2Fmulti.py">http://yade.wikia.com/wiki/ScriptParametricStudy#scripts.2Fmulti.py</A> for explanations
+ #
+ ## read parameters from table here
+-from yade import utils
+-utils.readParamsFromTable(gravity=-9.81,density=2400,initialSpeed=20,noTableOk=True)
++from yade import utils, plot
++utils.readParamsFromTable(gravity=-9.81,density=2400,initialSpeed=10,noTableOk=True)
+ print gravity,density,initialSpeed
+ 
+ o=Omega()
+@@ -22,8 +22,9 @@
+ 		[InteractingSphere2InteractingSphere4SpheresContactGeometry(),InteractingBox2InteractingSphere4SpheresContactGeometry()],
+ 		[SimpleElasticRelationships(),],
+ 		[ef2_Spheres_Elastic_ElasticLaw(),]
+-	)
++	),
+ 	GravityEngine(gravity=(0,0,gravity)), ## here we use the 'gravity' parameter
++	PeriodicPythonRunner(iterPeriod=100,command='myAddPlotData()',label='plotDataCollector'),
+ 	NewtonsDampedLaw(damping=0.4)
+ ]
+ o.bodies.append(utils.box([0,50,0],extents=[1,50,1],dynamic=False,color=[1,0,0],young=30e9,poisson=.3,density=density)) ## here we use the density parameter
+@@ -33,11 +34,16 @@
+ 
+ o.dt=.8*utils.PWaveTimeStep()
+ ## o.saveTmp('initial')
++def myAddPlotData():
++	s=O.bodies[1]
++	plot.addData({'t':O.time,'y_sph':s.phys.pos[1],'z_sph':s.phys.pos[2]})
++plot.plots={'y_sph':('z_sph',)}
+ 
+ # run 30000 iterations
+-o.run(30000,True)
++o.run(20000,True)
+ 
+ # write some results to a common file
+ # (we rely on the fact that 2 processes will not write results at exactly the same time)
+ # 'a' means to open for appending
+ file('multi.out','a').write('%s %g %g %g %g\n'%(o.tags['description'],gravity,density,initialSpeed,o.bodies[1].phys.pos[1]))
++print 'gnuplot',plot.saveGnuplot(O.tags['id'])
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000922.html">[deprecated list] [Yade-dev] Automated crash report	for	/tmp/yade-13614/bin/yade-svn1754:	TriaxialTestWater, USCTGen
+</A></li>
+	<LI>Next message: <A HREF="000924.html">[deprecated list] [Yade-dev] [svn] r1756 - trunk/extra/SpherePadder
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#923">[ date ]</a>
+              <a href="thread.html#923">[ thread ]</a>
+              <a href="subject.html#923">[ subject ]</a>
+              <a href="author.html#923">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

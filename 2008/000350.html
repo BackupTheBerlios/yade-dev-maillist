@@ -1,0 +1,143 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1512 - trunk/gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1512%20-%20trunk/gui/py&In-Reply-To=%3C200809080856.m888ugIV022478%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000349.html">
+   <LINK REL="Next"  HREF="000351.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1512 - trunk/gui/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1512%20-%20trunk/gui/py&In-Reply-To=%3C200809080856.m888ugIV022478%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1512 - trunk/gui/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Mon Sep  8 10:56:42 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000349.html">[deprecated list] [Yade-dev] [svn] r1511 - in trunk: core gui/py
+</A></li>
+        <LI>Next message: <A HREF="000351.html">[deprecated list] [Yade-dev] [svn] r1513 - in trunk: core extra gui	gui/py	pkg/common/DataClass/InteractionPhysics	pkg/common/DataClass/PhysicalAction
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#350">[ date ]</a>
+              <a href="thread.html#350">[ thread ]</a>
+              <a href="subject.html#350">[ subject ]</a>
+              <a href="author.html#350">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-09-08 10:56:42 +0200 (Mon, 08 Sep 2008)
+New Revision: 1512
+
+Modified:
+   trunk/gui/py/_utils.cpp
+   trunk/gui/py/eudoxos.py
+Log:
+1. eudoxos module cleanups, young estimator arg chages
+2. fix harmless compiler warning in _utils.cpp
+
+
+Modified: trunk/gui/py/_utils.cpp
+===================================================================
+--- trunk/gui/py/_utils.cpp	2008-09-07 12:47:01 UTC (rev 1511)
++++ trunk/gui/py/_utils.cpp	2008-09-08 08:56:42 UTC (rev 1512)
+@@ -38,7 +38,7 @@
+ BOOST_PYTHON_FUNCTION_OVERLOADS(negPosExtremeIds_overloads,negPosExtremeIds,1,2);
+ 
+ python::tuple coordsAndDisplacements(int axis,python::tuple AABB=python::tuple()){
+-	Vector3r bbMin,bbMax; bool useBB=python::len(AABB)&gt;0;
++	Vector3r bbMin(Vector3r::ZERO), bbMax(Vector3r::ZERO); bool useBB=python::len(AABB)&gt;0;
+ 	if(useBB){bbMin=tuple2vec(extract&lt;python::tuple&gt;(AABB[0])());bbMax=tuple2vec(extract&lt;python::tuple&gt;(AABB[1])());}
+ 	python::list retCoord,retDispl;
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp;b, *Omega::instance().getRootBody()-&gt;bodies){
+
+Modified: trunk/gui/py/eudoxos.py
+===================================================================
+--- trunk/gui/py/eudoxos.py	2008-09-07 12:47:01 UTC (rev 1511)
++++ trunk/gui/py/eudoxos.py	2008-09-08 08:56:42 UTC (rev 1512)
+@@ -16,7 +16,7 @@
+ 		bar(d[0],d[1],width=math.pi/(1.2*bins),fc=fc,alpha=.7,label=['yz','xz','xy'][axis])
+ 	pylab.show()
+ 
+-def estimatePoissonYoung(principalAxis,stress=0,plot=False,keepRatio=1.):
++def estimatePoissonYoung(principalAxis,stress=0,plot=False,cutoff=0.):
+ 	&quot;&quot;&quot;Estimate Poisson's ration given the &quot;principal&quot; axis of straining.
+ 	For every base direction, homogenized strain is computed
+ 	(slope in linear regression on discrete function particle coordinate &#8594;
+@@ -27,16 +27,17 @@
+ 	Young's modulus is computed as &#963;/&#949;&#8320;; if stress &#963; is not given (default 0),
+ 	the result is 0.
+ 
+-	keepRatio, if &lt; 1., will take only smaller part (centered) or the specimen into account
++	cutoff, if &gt; 0., will take only smaller part (centered) or the specimen into account
+ 	&quot;&quot;&quot;
+ 	dd=[] # storage for linear regression parameters
+ 	import pylab,numpy,stats
+ 	from yade import utils
+-	if keepRatio&lt;1.:
++	if cutoff&gt;0:
+ 		aabb=utils.aabbExtrema(); half=[.5*(aabb[1][i]-aabb[0][i]) for i in [0,1,2]]
+-		cut=(tuple([aabb[0][i]+(1.-keepRatio)*half[i] for i in [0,1,2]]),tuple([aabb[1][i]-(1.-keepRatio)*half[i] for i in [0,1,2]]))
++		cut=(tuple([aabb[0][i]+cutoff*half[i] for i in [0,1,2]]),tuple([aabb[1][i]-cutoff*half[i] for i in [0,1,2]]))
+ 	for axis in [0,1,2]:
+-		if keepRatio&lt;1.:
++		if cutoff&gt;0:
++			#print cutoff,utils.aabbExtrema(),cut
+ 			w,dw=utils.coordsAndDisplacements(axis,AABB=cut)
+ 		else:
+ 			w,dw=utils.coordsAndDisplacements(axis)
+@@ -97,11 +98,11 @@
+ 	return material+[&quot;%d %d&quot;%(len(bodies),len(interactions))]+bodies+interactions
+ 
+ 
+-import numpy
+-from pylab import *
+-from matplotlib.mlab import *
+ 
+ def eliminateJumps(eps,sigma,numSteep=10,gapWidth=5,movWd=40):
++	from matplotlib.mlab import movavg
++	from numpy import diff,abs
++	import numpy
+ 	# get histogram of 'derivatives'
+ 	ds=abs(diff(sigma))
+ 	n,bins=numpy.histogram(ds)
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000349.html">[deprecated list] [Yade-dev] [svn] r1511 - in trunk: core gui/py
+</A></li>
+	<LI>Next message: <A HREF="000351.html">[deprecated list] [Yade-dev] [svn] r1513 - in trunk: core extra gui	gui/py	pkg/common/DataClass/InteractionPhysics	pkg/common/DataClass/PhysicalAction
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#350">[ date ]</a>
+              <a href="thread.html#350">[ thread ]</a>
+              <a href="subject.html#350">[ subject ]</a>
+              <a href="author.html#350">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

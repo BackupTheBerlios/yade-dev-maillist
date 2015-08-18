@@ -1,0 +1,176 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] svn1370 unstable
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20svn1370%20unstable&In-Reply-To=%3C200806021536.23370.dorofeenko%40icp.ac.ru%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000212.html">
+   <LINK REL="Next"  HREF="000215.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] svn1370 unstable</H1>
+    <B>sega</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20svn1370%20unstable&In-Reply-To=%3C200806021536.23370.dorofeenko%40icp.ac.ru%3E"
+       TITLE="[yade-dev] svn1370 unstable">dorofeenko at icp.ac.ru
+       </A><BR>
+    <I>Mon Jun  2 13:36:23 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000212.html">[yade-dev] svn1370 unstable
+</A></li>
+        <LI>Next message: <A HREF="000215.html">[yade-dev] svn1370 unstable
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#214">[ date ]</a>
+              <a href="thread.html#214">[ thread ]</a>
+              <a href="subject.html#214">[ subject ]</a>
+              <a href="author.html#214">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Hi. I made a clear build but YADE still crashes.
+I run yade-trunk simple-scene.py and click on the Controller button.
+(I note that isDynamic of rootbody have wrong value, the file a.xml is attached).
+(my system is amd64, openSUSE 10.2, gcc 4.1.2)
+ I get:
+
+==================
+<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at sega</A>:~/work/yade/trunk/scripts&gt; yade-trunk simple-scene.py
+Constructing ClassFactory  (if multiple times - check '-rdynamic' flag!).
+Constructing SerializableSingleton  (if multiple times - check '-rdynamic' flag!).
+WARNING: cannot open file used for capillary law, in TriaxalTestWater
+Running script simple-scene.py
+__   __    ____          ____                      _
+\ \ / /_ _|  _ \  ___   / ___|___  _ __  ___  ___ | | ___
+ \ V / _` | | | |/ _ \ | |   / _ \| '_ \/ __|/ _ \| |/ _ \
+  | | (_| | |_| |  __/ | |__| (_) | | | \__ \ (_) | |  __/
+  |_|\__,_|____/ \___|  \____\___/|_| |_|___/\___/|_|\___|
+
+
+In [1]: Omega::instance().getSimulationFileName()=
+yade-trunk: /home/sega/build/yade/build-trunk/include/yade-trunk/yade/lib-multimethods/DynLibDispatcher.hpp:322: bool DynLibDispatcher&lt;BaseClass, Executor, ResultType, TList, autoSymmetry&gt;::locateMultivirtualFunctor1D(int&amp;, boost::shared_ptr&lt;typename Loki::TL::TypeAtNonStrict&lt;typename Loki::TL::Append&lt;Loki::NullType, T&gt;::Result, 0u, Loki::NullType&gt;::Result&gt;&amp;) [with BaseClass = Loki::Typelist&lt;PhysicalParameters, Loki::NullType&gt;, Executor = PhysicalParametersEngineUnit, ResultType = void, TList = Loki::Typelist&lt;const boost::shared_ptr&lt;PhysicalParameters&gt;&amp;, Loki::Typelist&lt;Body*, Loki::NullType&gt; &gt;, bool autoSymmetry = true]: &#1055;&#1088;&#1086;&#1074;&#1077;&#1088;&#1086;&#1095;&#1085;&#1086;&#1077; &#1091;&#1090;&#1074;&#1077;&#1088;&#1078;&#1076;&#1077;&#1085;&#1080;&#1077; `index &gt;= 0 &amp;&amp; (unsigned int)( index ) &lt; callBacks.size()' &#1085;&#1077; &#1074;&#1099;&#1087;&#1086;&#1083;&#1085;&#1077;&#1085;&#1086;.
+SIGSEGV/SIGABRT handler called; gdb batch file is `/home/sega/.yade-trunk/gdb_crash_batch-pid7314'
+GNU gdb 6.5
+Copyright (C) 2006 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type &quot;show copying&quot; to see the conditions.
+There is absolutely no warranty for GDB.  Type &quot;show warranty&quot; for details.
+This GDB was configured as &quot;x86_64-suse-linux&quot;.
+Using host libthread_db library &quot;/lib64/libthread_db.so.1&quot;.
+[Thread debugging using libthread_db enabled]
+[New Thread 47532414684208 (LWP 7314)]
+[New Thread 1091017024 (LWP 7465)]
+[New Thread 1082149184 (LWP 7366)]
+0x00002b3afc662302 in __select_nocancel () from /lib64/libc.so.6
+No symbol &quot;info&quot; in current context.
+
+Thread 3 (Thread 1082149184 (LWP 7366)):
+#0  0x00002b3afc662302 in __select_nocancel () from /lib64/libc.so.6
+#1  0x00002aaad0b124c5 in initreadline () from /usr/lib64/python2.5/lib-dynload/readline.so
+#2  0x00002b3af8d98b4f in PyOS_Readline () from /usr/lib64/libpython2.5.so.1.0
+#3  0x00002b3af8e04c74 in _PyBuiltin_Init () from /usr/lib64/libpython2.5.so.1.0
+#4  0x00002b3af8e0e56a in PyEval_EvalFrameEx () from /usr/lib64/libpython2.5.so.1.0
+#5  0x00002b3af8e0f5ac in PyEval_EvalCodeEx () from /usr/lib64/libpython2.5.so.1.0
+#6  0x00002b3af8e0dcd4 in PyEval_EvalFrameEx () from /usr/lib64/libpython2.5.so.1.0
+#7  0x00002b3af8e0f5ac in PyEval_EvalCodeEx () from /usr/lib64/libpython2.5.so.1.0
+#8  0x00002b3af8e0dcd4 in PyEval_EvalFrameEx () from /usr/lib64/libpython2.5.so.1.0
+#9  0x00002b3af8e0f5ac in PyEval_EvalCodeEx () from /usr/lib64/libpython2.5.so.1.0
+#10 0x00002b3af8e0dcd4 in PyEval_EvalFrameEx () from /usr/lib64/libpython2.5.so.1.0
+#11 0x00002b3af8e0f5ac in PyEval_EvalCodeEx () from /usr/lib64/libpython2.5.so.1.0
+#12 0x00002b3af8db7c48 in PyClassMethod_New () from /usr/lib64/libpython2.5.so.1.0
+#13 0x00002b3af8d9ae13 in PyObject_Call () from /usr/lib64/libpython2.5.so.1.0
+#14 0x00002b3af8da1ecd in PyClass_IsSubclass () from /usr/lib64/libpython2.5.so.1.0
+#15 0x00002b3af8d9ae13 in PyObject_Call () from /usr/lib64/libpython2.5.so.1.0
+#16 0x00002b3af8da293b in _PyInstance_Lookup () from /usr/lib64/libpython2.5.so.1.0
+#17 0x00002b3af8d9ae13 in PyObject_Call () from /usr/lib64/libpython2.5.so.1.0
+#18 0x00002b3af8e0b463 in PyEval_EvalFrameEx () from /usr/lib64/libpython2.5.so.1.0
+#19 0x00002b3af8e0f5ac in PyEval_EvalCodeEx () from /usr/lib64/libpython2.5.so.1.0
+#20 0x00002b3af8e0f5f2 in PyEval_EvalCode () from /usr/lib64/libpython2.5.so.1.0
+#21 0x00002b3af8e28022 in Py_CompileString () from /usr/lib64/libpython2.5.so.1.0
+#22 0x00002b3af8e280f6 in PyRun_FileExFlags () from /usr/lib64/libpython2.5.so.1.0
+#23 0x00002b3af8e295b8 in PyRun_SimpleFileExFlags () from /usr/lib64/libpython2.5.so.1.0
+#24 0x00002aaab50667d5 in PythonUI::execScript (script=@0x40803fd0) at gui/py/PythonUI.cpp:42
+#25 0x00002aaab50676e8 in PythonUI::pythonSession () at gui/py/PythonUI.cpp:92
+#26 0x00002aaab494f6d1 in boost::detail::function::void_function_invoker0&lt;void (*)(), void&gt;::invoke (function_ptr=@0x408040a8) at /usr/local/include/boost/function/function_template.hpp:114
+#27 0x00002b3af973754e in boost::function0&lt;void, std::allocator&lt;boost::function_base&gt; &gt;::operator() () from /usr/local/lib64/libboost_thread-gcc41-mt-1_34_1.so.1.34.1
+#28 0x00002b3af9737202 in boost::thread_group::add_thread () from /usr/local/lib64/libboost_thread-gcc41-mt-1_34_1.so.1.34.1
+#29 0x00002b3af90bc09e in start_thread () from /lib64/libpthread.so.0
+#30 0x00002b3afc6684cd in clone () from /lib64/libc.so.6
+#31 0x0000000000000000 in ?? ()
+
+Thread 2 (Thread 1091017024 (LWP 7465)):
+#0  0x00002b3afc639e1f in waitpid () from /lib64/libc.so.6
+#1  0x00002b3afc5e2491 in do_system () from /lib64/libc.so.6
+#2  0x00002b3afc5e2817 in system () from /lib64/libc.so.6
+#3  0x000000000056f82b in sigHandler (sig=6) at core/yade.cpp:58
+#4  &lt;signal handler called&gt;
+#5  0x00002b3afc5d7535 in raise () from /lib64/libc.so.6
+#6  0x00002b3afc5d8990 in abort () from /lib64/libc.so.6
+#7  0x00002b3afc5d0c16 in __assert_fail () from /lib64/libc.so.6
+#8  0x00002aaaae3407fe in DynLibDispatcher&lt;Loki::Typelist&lt;PhysicalParameters, Loki::NullType&gt;, PhysicalParametersEngineUnit, void, Loki::Typelist&lt;boost::shared_ptr&lt;PhysicalParameters&gt; const&amp;, Loki::Typelist&lt;Body*, Loki::NullType&gt; &gt;, true&gt;::locateMultivirtualFunctor1D (this=0xa4d0c0, index=@0x41078dac, base=@0x94cc88) at /home/sega/build/yade/build-trunk/include/yade-trunk/yade/lib-multimethods/DynLibDispatcher.hpp:322
+#9  0x00002aaaae3409fd in DynLibDispatcher&lt;Loki::Typelist&lt;PhysicalParameters, Loki::NullType&gt;, PhysicalParametersEngineUnit, void, Loki::Typelist&lt;boost::shared_ptr&lt;PhysicalParameters&gt; const&amp;, Loki::Typelist&lt;Body*, Loki::NullType&gt; &gt;, true&gt;::operator() (this=0xa4d0c0, base=@0x94cc88, p2=0x94cc60) at /home/sega/build/yade/build-trunk/include/yade-trunk/yade/lib-multimethods/DynLibDispatcher.hpp:537
+#10 0x00002aaaae32d1ee in PhysicalParametersMetaEngine::action (this=0xa4d080, ncb=0x94cc60) at pkg/common/Engine/MetaEngine/PhysicalParametersMetaEngine.cpp:27
+#11 0x00000000005105a3 in MetaBody::moveToNextTimeStep (this=0x94cc60) at core/MetaBody.cpp:81
+#12 0x00000000005664b9 in SimulationFlow::singleAction (this=0x80dd60) at core/SimulationFlow.cpp:17
+#13 0x0000000000568344 in ThreadWorker::callSingleAction (this=0x80dd60) at core/ThreadWorker.cpp:71
+#14 0x0000000000567a25 in ThreadRunner::call (this=0xa45770) at core/ThreadRunner.cpp:42
+#15 0x0000000000567a89 in ThreadRunner::run (this=0xa45770) at core/ThreadRunner.cpp:21
+#16 0x0000000000567f9d in boost::_mfi::mf0&lt;void, ThreadRunner&gt;::operator() (this=0x410790a8, p=0xa45770) at /usr/local/include/boost/bind/mem_fn_template.hpp:49
+#17 0x000000000056801e in boost::_bi::list1&lt;boost::_bi::value&lt;ThreadRunner*&gt; &gt;::operator()&lt;boost::_mfi::mf0&lt;void, ThreadRunner&gt;, boost::_bi::list0&gt; (this=0x410790b8, f=@0x410790a8, a=@0x4107900f) at /usr/local/include/boost/bind.hpp:231
+#18 0x0000000000568061 in boost::_bi::bind_t&lt;void, boost::_mfi::mf0&lt;void, ThreadRunner&gt;, boost::_bi::list1&lt;boost::_bi::value&lt;ThreadRunner*&gt; &gt; &gt;::operator() (this=0x410790a8) at /usr/local/include/boost/bind/bind_template.hpp:20
+#19 0x0000000000568086 in boost::detail::function::void_function_obj_invoker0&lt;boost::_bi::bind_t&lt;void, boost::_mfi::mf0&lt;void, ThreadRunner&gt;, boost::_bi::list1&lt;boost::_bi::value&lt;ThreadRunner*&gt; &gt; &gt;, void&gt;::invoke (function_obj_ptr=@0x410790a8) at /usr/local/include/boost/function/function_template.hpp:155
+#20 0x00002b3af973754e in boost::function0&lt;void, std::allocator&lt;boost::function_base&gt; &gt;::operator() () from /usr/local/lib64/libboost_thread-gcc41-mt-1_34_1.so.1.34.1
+#21 0x00002b3af9737202 in boost::thread_group::add_thread () from /usr/local/lib64/libboost_thread-gcc41-mt-1_34_1.so.1.34.1
+#22 0x00002b3af90bc09e in start_thread () from /lib64/libpthread.so.0
+#23 0x00002b3afc6684cd in clone () from /lib64/libc.so.6
+#24 0x0000000000000000 in ?? ()
+
+Thread 1 (Thread 47532414684208 (LWP 7314)):
+#0  0x00002b3afc662302 in __select_nocancel () from /lib64/libc.so.6
+#1  0x00002b3af9ffd24b in QEventLoop::processEvents () from /usr/lib64/libqt-mt.so.3
+#2  0x00002b3afa05b963 in QEventLoop::enterLoop () from /usr/lib64/libqt-mt.so.3
+#3  0x00002b3afa05b812 in QEventLoop::exec () from /usr/lib64/libqt-mt.so.3
+#4  0x00002aaab494eccb in QtGUI::run (this=0x93e110, argc=2, argv=0x7fffb1f66e88) at gui/qt3/QtGUI.cpp:72
+#5  0x000000000056f2f0 in main (argc=2, argv=0x7fffb1f66e88) at core/yade.cpp:255
+#0  0x00002b3afc662302 in __select_nocancel () from /lib64/libc.so.6
+=======================
+-- 
+Best regards, Sergei D.
+-------------- next part --------------
+A non-text attachment was scrubbed...
+Name: a.xml.gz
+Type: application/x-gzip
+Size: 1303 bytes
+Desc: not available
+URL: &lt;<A HREF="https://lists.berlios.de/pipermail/yade-dev/attachments/20080602/7b1101d8/attachment.bin">https://lists.berlios.de/pipermail/yade-dev/attachments/20080602/7b1101d8/attachment.bin</A>&gt;
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000212.html">[yade-dev] svn1370 unstable
+</A></li>
+	<LI>Next message: <A HREF="000215.html">[yade-dev] svn1370 unstable
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#214">[ date ]</a>
+              <a href="thread.html#214">[ thread ]</a>
+              <a href="subject.html#214">[ subject ]</a>
+              <a href="author.html#214">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

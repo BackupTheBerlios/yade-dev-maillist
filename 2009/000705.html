@@ -1,0 +1,218 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1669 - in	trunk:	core/DefaultContainerImplementations	gui/py	pkg/common/Engine/StandAloneEngine
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1669%20-%20in%0A%09trunk%3A%09core/DefaultContainerImplementations%0A%09gui/py%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200902172048.n1HKm0XJ031778%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000692.html">
+   <LINK REL="Next"  HREF="000706.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1669 - in	trunk:	core/DefaultContainerImplementations	gui/py	pkg/common/Engine/StandAloneEngine</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1669%20-%20in%0A%09trunk%3A%09core/DefaultContainerImplementations%0A%09gui/py%09pkg/common/Engine/StandAloneEngine&In-Reply-To=%3C200902172048.n1HKm0XJ031778%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1669 - in	trunk:	core/DefaultContainerImplementations	gui/py	pkg/common/Engine/StandAloneEngine">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Tue Feb 17 21:48:00 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000692.html">[deprecated list] [Yade-dev] [svn] r1668 - in	trunk:	examples/dynamic_simulation_tests gui/py
+</A></li>
+        <LI>Next message: <A HREF="000706.html">[deprecated list] [Yade-dev] [svn] r1670 -	trunk/pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#705">[ date ]</a>
+              <a href="thread.html#705">[ thread ]</a>
+              <a href="subject.html#705">[ subject ]</a>
+              <a href="author.html#705">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-02-17 21:47:59 +0100 (Tue, 17 Feb 2009)
+New Revision: 1669
+
+Modified:
+   trunk/core/DefaultContainerImplementations/PhysicalActionVectorVector.cpp
+   trunk/core/DefaultContainerImplementations/PhysicalActionVectorVector.hpp
+   trunk/gui/py/yadeControl.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+Log:
+1. Add possibility to change container types from python (for benchmarks) -- code not yet tested!
+2. Possible optimization in PhysicalActionVectorVector, now disabled.
+
+
+Modified: trunk/core/DefaultContainerImplementations/PhysicalActionVectorVector.cpp
+===================================================================
+--- trunk/core/DefaultContainerImplementations/PhysicalActionVectorVector.cpp	2009-02-17 09:10:50 UTC (rev 1668)
++++ trunk/core/DefaultContainerImplementations/PhysicalActionVectorVector.cpp	2009-02-17 20:47:59 UTC (rev 1669)
+@@ -114,16 +114,23 @@
+ // doesn't not delete all, just resets data
+ void PhysicalActionVectorVector::reset()
+ {
+-	vector&lt; vector&lt; shared_ptr&lt;PhysicalAction&gt; &gt; &gt;::iterator vvi    = physicalActions.begin();
+-	vector&lt; vector&lt; shared_ptr&lt;PhysicalAction&gt; &gt; &gt;::iterator vviEnd = physicalActions.end();
+-	for( ; vvi != vviEnd ; ++vvi )
+-	{
+-		vector&lt; shared_ptr&lt;PhysicalAction&gt; &gt;::iterator vi    = (*vvi).begin();
+-		vector&lt; shared_ptr&lt;PhysicalAction&gt; &gt;::iterator viEnd = (*vvi).end();
+-		for( ; vi != viEnd ; ++vi)
+-		//if(*vi) // FIXME ?? do not check - all fields are NOT empty.
+-			(*vi)-&gt;reset();
+-	}
++	#if 1
++		vector&lt; vector&lt; shared_ptr&lt;PhysicalAction&gt; &gt; &gt;::iterator vvi    = physicalActions.begin();
++		vector&lt; vector&lt; shared_ptr&lt;PhysicalAction&gt; &gt; &gt;::iterator vviEnd = physicalActions.end();
++		for( ; vvi != vviEnd ; ++vvi )
++		{
++			vector&lt; shared_ptr&lt;PhysicalAction&gt; &gt;::iterator vi    = (*vvi).begin();
++			vector&lt; shared_ptr&lt;PhysicalAction&gt; &gt;::iterator viEnd = (*vvi).end();
++			for( ; vi != viEnd ; ++vi)
++			//if(*vi) // FIXME ?? do not check - all fields are NOT empty.
++				(*vi)-&gt;reset();
++		}
++	#else
++		FOREACH(int idx, usedBexIndices){
++			// reset everything
++			FOREACH(shared_ptr&lt;PhysicalAction&gt;&amp; pa,physicalActions[idx]){ pa-&gt;reset();}
++		}
++	#endif
+ }
+ 
+ 
+@@ -142,10 +149,13 @@
+ 		maxSize = max(maxSize , actionTypes[i]-&gt;getClassIndex() );
+ 	++maxSize;
+ 	actionTypesResetted.resize(maxSize);
++	usedBexIndices.clear();
+ 	for(unsigned int i = 0 ; i &lt; size ; ++i )
+ 	{
+-		actionTypesResetted[actionTypes[i]-&gt;getClassIndex()] = actionTypes[i]-&gt;clone();
+-		actionTypesResetted[actionTypes[i]-&gt;getClassIndex()] -&gt; reset();
++		int idx=actionTypes[i]-&gt;getClassIndex();
++		actionTypesResetted[idx] = actionTypes[i]-&gt;clone();
++		actionTypesResetted[idx] -&gt; reset();
++		usedBexIndices.push_back(idx);
+ 	}
+ }
+ 
+
+Modified: trunk/core/DefaultContainerImplementations/PhysicalActionVectorVector.hpp
+===================================================================
+--- trunk/core/DefaultContainerImplementations/PhysicalActionVectorVector.hpp	2009-02-17 09:10:50 UTC (rev 1668)
++++ trunk/core/DefaultContainerImplementations/PhysicalActionVectorVector.hpp	2009-02-17 20:47:59 UTC (rev 1669)
+@@ -56,6 +56,7 @@
+ 			vector&lt; shared_ptr&lt;PhysicalAction&gt; &gt;   actionTypesResetted;
+ 		vector&lt; bool &gt; usedIds;
+ 		unsigned int current_size;
++		vector&lt;int&gt; usedBexIndices;
+ 	
+ 	public :
+ 		PhysicalActionVectorVector();
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2009-02-17 09:10:50 UTC (rev 1668)
++++ trunk/gui/py/yadeControl.cpp	2009-02-17 20:47:59 UTC (rev 1669)
+@@ -526,6 +526,30 @@
+ 	}
+ 
+ 	pyTags tags_get(void){assertRootBody(); return pyTags(OMEGA.getRootBody());}
++
++	void interactionContainer_set(string clss){
++		MetaBody* rb=OMEGA.getRootBody().get();
++		if(rb-&gt;transientInteractions-&gt;size()&gt;0) throw std::runtime_error(&quot;Interaction container not empty, will not change its class.&quot;);
++		shared_ptr&lt;InteractionContainer&gt; ic=dynamic_pointer_cast&lt;InteractionContainer&gt;(ClassFactory::instance().createShared(clss));
++		rb-&gt;transientInteractions=ic;
++	}
++	string interactionContainer_get(string clss){ return OMEGA.getRootBody()-&gt;transientInteractions-&gt;getClassName(); }
++
++	void bodyContainer_set(string clss){
++		MetaBody* rb=OMEGA.getRootBody().get();
++		if(rb-&gt;bodies-&gt;size()&gt;0) throw std::runtime_error(&quot;Body container not empty, will not change its class.&quot;);
++		shared_ptr&lt;BodyContainer&gt; bc=dynamic_pointer_cast&lt;BodyContainer&gt;(ClassFactory::instance().createShared(clss));
++		rb-&gt;bodies=bc;
++	}
++	string bodyContainer_get(string clss){ return OMEGA.getRootBody()-&gt;bodies-&gt;getClassName(); }
++
++	void physicalActionContainer_set(string clss){
++		MetaBody* rb=OMEGA.getRootBody().get();
++		shared_ptr&lt;PhysicalActionContainer&gt; pac=dynamic_pointer_cast&lt;PhysicalActionContainer&gt;(ClassFactory::instance().createShared(clss));
++		rb-&gt;physicalActions=pac;
++	}
++	string physicalActionContainer_get(string clss){ return OMEGA.getRootBody()-&gt;physicalActions-&gt;getClassName(); }
++
+ };
+ BOOST_PYTHON_MEMBER_FUNCTION_OVERLOADS(omega_run_overloads,run,0,2);
+ 
+@@ -580,6 +604,9 @@
+ 		.add_property(&quot;actions&quot;,&amp;pyOmega::actions_get)
+ 		.add_property(&quot;tags&quot;,&amp;pyOmega::tags_get)
+ 		.def(&quot;childClasses&quot;,&amp;pyOmega::listChildClasses)
++		.add_property(&quot;bodyContainer&quot;,&amp;pyOmega::bodyContainer_get,&amp;pyOmega::bodyContainer_set)
++		.add_property(&quot;interactionContainer&quot;,&amp;pyOmega::interactionContainer_get,&amp;pyOmega::interactionContainer_set)
++		.add_property(&quot;actionContainer&quot;,&amp;pyOmega::physicalActionContainer_get,&amp;pyOmega::physicalActionContainer_set)
+ 		;
+ 	boost::python::class_&lt;pyTags&gt;(&quot;TagsWrapper&quot;,python::init&lt;pyTags&amp;&gt;())
+ 		.def(&quot;__getitem__&quot;,&amp;pyTags::getItem)
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-02-17 09:10:50 UTC (rev 1668)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-02-17 20:47:59 UTC (rev 1669)
+@@ -191,6 +191,8 @@
+ 	int offset1=3*id1, offset2=3*id2;
+ 	const shared_ptr&lt;Body&gt;&amp; b1(Body::byId(body_id_t(id1),rootBody)), b2(Body::byId(body_id_t(id2),rootBody));
+ 	bool overlap =
++		// only collide if at least one of the bodies is not shadow
++		((!b1-&gt;isShadow()) || (!b2-&gt;isShadow())) &amp;&amp;
+ 		// only collide if at least one particle is standalone or they belong to different clumps
+ 		(b1-&gt;isStandalone() || b2-&gt;isStandalone() || b1-&gt;clumpId!=b2-&gt;clumpId ) &amp;&amp;
+ 		 // do not collide clumps, since they are just containers, never interact
+@@ -230,8 +232,6 @@
+ }
+ 
+ 
+-
+-
+ void PersistentSAPCollider::findOverlappingBB(std::vector&lt;shared_ptr&lt;AABBBound&gt; &gt;&amp; bounds, int nbElements){
+ 	int i=0,j=0;
+ 	while (i&lt;2*nbElements) {
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000692.html">[deprecated list] [Yade-dev] [svn] r1668 - in	trunk:	examples/dynamic_simulation_tests gui/py
+</A></li>
+	<LI>Next message: <A HREF="000706.html">[deprecated list] [Yade-dev] [svn] r1670 -	trunk/pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#705">[ date ]</a>
+              <a href="thread.html#705">[ thread ]</a>
+              <a href="subject.html#705">[ subject ]</a>
+              <a href="author.html#705">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

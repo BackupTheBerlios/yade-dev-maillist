@@ -1,0 +1,219 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1817 - in trunk:	gui/py	pkg/common/RenderingEngine/GLDrawInteractingGeometry	scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1817%20-%20in%20trunk%3A%0A%09gui/py%09pkg/common/RenderingEngine/GLDrawInteractingGeometry%0A%09scripts/test&In-Reply-To=%3C200906252320.n5PNKWMG011844%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001056.html">
+   <LINK REL="Next"  HREF="001069.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1817 - in trunk:	gui/py	pkg/common/RenderingEngine/GLDrawInteractingGeometry	scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1817%20-%20in%20trunk%3A%0A%09gui/py%09pkg/common/RenderingEngine/GLDrawInteractingGeometry%0A%09scripts/test&In-Reply-To=%3C200906252320.n5PNKWMG011844%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1817 - in trunk:	gui/py	pkg/common/RenderingEngine/GLDrawInteractingGeometry	scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Jun 26 01:20:32 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001056.html">[deprecated list] [Yade-dev] [svn] r1816 - trunk
+</A></li>
+        <LI>Next message: <A HREF="001069.html">[deprecated list] [Yade-dev] [svn] r1817 - in trunk:	gui/py	pkg/common/RenderingEngine/GLDrawInteractingGeometry	scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1057">[ date ]</a>
+              <a href="thread.html#1057">[ thread ]</a>
+              <a href="subject.html#1057">[ subject ]</a>
+              <a href="author.html#1057">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-06-26 01:20:31 +0200 (Fri, 26 Jun 2009)
+New Revision: 1817
+
+Added:
+   trunk/scripts/test/gts.py
+Modified:
+   trunk/gui/py/_packPredicates.cpp
+   trunk/gui/py/pack.py
+   trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingFacet.cpp
+Log:
+1. Add GTS surface predicate
+2. Add example of sphere horse falling onto facet horse in scripts/test/gts.py (try it!)
+3. Predicate difference now takes padding in the inverse sense for the second predicate (logical)
+4. Attempt to enable lightning on facets (no effect :-( )
+
+
+Modified: trunk/gui/py/_packPredicates.cpp
+===================================================================
+--- trunk/gui/py/_packPredicates.cpp	2009-06-25 21:29:36 UTC (rev 1816)
++++ trunk/gui/py/_packPredicates.cpp	2009-06-25 23:20:31 UTC (rev 1817)
+@@ -71,7 +71,7 @@
+ class PredicateDifference: public PredicateBoolean{
+ 	public:
+ 		PredicateDifference(const shared_ptr&lt;Predicate&gt; _A, const shared_ptr&lt;Predicate&gt; _B): PredicateBoolean(_A,_B){}
+-		virtual bool operator()(python::tuple pt,Real pad) const {return (*A)(pt,pad) &amp;&amp; !(*B)(pt,pad);}
++		virtual bool operator()(python::tuple pt,Real pad) const {return (*A)(pt,pad) &amp;&amp; !(*B)(pt,-pad);}
+ 		virtual python::tuple aabb() const { return A-&gt;aabb(); }
+ };
+ PredicateDifference makeDifference(const shared_ptr&lt;Predicate&gt;&amp; A, const shared_ptr&lt;Predicate&gt;&amp; B){ return PredicateDifference(A,B);}
+
+Modified: trunk/gui/py/pack.py
+===================================================================
+--- trunk/gui/py/pack.py	2009-06-25 21:29:36 UTC (rev 1816)
++++ trunk/gui/py/pack.py	2009-06-25 23:20:31 UTC (rev 1817)
+@@ -1,11 +1,50 @@
+ 
+-from numpy import arange; from math import sqrt
+-import itertools
++import itertools,warnings
++from numpy import arange
++from math import sqrt
+ from yade import utils
+ 
+-# make predicates available from yade.pack
++# for now skip the import, but try in inGtsSurface constructor again, to give error if we really use it
++try:
++	import gts
++except ImportError: pass
++
++
++# make c++ predicates available in this module
+ from _packPredicates import *
+ 
++
++class inGtsSurface(Predicate):
++	&quot;&quot;&quot;Predicate for GTS surfaces. Constructed using an already existing surfaces, which must be closed.
++
++		import gts
++		surf=gts.read(open('horse.gts'))
++		inGtsSurface(surf)
++
++	Note: padding is not supported, warning is given and zero used instead.
++	&quot;&quot;&quot;
++	def __init__(self,surf):
++		import gts
++		if not surf.is_closed(): raise RuntimeError(&quot;Surface for inGtsSurface predicate must be closed.&quot;)
++		self.surf=surf
++		inf=float('inf')
++		mn,mx=[inf,inf,inf],[-inf,-inf,-inf]
++		for v in surf.vertices():
++			c=v.coords()
++			mn,mx=[min(mn[i],c[i]) for i in 0,1,2],[max(mx[i],c[i]) for i in 0,1,2]
++		self.mn,self.mx=tuple(mn),tuple(mx)
++	def aabb(self): return self.mn,self.mx
++	def __call__(self,_pt,pad=0.):
++		p=gts.Point(*_pt)
++		if(pad!=0): warnings.warn(&quot;Pad distance not supported for GTS surfaces, using 0 instead.&quot;)
++		return p.is_inside(self.surf)
++
++def gtsSurface2Facets(surf,**kw):
++	&quot;&quot;&quot;Construct facets from given GTS surface. **kw is passed to utils.facet.&quot;&quot;&quot;
++	return [utils.facet([v.coords() for v in face.vertices()],**kw) for face in surf]
++
++
++
+ def regularOrtho(predicate,radius,gap,**kw):
+ 	&quot;&quot;&quot;Return set of spheres in regular orthogonal grid, clipped inside solid given by predicate.
+ 	Created spheres will have given radius and will be separated by gap space.&quot;&quot;&quot;
+
+Modified: trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingFacet.cpp
+===================================================================
+--- trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingFacet.cpp	2009-06-25 21:29:36 UTC (rev 1816)
++++ trunk/pkg/common/RenderingEngine/GLDrawInteractingGeometry/GLDrawInteractingFacet.cpp	2009-06-25 23:20:31 UTC (rev 1817)
+@@ -19,7 +19,7 @@
+ 	const Vector3r* ne = facet-&gt;ne;
+ 	const Real&amp; icr = facet-&gt;icr;
+ 
+-    glDisable(GL_LIGHTING);
++  //  glDisable(GL_LIGHTING);
+ 
+     // facet
+     glBegin(GL_LINE_LOOP);
+
+Added: trunk/scripts/test/gts.py
+===================================================================
+--- trunk/scripts/test/gts.py	2009-06-25 21:29:36 UTC (rev 1816)
++++ trunk/scripts/test/gts.py	2009-06-25 23:20:31 UTC (rev 1817)
+@@ -0,0 +1,43 @@
++# encoding: utf-8
++# &#169; 2009 V&#225;clav &#352;milauer &lt;<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">eudoxos at arcig.cz</A>&gt;
++&quot;&quot;&quot;Script showing how to use GTS to import arbitrary triangulated surface,
++which can further be either filled with packing (if used as predicate) or converted
++to facets representing the surface.&quot;&quot;&quot;
++
++from yade import pack
++import gts
++
++try:
++	surf=gts.read(open('horse.gts'))
++	surf.coarsen(1000) # MUCH faster subsequently if the surface is coarse
++except IOError:
++	print &quot;&quot;&quot;horse.gts not found, you need to download input data:
++
++	wget <A HREF="http://gts.sourceforge.net/samples/horse.gts.gz">http://gts.sourceforge.net/samples/horse.gts.gz</A>
++	gunzip horse.gts.gz
++	&quot;&quot;&quot;
++	quit()
++
++if surf.is_closed():
++	pred=pack.inGtsSurface(surf)
++	aabb=pred.aabb()
++	dim0=aabb[1][0]-aabb[0][0]; radius=dim0/30. # get some characteristic dimension, use it for radius
++	O.bodies.append(pack.regularHexa(pred,radius=radius,gap=radius/4.,density=2000))
++	surf.translate(0,0,-(aabb[1][2]-aabb[0][2])) # move surface down so that facets underneath
++O.bodies.append(pack.gtsSurface2Facets(surf,wire=True))
++
++O.engines=[
++	BexResetter(),
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingFacet2AABB(),MetaInteractingGeometry2AABB()]),
++	InsertionSortCollider(),
++	InteractionDispatchers(
++		[ef2_Sphere_Sphere_Dem3DofGeom(),ef2_Facet_Sphere_Dem3DofGeom()],
++		[SimpleElasticRelationships()],
++		[ef2_Dem3Dof_Elastic_ElasticLaw()],
++	),
++	GravityEngine(gravity=[0,0,-1e4]),
++	NewtonsDampedLaw(damping=.1)
++]
++
++O.dt=1.5*utils.PWaveTimeStep()
++O.saveTmp()
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001056.html">[deprecated list] [Yade-dev] [svn] r1816 - trunk
+</A></li>
+	<LI>Next message: <A HREF="001069.html">[deprecated list] [Yade-dev] [svn] r1817 - in trunk:	gui/py	pkg/common/RenderingEngine/GLDrawInteractingGeometry	scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1057">[ date ]</a>
+              <a href="thread.html#1057">[ thread ]</a>
+              <a href="subject.html#1057">[ subject ]</a>
+              <a href="author.html#1057">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

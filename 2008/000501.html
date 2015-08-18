@@ -1,0 +1,224 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1570 - trunk/gui/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1570%20-%20trunk/gui/py&In-Reply-To=%3C200811150907.mAF97bFb017845%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000500.html">
+   <LINK REL="Next"  HREF="000502.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1570 - trunk/gui/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1570%20-%20trunk/gui/py&In-Reply-To=%3C200811150907.mAF97bFb017845%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1570 - trunk/gui/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Sat Nov 15 10:07:37 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000500.html">[deprecated list] [Yade-dev] [svn] r1569 - in trunk:	gui/py	pkg/common/RenderingEngine/GLDrawInteractingGeometry
+</A></li>
+        <LI>Next message: <A HREF="000502.html">[deprecated list] [Yade-dev] [svn] r1571 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#501">[ date ]</a>
+              <a href="thread.html#501">[ thread ]</a>
+              <a href="subject.html#501">[ subject ]</a>
+              <a href="author.html#501">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-11-15 10:07:37 +0100 (Sat, 15 Nov 2008)
+New Revision: 1570
+
+Modified:
+   trunk/gui/py/eudoxos.py
+   trunk/gui/py/yadeControl.cpp
+Log:
+1. Body().phys.refPos is directly accessible now (old way Body().phys['refSe3'[0:3]] still works, though)
+2. Labeled engines are at load-time or when Omega().engines are modified assigned to variables __builtins__.label;
+  for example
+	  
+	  Omega().engines=[DeusExMachina('NewtonsDampedLaw',{'label':'dlaw'})]
+
+	automatically create dlaw variable (in the builtin namespace) referring to that engine.
+	Unlike Omega().labeledEngine('dlaw'), which may point to a fictive engine after re-loading the simulation, for example,
+	this should be always kept in sync.
+
+	Adding labels for bodies (and maybe &quot;persistent&quot; interactions) is under consideration.
+
+
+
+Modified: trunk/gui/py/eudoxos.py
+===================================================================
+--- trunk/gui/py/eudoxos.py	2008-11-11 08:06:10 UTC (rev 1569)
++++ trunk/gui/py/eudoxos.py	2008-11-15 09:07:37 UTC (rev 1570)
+@@ -3,6 +3,8 @@
+ #
+ # I doubt there functions will be useful for anyone besides me.
+ #
++from yade.wrapper import *
++from math import *
+ 
+ def estimateStress(strain,cutoff=0.):
+ 	&quot;&quot;&quot;Use summed stored energy in contacts to compute macroscopic stress over the same volume, provided known strain.&quot;&quot;&quot;
+@@ -51,7 +53,7 @@
+ 	return -avgTransHomogenizedStrain/principalHomogenizedStrain,stress/principalHomogenizedStrain
+ 
+ 
+-def oofemTextExport():
++def oofemTextExport(fName):
+ 	&quot;&quot;&quot;Export simulation data in text format 
+ 	
+ 	The format is line-oriented as follows:
+@@ -67,6 +69,8 @@
+ 	material,bodies,interactions=[],[],[]
+ 	o=Omega()
+ 
++	f=open(fName,'w') # fail early on I/O problem
++
+ 	ph=o.interactions.nth(0).phys # some params are the same everywhere
+ 	material.append(&quot;%g %g&quot;%(ph['E'],ph['G']))
+ 	material.append(&quot;%g %g %g %g&quot;%(ph['epsCrackOnset'],ph['epsFracture'],1e50,ph['xiShear']))
+@@ -87,9 +91,10 @@
+ 		if not i.geom or not i.phys: continue
+ 		cp=i.geom['contactPoint']
+ 		interactions.append(&quot;%d %d %g %g %g %g&quot;%(i.id1,i.id2,cp[0],cp[1],cp[2],i.phys['crossSection']))
++	
++	f.write('\n'.join(material+[&quot;%d %d&quot;%(len(bodies),len(interactions))]+bodies+interactions))
++	f.close()
+ 
+-	return material+[&quot;%d %d&quot;%(len(bodies),len(interactions))]+bodies+interactions
+-
+ def oofemDirectExport(fileBase,title=None,negIds=[],posIds=[]):
+ 	from yade.wrapper import Omega
+ 	material,bodies,interactions=[],[],[]
+@@ -131,9 +136,31 @@
+ 	f.write('PiecewiseLinFunction 1 npoints 3 t 3 0. 10. 1000.  f(t) 3 0. 10. 1000.\n')
+ 
+ 
++def displacementsInteractionsExport(fName):
++	f=open(fName,'w')
++	print &quot;Writing body displacements and interaction strains.&quot;
++	o=Omega()
++	for b in o.bodies:
++		x0,y0,z0=b.phys['refSe3'][0:3]; x,y,z=b.phys.pos
++		rx,ry,rz,rr=b.phys['se3'][3:7]
++		f.write('%d xyz [ %g %g %g ] dxyz [ %g %g %g ] rxyz [ %g %g %g ] \n'%(b.id,x0,y0,z0,x-x0,y-y0,z-z0,rr*rx,rr*ry,rr*rz))
++	f.write('\n')
++	for i in o.interactions:
++		if not i['isReal']:continue
++		epsTNorm=sqrt(sum([e**2 for e in i.phys['epsT']]))
++		epsT='epsT [ %g %g %g ] %g'%(i.phys['epsT'][0],i.phys['epsT'][1],i.phys['epsT'][2],epsTNorm)
++		en=i.phys['epsN']; n=i.geom['normal']
++		epsN='epsN [ %g %g %g ] %g'%(en*n[0],en*n[1],en*n[2],en)
++		Fn='Fn [ %g %g %g ] %g'%(i.phys['normalForce'][0],i.phys['normalForce'][1],i.phys['normalForce'][2],i.phys['Fn'])
++		Fs='Fs [ %lf %lf %lf ] %lf'%(i.phys['shearForce'][0],i.phys['shearForce'][1],i.phys['shearForce'][2],sqrt(sum([fs**2 for fs in i.phys['shearForce']])))
++		f.write('%d %d %s %s %s %s\n'%(i.id1,i.id2,epsN,epsT,Fn,Fs))
++		# f.write('%d %d %g %g %g %g %g\n'%(i.id1,i.id2,i.phys['epsN'],i.phys['epsT'][0],i.phys['epsT'][1],i.phys['epsT'][2],epsTNorm))
++	f.close()
+ 
+ 
+ 
++
++
+ def eliminateJumps(eps,sigma,numSteep=10,gapWidth=5,movWd=40):
+ 	from matplotlib.mlab import movavg
+ 	from numpy import diff,abs
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-11-11 08:06:10 UTC (rev 1569)
++++ trunk/gui/py/yadeControl.cpp	2008-11-15 09:07:37 UTC (rev 1570)
+@@ -150,8 +150,10 @@
+ 		}
+ 	}
+ 	python::tuple pos_get(){const Vector3r&amp; p=proxee-&gt;se3.position; return python::make_tuple(p[0],p[1],p[2]);}
++	python::tuple refPos_get(){const Vector3r&amp; p=proxee-&gt;refSe3.position; return python::make_tuple(p[0],p[1],p[2]);}
+ 	python::tuple ori_get(){Vector3r axis; Real angle; proxee-&gt;se3.orientation.ToAxisAngle(axis,angle); return python::make_tuple(axis[0],axis[1],axis[2],angle);}
+ 	void pos_set(python::list l){if(python::len(l)!=3) throw invalid_argument(&quot;Wrong number of vector3 elements &quot;+lexical_cast&lt;string&gt;(python::len(l))+&quot;, should be 3&quot;); proxee-&gt;se3.position=Vector3r(python::extract&lt;double&gt;(l[0])(),python::extract&lt;double&gt;(l[1])(),python::extract&lt;double&gt;(l[2])());}
++	void refPos_set(python::list l){if(python::len(l)!=3) throw invalid_argument(&quot;Wrong number of vector3 elements &quot;+lexical_cast&lt;string&gt;(python::len(l))+&quot;, should be 3&quot;); proxee-&gt;refSe3.position=Vector3r(python::extract&lt;double&gt;(l[0])(),python::extract&lt;double&gt;(l[1])(),python::extract&lt;double&gt;(l[2])());}
+ 	void ori_set(python::list l){if(python::len(l)!=4) throw invalid_argument(&quot;Wrong number of quaternion elements &quot;+lexical_cast&lt;string&gt;(python::len(l))+&quot;, should be 4&quot;); proxee-&gt;se3.orientation=Quaternionr(Vector3r(python::extract&lt;double&gt;(l[0])(),python::extract&lt;double&gt;(l[1])(),python::extract&lt;double&gt;(l[2])()),python::extract&lt;double&gt;(l[3])());}
+ BASIC_PY_PROXY_TAIL;
+ 
+@@ -398,6 +400,16 @@
+ 			OMEGA.createSimulationLoop();
+ 		}
+ 	};
++	/* Create variables in python's __builtin__ namespace that correspond to labeled objects. At this moment, only engines can be labeled. */
++	void mapLabeledEntitiesToVariables(){
++		FOREACH(const shared_ptr&lt;Engine&gt;&amp; e, OMEGA.getRootBody()-&gt;engines){
++			if(!e-&gt;label.empty()){
++				PyGILState_STATE gstate; gstate = PyGILState_Ensure();
++				PyRun_SimpleString((&quot;__builtins__.&quot;+e-&gt;label+&quot;=Omega().labeledEngine('&quot;+e-&gt;label+&quot;')&quot;).c_str());
++				PyGILState_Release(gstate);
++			}
++		}
++	}
+ 
+ 	long iter(){ return OMEGA.getCurrentIteration();}
+ 	double simulationTime(){return OMEGA.getSimulationTime();}
+@@ -427,6 +439,7 @@
+ 		OMEGA.setSimulationFileName(fileName);
+ 		OMEGA.loadSimulation();
+ 		OMEGA.createSimulationLoop();
++		mapLabeledEntitiesToVariables();
+ 		LOG_DEBUG(&quot;LOAD!&quot;);
+ 	}
+ 	void reload(){	load(OMEGA.getSimulationFileName());}
+@@ -475,7 +488,7 @@
+ 	}
+ 
+ 	python::list engines_get(void){assertRootBody(); return anyEngines_get(OMEGA.getRootBody()-&gt;engines);}
+-	void engines_set(python::object egs){assertRootBody(); anyEngines_set(OMEGA.getRootBody()-&gt;engines,egs);}
++	void engines_set(python::object egs){assertRootBody(); anyEngines_set(OMEGA.getRootBody()-&gt;engines,egs); mapLabeledEntitiesToVariables(); }
+ 	python::list initializers_get(void){assertRootBody(); return anyEngines_get(OMEGA.getRootBody()-&gt;initializers);}
+ 	void initializers_set(python::object egs){assertRootBody(); anyEngines_set(OMEGA.getRootBody()-&gt;initializers,egs); OMEGA.getRootBody()-&gt;needsInitializers=true; }
+ 
+@@ -605,6 +618,7 @@
+ 		.add_property(&quot;blockedDOFs&quot;,&amp;pyPhysicalParameters::blockedDOFs_get,&amp;pyPhysicalParameters::blockedDOFs_set)
+ 		.add_property(&quot;pos&quot;,&amp;pyPhysicalParameters::pos_get,&amp;pyPhysicalParameters::pos_set)
+ 		.add_property(&quot;ori&quot;,&amp;pyPhysicalParameters::ori_get,&amp;pyPhysicalParameters::ori_set)
++		.add_property(&quot;refPos&quot;,&amp;pyPhysicalParameters::refPos_get,&amp;pyPhysicalParameters::refPos_set)
+ 		;
+ 	BASIC_PY_PROXY_WRAPPER(pyBoundingVolume,&quot;BoundingVolume&quot;);
+ 	BASIC_PY_PROXY_WRAPPER(pyInteractionGeometry,&quot;InteractionGeometry&quot;);
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000500.html">[deprecated list] [Yade-dev] [svn] r1569 - in trunk:	gui/py	pkg/common/RenderingEngine/GLDrawInteractingGeometry
+</A></li>
+	<LI>Next message: <A HREF="000502.html">[deprecated list] [Yade-dev] [svn] r1571 - trunk/gui/py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#501">[ date ]</a>
+              <a href="thread.html#501">[ thread ]</a>
+              <a href="subject.html#501">[ subject ]</a>
+              <a href="author.html#501">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

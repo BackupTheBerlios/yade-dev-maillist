@@ -1,0 +1,839 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1866 - in trunk/pkg/dem: .	Engine/EngineUnit	PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1866%20-%20in%20trunk/pkg/dem%3A%20.%0A%09Engine/EngineUnit%09PreProcessor&In-Reply-To=%3C200907142342.n6ENgxRl016208%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001208.html">
+   <LINK REL="Next"  HREF="001209.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1866 - in trunk/pkg/dem: .	Engine/EngineUnit	PreProcessor</H1>
+    <B>chareyre at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1866%20-%20in%20trunk/pkg/dem%3A%20.%0A%09Engine/EngineUnit%09PreProcessor&In-Reply-To=%3C200907142342.n6ENgxRl016208%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1866 - in trunk/pkg/dem: .	Engine/EngineUnit	PreProcessor">chareyre at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul 15 01:42:59 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001208.html">[deprecated list] [Yade-dev] Re : [svn] r1864 - trunk/pkg/dem
+</A></li>
+        <LI>Next message: <A HREF="001209.html">[deprecated list] [Yade-dev] [svn] r1867 -	trunk/pkg/common/DataClass
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1206">[ date ]</a>
+              <a href="thread.html#1206">[ thread ]</a>
+              <a href="subject.html#1206">[ subject ]</a>
+              <a href="author.html#1206">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: chareyre
+Date: 2009-07-15 01:42:58 +0200 (Wed, 15 Jul 2009)
+New Revision: 1866
+
+Removed:
+   trunk/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometryWater.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometryWater.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2AABBwater.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2AABBwater.hpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometryWater.cpp
+   trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometryWater.hpp
+   trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp
+   trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.hpp
+Modified:
+   trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+   trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+   trunk/pkg/dem/PreProcessor/TriaxialTestWater.hpp
+   trunk/pkg/dem/SConscript
+Log:
+- cleanup : removing unused (and useless) &quot;water&quot; variants of engines
+- some cleanup in recorders too 
+
+
+
+
+Deleted: trunk/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometryWater.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometryWater.cpp	2009-07-14 21:03:51 UTC (rev 1865)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometryWater.cpp	2009-07-14 23:42:58 UTC (rev 1866)
+@@ -1,190 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include &quot;InteractingBox2InteractingSphere4SpheresContactGeometryWater.hpp&quot;
+-#include &lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+-#include &lt;yade/pkg-common/InteractingSphere.hpp&gt;
+-#include &lt;yade/pkg-common/InteractingBox.hpp&gt;
+-
+-#include &lt;yade/lib-base/yadeWm3Extra.hpp&gt;
+-
+-//FIXME return type should be shared_ptr&lt;Interaction&gt;
+-bool InteractingBox2InteractingSphere4SpheresContactGeometryWater::go(		const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+-						const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+-						const Se3r&amp; se31,
+-						const Se3r&amp; se32,
+-						const shared_ptr&lt;Interaction&gt;&amp; c)
+-{
+-
+-	//if (se31.orientation == Quaternionr())
+-	//	return collideAABoxSphere(cm1,cm2,se31,se32,c);
+-	
+-	Vector3r l,t,p,q,r;
+-	bool onborder = false;
+-	Vector3r pt1,pt2,normal;
+-	Matrix3r axisT,axis;
+-	Real depth;
+-
+-	InteractingSphere* s = static_cast&lt;InteractingSphere*&gt;(cm2.get());
+-	InteractingBox* obb = static_cast&lt;InteractingBox*&gt;(cm1.get());
+-	
+-	Vector3r extents = obb-&gt;extents;
+-
+-	se31.orientation.ToRotationMatrix(axisT);
+-	axis = axisT.Transpose();
+-	
+-	p = se32.position-se31.position;
+-	
+-	l[0] = extents[0];
+-	t[0] = axis.GetRow(0).Dot(p); 
+-	if (t[0] &lt; -l[0]) { t[0] = -l[0]; onborder = true; }
+-	if (t[0] &gt;  l[0]) { t[0] =  l[0]; onborder = true; }
+-
+-	l[1] = extents[1];
+-	t[1] = axis.GetRow(1).Dot(p);
+-	if (t[1] &lt; -l[1]) { t[1] = -l[1]; onborder = true; }
+-	if (t[1] &gt;  l[1]) { t[1] =  l[1]; onborder = true; }
+-
+-	l[2] = extents[2];
+-	t[2] = axis.GetRow(2).Dot(p);
+-	if (t[2] &lt; -l[2]) { t[2] = -l[2]; onborder = true; }
+-	if (t[2] &gt;  l[2]) { t[2] =  l[2]; onborder = true; }
+-	
+-	if (!onborder) 
+-	{	//cerr &lt;&lt; &quot;!onborder&quot;;
+-		// sphere center inside box. find largest `t' value
+-		Real min = l[0]-fabs(t[0]);
+-		int mini = 0;
+-		for (int i=1; i&lt;3; i++) 
+-		{
+-			Real tt = l[i]-fabs(t[i]);
+-			if (tt &lt; min) 
+-			{
+-				min = tt;
+-				mini = i;
+-			}
+-		}
+-		
+-		// contact normal aligned with box edge along largest `t' value
+-		Vector3r tmp = Vector3r(0,0,0);
+-
+-		tmp[mini] = (t[mini] &gt; 0) ? 1.0 : -1.0;
+-		
+-		normal = axisT*tmp;
+-		
+-		normal.Normalize();
+-		
+-		pt1 = se32.position + normal*min;
+-		pt2 = se32.position - normal*s-&gt;radius;	
+-
+-		// FIXME : remove those uncommented lines
+-		shared_ptr&lt;SpheresContactGeometry&gt; scm;
+-		if (!c-&gt;interactionGeometry)
+-			scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
+-		else
+-			scm = dynamic_pointer_cast&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
+-			
+-		scm-&gt;contactPoint = 0.5*(pt1+pt2);
+-		scm-&gt;normal = pt1-pt2;
+-		scm-&gt;penetrationDepth = scm-&gt;normal.Normalize();
+-		//cerr &lt;&lt; &quot;Box/Sphere penetrationdepth= &quot;&lt;&lt; scm-&gt;normal.Normalize() &lt;&lt; endl;
+-		scm-&gt;radius1 = s-&gt;radius*2; /// c ici que le &quot;rayon&quot; du mur est fix&#65533;
+-		//cerr &lt;&lt; &quot;1&quot; &lt;&lt; endl;
+-		scm-&gt;radius2 = s-&gt;radius;
+-		c-&gt;interactionGeometry = scm;
+-		
+-// FIXME : uncommente those lines	
+-/////////////////////////////////////////////////
+-// 		shared_ptr&lt;SpheresContactGeometry&gt; scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
+-// 		scm-&gt;contactPoint = 0.5*(pt1+pt2);
+-// 		scm-&gt;normal = pt1-pt2;
+-// 		scm-&gt;penetrationDepth = scm-&gt;normal.Normalize();
+-// 		scm-&gt;radius1 = s-&gt;radius*2;
+-// 		scm-&gt;radius2 = s-&gt;radius;
+-// 		c-&gt;interactionGeometry = scm;
+-		
+-		return true;	
+-	}
+-	//FIXME : use else instead and signle return
+-	
+-	q = axisT*t;
+-	r = p - q;
+-	
+-	depth = s-&gt;radius-sqrt(r.Dot(r));
+-	//cerr &lt;&lt; &quot;depth = &quot; &lt;&lt; depth;
+-	
+-	if (depth &lt; 0) 
+-	{	//cerr &lt;&lt; &quot;depth &lt; 0&quot; ;
+-		return false;
+-	}
+-
+-	pt1 = q + se31.position;
+-
+-	normal = r;
+-	normal.Normalize();
+-
+-	pt2 = se32.position - normal * s-&gt;radius;
+-	
+-	// FIXME : remove those uncommented lines
+-	shared_ptr&lt;SpheresContactGeometry&gt; scm;
+-	//cerr &lt;&lt; &quot;scm = &quot; &lt;&lt; scm &lt;&lt; &quot; | c = &quot; &lt;&lt; c &lt;&lt; endl;
+-	
+-	if (!c-&gt;interactionGeometry)
+-	{	//cerr &lt;&lt; &quot;c-&gt;isNew&quot;;
+-		scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
+-	}
+-	else
+-	{	//cerr &lt;&lt; &quot;else&quot;;
+-		scm = dynamic_pointer_cast&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
+-	}
+-	scm-&gt;contactPoint = 0.5*(pt1+pt2);
+-	scm-&gt;normal = pt1-pt2;
+-	scm-&gt;penetrationDepth = scm-&gt;normal.Normalize();
+-	//cerr &lt;&lt; &quot;Box/Sphere penetrationdepth= &quot;&lt;&lt; scm-&gt;normal.Normalize() &lt;&lt; endl;
+-	scm-&gt;radius1 = s-&gt;radius*2; /// c ici que le &quot;rayon&quot; du mur est fix&#65533;
+-	//cerr &lt;&lt; &quot;2 &quot; &lt;&lt; endl;
+-	scm-&gt;radius2 = s-&gt;radius;
+-	c-&gt;interactionGeometry = scm;
+-// FIXME : uncommente those lines	
+-/////////////////////////////////////////////////	
+-// 	shared_ptr&lt;SpheresContactGeometry&gt; scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
+-// 	scm-&gt;contactPoint = 0.5*(pt1+pt2);
+-// 	scm-&gt;normal = pt1-pt2;
+-// 	scm-&gt;penetrationDepth = scm-&gt;normal.Normalize();
+-// 	scm-&gt;radius1 = s-&gt;radius*2;
+-// 	scm-&gt;radius2 = s-&gt;radius;
+-// 	c-&gt;interactionGeometry = scm;
+-	
+-	return true;
+-}
+-
+-
+-bool InteractingBox2InteractingSphere4SpheresContactGeometryWater::goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+-						const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+-						const Se3r&amp; se31,
+-						const Se3r&amp; se32,
+-						const shared_ptr&lt;Interaction&gt;&amp; c)
+-{
+-	bool isInteracting = go(cm2,cm1,se32,se31,c);
+-	if (isInteracting)
+-	{
+-		SpheresContactGeometry* scm = static_cast&lt;SpheresContactGeometry*&gt;(c-&gt;interactionGeometry.get());
+-		//Vector3r tmp = scm-&gt;closestsPoints[0].first;		
+-		//scm-&gt;closestsPoints[0].first = scm-&gt;closestsPoints[0].second;
+-		//scm-&gt;closestsPoints[0].second = tmp;
+-		scm-&gt;normal = -scm-&gt;normal;
+-		Real tmpR  = scm-&gt;radius1;
+-		scm-&gt;radius1 = scm-&gt;radius2;
+-		scm-&gt;radius2 = tmpR;
+-	}
+-	return isInteracting;
+-}
+-
+-YADE_PLUGIN();
+
+Deleted: trunk/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometryWater.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometryWater.hpp	2009-07-14 21:03:51 UTC (rev 1865)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometryWater.hpp	2009-07-14 23:42:58 UTC (rev 1866)
+@@ -1,38 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#pragma once
+-
+-#include &lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
+-
+-class InteractingBox2InteractingSphere4SpheresContactGeometryWater : public InteractionGeometryEngineUnit
+-{
+-	public :
+-		virtual bool go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+-					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+-					const Se3r&amp; se31,
+-					const Se3r&amp; se32,
+-					const shared_ptr&lt;Interaction&gt;&amp; c);
+-
+-		virtual bool goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+-					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+-					const Se3r&amp; se31,
+-					const Se3r&amp; se32,
+-					const shared_ptr&lt;Interaction&gt;&amp; c);
+-
+-	REGISTER_CLASS_NAME(InteractingBox2InteractingSphere4SpheresContactGeometryWater);
+-	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
+-
+-	DEFINE_FUNCTOR_ORDER_2D(InteractingBox,InteractingSphere);
+-};
+-
+-REGISTER_SERIALIZABLE(InteractingBox2InteractingSphere4SpheresContactGeometryWater);
+-
+-
+
+Deleted: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2AABBwater.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2AABBwater.cpp	2009-07-14 21:03:51 UTC (rev 1865)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2AABBwater.cpp	2009-07-14 23:42:58 UTC (rev 1866)
+@@ -1,30 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2006 by luc Scholtes                                    *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">luc.scholtes at hmg.inpg.fr</A>                                              *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+- 
+-#include &quot;InteractingSphere2AABBwater.hpp&quot;
+-#include &lt;yade/pkg-common/InteractingSphere.hpp&gt;
+-#include &lt;yade/pkg-common/AABB.hpp&gt;
+-
+-void InteractingSphere2AABBwater::go(	  const shared_ptr&lt;InteractingGeometry&gt;&amp; cm
+-				, shared_ptr&lt;BoundingVolume&gt;&amp; bv
+-				, const Se3r&amp; se3
+-				, const Body*	)
+-{
+-	InteractingSphere* sphere = static_cast&lt;InteractingSphere*&gt;(cm.get());
+-	AABB* aabb = static_cast&lt;AABB*&gt;(bv.get());
+-	
+-	aabb-&gt;center = se3.position;
+-	
+-	aabb-&gt;halfSize = Vector3r(1.5*sphere-&gt;radius,1.5*sphere-&gt;radius,1.5*sphere-&gt;radius);
+-	
+-	aabb-&gt;min = aabb-&gt;center-aabb-&gt;halfSize;
+-	aabb-&gt;max = aabb-&gt;center+aabb-&gt;halfSize;	
+-
+-}
+-	
+-YADE_PLUGIN();
+
+Deleted: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2AABBwater.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2AABBwater.hpp	2009-07-14 21:03:51 UTC (rev 1865)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2AABBwater.hpp	2009-07-14 23:42:58 UTC (rev 1866)
+@@ -1,27 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+- 
+-#pragma once
+-
+-#include &lt;yade/pkg-common/BoundingVolumeEngineUnit.hpp&gt;
+-
+-class InteractingSphere2AABBwater : public BoundingVolumeEngineUnit
+-{
+-	public :
+-		void go(	  const shared_ptr&lt;InteractingGeometry&gt;&amp; cm
+-				, shared_ptr&lt;BoundingVolume&gt;&amp; bv
+-				, const Se3r&amp; se3
+-				, const Body*	);
+-	FUNCTOR2D(InteractingSphere,AABB);
+-	REGISTER_CLASS_NAME(InteractingSphere2AABBwater);
+-	REGISTER_BASE_CLASS_NAME(BoundingVolumeEngineUnit);
+-};
+-
+-REGISTER_SERIALIZABLE(InteractingSphere2AABBwater);
+-
+-
+
+Deleted: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometryWater.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometryWater.cpp	2009-07-14 21:03:51 UTC (rev 1865)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometryWater.cpp	2009-07-14 23:42:58 UTC (rev 1866)
+@@ -1,94 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2006 by luc Scholtes                                    *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">luc.scholtes at hmg.inpg.fr</A>                                              *
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include &quot;InteractingSphere2InteractingSphere4SpheresContactGeometryWater.hpp&quot;
+-
+-#include &lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+-#include &lt;yade/pkg-common/InteractingSphere.hpp&gt;
+-
+-
+-
+-bool InteractingSphere2InteractingSphere4SpheresContactGeometryWater::go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+-							const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+-							const Se3r&amp; se31,
+-							const Se3r&amp; se32,
+-							const shared_ptr&lt;Interaction&gt;&amp; c)
+-{
+-	InteractingSphere* s1 = static_cast&lt;InteractingSphere*&gt;(cm1.get());
+-	InteractingSphere* s2 = static_cast&lt;InteractingSphere*&gt;(cm2.get());
+-
+-	/// pb ???
+-	Vector3r normal = se32.position-se31.position;
+-	Real penetrationDepth = s1-&gt;radius+s2-&gt;radius-normal.Normalize();
+-	
+-	shared_ptr&lt;SpheresContactGeometry&gt; scm;
+-	
+-	if (c-&gt;interactionGeometry)	
+-	{
+-		scm = dynamic_pointer_cast&lt;SpheresContactGeometry&gt;(c-&gt;interactionGeometry);
+-	}
+-
+-	// BEGIN .......  FIXME FIXME	- wrong hack, to make cohesion work.
+-	
+-	else	
+-		
+-	scm = shared_ptr&lt;SpheresContactGeometry&gt;(new SpheresContactGeometry());
+-		
+-		
+-// 	if (penetrationDepth&gt;0)
+-	{
+-		scm-&gt;contactPoint = se31.position+(s1-&gt;radius-0.5*penetrationDepth)*normal;//0.5*(pt1+pt2);
+-		scm-&gt;normal = normal;
+-		scm-&gt;penetrationDepth = penetrationDepth;
+-		scm-&gt;radius1 = s1-&gt;radius;
+-		scm-&gt;radius2 = s2-&gt;radius;
+-		
+-		// ?????
+-		if (!c-&gt;interactionGeometry)
+-		c-&gt;interactionGeometry = scm;
+-	
+-	return true;
+-		
+-	}
+-		
+-// 	else	 //d&#65533;finition de g&#65533;om&#65533;trie d'interaction pour le cas ou !contact
+-// 	{
+-// 	scm-&gt;normal = normal;
+-// 	scm-&gt;penetrationDepth = penetrationDepth;
+-// 	scm-&gt;radius1 = s1-&gt;radius;
+-// 	scm-&gt;radius2 = s2-&gt;radius;
+-// 	
+-// 	//linkGeometry-&gt;normal.normalize();
+-// 	//linkGeometry-&gt;radius1 = s1-&gt;radius;
+-// 	//linkGeometry-&gt;radius2 = s2-&gt;radius;
+-// 	
+-// 	if (!c-&gt;interactionGeometry)
+-// 		c-&gt;interactionGeometry = scm;
+-// 		
+-// 	//if (!c-&gt;interactionGeometry)
+-// 	//	c-&gt;interactionGeometry = linkGeometry;
+-// 	
+-// 	return true;
+-// 	//return false;
+-// 	}
+-}
+-
+-
+-
+-bool InteractingSphere2InteractingSphere4SpheresContactGeometryWater::goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+-								const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+-								const Se3r&amp; se31,
+-								const Se3r&amp; se32,
+-								const shared_ptr&lt;Interaction&gt;&amp; c)
+-{
+-	return go(cm1,cm2,se31,se32,c);
+-}
+-
+-YADE_PLUGIN();
+
+Deleted: trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometryWater.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometryWater.hpp	2009-07-14 21:03:51 UTC (rev 1865)
++++ trunk/pkg/dem/Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometryWater.hpp	2009-07-14 23:42:58 UTC (rev 1866)
+@@ -1,37 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#pragma once
+-
+-#include &lt;yade/pkg-common/InteractionGeometryEngineUnit.hpp&gt;
+-
+-class InteractingSphere2InteractingSphere4SpheresContactGeometryWater : public InteractionGeometryEngineUnit
+-{
+-	public :
+-		virtual bool go(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+-					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+-					const Se3r&amp; se31,
+-					const Se3r&amp; se32,
+-					const shared_ptr&lt;Interaction&gt;&amp; c);
+-		virtual bool goReverse(	const shared_ptr&lt;InteractingGeometry&gt;&amp; cm1,
+-					const shared_ptr&lt;InteractingGeometry&gt;&amp; cm2,
+-					const Se3r&amp; se31,
+-					const Se3r&amp; se32,
+-					const shared_ptr&lt;Interaction&gt;&amp; c);
+-
+-	FUNCTOR2D(InteractingSphere,InteractingSphere);
+-
+-	REGISTER_CLASS_NAME(InteractingSphere2InteractingSphere4SpheresContactGeometryWater);
+-	REGISTER_BASE_CLASS_NAME(InteractionGeometryEngineUnit);
+-
+-	DEFINE_FUNCTOR_ORDER_2D(InteractingSphere,InteractingSphere);
+-};
+-
+-REGISTER_SERIALIZABLE(InteractingSphere2InteractingSphere4SpheresContactGeometryWater);
+-
+-
+
+Deleted: trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp	2009-07-14 21:03:51 UTC (rev 1865)
++++ trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp	2009-07-14 23:42:58 UTC (rev 1866)
+@@ -1,134 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include &quot;MacroMicroElasticRelationshipsWater.hpp&quot;
+-#include &lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+-#include &lt;yade/pkg-dem/CapillaryParameters.hpp&gt;
+-#include &lt;yade/pkg-dem/ElasticContactInteraction.hpp&gt;
+-#include &lt;yade/pkg-dem/SDECLinkGeometry.hpp&gt; // FIXME - I can't dispatch by SDECLinkGeometry &lt;-&gt; SpheresContactGeometry !!?
+-#include &lt;yade/pkg-dem/SDECLinkPhysics.hpp&gt; // FIXME
+-#include &lt;yade/pkg-dem/BodyMacroParameters.hpp&gt;
+-#include &lt;yade/core/Omega.hpp&gt;
+-#include &lt;yade/core/MetaBody.hpp&gt;
+-
+-
+-MacroMicroElasticRelationshipsWater::MacroMicroElasticRelationshipsWater()
+-{
+-	alpha 	= 2.5;
+-	beta 	= 2.0;
+-	gamma 	= 2.65;
+-}
+-
+-
+-void MacroMicroElasticRelationshipsWater::registerAttributes()
+-{
+-	REGISTER_ATTRIBUTE(alpha);
+-	REGISTER_ATTRIBUTE(beta);
+-	REGISTER_ATTRIBUTE(gamma);
+-}
+-
+-
+-void MacroMicroElasticRelationshipsWater::go(	  const shared_ptr&lt;PhysicalParameters&gt;&amp; b1 // BodyMacroParameters
+-					, const shared_ptr&lt;PhysicalParameters&gt;&amp; b2 // BodyMacroParameters
+-					, const shared_ptr&lt;Interaction&gt;&amp; interaction)
+-{
+-	BodyMacroParameters* sdec1 = static_cast&lt;BodyMacroParameters*&gt;(b1.get());
+-	BodyMacroParameters* sdec2 = static_cast&lt;BodyMacroParameters*&gt;(b2.get());
+-	SpheresContactGeometry* interactionGeometry = static_cast&lt;SpheresContactGeometry*&gt;(interaction-&gt;interactionGeometry.get());
+-	
+-	if(interactionGeometry) // so it is SpheresContactGeometry  - NON PERMANENT LINK
+-	{
+-
+-/* OLD VERSION  this is a LinearContactModel, different class, model different that MicroMacroElasticRelationships
+-another would be HerzMindlinContactModel
+-
+-		shared_ptr&lt;ElasticContactInteraction&gt; contactPhysics;
+-		
+-		if ( interaction-&gt;isNew)
+-		{
+-			interaction-&gt;interactionPhysics = shared_ptr&lt;ElasticContactInteraction&gt;(new ElasticContactInteraction());
+-			contactPhysics = dynamic_pointer_cast&lt;ElasticContactInteraction&gt;(interaction-&gt;interactionPhysics);
+-			
+-			contactPhysics-&gt;initialKn			= 2*(sdec1-&gt;kn*sdec2-&gt;kn)/(sdec1-&gt;kn+sdec2-&gt;kn);
+-			contactPhysics-&gt;initialKs			= 2*(sdec1-&gt;ks*sdec2-&gt;ks)/(sdec1-&gt;ks+sdec2-&gt;ks);
+-			contactPhysics-&gt;prevNormal 			= interactionGeometry-&gt;normal;
+-			contactPhysics-&gt;initialEquilibriumDistance	= interactionGeometry-&gt;radius1+interactionGeometry-&gt;radius2;
+-		}
+-		else
+-			contactPhysics = dynamic_pointer_cast&lt;ElasticContactInteraction&gt;(interaction-&gt;interactionPhysics);
+-		
+-		contactPhysics-&gt;kn = contactPhysics-&gt;initialKn;
+-		contactPhysics-&gt;ks = contactPhysics-&gt;initialKs;
+-		contactPhysics-&gt;equilibriumDistance = contactPhysics-&gt;initialEquilibriumDistance;
+-*/
+-		if(!interaction-&gt;interactionPhysics)
+-		{
+-			interaction-&gt;interactionPhysics = shared_ptr&lt;CapillaryParameters&gt;(new CapillaryParameters());
+-			CapillaryParameters* contactPhysics = static_cast&lt;CapillaryParameters*&gt;(interaction-&gt;interactionPhysics.get());
+-
+-			Real Ea 	= sdec1-&gt;young;
+-			Real Eb 	= sdec2-&gt;young;
+-			//Real Va 	= sdec1-&gt;poisson;
+-			//Real Vb 	= sdec2-&gt;poisson;
+-			Real Da 	= interactionGeometry-&gt;radius1; // FIXME - multiply by factor of sphere interaction distance (so sphere intaracts at bigger range that its geometrical size)
+-			Real Db 	= interactionGeometry-&gt;radius2; // FIXME - as above
+-			Real fa 	= sdec1-&gt;frictionAngle;
+-			Real fb 	= sdec2-&gt;frictionAngle;
+-
+-			//Real Eab	= 2*Ea*Eb/(Ea+Eb);
+-			//Real Vab	= 2*Va*Vb/(Va+Vb);
+-
+-			Real Dinit 	= Da+Db; 			// FIXME - is it just a sum?
+-			//Real Sinit 	= Mathr::PI * std::pow( std::min(Da,Db) , 2);
+-
+-			//Real Kn						= (Eab*Sinit/Dinit)*( (1+alpha)/(beta*(1+Vab) + gamma*(1-alpha*Vab) ) );
+-			Real ksOnkn = 0.5;
+-			Real Kn = 4*Ea*Da*Eb*Db/(2*(Ea*Da+Eb*Db));//harmonic average of two stiffnesses
+-//cerr &lt;&lt; &quot;Kn: &quot; &lt;&lt; Kn &lt;&lt; endl;
+-			contactPhysics-&gt;initialKn			= Kn;
+-			//contactPhysics-&gt;initialKs			= Kn*(1-alpha*Vab)/(1+Vab);
+-			contactPhysics-&gt;initialKs			= Kn*ksOnkn;
+-//cerr &lt;&lt; &quot;Ks: &quot; &lt;&lt;       contactPhysics-&gt;initialKs			&lt;&lt; endl;
+-			//contactPhysics-&gt;frictionAngle			= (fa+fb)*0.5; // FIXME - this is actually a waste of memory space, just like initialKs and initialKn
+-			contactPhysics-&gt;frictionAngle			= std::min(fa,fb);
+-			contactPhysics-&gt;tangensOfFrictionAngle		= std::tan(contactPhysics-&gt;frictionAngle); 
+-
+-			contactPhysics-&gt;prevNormal 			= interactionGeometry-&gt;normal;
+-			contactPhysics-&gt;initialEquilibriumDistance	= Dinit;			
+-
+-			contactPhysics-&gt;kn = contactPhysics-&gt;initialKn;
+-			contactPhysics-&gt;ks = contactPhysics-&gt;initialKs;
+-			contactPhysics-&gt;equilibriumDistance = contactPhysics-&gt;initialEquilibriumDistance;
+-
+-		}
+-		else
+-		{	// FIXME - are those lines necessary ???? what they are doing in fact ???
+-			CapillaryParameters* contactPhysics = static_cast&lt;CapillaryParameters*&gt;(interaction-&gt;interactionPhysics.get());
+-
+-			contactPhysics-&gt;kn = contactPhysics-&gt;initialKn;
+-			contactPhysics-&gt;ks = contactPhysics-&gt;initialKs;
+-			contactPhysics-&gt;equilibriumDistance = contactPhysics-&gt;initialEquilibriumDistance;
+-		}	
+-		
+-	}
+-	else   // this is PERMANENT LINK because previous static_cast failed, dispatcher should do this job
+-	{
+-		SDECLinkGeometry* sdecLinkGeometry =  static_cast&lt;SDECLinkGeometry*&gt;(interaction-&gt;interactionGeometry.get());
+-		if (sdecLinkGeometry)
+-		{		
+-			SDECLinkPhysics* linkPhysics = static_cast&lt;SDECLinkPhysics*&gt;(interaction-&gt;interactionPhysics.get());
+-	//		linkPhysics-&gt;frictionAngle 		= ?? //FIXME - uninitialized 
+-			linkPhysics-&gt;kn 			= linkPhysics-&gt;initialKn;
+-			linkPhysics-&gt;ks 			= linkPhysics-&gt;initialKs;
+-			linkPhysics-&gt;equilibriumDistance 	= linkPhysics-&gt;initialEquilibriumDistance;
+-		}
+-	}
+-};
+-YADE_PLUGIN();
+
+Deleted: trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.hpp	2009-07-14 21:03:51 UTC (rev 1865)
++++ trunk/pkg/dem/Engine/EngineUnit/MacroMicroElasticRelationshipsWater.hpp	2009-07-14 23:42:58 UTC (rev 1866)
+@@ -1,38 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#pragma once
+-
+-#include &lt;yade/pkg-common/InteractionPhysicsEngineUnit.hpp&gt;
+-
+-class MacroMicroElasticRelationshipsWater : public InteractionPhysicsEngineUnit
+-{
+-	public :
+-		Real		 alpha
+-				,beta
+-				,gamma;
+-
+-		MacroMicroElasticRelationshipsWater();
+-
+-		virtual void go(	const shared_ptr&lt;PhysicalParameters&gt;&amp; b1,
+-					const shared_ptr&lt;PhysicalParameters&gt;&amp; b2,
+-					const shared_ptr&lt;Interaction&gt;&amp; interaction);
+-
+-	protected :
+-		virtual void registerAttributes();
+-
+-	FUNCTOR2D(BodyMacroParameters,BodyMacroParameters);
+-	
+-	REGISTER_CLASS_NAME(MacroMicroElasticRelationshipsWater);
+-	REGISTER_BASE_CLASS_NAME(InteractionPhysicsEngineUnit);
+-
+-};
+-
+-REGISTER_SERIALIZABLE(MacroMicroElasticRelationshipsWater);
+-
+-
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-07-14 21:03:51 UTC (rev 1865)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.cpp	2009-07-14 23:42:58 UTC (rev 1866)
+@@ -1,9 +1,5 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
+-*  Copyright (C) 2007 by Bruno Chareyre		                         *
++*  Copyright (C) 2006 by Bruno Chareyre		                         *
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at hmg.inpg.fr</A>                                            *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTest.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2009-07-14 21:03:51 UTC (rev 1865)
++++ trunk/pkg/dem/PreProcessor/TriaxialTest.hpp	2009-07-14 23:42:58 UTC (rev 1866)
+@@ -1,9 +1,5 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
+-*  Copyright (C) 2007 by Bruno Chareyre		                         *
++*  Copyright (C) 2006 by Bruno Chareyre		                         *
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at hmg.inpg.fr</A>                                            *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2009-07-14 21:03:51 UTC (rev 1865)
++++ trunk/pkg/dem/PreProcessor/TriaxialTestWater.cpp	2009-07-14 23:42:58 UTC (rev 1866)
+@@ -1,10 +1,8 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
+-*  Copyright (C) 2007 by Bruno Chareyre		                         *
++*  Copyright (C) 2006 by Bruno Chareyre		                         *
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at hmg.inpg.fr</A>                                            *
++*  Copyright (C) 2006 by luc Scholtes                                    *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">luc.scholtes at hmg.inpg.fr</A>                                              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+
+Modified: trunk/pkg/dem/PreProcessor/TriaxialTestWater.hpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TriaxialTestWater.hpp	2009-07-14 21:03:51 UTC (rev 1865)
++++ trunk/pkg/dem/PreProcessor/TriaxialTestWater.hpp	2009-07-14 23:42:58 UTC (rev 1866)
+@@ -1,10 +1,8 @@
+ /*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
+-*  Copyright (C) 2004 by Janek Kozicki                                   *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">cosurgi at berlios.de</A>                                                    *
+-*  Copyright (C) 2007 by Bruno Chareyre		                         *
++*  Copyright (C) 2006 by Bruno Chareyre		                         *
+ *  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">bruno.chareyre at hmg.inpg.fr</A>                                            *
++*  Copyright (C) 2006 by luc Scholtes                                    *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">luc.scholtes at hmg.inpg.fr</A>                                              *
+ *                                                                        *
+ *  This program is free software; it is licensed under the terms of the  *
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2009-07-14 21:03:51 UTC (rev 1865)
++++ trunk/pkg/dem/SConscript	2009-07-14 23:42:58 UTC (rev 1866)
+@@ -849,35 +849,6 @@
+ 		['DataClass/InteractionPhysics/CapillaryParameters.cpp'],
+ 		LIBS=env['LIBS']+['ElasticContactInteraction']),
+ 
+-#env.SharedLibrary('InteractingSphere2InteractingSphere4SpheresContactGeometryWater',
+-		#['Engine/EngineUnit/InteractingSphere2InteractingSphere4SpheresContactGeometryWater.cpp'],
+-		#LIBS=env['LIBS']+['SpheresContactGeometry',
+-			#'InteractionGeometryMetaEngine',
+-			#'InteractingSphere' ]),
+-
+-#env.SharedLibrary('InteractingBox2InteractingSphere4SpheresContactGeometryWater',
+-		#['Engine/EngineUnit/InteractingBox2InteractingSphere4SpheresContactGeometryWater.cpp'],
+-		#LIBS=env['LIBS']+['SpheresContactGeometry',
+-			#'InteractionGeometryMetaEngine',
+-			#'InteractingSphere',
+-			#'InteractingBox' ]),
+-
+-#env.SharedLibrary('MacroMicroElasticRelationshipsWater',
+-		#['Engine/EngineUnit/MacroMicroElasticRelationshipsWater.cpp'],
+-		#LIBS=env['LIBS']+['SDECLinkPhysics',
+-			#'SDECLinkGeometry',
+-			#'ElasticContactInteraction',
+-			#'SpheresContactGeometry',
+-			#'BodyMacroParameters',
+-			#'RigidBodyParameters',
+-			#'ParticleParameters',
+-			#'InteractionPhysicsMetaEngine',
+-			#'CapillaryParameters']),
+-
+-#env.SharedLibrary('InteractingSphere2AABBwater',
+-		#['Engine/EngineUnit/InteractingSphere2AABBwater.cpp'],
+-		#LIBS=env['LIBS']+['InteractingSphere', 'AABB', 'BoundingVolumeMetaEngine']),
+-		
+ env.SharedLibrary('HydraulicForceEngine',
+ 		['Engine/DeusExMachina/HydraulicForceEngine.cpp'],
+ 		LIBS=env['LIBS']+['yade-base',   'ParticleParameters', 'CohesiveFrictionalBodyParameters', 'TriaxialCompressionEngine', 'GravityEngines'],
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001208.html">[deprecated list] [Yade-dev] Re : [svn] r1864 - trunk/pkg/dem
+</A></li>
+	<LI>Next message: <A HREF="001209.html">[deprecated list] [Yade-dev] [svn] r1867 -	trunk/pkg/common/DataClass
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1206">[ date ]</a>
+              <a href="thread.html#1206">[ thread ]</a>
+              <a href="subject.html#1206">[ subject ]</a>
+              <a href="author.html#1206">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

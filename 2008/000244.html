@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] cool! &amp; postprocessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20cool%21%20%26%20postprocessor&In-Reply-To=%3C485641FB.4040107%40hmg.inpg.fr%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000243.html">
+   <LINK REL="Next"  HREF="000245.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] cool! &amp; postprocessor</H1>
+    <B>Bruno Chareyre</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20cool%21%20%26%20postprocessor&In-Reply-To=%3C485641FB.4040107%40hmg.inpg.fr%3E"
+       TITLE="[yade-dev] cool! &amp; postprocessor">bruno.chareyre at hmg.inpg.fr
+       </A><BR>
+    <I>Mon Jun 16 12:35:39 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000243.html">[yade-dev] cool! &amp; postprocessor
+</A></li>
+        <LI>Next message: <A HREF="000245.html">[yade-dev] [Fwd: Re: [Berlios-contact] sheep:/usr/bin/svnserver is not eXectubale for	users]
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#244">[ date ]</a>
+              <a href="thread.html#244">[ thread ]</a>
+              <a href="subject.html#244">[ subject ]</a>
+              <a href="author.html#244">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>sega a &#233;crit :
+&gt;<i>    
+</I>&gt;<i>   
+</I>&gt;&gt;<i> The problem is somebody else will want to draw velocity, stiffness, 
+</I>&gt;&gt;<i> volume of Voronoi cells, local deformation, or anything else I don't 
+</I>&gt;&gt;<i> even suspect. So, saving all possible modelling results in periodic 
+</I>&gt;&gt;<i> snapshots is impossible.
+</I>&gt;&gt;<i> Off-screen rendering sounds more realistic to me, only problem is you 
+</I>&gt;&gt;<i> will have to set camera position before the simulation.
+</I>&gt;&gt;<i>     
+</I>&gt;<i>
+</I>&gt;<i> I think that really when planning the simulation to select parameters that 
+</I>&gt;<i> will be needed in the future for postprocessing. It is clear that in the 
+</I>&gt;<i> future if I want to work only with the Voronoi cells, I need only to save 
+</I>&gt;<i> these values and nothing more. And in the future I always be able to 
+</I>&gt;<i> visualize this Voronoi cells and see it from a new angle (clipping plane, 
+</I>&gt;<i> color scheme, etc...). (By the way, not necessarily to save velocity. It can 
+</I>&gt;<i> be obtained from two consecutive positions snapshots.). 
+</I>&gt;<i> In doing so, off-screen rendering sounds fine and in this case: you can 
+</I>&gt;<i> configure a new look and also start to render the scene in background.
+</I>&gt;<i> If I will have to set camera only before the simulation, I will have to set 
+</I>&gt;<i> _all_ cameras (all foreshortening, clipping planes, color shemes).To me, this 
+</I>&gt;<i> is not so easy... In my opinion, it is better to separate the simulation and 
+</I>&gt;<i> visualization. How do you think?
+</I>&gt;<i>
+</I>&gt;<i>   
+</I>I agree that separating simulation and visualisation would be better 
+(besides it needs more file management before actually getting the 
+animation), but the problem is (I think) it needs more coding.
+
+Offscreen rendering needs no new method. Anything drawable in Yade can 
+be seen on snapshots, directly converted from graphic card output to 
+image file (for setting camera and other QGL parameters, I guess we can 
+use files like the preferences.xml we have in ~/.yade).
+
+If we go for separating simulation/rendering, we need 2 more methods for 
+each type of drawable : writing GL object to file + loading GL object 
+from file, and we also need the code and interface for tuning which 
+types of objects we want to save in snapshots.
+Sounds more difficult, but of course it has the advantage of being a lot 
+more versatile.
+
+Actually, both approaches can co-exist in Yade. So, if you feel like 
+coding the saving/loading of velocity field in text snapshots, it will 
+be usefull. And if later we have offscreen rendering, it will be a quick 
+solution for all those objects that are not included in text snapshots.
+
+Bruno
+
+-- 
+ 
+_______________
+Chareyre Bruno
+Maitre de conference
+
+Institut National Polytechnique de Grenoble
+Laboratoire 3S (Soils Solids Structures) - bureau E145
+BP 53 - 38041, Grenoble cedex 9 - France
+T&#233;l : 33 4 56 52 86 21
+Fax : 33 4 76 82 70 43
+________________
+
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000243.html">[yade-dev] cool! &amp; postprocessor
+</A></li>
+	<LI>Next message: <A HREF="000245.html">[yade-dev] [Fwd: Re: [Berlios-contact] sheep:/usr/bin/svnserver is not eXectubale for	users]
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#244">[ date ]</a>
+              <a href="thread.html#244">[ thread ]</a>
+              <a href="subject.html#244">[ subject ]</a>
+              <a href="author.html#244">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

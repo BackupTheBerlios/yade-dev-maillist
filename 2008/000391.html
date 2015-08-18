@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1529 - in	trunk:	core/DefaultContainerImplementations gui/py	pkg/common/Container
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1529%20-%20in%0A%09trunk%3A%09core/DefaultContainerImplementations%20gui/py%0A%09pkg/common/Container&In-Reply-To=%3C200809260942.m8Q9gEuD004542%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000481.html">
+   <LINK REL="Next"  HREF="000395.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1529 - in	trunk:	core/DefaultContainerImplementations gui/py	pkg/common/Container</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1529%20-%20in%0A%09trunk%3A%09core/DefaultContainerImplementations%20gui/py%0A%09pkg/common/Container&In-Reply-To=%3C200809260942.m8Q9gEuD004542%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1529 - in	trunk:	core/DefaultContainerImplementations gui/py	pkg/common/Container">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Sep 26 11:42:14 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000481.html">[deprecated list] [Yade-dev] ContactLaw1
+</A></li>
+        <LI>Next message: <A HREF="000395.html">[deprecated list] [Yade-dev] r1529 - in trunk:	core/DefaultContainerImplementations gui/py pkg/common/Container
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#391">[ date ]</a>
+              <a href="thread.html#391">[ thread ]</a>
+              <a href="subject.html#391">[ subject ]</a>
+              <a href="author.html#391">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2008-09-26 11:42:13 +0200 (Fri, 26 Sep 2008)
+New Revision: 1529
+
+Modified:
+   trunk/core/DefaultContainerImplementations/BodyRedirectionVector.cpp
+   trunk/gui/py/yadeControl.cpp
+   trunk/pkg/common/Container/BodyAssocVector.cpp
+Log:
+1. Avoid compiler warning in optimized builds from pyOmega
+2. Body containers now allocate the lowest possible ID for each added body. The old behavior was to allocate the first free ID greater than the ID of the body, if it was already set. Please let me know if this is critical for someone. We can do things like:
+
+	# remove all bodies except spheres (changes IDs)
+	o.bodies.replace([b for o.bodies if b.shape.name=='Sphere'])
+
+
+
+
+Modified: trunk/core/DefaultContainerImplementations/BodyRedirectionVector.cpp
+===================================================================
+--- trunk/core/DefaultContainerImplementations/BodyRedirectionVector.cpp	2008-09-26 08:02:12 UTC (rev 1528)
++++ trunk/core/DefaultContainerImplementations/BodyRedirectionVector.cpp	2008-09-26 09:42:13 UTC (rev 1529)
+@@ -89,8 +89,8 @@
+ 
+ 	if( used )
+ 	{
+-		unsigned int newPosition = position;
+-		// finds the first free key, which is bigger than id.
++		// finds the first free key (was: which is bigger than id... why bigger??)
++		unsigned int newPosition = 0; // was: newPosition=position;
+ 		bool newUsed = true;
+ 		while( newUsed )
+ 		{
+
+Modified: trunk/gui/py/yadeControl.cpp
+===================================================================
+--- trunk/gui/py/yadeControl.cpp	2008-09-26 08:02:12 UTC (rev 1528)
++++ trunk/gui/py/yadeControl.cpp	2008-09-26 09:42:13 UTC (rev 1529)
+@@ -284,6 +284,7 @@
+ 	}
+ 	body_id_t insert(pyBody b){return proxee-&gt;insert(b.proxee);}
+ 	python::list insertList(python::list bb){python::list ret; for(int i=0; i&lt;len(bb); i++){ret.append(insert(python::extract&lt;pyBody&gt;(bb[i])()));} return ret;}
++	python::list replace(python::list bb){proxee-&gt;clear(); return insertList(bb);}
+ 	long length(){return proxee-&gt;size();}
+ 	void clear(){proxee-&gt;clear();}
+ };
+@@ -407,8 +408,7 @@
+ 	void run(long int numIter=-1,bool doWait=false){
+ 		if(numIter&gt;0) OMEGA.getRootBody()-&gt;stopAtIteration=OMEGA.getCurrentIteration()+numIter;
+ 		OMEGA.startSimulationLoop();
+-		long toGo=OMEGA.getRootBody()-&gt;stopAtIteration-OMEGA.getCurrentIteration();
+-		LOG_DEBUG(&quot;RUN&quot;&lt;&lt;(toGo&gt;0?string(&quot; (&quot;+lexical_cast&lt;string&gt;(toGo)+&quot; to go)&quot;):string(&quot;&quot;))&lt;&lt;&quot;!&quot;);
++		LOG_DEBUG(&quot;RUN&quot;&lt;&lt;((OMEGA.getRootBody()-&gt;stopAtIteration-OMEGA.getCurrentIteration())&gt;0?string(&quot; (&quot;+lexical_cast&lt;string&gt;(OMEGA.getRootBody()-&gt;stopAtIteration-OMEGA.getCurrentIteration())+&quot; to go)&quot;):string(&quot;&quot;))&lt;&lt;&quot;!&quot;);
+ 		if(doWait) wait();
+ 	}
+ 	void pause(){Py_BEGIN_ALLOW_THREADS; OMEGA.stopSimulationLoop(); Py_END_ALLOW_THREADS; LOG_DEBUG(&quot;PAUSE!&quot;);}
+@@ -545,7 +545,8 @@
+ 		.def(&quot;__len__&quot;,&amp;pyBodyContainer::length)
+ 		.def(&quot;append&quot;,&amp;pyBodyContainer::insert)
+ 		.def(&quot;append&quot;,&amp;pyBodyContainer::insertList)
+-		.def(&quot;clear&quot;, &amp;pyBodyContainer::clear);
++		.def(&quot;clear&quot;, &amp;pyBodyContainer::clear)
++		.def(&quot;replace&quot;,&amp;pyBodyContainer::replace);
+ 	boost::python::class_&lt;pyInteractionContainer&gt;(&quot;InteractionContainer&quot;,python::init&lt;pyInteractionContainer&amp;&gt;())
+ 		.def(&quot;__iter__&quot;,&amp;pyInteractionContainer::pyIter)
+ 		.def(&quot;__getitem__&quot;,&amp;pyInteractionContainer::pyGetitem)
+
+Modified: trunk/pkg/common/Container/BodyAssocVector.cpp
+===================================================================
+--- trunk/pkg/common/Container/BodyAssocVector.cpp	2008-09-26 08:02:12 UTC (rev 1528)
++++ trunk/pkg/common/Container/BodyAssocVector.cpp	2008-09-26 09:42:13 UTC (rev 1529)
+@@ -86,8 +86,8 @@
+ 	tmpBii = bodies.find(position);
+ 	if( tmpBii != bodies.end() )
+ 	{
+-		unsigned int newPosition = position;
+-		// finds the first free key, which is bigger than id.
++		// finds the first free key, which is bigger than 0 (was: newPoistion=position, i.e. greater than id... why?)
++		unsigned int newPosition = 0;
+ 		while( bodies.find(newPosition) != bodies.end() )
+ 			++newPosition;
+ 		//cerr &lt;&lt; &quot;WARNING: body id=\&quot;&quot; &lt;&lt; position &lt;&lt; &quot;\&quot; is already used. Using first free id=\&quot;&quot; &lt;&lt; newPosition &lt;&lt; &quot;\&quot;, beware - if you are loading a file, this will break interactions for this body!\n&quot;;
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000481.html">[deprecated list] [Yade-dev] ContactLaw1
+</A></li>
+	<LI>Next message: <A HREF="000395.html">[deprecated list] [Yade-dev] r1529 - in trunk:	core/DefaultContainerImplementations gui/py pkg/common/Container
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#391">[ date ]</a>
+              <a href="thread.html#391">[ thread ]</a>
+              <a href="subject.html#391">[ subject ]</a>
+              <a href="author.html#391">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

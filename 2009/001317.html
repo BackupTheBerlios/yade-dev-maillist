@@ -1,0 +1,269 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1906 - in	trunk:	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/DeusExMachina	pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry	py/yadeWrapper
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1906%20-%20in%0A%09trunk%3A%09pkg/dem/DataClass/InteractionGeometry%0A%09pkg/dem/Engine/DeusExMachina%09pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry%09py/yadeWrapper&In-Reply-To=%3C200907310945.n6V9jOU0013707%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001313.html">
+   <LINK REL="Next"  HREF="001318.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1906 - in	trunk:	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/DeusExMachina	pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry	py/yadeWrapper</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1906%20-%20in%0A%09trunk%3A%09pkg/dem/DataClass/InteractionGeometry%0A%09pkg/dem/Engine/DeusExMachina%09pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry%09py/yadeWrapper&In-Reply-To=%3C200907310945.n6V9jOU0013707%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1906 - in	trunk:	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/DeusExMachina	pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry	py/yadeWrapper">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Jul 31 11:45:24 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001313.html">[deprecated list] [Yade-dev] WIKIA advertisements
+</A></li>
+        <LI>Next message: <A HREF="001318.html">[deprecated list] [Yade-dev] [svn] r1907 - in trunk:	core/containers	pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1317">[ date ]</a>
+              <a href="thread.html#1317">[ thread ]</a>
+              <a href="subject.html#1317">[ subject ]</a>
+              <a href="author.html#1317">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-31 11:45:22 +0200 (Fri, 31 Jul 2009)
+New Revision: 1906
+
+Modified:
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+   trunk/pkg/dem/Engine/DeusExMachina/FlowEngine.cpp
+   trunk/pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry/GLDrawLatticeInteractingGeometry.cpp
+   trunk/py/yadeWrapper/yadeWrapper.cpp
+Log:
+1. Add docstrings to all wrapper.Omega() methods
+2. Fix a few warnings.
+
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2009-07-29 20:36:40 UTC (rev 1905)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2009-07-31 09:45:22 UTC (rev 1906)
+@@ -40,7 +40,7 @@
+ 		#endif
+ 
+ 
+-		SpheresContactGeometry():contactPoint(Vector3r::ZERO),normal(GenericSpheresContact::normal),radius1(GenericSpheresContact::refR1),radius2(GenericSpheresContact::refR2)
++		SpheresContactGeometry():normal(GenericSpheresContact::normal),contactPoint(Vector3r::ZERO),radius1(GenericSpheresContact::refR1),radius2(GenericSpheresContact::refR2)
+ 		#ifdef SCG_SHEAR
+ 			,shear(Vector3r::ZERO), prevNormal(Vector3r::ZERO) /*initialized to proper value by geom functor*/
+ 		#endif
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/FlowEngine.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/FlowEngine.cpp	2009-07-29 20:36:40 UTC (rev 1905)
++++ trunk/pkg/dem/Engine/DeusExMachina/FlowEngine.cpp	2009-07-31 09:45:22 UTC (rev 1906)
+@@ -27,25 +27,21 @@
+ 
+ void FlowEngine::applyCondition(MetaBody* ncb)
+ {
+-
+-    if (isActivated)
+-    {
+-        shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-
+-
+-
+-	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *ncb-&gt;bodies){
++	if (!isActivated) return;
++	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
++	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *bodies){
+ 		// clump members are non-dynamic; they skip the rest of loop once their forces are properly taken into account, however
+ 		//if (!b-&gt;isDynamic &amp;&amp; !b-&gt;isClumpMember()) continue;
+ 		
+-		RigidBodyParameters* rb = YADE_CAST&lt;RigidBodyParameters*&gt;(b-&gt;physicalParameters.get());
+ 		///Access data (examples)
+-		const body_id_t&amp; id=b-&gt;getId();
+-		Real vx = rb-&gt;velocity[0];
+-		Real rx = rb-&gt;angularVelocity[0];
+-		Real x = rb-&gt;se3.position[0];
++		#if 0
++			RigidBodyParameters* rb = YADE_CAST&lt;RigidBodyParameters*&gt;(b-&gt;physicalParameters.get());
++			const body_id_t&amp; id=b-&gt;getId();
++			Real vx = rb-&gt;velocity[0];
++			Real rx = rb-&gt;angularVelocity[0];
++			Real x = rb-&gt;se3.position[0];
++		#endif
+ 	}
+-
+ 	///Compute flow and and forces here
+ 
+ 	
+@@ -53,9 +49,6 @@
+ 	
+ 	
+ 	
+-		
+-	
+-	
+ 	///End Compute flow and and forces
+ 	
+ 	
+@@ -74,8 +67,6 @@
+ 		//ncb-&gt;bex.addTorque(id,t);
+ 
+ 	}
+-	
+-    }
+ }
+ 
+-YADE_PLUGIN(&quot;FlowEngine&quot;);
+\ No newline at end of file
++YADE_PLUGIN(&quot;FlowEngine&quot;);
+
+Modified: trunk/pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry/GLDrawLatticeInteractingGeometry.cpp
+===================================================================
+--- trunk/pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry/GLDrawLatticeInteractingGeometry.cpp	2009-07-29 20:36:40 UTC (rev 1905)
++++ trunk/pkg/lattice/RenderingEngine/GLDrawLatticeInteractingGeometry/GLDrawLatticeInteractingGeometry.cpp	2009-07-31 09:45:22 UTC (rev 1906)
+@@ -158,10 +158,11 @@
+ 					     B=b1-&gt;id2,
+ 					     C=b2-&gt;id1,
+ 					     D=b2-&gt;id2;
+-				if( !(A!=B &amp;&amp; A!=C &amp;&amp; B!=C) )
++				if( !(A!=B &amp;&amp; A!=C &amp;&amp; B!=C) ){
+ 					if( A==B )	A=D;
+ 					else if(A==C)	A=D;
+ 					else if(B==C)	B=D;
++				}
+ 
+ 				if(wire &amp;&amp; (damaged.size()&gt;static_cast&lt;unsigned int&gt;(std::max((*angles)-&gt;getId1(),(*angles)-&gt;getId2()))) &amp;&amp; (damaged[(*angles)-&gt;getId1()]&gt;=limit &amp;&amp; damaged[(*angles)-&gt;getId2()]&gt;=limit))
+ 				{
+
+Modified: trunk/py/yadeWrapper/yadeWrapper.cpp
+===================================================================
+--- trunk/py/yadeWrapper/yadeWrapper.cpp	2009-07-29 20:36:40 UTC (rev 1905)
++++ trunk/py/yadeWrapper/yadeWrapper.cpp	2009-07-31 09:45:22 UTC (rev 1906)
+@@ -588,50 +588,49 @@
+ BOOST_PYTHON_MODULE(wrapper)
+ {
+ 	python::class_&lt;pyOmega&gt;(&quot;Omega&quot;)
+-		.add_property(&quot;iter&quot;,&amp;pyOmega::iter)
+-		.add_property(&quot;stopAtIter&quot;,&amp;pyOmega::stopAtIter_get,&amp;pyOmega::stopAtIter_set)
+-		.add_property(&quot;time&quot;,&amp;pyOmega::simulationTime)
+-		.add_property(&quot;realtime&quot;,&amp;pyOmega::realTime)
+-		.add_property(&quot;dt&quot;,&amp;pyOmega::dt_get,&amp;pyOmega::dt_set)
+-		.add_property(&quot;usesTimeStepper&quot;,&amp;pyOmega::usesTimeStepper_get,&amp;pyOmega::usesTimeStepper_set)
+-		.def(&quot;load&quot;,&amp;pyOmega::load)
+-		.def(&quot;reload&quot;,&amp;pyOmega::reload)
+-		.def(&quot;save&quot;,&amp;pyOmega::save)
+-		.def(&quot;loadTmp&quot;,&amp;pyOmega::loadTmp,omega_loadTmp_overloads(python::args(&quot;mark&quot;)))
+-		.def(&quot;saveTmp&quot;,&amp;pyOmega::saveTmp,omega_saveTmp_overloads(python::args(&quot;mark&quot;)))
+-		.def(&quot;tmpToFile&quot;,&amp;pyOmega::tmpToFile)
+-		.def(&quot;tmpToString&quot;,&amp;pyOmega::tmpToString)
+-		.def(&quot;saveSpheres&quot;,&amp;pyOmega::saveSpheres)
+-		.def(&quot;run&quot;,&amp;pyOmega::run,omega_run_overloads())
+-		.def(&quot;pause&quot;,&amp;pyOmega::pause)
+-		.def(&quot;step&quot;,&amp;pyOmega::step)
+-		.def(&quot;wait&quot;,&amp;pyOmega::wait)
+-		.def(&quot;reset&quot;,&amp;pyOmega::reset)
+-		.def(&quot;switchWorld&quot;,&amp;pyOmega::switchWorld)
+-		.def(&quot;labeledEngine&quot;,&amp;pyOmega::labeled_engine_get)
+-		.def(&quot;resetTime&quot;,&amp;pyOmega::resetTime)
+-		.def(&quot;plugins&quot;,&amp;pyOmega::plugins_get)
+-		.add_property(&quot;engines&quot;,&amp;pyOmega::engines_get,&amp;pyOmega::engines_set)
+-		.add_property(&quot;miscParams&quot;,&amp;pyOmega::miscParams_get,&amp;pyOmega::miscParams_set)
+-		.add_property(&quot;initializers&quot;,&amp;pyOmega::initializers_get,&amp;pyOmega::initializers_set)
+-		.add_property(&quot;bodies&quot;,&amp;pyOmega::bodies_get)
+-		.add_property(&quot;interactions&quot;,&amp;pyOmega::interactions_get)
+-		.add_property(&quot;actions&quot;,&amp;pyOmega::bex_get)
+-		.add_property(&quot;bex&quot;,&amp;pyOmega::bex_get)
+-		.add_property(&quot;tags&quot;,&amp;pyOmega::tags_get)
+-		.def(&quot;childClasses&quot;,&amp;pyOmega::listChildClasses)
+-		.def(&quot;isChildClassOf&quot;,&amp;pyOmega::isChildClassOf)
+-		.add_property(&quot;bodyContainer&quot;,&amp;pyOmega::bodyContainer_get,&amp;pyOmega::bodyContainer_set)
+-		.add_property(&quot;interactionContainer&quot;,&amp;pyOmega::interactionContainer_get,&amp;pyOmega::interactionContainer_set)
+-		.add_property(&quot;timingEnabled&quot;,&amp;pyOmega::timingEnabled_get,&amp;pyOmega::timingEnabled_set)
+-		.add_property(&quot;bexSyncCount&quot;,&amp;pyOmega::bexSyncCount_get,&amp;pyOmega::bexSyncCount_set)
+-		.add_property(&quot;numThreads&quot;,&amp;pyOmega::numThreads_get,&amp;pyOmega::numThreads_set)
++		.add_property(&quot;iter&quot;,&amp;pyOmega::iter,&quot;Get current step number&quot;)
++		.add_property(&quot;stopAtIter&quot;,&amp;pyOmega::stopAtIter_get,&amp;pyOmega::stopAtIter_set,&quot;Get/set number of iteration after which the simulation will stop.&quot;)
++		.add_property(&quot;time&quot;,&amp;pyOmega::simulationTime,&quot;Return virtual (model world) time of the simulation.&quot;)
++		.add_property(&quot;realtime&quot;,&amp;pyOmega::realTime,&quot;Return clock (human world) time the simulation has been running.&quot;)
++		.add_property(&quot;dt&quot;,&amp;pyOmega::dt_get,&amp;pyOmega::dt_set,&quot;Current timestep (assignable); note that assigning to dt will not turn of TimeStepper, if used.&quot;)
++		.add_property(&quot;usesTimeStepper&quot;,&amp;pyOmega::usesTimeStepper_get,&amp;pyOmega::usesTimeStepper_set,&quot;Enable/disable use of TimeStepper in the simulation&quot;)
++		.def(&quot;load&quot;,&amp;pyOmega::load,&quot;Load simulation from file.&quot;)
++		.def(&quot;reload&quot;,&amp;pyOmega::reload,&quot;Reload current simulation&quot;)
++		.def(&quot;save&quot;,&amp;pyOmega::save,&quot;Save current simulation to file (should be .xml or .xml.bz2)&quot;)
++		.def(&quot;loadTmp&quot;,&amp;pyOmega::loadTmp,omega_loadTmp_overloads(python::args(&quot;mark&quot;),&quot;Load simulation previously stored in memory by saveTmp.\n @param mark optionally distinguishes multiple saved simulations&quot;))
++		.def(&quot;saveTmp&quot;,&amp;pyOmega::saveTmp,omega_saveTmp_overloads(python::args(&quot;mark&quot;),&quot;Save simulation to memory (disappears at shutdown), can be loaded later with loadTmp.\n @param mark optionally distinguishes different memory-saved simulations.&quot;))
++		.def(&quot;tmpToFile&quot;,&amp;pyOmega::tmpToFile,&quot;Return XML of saveTmp'd simulation as string.&quot;)
++		.def(&quot;tmpToString&quot;,&amp;pyOmega::tmpToString,&quot;Save XML of saveTmp'd simulation in file.&quot;)
++		.def(&quot;saveSpheres&quot;,&amp;pyOmega::saveSpheres,&quot;Saves spherical bodies to external ASCII file, one sphere (x y z r) per line.&quot;)
++		.def(&quot;run&quot;,&amp;pyOmega::run,omega_run_overloads(&quot;Run the simulation.\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">n at param</A> nSteps how many steps to run, then stop.\<A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">n at param</A> wait if True, doesn't return until the simulation will have stopped.&quot;))
++		.def(&quot;pause&quot;,&amp;pyOmega::pause,&quot;Stop simulation execution.\n(may be called from within the loop, and it will stop after the current step).&quot;)
++		.def(&quot;step&quot;,&amp;pyOmega::step,&quot;Advance the simulation by one step. Returns after the step will have finished.&quot;)
++		.def(&quot;wait&quot;,&amp;pyOmega::wait,&quot;Don't return until the simulation will have been paused. (Returns immediately if not running).&quot;)
++		.def(&quot;reset&quot;,&amp;pyOmega::reset,&quot;Reset simulation completely.&quot;)
++		.def(&quot;switchWorld&quot;,&amp;pyOmega::switchWorld,&quot;Switch to alternative simulation (while keeping the old one). Calling the function again switches back to the first one. Note that most variables from the first simulation will still refer to the first simulation even after the switch\n(e.g. b=O.bodies[4]; O.switchWorld(); [b still refers to the body in the first simulation here])&quot;)
++		.def(&quot;labeledEngine&quot;,&amp;pyOmega::labeled_engine_get,&quot;Return instance of engine/functor with the given label. This function shouldn't be called by the user directly; every ehange in O.engines will assign respective global python variables according to labels.\n For example: \n\tO.engines=[InsertionSortCollider(label='collider')]\n\tcollider['nBins']=5 ## collider has become a variable after assignment to O.engines automatically)&quot;)
++		.def(&quot;resetTime&quot;,&amp;pyOmega::resetTime,&quot;Reset simulation time: step number, virtual and real time. (Doesn't touch anything else, including timings).&quot;)
++		.def(&quot;plugins&quot;,&amp;pyOmega::plugins_get,&quot;Return list of all plugins registered in the class factory.&quot;)
++		.add_property(&quot;engines&quot;,&amp;pyOmega::engines_get,&amp;pyOmega::engines_set,&quot;List of engines in the simulation (MetaBody::engines).&quot;)
++		.add_property(&quot;miscParams&quot;,&amp;pyOmega::miscParams_get,&amp;pyOmega::miscParams_set,&quot;MiscParams in the simulation (MetaBody::mistParams), usually used to save serializables that don't fit anywhere else, like GL functors&quot;)
++		.add_property(&quot;initializers&quot;,&amp;pyOmega::initializers_get,&amp;pyOmega::initializers_set,&quot;List of initializers (MetaBody::initializers).&quot;)
++		.add_property(&quot;bodies&quot;,&amp;pyOmega::bodies_get,&quot;Bodies in the current simulation (container supporting index access by id and iteration)&quot;)
++		.add_property(&quot;interactions&quot;,&amp;pyOmega::interactions_get,&quot;Interactions in the current simulation (container supporting index acces by either (id1,id2) or interactionNumber and iteration)&quot;)
++		.add_property(&quot;actions&quot;,&amp;pyOmega::bex_get,&quot;Deprecated alias for Omega().bex&quot;)
++		.add_property(&quot;bex&quot;,&amp;pyOmega::bex_get,&quot;BodyExternalVariables (forces, torques, ..) in  the current simulation.&quot;)
++		.add_property(&quot;tags&quot;,&amp;pyOmega::tags_get,&quot;Tags (string=string dictionary) of the current simulation (container supporting string-index access/assignment)&quot;)
++		.def(&quot;childClasses&quot;,&amp;pyOmega::listChildClasses,&quot;Return list of all classes deriving from given class, as registered in the class factory&quot;)
++		.def(&quot;isChildClassOf&quot;,&amp;pyOmega::isChildClassOf,&quot;Tells whether the first class derives from the second one (both given as strings).&quot;)
++		.add_property(&quot;bodyContainer&quot;,&amp;pyOmega::bodyContainer_get,&amp;pyOmega::bodyContainer_set,&quot;Get/set type of body container (as string); there must be no bodies.&quot;)
++		.add_property(&quot;interactionContainer&quot;,&amp;pyOmega::interactionContainer_get,&amp;pyOmega::interactionContainer_set,&quot;Get/set type of interaction container (as string); there must be no interactions.&quot;)
++		.add_property(&quot;timingEnabled&quot;,&amp;pyOmega::timingEnabled_get,&amp;pyOmega::timingEnabled_set,&quot;Globally enable/disable timing services (see documentation of yade.timing).&quot;)
++		.add_property(&quot;bexSyncCount&quot;,&amp;pyOmega::bexSyncCount_get,&amp;pyOmega::bexSyncCount_set,&quot;Counter for number of syncs in BexContainer, for profiling purposes.&quot;)
++		.add_property(&quot;numThreads&quot;,&amp;pyOmega::numThreads_get /* ,&amp;pyOmega::numThreads_set*/ ,&quot;Get maximum number of threads openMP can use.&quot;)
+ 		;
+ 	python::class_&lt;pyTags&gt;(&quot;TagsWrapper&quot;,python::init&lt;pyTags&amp;&gt;())
+ 		.def(&quot;__getitem__&quot;,&amp;pyTags::getItem)
+ 		.def(&quot;__setitem__&quot;,&amp;pyTags::setItem)
+ 		.def(&quot;keys&quot;,&amp;pyTags::keys);
+-	
+ 	python::class_&lt;pyBodyContainer&gt;(&quot;BodyContainer&quot;,python::init&lt;pyBodyContainer&amp;&gt;())
+ 		.def(&quot;__getitem__&quot;,&amp;pyBodyContainer::pyGetitem)
+ 		.def(&quot;__len__&quot;,&amp;pyBodyContainer::length)
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001313.html">[deprecated list] [Yade-dev] WIKIA advertisements
+</A></li>
+	<LI>Next message: <A HREF="001318.html">[deprecated list] [Yade-dev] [svn] r1907 - in trunk:	core/containers	pkg/dem/Engine/DeusExMachina
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1317">[ date ]</a>
+              <a href="thread.html#1317">[ thread ]</a>
+              <a href="subject.html#1317">[ subject ]</a>
+              <a href="author.html#1317">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

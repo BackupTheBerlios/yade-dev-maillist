@@ -1,0 +1,394 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1935 - in trunk:	examples	examples/dynamic_simulation_tests	examples/rod_penetration	pkg/dem/Engine/EngineUnit py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1935%20-%20in%20trunk%3A%0A%09examples%09examples/dynamic_simulation_tests%0A%09examples/rod_penetration%09pkg/dem/Engine/EngineUnit%20py&In-Reply-To=%3C200908101759.n7AHxYWo022040%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001357.html">
+   <LINK REL="Next"  HREF="001359.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1935 - in trunk:	examples	examples/dynamic_simulation_tests	examples/rod_penetration	pkg/dem/Engine/EngineUnit py</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1935%20-%20in%20trunk%3A%0A%09examples%09examples/dynamic_simulation_tests%0A%09examples/rod_penetration%09pkg/dem/Engine/EngineUnit%20py&In-Reply-To=%3C200908101759.n7AHxYWo022040%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1935 - in trunk:	examples	examples/dynamic_simulation_tests	examples/rod_penetration	pkg/dem/Engine/EngineUnit py">sega at mail.berlios.de
+       </A><BR>
+    <I>Mon Aug 10 19:59:34 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001357.html">[deprecated list] [Yade-dev] [svn] r1934 - in trunk:	extra	pkg/dem/DataClass/InteractionGeometry pkg/dem/PreProcessor
+</A></li>
+        <LI>Next message: <A HREF="001359.html">[deprecated list] [Yade-dev] [svn] r1936 - in trunk: . gui/qt3	pkg/dem/DataClass py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1358">[ date ]</a>
+              <a href="thread.html#1358">[ thread ]</a>
+              <a href="subject.html#1358">[ subject ]</a>
+              <a href="author.html#1358">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2009-08-10 19:59:33 +0200 (Mon, 10 Aug 2009)
+New Revision: 1935
+
+Modified:
+   trunk/examples/STLImporterTest.py
+   trunk/examples/dynamic_simulation_tests/ringCundallDamping.py
+   trunk/examples/dynamic_simulation_tests/ringSimpleViscoelastic.py
+   trunk/examples/rod_penetration/model.py
+   trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp
+   trunk/py/utils.py
+Log:
+fixed and updated some examples in keeping with last modifications
+
+Modified: trunk/examples/STLImporterTest.py
+===================================================================
+--- trunk/examples/STLImporterTest.py	2009-08-10 12:11:49 UTC (rev 1934)
++++ trunk/examples/STLImporterTest.py	2009-08-10 17:59:33 UTC (rev 1935)
+@@ -15,8 +15,8 @@
+ 
+ ## Spheres
+ sphereRadius = 0.2
+-#nbSpheres = (10,10,10)
+-nbSpheres = (5,5,5)
++nbSpheres = (10,10,10)
++#nbSpheres = (5,5,5)
+ for i in xrange(nbSpheres[0]):
+     for j in xrange(nbSpheres[1]):
+         for k in xrange(nbSpheres[2]):
+@@ -65,5 +65,9 @@
+ 	## Apply kinematics to walls
+ 	RotationEngine(subscribedBodies=imported,rotationAxis=[0,0,1],rotateAroundZero=True,angularVelocity=0.5)
+ ]
+-O.saveTmp();
+-O.step()
++
++from yade import qt
++#qt.Controller()
++qt.View()
++O.run()
++
+
+Modified: trunk/examples/dynamic_simulation_tests/ringCundallDamping.py
+===================================================================
+--- trunk/examples/dynamic_simulation_tests/ringCundallDamping.py	2009-08-10 12:11:49 UTC (rev 1934)
++++ trunk/examples/dynamic_simulation_tests/ringCundallDamping.py	2009-08-10 17:59:33 UTC (rev 1935)
+@@ -35,37 +35,48 @@
+ 
+ ## Initializers 
+ o.initializers=[
+-	MetaEngine('BoundingVolumeMetaEngine',
+-		[EngineUnit('InteractingSphere2AABB'),
+-			EngineUnit('InteractingFacet2AABB'),
+-			EngineUnit('MetaInteractingGeometry2AABB')]),
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingFacet2AABB(),MetaInteractingGeometry2AABB()])
+ 	]
+ 
+ ## Engines 
+ o.engines=[
+-	StandAloneEngine('PhysicalActionContainerReseter'),
+-	MetaEngine('BoundingVolumeMetaEngine',[
+-		EngineUnit('InteractingSphere2AABB'),
+-		EngineUnit('InteractingFacet2AABB'),
+-		EngineUnit('MetaInteractingGeometry2AABB')
++	## Resets forces and momenta the act on bodies
++	BexResetter(),
++
++	## Associates bounding volume to each body.
++	BoundingVolumeMetaEngine([
++		InteractingSphere2AABB(),
++		InteractingFacet2AABB(),
++		MetaInteractingGeometry2AABB()
+ 	]),
+-	StandAloneEngine('PersistentSAPCollider'),
+-	MetaEngine('InteractionGeometryMetaEngine',[
+-		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
+-		EngineUnit('InteractingFacet2InteractingSphere4SpheresContactGeometry')
++
++	## Using bounding boxes find possible body collisions.
++	InsertionSortCollider(),
++
++	## Create geometry information about each potential collision.
++	InteractionGeometryMetaEngine([
++		InteractingSphere2InteractingSphere4SpheresContactGeometry(),
++		InteractingFacet2InteractingSphere4SpheresContactGeometry()
+ 	]),
+-	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('MacroMicroElasticRelationships')]),
+-	StandAloneEngine('ElasticContactLaw'),
+-	DeusExMachina('GravityEngine',{'gravity':[0,-9.81,0]}),
+ 
++	## Create physical information about the interaction.
++	InteractionPhysicsMetaEngine([MacroMicroElasticRelationships()]),
++
++    ## Constitutive law
++	ElasticContactLaw(),
++
++	## Apply gravity
++	GravityEngine(gravity=[0,-9.81,0]),
++
+ 	## NOTE: Non zero Cundall damping affected a dynamic simulation!
+-	DeusExMachina('NewtonsDampedLaw',{'damping':0}),
++	NewtonsDampedLaw(damping=0.3),
+ 
++	## Apply kinematics to walls
+     ## angularVelocity = 0.73 rad/sec = 7 rpm
+-    DeusExMachina('RotationEngine',{'subscribedBodies':walls,'rotationAxis':[0,0,1],'rotateAroundZero':True,'angularVelocity':0.73}),
++	RotationEngine(subscribedBodies=walls,rotationAxis=[0,0,1],rotateAroundZero=True,angularVelocity=0.73)
+ ]
+ 
+-o.miscParams=[Generic('GLDrawSphere',{'glutUse':True})]
++o.miscParams=[GLDrawSphere(glutUse=True)]
+ 
+ for b in o.bodies:
+     if b.shape.name=='Sphere':
+@@ -78,5 +89,7 @@
+ from yade import qt
+ renderer=qt.Renderer()
+ renderer['Body_wire']=True
+-qt.Controller()
++#qt.Controller()
++qt.View()
++O.run()
+ 
+
+Modified: trunk/examples/dynamic_simulation_tests/ringSimpleViscoelastic.py
+===================================================================
+--- trunk/examples/dynamic_simulation_tests/ringSimpleViscoelastic.py	2009-08-10 12:11:49 UTC (rev 1934)
++++ trunk/examples/dynamic_simulation_tests/ringSimpleViscoelastic.py	2009-08-10 17:59:33 UTC (rev 1935)
+@@ -14,8 +14,8 @@
+ es = 0.3
+ 
+ ## Import wall's geometry
+-p=utils.getViscoelasticFromSpheresInteraction(10e3,tc,en,es)
+-walls = utils.import_stl_geometry('ring.stl',frictionAngle=frictionAngle,physParamsClass=&quot;SimpleViscoelasticBodyParameters&quot;,physParamsAttr={'kn':p['kn'],'cn':p['cn'],'ks':p['ks'],'cs':p['cs']})
++params=utils.getViscoelasticFromSpheresInteraction(10e3,tc,en,es)
++walls = utils.import_stl_geometry('ring.stl',frictionAngle=frictionAngle,physParamsClass=&quot;SimpleViscoelasticBodyParameters&quot;,**params)
+ 
+ def fill_cylinder_with_spheres(sphereRadius,cylinderRadius,cylinderHeight,cylinderOrigin,cylinderSlope):
+ 	spheresCount=0
+@@ -40,45 +40,48 @@
+ 
+ ## Initializers 
+ o.initializers=[
+-	MetaEngine('BoundingVolumeMetaEngine',
+-		[EngineUnit('InteractingSphere2AABB'),
+-			EngineUnit('InteractingFacet2AABB'),
+-			EngineUnit('MetaInteractingGeometry2AABB')]),
++	## Create bounding boxes. They are needed to zoom the 3d view properly before we start the simulation.
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingFacet2AABB(),MetaInteractingGeometry2AABB()])
+ 	]
+ 
+ ## Engines 
+ o.engines=[
++	## Resets forces and momenta the act on bodies
++	BexResetter(),
+ 
+-	StandAloneEngine('PhysicalActionContainerReseter'),
+-
+-	MetaEngine('BoundingVolumeMetaEngine',[
+-		EngineUnit('InteractingSphere2AABB'),
+-		EngineUnit('InteractingFacet2AABB'),
+-		EngineUnit('MetaInteractingGeometry2AABB')
++	## Associates bounding volume to each body.
++	BoundingVolumeMetaEngine([
++		InteractingSphere2AABB(),
++		InteractingFacet2AABB(),
++		MetaInteractingGeometry2AABB()
+ 	]),
+ 
+-	StandAloneEngine('PersistentSAPCollider'),
++	## Using bounding boxes find possible body collisions.
++	InsertionSortCollider(),
+ 
+-	MetaEngine('InteractionGeometryMetaEngine',[
+-		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
+-		EngineUnit('InteractingFacet2InteractingSphere4SpheresContactGeometry')
++	## Create geometry information about each potential collision.
++	InteractionGeometryMetaEngine([
++		InteractingSphere2InteractingSphere4SpheresContactGeometry(),
++		InteractingFacet2InteractingSphere4SpheresContactGeometry()
+ 	]),
+ 
+-	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleViscoelasticRelationships')]),
++	## Create physical information about the interaction.
++	InteractionPhysicsMetaEngine([SimpleViscoelasticRelationships()]),
+ 
+     ## Constitutive law
+-	MetaEngine('ConstitutiveLawDispatcher',[EngineUnit('ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw')]),
++	ConstitutiveLawDispatcher([ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw()]),
+ 
+-	DeusExMachina('GravityEngine',{'gravity':[0,-9.81,0]}),
+-
++	## Apply gravity
++	GravityEngine(gravity=[0,-9.81,0]),
+ 	## Cundall damping must been disabled!
+-	DeusExMachina('NewtonsDampedLaw',{'damping':0}),
++	NewtonsDampedLaw(damping=0),
++	## Apply kinematics to walls
++    ## angularVelocity = 0.73 rad/sec = 7 rpm
++	RotationEngine(subscribedBodies=walls,rotationAxis=[0,0,1],rotateAroundZero=True,angularVelocity=0.73)
+ 
+-    ## angularVelocity = 0.73 rad/sec = 7 rpm
+-    DeusExMachina('RotationEngine',{'subscribedBodies':walls,'rotationAxis':[0,0,1],'rotateAroundZero':True,'angularVelocity':0.73}),
+ ]
+ 
+-o.miscParams=[Generic('GLDrawSphere',{'glutUse':True})]
++o.miscParams=[GLDrawSphere(glutUse=True)]
+ 
+ for b in o.bodies:
+     if b.shape.name=='Sphere':
+@@ -91,5 +94,7 @@
+ from yade import qt
+ renderer=qt.Renderer()
+ renderer['Body_wire']=True
+-qt.Controller()
++#qt.Controller()
++qt.View()
++O.run()
+ 
+
+Modified: trunk/examples/rod_penetration/model.py
+===================================================================
+--- trunk/examples/rod_penetration/model.py	2009-08-10 12:11:49 UTC (rev 1934)
++++ trunk/examples/rod_penetration/model.py	2009-08-10 17:59:33 UTC (rev 1935)
+@@ -45,35 +45,41 @@
+ 
+ ## Initializers 
+ o.initializers=[
+-	MetaEngine('BoundingVolumeMetaEngine',[
+-		EngineUnit('InteractingSphere2AABB'),
+-		EngineUnit('InteractingFacet2AABB'),
+-		EngineUnit('MetaInteractingGeometry2AABB')]),
++	BoundingVolumeMetaEngine([InteractingSphere2AABB(),InteractingFacet2AABB(),MetaInteractingGeometry2AABB()])
+ 	]
+ 
+ ## Engines 
+ o.engines=[
+-	StandAloneEngine('PhysicalActionContainerReseter'),
+-	MetaEngine('BoundingVolumeMetaEngine',[
+-		EngineUnit('InteractingSphere2AABB'),
+-		EngineUnit('InteractingFacet2AABB'),
+-		EngineUnit('MetaInteractingGeometry2AABB')
++	## Resets forces and momenta the act on bodies
++	BexResetter(),
++
++	## Associates bounding volume to each body.
++	BoundingVolumeMetaEngine([
++		InteractingSphere2AABB(),
++		InteractingFacet2AABB(),
++		MetaInteractingGeometry2AABB()
+ 	]),
+-	StandAloneEngine('PersistentSAPCollider'),
+-	MetaEngine('InteractionGeometryMetaEngine',[
+-		EngineUnit('InteractingSphere2InteractingSphere4SpheresContactGeometry'),
+-		EngineUnit('InteractingFacet2InteractingSphere4SpheresContactGeometry',{'shrinkFactor':shrinkFactor})
++	## Using bounding boxes find possible body collisions.
++	InsertionSortCollider(),
++	## Create geometry information about each potential collision.
++	InteractionGeometryMetaEngine([
++		InteractingSphere2InteractingSphere4SpheresContactGeometry(),
++		InteractingFacet2InteractingSphere4SpheresContactGeometry()
+ 	]),
+-	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('MacroMicroElasticRelationships')]),
+-	StandAloneEngine('ElasticContactLaw'),
+-	DeusExMachina('GravityEngine',{'gravity':[0,-9.81,0]}),
+-	DeusExMachina('NewtonsDampedLaw',{'damping':0.3}),
++	## Create physical information about the interaction.
++	InteractionPhysicsMetaEngine([MacroMicroElasticRelationships()]),
++    ## Constitutive law
++	ElasticContactLaw(),
++	## Apply gravity
++	GravityEngine(gravity=[0,-9.81,0]),
++	## Motion equation
++	NewtonsDampedLaw(damping=0.3),
+ 	## Apply kinematics to rod
+-	DeusExMachina('TranslationEngine',{'subscribedBodies':range(rod),'translationAxis':[0,-1,0],'velocity':0.075}),
++	TranslationEngine(subscribedBodies=rod,translationAxis=[0,-1,0],velocity=0.075),
+ 	## Save force on rod
+-	StandAloneEngine('ForceRecorder',{'startId':0,'endId':rod-1,'outputFile':'force-'+mesh+'.dat','interval':50}),	
++	ForceRecorder(startId=0,endId=len(rod)-1,outputFile='force-'+mesh+'.dat',interval=50),	
+ 	## Save positions
+-	StandAloneEngine('SQLiteRecorder',{'recorders':['se3'],'dbFile':'positions-'+mesh+'.sqlite','iterPeriod':100})
++	SQLiteRecorder(recorders=['se3'],dbFile='positions-'+mesh+'.sqlite',iterPeriod=100)
+ 
+ ]
+ 
+
+Modified: trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp	2009-08-10 12:11:49 UTC (rev 1934)
++++ trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp	2009-08-10 17:59:33 UTC (rev 1935)
+@@ -19,6 +19,11 @@
+ 	int id1 = I-&gt;getId1();
+ 	int id2 = I-&gt;getId2();
+ 	
++	if (geom-&gt;penetrationDepth&lt;0) {
++		rootBody-&gt;interactions-&gt;requestErase(id1,id2);
++		return;
++	}
++
+ 	shared_ptr&lt;BodyContainer&gt;&amp; bodies = rootBody-&gt;bodies;
+ 
+ 	RigidBodyParameters* de1 = YADE_CAST&lt;RigidBodyParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
+@@ -51,7 +56,7 @@
+ 	Vector3r shearVelocity			= relativeVelocity-normalVelocity*geom-&gt;normal;
+ 	shearForce 			       -= (phys-&gt;ks*dt+phys-&gt;cs)*shearVelocity;
+ 
+-	phys-&gt;normalForce = ( phys-&gt;kn * std::max(geom-&gt;penetrationDepth,(Real) 0) - phys-&gt;cn * normalVelocity ) * geom-&gt;normal;
++	phys-&gt;normalForce = ( phys-&gt;kn * geom-&gt;penetrationDepth - phys-&gt;cn * normalVelocity ) * geom-&gt;normal;
+ 	phys-&gt;prevNormal = geom-&gt;normal;
+ 
+ 	Real maxFs = phys-&gt;normalForce.SquaredLength() * std::pow(phys-&gt;tangensOfFrictionAngle,2);
+
+Modified: trunk/py/utils.py
+===================================================================
+--- trunk/py/utils.py	2009-08-10 12:11:49 UTC (rev 1934)
++++ trunk/py/utils.py	2009-08-10 17:59:33 UTC (rev 1935)
+@@ -327,7 +327,7 @@
+ 	imported=range(begin,begin+imp.number_of_facets)
+ 	for i in imported:
+ 		if not noInteractingGeometry:
+-			o.bodies[i].mold.postProcessAttributes()
++			o.bodies[i].mold.postProcessAttributes(True)
+ 		o.bodies[i].shape['diffuseColor']=color
+ 	return imported
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001357.html">[deprecated list] [Yade-dev] [svn] r1934 - in trunk:	extra	pkg/dem/DataClass/InteractionGeometry pkg/dem/PreProcessor
+</A></li>
+	<LI>Next message: <A HREF="001359.html">[deprecated list] [Yade-dev] [svn] r1936 - in trunk: . gui/qt3	pkg/dem/DataClass py
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1358">[ date ]</a>
+              <a href="thread.html#1358">[ thread ]</a>
+              <a href="subject.html#1358">[ subject ]</a>
+              <a href="author.html#1358">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

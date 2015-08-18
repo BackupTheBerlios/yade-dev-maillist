@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1846 - trunk/py
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1846%20-%20trunk/py&In-Reply-To=%3C200907080812.n688C5We032184%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001144.html">
+   <LINK REL="Next"  HREF="001146.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1846 - trunk/py</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1846%20-%20trunk/py&In-Reply-To=%3C200907080812.n688C5We032184%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1846 - trunk/py">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Jul  8 10:12:05 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001144.html">[deprecated list] [Yade-dev] [svn] r1845 - in trunk:	pkg/dem/Engine/StandAloneEngine	py scripts/test
+</A></li>
+        <LI>Next message: <A HREF="001146.html">[deprecated list] [Yade-dev] YADE bugs in Launchpad
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1145">[ date ]</a>
+              <a href="thread.html#1145">[ thread ]</a>
+              <a href="subject.html#1145">[ subject ]</a>
+              <a href="author.html#1145">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-08 10:12:05 +0200 (Wed, 08 Jul 2009)
+New Revision: 1846
+
+Added:
+   trunk/py/SConscript
+Modified:
+   trunk/py/pack.py
+Log:
+1. Add forgotten py/SConscript (sorry!)
+
+
+Added: trunk/py/SConscript
+===================================================================
+--- trunk/py/SConscript	2009-07-07 20:05:30 UTC (rev 1845)
++++ trunk/py/SConscript	2009-07-08 08:12:05 UTC (rev 1846)
+@@ -0,0 +1,38 @@
++# vim: set filetype=python :
++Import('*')
++import os.path 
++
++if 'EMBED_PYTHON' in env['CPPDEFINES']:
++	env.Install('$PREFIX/lib/yade$SUFFIX/py/yade',[
++		env.SharedLibrary('_eudoxos',['_eudoxos.cpp'],SHLIBPREFIX='',CXXFLAGS=env['CXXFLAGS']+([] if not os.path.exists('../../brefcom-mm.hh') else ['-include','../brefcom-mm.hh']),LIBS=env['LIBS']+['Shop','ConcretePM']),
++		env.SharedLibrary('log',['log.cpp'],SHLIBPREFIX=''),
++		env.SharedLibrary('_utils',['_utils.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['Shop','ConcretePM']),
++		env.SharedLibrary('_packPredicates',['_packPredicates.cpp'],SHLIBPREFIX='',
++			# if we compile with GTS, link to the python module, as inGtsSurface uses some of its symbols.
++			# because the module doesn't have the lib- suffix, we put it directly to SHLINKFLAGS
++			# using the -l: syntax (see man ld) and declare the dependency below
++			SHLINKFLAGS=env['SHLINKFLAGS']+(['-l:$PREFIX/lib/yade$SUFFIX/py/gts/_gts.so'] if 'GTS' in env['features'] else [])),
++		env.SharedLibrary('_packSpheres',['_packSpheres.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['Shop']),
++		env.File('utils.py'),
++		env.File('eudoxos.py'),
++		env.File('plot.py'),
++		env.File('linterpolation.py'),
++		env.File('timing.py'),
++		env.File('pack.py'),
++		env.SharedLibrary('wrapper',['yadeWrapper/yadeWrapper.cpp'],SHLIBPREFIX='',LIBS=env['LIBS']+['XMLFormatManager','yade-factory','yade-serialization','Shop','BoundingVolumeMetaEngine','GeometricalModelMetaEngine','InteractingGeometryMetaEngine','InteractionGeometryMetaEngine','InteractionPhysicsMetaEngine','PhysicalParametersMetaEngine','ConstitutiveLawDispatcher','InteractionDispatchers','STLImporter','ParallelEngine','Clump'],),
++	])
++	if 'GTS' in env['features']: env.Depends('_packPredicates.so','$PREFIX/lib/yade$SUFFIX/py/gts/_gts.so')
++
++	# 3rd party modules:
++	# ==================
++	# do not install them under yade but to the top-level module path; say e.g. 'import euclid' (not 'import yade.euclid')
++	env.Install('$PREFIX/lib/yade$SUFFIX/py',[
++		env.File('euclid.py'),
++		env.SharedLibrary('miniWm3Wrap',['miniWm3Wrap/miniWm3Wrap.cpp'],SHLIBPREFIX='',CPPPATH=env['CPPPATH']+['../lib/'])
++	])
++
++
++
++
++
++
+
+Modified: trunk/py/pack.py
+===================================================================
+--- trunk/py/pack.py	2009-07-07 20:05:30 UTC (rev 1845)
++++ trunk/py/pack.py	2009-07-08 08:12:05 UTC (rev 1846)
+@@ -88,8 +88,9 @@
+ 	surf=gts.Surface()
+ 	for i in range(0,len(vtxs)-1):
+ 		for j in range(0,len(vtxs[i])-1):
+-			surf.add(gts.Face(interSectEdges[i][2*j+1],sectEdges[i+1][j],interSectEdges[i][2*j]))
+-			surf.add(gts.Face(sectEdges[i][j],interSectEdges[i][2*j+2],interSectEdges[i][2*j+1]))
++			newFaces=gts.Face(interSectEdges[i][2*j+1],sectEdges[i+1][j],interSectEdges[i][2*j]),gts.Face(sectEdges[i][j],interSectEdges[i][2*j+2],interSectEdges[i][2*j+1])
++			for face in newFaces:
++				if face.is_ok: surf.add(face)
+ 	def doCap(vtx,edg,start):
+ 		ret=[]
+ 		eFan=[edg[0]]+[gts.Edge(vtx[i],vtx[0]) for i in range(2,len(vtx))]
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001144.html">[deprecated list] [Yade-dev] [svn] r1845 - in trunk:	pkg/dem/Engine/StandAloneEngine	py scripts/test
+</A></li>
+	<LI>Next message: <A HREF="001146.html">[deprecated list] [Yade-dev] YADE bugs in Launchpad
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1145">[ date ]</a>
+              <a href="thread.html#1145">[ thread ]</a>
+              <a href="subject.html#1145">[ subject ]</a>
+              <a href="author.html#1145">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

@@ -1,0 +1,390 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1853 - in trunk:	pkg/common	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina	scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1853%20-%20in%20trunk%3A%0A%09pkg/common%09pkg/common/Engine/StandAloneEngine%09pkg/dem/Engine/DeusExMachina%0A%09scripts/test&In-Reply-To=%3C200907101916.n6AJG2U5005503%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001187.html">
+   <LINK REL="Next"  HREF="001177.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1853 - in trunk:	pkg/common	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina	scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1853%20-%20in%20trunk%3A%0A%09pkg/common%09pkg/common/Engine/StandAloneEngine%09pkg/dem/Engine/DeusExMachina%0A%09scripts/test&In-Reply-To=%3C200907101916.n6AJG2U5005503%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1853 - in trunk:	pkg/common	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/DeusExMachina	scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Fri Jul 10 21:16:02 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001187.html">[deprecated list] [Yade-dev] Example of using log4cxx
+</A></li>
+        <LI>Next message: <A HREF="001177.html">[deprecated list] [Yade-dev] [svn] r1853 - in trunk: pkg/common	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/DeusExMachina scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1176">[ date ]</a>
+              <a href="thread.html#1176">[ thread ]</a>
+              <a href="subject.html#1176">[ subject ]</a>
+              <a href="author.html#1176">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-07-10 21:16:01 +0200 (Fri, 10 Jul 2009)
+New Revision: 1853
+
+Modified:
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp
+   trunk/pkg/common/SConscript
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+   trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+   trunk/scripts/test/collider-stride-triax.py
+Log:
+1. Make NewtonsDampedLaw compute maxVlocitySq at every step anew.
+2. Make InsertionSortCollider find NewtonsDampedLaw and get max speed from there. Together with InsertionSortColider::sweepLength, this makes stride adapted automatically to maxVelocitySq; this will described at <A HREF="http://yade.wikia.com/wiki/Insertion_Sort_Collider_Stride.">http://yade.wikia.com/wiki/Insertion_Sort_Collider_Stride.</A> 
+3. Update test script for that.
+
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-07-10 09:52:33 UTC (rev 1852)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.cpp	2009-07-10 19:16:01 UTC (rev 1853)
+@@ -5,6 +5,7 @@
+ #include&lt;yade/core/Interaction.hpp&gt;
+ #include&lt;yade/core/InteractionContainer.hpp&gt;
+ #include&lt;yade/pkg-common/BoundingVolumeMetaEngine.hpp&gt;
++#include&lt;yade/pkg-dem/NewtonsDampedLaw.hpp&gt;
+ 
+ #include&lt;algorithm&gt;
+ #include&lt;vector&gt;
+@@ -65,16 +66,31 @@
+ 		// activated if number of bodies changes (hence need to refresh collision information)
+ 		// or the time of scheduled run already came, or we were never scheduled yet
+ 		if(stride&lt;=1) return true;
+-		bool ret=XX.size()!=2*rb-&gt;bodies-&gt;size() || scheduledRun&lt;0 || rb-&gt;simulationTime&gt;=scheduledRun;
+-		// we wouldn't run in this step; just delete pending interactions
+-		// this could be done in ::action, but it would make the call counters not reflect the stride
++		if(sweepLength&lt;=0) return true;
++		if(!newton) return true; // we wouldn't be able to find the max velocity
++		bool ret=rb-&gt;simulationTime&gt;=scheduledRun ||
++			// if the max velocity is bigger than the one that we used for bb computation last time
++			// and the distance bodies would travel with this bigger velocity since last run (rb-&gt;simulationTime-lastRun)
++			// would be the same or greater than the one that would be traveled with the original velocity
++			// over the stride time (scheduledRun-lastRun)
++			(newton-&gt;maxVelocitySq&lt;0) || // no valid data about max velocity, run always
++			(sweepVelocity==0 &amp;&amp; newton-&gt;maxVelocitySq&gt;0) || 
++			(sweepVelocity&lt;sqrt(newton-&gt;maxVelocitySq) &amp;&amp; rb-&gt;simulationTime-lastRun&gt;=(sweepVelocity/sqrt(newton-&gt;maxVelocitySq)/* we know maxVelocitySq&gt;0 from the first condition */)*(scheduledRun-lastRun)) ||
++			// number of bodies changed
++			XX.size()!=2*rb-&gt;bodies-&gt;size() ||
++			// we've never run yet (this should never happen as per if(!newton) above)
++			scheduledRun&lt;0;
++		// we wouldn't run in this step; in that case, just delete pending interactions
++		// this is done in ::action normally, but it would make the call counters not reflect the stride
+ 		if(!ret) rb-&gt;interactions-&gt;erasePending(*this);
+ 		return ret;
+ 	}
+ #endif
+ 
+ void InsertionSortCollider::action(MetaBody* rb){
+-	// timingDeltas-&gt;start();
++	#ifdef ISC_TIMING
++		timingDeltas-&gt;start();
++	#endif
+ 
+ 	size_t nBodies=rb-&gt;bodies-&gt;size();
+ 	InteractionContainer* interactions=rb-&gt;interactions.get();
+@@ -107,28 +123,44 @@
+ 			// get the BoundingVolumeMetaEngine and turn it off; we will call it ourselves
+ 			if(!boundDispatcher){
+ 				FOREACH(shared_ptr&lt;Engine&gt;&amp; e, rb-&gt;engines){ boundDispatcher=dynamic_pointer_cast&lt;BoundingVolumeMetaEngine&gt;(e); if(boundDispatcher) break; }
+-				if(!boundDispatcher){ LOG_FATAL(&quot;Unable to locate BoundingVolumeMetaEngine within engines, aborting.&quot;); throw runtime_error(&quot;Explanation above&quot;); }
++				if(!boundDispatcher){ LOG_FATAL(&quot;Unable to locate BoundingVolumeMetaEngine within engines, aborting.&quot;); abort(); }
+ 				boundDispatcher-&gt;activated=false; // deactive the engine, we will call it ourselves from now (just when needed)
+ 			}
++			if(sweepLength&gt;0){
++				// get NewtonsDampedLaw, to ask for the maximum velocity value
++				if(!newton){
++					FOREACH(shared_ptr&lt;Engine&gt;&amp; e, rb-&gt;engines){ newton=dynamic_pointer_cast&lt;NewtonsDampedLaw&gt;(e); if(newton) break; }
++					if(!newton){ LOG_FATAL(&quot;Unable to locate NewtonsDampedLaw within engines, aborting.&quot;); abort(); }
++				}
++			}
+ 		#endif
+-	// timingDeltas-&gt;checkpoint(&quot;init&quot;);
++	ISC_CHECKPOINT(&quot;init&quot;);
+ 
+ 		#ifdef COLLIDE_STRIDED
+-			// FIXME: should be able to adapt stride based on the potential_interaction_count_increase/stride_speedup tradeoff
+-			// this depends on the packing density, for instance, maximum velocities/accels etc.
+-			if(stride&gt;1 &amp;&amp; sweepTimeFactor&lt;1 &amp;&amp; sweepVelocity&lt;=0){ LOG_WARN(&quot;Stride is &quot;&lt;&lt;stride&lt;&lt;&quot;, but no sweeping effective!! Setting stride back to 1.&quot;); stride=1; }
+-			if(stride&gt;1){
+-				//schedule next run
+-				scheduledRun=rb-&gt;simulationTime+rb-&gt;dt*(stride-.5); // -.5 to avoid rounding issues
+-				if(sweepTimeFactor&gt;=1) boundDispatcher-&gt;sweepTime=rb-&gt;dt*stride*sweepTimeFactor;
+-				if(sweepVelocity&gt;0) boundDispatcher-&gt;sweepDist=rb-&gt;dt*stride*sweepVelocity;
++			if(sweepLength&gt;0){
++				if(newton-&gt;maxVelocitySq&gt;=0){ // non-negative, i.e. a really computed value
++					// compute new stride value
++					assert(sweepFactor&gt;1.);
++					sweepVelocity=sqrt(newton-&gt;maxVelocitySq)*sweepFactor;
++					if(sweepVelocity&gt;0) {
++						stride=max(1,int((sweepLength/sweepVelocity)/rb-&gt;dt));
++						boundDispatcher-&gt;sweepDist=rb-&gt;dt*(stride-1)*sweepVelocity;
++					} else { // no motion
++						stride=1000; // shouldn't this be some saner value? Infinity? How to decide?
++						boundDispatcher-&gt;sweepDist=0; // nothing moves, no need to make bboxes larger
++					}
++					scheduledRun=rb-&gt;simulationTime+rb-&gt;dt*(stride-.5); // -.5 to avoid rounding issues
++				} else { /* no valid data yet, run next time again */ boundDispatcher-&gt;sweepDist=0; stride=1; scheduledRun=rb-&gt;simulationTime+rb-&gt;dt; }
++				LOG_DEBUG(rb-&gt;simulationTime&lt;&lt;&quot;s: stride adapted to &quot;&lt;&lt;stride&lt;&lt;&quot;; sweepVelocity=&quot;&lt;&lt;sweepVelocity&lt;&lt;&quot;, maxVelocity=&quot;&lt;&lt;sqrt(newton-&gt;maxVelocitySq)&lt;&lt;&quot;, sweepDist=&quot;&lt;&lt;boundDispatcher-&gt;sweepDist);
++				newton-&gt;maxVelocitySq=-1; // reset to invalid value again
+ 			} else { scheduledRun=-1; boundDispatcher-&gt;sweepTime=-1; boundDispatcher-&gt;sweepDist=0; }
+ 			boundDispatcher-&gt;action(rb);
+ 		#endif
+-	// timingDeltas-&gt;checkpoint(&quot;bound&quot;);
+ 
++	ISC_CHECKPOINT(&quot;bound&quot;);
+ 
+ 
++
+ 	// copy bounds along given axis into our arrays
+ 		for(size_t i=0; i&lt;2*nBodies; i++){
+ 			const body_id_t&amp; idXX=XX[i].id; const body_id_t&amp; idYY=YY[i].id; const body_id_t&amp; idZZ=ZZ[i].id;
+@@ -144,11 +176,11 @@
+ 				else{ const Vector3r&amp; pos=Body::byId(idXX,rb)-&gt;physicalParameters-&gt;se3.position; memcpy(&amp;minima[3*idXX],pos,3*sizeof(Real)); memcpy(&amp;maxima[3*idXX],pos,3*sizeof(Real)); }
+ 			}
+ 		}
++	ISC_CHECKPOINT(&quot;copy&quot;);
+ 
+-	// timingDeltas-&gt;checkpoint(&quot;copy&quot;);
+-
+ 	// process interactions that the constitutive law asked to be erased
+-	interactions-&gt;erasePending(*this);
++		interactions-&gt;erasePending(*this);
++	ISC_CHECKPOINT(&quot;erase&quot;);
+ 
+ 	// sort
+ 		if(!doInitSort &amp;&amp; !sortThenCollide){
+@@ -159,13 +191,9 @@
+ 			if(doInitSort){
+ 				// the initial sort is in independent in 3 dimensions, may be run in parallel
+ 				// it seems that there is no time gain running this in parallel, though
+-				#pragma omp parallel sections
+ 				{
+-					#pragma omp section
+ 						std::sort(XX.begin(),XX.end());
+-					#pragma omp section	
+ 						std::sort(YY.begin(),YY.end());
+-					#pragma omp section
+ 						std::sort(ZZ.begin(),ZZ.end());
+ 				}
+ 			} else { // sortThenCollide
+@@ -205,5 +233,5 @@
+ 				}
+ 			}
+ 		}
+-	// timingDeltas-&gt;checkpoint(&quot;sort&amp;collide&quot;);
++	ISC_CHECKPOINT(&quot;sort&amp;collide&quot;);
+ }
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp	2009-07-10 09:52:33 UTC (rev 1852)
++++ trunk/pkg/common/Engine/StandAloneEngine/InsertionSortCollider.hpp	2009-07-10 19:16:01 UTC (rev 1853)
+@@ -15,7 +15,18 @@
+ */
+ 
+ #define COLLIDE_STRIDED
++
++// #define this macro to enable timing whichin this engine
++//#define ISC_TIMING
++
++#ifdef ISC_TIMING
++	#define ISC_CHECKPOINT(cpt) timingDeltas-&gt;checkPoint(cpt)
++#else
++	#define ISC_CHECKPOINT(cpt)
++#endif
++
+ class BoundingVolumeMetaEngine;
++class NewtonsDampedLaw;
+ 
+ class InsertionSortCollider: public Collider{
+ 	//! struct for storing bounds of bodies
+@@ -33,16 +44,25 @@
+ 	#ifdef COLLIDE_STRIDED
+ 		// keep this dispatcher and call it ourselves as needed
+ 		shared_ptr&lt;BoundingVolumeMetaEngine&gt; boundDispatcher;
+-		// interval at which we will run; if &lt;=1, we run always (as usual). 0 by default.
++		// we need this to find out about current maxVelocitySq
++		shared_ptr&lt;NewtonsDampedLaw&gt; newton;
++		// interval at which we will run; if 0, we run always (as usual).
+ 		int stride;
+-		// virtual time when we have to run the next time
+-		Real scheduledRun;
+-		//! If &gt;1 and using stride, sweep time will be multiplied by this number; it should be &gt;=1. to accomodate non-linearities in the system.
+-		/// If deactivated (-1 by default), current-velocity-based sweeping will not be enabled.
+-		Real sweepTimeFactor;
+-		//! If &gt;0 and using stride, all bodies will be swept as if having this velocity.
+-		/// It should be the maximum (predicted or measured) velocity increased by some safety margin, otherwise bodies may get out of their AABB. Deactivated (-1) by default.
++		//! virtual time when we were run last time
++		Real lastRun;
++		//! virtual time when we have to run the next time
++		Real scheduledRun; 
++		/// Absolute length that will be added to bounding boxes at each side; it should be something like 1/5 of typical grain radius
++		/// this value is used to adapt stride; if too large, stride will be big, but the ratio of potential-only interactions will be very big, 
++		/// thus slowing down collider &amp; interaction loops significantly (remember: O(addLength^3))
++		/// If non-positive, collider runs always, without stride adaptivity
++		Real sweepLength;
++		//! Current sweeping velocity; computed from maxVelocity*sweepVelocityFactor
+ 		Real sweepVelocity;
++		//! Overestimation factor for the sweep velocity; must be &gt;=1.0.
++		/// Has no influence on sweepLength, only on the computed stride.
++		/// Default 1.05
++		Real sweepFactor;
+ 	#endif
+ 	//! storage for bounds
+ 	std::vector&lt;Bound&gt; XX,YY,ZZ;
+@@ -72,14 +92,18 @@
+ 
+ 	InsertionSortCollider():
+ 	#ifdef COLLIDE_STRIDED
+-		stride(0), scheduledRun(-1), sweepTimeFactor(-1), sweepVelocity(-1),
++		stride(0), lastRun(-1), scheduledRun(-1), sweepLength(-1), sweepVelocity(-1), sweepFactor(1.05),
+ 	#endif
+-		 sortAxis(0), sortThenCollide(false){ /* timingDeltas=shared_ptr&lt;TimingDeltas&gt;(new TimingDeltas); */ }
++		sortAxis(0), sortThenCollide(false){
++			#ifdef ISC_TIMING
++				timingDeltas=shared_ptr&lt;TimingDeltas&gt;(new TimingDeltas);
++			#endif 
++		 }
+ 	virtual void action(MetaBody*);
+ 	REGISTER_CLASS_AND_BASE(InsertionSortCollider,Collider);
+ 	REGISTER_ATTRIBUTES(Collider,(sortAxis)(sortThenCollide)
+ 		#ifdef COLLIDE_STRIDED
+-			(stride)(scheduledRun)(sweepTimeFactor)(sweepVelocity)
++			(stride)(lastRun)(scheduledRun)(sweepLength)(sweepFactor)(sweepVelocity)
+ 		#endif
+ 	);
+ 	DECLARE_LOGGER;
+
+Modified: trunk/pkg/common/SConscript
+===================================================================
+--- trunk/pkg/common/SConscript	2009-07-10 09:52:33 UTC (rev 1852)
++++ trunk/pkg/common/SConscript	2009-07-10 19:16:01 UTC (rev 1853)
+@@ -143,7 +143,7 @@
+ 	env.SharedLibrary('SpheresFactory',['Engine/StandAloneEngine/SpheresFactory.cpp'],
+ 		LIBS=env['LIBS']+['AABB','InteractingSphere','Facet','Sphere','BodyMacroParameters','InteractionGeometryMetaEngine']),
+ 	env.SharedLibrary('SpatialQuickSortCollider',['Engine/StandAloneEngine/SpatialQuickSortCollider.cpp']),
+-	env.SharedLibrary('InsertionSortCollider',['Engine/StandAloneEngine/InsertionSortCollider.cpp'],LIBS=env['LIBS']+['BoundingVolumeMetaEngine']),
++	env.SharedLibrary('InsertionSortCollider',['Engine/StandAloneEngine/InsertionSortCollider.cpp'],LIBS=env['LIBS']+['BoundingVolumeMetaEngine','NewtonsDampedLaw']),
+ 	env.SharedLibrary('PersistentSAPCollider',['Engine/StandAloneEngine/PersistentSAPCollider.cpp']),
+ 	env.SharedLibrary('DistantPersistentSAPCollider',['Engine/StandAloneEngine/DistantPersistentSAPCollider.cpp']),
+ 	env.SharedLibrary('PhysicalActionContainerReseter',['Engine/StandAloneEngine/PhysicalActionContainerReseter.cpp']),
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-07-10 09:52:33 UTC (rev 1852)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.cpp	2009-07-10 19:16:01 UTC (rev 1853)
+@@ -25,6 +25,7 @@
+ {
+ 	ncb-&gt;bex.sync();
+ 	Real dt=Omega::instance().getTimeStep();
++	maxVelocitySq=-1;
+ 
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *ncb-&gt;bodies){
+ 		// clump members are non-dynamic; they skip the rest of loop once their forces are properly taken into account, however
+
+Modified: trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2009-07-10 09:52:33 UTC (rev 1852)
++++ trunk/pkg/dem/Engine/DeusExMachina/NewtonsDampedLaw.hpp	2009-07-10 19:16:01 UTC (rev 1853)
+@@ -38,10 +38,10 @@
+ 	public:
+ 		///damping coefficient for Cundall's non viscous damping
+ 		Real damping;
+-		/// store square of max. velocity, for informative purposes
++		/// store square of max. velocity, for informative purposes; computed again at every step
+ 		Real maxVelocitySq;
+ 		virtual void applyCondition(MetaBody *);		
+-		NewtonsDampedLaw(): damping(0.2), maxVelocitySq(0){}
++		NewtonsDampedLaw(): damping(0.2), maxVelocitySq(-1){}
+ 	REGISTER_ATTRIBUTES(DeusExMachina,(damping)(maxVelocitySq));
+ 	REGISTER_CLASS_AND_BASE(NewtonsDampedLaw,DeusExMachina);
+ };
+
+Modified: trunk/scripts/test/collider-stride-triax.py
+===================================================================
+--- trunk/scripts/test/collider-stride-triax.py	2009-07-10 09:52:33 UTC (rev 1852)
++++ trunk/scripts/test/collider-stride-triax.py	2009-07-10 19:16:01 UTC (rev 1853)
+@@ -4,30 +4,19 @@
+ import os.path
+ loadFrom='/tmp/triax.xml'
+ if not os.path.exists(loadFrom):
+-	TriaxialTest(numberOfGrains=8000,fast=fast,noFiles=True).generate(loadFrom)
++	TriaxialTest(numberOfGrains=8000,fast=True,noFiles=True).generate(loadFrom)
+ O.load(loadFrom)
+ log.setLevel('TriaxialCompressionEngine',log.WARN) # shut up
++log.setLevel('InsertionSortCollider',log.DEBUG) # shut up
+ 
+ collider=utils.typedEngine('InsertionSortCollider')
+ newton=utils.typedEngine('NewtonsDampedLaw')
+ 
+ # use striding; say &quot;if 0:&quot; to disable striding and compare to regular runs
+ if 1:
+-	collider['stride']=4
+-	collider['sweepVelocity']=16
+-	# try to update maximum velocity dynamically:
+-	if 1:
+-		O.engines=O.engines+[PeriodicPythonRunner(command='adjustMaxVelocity()',iterPeriod=50)]
++	# length by which bboxes will be made larger
++	collider['sweepLength']=.05*O.bodies[100].shape['radius']
+ 
+-def adjustMaxVelocity():
+-	newMax=sqrt(newton['maxVelocitySq']); newton['maxVelocitySq']=0
+-	collider['sweepVelocity']=newMax
+-	# try to adjust stride here; the 4 and 16 are original (reference) values for stride and sweepVelocity
+-	# if this were inverse-proportional (without sqrt), stride is getting too high
+-	collider['stride']=4*int(sqrt(16/newMax))
+-	print 'step %d; new max velocity %g, stride %d'%(O.iter,newMax,collider['stride'])
+-
+-
+ O.step() # filter out initialization
+ O.timingEnabled=True
+ totalTime=0
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001187.html">[deprecated list] [Yade-dev] Example of using log4cxx
+</A></li>
+	<LI>Next message: <A HREF="001177.html">[deprecated list] [Yade-dev] [svn] r1853 - in trunk: pkg/common	pkg/common/Engine/StandAloneEngine pkg/dem/Engine/DeusExMachina scripts/test
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1176">[ date ]</a>
+              <a href="thread.html#1176">[ thread ]</a>
+              <a href="subject.html#1176">[ subject ]</a>
+              <a href="author.html#1176">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

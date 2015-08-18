@@ -1,0 +1,866 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1718 - in trunk:	examples	examples/dynamic_simulation_tests	pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1718%20-%20in%20trunk%3A%0A%09examples%09examples/dynamic_simulation_tests%09pkg/common/DataClass/PhysicalParameters%09pkg/common/Engine/DeusExMachina%0A%09pkg/dem%09pkg/dem/DataClass/InteractionGeometry%09pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%09pkg/dem/PreProcessor&In-Reply-To=%3C200903121727.n2CHRaK7013133%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000841.html">
+   <LINK REL="Next"  HREF="000852.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1718 - in trunk:	examples	examples/dynamic_simulation_tests	pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor</H1>
+    <B>sega at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1718%20-%20in%20trunk%3A%0A%09examples%09examples/dynamic_simulation_tests%09pkg/common/DataClass/PhysicalParameters%09pkg/common/Engine/DeusExMachina%0A%09pkg/dem%09pkg/dem/DataClass/InteractionGeometry%09pkg/dem/Engine/EngineUnit%0A%09pkg/dem/Engine/StandAloneEngine%09pkg/dem/PreProcessor&In-Reply-To=%3C200903121727.n2CHRaK7013133%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1718 - in trunk:	examples	examples/dynamic_simulation_tests	pkg/common/DataClass/PhysicalParameters	pkg/common/Engine/DeusExMachina	pkg/dem	pkg/dem/DataClass/InteractionGeometry	pkg/dem/Engine/EngineUnit	pkg/dem/Engine/StandAloneEngine	pkg/dem/PreProcessor">sega at mail.berlios.de
+       </A><BR>
+    <I>Thu Mar 12 18:27:36 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000841.html">[deprecated list] [Yade-dev] Shear force computation
+</A></li>
+        <LI>Next message: <A HREF="000852.html">[deprecated list] [Yade-dev] [Yade-users] pregenerated sphere	packings
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#851">[ date ]</a>
+              <a href="thread.html#851">[ thread ]</a>
+              <a href="subject.html#851">[ subject ]</a>
+              <a href="author.html#851">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: sega
+Date: 2009-03-12 18:27:35 +0100 (Thu, 12 Mar 2009)
+New Revision: 1718
+
+Added:
+   trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp
+   trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw.hpp
+Removed:
+   trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp
+   trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticContactLaw.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticContactLaw.hpp
+Modified:
+   trunk/examples/STLImporterTest.py
+   trunk/examples/dynamic_simulation_tests/ringSimpleViscoelastic.py
+   trunk/pkg/common/DataClass/PhysicalParameters/RigidBodyParameters.cpp
+   trunk/pkg/common/DataClass/PhysicalParameters/RigidBodyParameters.hpp
+   trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+   trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+   trunk/pkg/dem/PreProcessor/MembraneTest.cpp
+   trunk/pkg/dem/PreProcessor/TestSimpleViscoelastic.cpp
+   trunk/pkg/dem/SConscript
+Log:
+1. Remove zeroPoint
+2. Add prefix ef2_ to Spheres_Viscoelastic_SimpleViscoelasticContactLaw
+
+
+Modified: trunk/examples/STLImporterTest.py
+===================================================================
+--- trunk/examples/STLImporterTest.py	2009-03-10 13:22:50 UTC (rev 1717)
++++ trunk/examples/STLImporterTest.py	2009-03-12 17:27:35 UTC (rev 1718)
+@@ -64,7 +64,7 @@
+ 	## Create physical information about the interaction.
+ 	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleViscoelasticRelationships')]),
+     ## Constitutive law
+-	MetaEngine('ConstitutiveLawDispatcher',[EngineUnit('Spheres_Viscoelastic_SimpleViscoelasticContactLaw')]),
++	MetaEngine('ConstitutiveLawDispatcher',[EngineUnit('ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw')]),
+ 	## Apply gravity
+ 	DeusExMachina('GravityEngine',{'gravity':[0,-9.81,0]}),
+ 	## Cundall damping must been disabled!
+
+Modified: trunk/examples/dynamic_simulation_tests/ringSimpleViscoelastic.py
+===================================================================
+--- trunk/examples/dynamic_simulation_tests/ringSimpleViscoelastic.py	2009-03-10 13:22:50 UTC (rev 1717)
++++ trunk/examples/dynamic_simulation_tests/ringSimpleViscoelastic.py	2009-03-12 17:27:35 UTC (rev 1718)
+@@ -68,9 +68,7 @@
+ 	MetaEngine('InteractionPhysicsMetaEngine',[EngineUnit('SimpleViscoelasticRelationships')]),
+ 
+     ## Constitutive law
+-	MetaEngine('ConstitutiveLawDispatcher',[EngineUnit('Spheres_Viscoelastic_SimpleViscoelasticContactLaw')]),
+-    ## or InteractionSolver 
+-	#StandAloneEngine('SimpleViscoelasticContactLaw'),
++	MetaEngine('ConstitutiveLawDispatcher',[EngineUnit('ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw')]),
+ 
+ 	DeusExMachina('GravityEngine',{'gravity':[0,-9.81,0]}),
+ 
+
+Modified: trunk/pkg/common/DataClass/PhysicalParameters/RigidBodyParameters.cpp
+===================================================================
+--- trunk/pkg/common/DataClass/PhysicalParameters/RigidBodyParameters.cpp	2009-03-10 13:22:50 UTC (rev 1717)
++++ trunk/pkg/common/DataClass/PhysicalParameters/RigidBodyParameters.cpp	2009-03-12 17:27:35 UTC (rev 1718)
+@@ -16,7 +16,6 @@
+ 	acceleration = Vector3r(0,0,0);
+ 	angularAcceleration = Vector3r(0,0,0);
+ 	angularVelocity=Vector3r(0,0,0);
+-	zeroPoint=Vector3r(0,0,0);
+ }
+ 
+ RigidBodyParameters::~RigidBodyParameters()
+@@ -28,7 +27,6 @@
+ 	ParticleParameters::registerAttributes();
+ 	REGISTER_ATTRIBUTE(inertia);
+ 	REGISTER_ATTRIBUTE(angularVelocity);
+-//	REGISTER_ATTRIBUTE(zeroPoint); // must be set by kinematic Engine
+ }
+ 
+ YADE_PLUGIN();
+
+Modified: trunk/pkg/common/DataClass/PhysicalParameters/RigidBodyParameters.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/PhysicalParameters/RigidBodyParameters.hpp	2009-03-10 13:22:50 UTC (rev 1717)
++++ trunk/pkg/common/DataClass/PhysicalParameters/RigidBodyParameters.hpp	2009-03-12 17:27:35 UTC (rev 1718)
+@@ -20,10 +20,6 @@
+ 		// state
+ 				,angularAcceleration
+ 				,angularVelocity;
+-
+-		/// It is the rotation center of kinematic (non-isDymanic) body. 
+-		/// It is non-serializable and must be set by kinematic Engine. 
+-		Vector3r zeroPoint;
+ 	
+ 		RigidBodyParameters ();
+ 		virtual ~RigidBodyParameters ();
+
+Modified: trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp
+===================================================================
+--- trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp	2009-03-10 13:22:50 UTC (rev 1717)
++++ trunk/pkg/common/Engine/DeusExMachina/RotationEngine.cpp	2009-03-12 17:27:35 UTC (rev 1718)
+@@ -74,7 +74,6 @@
+ 	std::vector&lt;int&gt;::const_iterator iiEnd = subscribedBodies.end();
+ 
+ 	Real dt = Omega::instance().getTimeStep();
+-	// time = dt;
+ 
+ 	Quaternionr q;
+ 	q.FromAxisAngle(rotationAxis,angularVelocity*dt);
+@@ -86,16 +85,19 @@
+ 	{
+ 		RigidBodyParameters * rb = static_cast&lt;RigidBodyParameters*&gt;((*bodies)[*ii]-&gt;physicalParameters.get());
+ 
++		rb-&gt;angularVelocity	= rotationAxis*angularVelocity;
++
+ 		if(rotateAroundZero)
+-			rb-&gt;se3.position	= q*(rb-&gt;se3.position-zeroPoint)+zeroPoint; // for RotatingBox
++        {
++            const Vector3r l = rb-&gt;se3.position-zeroPoint;
++			rb-&gt;se3.position	= q*l+zeroPoint; 
++            rb-&gt;velocity		= rb-&gt;angularVelocity.Cross(l);
++		}
+ 			
+ 		rb-&gt;se3.orientation	= q*rb-&gt;se3.orientation;
+-
+ 		rb-&gt;se3.orientation.Normalize();
+ 		rb-&gt;se3.orientation.ToAxisAngle(ax,an);
+ 		
+-		rb-&gt;angularVelocity	= rotationAxis*angularVelocity;
+-		rb-&gt;velocity		= Vector3r(0,0,0);
+ 	}
+ 
+ 
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2009-03-10 13:22:50 UTC (rev 1717)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.cpp	2009-03-12 17:27:35 UTC (rev 1718)
+@@ -9,7 +9,7 @@
+ // At least one virtual method must be in the .cpp file (!!!)
+ SpheresContactGeometry::~SpheresContactGeometry(){};
+ 
+-void SpheresContactGeometry::updateShearForce(Vector3r&amp; shearForce, Real ks, const Vector3r&amp; prevNormal, const RigidBodyParameters* rbp1, const RigidBodyParameters* rbp2, bool isDynamic1, bool isDynamic2, Real dt, bool avoidGranularRatcheting){
++void SpheresContactGeometry::updateShearForce(Vector3r&amp; shearForce, Real ks, const Vector3r&amp; prevNormal, const RigidBodyParameters* rbp1, const RigidBodyParameters* rbp2, Real dt, bool avoidGranularRatcheting){
+ 
+ 	Vector3r axis;
+ 	Real angle;
+@@ -17,13 +17,7 @@
+ 	// approximated rotations
+ 		axis = prevNormal.Cross(normal); 
+ 		shearForce -= shearForce.Cross(axis);
+-		//angle = dt*0.5*currentContactGeometry-&gt;normal.Dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
+-		//FIXME: if one body is kinematic then assumed its rotation centre does not lies along the normal
+-		//(i.e. virtual sphere, which replaces this kinematic body on contact, does not rotate)
+-		Vector3r summaryAngularVelocity(Vector3r::ZERO);
+-		if (isDynamic1) summaryAngularVelocity += rbp1-&gt;angularVelocity;
+-		if (isDynamic2) summaryAngularVelocity += rbp2-&gt;angularVelocity;
+-		angle = dt*0.5*normal.Dot(summaryAngularVelocity);
++		angle = dt*0.5*normal.Dot(rbp1-&gt;angularVelocity + rbp2-&gt;angularVelocity);
+ 		axis = angle*normal;
+ 		shearForce -= shearForce.Cross(axis);
+ 		
+@@ -48,10 +42,13 @@
+ 		 *  (see F. ALONSO-MARROQUIN, R. GARCIA-ROJO, H.J. HERRMANN, 
+ 		 *  &quot;Micro-mechanical investigation of granular ratcheting, in Cyclic Behaviour of Soils and Liquefaction Phenomena&quot;,
+ 		 *  ed. T. Triantafyllidis (Balklema, London, 2004), p. 3-10 - and a lot more papers from the same authors) */
+-		c1x = (isDynamic1) ?  radius1*normal : x - rbp1-&gt;zeroPoint;
+-		c2x = (isDynamic2) ? -radius2*normal : x - rbp2-&gt;zeroPoint;
++
++		// FIXME: For sphere-facet contact this will give an erroneous value of relative velocity...
++		c1x =   radius1*normal; 
++		c2x =  -radius2*normal;
+ 	}
+ 	else {
++		// FIXME: It is correct for sphere-sphere and sphere-facet contact
+ 		c1x = (x - rbp1-&gt;se3.position);
+ 		c2x = (x - rbp2-&gt;se3.position);
+ 	}
+
+Modified: trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp
+===================================================================
+--- trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2009-03-10 13:22:50 UTC (rev 1717)
++++ trunk/pkg/dem/DataClass/InteractionGeometry/SpheresContactGeometry.hpp	2009-03-12 17:27:35 UTC (rev 1718)
+@@ -100,7 +100,7 @@
+ 		SpheresContactGeometry():contactPoint(Vector3r::ZERO),radius1(0),radius2(0),facetContactFace(0.),hasShear(false),pos1(Vector3r::ZERO),pos2(Vector3r::ZERO),ori1(Quaternionr::IDENTITY),ori2(Quaternionr::IDENTITY),cp1rel(Quaternionr::IDENTITY),cp2rel(Quaternionr::IDENTITY),d1(0),d2(0),d0(0),initRelOri12(Quaternionr::IDENTITY){createIndex();}
+ 		virtual ~SpheresContactGeometry();
+ 
+-		void updateShearForce(Vector3r&amp; shearForce, Real ks, const Vector3r&amp; prevNormal, const RigidBodyParameters* rbp1, const RigidBodyParameters* rbp2, bool isDynamic1, bool isDynamic2, Real dt, bool avoidGranularRatcheting=true);
++		void updateShearForce(Vector3r&amp; shearForce, Real ks, const Vector3r&amp; prevNormal, const RigidBodyParameters* rbp1, const RigidBodyParameters* rbp2, Real dt, bool avoidGranularRatcheting=true);
+ 
+ 	REGISTER_ATTRIBUTES(/* no attributes from base class */,
+ 			(normal)
+
+Deleted: trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp	2009-03-10 13:22:50 UTC (rev 1717)
++++ trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp	2009-03-12 17:27:35 UTC (rev 1718)
+@@ -1,74 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2009 by Sergei Dorofeenko                               *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include&quot;Spheres_Viscoelastic_SimpleViscoelasticContactLaw.hpp&quot;
+-#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+-#include&lt;yade/pkg-dem/ViscoelasticInteraction.hpp&gt;
+-#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
+-YADE_PLUGIN(&quot;Spheres_Viscoelastic_SimpleViscoelasticContactLaw&quot;);
+-
+-void Spheres_Viscoelastic_SimpleViscoelasticContactLaw::go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody){
+-
+-	SpheresContactGeometry* geom=static_cast&lt;SpheresContactGeometry*&gt;(_geom.get());
+-	ViscoelasticInteraction* phys=static_cast&lt;ViscoelasticInteraction*&gt;(_phys.get());
+-
+-	int id1 = I-&gt;getId1();
+-	int id2 = I-&gt;getId2();
+-	
+-	shared_ptr&lt;BodyContainer&gt;&amp; bodies = rootBody-&gt;bodies;
+-
+-	RigidBodyParameters* de1 = YADE_CAST&lt;RigidBodyParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
+-	RigidBodyParameters* de2 = YADE_CAST&lt;RigidBodyParameters*&gt;((*bodies)[id2]-&gt;physicalParameters.get());
+-
+-	bool isDynamic1 = (*bodies)[id1]-&gt;isDynamic;
+-	bool isDynamic2 = (*bodies)[id2]-&gt;isDynamic;
+-
+-	Vector3r&amp; shearForce 			= phys-&gt;shearForce;
+-	if (I-&gt;isNew) shearForce=Vector3r(0,0,0);
+-
+-	Real dt = Omega::instance().getTimeStep();
+-
+-	Vector3r axis = phys-&gt;prevNormal.Cross(geom-&gt;normal);
+-	shearForce -= shearForce.Cross(axis);
+-	Vector3r summaryAngularVelocity(0,0,0);
+-	if (isDynamic1) summaryAngularVelocity += de1-&gt;angularVelocity;
+-	if (isDynamic2) summaryAngularVelocity += de2-&gt;angularVelocity;
+-	Real angle = dt*0.5*geom-&gt;normal.Dot(summaryAngularVelocity);
+-	axis = angle*geom-&gt;normal;
+-	shearForce -= shearForce.Cross(axis);
+-
+-	Vector3r x				= geom-&gt;contactPoint;
+-	Vector3r c1x				= (x - de1-&gt;se3.position);
+-	Vector3r c2x				= (x - de2-&gt;se3.position);
+-	 /// The following definition of c1x and c2x is to avoid &quot;granular ratcheting&quot; 
+-	///  (see F. ALONSO-MARROQUIN, R. GARCIA-ROJO, H.J. HERRMANN, 
+-	///   &quot;Micro-mechanical investigation of granular ratcheting, in Cyclic Behaviour of Soils and Liquefaction Phenomena&quot;,
+-	///   ed. T. Triantafyllidis (Balklema, London, 2004), p. 3-10 - and a lot more papers from the same authors)
+-			Vector3r _c1x_	= (isDynamic1) ? geom-&gt;radius1*geom-&gt;normal : x - de1-&gt;zeroPoint;
+-			Vector3r _c2x_	= (isDynamic2) ? -geom-&gt;radius2*geom-&gt;normal : x - de2-&gt;zeroPoint;
+-	Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.Cross(_c2x_)) - (de1-&gt;velocity+de1-&gt;angularVelocity.Cross(_c1x_));
+-	Real     normalVelocity			= geom-&gt;normal.Dot(relativeVelocity);
+-	Vector3r shearVelocity			= relativeVelocity-normalVelocity*geom-&gt;normal;
+-	shearForce 			       -= (phys-&gt;ks*dt+phys-&gt;cs)*shearVelocity;
+-
+-	phys-&gt;normalForce = ( phys-&gt;kn * std::max(geom-&gt;penetrationDepth,(Real) 0) - phys-&gt;cn * normalVelocity ) * geom-&gt;normal;
+-	phys-&gt;prevNormal = geom-&gt;normal;
+-
+-	Real maxFs = phys-&gt;normalForce.SquaredLength() * std::pow(phys-&gt;tangensOfFrictionAngle,2);
+-	if( shearForce.SquaredLength() &gt; maxFs )
+-	{
+-		maxFs = Mathr::Sqrt(maxFs) / shearForce.Length();
+-		shearForce *= maxFs;
+-	}
+-
+-	Vector3r f				= phys-&gt;normalForce + shearForce;
+-	addForce (id1,-f,rootBody);
+-	addForce (id2, f,rootBody);
+-	addTorque(id1,-c1x.Cross(f),rootBody);
+-	addTorque(id2, c2x.Cross(f),rootBody);
+-}
+
+Deleted: trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.hpp	2009-03-10 13:22:50 UTC (rev 1717)
++++ trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.hpp	2009-03-12 17:27:35 UTC (rev 1718)
+@@ -1,24 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2009 by Sergei Dorofeenko                               *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#pragma once
+-
+-#include&lt;yade/pkg-common/ConstitutiveLaw.hpp&gt;
+-
+-/// This class provides linear viscoelastic contact model
+-class Spheres_Viscoelastic_SimpleViscoelasticContactLaw : public ConstitutiveLaw
+-{
+-	public :
+-		virtual void go(shared_ptr&lt;InteractionGeometry&gt;&amp;, shared_ptr&lt;InteractionPhysics&gt;&amp;, Interaction*, MetaBody*);
+-		NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
+-		FUNCTOR2D(SpheresContactGeometry,ViscoelasticInteraction);
+-		REGISTER_CLASS_AND_BASE(Spheres_Viscoelastic_SimpleViscoelasticContactLaw,ConstitutiveLaw);
+-};
+-REGISTER_SERIALIZABLE(Spheres_Viscoelastic_SimpleViscoelasticContactLaw);
+-
+-
+
+Copied: trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp (from rev 1717, trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp)
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp	2009-03-10 13:22:50 UTC (rev 1717)
++++ trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp	2009-03-12 17:27:35 UTC (rev 1718)
+@@ -0,0 +1,69 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Sergei Dorofeenko                               *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include&quot;ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw.hpp&quot;
++#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
++#include&lt;yade/pkg-dem/ViscoelasticInteraction.hpp&gt;
++#include&lt;yade/pkg-common/RigidBodyParameters.hpp&gt;
++YADE_PLUGIN(&quot;ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw&quot;);
++
++void ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw::go(shared_ptr&lt;InteractionGeometry&gt;&amp; _geom, shared_ptr&lt;InteractionPhysics&gt;&amp; _phys, Interaction* I, MetaBody* rootBody){
++
++	SpheresContactGeometry* geom=static_cast&lt;SpheresContactGeometry*&gt;(_geom.get());
++	ViscoelasticInteraction* phys=static_cast&lt;ViscoelasticInteraction*&gt;(_phys.get());
++
++	int id1 = I-&gt;getId1();
++	int id2 = I-&gt;getId2();
++	
++	shared_ptr&lt;BodyContainer&gt;&amp; bodies = rootBody-&gt;bodies;
++
++	RigidBodyParameters* de1 = YADE_CAST&lt;RigidBodyParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
++	RigidBodyParameters* de2 = YADE_CAST&lt;RigidBodyParameters*&gt;((*bodies)[id2]-&gt;physicalParameters.get());
++
++	Vector3r&amp; shearForce 			= phys-&gt;shearForce;
++	if (I-&gt;isNew) shearForce=Vector3r(0,0,0);
++
++	Real dt = Omega::instance().getTimeStep();
++
++	Vector3r axis = phys-&gt;prevNormal.Cross(geom-&gt;normal);
++	shearForce -= shearForce.Cross(axis);
++	Real angle = dt*0.5*geom-&gt;normal.Dot(de1-&gt;angularVelocity + de2-&gt;angularVelocity);
++	axis = angle*geom-&gt;normal;
++	shearForce -= shearForce.Cross(axis);
++
++	Vector3r x				= geom-&gt;contactPoint;
++	Vector3r c1x				= (x - de1-&gt;se3.position);
++	Vector3r c2x				= (x - de2-&gt;se3.position);
++	 /// The following definition of c1x and c2x is to avoid &quot;granular ratcheting&quot; 
++	///  (see F. ALONSO-MARROQUIN, R. GARCIA-ROJO, H.J. HERRMANN, 
++	///   &quot;Micro-mechanical investigation of granular ratcheting, in Cyclic Behaviour of Soils and Liquefaction Phenomena&quot;,
++	///   ed. T. Triantafyllidis (Balklema, London, 2004), p. 3-10 - and a lot more papers from the same authors)
++			//Vector3r _c1x_	=  geom-&gt;radius1*geom-&gt;normal;
++			//Vector3r _c2x_	= -geom-&gt;radius2*geom-&gt;normal;
++			//Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.Cross(_c2x_)) - (de1-&gt;velocity+de1-&gt;angularVelocity.Cross(_c1x_));
++	Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.Cross(c2x)) - (de1-&gt;velocity+de1-&gt;angularVelocity.Cross(c1x));
++	Real     normalVelocity			= geom-&gt;normal.Dot(relativeVelocity);
++	Vector3r shearVelocity			= relativeVelocity-normalVelocity*geom-&gt;normal;
++	shearForce 			       -= (phys-&gt;ks*dt+phys-&gt;cs)*shearVelocity;
++
++	phys-&gt;normalForce = ( phys-&gt;kn * std::max(geom-&gt;penetrationDepth,(Real) 0) - phys-&gt;cn * normalVelocity ) * geom-&gt;normal;
++	phys-&gt;prevNormal = geom-&gt;normal;
++
++	Real maxFs = phys-&gt;normalForce.SquaredLength() * std::pow(phys-&gt;tangensOfFrictionAngle,2);
++	if( shearForce.SquaredLength() &gt; maxFs )
++	{
++		maxFs = Mathr::Sqrt(maxFs) / shearForce.Length();
++		shearForce *= maxFs;
++	}
++
++	Vector3r f				= phys-&gt;normalForce + shearForce;
++	addForce (id1,-f,rootBody);
++	addForce (id2, f,rootBody);
++	addTorque(id1,-c1x.Cross(f),rootBody);
++	addTorque(id2, c2x.Cross(f),rootBody);
++}
+
+
+Property changes on: trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Copied: trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw.hpp (from rev 1717, trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.hpp)
+===================================================================
+--- trunk/pkg/dem/Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.hpp	2009-03-10 13:22:50 UTC (rev 1717)
++++ trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw.hpp	2009-03-12 17:27:35 UTC (rev 1718)
+@@ -0,0 +1,24 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Sergei Dorofeenko                               *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#pragma once
++
++#include&lt;yade/pkg-common/ConstitutiveLaw.hpp&gt;
++
++/// This class provides linear viscoelastic contact model
++class ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw : public ConstitutiveLaw
++{
++	public :
++		virtual void go(shared_ptr&lt;InteractionGeometry&gt;&amp;, shared_ptr&lt;InteractionPhysics&gt;&amp;, Interaction*, MetaBody*);
++		NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
++		FUNCTOR2D(SpheresContactGeometry,ViscoelasticInteraction);
++		REGISTER_CLASS_AND_BASE(ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw,ConstitutiveLaw);
++};
++REGISTER_SERIALIZABLE(ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw);
++
++
+
+
+Property changes on: trunk/pkg/dem/Engine/EngineUnit/ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw.hpp
+___________________________________________________________________
+Name: svn:mergeinfo
+   + 
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2009-03-10 13:22:50 UTC (rev 1717)
++++ trunk/pkg/dem/Engine/StandAloneEngine/ElasticContactLaw.cpp	2009-03-12 17:27:35 UTC (rev 1718)
+@@ -104,9 +104,6 @@
+ 			BodyMacroParameters* de1 				= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
+ 			BodyMacroParameters* de2 				= YADE_CAST&lt;BodyMacroParameters*&gt;((*bodies)[id2]-&gt;physicalParameters.get());
+ 
+-			bool isDynamic1 = (*bodies)[id1]-&gt;isDynamic;
+-			bool isDynamic2 = (*bodies)[id2]-&gt;isDynamic;
+-
+ 			Vector3r&amp; shearForce 			= currentContactPhysics-&gt;shearForce;
+ 	
+ 			if (contact-&gt;isNew) shearForce=Vector3r(0,0,0);
+@@ -122,18 +119,9 @@
+ 			Real angle;
+ 
+ 	/// Here is the code with approximated rotations 	 ///
+-			
+-
+-
+ 			axis = currentContactPhysics-&gt;prevNormal.Cross(currentContactGeometry-&gt;normal);
+ 			shearForce -= shearForce.Cross(axis);
+-			//angle = dt*0.5*currentContactGeometry-&gt;normal.Dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
+-				//FIXME: if one body is kinematic then assumed its rotation centre does not lies along the normal
+-				//(i.e. virtual sphere, which replaces this kinematic body on contact, does not rotate)
+-			Vector3r summaryAngularVelocity(0,0,0);
+-			if (isDynamic1) summaryAngularVelocity += de1-&gt;angularVelocity;
+-			if (isDynamic2) summaryAngularVelocity += de2-&gt;angularVelocity;
+-			angle = dt*0.5*currentContactGeometry-&gt;normal.Dot(summaryAngularVelocity);
++			angle = dt*0.5*currentContactGeometry-&gt;normal.Dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
+ 			axis = angle*currentContactGeometry-&gt;normal;
+ 			shearForce -= shearForce.Cross(axis);
+ 		
+@@ -161,9 +149,10 @@
+ 			///  (see F. ALONSO-MARROQUIN, R. GARCIA-ROJO, H.J. HERRMANN, 
+ 			///   &quot;Micro-mechanical investigation of granular ratcheting, in Cyclic Behaviour of Soils and Liquefaction Phenomena&quot;,
+ 			///   ed. T. Triantafyllidis (Balklema, London, 2004), p. 3-10 - and a lot more papers from the same authors)
+-            		Vector3r _c1x_	= (isDynamic1) ? currentContactGeometry-&gt;radius1*currentContactGeometry-&gt;normal : x - de1-&gt;zeroPoint;
+-            		Vector3r _c2x_	= (isDynamic2) ? -currentContactGeometry-&gt;radius2*currentContactGeometry-&gt;normal : x - de2-&gt;zeroPoint;
+-			Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.Cross(_c2x_)) - (de1-&gt;velocity+de1-&gt;angularVelocity.Cross(_c1x_));
++                    //Vector3r _c1x_	=  currentContactGeometry-&gt;radius1*currentContactGeometry-&gt;normal;
++                    //Vector3r _c2x_	= -currentContactGeometry-&gt;radius2*currentContactGeometry-&gt;normal;
++					//Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.Cross(_c2x_)) - (de1-&gt;velocity+de1-&gt;angularVelocity.Cross(_c1x_));
++			Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.Cross(c2x)) - (de1-&gt;velocity+de1-&gt;angularVelocity.Cross(c1x));
+ 			Vector3r shearVelocity			= relativeVelocity-currentContactGeometry-&gt;normal.Dot(relativeVelocity)*currentContactGeometry-&gt;normal;
+ 			Vector3r shearDisplacement		= shearVelocity*dt;
+ 			shearForce 			       -= currentContactPhysics-&gt;ks*shearDisplacement;
+
+Deleted: trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticContactLaw.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticContactLaw.cpp	2009-03-10 13:22:50 UTC (rev 1717)
++++ trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticContactLaw.cpp	2009-03-12 17:27:35 UTC (rev 1718)
+@@ -1,153 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
+-*									 *
+-*  Copyright (C) 2008 by Sergei Dorofeenko                               *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#include&quot;SimpleViscoelasticContactLaw.hpp&quot;
+-#include&lt;yade/pkg-dem/SimpleViscoelasticBodyParameters.hpp&gt;
+-#include&lt;yade/pkg-dem/ViscoelasticInteraction.hpp&gt;
+-#include&lt;yade/pkg-dem/SpheresContactGeometry.hpp&gt;
+-#include&lt;yade/core/Omega.hpp&gt;
+-#include&lt;yade/core/MetaBody.hpp&gt;
+-#include&lt;yade/pkg-common/Force.hpp&gt;
+-#include&lt;yade/pkg-common/Momentum.hpp&gt;
+-#include&lt;yade/core/PhysicalAction.hpp&gt;
+-
+-
+-SimpleViscoelasticContactLaw::SimpleViscoelasticContactLaw() : InteractionSolver() , actionForce(new Force) , actionMomentum(new Momentum)
+-{
+-//	sdecGroupMask=1;
+-	momentRotationLaw = true;
+-	actionForceIndex = actionForce-&gt;getClassIndex();
+-	actionMomentumIndex = actionMomentum-&gt;getClassIndex();
+-}
+-
+-
+-void SimpleViscoelasticContactLaw::registerAttributes()
+-{
+-	InteractionSolver::registerAttributes();
+-//	REGISTER_ATTRIBUTE(sdecGroupMask);
+-	REGISTER_ATTRIBUTE(momentRotationLaw);
+-}
+-
+-
+-void SimpleViscoelasticContactLaw::action(MetaBody* ncb)
+-{
+-	shared_ptr&lt;BodyContainer&gt;&amp; bodies = ncb-&gt;bodies;
+-
+-	Real dt = Omega::instance().getTimeStep();
+-
+-/// Non Permanents Links												///
+-
+-	InteractionContainer::iterator ii    = ncb-&gt;transientInteractions-&gt;begin();
+-	InteractionContainer::iterator iiEnd = ncb-&gt;transientInteractions-&gt;end();
+-	for(  ; ii!=iiEnd ; ++ii )
+-	{
+-		if ((*ii)-&gt;isReal)
+-		{
+-			const shared_ptr&lt;Interaction&gt;&amp; contact = *ii;
+-			int id1 = contact-&gt;getId1();
+-			int id2 = contact-&gt;getId2();
+-			
+-			//if( !( (*bodies)[id1]-&gt;getGroupMask() &amp; (*bodies)[id2]-&gt;getGroupMask() &amp; sdecGroupMask) ) continue;
+-
+-			SpheresContactGeometry*    currentContactGeometry= YADE_CAST&lt;SpheresContactGeometry*&gt;(contact-&gt;interactionGeometry.get());
+-			ViscoelasticInteraction* currentContactPhysics = YADE_CAST&lt;ViscoelasticInteraction*&gt; (contact-&gt;interactionPhysics.get());
+-			if((!currentContactGeometry)||(!currentContactPhysics)) continue;
+-	
+-			SimpleViscoelasticBodyParameters* de1 				= YADE_CAST&lt;SimpleViscoelasticBodyParameters*&gt;((*bodies)[id1]-&gt;physicalParameters.get());
+-			SimpleViscoelasticBodyParameters* de2 				= YADE_CAST&lt;SimpleViscoelasticBodyParameters*&gt;((*bodies)[id2]-&gt;physicalParameters.get());
+-
+-			bool isDynamic1 = (*bodies)[id1]-&gt;isDynamic;
+-			bool isDynamic2 = (*bodies)[id2]-&gt;isDynamic;
+-
+-			Vector3r&amp; shearForce 			= currentContactPhysics-&gt;shearForce;
+-	
+-			if (contact-&gt;isNew) shearForce=Vector3r(0,0,0);
+-					
+-			Vector3r axis;
+-			Real angle;
+-
+-	/// Here is the code with approximated rotations 	 ///
+-			
+-
+-
+-			axis = currentContactPhysics-&gt;prevNormal.Cross(currentContactGeometry-&gt;normal);
+-			shearForce -= shearForce.Cross(axis);
+-			//angle = dt*0.5*currentContactGeometry-&gt;normal.Dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
+-				//FIXME: if one body is kinematic then assumed its rotation centre does not lies along the normal
+-				//(i.e. virtual sphere, which replaces this kinematic body on contact, does not rotate)
+-			Vector3r summaryAngularVelocity(0,0,0);
+-			if (isDynamic1) summaryAngularVelocity += de1-&gt;angularVelocity;
+-			if (isDynamic2) summaryAngularVelocity += de2-&gt;angularVelocity;
+-			angle = dt*0.5*currentContactGeometry-&gt;normal.Dot(summaryAngularVelocity);
+-			axis = angle*currentContactGeometry-&gt;normal;
+-			shearForce -= shearForce.Cross(axis);
+-		
+-	/// Here is the code with exact rotations 		 ///
+-	
+-	// 		Quaternionr q;
+-	//
+-	// 		axis					= currentContactPhysics-&gt;prevNormal.cross(currentContactGeometry-&gt;normal);
+-	// 		angle					= acos(currentContactGeometry-&gt;normal.dot(currentContactPhysics-&gt;prevNormal));
+-	// 		q.fromAngleAxis(angle,axis);
+-	//
+-	// 		currentContactPhysics-&gt;shearForce	= currentContactPhysics-&gt;shearForce*q;
+-	//
+-	// 		angle					= dt*0.5*currentContactGeometry-&gt;normal.dot(de1-&gt;angularVelocity+de2-&gt;angularVelocity);
+-	// 		axis					= currentContactGeometry-&gt;normal;
+-	// 		q.fromAngleAxis(angle,axis);
+-	// 		currentContactPhysics-&gt;shearForce	= q*currentContactPhysics-&gt;shearForce;
+-	
+-	/// 							 ///
+-	
+-			Vector3r x				= currentContactGeometry-&gt;contactPoint;
+-			Vector3r c1x				= (x - de1-&gt;se3.position);
+-			Vector3r c2x				= (x - de2-&gt;se3.position);
+-			 /// The following definition of c1x and c2x is to avoid &quot;granular ratcheting&quot; 
+-			///  (see F. ALONSO-MARROQUIN, R. GARCIA-ROJO, H.J. HERRMANN, 
+-			///   &quot;Micro-mechanical investigation of granular ratcheting, in Cyclic Behaviour of Soils and Liquefaction Phenomena&quot;,
+-			///   ed. T. Triantafyllidis (Balklema, London, 2004), p. 3-10 - and a lot more papers from the same authors)
+-            		Vector3r _c1x_	= (isDynamic1) ? currentContactGeometry-&gt;radius1*currentContactGeometry-&gt;normal : x - de1-&gt;zeroPoint;
+-            		Vector3r _c2x_	= (isDynamic2) ? -currentContactGeometry-&gt;radius2*currentContactGeometry-&gt;normal : x - de2-&gt;zeroPoint;
+-			Vector3r relativeVelocity		= (de2-&gt;velocity+de2-&gt;angularVelocity.Cross(_c2x_)) - (de1-&gt;velocity+de1-&gt;angularVelocity.Cross(_c1x_));
+-			Real     normalVelocity			= currentContactGeometry-&gt;normal.Dot(relativeVelocity);
+-			Vector3r shearVelocity			= relativeVelocity-normalVelocity*currentContactGeometry-&gt;normal;
+-			//Vector3r shearDisplacement		= shearVelocity*dt;
+-			//shearForce 			       -= currentContactPhysics-&gt;ks*shearDisplacement;
+-			shearForce 			       -= (currentContactPhysics-&gt;ks*dt+currentContactPhysics-&gt;cs)*shearVelocity;
+-	
+-			Real un=currentContactGeometry-&gt;penetrationDepth;
+-			//currentContactPhysics-&gt;normalForce=currentContactPhysics-&gt;kn*std::max(un,(Real) 0)*currentContactGeometry-&gt;normal;
+-			currentContactPhysics-&gt;normalForce = ( currentContactPhysics-&gt;kn * std::max(un,(Real) 0) - currentContactPhysics-&gt;cn * normalVelocity ) * currentContactGeometry-&gt;normal;
+-	
+-	// PFC3d SlipModel, is using friction angle. CoulombCriterion
+-			Real maxFs = currentContactPhysics-&gt;normalForce.SquaredLength() * std::pow(currentContactPhysics-&gt;tangensOfFrictionAngle,2);
+-			if( shearForce.SquaredLength() &gt; maxFs )
+-			{
+-				maxFs = Mathr::Sqrt(maxFs) / shearForce.Length();
+-				shearForce *= maxFs;
+-			}
+-	////////// PFC3d SlipModel
+-	
+-			Vector3r f				= currentContactPhysics-&gt;normalForce + shearForce;
+-			
+-	// it will be some macro(	body-&gt;physicalActions,	ActionType , bodyId )
+-			static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( id1 , actionForceIndex).get() )-&gt;force    -= f;
+-			static_cast&lt;Force*&gt;   ( ncb-&gt;physicalActions-&gt;find( id2 , actionForceIndex ).get() )-&gt;force    += f;
+-			
+-			static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id1 , actionMomentumIndex ).get() )-&gt;momentum -= c1x.Cross(f);
+-			static_cast&lt;Momentum*&gt;( ncb-&gt;physicalActions-&gt;find( id2 , actionMomentumIndex ).get() )-&gt;momentum += c2x.Cross(f);
+-			
+-			currentContactPhysics-&gt;prevNormal = currentContactGeometry-&gt;normal;
+-		}
+-	}
+-}
+-
+-YADE_PLUGIN();
+
+Deleted: trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticContactLaw.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticContactLaw.hpp	2009-03-10 13:22:50 UTC (rev 1717)
++++ trunk/pkg/dem/Engine/StandAloneEngine/SimpleViscoelasticContactLaw.hpp	2009-03-12 17:27:35 UTC (rev 1718)
+@@ -1,44 +0,0 @@
+-/*************************************************************************
+-*  Copyright (C) 2004 by Olivier Galizzi                                 *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">olivier.galizzi at imag.fr</A>                                               *
+-*									 *
+-*  Copyright (C) 2008 by Sergei Dorofeenko                               *
+-*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">sega at users.berlios.de</A>                                                 *
+-*                                                                        *
+-*  This program is free software; it is licensed under the terms of the  *
+-*  GNU General Public License v2 or later. See file LICENSE for details. *
+-*************************************************************************/
+-
+-#pragma once
+-
+-#include&lt;yade/core/InteractionSolver.hpp&gt;
+-
+-class PhysicalAction;
+-
+-/// This class provides linear viscoelastic contact model
+-class SimpleViscoelasticContactLaw : public InteractionSolver
+-{
+-/// Attributes
+-	private :
+-		shared_ptr&lt;PhysicalAction&gt; actionForce;
+-		shared_ptr&lt;PhysicalAction&gt; actionMomentum;
+-		int actionForceIndex;
+-		int actionMomentumIndex;
+-		
+-	public :
+-//		int sdecGroupMask;
+-		bool momentRotationLaw;
+-	
+-		SimpleViscoelasticContactLaw();
+-		void action(MetaBody*);
+-
+-	protected :
+-		void registerAttributes();
+-	NEEDS_BEX(&quot;Force&quot;,&quot;Momentum&quot;);
+-	REGISTER_CLASS_NAME(SimpleViscoelasticContactLaw);
+-	REGISTER_BASE_CLASS_NAME(InteractionSolver);
+-};
+-
+-REGISTER_SERIALIZABLE(SimpleViscoelasticContactLaw);
+-
+-
+
+Modified: trunk/pkg/dem/PreProcessor/MembraneTest.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/MembraneTest.cpp	2009-03-10 13:22:50 UTC (rev 1717)
++++ trunk/pkg/dem/PreProcessor/MembraneTest.cpp	2009-03-12 17:27:35 UTC (rev 1718)
+@@ -12,8 +12,9 @@
+ #include &quot;MembraneTest.hpp&quot;
+ 
+ //#include&lt;yade/pkg-dem/ElasticContactLaw.hpp&gt;
+-#include&lt;yade/pkg-dem/SimpleViscoelasticContactLaw.hpp&gt;
++#include&lt;yade/pkg-dem/ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw.hpp&gt;
+ //#include&lt;yade/pkg-dem/ElasticBodyParameters2BcpConnection4ElasticContactInteraction.hpp&gt;
++#include&lt;yade/pkg-common/ConstitutiveLawDispatcher.hpp&gt;
+ #include&lt;yade/pkg-common/ParticleParameters.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/pkg-common/ef2_BshTube_BssSweptSphereLineSegment_makeBssSweptSphereLineSegment.hpp&gt;
+@@ -335,13 +336,16 @@
+ 	shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+ 	orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
+ 
++	shared_ptr&lt;ConstitutiveLawDispatcher&gt; constitutiveLaw(new ConstitutiveLawDispatcher);
++	constitutiveLaw-&gt;add(&quot;ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw&quot;);
++
+ 	rootBody-&gt;engines.clear();
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);	
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
+ 	rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+ 	rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+-        rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new SimpleViscoelasticContactLaw));
++        rootBody-&gt;engines.push_back(constitutiveLaw);
+ 	rootBody-&gt;engines.push_back(gravityCondition);
+ 	rootBody-&gt;engines.push_back(applyActionDispatcher);
+ 	rootBody-&gt;engines.push_back(positionIntegrator);
+
+Modified: trunk/pkg/dem/PreProcessor/TestSimpleViscoelastic.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/TestSimpleViscoelastic.cpp	2009-03-10 13:22:50 UTC (rev 1717)
++++ trunk/pkg/dem/PreProcessor/TestSimpleViscoelastic.cpp	2009-03-12 17:27:35 UTC (rev 1718)
+@@ -30,10 +30,11 @@
+ #include&lt;yade/pkg-common/PhysicalParametersMetaEngine.hpp&gt;
+ #include&lt;yade/pkg-common/Sphere.hpp&gt;
+ #include&lt;yade/pkg-common/Box.hpp&gt;
++#include&lt;yade/pkg-common/ConstitutiveLawDispatcher.hpp&gt;
+ #include&lt;yade/pkg-dem/RigidBodyRecorder.hpp&gt;
+ #include&lt;yade/pkg-dem/SimpleViscoelasticSpheresInteractionRecorder.hpp&gt;
+ #include&lt;yade/pkg-dem/SimpleViscoelasticBodyParameters.hpp&gt;
+-#include&lt;yade/pkg-dem/SimpleViscoelasticContactLaw.hpp&gt;
++#include&lt;yade/pkg-dem/ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw.hpp&gt;
+ #include&lt;yade/pkg-dem/SimpleViscoelasticRelationships.hpp&gt;
+ #include&lt;yade/pkg-common/GravityEngines.hpp&gt;
+ 
+@@ -190,13 +191,16 @@
+     shared_ptr&lt;PhysicalParametersMetaEngine&gt; orientationIntegrator(new PhysicalParametersMetaEngine);
+     orientationIntegrator-&gt;add(&quot;LeapFrogOrientationIntegrator&quot;);
+     
++	shared_ptr&lt;ConstitutiveLawDispatcher&gt; constitutiveLaw(new ConstitutiveLawDispatcher);
++	constitutiveLaw-&gt;add(&quot;ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw&quot;);
++
+     rootBody-&gt;engines.clear();
+     rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
+     rootBody-&gt;engines.push_back(boundingVolumeDispatcher);	
+     rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
+     rootBody-&gt;engines.push_back(interactionGeometryDispatcher);
+     rootBody-&gt;engines.push_back(interactionPhysicsDispatcher);
+-    rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new SimpleViscoelasticContactLaw));
++    rootBody-&gt;engines.push_back(constitutiveLaw);
+     rootBody-&gt;engines.push_back(gravityCondition);
+     rootBody-&gt;engines.push_back(applyActionDispatcher);
+     rootBody-&gt;engines.push_back(positionIntegrator);
+
+Modified: trunk/pkg/dem/SConscript
+===================================================================
+--- trunk/pkg/dem/SConscript	2009-03-10 13:22:50 UTC (rev 1717)
++++ trunk/pkg/dem/SConscript	2009-03-12 17:27:35 UTC (rev 1718)
+@@ -664,7 +664,8 @@
+ 			#'ElasticBodyParameters2BcpConnection4ElasticContactInteraction',
+                         'BssSweptSphereLineSegment',
+ 			'SimpleViscoelasticRelationships',
+-			'SimpleViscoelasticContactLaw',
++			'ConstitutiveLawDispatcher',
++			'ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw',
+ 			'SimpleViscoelasticBodyParameters',
+ 			'ViscoelasticInteraction',
+                         'InteractingSphere','InteractingNode', 
+@@ -1037,15 +1038,6 @@
+ 		    ,'SpheresContactGeometry'
+ 		    ])
+ 
+-	,env.SharedLibrary('SimpleViscoelasticContactLaw'
+-		,['Engine/StandAloneEngine/SimpleViscoelasticContactLaw.cpp']
+-		,LIBS=env['LIBS']+['ViscoelasticInteraction'
+-		    ,'SimpleViscoelasticBodyParameters'
+-		    ,'SpheresContactGeometry'
+-		    ,'Force'
+-		    ,'Momentum'
+-		    ])
+-	
+ 	,env.SharedLibrary('ContactLaw1',
+ 		['Engine/StandAloneEngine/ContactLaw1.cpp'],
+ 		LIBS=env['LIBS']+['SDECLinkPhysics',
+@@ -1078,7 +1070,8 @@
+                 ,'Shop'
+ 			    ,'InteractingBox'
+ 			    ,'SimpleViscoelasticRelationships'
+-			    ,'SimpleViscoelasticContactLaw'
++			    ,'ConstitutiveLawDispatcher'
++			    ,'ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw'
+ 			    ,'SimpleViscoelasticBodyParameters'
+ 			    ,'ViscoelasticInteraction'
+ 			    ,'SimpleViscoelasticSpheresInteractionRecorder'
+@@ -1131,8 +1124,8 @@
+ 		['Engine/EngineUnit/ef2_Spheres_NormalShear_ElasticFrictionalLaw.cpp'],
+ 		LIBS=env['LIBS']+['ConstitutiveLawDispatcher','NormalShearInteractions','SpheresContactGeometry']),
+ 
+-	env.SharedLibrary('Spheres_Viscoelastic_SimpleViscoelasticContactLaw',
+-		['Engine/EngineUnit/Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp'],
++	env.SharedLibrary('ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw',
++		['Engine/EngineUnit/ef2_Spheres_Viscoelastic_SimpleViscoelasticContactLaw.cpp'],
+ 		LIBS=env['LIBS']+['ConstitutiveLawDispatcher','ViscoelasticInteraction','SpheresContactGeometry','RigidBodyParameters']),
+ 				
+ 	#env.SharedLibrary('MicroMacroAnalyser',
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000841.html">[deprecated list] [Yade-dev] Shear force computation
+</A></li>
+	<LI>Next message: <A HREF="000852.html">[deprecated list] [Yade-dev] [Yade-users] pregenerated sphere	packings
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#851">[ date ]</a>
+              <a href="thread.html#851">[ thread ]</a>
+              <a href="subject.html#851">[ subject ]</a>
+              <a href="author.html#851">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

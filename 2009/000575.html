@@ -1,0 +1,1261 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1612 - in trunk/extra: .	SpherePadder mgpost/doc	mgpost/src
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1612%20-%20in%20trunk/extra%3A%20.%0A%09SpherePadder%20mgpost/doc%09mgpost/src&In-Reply-To=%3C200901061638.n06GcB3l024775%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000571.html">
+   <LINK REL="Next"  HREF="000576.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1612 - in trunk/extra: .	SpherePadder mgpost/doc	mgpost/src</H1>
+    <B>richefeu at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1612%20-%20in%20trunk/extra%3A%20.%0A%09SpherePadder%20mgpost/doc%09mgpost/src&In-Reply-To=%3C200901061638.n06GcB3l024775%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1612 - in trunk/extra: .	SpherePadder mgpost/doc	mgpost/src">richefeu at mail.berlios.de
+       </A><BR>
+    <I>Tue Jan  6 17:38:11 CET 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000571.html">[deprecated list] [Yade-dev] [svn] r1611 - trunk/gui/qt3
+</A></li>
+        <LI>Next message: <A HREF="000576.html">[deprecated list] [Yade-dev] [robot] SVN checkout failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#575">[ date ]</a>
+              <a href="thread.html#575">[ thread ]</a>
+              <a href="subject.html#575">[ subject ]</a>
+              <a href="author.html#575">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: richefeu
+Date: 2009-01-06 17:38:10 +0100 (Tue, 06 Jan 2009)
+New Revision: 1612
+
+Added:
+   trunk/extra/SpherePadder/
+   trunk/extra/SpherePadder/Makefile
+   trunk/extra/SpherePadder/SpherePadder.cpp
+   trunk/extra/SpherePadder/SpherePadder.hpp
+   trunk/extra/SpherePadder/TetraMesh.cpp
+   trunk/extra/SpherePadder/TetraMesh.hpp
+   trunk/extra/SpherePadder/main.cpp
+Modified:
+   trunk/extra/mgpost/doc/mgpost-doc-en.tex
+   trunk/extra/mgpost/src/display_funcs.c
+   trunk/extra/mgpost/src/display_funcs.h
+   trunk/extra/mgpost/src/ihm.c
+Log:
+- add a new tool for sphere packing (still in dev)
+- some enhancement in mgpost interface
+
+
+
+Added: trunk/extra/SpherePadder/Makefile
+===================================================================
+--- trunk/extra/SpherePadder/Makefile	2009-01-05 19:54:39 UTC (rev 1611)
++++ trunk/extra/SpherePadder/Makefile	2009-01-06 16:38:10 UTC (rev 1612)
+@@ -0,0 +1,25 @@
++CC      = g++
++CFLAGS  = -O3 -Wall
++
++SRC = main.cpp \
++      SpherePadder.cpp TetraMesh.cpp
++
++OBJS = $(subst .cpp,.o,$(SRC))
++
++.SUFFIXES: .cpp
++.cpp.o:
++	$(CC) -c $(CFLAGS) $&lt;
++
++all: $(OBJS)
++	$(CC) -o pad $(OBJS)
++
++clean:
++	rm -f *~ \#*\#
++	rm -f *.o
++
++depend:
++	makedepend -- $(CFLAGS) -- *.cpp
++
++# DO NOT DELETE
++
++
+
+Added: trunk/extra/SpherePadder/SpherePadder.cpp
+===================================================================
+--- trunk/extra/SpherePadder/SpherePadder.cpp	2009-01-05 19:54:39 UTC (rev 1611)
++++ trunk/extra/SpherePadder/SpherePadder.cpp	2009-01-06 16:38:10 UTC (rev 1612)
+@@ -0,0 +1,292 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Jean Francois Jerier                            *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">jerier at geo.hmg.inpg.fr</A>                                                *
++*  Copyright (C) 2009 by Vincent Richefeu                                *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">vincent.richefeu at hmg.inpg.fr</A>                                          *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;SpherePadder.hpp&quot;
++
++double rand01()
++{
++	return (double)rand()/(double)RAND_MAX;
++}
++
++void SpherePadder::read_data (const char* filename)
++{
++	//FIXME : 
++	// si on utilise la class dans un autre programme c'est peu etre pas util
++		
++	//rmin = 1e-2;
++	//rmax = 2e-2;
++	//rmoy = 0.5 * (rmin + rmax);
++	ratio = 3.0; rmoy = 0.0;
++
++/* FIXME
++pour le moment, l'utilisateur ne peut entre qu'un ratio.
++Le rayon des sphere depend du maillage (des longueurs des segments)
++*/
++
++
++}
++	
++void SpherePadder::plugTetraMesh (TetraMesh * pluggedMesh)
++{
++	mesh = pluggedMesh;
++	
++	// Si l'utilisateur n'a choisi qu'une valeur de ratio, 
++    // on cree les valeur de rmin et rmax:
++	if (rmoy == 0 &amp;&amp; ratio &gt; 0)
++	{
++		rmoy = 0.125 * mesh-&gt;mean_segment_length; // 1/8
++	    rmin = (2.0 * rmoy) / (ratio + 1.0);
++	    //rmax = (2.0 * ratio * rmoy) / (ratio + 1.0); // FIXME ask jf
++		rmax = 2.0 * rmoy - rmin;
++	    //dr	 = 0.5 * (rmax - rmin); // FIXME : voir avec jf ce qu'il fait vraiment (sa version (rmax+rmin)/2)
++		dr = rmax - rmoy;
++	}
++}
++
++void SpherePadder::pad_5 ()
++{
++	// TODO check if all si ok (mesh exist...)
++	place_at_nodes();
++	place_at_segment_middle();
++	place_at_faces_barycentre(); // TODO tester avec barycentres
++	cancel_overlap();
++	// ...
++}
++
++void SpherePadder::save_mgpost (const char* name)
++{
++  ofstream fmgpost(name);
++
++  fmgpost &lt;&lt; &quot;&lt;?xml version=\&quot;1.0\&quot;?&gt;&quot; &lt;&lt; endl
++	      &lt;&lt; &quot; &lt;mgpost mode=\&quot;3D\&quot;&gt;&quot; &lt;&lt; endl
++	      &lt;&lt; &quot;  &lt;newcolor name=\&quot;nodes\&quot;/&gt;&quot; &lt;&lt; endl
++	      &lt;&lt; &quot;  &lt;newcolor name=\&quot;middle nodes\&quot;/&gt;&quot; &lt;&lt; endl	
++	      &lt;&lt; &quot;  &lt;newcolor name=\&quot;fixme\&quot;/&gt;&quot; &lt;&lt; endl
++	      &lt;&lt; &quot;  &lt;state id=\&quot;&quot; &lt;&lt; 1 
++	      &lt;&lt; &quot;\&quot; time=\&quot;&quot; &lt;&lt; 0.0 &lt;&lt; &quot;\&quot;&gt;&quot; &lt;&lt; endl;
++
++  for (unsigned int i = 0 ; i &lt; sphere.size() ; ++i)
++    {
++    fmgpost &lt;&lt; &quot;   &lt;body&gt;&quot; &lt;&lt; endl;
++    fmgpost &lt;&lt; &quot;    &lt;SPHER id=\&quot;&quot; &lt;&lt; i+1 &lt;&lt; &quot;\&quot; col=\&quot;&quot; &lt;&lt; sphere[i].type &lt;&lt; &quot;\&quot; r=\&quot;&quot; &lt;&lt; sphere[i].R &lt;&lt; &quot;\&quot;&gt;&quot; &lt;&lt; endl
++		    &lt;&lt; &quot;     &lt;position x=\&quot;&quot; &lt;&lt; sphere[i].x &lt;&lt; &quot;\&quot; y=\&quot;&quot; &lt;&lt; sphere[i].y &lt;&lt; &quot;\&quot; z=\&quot;&quot; &lt;&lt; sphere[i].z &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl	 
++            &lt;&lt; &quot;    &lt;/SPHER&gt;&quot; &lt;&lt; endl &lt;&lt; flush;
++
++// tmp (bricolage)
++if (i &lt; mesh-&gt;node.size())
++		for (unsigned int s = 0 ; s &lt; mesh-&gt;segment.size() ; ++s)
++		{
++			if (mesh-&gt;segment[s].nodeId[0] == i)
++			{
++				fmgpost &lt;&lt; &quot;    &lt;SPSPx antac=\&quot;&quot; &lt;&lt; mesh-&gt;segment[s].nodeId[1] + 1 &lt;&lt; &quot;\&quot;/&gt;&quot; &lt;&lt; endl;
++			}
++		}
++
++
++    fmgpost &lt;&lt; &quot;   &lt;/body&gt;&quot; &lt;&lt; endl;
++    }
++
++  fmgpost &lt;&lt; &quot;  &lt;/state&gt;&quot; &lt;&lt; endl
++	      &lt;&lt; &quot; &lt;/mgpost&gt;&quot; &lt;&lt; endl;
++		
++}
++	
++void SpherePadder::place_at_nodes ()
++{
++	unsigned int segId;
++	Sphere S;
++	S.type = 0;
++	S.owner.push_back(0);
++	
++	cerr &lt;&lt; &quot;place at nodes... &quot;;
++	
++	for (unsigned int n = 0 ; n &lt; mesh-&gt;node.size() ; ++n)
++	{
++		S.x = mesh-&gt;node[n].x;
++		S.y = mesh-&gt;node[n].y;
++		S.z = mesh-&gt;node[n].z;
++		S.R = mesh-&gt;segment[ mesh-&gt;node[n].segmentOwner[0] ].length;
++		for (unsigned int i = 1 ; i &lt; mesh-&gt;node[n].segmentOwner.size() ; ++i)
++		{
++			segId = mesh-&gt;node[n].segmentOwner[i];
++			S.R = (S.R &lt; mesh-&gt;segment[segId].length) ? S.R : mesh-&gt;segment[segId].length;
++		}	
++		S.R /= 4.0;
++		S.owner[0] = n;// FIXME utile ???
++		
++		S.tetraOwner = mesh-&gt;node[n].tetraOwner[0];
++		mesh-&gt;tetraedre[S.tetraOwner].sphereId.push_back(n);
++		
++		sphere.push_back(S);	
++	}
++	cerr &lt;&lt; &quot;done&quot; &lt;&lt; endl;
++}
++
++void SpherePadder::place_at_segment_middle ()
++{	
++	cerr &lt;&lt; &quot;place at segment middle... &quot;;
++	Sphere S;
++	S.type = 1;
++	S.owner.push_back(0);
++	double x1,y1,z1;
++	double x2,y2,z2;
++	unsigned int id1,id2;
++	unsigned int n0 = sphere.size();
++	
++	for (unsigned int s = 0 ; s &lt; mesh-&gt;segment.size() ; ++s)
++	{
++		id1 = mesh-&gt;segment[s].nodeId[0];
++		id2 = mesh-&gt;segment[s].nodeId[1];
++		
++		x1  = mesh-&gt;node[id1].x;
++		y1  = mesh-&gt;node[id1].y;
++		z1  = mesh-&gt;node[id1].z;
++		
++		x2  = mesh-&gt;node[id2].x;
++		y2  = mesh-&gt;node[id2].y;
++		z2  = mesh-&gt;node[id2].z;
++		
++		S.x = 0.5 * (x1 + x2);
++		S.y = 0.5 * (y1 + y2);
++		S.z = 0.5 * (z1 + z2);
++		S.R = 0.125 * mesh-&gt;segment[s].length;
++		if (S.R &lt; rmin) S.R = rmin;
++		else if (S.R &gt; rmax) S.R = rmoy + dr * rand01();
++		S.owner[0] = s;
++		sphere.push_back(S);	
++		
++		S.tetraOwner = mesh-&gt;node[id1].tetraOwner[0];
++		mesh-&gt;tetraedre[S.tetraOwner].sphereId.push_back(n0 + s);
++		
++		mesh-&gt;segment[s].sphereId = n0 + s;
++		
++	}	
++	cerr &lt;&lt; &quot;done&quot; &lt;&lt; endl;	
++}
++
++
++
++
++void SpherePadder::place_at_faces_barycentre ()
++{
++	cerr &lt;&lt; &quot;place at faces_barycentre... &quot;;
++
++	unsigned int sphereId,faceId;
++	for (unsigned int s = 0 ; s &lt; mesh-&gt;segment.size() ; ++s)
++	{
++		sphereId = mesh-&gt;segment[s].sphereId;
++		for (unsigned int f = 0 ; f &lt; mesh-&gt;segment[s].faceOwner.size() ; ++f)
++		{
++			faceId = mesh-&gt;segment[s].faceOwner[f];
++			mesh-&gt;face[ faceId ].sphereId.push_back( sphereId );
++		}
++	}
++	
++	Sphere S;
++	S.type = 2;
++	// todo S.owner ...
++	unsigned int ns = sphere.size();
++        const double untiers = 0.3333333333333;
++	double R1,R2,R3;
++
++	for (unsigned int f = 0 ; f &lt; mesh-&gt;face.size() ; ++f)
++	{
++
++		Sphere S1 = sphere[ mesh-&gt;face[f].sphereId[0] ];
++		Sphere S2 = sphere[ mesh-&gt;face[f].sphereId[1] ];
++		Sphere S3 = sphere[ mesh-&gt;face[f].sphereId[2] ];
++
++		S.x = untiers * (S1.x + S2.x + S3.x); 
++		S.y = untiers * (S1.y + S2.y + S3.y); 
++		S.z = untiers * (S1.z + S2.z + S3.z); 
++		
++		R1 = distance_centre_spheres(S1,S) - S1.R;
++		R2 = distance_centre_spheres(S2,S) - S2.R;
++		R3 = distance_centre_spheres(S3,S) - S3.R;
++		S.R = (R1&gt;R2)    ? R2 : R1;
++		S.R = (S.R &gt; R3) ? R3 : S.R;
++		
++		sphere.push_back(S);
++
++		S.tetraOwner = mesh-&gt;node[ mesh-&gt;face[f].nodeId[0] ].tetraOwner[0];
++		mesh-&gt;tetraedre[S.tetraOwner].sphereId.push_back(ns++);
++	}
++	cerr &lt;&lt; &quot;done&quot; &lt;&lt; endl;
++}
++
++
++
++
++
++
++
++
++double SpherePadder::distance_spheres(unsigned int i, unsigned int j)
++{
++	double lx,ly,lz;
++	lx  = sphere[j].x - sphere[i].x;
++	ly  = sphere[j].y - sphere[i].y;
++	lz  = sphere[j].z - sphere[i].z;
++	return (sqrt(lx*lx + ly*ly + lz*lz) - sphere[i].R - sphere[j].R);
++}
++
++double SpherePadder::distance_centre_spheres(Sphere&amp; S1, Sphere&amp; S2)
++{
++	double lx,ly,lz;
++	lx  = S2.x - S1.x;
++	ly  = S2.y - S1.y;
++	lz  = S2.z - S1.z;
++	return (sqrt(lx*lx + ly*ly + lz*lz));
++}
++
++
++void SpherePadder::cancel_overlap()
++{
++	
++	cerr &lt;&lt; &quot;cancel_overlap... &quot;;
++	unsigned int current_tetra_id,tetra_neighbor_id,j;
++	Tetraedre current_tetra, tetra_neighbor;
++	double distance,k;
++	
++	for(unsigned int i = 0 ; i &lt;  sphere.size(); ++i)
++	{
++		if (sphere[i].R &lt; 0.0) continue;
++		current_tetra_id = sphere[i].tetraOwner;
++		current_tetra = mesh-&gt;tetraedre[current_tetra_id];
++		
++		for (unsigned int t = 0 ; t &lt; current_tetra.tetraNeighbor.size() ; ++t)
++		{
++			tetra_neighbor_id = current_tetra.tetraNeighbor[t];
++			tetra_neighbor = mesh-&gt;tetraedre[tetra_neighbor_id];
++			for (unsigned int n = 0 ; n &lt; tetra_neighbor.sphereId.size() ; ++n)
++			{
++				j = tetra_neighbor.sphereId[n];
++
++				if (sphere[j].R &lt; 0.0) continue;
++				if (i &lt; j)
++				{
++					while ( (distance = distance_spheres(i,j)) &lt; -0.001)
++					{						
++						k = 1.0 + distance / (sphere[i].R+ sphere[j].R);
++						sphere[i].R *= k;
++						sphere[j].R *= k;
++					}
++				}
++			}
++		}
++	}
++	cerr &lt;&lt; &quot;done&quot; &lt;&lt; endl;
++}
++
++
++void SpherePadder::place_at_tetra_centers ()
++{
++// TODO	
++}
+
+Added: trunk/extra/SpherePadder/SpherePadder.hpp
+===================================================================
+--- trunk/extra/SpherePadder/SpherePadder.hpp	2009-01-05 19:54:39 UTC (rev 1611)
++++ trunk/extra/SpherePadder/SpherePadder.hpp	2009-01-06 16:38:10 UTC (rev 1612)
+@@ -0,0 +1,59 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Jean Francois Jerier                            *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">jerier at geo.hmg.inpg.fr</A>                                                *
++*  Copyright (C) 2009 by Vincent Richefeu                                *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">vincent.richefeu at hmg.inpg.fr</A>                                          *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef SPHERE_PADDER_HPP
++#define SPHERE_PADDER_HPP
++
++#include &quot;TetraMesh.hpp&quot;
++
++struct Sphere
++{
++	double                x,y,z,R;
++	unsigned int          type; // FIXME utiliser un enum ??
++	unsigned int          tetraOwner;
++	vector&lt;unsigned int&gt;  owner; // a documenter... FIXME necessaire ?
++	// type = 0 =&gt; owner = nodeId
++	// type = 1 =&gt; owner = segId
++};
++
++struct Neighbor
++{
++	unsigned int i,j;	
++};
++
++class SpherePadder
++{
++protected:
++	
++	double distance_spheres (unsigned int i, unsigned int j);
++        double distance_centre_spheres(Sphere&amp; S1, Sphere&amp; S2);
++	void place_at_nodes ();
++	void place_at_segment_middle ();
++	void place_at_faces_barycentre ();
++	void cancel_overlap ();
++	void place_at_tetra_centers ();
++	
++public:
++	double rmin,rmax,rmoy,dr;
++	double ratio;
++	double max_overlap; // ATTENTION negatif 
++	
++	TetraMesh * mesh;
++	vector&lt;Sphere&gt; sphere;
++
++	void read_data (const char* filename);
++	void plugTetraMesh (TetraMesh * mesh);
++	void save_mgpost (const char* name);
++	//void save_Rxyz (const char* name);
++	
++	void pad_5 ();		
++};
++
++#endif // SPHERE_PADDER_HPP
+
+Added: trunk/extra/SpherePadder/TetraMesh.cpp
+===================================================================
+--- trunk/extra/SpherePadder/TetraMesh.cpp	2009-01-05 19:54:39 UTC (rev 1611)
++++ trunk/extra/SpherePadder/TetraMesh.cpp	2009-01-06 16:38:10 UTC (rev 1612)
+@@ -0,0 +1,284 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Jean Francois Jerier                            *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">jerier at geo.hmg.inpg.fr</A>                                                *
++*  Copyright (C) 2009 by Vincent Richefeu                                *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">vincent.richefeu at hmg.inpg.fr</A>                                          *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;TetraMesh.hpp&quot;
++
++void TetraMesh::read_data (const char* name)
++{
++	ifstream meshFile(name);
++	if(!meshFile)
++	{
++		cerr &lt;&lt; &quot;TetraMesh::read_data, cannot open file &quot; &lt;&lt; name &lt;&lt; endl;
++		return;
++	}  
++
++    cout &lt;&lt; &quot;Read data... &quot; &lt;&lt; flush;
++	string token;
++	meshFile &gt;&gt; token;
++
++	while(meshFile)
++	{
++		if (token == &quot;NODES&quot;) 
++		{
++			unsigned int nbnodes;
++			Node N;
++
++			meshFile &gt;&gt; nbnodes; 
++			for (unsigned int n = 0 ; n &lt; nbnodes ; ++n)
++			{
++				meshFile &gt;&gt; N.x &gt;&gt; N.y &gt;&gt; N.z;
++				node.push_back(N);	
++			}
++		}
++
++		if (token == &quot;TETRA&quot;) 
++		{
++			unsigned int nbTetra;
++			Tetraedre T;
++			
++			meshFile &gt;&gt; nbTetra;
++			for (unsigned int t = 0 ; t &lt; nbTetra ; ++t)
++			{
++				meshFile &gt;&gt; T.nodeId[0] &gt;&gt; T.nodeId[1] &gt;&gt; T.nodeId[2] &gt;&gt; T.nodeId[3];
++				
++				// numbers begin at 0 instead of 1
++				// (0 in C corresponds to 1 in the file)
++				T.nodeId[0] -= 1;
++				T.nodeId[1] -= 1;
++				T.nodeId[2] -= 1;
++				T.nodeId[3] -= 1;
++				
++				node[T.nodeId[0]].tetraOwner.push_back(t);
++				node[T.nodeId[1]].tetraOwner.push_back(t);
++				node[T.nodeId[2]].tetraOwner.push_back(t);
++				node[T.nodeId[3]].tetraOwner.push_back(t);
++				
++				tetraedre.push_back(T);	
++			}			
++		}
++		
++		if (token == &quot;EOF&quot;) break;
++		
++		meshFile &gt;&gt; token;
++	}
++	cout &lt;&lt; &quot;Done&quot; &lt;&lt; endl;
++	
++	organize ();
++}
++
++int compareInt (const void * a, const void * b)
++{
++	return ( *(int*)a &gt; *(int*)b ) ? 1 :-1;
++}
++
++void TetraMesh::organize ()
++{
++	cout &lt;&lt; &quot;Organize data... &quot; &lt;&lt; flush;
++	
++	// Translate all nodes in such a manner that all coordinates are &gt; 0
++	xtrans = node[0].x;
++	ytrans = node[0].y;
++	ztrans = node[0].z;
++	for (unsigned int i = 1 ; i &lt; node.size() ; ++i)
++	{
++		xtrans = (xtrans &lt; node[i].x) ? xtrans : node[i].x;
++		ytrans = (ytrans &lt; node[i].y) ? ytrans : node[i].y;
++		ztrans = (ztrans &lt; node[i].z) ? ztrans : node[i].z;
++	}
++	xtrans = (xtrans&lt;0.0) ? -xtrans : 0.0;
++	ytrans = (ytrans&lt;0.0) ? -ytrans : 0.0;
++	ztrans = (ztrans&lt;0.0) ? -ztrans : 0.0;
++	for (unsigned int i = 0 ; i &lt; node.size() ; ++i)
++	{
++		node[i].x += xtrans;
++		node[i].y += ytrans;
++		node[i].z += ztrans;
++	}	
++	
++	// Organize tetraedre nodes in ascending order
++	for (unsigned int i = 0 ; i &lt; tetraedre.size() ; ++i)
++	{
++		qsort (&amp;(tetraedre[i].nodeId[0]), 4, sizeof(int), compareInt);
++	}
++	
++	// Face creation
++	vector &lt;Face&gt; tmpFace; // This will contain all faces more than one time
++	Face F;
++	F.tetraOwner.push_back(0);
++	F.belongBoundary = true;
++	for (unsigned int i = 0 ; i &lt; tetraedre.size() ; ++i)
++	{
++		F.tetraOwner[0] = i;
++		
++		// Note that nodes are still organized in ascending order
++		F.nodeId[0] = tetraedre[i].nodeId[0];
++		F.nodeId[1] = tetraedre[i].nodeId[1];
++		F.nodeId[2] = tetraedre[i].nodeId[2];
++		tmpFace.push_back(F);
++		
++		F.nodeId[0] = tetraedre[i].nodeId[1];
++		F.nodeId[1] = tetraedre[i].nodeId[2];
++		F.nodeId[2] = tetraedre[i].nodeId[3];
++		tmpFace.push_back(F);
++		
++		F.nodeId[0] = tetraedre[i].nodeId[0];
++		F.nodeId[1] = tetraedre[i].nodeId[2];
++		F.nodeId[2] = tetraedre[i].nodeId[3];
++		tmpFace.push_back(F);
++		
++		F.nodeId[0] = tetraedre[i].nodeId[0];
++		F.nodeId[1] = tetraedre[i].nodeId[1];
++		F.nodeId[2] = tetraedre[i].nodeId[3];
++		tmpFace.push_back(F);		
++	}
++	
++	face.push_back(tmpFace[0]);
++	bool duplicated;
++	for (unsigned int i = 1 ; i &lt; tmpFace.size() ; ++i)
++	{
++		duplicated = false;
++		for (unsigned int n = 0 ; n &lt; face.size() ; ++n)
++		{
++			if (   tmpFace[i].nodeId[0] == face[n].nodeId[0]
++			    &amp;&amp; tmpFace[i].nodeId[1] == face[n].nodeId[1]
++			    &amp;&amp; tmpFace[i].nodeId[2] == face[n].nodeId[2])
++			{
++				duplicated = true;
++				face[n].tetraOwner.push_back(tmpFace[i].tetraOwner[0]);
++				face[n].belongBoundary = false;
++				break;
++			}				
++		}
++		
++		if (!duplicated) 
++		{
++			face.push_back(tmpFace[i]);
++		}
++	}
++	tmpFace.clear(); // It should be usefull to free memory before the end of the function
++	
++	for (unsigned int f = 0 ; f &lt; face.size() ; ++f)
++	{
++		node[face[f].nodeId[0]].faceOwner.push_back(f);
++		node[face[f].nodeId[1]].faceOwner.push_back(f);
++		node[face[f].nodeId[2]].faceOwner.push_back(f);
++	}
++	
++	// Segment creation
++	vector &lt;Segment&gt; tmpSegment;
++	Segment S;
++	S.faceOwner.push_back(0);
++	//S.belongBoundary = true; // a voir
++	for (unsigned int i = 0 ; i &lt; face.size() ; ++i)
++	{
++		S.faceOwner[0] = i;
++		S.nodeId[0] = face[i].nodeId[0];
++		S.nodeId[1] = face[i].nodeId[1];
++		tmpSegment.push_back(S);
++		
++		S.nodeId[0] = face[i].nodeId[1];
++		S.nodeId[1] = face[i].nodeId[2];
++		tmpSegment.push_back(S);
++		
++		S.nodeId[0] = face[i].nodeId[0];
++		S.nodeId[1] = face[i].nodeId[2];
++		tmpSegment.push_back(S);
++				
++	}
++	
++	segment.push_back(tmpSegment[0]);
++	for (unsigned int i = 1 ; i &lt; tmpSegment.size() ; ++i)
++	{
++		duplicated = false;
++		for (unsigned int n = 0 ; n &lt; segment.size() ; ++n)
++		{
++			if (   tmpSegment[i].nodeId[0] == segment[n].nodeId[0]
++			    &amp;&amp; tmpSegment[i].nodeId[1] == segment[n].nodeId[1])
++			{
++				duplicated = true;
++				segment[n].faceOwner.push_back(tmpSegment[i].faceOwner[0]);
++				break;
++			}
++				
++		}
++		
++		if (!duplicated) 
++		{
++			segment.push_back(tmpSegment[i]);
++		}
++	}
++	
++	for (unsigned int s = 0 ; s &lt; segment.size() ; ++s)
++	{
++		node[segment[s].nodeId[0]].segmentOwner.push_back(s);
++		node[segment[s].nodeId[1]].segmentOwner.push_back(s);
++	}
++		
++	// Compute length of segments
++	double lx,ly,lz;
++	unsigned int id1,id2;
++	mean_segment_length = 0.0;
++	min_segment_length = 0.0;
++	max_segment_length = 0.0;
++	for (unsigned int s = 0 ; s &lt; segment.size() ; ++s)
++	{
++		id1 = segment[s].nodeId[0];
++		id2 = segment[s].nodeId[1];
++		
++		lx  = node[id2].x - node[id1].x;
++	    ly  = node[id2].y - node[id1].y;
++	    lz  = node[id2].z - node[id1].z;
++		
++		mean_segment_length += (segment[s].length = sqrt(lx*lx + ly*ly + lz*lz));
++		min_segment_length = (segment[s].length &lt; min_segment_length) ? segment[s].length : min_segment_length;
++		max_segment_length = (segment[s].length &gt; max_segment_length) ? segment[s].length : max_segment_length;
++	}
++	mean_segment_length /= (double)(segment.size());
++	
++	
++	// Define tetraedre neighbors
++	for (unsigned int t1 = 0 ; t1 &lt; tetraedre.size() ; ++t1)
++	{
++		for (unsigned int t2 = t1 ; t2 &lt; tetraedre.size() ; ++t2)
++		{
++			if (   (tetraedre[t1].nodeId[0] &gt; tetraedre[t2].nodeId[3]) 
++				|| (tetraedre[t1].nodeId[3] &lt; tetraedre[t2].nodeId[0]) ) continue;
++                        
++                        // TODO mettre du while...
++			for (unsigned int i = 0 ; i &lt; 4 ; i++)
++                        {
++			        for (unsigned int j = 0 ; j &lt; 4 ; j++)
++				{
++				    if (tetraedre[t1].nodeId[i] == tetraedre[t2].nodeId[j])
++				    {
++				      tetraedre[t1].tetraNeighbor.push_back(t2);
++				      tetraedre[t2].tetraNeighbor.push_back(t1);
++				      break;
++				    }
++				}
++                        }	  
++		}
++	}
++	
++	// Define Owners FIXME :  a voir plus tard
++	/*
++	for (unsigned int t = 0 ; t &lt; tetraedre.size() ; ++t)
++	{
++		node[tetraedre[t].nodeId[0]].tetraOwner.push_back(t);
++		node[tetraedre[t].nodeId[1]].tetraOwner.push_back(t);
++		node[tetraedre[t].nodeId[2]].tetraOwner.push_back(t);
++		node[tetraedre[t].nodeId[3]].tetraOwner.push_back(t);
++	}
++	*/
++	cout &lt;&lt; &quot;Done&quot; &lt;&lt; endl;
++}
++
++
++
+
+Added: trunk/extra/SpherePadder/TetraMesh.hpp
+===================================================================
+--- trunk/extra/SpherePadder/TetraMesh.hpp	2009-01-05 19:54:39 UTC (rev 1611)
++++ trunk/extra/SpherePadder/TetraMesh.hpp	2009-01-06 16:38:10 UTC (rev 1612)
+@@ -0,0 +1,73 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Jean Francois Jerier                            *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">jerier at geo.hmg.inpg.fr</A>                                                *
++*  Copyright (C) 2009 by Vincent Richefeu                                *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">vincent.richefeu at hmg.inpg.fr</A>                                          *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#ifndef TETRA_MESH_HPP
++#define TETRA_MESH_HPP
++
++#include &lt;vector&gt;
++#include &lt;iostream&gt;
++#include &lt;fstream&gt;
++#include &lt;stdlib.h&gt; // for qsort
++#include &lt;math.h&gt;
++
++using namespace std;
++
++struct Node
++{
++	double x,y,z;
++	vector&lt;unsigned int&gt; tetraOwner;
++	vector&lt;unsigned int&gt; faceOwner;
++	vector&lt;unsigned int&gt; segmentOwner;
++};
++
++struct Segment
++{
++	unsigned int nodeId[2];
++	double length;
++	vector&lt;unsigned int&gt; faceOwner;
++	unsigned int sphereId;
++};
++
++struct Face
++{
++	unsigned int nodeId[3];
++	vector&lt;unsigned int&gt; tetraOwner; // FIXME utile ???
++	vector&lt;unsigned int&gt; sphereId;
++	bool belongBoundary;
++};
++
++struct Tetraedre
++{
++	unsigned int nodeId[4];
++	vector&lt;unsigned int&gt; sphereId;
++	vector&lt;unsigned int&gt; tetraNeighbor;
++};
++	
++class TetraMesh
++{
++
++	
++public:
++	vector&lt;Node&gt;       node;
++	vector&lt;Segment&gt;    segment;
++    vector&lt;Face&gt;       face;
++	vector&lt;Tetraedre&gt;  tetraedre;
++
++	double xtrans,ytrans,ztrans;
++	double mean_segment_length;
++	double min_segment_length;
++	double max_segment_length;
++		
++	//void read_data (string filename);
++	void read_data (const char* name);
++	void organize (); // FIXME protected ?
++};
++
++#endif // TETRA_MESH_HPP
+
+Added: trunk/extra/SpherePadder/main.cpp
+===================================================================
+--- trunk/extra/SpherePadder/main.cpp	2009-01-05 19:54:39 UTC (rev 1611)
++++ trunk/extra/SpherePadder/main.cpp	2009-01-06 16:38:10 UTC (rev 1612)
+@@ -0,0 +1,29 @@
++/*************************************************************************
++*  Copyright (C) 2009 by Jean Francois Jerier                            *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">jerier at geo.hmg.inpg.fr</A>                                                *
++*  Copyright (C) 2009 by Vincent Richefeu                                *
++*  <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">vincent.richefeu at hmg.inpg.fr</A>                                          *
++*                                                                        *
++*  This program is free software; it is licensed under the terms of the  *
++*  GNU General Public License v2 or later. See file LICENSE for details. *
++*************************************************************************/
++
++#include &quot;SpherePadder.hpp&quot;
++
++int main()
++{
++	SpherePadder * padder = new SpherePadder();
++	padder-&gt;read_data(&quot;padding.dat&quot;);
++	TetraMesh * mesh = new TetraMesh();
++	mesh-&gt;read_data(&quot;test.msh&quot;);
++	padder-&gt;plugTetraMesh(mesh);
++	
++	padder-&gt;pad_5();
++	
++	padder-&gt;save_mgpost(&quot;mgp.out.001&quot;);
++	
++	return 0;
++}
++
++
++
+
+Modified: trunk/extra/mgpost/doc/mgpost-doc-en.tex
+===================================================================
+--- trunk/extra/mgpost/doc/mgpost-doc-en.tex	2009-01-05 19:54:39 UTC (rev 1611)
++++ trunk/extra/mgpost/doc/mgpost-doc-en.tex	2009-01-06 16:38:10 UTC (rev 1612)
+@@ -184,7 +184,7 @@
+ \end{verbatim}
+ 
+ \marginlabel{\texttt{-section \var{a} \var{b} \var{c} \var{d}}}
+-Define the parameters  $a$ $b$ $c$ et $d$ of the plan given by:
++Define the parameters  $a$ $b$ $c$ and $d$ of the plan given by:
+ 
+ \begin{equation}
+ aX + bY + cZ + d = 0 
+
+Modified: trunk/extra/mgpost/src/display_funcs.c
+===================================================================
+--- trunk/extra/mgpost/src/display_funcs.c	2009-01-05 19:54:39 UTC (rev 1611)
++++ trunk/extra/mgpost/src/display_funcs.c	2009-01-06 16:38:10 UTC (rev 1612)
+@@ -89,7 +89,7 @@
+   glEnable (GL_LIGHTING);
+ }
+ 
+-void disp_outline () /* ne fonctionne que pour les spheres */
++void disp_outline () /* Only for spheres */
+ {
+   int i;
+   GLdouble Xcam = Xviewp * TRANS_CAM_FACTOR, Ycam = Yviewp * TRANS_CAM_FACTOR;
+@@ -359,7 +359,7 @@
+     if (pres_du_plan (i, dist_section))
+       {
+       
+-      if (layer[i] % 2) /* a tester : if (layer[i] &amp; 1) */
++      if (layer[i] % 2)
+         glColor3f (0.7f, 1.0f, 0.7f);
+       else
+         glColor3f (0.0f, 0.5f, 0.25f);
+
+Modified: trunk/extra/mgpost/src/display_funcs.h
+===================================================================
+--- trunk/extra/mgpost/src/display_funcs.h	2009-01-05 19:54:39 UTC (rev 1611)
++++ trunk/extra/mgpost/src/display_funcs.h	2009-01-06 16:38:10 UTC (rev 1612)
+@@ -13,18 +13,15 @@
+ 
+ int graph_xm, graph_xM, graph_ym, graph_yM;
+ 
+-void (*rendu) (void);
+-void (*disp_current) (void); 
+-void (*rendu_sup) (void);
+-void (*rendu_fluid) (void);
++void (*rendu)         (void);
++void (*disp_current)  (void); 
++void (*rendu_sup)     (void);
++void (*rendu_fluid)   (void);
+ void (*affgraph_func) (void);
+ 
+ int nb_section1 = 17;
+ int nb_section2 = 7;
+ 
+-
+-/* ----- display functions */
+-
+ void disp_time ();
+ void disp_text (char *text);
+ void disp_grad_color ();
+
+Modified: trunk/extra/mgpost/src/ihm.c
+===================================================================
+--- trunk/extra/mgpost/src/ihm.c	2009-01-05 19:54:39 UTC (rev 1611)
++++ trunk/extra/mgpost/src/ihm.c	2009-01-06 16:38:10 UTC (rev 1612)
+@@ -6,8 +6,7 @@
+ *  GNU General Public License v2 or later. See file LICENSE for details. *
+ *************************************************************************/
+ 
+-void 
+-mgpost_init(int argc, char **argv)
++void mgpost_init(int argc, char **argv)
+ {
+   int             i, c;
+   char            namebuf[256];
+@@ -67,6 +66,7 @@
+       
+       multifiles = MG_TRUE;
+     }
++
+     strcpy(buf, &amp;namebuf[strlen(namebuf) - 3]);
+     buf[3] = 0;
+     
+@@ -74,6 +74,7 @@
+       strcpy(datafilename, (const char *) namebuf);
+       multifiles = MG_FALSE;
+     }
++
+     strcpy(buf, &amp;namebuf[strlen(namebuf) - 6]);
+     buf[6] = 0;
+     
+@@ -92,37 +93,45 @@
+       
+       exit(EXIT_SUCCESS);
+     }
++
+     if (!strcmp(argv[i], &quot;-files&quot;)) {
+       make_mgpalloc_file();
+       make_mgconf_file();
+       exit(EXIT_SUCCESS);
+     }
++
+     if (!strcmp(argv[i], &quot;-mgpalloc&quot;)) {
+       make_mgpalloc_file();
+       exit(EXIT_SUCCESS);
+     }
++
+     if (!strcmp(argv[i], &quot;-mgconf&quot;)) {
+       make_mgconf_file();
+       exit(EXIT_SUCCESS);
+     }
++
+     if (!strcmp(argv[i], &quot;-nformat&quot;)) {
+       strcpy(num_file_format, (const char *) argv[i + 1]);
+     }
++
+     if (!strcmp(argv[i], &quot;-num&quot;)) {
+        if      (atoi(argv[i + 1]) == 3) strcpy(num_file_format,&quot;%03d&quot;);
+        else if (atoi(argv[i + 1]) == 4) strcpy(num_file_format,&quot;%04d&quot;);
+        else                             strcpy(num_file_format,&quot;%d&quot;);
+     }
++
+     if (!strcmp(argv[i], &quot;-i&quot;)) {
+       strcpy(datafilename, (const char *) argv[i + 1]);
+       cin_mode = MG_FALSE;
+       multifiles = MG_FALSE;
+     }
++
+     if (!strcmp(argv[i], &quot;-cin&quot;)) {
+       strcpy(datafilename, (const char *) argv[i + 1]);
+       cin_mode = MG_TRUE;
+       multifiles = MG_FALSE;
+     }
++
+     if (!strcmp(argv[i], &quot;-his&quot;)) {
+       if (argv[i + 1] != NULL)
+         nfile = atoi(argv[i + 1]);
+@@ -137,12 +146,15 @@
+       his_mode = MG_TRUE;
+       multifiles = MG_TRUE;
+     }
++
+     if (!strcmp(argv[i], &quot;-polye&quot;)) {
+       more_forces = MG_TRUE;
+     }
++
+     if (!strcmp(argv[i], &quot;-fluid&quot;)) {
+       with_fluid = MG_TRUE;
+     }
++
+     if (!strcmp(argv[i], &quot;-layer&quot;)) {
+       with_layers = MG_TRUE;
+       
+@@ -152,6 +164,7 @@
+         nbLayers = 5;
+       
+     }
++
+     if (!strcmp(argv[i], &quot;-p&quot;)) {
+       strcpy(pstfilename, (const char *) argv[i + 1]);
+       
+@@ -170,6 +183,7 @@
+       
+       exit(EXIT_SUCCESS);
+     }
++
+     if (!strcmp(argv[i], &quot;-pz&quot;)) {
+       strcpy(pstfilename, (const char *) argv[i + 1]);
+       
+@@ -188,6 +202,7 @@
+       
+       exit(EXIT_SUCCESS);
+     }
++
+     if (!strcmp(argv[i], &quot;-mf&quot;)) {
+       
+       if (argv[i + 1] != NULL)
+@@ -201,6 +216,7 @@
+       fgziped = MG_FALSE;
+       multifiles = MG_TRUE;
+     }
++
+     if (!strcmp(argv[i], &quot;-mfz&quot;)) {
+       
+       if (argv[i + 1] != NULL)
+@@ -215,22 +231,27 @@
+       fgziped = MG_TRUE;
+       multifiles = MG_TRUE;
+     }
++
+     if (!strcmp(argv[i], &quot;-r0&quot;)) {
+       middle_rep = MG_FALSE;
+     }
++
+     if (!strcmp(argv[i], &quot;-dim&quot;)) {
+       W = atoi(argv[i + 1]);
+       H = atoi(argv[i + 2]);
+     }
++
+     if (!strcmp(argv[i], &quot;-2d&quot;)) {
+       phi = -90;
+       theta = 0;
+       mode2D = MG_TRUE;
+     }
++
+     if (!strcmp(argv[i], &quot;-mono&quot;)) {
+       for (c = 0; c &lt;= nb_val_couleurs; c++)
+         gradc[c] = gradmono[c];
+     }
++
+     if (!strcmp(argv[i], &quot;-colormap&quot;)) {
+       FILE * f;
+       f = fopen (&quot;colormap&quot;,&quot;r&quot;);
+@@ -248,15 +269,18 @@
+         fprintf(stderr,&quot;File colormap not found\n&quot;);
+         }
+     }   
++
+     if (!strcmp(argv[i], &quot;-section&quot;)) {
+       section.a = atof(argv[i + 1]);
+       section.b = atof(argv[i + 2]);
+       section.c = atof(argv[i + 3]);
+       section.d = atof(argv[i + 4]);
+     }
++
+     if (!strcmp(argv[i], &quot;-dsec&quot;)) {
+       dist_section = atof(argv[i + 1]);
+     }
++
+     i++;
+   }
+ }
+@@ -397,8 +421,7 @@
+ }
+ 
+ /* Convert a string in color */
+-couleur 
+-select_color(const char *col)
++couleur select_color(const char *col)
+ {
+   couleur         retcol = fg_color;
+   
+@@ -420,8 +443,7 @@
+   return retcol;
+ }
+ 
+-void 
+-processDialogF1()
++void processDialogF1()
+ {
+   if (!strcmp(dialArea[2].state, &quot;SELECTED&quot;))
+     afficheRepere = MG_TRUE;
+@@ -454,8 +476,7 @@
+     dynamic_scale = MG_FALSE;  
+ }
+ 
+-void 
+-processDialogF2()
++void processDialogF2()
+ {
+   double val;
+   
+@@ -501,8 +522,7 @@
+ }
+ 
+ 
+-void 
+-processDialogF3()
++void processDialogF3()
+ {
+   int             val;
+   
+@@ -519,8 +539,7 @@
+     modDirCon = val;
+ }
+ 
+-void 
+-processDialogF4()
++void processDialogF4()
+ {
+   double val;
+   
+@@ -530,8 +549,7 @@
+   
+ }
+ 
+-void 
+-processDialogF5()
++void processDialogF5()
+ {
+   double val;
+   int c;
+@@ -555,8 +573,7 @@
+     }
+ }
+ 
+-void 
+-specialKey(int touche, int x, int y)
++void specialKey(int touche, int x, int y)
+ {
+   char            str[40];
+   int             c;
+@@ -567,14 +584,22 @@
+       dialogMode();
+       
+       openDialog(20, 50, 300, 180);
+-      
++
++#ifdef _FR      
+       creatCheckBox(30, 55,  &quot;Repere global&quot;, afficheRepere);
+       creatCheckBox(30, 75,  &quot;Affichage State et Time&quot;, afftime);
+       creatCheckBox(30, 95,  &quot;Orientation des grains&quot;, orient);
+       creatCheckBox(30, 115, &quot;Numero des corps&quot;, bodies_numbers);
+       creatCheckBox(30, 135, &quot;Affichage Noms fonctions&quot;, affFuncname);
+       creatCheckBox(30, 155, &quot;Echelle adaptable&quot;, dynamic_scale);    
+-      
++#else
++      creatCheckBox(30, 55,  &quot;Global Frame&quot;, afficheRepere);
++      creatCheckBox(30, 75,  &quot;Display State and Time&quot;, afftime);
++      creatCheckBox(30, 95,  &quot;Particle Orientation&quot;, orient);
++      creatCheckBox(30, 115, &quot;Body Numbers&quot;, bodies_numbers);
++      creatCheckBox(30, 135, &quot;Display Names of Functions&quot;, affFuncname);
++      creatCheckBox(30, 155, &quot;Dynamic Color-Scale&quot;, dynamic_scale);
++#endif
+       processDialog = processDialogF1;
+       
+       glutPostRedisplay();
+@@ -751,8 +776,8 @@
+   mgterminal = GL_TERMINAL;
+ }
+ 
+-void 
+-clavier(unsigned char touche, int ix, int iy)
++/* keyboard */
++void clavier(unsigned char touche, int ix, int iy)
+ {
+   
+   switch (touche) {
+@@ -1096,22 +1121,21 @@
+                 if (strcmp(mgpost_editor, &quot;&quot;)) {
+                   
+ #ifdef _MACOSX
+-                  strcpy(command, &quot;open -a &quot;);	/* MEMO a tester */
+-                         strcat(command, (const char *) mgpost_editor);
+-                         strcat(command, &quot; mgconf&quot;);
++                  strcpy(command, &quot;open -a &quot;);	/* TODO test it */
++                  strcat(command, (const char *) mgpost_editor);
++                  strcat(command, &quot; mgconf&quot;);
+ #endif
+                          
+ #ifdef _WINDOWS
+-                         strcpy(command, &quot;$MGPOST_EDITOR mgconf&quot;);	/* MEMO a tester */
++                  strcpy(command, &quot;$MGPOST_EDITOR mgconf&quot;); /* TODO test it */
+ #endif
+                                 
+ #ifdef _LINUX
+-                                strcpy(command, &quot;$MGPOST_EDITOR ./mgconf &amp;&quot;);
++                  strcpy(command, &quot;$MGPOST_EDITOR ./mgconf &amp;&quot;);
+ #endif
+                                 
+-                                system(command);
+-                } else
+-fprintf(stdout, &quot;You must define the environment variable MGPOST_EDITOR !\n&quot;);
++                  system(command);
++                } else fprintf(stdout, &quot;You must define the environment variable MGPOST_EDITOR !\n&quot;);
+               }
+ break;
+ 
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000571.html">[deprecated list] [Yade-dev] [svn] r1611 - trunk/gui/qt3
+</A></li>
+	<LI>Next message: <A HREF="000576.html">[deprecated list] [Yade-dev] [robot] SVN checkout failed
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#575">[ date ]</a>
+              <a href="thread.html#575">[ thread ]</a>
+              <a href="subject.html#575">[ subject ]</a>
+              <a href="author.html#575">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

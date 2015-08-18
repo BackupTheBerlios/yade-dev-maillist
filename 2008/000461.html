@@ -1,0 +1,99 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1554 -	trunk/pkg/dem/PreProcessor
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1554%20-%0A%09trunk/pkg/dem/PreProcessor&In-Reply-To=%3C200810240909.m9O99cwO031021%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000460.html">
+   <LINK REL="Next"  HREF="000463.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1554 -	trunk/pkg/dem/PreProcessor</H1>
+    <B>jduriez at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1554%20-%0A%09trunk/pkg/dem/PreProcessor&In-Reply-To=%3C200810240909.m9O99cwO031021%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1554 -	trunk/pkg/dem/PreProcessor">jduriez at mail.berlios.de
+       </A><BR>
+    <I>Fri Oct 24 11:09:38 CEST 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000460.html">[deprecated list] [Yade-dev] [svn] r1553 - trunk/pkg/dem
+</A></li>
+        <LI>Next message: <A HREF="000463.html">[deprecated list] [Yade-dev] [svn] r1557 - in trunk: core	extra/clump gui/py lib	lib/serialization lib/smoothing
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#461">[ date ]</a>
+              <a href="thread.html#461">[ thread ]</a>
+              <a href="subject.html#461">[ subject ]</a>
+              <a href="author.html#461">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: jduriez
+Date: 2008-10-24 11:09:38 +0200 (Fri, 24 Oct 2008)
+New Revision: 1554
+
+Modified:
+   trunk/pkg/dem/PreProcessor/SimpleShear.cpp
+Log:
+- The GlobalStifnessCounter engine (for correct use of GlobalStifnessTimeStepper) was forgotten in the preprocessor SimpleShear...
+
+
+Modified: trunk/pkg/dem/PreProcessor/SimpleShear.cpp
+===================================================================
+--- trunk/pkg/dem/PreProcessor/SimpleShear.cpp	2008-10-24 08:47:46 UTC (rev 1553)
++++ trunk/pkg/dem/PreProcessor/SimpleShear.cpp	2008-10-24 09:09:38 UTC (rev 1554)
+@@ -333,10 +333,16 @@
+ 	shared_ptr&lt;GlobalStiffnessTimeStepper&gt; globalStiffnessTimeStepper(new GlobalStiffnessTimeStepper);
+ 	globalStiffnessTimeStepper-&gt;sdecGroupMask = 1;
+ 	globalStiffnessTimeStepper-&gt;timeStepUpdateInterval = timeStepUpdateInterval;
++	globalStiffnessTimeStepper-&gt;defaultDt=1e-5;
+ 
++	shared_ptr&lt;GlobalStiffnessCounter&gt; globalStiffnessCounter(new GlobalStiffnessCounter);
++	globalStiffnessCounter-&gt;interval = timeStepUpdateInterval;
+ 
++
++
+ 	rootBody-&gt;engines.clear();
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PhysicalActionContainerReseter));
++	rootBody-&gt;engines.push_back(globalStiffnessCounter);
+ 	rootBody-&gt;engines.push_back(globalStiffnessTimeStepper);
+ 	rootBody-&gt;engines.push_back(boundingVolumeDispatcher);	
+ 	rootBody-&gt;engines.push_back(shared_ptr&lt;Engine&gt;(new PersistentSAPCollider));
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000460.html">[deprecated list] [Yade-dev] [svn] r1553 - trunk/pkg/dem
+</A></li>
+	<LI>Next message: <A HREF="000463.html">[deprecated list] [Yade-dev] [svn] r1557 - in trunk: core	extra/clump gui/py lib	lib/serialization lib/smoothing
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#461">[ date ]</a>
+              <a href="thread.html#461">[ thread ]</a>
+              <a href="subject.html#461">[ subject ]</a>
+              <a href="author.html#461">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

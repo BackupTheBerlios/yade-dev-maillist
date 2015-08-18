@@ -1,0 +1,224 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [yade-dev] metaengines etc.
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2008/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20metaengines%20etc.&In-Reply-To=%3C20080204215841.5ee73d17%40szpak%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000000.html">
+   <LINK REL="Next"  HREF="000002.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[yade-dev] metaengines etc.</H1>
+    <B>Janek Kozicki</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Byade-dev%5D%20metaengines%20etc.&In-Reply-To=%3C20080204215841.5ee73d17%40szpak%3E"
+       TITLE="[yade-dev] metaengines etc.">janek_listy at wp.pl
+       </A><BR>
+    <I>Mon Feb  4 21:58:41 CET 2008</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000000.html">[yade-dev] metaengines etc.
+</A></li>
+        <LI>Next message: <A HREF="000002.html">[yade-dev] metaengines etc.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1">[ date ]</a>
+              <a href="thread.html#1">[ thread ]</a>
+              <a href="subject.html#1">[ subject ]</a>
+              <a href="author.html#1">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>V&#225;clav &#352;milauer said:     (by the date of Mon, 04 Feb 2008 16:17:04 +0100)
+
+&gt;<i> Hi everybody (but mostly Janek),
+</I>
+Hi Vaclav,
+
+&gt;<i> 1. What is the purpose of MetaEngine, if only MetaDispatchingEngine is used?
+</I>
+MetaEngine was &quot;just in case&quot; if we wanted to do something else than
+dispatching. But it turned out to be useless. Refactor this out,
+then ;-) There will be just MetaDispatcher.
+
+I've sent to you some time ago the article submitted to CMAME, the
+articles uses new class names.
+
+ 
+&gt;<i> 2. Shouldn't I add a macro to EngineUnit's so that what types they take
+</I>&gt;<i> as arguments is inside the class? Then instead of saying
+</I>&gt;<i> dispatcher-&gt;add(&quot;InteractingBox&quot;,&quot;InteractingSphere&quot;,&quot;InteractingBox2InteractingSphere4SpheresContactGeometry&quot;),
+</I>&gt;<i> one would only have to say
+</I>&gt;<i> dispatcher-&gt;add(instanceOfInteractingBox2InteractingSphere4SpheresContactGeometry)
+</I>&gt;<i> and the instance would say to the dispatcher what types it takes - like
+</I>&gt;<i> we have RENDERS in gl drawers, there would be something like
+</I>&gt;<i> DISPATCHES(InteractingBox,InteractingSphere) inside the
+</I>&gt;<i> InteractingBox2InteractingSphere4SpheresContactGeometry class. Sounds
+</I>&gt;<i> reasonable?
+</I>
+yeah, sounds good. I can't remember why I didn't do it before. Maybe
+only because there wasn't enough time. I'm sure that when I get to
+this I will soon recall the whole issue to my mind.
+
+ 
+&gt;<i> 3. Why do we distinguish DeusExMachina and StandAloneEngine, if they do
+</I>&gt;<i> the same thing? I know it is supposed to apply different effects
+</I>&gt;<i> (kinematic vs. dynamic), but from programming point of view, is there a
+</I>&gt;<i> difference?
+</I>
+StandAloneEngine will be removed, we will have only EgiConditionApplier here.
+
+
+ 
+&gt;<i> 4. What is the status of boost::serialization in yade, what is the
+</I>&gt;<i> status of removing singletons, moving to the boost factory (?) etc? I am
+</I>&gt;<i> asking because I want to know how much force should I put into python
+</I>&gt;<i> wrapper now, since it relies quite heavily on the old serialization model.
+</I>
+
+yeah. Why I'm still not working on yade?? It's already 3 weeks since
+I'm in Grenoble ;-) Of course I want to do all of this ASAP.
+
+
+- until 15 february I must submit 2 conference proceeding papers
+  (6-12 pages each). And 2 conference abstracts (2 pages). That's 4 in total.
+
+- I must keep the &quot;snow&quot; people happy about my progress with respect
+  to modelling snow using yade. We have a meeting this week. There
+  wasn't money available to work directly on yade. I'm supposed to
+  implement snow modelling. So during my work on yade I got to keep
+  them happy.
+
+
+Because of this I'm slower with yade development than I'd like to :(
+
+
+The rough yade dev schedule for me looks like this:
+
+
+1. change all class names, as they appear in the CMAME article
+
+1a. modify yade::serialization to understand both old and new names
+    during serialization (if everyone agrees that it's necessary)
+
+2. add boost::serialization, don't remove yade serialization (becomes
+   deprecated, be removed later)
+
+3. about two week regression testing if nothing got broken with respect to
+   simulation results.
+
+4. remove yade ClassFactory and use boost counterpart (I got to check
+   which one we need here: boost::extension, or class factory provided with
+   boost::serialization) 
+
+4a. boost::extension is not yet formal part of boost, there will be a
+    review this year, and I guess it will be released with 1.35:
+       svn checkout <A HREF="http://svn.boost.org/svn/boost/sandbox/libs/extension">http://svn.boost.org/svn/boost/sandbox/libs/extension</A>
+       svn checkout <A HREF="http://svn.boost.org/svn/boost/sandbox/boost/extension">http://svn.boost.org/svn/boost/sandbox/boost/extension</A>
+
+4b. because boost::extension is not yet in boost, the
+    boost::serialization has to use it's own micro-factory - because
+    otherwise it would be impossible to instatinate classes during
+    deserialization. And I know that this micro-factory works well
+    with plugins (*.dll and *.so). So I got to check if it's enough for
+    our needs, or whether we need boost::extension.
+
+5. again two weeks of regression testing
+
+6. remove remaining singletons, prepare grounds for real unit tests.
+   (they work only without singletons). Learn boost::test, and start
+   writing unit tests for every classes - will take a long time...
+
+7. change the container layout to use boost::multi_index, drop
+   BodyContainer and InterctionContainer. Look at thread with words
+   &quot;good example&quot; in the subject:
+      <A HREF="http://lists.boost.org/Archives/boost/2007/07/index.php">http://lists.boost.org/Archives/boost/2007/07/index.php</A>
+   This is a major change, and it is pending for quite a long time.
+
+
+Smaller stuff, which should go in parallel, but not restricted to go
+somewhere between one thing and other thing.
+
+
+1. investigate if my QT4-serialization applet works well with
+   boost::serialization. Fix if it isn't. Then we have a GUI that can
+   communicate with boost::serialization and we can drop
+   REGISTER_ATTRIBUTE altogether.
+
+2. Start slow switch to QT4, by writing a new simple QT4 gui. When it
+   becomes usable the old gui will become depraceted. Removal of
+   yade::serialization equals to removal of QT3 GUI.
+
+3. finally separate BodyState from BodyConstitutiveParameters
+
+4. Write documentation (when?, I dunno, we got a lot of work here :-P )
+
+5. Perhaps implement a &quot;serialization on demand&quot; interface. It uses
+   boost::serialization, and can be used to check values when their name
+   is given. The name is provided using syntax similar to directory/file.
+   So you would ask gimmie(&quot;SomeClass/SomeMember/torsionalStiffness&quot;);
+   and get the answer - the value. That could be later used for tracking
+   variables maybe obtaining simulation results, and debugging.
+
+6. implement some simple parallelization on single multi-core
+   computer (shared memory), using boost::threads. Easy to do even now -
+   just divide a container into several parts, and process each part on
+   different CPU.
+
+7. stop using yade::MultiMethods. Use a similar library from boost
+   (that's a too complicated library to be part of yade, it should be
+   outside)
+
+7a. check if there is a similar library in boost (gotta look at the
+    boost mailing list archives), if there is one, then start using it
+
+7b. if there isn't any in boost, then clean our MultiMethods,
+    boostify them and submit to become part of boost.
+
+7c. In either way we will be using MultiMethods from boost ;-D
+
+
+
+You want to ask when all that? Good point. First of all I get to
+finish those conference articles, and make something for snow meeting
+this week.
+
+Realistically speaking I think that I should be somewhere around
+point (4) by middle/end of March.
+
+Sounds good?
+
+PS: maybe I missed several points. I should put this on wiki, and keep
+up to date.
+-- 
+Janek Kozicki                                                         |
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000000.html">[yade-dev] metaengines etc.
+</A></li>
+	<LI>Next message: <A HREF="000002.html">[yade-dev] metaengines etc.
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1">[ date ]</a>
+              <a href="thread.html#1">[ thread ]</a>
+              <a href="subject.html#1">[ subject ]</a>
+              <a href="author.html#1">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

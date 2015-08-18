@@ -1,0 +1,591 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] [svn] r1750 - in trunk:	lib/QGLViewer/VRender	pkg/common/DataClass/InteractingGeometry	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine	scripts/test
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1750%20-%20in%20trunk%3A%0A%09lib/QGLViewer/VRender%09pkg/common/DataClass/InteractingGeometry%09pkg/common/Engine/StandAloneEngine%09pkg/dem/Engine/StandAloneEngine%0A%09scripts/test&In-Reply-To=%3C200904082027.n38KR62b015665%40sheep.berlios.de%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="000910.html">
+   <LINK REL="Next"  HREF="000912.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] [svn] r1750 - in trunk:	lib/QGLViewer/VRender	pkg/common/DataClass/InteractingGeometry	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine	scripts/test</H1>
+    <B>eudoxos at BerliOS</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20%5Bsvn%5D%20r1750%20-%20in%20trunk%3A%0A%09lib/QGLViewer/VRender%09pkg/common/DataClass/InteractingGeometry%09pkg/common/Engine/StandAloneEngine%09pkg/dem/Engine/StandAloneEngine%0A%09scripts/test&In-Reply-To=%3C200904082027.n38KR62b015665%40sheep.berlios.de%3E"
+       TITLE="[deprecated list] [Yade-dev] [svn] r1750 - in trunk:	lib/QGLViewer/VRender	pkg/common/DataClass/InteractingGeometry	pkg/common/Engine/StandAloneEngine	pkg/dem/Engine/StandAloneEngine	scripts/test">eudoxos at mail.berlios.de
+       </A><BR>
+    <I>Wed Apr  8 22:27:06 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="000910.html">[deprecated list] [Yade-dev] [svn] r1749 - in trunk: gui/py	pkg/dem	pkg/dem/Engine/StandAloneEngine
+</A></li>
+        <LI>Next message: <A HREF="000912.html">[deprecated list] [Yade-dev] [svn] r1751 -	trunk/pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#911">[ date ]</a>
+              <a href="thread.html#911">[ thread ]</a>
+              <a href="subject.html#911">[ subject ]</a>
+              <a href="author.html#911">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Author: eudoxos
+Date: 2009-04-08 22:27:04 +0200 (Wed, 08 Apr 2009)
+New Revision: 1750
+
+Added:
+   trunk/scripts/test/facet-topo.py
+Modified:
+   trunk/lib/QGLViewer/VRender/BSPSortMethod.cpp
+   trunk/lib/QGLViewer/VRender/Exporter.cpp
+   trunk/lib/QGLViewer/VRender/FIGExporter.cpp
+   trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.cpp
+   trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.hpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+   trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp
+   trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp
+   trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.hpp
+Log:
+1. Parallelize initial bound filling in PersistentSAPCollider. Gives almost 3x speedup for the first step.
+2. Fix missing headers so that it compiles with g++-4.4 (in QGLViewer)
+3. FacetTopologyAnalyzer works (not tested extensively), questions of where to put topology data for InteractingFacet (will be raised on yade-dev)
+4. Test script for FacetTopologyAnalyzer.
+
+
+
+Modified: trunk/lib/QGLViewer/VRender/BSPSortMethod.cpp
+===================================================================
+--- trunk/lib/QGLViewer/VRender/BSPSortMethod.cpp	2009-04-06 21:40:30 UTC (rev 1749)
++++ trunk/lib/QGLViewer/VRender/BSPSortMethod.cpp	2009-04-08 20:27:04 UTC (rev 1750)
+@@ -49,6 +49,7 @@
+ #include &quot;Primitive.h&quot;
+ #include &quot;SortMethod.h&quot;
+ #include &quot;math.h&quot; // fabs
++#include &lt;cstdio&gt;
+ 
+ using namespace vrender ;
+ using namespace std;
+
+Modified: trunk/lib/QGLViewer/VRender/Exporter.cpp
+===================================================================
+--- trunk/lib/QGLViewer/VRender/Exporter.cpp	2009-04-06 21:40:30 UTC (rev 1749)
++++ trunk/lib/QGLViewer/VRender/Exporter.cpp	2009-04-08 20:27:04 UTC (rev 1750)
+@@ -48,6 +48,7 @@
+ #include &lt;stdexcept&gt;
+ #include &quot;VRender.h&quot;
+ #include &quot;Exporter.h&quot;
++#include &lt;cstdio&gt;
+ 
+ using namespace vrender ;
+ using namespace std ;
+
+Modified: trunk/lib/QGLViewer/VRender/FIGExporter.cpp
+===================================================================
+--- trunk/lib/QGLViewer/VRender/FIGExporter.cpp	2009-04-06 21:40:30 UTC (rev 1749)
++++ trunk/lib/QGLViewer/VRender/FIGExporter.cpp	2009-04-08 20:27:04 UTC (rev 1750)
+@@ -47,6 +47,7 @@
+ 
+ #include &quot;Exporter.h&quot;
+ #include &quot;math.h&quot;
++#include &lt;cstdio&gt;
+ 
+ using namespace vrender ;
+ using namespace std ;
+
+Modified: trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.cpp
+===================================================================
+--- trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.cpp	2009-04-06 21:40:30 UTC (rev 1749)
++++ trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.cpp	2009-04-08 20:27:04 UTC (rev 1750)
+@@ -9,7 +9,10 @@
+ 
+ InteractingFacet::InteractingFacet() : InteractingGeometry()
+ {
+-    createIndex();
++	createIndex();
++	#ifdef FACET_TOPO
++		edgeAdjIds.resize(3,Body::ID_NONE);	
++	#endif
+ }
+ 
+ InteractingFacet::~InteractingFacet()
+@@ -20,6 +23,9 @@
+ {
+     InteractingGeometry::registerAttributes();
+     REGISTER_ATTRIBUTE(vertices);
++	#ifdef FACET_TOPO
++		REGISTER_ATTRIBUTE(edgeAdjIds);
++	#endif
+ }
+ 
+ void InteractingFacet::postProcessAttributes(bool deserializing)
+
+Modified: trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.hpp
+===================================================================
+--- trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.hpp	2009-04-06 21:40:30 UTC (rev 1749)
++++ trunk/pkg/common/DataClass/InteractingGeometry/InteractingFacet.hpp	2009-04-08 20:27:04 UTC (rev 1750)
+@@ -9,7 +9,11 @@
+ 
+ 
+ #include &lt;yade/core/InteractingGeometry.hpp&gt;
++#include&lt;yade/core/Body.hpp&gt;
+ 
++// define this to have topology information about facets enabled;
++// it is necessary for FacetTopologyAnalyzer
++#define FACET_TOPO
+ 
+ class InteractingFacet : public InteractingGeometry {
+     public:
+@@ -34,6 +38,10 @@
+ 	Real vl[3];
+ 	/// Unit vertice vectors
+ 	Vector3r vu[3];
++	#ifdef FACET_TOPO
++		//! facet id's that are adjacent to respective edges
++		vector&lt;body_id_t&gt; edgeAdjIds;
++	#endif
+ 
+ 	protected:
+ 
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-04-06 21:40:30 UTC (rev 1749)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.cpp	2009-04-08 20:27:04 UTC (rev 1750)
+@@ -19,6 +19,7 @@
+ PersistentSAPCollider::PersistentSAPCollider() : Collider()
+ {
+ 	haveDistantTransient=false;
++	ompBodiesMin=0;
+ 
+ 	nbObjects=0;
+ 	xBounds.clear();
+@@ -27,7 +28,7 @@
+ 	minima.clear();
+ 	maxima.clear();
+ 
+-	//timingDeltas=shared_ptr&lt;TimingDeltas&gt;(new TimingDeltas);
++//	timingDeltas=shared_ptr&lt;TimingDeltas&gt;(new TimingDeltas);
+ }
+ 
+ PersistentSAPCollider::~PersistentSAPCollider()
+@@ -108,15 +109,22 @@
+ 	nbObjects=bodies-&gt;size();
+ 
+ 	// permutation sort of the AABBBounds along the 3 axis performed in a independant manner
+-	//#pragma omp parallel sections
+-	{
+-	//#pragma omp section
+-		sortBounds(xBounds, nbObjects);
+-	//#pragma omp section
+-		sortBounds(yBounds, nbObjects);
+-	//#pragma omp section
+-		sortBounds(zBounds, nbObjects);
+-	}
++	// serial version
++	//if(nbObjects&gt;ompBodiesMin || ompBodiesMin==0){ &#8230; }
++	sortBounds(xBounds,nbObjects); sortBounds(yBounds,nbObjects); sortBounds(zBounds,nbObjects);
++	#if 0
++		else {
++			#pragma omp parallel sections
++			{
++			#pragma omp section
++				sortBounds(xBounds, nbObjects);
++			#pragma omp section
++				sortBounds(yBounds, nbObjects);
++			#pragma omp section
++				sortBounds(zBounds, nbObjects);
++			}
++		}
++	#endif
+ 
+ //	timingDeltas-&gt;checkpoint(&quot;sortBounds&quot;);
+ }
+@@ -167,26 +175,60 @@
+ 		// initialization if the field &quot;value&quot; of the xBounds, yBounds, zBounds arrays
+ 		updateBounds(nbElements);
+ 
+-		// modified quick sort of the xBounds, yBounds, zBounds arrays
++		/* Performance note: such was the timing result on initial step of 8k sphere in triaxial test.
++			the findX, findY, findZ take almost the totality of the time.
++			Parallelizing those is vastly beneficial (almost 3x speed increase, which can be quite sensible as the initial
++			findOverlappingBB is really slow <A HREF="http://yade.wikia.com/wiki/Colliders_performace">http://yade.wikia.com/wiki/Colliders_performace</A> and is done in 3
++			orthogonal directions. Therefore, it is enabled by default.
++			
++			Now sortX is right before findX etc, in the same openMP section. Beware that timingDeltas will give garbage
++			results if used in parallelized code.
++
++			===
++
++			8k spheres:
++			Name                                                    Count                 Time            Rel. time
++			-------------------------------------------------------------------------------------------------------
++			PersistentSAPCollider                                 1            3568091us              100.00%      
++			  init                                                  1              21178us                0.59%    
++			  sortX                                                 1              33225us                0.93%    
++			  sortY                                                 1              29300us                0.82%    
++			  sortZ                                                 1              28334us                0.79%    
++			  findX                                                 1            1708426us               47.88%    
++			  findY                                                 1             869150us               24.36%    
++			  findZ                                                 1             867378us               24.31%    
++			  TOTAL                                                              3556994us               99.69%    
++
++		*/
++
+ 		// The first time these arrays are not sorted so it is faster to use such a sort instead
+ 		// of the permutation we are going to use next
+-		std::sort(xBounds.begin(),xBounds.begin()+2*nbElements,AABBBoundComparator());
+-		//timingDeltas-&gt;checkpoint(&quot;sortX&quot;);
+-		std::sort(yBounds.begin(),yBounds.begin()+2*nbElements,AABBBoundComparator());
+-		//timingDeltas-&gt;checkpoint(&quot;sortY&quot;);
+-		std::sort(zBounds.begin(),zBounds.begin()+2*nbElements,AABBBoundComparator());
+-		//timingDeltas-&gt;checkpoint(&quot;sortZ&quot;);
+ 
+-		// initialize the overlappingBB collection
+-		//for(unsigned int j=0;j&lt;nbElements;j++)
+-		//	overlappingBB[j].clear(); //attention memoire
+-
+-		findOverlappingBB(xBounds, nbElements);
+-		//timingDeltas-&gt;checkpoint(&quot;findX&quot;);
+-		findOverlappingBB(yBounds, nbElements);
+-		//timingDeltas-&gt;checkpoint(&quot;findY&quot;);
+-		findOverlappingBB(zBounds, nbElements);
+-		//timingDeltas-&gt;checkpoint(&quot;findZ&quot;);
++		// do not juse timingDeltas with openMP enabled, results will be garbage
++		#pragma omp parallel sections
++		{
++			#pragma omp section
++			{
++				std::sort(xBounds.begin(),xBounds.begin()+2*nbElements,AABBBoundComparator());
++				//timingDeltas-&gt;checkpoint(&quot;sortX&quot;);
++				findOverlappingBB(xBounds, nbElements);
++				//timingDeltas-&gt;checkpoint(&quot;findX&quot;);
++			}
++			#pragma omp section
++			{
++				std::sort(yBounds.begin(),yBounds.begin()+2*nbElements,AABBBoundComparator());
++				//timingDeltas-&gt;checkpoint(&quot;sortY&quot;);
++				findOverlappingBB(yBounds, nbElements);
++				//timingDeltas-&gt;checkpoint(&quot;findY&quot;);
++			}
++			#pragma omp section
++			{
++				std::sort(zBounds.begin(),zBounds.begin()+2*nbElements,AABBBoundComparator());
++				//timingDeltas-&gt;checkpoint(&quot;sortZ&quot;);
++				findOverlappingBB(zBounds, nbElements);
++				//timingDeltas-&gt;checkpoint(&quot;findZ&quot;);
++			}
++		}
+ 	}
+ 	else updateBounds(nbElements);
+ }
+@@ -240,16 +282,34 @@
+ 
+ void PersistentSAPCollider::updateBounds(int nbElements)
+ {
+-	for(int i=0; i &lt; 2*nbElements; i++){
+-		if (xBounds[i]-&gt;lower) xBounds[i]-&gt;value = minima[3*xBounds[i]-&gt;id+0];
+-		else xBounds[i]-&gt;value = maxima[3*xBounds[i]-&gt;id+0];
+-
+-		if (yBounds[i]-&gt;lower) yBounds[i]-&gt;value = minima[3*yBounds[i]-&gt;id+1];
+-		else yBounds[i]-&gt;value = maxima[3*yBounds[i]-&gt;id+1];
+-
+-		if (zBounds[i]-&gt;lower) zBounds[i]-&gt;value = minima[3*zBounds[i]-&gt;id+2];
+-		else zBounds[i]-&gt;value = maxima[3*zBounds[i]-&gt;id+2];
++	#define _BOUND_UPDATE(bounds,offset) \
++		if (bounds[i]-&gt;lower) bounds[i]-&gt;value = minima[3*bounds[i]-&gt;id+offset]; \
++		else bounds[i]-&gt;value = maxima[3*bounds[i]-&gt;id+offset];
++	// for small number of bodies, run sequentially
++	#if 0
++	if(nbElements&lt;ompBodiesMin || ompBodiesMin==0){
++	#endif
++		for(int i=0; i &lt; 2*nbElements; i++){
++			_BOUND_UPDATE(xBounds,0);
++			_BOUND_UPDATE(yBounds,1);
++			_BOUND_UPDATE(zBounds,2);
++		}
++	#if 0
+ 	}
++	else{
++		// parallelize for large number of bodies (not used, updateBounds takes only about 5% of collider time
++		#pragma omp parallel sections
++		{
++			#pragma omp section
++			for(int i=0; i &lt; 2*nbElements; i++){ _BOUND_UPDATE(xBounds,0); }
++			#pragma omp section
++			for(int i=0; i &lt; 2*nbElements; i++){ _BOUND_UPDATE(yBounds,1); }
++			#pragma omp section
++			for(int i=0; i &lt; 2*nbElements; i++){ _BOUND_UPDATE(zBounds,2); }
++		}
++	}
++	#endif
++	#undef _BOUND_UPDATE
+ }
+ 
+ 
+
+Modified: trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp
+===================================================================
+--- trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp	2009-04-06 21:40:30 UTC (rev 1749)
++++ trunk/pkg/common/Engine/StandAloneEngine/PersistentSAPCollider.hpp	2009-04-08 20:27:04 UTC (rev 1750)
+@@ -99,9 +99,13 @@
+ 		//! Don't break transient interaction once bodies don't overlap anymore; material law will be responsible for breaking it.
+ 		bool haveDistantTransient;
+ 
++		//! minimum number of bodies to run updateIds in parallel secions; if 0 (default for now), never run in parallel
++		long ompBodiesMin;
++
+ 		void registerAttributes(){
+ 			Collider::registerAttributes();
+ 			REGISTER_ATTRIBUTE(haveDistantTransient);
++			REGISTER_ATTRIBUTE(ompBodiesMin);
+ 		}
+ 
+ 	DECLARE_LOGGER;
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp	2009-04-06 21:40:30 UTC (rev 1749)
++++ trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.cpp	2009-04-08 20:27:04 UTC (rev 1750)
+@@ -2,11 +2,21 @@
+ #include&lt;yade/pkg-common/InteractingFacet.hpp&gt;
+ #include&lt;yade/core/MetaBody.hpp&gt;
+ #include&lt;yade/core/Body.hpp&gt;
++
++CREATE_LOGGER(FacetTopologyAnalyzer);
++YADE_PLUGIN(&quot;FacetTopologyAnalyzer&quot;);
++
++#ifndef FACET_TOPO
+ void FacetTopologyAnalyzer::action(MetaBody* rb){
++	throw runtime_error(&quot;FACET_TOPO was not enabled in InteractingFacet.hpp at compile-time. Do not use FacetTopologyAnalyzer or recompile.&quot;);
++}
++#else
++void FacetTopologyAnalyzer::action(MetaBody* rb){
++	commonEdgesFound=0;
+ 	LOG_DEBUG(&quot;Projection axis for analysis is &quot;&lt;&lt;projectionAxis);
+ 	vector&lt;shared_ptr&lt;VertexData&gt; &gt; vv;
+ 	// minimum facet edge length (tolerance scale)
+-	Real minSqLen=0;
++	Real minSqLen=numeric_limits&lt;Real&gt;::infinity();
+ 	FOREACH(const shared_ptr&lt;Body&gt;&amp; b, *rb-&gt;bodies){
+ 		shared_ptr&lt;InteractingFacet&gt; f=dynamic_pointer_cast&lt;InteractingFacet&gt;(b-&gt;interactingGeometry);
+ 		if(!f) continue;
+@@ -23,20 +33,89 @@
+ 	size_t nVertices=vv.size(), j;
+ 	for(size_t i=0; i&lt;nVertices; i++){
+ 		j=i;
+-		while(++j&lt;nVertices &amp;&amp; (vv[j]-&gt;coord-vv[i]-&gt;coord)&lt;tolerance){
++		while(++j&lt;nVertices &amp;&amp; (vv[j]-&gt;coord-vv[i]-&gt;coord)&lt;=tolerance){
+ 			shared_ptr&lt;VertexData&gt; &amp;vi=vv[i], &amp;vj=vv[j];
+-			if(abs(vi-&gt;pos[0]-vj-&gt;pos[0])&lt;tolerance &amp;&amp;
+-				abs(vi-&gt;pos[1]-vj-&gt;pos[1])&lt;tolerance &amp;&amp;
+-				abs(vi-&gt;pos[2]-vj-&gt;pos[2])&lt;tolerance &amp;&amp;
+-				(vi-&gt;pos-vj-&gt;pos).SquaredLength()&lt;tolerance*tolerance){
++			if(abs(vi-&gt;pos[0]-vj-&gt;pos[0])&lt;=tolerance &amp;&amp;
++				abs(vi-&gt;pos[1]-vj-&gt;pos[1])&lt;=tolerance &amp;&amp;
++				abs(vi-&gt;pos[2]-vj-&gt;pos[2])&lt;=tolerance &amp;&amp;
++				(vi-&gt;pos-vj-&gt;pos).SquaredLength()&lt;=tolerance*tolerance){
+ 				// OK, these two vertices touch
+-				LOG_DEBUG(&quot;Vertices &quot;&lt;&lt;vi-&gt;id&lt;&lt;&quot;/&quot;&lt;&lt;vi-&gt;vertexNo&lt;&lt;&quot; and &quot;&lt;&lt;vj-&gt;id&lt;&lt;&quot;/&quot;&lt;&lt;vj-&gt;vertexNo&lt;&lt;&quot; close enough.&quot;);
++				LOG_TRACE(&quot;Vertices &quot;&lt;&lt;vi-&gt;id&lt;&lt;&quot;/&quot;&lt;&lt;vi-&gt;vertexNo&lt;&lt;&quot; and &quot;&lt;&lt;vj-&gt;id&lt;&lt;&quot;/&quot;&lt;&lt;vj-&gt;vertexNo&lt;&lt;&quot; close enough.&quot;);
+ 				// add vertex to the nextIndetical of the one that has lower index; the one that is added will have isLowestIndex=false
+ 				if(vi-&gt;index&lt;vj-&gt;index){ vi-&gt;nextIdentical.push_back(vj); vj-&gt;isLowestIndex=false; }
+ 				else{                    vj-&gt;nextIdentical.push_back(vi); vi-&gt;isLowestIndex=false; }
+ 			}
+ 		}
+ 	}
+-	/* TODO: create vertex clusters of touching vertices; find what facets they belong to; find whether facets that touch have common edges; compute mutual angle between faces on edge and save that to InteractingFacet */
++	// identity chains start always at lower indices, this way we get all of them
++	sort(vv.begin(),vv.end(),VertexIndexComparator());
++	int maxVertexId=0;
++	FOREACH(shared_ptr&lt;VertexData&gt;&amp; v, vv){
++		if(v-&gt;vertexId&lt;0){
++			assert(v-&gt;isLowestIndex);
++			v-&gt;vertexId=maxVertexId++;
++		}
++		FOREACH(shared_ptr&lt;VertexData&gt;&amp; vNext, v-&gt;nextIdentical){
++			vNext-&gt;vertexId=v-&gt;vertexId;
++		}
++		if(v-&gt;vertexId&gt;=0) continue; // already assigned
++	}
++	LOG_DEBUG(&quot;Found &quot;&lt;&lt;maxVertexId&lt;&lt;&quot; unique vertices.&quot;);
++	// add FacetTopology for all facets; index within the topo array is the body id
++	vector&lt;shared_ptr&lt;FacetTopology&gt; &gt; topo(rb-&gt;bodies-&gt;size()); // initialized with the default ctor
++	FOREACH(shared_ptr&lt;VertexData&gt;&amp; v, vv){
++		if(!topo[v-&gt;id]) topo[v-&gt;id]=shared_ptr&lt;FacetTopology&gt;(new FacetTopology(v-&gt;id));
++		topo[v-&gt;id]-&gt;vertices[v-&gt;vertexNo]=v-&gt;vertexId;
++	}
++	// make sure all facets have their vertex id's assigned
++	// add non-empty ones to topo1 that will be used for adjacency search afterwards
++	vector&lt;shared_ptr&lt;FacetTopology&gt; &gt; topo1;
++	for(size_t i=0; i&lt;topo.size(); i++){
++		shared_ptr&lt;FacetTopology&gt; t=topo[i];
++		if(!t) continue;
++		if(t-&gt;vertices[0]&lt;0 || t-&gt;vertices[1]&lt;0 || t-&gt;vertices[2]&lt;0){
++			LOG_FATAL(&quot;Facet #&quot;&lt;&lt;i&lt;&lt;&quot;: some vertex has no integrized vertexId assigned!!&quot;);
++			LOG_FATAL(&quot;Vertices are: &quot;&lt;&lt;t-&gt;vertices[0]&lt;&lt;&quot;,&quot;&lt;&lt;t-&gt;vertices[1]&lt;&lt;&quot;,&quot;&lt;&lt;t-&gt;vertices[2]);
++			throw logic_error(&quot;Facet vertex has no integrized vertex assigned?!&quot;);
++		}
++		topo1.push_back(t);
++	}
++	sort(topo1.begin(),topo1.end(),TopologyIndexComparator());
++	size_t nTopo=topo1.size();
++	for(size_t i=0; i&lt;nTopo; i++){
++		size_t j=i;
++		while(++j&lt;nTopo){
++			const shared_ptr&lt;FacetTopology&gt;&amp; ti(topo1[i]), &amp;tj(topo1[j]);
++			LOG_TRACE(&quot;Analyzing possibly-adjacent facets #&quot;&lt;&lt;ti-&gt;id&lt;&lt;&quot; #&quot;&lt;&lt;tj-&gt;id&lt;&lt;&quot; (vertices &quot;&lt;&lt;ti-&gt;vertices[0]&lt;&lt;&quot;,&quot;&lt;&lt;ti-&gt;vertices[1]&lt;&lt;&quot;,&quot;&lt;&lt;ti-&gt;vertices[2]&lt;&lt;&quot;; &quot;&lt;&lt;tj-&gt;vertices[0]&lt;&lt;&quot;,&quot;&lt;&lt;ti-&gt;vertices[1]&lt;&lt;&quot;,&quot;&lt;&lt;ti-&gt;vertices[2]&lt;&lt;&quot;)&quot;);
++			vector&lt;size_t&gt; vvv; // array of common vertices
++			for(size_t k=0; k&lt;3; k++){
++				if     (ti-&gt;vertices[k]==tj-&gt;vertices[0]) vvv.push_back(ti-&gt;vertices[k]);
++				else if(ti-&gt;vertices[k]==tj-&gt;vertices[1]) vvv.push_back(ti-&gt;vertices[k]);
++				else if(ti-&gt;vertices[k]==tj-&gt;vertices[2]) vvv.push_back(ti-&gt;vertices[k]);
++			}
++			if(vvv.size()==0) break; // reached end of those that have the lowest-id vertex in common
++			if(vvv.size()==1) continue; // only one edge in common
++			assert(vvv.size()!=3); // same coords? nonsense
++			assert(vvv.size()==2);
++			vector&lt;int&gt; edge(2,0);
++			// identify what edge are we at, for both facets
++			for(int k=0; k&lt;2; k++){
++				for(edge[k]=0; edge[k]&lt;3; edge[k]++){
++					const shared_ptr&lt;FacetTopology&gt;&amp; tt( k==0 ? ti : tj);
++					size_t v1=tt-&gt;vertices[edge[k]],v2=tt-&gt;vertices[(edge[k]+1)%3];
++					if((vvv[0]==v1 &amp;&amp; vvv[1]==v2) || (vvv[0]==v2 &amp;&amp; vvv[1]==v1)) break;
++					if(edge[k]==2){
++						LOG_FATAL(&quot;No edge identified for 2 vertices &quot;&lt;&lt;vvv[0]&lt;&lt;&quot;,&quot;&lt;&lt;vvv[1]&lt;&lt;&quot; (facet #&quot;&lt;&lt;tt-&gt;id&lt;&lt;&quot; is: &quot;&lt;&lt;tt-&gt;vertices[0]&lt;&lt;&quot;,&quot;&lt;&lt;tt-&gt;vertices[1]&lt;&lt;&quot;,&quot;&lt;&lt;tt-&gt;vertices[2]&lt;&lt;&quot;)&quot;);
++						throw logic_error(&quot;No edge identified for given vertices.&quot;);
++					}
++				}
++			}
++			// add adjacency information to the facet itself
++			YADE_PTR_CAST&lt;InteractingFacet&gt;((*rb-&gt;bodies)[ti-&gt;id]-&gt;interactingGeometry)-&gt;edgeAdjIds[edge[0]]=tj-&gt;id;
++			YADE_PTR_CAST&lt;InteractingFacet&gt;((*rb-&gt;bodies)[tj-&gt;id]-&gt;interactingGeometry)-&gt;edgeAdjIds[edge[1]]=tj-&gt;id;
++			commonEdgesFound++;
++			LOG_TRACE(&quot;Added adjacency information for #&quot;&lt;&lt;ti-&gt;id&lt;&lt;&quot;+#&quot;&lt;&lt;tj-&gt;id&lt;&lt;&quot; (common edges &quot;&lt;&lt;edge[0]&lt;&lt;&quot;+&quot;&lt;&lt;edge[1]&lt;&lt;&quot;)&quot;);
++		}
++	}
+ }
+-
++#endif
+
+Modified: trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.hpp
+===================================================================
+--- trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.hpp	2009-04-06 21:40:30 UTC (rev 1749)
++++ trunk/pkg/dem/Engine/StandAloneEngine/FacetTopologyAnalyzer.hpp	2009-04-08 20:27:04 UTC (rev 1750)
+@@ -9,7 +9,7 @@
+  */
+ class FacetTopologyAnalyzer: public StandAloneEngine{
+ 	struct VertexData{
+-		VertexData(body_id_t _id, int _vertexNo, Vector3r _pos, Real _coord): id(_id), vertexNo(_vertexNo), coord(_coord), pos(_pos){index=3*id+vertexNo; isLowestIndex=true;}
++		VertexData(body_id_t _id, int _vertexNo, Vector3r _pos, Real _coord): id(_id), vertexNo(_vertexNo), coord(_coord), pos(_pos){index=3*id+vertexNo; isLowestIndex=true; vertexId=-1;}
+ 		//! Facet (body id) that we represent
+ 		body_id_t id;
+ 		//! vertex number within this Facet
+@@ -24,21 +24,37 @@
+ 		bool isLowestIndex;
+ 		//! vertices that are &quot;identical&quot; with this one, but have higer indices
+ 		vector&lt;shared_ptr&lt;VertexData&gt; &gt; nextIdentical;
++		//! id of vertex, once they have id's assigned
++		long vertexId;
+ 	};
+ 	struct VertexComparator{
+ 		bool operator()(const shared_ptr&lt;VertexData&gt;&amp; v1, const shared_ptr&lt;VertexData&gt;&amp; v2){return v1-&gt;coord&lt;v2-&gt;coord;}
+ 	};
+-
++	struct VertexIndexComparator{
++		bool operator()(const shared_ptr&lt;VertexData&gt;&amp; v1, const shared_ptr&lt;VertexData&gt;&amp; v2){return v1-&gt;index&lt;v2-&gt;index;}
++	};
++	struct FacetTopology{
++		FacetTopology(body_id_t _id): id(_id){vertices[0]=vertices[1]=vertices[2]=-1;}
++		//! integrized vertices
++		long vertices[3];
++		//! facet id, for back reference
++		body_id_t id;
++	};
++	struct TopologyIndexComparator{
++		bool operator()(const shared_ptr&lt;FacetTopology&gt;&amp; t1, const shared_ptr&lt;FacetTopology&gt;&amp; t2){ return min(t1-&gt;vertices[0],min(t1-&gt;vertices[1],t1-&gt;vertices[2]))&lt;min(t2-&gt;vertices[0],min(t2-&gt;vertices[1],t2-&gt;vertices[2])); }
++	};
+ 	public:
+ 		//! Axis along which to do the initial vertex sort
+ 		Vector3r projectionAxis;
+-		//! maximum distance of &quot;identical&quot; vertices, relative to maximum facet size
++		//! maximum distance of &quot;identical&quot; vertices, relative to minimum facet size
+ 		Real relTolerance;
++		//! how many common edges were identified during last run
++		long commonEdgesFound;
+ 	void action(MetaBody*); 
+-	FacetTopologyAnalyzer(): projectionAxis(Vector3r::UNIT_X), relTolerance(1e-4) {}
++	FacetTopologyAnalyzer(): projectionAxis(Vector3r::UNIT_X), relTolerance(1e-4), commonEdgesFound(0) {}
+ 	DECLARE_LOGGER;
+ 	REGISTER_CLASS_AND_BASE(FacetTopologyAnalyzer,StandAloneEngine);
+-	REGISTER_ATTRIBUTES(StandAloneEngine, /* none */);
++	REGISTER_ATTRIBUTES(StandAloneEngine, (projectionAxis)(relTolerance));
+ };
+ REGISTER_SERIALIZABLE(FacetTopologyAnalyzer);
+ 
+
+Added: trunk/scripts/test/facet-topo.py
+===================================================================
+--- trunk/scripts/test/facet-topo.py	2009-04-06 21:40:30 UTC (rev 1749)
++++ trunk/scripts/test/facet-topo.py	2009-04-08 20:27:04 UTC (rev 1750)
+@@ -0,0 +1,24 @@
++import yade.log
++yade.log.setLevel('FacetTopologyAnalyzer',yade.log.TRACE)
++
++# Note: FacetTopologyAnalyzer is normally run as an initializer;
++# it is only for testing sake that it is in O.engines here.
++O.engines=[FacetTopologyAnalyzer(projectionAxis=(0,0,1),label='topo'),]
++
++# most simple case: no touch at all
++if 1:
++	O.bodies.append([
++		utils.facet([(0,0,0),(1,0,0),(0,1,0)]),
++		utils.facet([(0,0,1),(1,0,1),(0,1,1)]),
++	])
++	O.step();
++	assert(topo['commonEdgesFound']==0)
++if 1:
++	O.bodies.clear()
++	O.bodies.append([
++		utils.facet([(0,0,0),(1,0,0),(0,1,0)]),
++		utils.facet([(1,1,0),(1,0,0),(0,1,0)]),
++	])
++	O.step()
++	#assert(O.bodies[0].phys['edgeAdjIds'][1]==1 and O.bodies[1].phys['edgeAdjIds'][0]==1)
++	assert(topo['commonEdgesFound']==1)
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="000910.html">[deprecated list] [Yade-dev] [svn] r1749 - in trunk: gui/py	pkg/dem	pkg/dem/Engine/StandAloneEngine
+</A></li>
+	<LI>Next message: <A HREF="000912.html">[deprecated list] [Yade-dev] [svn] r1751 -	trunk/pkg/common/Engine/StandAloneEngine
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#911">[ date ]</a>
+              <a href="thread.html#911">[ thread ]</a>
+              <a href="subject.html#911">[ subject ]</a>
+              <a href="author.html#911">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>

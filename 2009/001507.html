@@ -1,0 +1,100 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+ <HEAD>
+   <TITLE> [deprecated list] [Yade-dev] dispatch, inheritance,	virtual functions
+   </TITLE>
+   <LINK REL="Index" HREF="http://lists.berlios.de/pipermail/yade-dev/2009/index.html" >
+   <LINK REL="made" HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20dispatch%2C%20inheritance%2C%0A%09virtual%20functions&In-Reply-To=%3C1250847424.11272.33.camel%40flux%3E">
+   <META NAME="robots" CONTENT="index,nofollow">
+   <style type="text/css">
+       pre {
+           white-space: pre-wrap;       /* css-2.1, curent FF, Opera, Safari */
+           }
+   </style>
+   <META http-equiv="Content-Type" content="text/html; charset=us-ascii">
+   <LINK REL="Previous"  HREF="001496.html">
+   <LINK REL="Next"  HREF="001510.html">
+ </HEAD>
+ <BODY BGCOLOR="#ffffff">
+   <H1>[deprecated list] [Yade-dev] dispatch, inheritance,	virtual functions</H1>
+    <B>V&#225;clav &#352;milauer</B> 
+    <A HREF="mailto:yade-dev%40lists.berlios.de?Subject=Re%3A%20%5Bdeprecated%20list%5D%20%5BYade-dev%5D%20dispatch%2C%20inheritance%2C%0A%09virtual%20functions&In-Reply-To=%3C1250847424.11272.33.camel%40flux%3E"
+       TITLE="[deprecated list] [Yade-dev] dispatch, inheritance,	virtual functions">eudoxos at arcig.cz
+       </A><BR>
+    <I>Fri Aug 21 11:37:03 CEST 2009</I>
+    <P><UL>
+        <LI>Previous message: <A HREF="001496.html">[deprecated list] [Yade-dev] dispatch, inheritance,	virtual functions
+</A></li>
+        <LI>Next message: <A HREF="001510.html">[deprecated list] [Yade-dev]   dispatch, inheritance, virtual functions
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1507">[ date ]</a>
+              <a href="thread.html#1507">[ thread ]</a>
+              <a href="subject.html#1507">[ subject ]</a>
+              <a href="author.html#1507">[ author ]</a>
+         </LI>
+       </UL>
+    <HR>  
+<!--beginarticle-->
+<PRE>Janek, ping?
+
+I was debugging that and I get the following:
+
+ConstitutiveLawDispatcher::locateMultivirtualFunctor2D is called with
+those arguments:
+	
+1. Dem3DofGeom_FacetSphere, class index 2 (for InteractionGeometry)
+2. ElasticContactInteraction, class index 2 (for InteractionPhysics)
+
+Now there is only 1 entry in the dispatch matrix:
+
+1+2 -&gt; Law2_Dem3Dof_Elastic_Elastic
+
+(where index 1 is Dem3DofGeom).
+
+Since it is not the direct hit, I would expect that we will crawl up the
+base class indices, until a match is found. However, reading the code:
+
+int depth1=1, depth2=1;
+int index1_tmp=base1-&gt;getBaseClassIndex(depth1),index2_tmp = base2-&gt;getBaseClassIndex(depth2);
+if(index1_tmp==-1){ /* loop over index2_tmp up, until a match index1,index2_tmp is found, then return */ }
+if(index2_tmp==-1){ /* loop over index1_tmp up, until a match index1_tmp,index2 is found, then return */ }
+/* here index1_tmp=-1 &amp;&amp; index2_tmp=-1 */
+throw;
+
+What is the logic there??? I get exception, even though the dispatch is neither ambiguous nor undefined.
+
+V.
+
+
+
+
+
+_______________________________________________
+Mailing list: <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+Post to     : <A HREF="https://lists.berlios.de/mailman/listinfo/yade-dev">yade-dev at lists.launchpad.net</A>
+Unsubscribe : <A HREF="https://launchpad.net/~yade-dev">https://launchpad.net/~yade-dev</A>
+More help   : <A HREF="https://help.launchpad.net/ListHelp">https://help.launchpad.net/ListHelp</A>
+
+</PRE>
+
+<!--endarticle-->
+    <HR>
+    <P><UL>
+        <!--threads-->
+	<LI>Previous message: <A HREF="001496.html">[deprecated list] [Yade-dev] dispatch, inheritance,	virtual functions
+</A></li>
+	<LI>Next message: <A HREF="001510.html">[deprecated list] [Yade-dev]   dispatch, inheritance, virtual functions
+</A></li>
+         <LI> <B>Messages sorted by:</B> 
+              <a href="date.html#1507">[ date ]</a>
+              <a href="thread.html#1507">[ thread ]</a>
+              <a href="subject.html#1507">[ subject ]</a>
+              <a href="author.html#1507">[ author ]</a>
+         </LI>
+       </UL>
+
+<hr>
+<a href="https://lists.berlios.de/mailman/listinfo/yade-dev">More information about the yade-dev
+mailing list</a><br>
+</body></html>
